@@ -1443,6 +1443,8 @@ export type Database = {
           created_at: string
           employee_id: string
           end_date: string | null
+          has_cert: boolean | null
+          has_cr: boolean | null
           id: string
           location: string | null
           provider: string | null
@@ -1455,6 +1457,8 @@ export type Database = {
           created_at?: string
           employee_id: string
           end_date?: string | null
+          has_cert?: boolean | null
+          has_cr?: boolean | null
           id?: string
           location?: string | null
           provider?: string | null
@@ -1467,6 +1471,8 @@ export type Database = {
           created_at?: string
           employee_id?: string
           end_date?: string | null
+          has_cert?: boolean | null
+          has_cr?: boolean | null
           id?: string
           location?: string | null
           provider?: string | null

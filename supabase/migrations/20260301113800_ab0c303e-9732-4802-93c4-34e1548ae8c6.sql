@@ -1,0 +1,1 @@
+ALTER TABLE public.training_records ADD COLUMN has_cert boolean DEFAULT false, ADD COLUMN has_cr boolean DEFAULT false;
