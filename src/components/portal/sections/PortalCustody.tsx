@@ -74,7 +74,12 @@ export const PortalCustody = () => {
   }, [PORTAL_EMPLOYEE_ID]);
 
   const assigned = assets.filter(a => a.status === 'assigned').length;
+  const inMaintenance = assets.filter(a => a.status === 'maintenance').length;
   const conditionMap: Record<string, string> = { good: 'جيدة', fair: 'مقبولة', poor: 'سيئة', new: 'جديدة' };
+  const assetStatusMap: Record<string, { ar: string; cls: string }> = {
+    assigned: { ar: 'بحوزتي', cls: 'bg-primary/10 text-primary border-primary' },
+    maintenance: { ar: 'بالصيانة', cls: 'bg-amber-100 text-amber-700 border-amber-400' },
+  };
   const statusMap: Record<string, { ar: string; cls: string }> = {
     enrolled: { ar: 'قيد التدريب', cls: 'bg-warning/10 text-warning border-warning' },
     failed: { ar: 'لم يجتاز', cls: 'bg-destructive/10 text-destructive border-destructive' },
@@ -125,18 +130,23 @@ export const PortalCustody = () => {
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الاسم' : 'Name'}</TableHead>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الماركة' : 'Brand'}</TableHead>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الموديل' : 'Model'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحالة' : 'Condition'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحالة الفنية' : 'Condition'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحالة' : 'Status'}</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {assets.map(a => (
-                      <TableRow key={a.id}>
-                        <TableCell className="font-mono">{a.assetCode}</TableCell>
-                        <TableCell className="font-medium">{ar ? a.nameAr : a.nameEn}</TableCell>
-                        <TableCell>{a.brand}</TableCell>
-                        <TableCell>{a.model}</TableCell>
-                        <TableCell><Badge variant="outline">{ar ? (conditionMap[a.condition] || a.condition) : a.condition}</Badge></TableCell>
-                      </TableRow>
-                    ))}
+                    {assets.map(a => {
+                      const aStatus = assetStatusMap[a.status] || { ar: a.status, cls: '' };
+                      return (
+                        <TableRow key={a.id}>
+                          <TableCell className="font-mono">{a.assetCode}</TableCell>
+                          <TableCell className="font-medium">{ar ? a.nameAr : a.nameEn}</TableCell>
+                          <TableCell>{a.brand}</TableCell>
+                          <TableCell>{a.model}</TableCell>
+                          <TableCell><Badge variant="outline">{ar ? (conditionMap[a.condition] || a.condition) : a.condition}</Badge></TableCell>
+                          <TableCell><Badge variant="outline" className={aStatus.cls}>{ar ? aStatus.ar : a.status}</Badge></TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}

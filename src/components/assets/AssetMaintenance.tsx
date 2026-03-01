@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,9 +12,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Plus, Search, Wrench, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+
+interface DbAsset {
+  id: string;
+  asset_code: string;
+  name_ar: string;
+  name_en: string;
+  status: string;
+}
 
 interface MaintenanceRecord {
   id: string;
+  assetId: string;
   assetCode: string;
   assetName: string;
   type: 'preventive' | 'corrective' | 'emergency';
@@ -28,25 +38,49 @@ interface MaintenanceRecord {
   resolution?: string;
 }
 
-const initialMaintenance: MaintenanceRecord[] = [
-  { id: '1', assetCode: 'AST-003', assetName: 'طابعة HP LaserJet', type: 'corrective', priority: 'high', status: 'in-progress', reportedDate: '2026-02-01', assignedTo: 'محمد الفني', cost: 500, description: 'الطابعة لا تعمل بشكل صحيح - انسداد في الحبر' },
-  { id: '2', assetCode: 'AST-001', assetName: 'لابتوب Dell Latitude', type: 'preventive', priority: 'low', status: 'completed', reportedDate: '2026-01-15', completedDate: '2026-01-18', assignedTo: 'أحمد الصيانة', cost: 200, description: 'صيانة دورية - تنظيف وتحديث', resolution: 'تم التنظيف وتحديث النظام' },
-  { id: '3', assetCode: 'AST-007', assetName: 'سيارة تويوتا كورولا', type: 'preventive', priority: 'medium', status: 'pending', reportedDate: '2026-02-05', assignedTo: 'ورشة الصيانة', cost: 1500, description: 'صيانة دورية - تغيير زيت وفلاتر' },
-  { id: '4', assetCode: 'AST-008', assetName: 'جهاز كمبيوتر HP', type: 'emergency', priority: 'critical', status: 'completed', reportedDate: '2026-01-20', completedDate: '2026-01-21', assignedTo: 'أحمد الصيانة', cost: 0, description: 'الجهاز لا يعمل نهائياً', resolution: 'تم تقييم الجهاز - غير قابل للإصلاح ويجب الاستغناء عنه' },
-  { id: '5', assetCode: 'AST-002', assetName: 'شاشة Samsung', type: 'corrective', priority: 'medium', status: 'pending', reportedDate: '2026-02-08', assignedTo: 'محمد الفني', cost: 350, description: 'وميض في الشاشة عند التشغيل' },
-];
-
 export const AssetMaintenance = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
+  const ar = language === 'ar';
   const { toast } = useToast();
-  const [records, setRecords] = useState<MaintenanceRecord[]>(initialMaintenance);
+  const [records, setRecords] = useState<MaintenanceRecord[]>([]);
+  const [allAssets, setAllAssets] = useState<DbAsset[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
-    assetCode: '', assetName: '', type: 'corrective' as MaintenanceRecord['type'],
+    assetId: '', type: 'corrective' as MaintenanceRecord['type'],
     priority: 'medium' as MaintenanceRecord['priority'], assignedTo: '', cost: 0, description: '',
   });
+
+  const fetchAssets = useCallback(async () => {
+    const { data } = await supabase.from('assets').select('id, asset_code, name_ar, name_en, status').order('asset_code');
+    if (data) setAllAssets(data);
+  }, []);
+
+  const fetchMaintenance = useCallback(async () => {
+    // Assets currently in maintenance
+    const { data } = await supabase.from('assets').select('*').eq('status', 'maintenance');
+    if (data) {
+      setRecords(data.map(a => ({
+        id: a.id,
+        assetId: a.id,
+        assetCode: a.asset_code,
+        assetName: ar ? a.name_ar : a.name_en,
+        type: 'corrective',
+        priority: 'medium',
+        status: 'in-progress' as MaintenanceRecord['status'],
+        reportedDate: a.created_at?.split('T')[0] || '',
+        assignedTo: a.notes || '',
+        cost: 0,
+        description: a.notes || '',
+      })));
+    }
+  }, [ar]);
+
+  useEffect(() => { fetchAssets(); fetchMaintenance(); }, [fetchAssets, fetchMaintenance]);
+
+  // Available assets for maintenance (not retired)
+  const availableForMaintenance = allAssets.filter(a => a.status !== 'retired' && a.status !== 'maintenance');
 
   const stats = [
     { label: t('assets.maintenance.pending'), value: records.filter(r => r.status === 'pending').length, icon: Clock, bg: 'bg-amber-100', color: 'text-amber-600' },
@@ -61,21 +95,57 @@ export const AssetMaintenance = () => {
     return matchSearch && matchStatus;
   });
 
-  const handleAdd = () => {
-    if (!form.assetCode || !form.description) {
+  const handleAdd = async () => {
+    if (!form.assetId || !form.description) {
       toast({ title: t('assets.error'), description: t('assets.fillRequired'), variant: 'destructive' });
       return;
     }
-    const newRecord: MaintenanceRecord = { id: String(Date.now()), ...form, status: 'pending', reportedDate: new Date().toISOString().split('T')[0] };
+
+    const asset = allAssets.find(a => a.id === form.assetId);
+    if (!asset) return;
+
+    // Update asset status to 'maintenance' in DB
+    const { error } = await supabase.from('assets').update({
+      status: 'maintenance',
+      notes: `[${form.type}] ${form.description} | ${ar ? 'المسؤول:' : 'Assigned:'} ${form.assignedTo}`,
+    }).eq('id', form.assetId);
+
+    if (error) {
+      toast({ title: t('assets.error'), description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    const newRecord: MaintenanceRecord = {
+      id: form.assetId,
+      assetId: form.assetId,
+      assetCode: asset.asset_code,
+      assetName: ar ? asset.name_ar : asset.name_en,
+      type: form.type,
+      priority: form.priority,
+      status: 'in-progress',
+      reportedDate: new Date().toISOString().split('T')[0],
+      assignedTo: form.assignedTo,
+      cost: form.cost,
+      description: form.description,
+    };
     setRecords(prev => [newRecord, ...prev]);
     toast({ title: t('assets.success'), description: t('assets.maintenance.created') });
     setDialogOpen(false);
-    setForm({ assetCode: '', assetName: '', type: 'corrective', priority: 'medium', assignedTo: '', cost: 0, description: '' });
+    setForm({ assetId: '', type: 'corrective', priority: 'medium', assignedTo: '', cost: 0, description: '' });
+    fetchAssets();
   };
 
-  const handleStatusChange = (id: string, status: MaintenanceRecord['status']) => {
+  const handleStatusChange = async (id: string, status: MaintenanceRecord['status']) => {
+    if (status === 'completed' || status === 'cancelled') {
+      // Find the original asset status - restore to 'available' (or 'assigned' if it was assigned)
+      await supabase.from('assets').update({ status: 'available', notes: '' }).eq('id', id);
+    }
     setRecords(prev => prev.map(r => r.id === id ? { ...r, status, ...(status === 'completed' ? { completedDate: new Date().toISOString().split('T')[0] } : {}) } : r));
+    if (status === 'completed' || status === 'cancelled') {
+      setRecords(prev => prev.filter(r => r.id !== id));
+    }
     toast({ title: t('assets.success'), description: t('assets.maintenance.statusUpdated') });
+    fetchAssets();
   };
 
   const getStatusBadge = (status: string) => {
@@ -140,9 +210,19 @@ export const AssetMaintenance = () => {
               <DialogContent className="max-w-md">
                 <DialogHeader><DialogTitle>{t('assets.maintenance.addRequest')}</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>{t('assets.field.code')}</Label><Input value={form.assetCode} onChange={e => setForm(f => ({ ...f, assetCode: e.target.value }))} placeholder="AST-XXX" /></div>
-                    <div className="space-y-2"><Label>{t('assets.field.name')}</Label><Input value={form.assetName} onChange={e => setForm(f => ({ ...f, assetName: e.target.value }))} /></div>
+                  {/* Asset Selection from Registry */}
+                  <div className="space-y-2">
+                    <Label>{ar ? 'اختر الأصل' : 'Select Asset'}</Label>
+                    <Select value={form.assetId} onValueChange={v => setForm(f => ({ ...f, assetId: v }))}>
+                      <SelectTrigger><SelectValue placeholder={ar ? 'اختر أصل من السجل...' : 'Choose asset from registry...'} /></SelectTrigger>
+                      <SelectContent>
+                        {availableForMaintenance.map(a => (
+                          <SelectItem key={a.id} value={a.id}>
+                            {a.asset_code} - {ar ? a.name_ar : a.name_en}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2"><Label>{t('assets.maintenance.type')}</Label>
@@ -180,48 +260,53 @@ export const AssetMaintenance = () => {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('assets.field.code')}</TableHead>
-                <TableHead>{t('assets.field.name')}</TableHead>
-                <TableHead>{t('assets.maintenance.type')}</TableHead>
-                <TableHead>{t('assets.maintenance.priority')}</TableHead>
-                <TableHead>{t('assets.maintenance.reportedDate')}</TableHead>
-                <TableHead>{t('assets.maintenance.assignedTo')}</TableHead>
-                <TableHead>{t('assets.maintenance.cost')}</TableHead>
-                <TableHead>{t('assets.field.status')}</TableHead>
-                <TableHead>{t('assets.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map(record => (
-                <TableRow key={record.id}>
-                  <TableCell className="font-mono text-sm">{record.assetCode}</TableCell>
-                  <TableCell className="font-medium">{record.assetName}</TableCell>
-                  <TableCell><Badge variant="outline">{t(`assets.maintenance.type${record.type.charAt(0).toUpperCase() + record.type.slice(1)}`)}</Badge></TableCell>
-                  <TableCell>{getPriorityBadge(record.priority)}</TableCell>
-                  <TableCell>{record.reportedDate}</TableCell>
-                  <TableCell>{record.assignedTo}</TableCell>
-                  <TableCell>{record.cost.toLocaleString()} {t('assets.currency')}</TableCell>
-                  <TableCell>{getStatusBadge(record.status)}</TableCell>
-                  <TableCell>
-                    {record.status !== 'completed' && record.status !== 'cancelled' && (
-                      <Select value={record.status} onValueChange={v => handleStatusChange(record.id, v as MaintenanceRecord['status'])}>
-                        <SelectTrigger className="w-28 h-8"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">{t('assets.maintenance.statusPending')}</SelectItem>
-                          <SelectItem value="in-progress">{t('assets.maintenance.statusInProgress')}</SelectItem>
-                          <SelectItem value="completed">{t('assets.maintenance.statusCompleted')}</SelectItem>
-                          <SelectItem value="cancelled">{t('assets.maintenance.statusCancelled')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </TableCell>
+          {filtered.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              {ar ? 'لا توجد طلبات صيانة حالياً' : 'No maintenance requests currently'}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('assets.field.code')}</TableHead>
+                  <TableHead>{t('assets.field.name')}</TableHead>
+                  <TableHead>{t('assets.maintenance.type')}</TableHead>
+                  <TableHead>{t('assets.maintenance.priority')}</TableHead>
+                  <TableHead>{t('assets.maintenance.reportedDate')}</TableHead>
+                  <TableHead>{t('assets.maintenance.assignedTo')}</TableHead>
+                  <TableHead>{t('assets.maintenance.cost')}</TableHead>
+                  <TableHead>{t('assets.field.status')}</TableHead>
+                  <TableHead>{t('assets.actions')}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filtered.map(record => (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-mono text-sm">{record.assetCode}</TableCell>
+                    <TableCell className="font-medium">{record.assetName}</TableCell>
+                    <TableCell><Badge variant="outline">{t(`assets.maintenance.type${record.type.charAt(0).toUpperCase() + record.type.slice(1)}`)}</Badge></TableCell>
+                    <TableCell>{getPriorityBadge(record.priority)}</TableCell>
+                    <TableCell>{record.reportedDate}</TableCell>
+                    <TableCell>{record.assignedTo}</TableCell>
+                    <TableCell>{record.cost.toLocaleString()} {t('assets.currency')}</TableCell>
+                    <TableCell>{getStatusBadge(record.status)}</TableCell>
+                    <TableCell>
+                      {record.status !== 'completed' && record.status !== 'cancelled' && (
+                        <Select value={record.status} onValueChange={v => handleStatusChange(record.id, v as MaintenanceRecord['status'])}>
+                          <SelectTrigger className="w-28 h-8"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="in-progress">{t('assets.maintenance.statusInProgress')}</SelectItem>
+                            <SelectItem value="completed">{t('assets.maintenance.statusCompleted')}</SelectItem>
+                            <SelectItem value="cancelled">{t('assets.maintenance.statusCancelled')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
