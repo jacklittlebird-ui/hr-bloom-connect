@@ -75,7 +75,7 @@ export const PortalLoans = () => {
             <TableBody>
               {myLoans.map(l => (
                 <TableRow key={l.id}>
-                  <TableCell className="font-mono">{l.id}</TableCell>
+                  <TableCell className="font-mono text-xs">{l.id.slice(0, 8).toUpperCase()}</TableCell>
                   <TableCell>{l.amount.toLocaleString()}</TableCell>
                   <TableCell>{l.monthlyPayment.toLocaleString()}</TableCell>
                   <TableCell className="text-success">{l.paidAmount.toLocaleString()}</TableCell>
@@ -109,7 +109,7 @@ export const PortalLoans = () => {
               <TableBody>
                 {myAdvances.map(a => (
                   <TableRow key={a.id}>
-                    <TableCell className="font-mono">{a.id}</TableCell>
+                    <TableCell className="font-mono text-xs">{a.id.slice(0, 8).toUpperCase()}</TableCell>
                     <TableCell>{a.amount.toLocaleString()}</TableCell>
                     <TableCell>{a.requestDate}</TableCell>
                     <TableCell>{a.deductionMonth}</TableCell>

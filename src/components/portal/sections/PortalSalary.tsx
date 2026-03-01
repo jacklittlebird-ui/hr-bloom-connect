@@ -266,7 +266,7 @@ export const PortalSalary = () => {
                     <TableBody>
                       {activeLoans.map(l => (
                         <TableRow key={l.id}>
-                          <TableCell className="font-mono">{l.id}</TableCell>
+                          <TableCell className="font-mono text-xs">{l.id.slice(0, 8).toUpperCase()}</TableCell>
                           <TableCell>{l.amount.toLocaleString('ar-EG')}</TableCell>
                           <TableCell className="text-destructive font-medium">{l.monthlyPayment.toLocaleString('ar-EG')}</TableCell>
                           <TableCell>{l.remainingAmount.toLocaleString('ar-EG')}</TableCell>

@@ -48,8 +48,8 @@ export const PortalAttendance = () => {
   const monthlyRecords = useMemo(() => getEmployeeMonthlyRecords(PORTAL_EMPLOYEE_ID, year, month), [year, month, getEmployeeMonthlyRecords, PORTAL_EMPLOYEE_ID]);
   const stats = useMemo(() => getMonthlyStats(PORTAL_EMPLOYEE_ID, year, month), [year, month, getMonthlyStats, PORTAL_EMPLOYEE_ID]);
 
-  const today = new Date().toISOString().split('T')[0];
-  const todayRecord = useMemo(() => records.find(r => r.employeeId === PORTAL_EMPLOYEE_ID && r.date === today), [records, PORTAL_EMPLOYEE_ID, today]);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayRecord = useMemo(() => records.find(r => r.employeeId === PORTAL_EMPLOYEE_ID && r.date === todayStr), [records, PORTAL_EMPLOYEE_ID, todayStr]);
 
   const hasCheckedIn = !!todayRecord?.checkIn;
   const hasCheckedOut = !!todayRecord?.checkOut;
@@ -73,8 +73,20 @@ export const PortalAttendance = () => {
     ? ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
     : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  const working = monthlyRecords.filter(r => !['weekend', 'on-leave'].includes(r.status)).length;
-  const pastWorking = monthlyRecords.filter(r => !['weekend', 'on-leave'].includes(r.status) && new Date(r.date) <= new Date()).length;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const nowDate = new Date();
+  let working = 0;
+  let pastWorking = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 5 || dayOfWeek === 6) continue;
+    const dateStr = date.toISOString().split('T')[0];
+    const rec = monthlyRecords.find(r => r.date === dateStr);
+    if (rec && rec.status === 'on-leave') continue;
+    working++;
+    if (date <= nowDate) pastWorking++;
+  }
   const rate = pastWorking > 0 ? ((stats.present / pastWorking) * 100).toFixed(1) : '0';
 
   const statusBadge = (s: string) => {

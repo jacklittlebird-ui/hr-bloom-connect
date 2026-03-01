@@ -27,7 +27,8 @@ const Uniforms = () => {
   const { uniforms, addUniform, deleteUniform, updateUniform } = useUniformData();
   const { reportRef, handlePrint, exportToCSV } = useReportExport();
 
-  const [employeeId, setEmployeeId] = useState('');
+  const [employeeId, setEmployeeId] = useState(''); // This stores employee code for display
+  const [employeeUUID, setEmployeeUUID] = useState(''); // This stores the actual UUID for DB
   const [empOpen, setEmpOpen] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState('');
   const [notes, setNotes] = useState('');
@@ -41,7 +42,7 @@ const Uniforms = () => {
   const [editForm, setEditForm] = useState({ typeAr: '', typeEn: '', quantity: 1, unitPrice: 0, deliveryDate: '', notes: '' });
 
   const activeEmployees = useMemo(() => employees.filter(e => e.status === 'active'), [employees]);
-  const selectedEmployee = activeEmployees.find(e => e.employeeId === employeeId);
+  const selectedEmployee = activeEmployees.find(e => e.id === employeeUUID);
 
   const addRow = () => setItems(prev => [...prev, { typeIndex: '', quantity: 1, unitPrice: 0 }]);
   const removeRow = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i));
@@ -52,7 +53,7 @@ const Uniforms = () => {
   const grandTotal = items.reduce((sum, r) => sum + r.quantity * r.unitPrice, 0);
 
   const handleSave = () => {
-    if (!employeeId || !deliveryDate) {
+    if (!employeeUUID || !deliveryDate) {
       toast.error(language === 'ar' ? 'يرجى اختيار الموظف وتاريخ التسليم' : 'Please select employee and delivery date');
       return;
     }
@@ -64,7 +65,7 @@ const Uniforms = () => {
     validItems.forEach(r => {
       const uType = UNIFORM_TYPES[parseInt(r.typeIndex)];
       addUniform({
-        employeeId,
+        employeeId: employeeUUID,
         typeAr: uType.ar,
         typeEn: uType.en,
         quantity: r.quantity,
@@ -80,6 +81,7 @@ const Uniforms = () => {
 
   const handleReset = () => {
     setEmployeeId('');
+    setEmployeeUUID('');
     setDeliveryDate('');
     setNotes('');
     setItems([{ typeIndex: '', quantity: 1, unitPrice: 0 }]);
@@ -122,12 +124,12 @@ const Uniforms = () => {
   const reportByEmployee = useMemo(() => {
     const map: Record<string, { empId: string; name: string; station: string; dept: string; items: number; original: number; current: number }> = {};
     uniforms.forEach(u => {
-      const emp = employees.find(e => e.employeeId === u.employeeId);
+      const emp = employees.find(e => e.id === u.employeeId);
       if (!map[u.employeeId]) {
         const st = emp?.stationLocation || '';
         const stLabel = stationLocations.find(s => s.value === st);
         map[u.employeeId] = {
-          empId: u.employeeId,
+          empId: emp?.employeeId || u.employeeId,
           name: emp ? (language === 'ar' ? emp.nameAr : emp.nameEn) : u.employeeId,
           station: stLabel ? (language === 'ar' ? stLabel.labelAr : stLabel.labelEn) : st,
           dept: emp?.department || '',
@@ -251,9 +253,9 @@ const Uniforms = () => {
                           <CommandEmpty>{language === 'ar' ? 'لا نتائج' : 'No results'}</CommandEmpty>
                           <CommandGroup>
                             {activeEmployees.map(emp => (
-                              <CommandItem key={emp.employeeId} value={`${emp.nameAr} ${emp.nameEn} ${emp.employeeId}`}
-                                onSelect={() => { setEmployeeId(emp.employeeId); setEmpOpen(false); }}>
-                                <Check className={cn("mr-2 h-4 w-4", employeeId === emp.employeeId ? "opacity-100" : "opacity-0")} />
+                              <CommandItem key={emp.id} value={`${emp.nameAr} ${emp.nameEn} ${emp.employeeId}`}
+                                onSelect={() => { setEmployeeId(emp.employeeId); setEmployeeUUID(emp.id); setEmpOpen(false); }}>
+                                <Check className={cn("mr-2 h-4 w-4", employeeUUID === emp.id ? "opacity-100" : "opacity-0")} />
                                 <span>{emp.employeeId} - {language === 'ar' ? emp.nameAr : emp.nameEn}</span>
                               </CommandItem>
                             ))}
@@ -379,7 +381,7 @@ const Uniforms = () => {
                       </TableRow>
                     ) : (
                       uniforms.map(u => {
-                        const emp = employees.find(e => e.employeeId === u.employeeId);
+                        const emp = employees.find(e => e.id === u.employeeId);
                         const depPct = getDepreciationPercent(u.deliveryDate);
                         const curVal = getCurrentValue(u.totalPrice, u.deliveryDate);
                         const usedPct = 100 - depPct;
