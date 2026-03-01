@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,13 @@ export const Interviews = () => {
   const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   const [interviews, setInterviews] = useState<Interview[]>(initialInterviews);
+  const [stations, setStations] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
+  
+  useEffect(() => {
+    supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).then(({ data }) => {
+      if (data) setStations(data);
+    });
+  }, []);
   const [statusFilter, setStatusFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
@@ -172,7 +180,19 @@ export const Interviews = () => {
                       </Select>
                     </div>
                   </div>
-                  <div className="space-y-2"><Label>{t('recruitment.field.location')}</Label><Input value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} /></div>
+                  <div className="space-y-2">
+                    <Label>{t('recruitment.field.location')}</Label>
+                    <Select value={form.location} onValueChange={v => setForm(f => ({ ...f, location: v }))}>
+                      <SelectTrigger><SelectValue placeholder={t('recruitment.field.selectLocation')} /></SelectTrigger>
+                      <SelectContent>
+                        {stations.map(s => (
+                          <SelectItem key={s.id} value={isRTL ? s.name_ar : s.name_en}>
+                            {isRTL ? s.name_ar : s.name_en}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button onClick={handleAdd} className="w-full">{t('recruitment.save')}</Button>
                 </div>
               </DialogContent>
