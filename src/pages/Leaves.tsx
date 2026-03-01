@@ -12,6 +12,7 @@ import { LeaveBalanceOverview } from '@/components/leaves/LeaveBalanceOverview';
 import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
 import { LeaveApprovals } from '@/components/leaves/LeaveApprovals';
 import { RequestFilters } from '@/components/leaves/RequestFilters';
+import { ViolationsManagement } from '@/components/leaves/ViolationsManagement';
 import { supabase } from '@/integrations/supabase/client';
 import {
   LeaveRequest,
@@ -21,7 +22,7 @@ import {
   EmployeeLeaveBalance,
   MISSION_TIME_CONFIG,
 } from '@/types/leaves';
-import { FileText, Plus, CheckCircle, BarChart3, Calendar, ShieldCheck, Briefcase, PlusCircle } from 'lucide-react';
+import { FileText, Plus, CheckCircle, BarChart3, Calendar, ShieldCheck, Briefcase, PlusCircle, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DeptOption { id: string; name_ar: string; name_en: string; }
@@ -247,7 +248,7 @@ const Leaves = () => {
     missionRequests.filter(r => r.status === 'pending').length +
     overtimeRequests.filter(r => r.status === 'pending').length;
 
-  const showFilters = ['leaves', 'permissions', 'missions', 'overtime', 'approvals', 'balance'].includes(activeTab);
+  const showFilters = ['leaves', 'permissions', 'missions', 'overtime', 'approvals', 'balance', 'violations'].includes(activeTab);
 
   return (
     <DashboardLayout>
@@ -258,11 +259,12 @@ const Leaves = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn("grid w-full grid-cols-4 lg:grid-cols-8 mb-6", isRTL && "direction-rtl")}>
+          <TabsList className={cn("grid w-full grid-cols-4 lg:grid-cols-9 mb-6", isRTL && "direction-rtl")}>
             <TabsTrigger value="leaves" className="flex items-center gap-1.5"><FileText className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.leaves')}</span></TabsTrigger>
             <TabsTrigger value="permissions" className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.permissions')}</span></TabsTrigger>
             <TabsTrigger value="missions" className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.missions')}</span></TabsTrigger>
             <TabsTrigger value="overtime" className="flex items-center gap-1.5"><PlusCircle className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.overtime')}</span></TabsTrigger>
+            <TabsTrigger value="violations" className="flex items-center gap-1.5"><AlertTriangle className="w-4 h-4" /><span className="hidden lg:inline">{language === 'ar' ? 'المخالفات' : 'Violations'}</span></TabsTrigger>
             <TabsTrigger value="new" className="flex items-center gap-1.5"><Plus className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.newRequest')}</span></TabsTrigger>
             <TabsTrigger value="approvals" className="flex items-center gap-1.5 relative"><CheckCircle className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.approvals')}</span>
               {pendingCount > 0 && (<span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">{pendingCount}</span>)}
@@ -302,6 +304,9 @@ const Leaves = () => {
               onApproveMission={handleApproveMission} onRejectMission={handleRejectMission}
               onApproveOvertime={handleApproveOvertime} onRejectOvertime={handleRejectOvertime}
             />
+          </TabsContent>
+          <TabsContent value="violations">
+            <ViolationsManagement searchQuery={searchQuery} selectedDepartment={selectedDepartment} selectedStation={selectedStation} />
           </TabsContent>
           <TabsContent value="balance"><LeaveBalanceOverview balances={filteredBalances} /></TabsContent>
           <TabsContent value="calendar"><LeaveCalendar requests={filteredLeaves.filter(r => r.status === 'approved')} /></TabsContent>

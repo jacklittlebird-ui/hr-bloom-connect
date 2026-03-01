@@ -76,7 +76,7 @@ export const LeaveRequestsList = ({ requests, onDelete }: LeaveRequestsListProps
                   requests.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
-                      <TableCell>{t(`dept.${request.department.toLowerCase()}`)}</TableCell>
+                      <TableCell>{request.department}</TableCell>
                       <TableCell>{getLeaveTypeBadge(request.leaveType)}</TableCell>
                       <TableCell>{request.startDate}</TableCell>
                       <TableCell>{request.endDate}</TableCell>
