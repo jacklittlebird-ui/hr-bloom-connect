@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useRecruitmentData, JobOpening } from '@/contexts/RecruitmentDataContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,41 +15,24 @@ import { cn } from '@/lib/utils';
 import { Plus, Search, Edit, Trash2, Eye, Briefcase, Users, Clock, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface JobOpening {
-  id: string;
-  titleAr: string;
-  titleEn: string;
-  department: string;
-  location: string;
-  type: 'full-time' | 'part-time' | 'contract';
-  status: 'open' | 'closed' | 'on-hold';
-  vacancies: number;
-  applicants: number;
-  postedDate: string;
-  closingDate: string;
-  description: string;
-}
-
-const initialOpenings: JobOpening[] = [];
-
 export const JobOpenings = () => {
   const { t, isRTL } = useLanguage();
   const { toast } = useToast();
-  const [openings, setOpenings] = useState<JobOpening[]>(initialOpenings);
+  const { jobOpenings: openings, setJobOpenings: setOpenings } = useRecruitmentData();
   const [stations, setStations] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
-  
-  useEffect(() => {
-    supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).then(({ data }) => {
-      if (data) setStations(data);
-    });
-  }, []);
+  const [departments, setDepartments] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobOpening | null>(null);
   const [editingJob, setEditingJob] = useState<JobOpening | null>(null);
-  const [form, setForm] = useState<{ titleAr: string; titleEn: string; department: string; location: string; type: JobOpening['type']; vacancies: number; closingDate: string; description: string }>({ titleAr: '', titleEn: '', department: '', location: '', type: 'full-time', vacancies: 1, closingDate: '', description: '' });
+  const [form, setForm] = useState({ titleAr: '', titleEn: '', department: '', location: '', type: 'full-time' as JobOpening['type'], vacancies: 1, closingDate: '', description: '' });
+
+  useEffect(() => {
+    supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).then(({ data }) => { if (data) setStations(data); });
+    supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true).then(({ data }) => { if (data) setDepartments(data); });
+  }, []);
 
   const stats = [
     { label: t('recruitment.stats.totalOpenings'), value: openings.length, icon: Briefcase, bg: 'bg-primary/10', color: 'text-primary' },
@@ -63,6 +47,8 @@ export const JobOpenings = () => {
     return matchSearch && matchStatus;
   });
 
+  const resetForm = () => setForm({ titleAr: '', titleEn: '', department: '', location: '', type: 'full-time', vacancies: 1, closingDate: '', description: '' });
+
   const handleSave = () => {
     if (!form.titleAr || !form.department) {
       toast({ title: t('recruitment.error'), description: t('recruitment.fillRequired'), variant: 'destructive' });
@@ -72,19 +58,13 @@ export const JobOpenings = () => {
       setOpenings(prev => prev.map(o => o.id === editingJob.id ? { ...o, ...form } : o));
       toast({ title: t('recruitment.success'), description: t('recruitment.jobUpdated') });
     } else {
-      const newJob: JobOpening = {
-        id: String(Date.now()),
-        ...form,
-        status: 'open',
-        applicants: 0,
-        postedDate: new Date().toISOString().split('T')[0],
-      };
+      const newJob: JobOpening = { id: String(Date.now()), ...form, status: 'open', applicants: 0, postedDate: new Date().toISOString().split('T')[0] };
       setOpenings(prev => [newJob, ...prev]);
       toast({ title: t('recruitment.success'), description: t('recruitment.jobCreated') });
     }
     setDialogOpen(false);
     setEditingJob(null);
-    setForm({ titleAr: '', titleEn: '', department: '', location: '', type: 'full-time', vacancies: 1, closingDate: '', description: '' });
+    resetForm();
   };
 
   const handleEdit = (job: JobOpening) => {
@@ -123,15 +103,12 @@ export const JobOpenings = () => {
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
           <Card key={i}>
             <CardContent className="p-4">
               <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-                <div className={cn("p-2.5 rounded-lg", stat.bg)}>
-                  <stat.icon className={cn("w-5 h-5", stat.color)} />
-                </div>
+                <div className={cn("p-2.5 rounded-lg", stat.bg)}><stat.icon className={cn("w-5 h-5", stat.color)} /></div>
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
                   <p className="text-2xl font-bold">{stat.value}</p>
@@ -142,24 +119,16 @@ export const JobOpenings = () => {
         ))}
       </div>
 
-      {/* Filters & Actions */}
       <Card>
         <CardContent className="p-4">
           <div className={cn("flex flex-wrap gap-3 items-center justify-between", isRTL && "flex-row-reverse")}>
             <div className={cn("flex gap-3 flex-1", isRTL && "flex-row-reverse")}>
               <div className="relative flex-1 max-w-sm">
                 <Search className={cn("absolute top-2.5 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
-                <Input
-                  placeholder={t('recruitment.searchJobs')}
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className={cn(isRTL ? "pr-9" : "pl-9")}
-                />
+                <Input placeholder={t('recruitment.searchJobs')} value={search} onChange={e => setSearch(e.target.value)} className={cn(isRTL ? "pr-9" : "pl-9")} />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-36">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('recruitment.filter.all')}</SelectItem>
                   <SelectItem value="open">{t('recruitment.status.open')}</SelectItem>
@@ -168,24 +137,16 @@ export const JobOpenings = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingJob(null); setForm({ titleAr: '', titleEn: '', department: '', location: '', type: 'full-time', vacancies: 1, closingDate: '', description: '' }); } }}>
+            <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setEditingJob(null); resetForm(); } }}>
               <DialogTrigger asChild>
                 <Button><Plus className="w-4 h-4" />{t('recruitment.addJob')}</Button>
               </DialogTrigger>
               <DialogContent className="max-w-lg">
-                <DialogHeader>
-                  <DialogTitle>{editingJob ? t('recruitment.editJob') : t('recruitment.addJob')}</DialogTitle>
-                </DialogHeader>
+                <DialogHeader><DialogTitle>{editingJob ? t('recruitment.editJob') : t('recruitment.addJob')}</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t('recruitment.field.titleAr')}</Label>
-                      <Input value={form.titleAr} onChange={e => setForm(f => ({ ...f, titleAr: e.target.value }))} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t('recruitment.field.titleEn')}</Label>
-                      <Input value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))} />
-                    </div>
+                    <div className="space-y-2"><Label>{t('recruitment.field.titleAr')}</Label><Input value={form.titleAr} onChange={e => setForm(f => ({ ...f, titleAr: e.target.value }))} /></div>
+                    <div className="space-y-2"><Label>{t('recruitment.field.titleEn')}</Label><Input value={form.titleEn} onChange={e => setForm(f => ({ ...f, titleEn: e.target.value }))} /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -193,23 +154,19 @@ export const JobOpenings = () => {
                       <Select value={form.department} onValueChange={v => setForm(f => ({ ...f, department: v }))}>
                         <SelectTrigger><SelectValue placeholder={t('recruitment.field.selectDept')} /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="تقنية المعلومات">{t('dept.it')}</SelectItem>
-                          <SelectItem value="الموارد البشرية">{t('dept.hr')}</SelectItem>
-                          <SelectItem value="المالية">{t('dept.finance')}</SelectItem>
-                          <SelectItem value="التسويق">{t('dept.marketing')}</SelectItem>
-                          <SelectItem value="العمليات">{t('dept.operations')}</SelectItem>
+                          {departments.map(d => (
+                            <SelectItem key={d.id} value={isRTL ? d.name_ar : d.name_en}>{isRTL ? d.name_ar : d.name_en}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label>{t('recruitment.field.location')}</Label>
                       <Select value={form.location} onValueChange={v => setForm(f => ({ ...f, location: v }))}>
-                        <SelectTrigger><SelectValue placeholder={t('recruitment.field.selectLocation')} /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر الموقع' : 'Select location'} /></SelectTrigger>
                         <SelectContent>
                           {stations.map(s => (
-                            <SelectItem key={s.id} value={isRTL ? s.name_ar : s.name_en}>
-                              {isRTL ? s.name_ar : s.name_en}
-                            </SelectItem>
+                            <SelectItem key={s.id} value={isRTL ? s.name_ar : s.name_en}>{isRTL ? s.name_ar : s.name_en}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -227,19 +184,10 @@ export const JobOpenings = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label>{t('recruitment.field.vacancies')}</Label>
-                      <Input type="number" min={1} value={form.vacancies} onChange={e => setForm(f => ({ ...f, vacancies: +e.target.value }))} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t('recruitment.field.closingDate')}</Label>
-                      <Input type="date" value={form.closingDate} onChange={e => setForm(f => ({ ...f, closingDate: e.target.value }))} />
-                    </div>
+                    <div className="space-y-2"><Label>{t('recruitment.field.vacancies')}</Label><Input type="number" min={1} value={form.vacancies} onChange={e => setForm(f => ({ ...f, vacancies: +e.target.value }))} /></div>
+                    <div className="space-y-2"><Label>{t('recruitment.field.closingDate')}</Label><Input type="date" value={form.closingDate} onChange={e => setForm(f => ({ ...f, closingDate: e.target.value }))} /></div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t('recruitment.field.description')}</Label>
-                    <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
-                  </div>
+                  <div className="space-y-2"><Label>{t('recruitment.field.description')}</Label><Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} /></div>
                   <Button onClick={handleSave} className="w-full">{t('recruitment.save')}</Button>
                 </div>
               </DialogContent>
@@ -248,7 +196,6 @@ export const JobOpenings = () => {
         </CardContent>
       </Card>
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -266,9 +213,11 @@ export const JobOpenings = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(job => (
+              {filtered.length === 0 ? (
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">{isRTL ? 'لا توجد وظائف شاغرة' : 'No job openings'}</TableCell></TableRow>
+              ) : filtered.map(job => (
                 <TableRow key={job.id}>
-                  <TableCell className="font-medium">{isRTL ? job.titleAr : job.titleEn}</TableCell>
+                  <TableCell className="font-medium">{isRTL ? job.titleAr : job.titleEn || job.titleAr}</TableCell>
                   <TableCell>{job.department}</TableCell>
                   <TableCell>{job.location}</TableCell>
                   <TableCell>{getTypeBadge(job.type)}</TableCell>
@@ -290,12 +239,9 @@ export const JobOpenings = () => {
         </CardContent>
       </Card>
 
-      {/* View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{t('recruitment.jobDetails')}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{t('recruitment.jobDetails')}</DialogTitle></DialogHeader>
           {selectedJob && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -308,7 +254,7 @@ export const JobOpenings = () => {
                 <div><p className="text-sm text-muted-foreground">{t('recruitment.field.vacancies')}</p><p className="font-medium">{selectedJob.vacancies}</p></div>
                 <div><p className="text-sm text-muted-foreground">{t('recruitment.field.applicants')}</p><p className="font-medium">{selectedJob.applicants}</p></div>
               </div>
-              <div><p className="text-sm text-muted-foreground">{t('recruitment.field.description')}</p><p>{selectedJob.description}</p></div>
+              {selectedJob.description && <div><p className="text-sm text-muted-foreground">{t('recruitment.field.description')}</p><p>{selectedJob.description}</p></div>}
               <div className="flex gap-2 pt-2">
                 <Select value={selectedJob.status} onValueChange={v => { handleStatusChange(selectedJob.id, v as JobOpening['status']); setSelectedJob({ ...selectedJob, status: v as JobOpening['status'] }); }}>
                   <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>

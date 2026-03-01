@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useRecruitmentData, Interview } from '@/contexts/RecruitmentDataContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,46 +12,30 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Plus, Calendar, Clock, User, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Plus, Calendar, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface Interview {
-  id: string;
-  candidateName: string;
-  position: string;
-  department: string;
-  interviewDate: string;
-  interviewTime: string;
-  interviewType: 'phone' | 'video' | 'in-person' | 'technical';
-  interviewer: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
-  rating?: number;
-  feedback?: string;
-  location: string;
-}
-
-const initialInterviews: Interview[] = [];
 
 export const Interviews = () => {
   const { t, isRTL } = useLanguage();
   const { toast } = useToast();
-  const [interviews, setInterviews] = useState<Interview[]>(initialInterviews);
+  const { interviews, setInterviews, candidates } = useRecruitmentData();
   const [stations, setStations] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
-  
-  useEffect(() => {
-    supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).then(({ data }) => {
-      if (data) setStations(data);
-    });
-  }, []);
   const [statusFilter, setStatusFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
   const [feedbackForm, setFeedbackForm] = useState({ rating: 5, feedback: '' });
   const [form, setForm] = useState({
-    candidateName: '', position: '', department: '', interviewDate: '', interviewTime: '',
+    candidateId: '', interviewDate: '', interviewTime: '',
     interviewType: 'in-person' as Interview['interviewType'], interviewer: '', location: '',
   });
+
+  useEffect(() => {
+    supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).then(({ data }) => { if (data) setStations(data); });
+  }, []);
+
+  // Candidates available for interview (not rejected/hired)
+  const availableCandidates = candidates.filter(c => !['hired', 'rejected'].includes(c.status));
 
   const stats = [
     { label: t('recruitment.interviews.scheduled'), value: interviews.filter(i => i.status === 'scheduled').length, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -62,15 +47,30 @@ export const Interviews = () => {
   const filtered = interviews.filter(i => statusFilter === 'all' || i.status === statusFilter);
 
   const handleAdd = () => {
-    if (!form.candidateName || !form.interviewDate) {
+    if (!form.candidateId || !form.interviewDate) {
       toast({ title: t('recruitment.error'), description: t('recruitment.fillRequired'), variant: 'destructive' });
       return;
     }
-    const newInterview: Interview = { id: String(Date.now()), ...form, status: 'scheduled' };
+    const candidate = candidates.find(c => c.id === form.candidateId);
+    if (!candidate) return;
+
+    const newInterview: Interview = {
+      id: String(Date.now()),
+      candidateId: candidate.id,
+      candidateName: isRTL ? candidate.nameAr : candidate.nameEn || candidate.nameAr,
+      position: candidate.appliedPosition,
+      department: candidate.department,
+      interviewDate: form.interviewDate,
+      interviewTime: form.interviewTime,
+      interviewType: form.interviewType,
+      interviewer: form.interviewer,
+      location: form.location,
+      status: 'scheduled',
+    };
     setInterviews(prev => [newInterview, ...prev]);
     toast({ title: t('recruitment.success'), description: t('recruitment.interviewScheduled') });
     setDialogOpen(false);
-    setForm({ candidateName: '', position: '', department: '', interviewDate: '', interviewTime: '', interviewType: 'in-person', interviewer: '', location: '' });
+    setForm({ candidateId: '', interviewDate: '', interviewTime: '', interviewType: 'in-person', interviewer: '', location: '' });
   };
 
   const handleComplete = () => {
@@ -109,7 +109,6 @@ export const Interviews = () => {
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
           <Card key={i}>
@@ -126,7 +125,6 @@ export const Interviews = () => {
         ))}
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="p-4">
           <div className={cn("flex flex-wrap gap-3 items-center justify-between", isRTL && "flex-row-reverse")}>
@@ -146,29 +144,26 @@ export const Interviews = () => {
               <DialogContent className="max-w-lg">
                 <DialogHeader><DialogTitle>{t('recruitment.scheduleInterview')}</DialogTitle></DialogHeader>
                 <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>{t('recruitment.field.candidateName')}</Label><Input value={form.candidateName} onChange={e => setForm(f => ({ ...f, candidateName: e.target.value }))} /></div>
-                    <div className="space-y-2"><Label>{t('recruitment.field.appliedPosition')}</Label><Input value={form.position} onChange={e => setForm(f => ({ ...f, position: e.target.value }))} /></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>{t('recruitment.field.department')}</Label>
-                      <Select value={form.department} onValueChange={v => setForm(f => ({ ...f, department: v }))}>
-                        <SelectTrigger><SelectValue placeholder={t('recruitment.field.selectDept')} /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="تقنية المعلومات">{t('dept.it')}</SelectItem>
-                          <SelectItem value="الموارد البشرية">{t('dept.hr')}</SelectItem>
-                          <SelectItem value="المالية">{t('dept.finance')}</SelectItem>
-                          <SelectItem value="التسويق">{t('dept.marketing')}</SelectItem>
-                          <SelectItem value="العمليات">{t('dept.operations')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2"><Label>{t('recruitment.field.interviewer')}</Label><Input value={form.interviewer} onChange={e => setForm(f => ({ ...f, interviewer: e.target.value }))} /></div>
+                  <div className="space-y-2">
+                    <Label>{t('recruitment.field.candidateName')}</Label>
+                    <Select value={form.candidateId} onValueChange={v => setForm(f => ({ ...f, candidateId: v }))}>
+                      <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر المرشح' : 'Select candidate'} /></SelectTrigger>
+                      <SelectContent>
+                        {availableCandidates.length === 0 ? (
+                          <SelectItem value="__none" disabled>{isRTL ? 'لا يوجد مرشحون' : 'No candidates available'}</SelectItem>
+                        ) : availableCandidates.map(c => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {isRTL ? c.nameAr : c.nameEn || c.nameAr} - {c.appliedPosition}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2"><Label>{t('recruitment.field.date')}</Label><Input type="date" value={form.interviewDate} onChange={e => setForm(f => ({ ...f, interviewDate: e.target.value }))} /></div>
                     <div className="space-y-2"><Label>{t('recruitment.field.time')}</Label><Input type="time" value={form.interviewTime} onChange={e => setForm(f => ({ ...f, interviewTime: e.target.value }))} /></div>
-                    <div className="space-y-2"><Label>{t('recruitment.field.interviewType')}</Label>
+                    <div className="space-y-2">
+                      <Label>{t('recruitment.field.interviewType')}</Label>
                       <Select value={form.interviewType} onValueChange={v => setForm(f => ({ ...f, interviewType: v as any }))}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -180,18 +175,19 @@ export const Interviews = () => {
                       </Select>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t('recruitment.field.location')}</Label>
-                    <Select value={form.location} onValueChange={v => setForm(f => ({ ...f, location: v }))}>
-                      <SelectTrigger><SelectValue placeholder={t('recruitment.field.selectLocation')} /></SelectTrigger>
-                      <SelectContent>
-                        {stations.map(s => (
-                          <SelectItem key={s.id} value={isRTL ? s.name_ar : s.name_en}>
-                            {isRTL ? s.name_ar : s.name_en}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>{t('recruitment.field.interviewer')}</Label><Input value={form.interviewer} onChange={e => setForm(f => ({ ...f, interviewer: e.target.value }))} /></div>
+                    <div className="space-y-2">
+                      <Label>{isRTL ? 'الموقع' : 'Location'}</Label>
+                      <Select value={form.location} onValueChange={v => setForm(f => ({ ...f, location: v }))}>
+                        <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر الموقع' : 'Select location'} /></SelectTrigger>
+                        <SelectContent>
+                          {stations.map(s => (
+                            <SelectItem key={s.id} value={isRTL ? s.name_ar : s.name_en}>{isRTL ? s.name_ar : s.name_en}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <Button onClick={handleAdd} className="w-full">{t('recruitment.save')}</Button>
                 </div>
@@ -201,7 +197,6 @@ export const Interviews = () => {
         </CardContent>
       </Card>
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -213,13 +208,16 @@ export const Interviews = () => {
                 <TableHead>{t('recruitment.field.time')}</TableHead>
                 <TableHead>{t('recruitment.field.interviewType')}</TableHead>
                 <TableHead>{t('recruitment.field.interviewer')}</TableHead>
+                <TableHead>{isRTL ? 'الموقع' : 'Location'}</TableHead>
                 <TableHead>{t('recruitment.field.status')}</TableHead>
                 <TableHead>{t('recruitment.field.rating')}</TableHead>
                 <TableHead>{t('recruitment.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map(interview => (
+              {filtered.length === 0 ? (
+                <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">{isRTL ? 'لا توجد مقابلات' : 'No interviews'}</TableCell></TableRow>
+              ) : filtered.map(interview => (
                 <TableRow key={interview.id}>
                   <TableCell className="font-medium">{interview.candidateName}</TableCell>
                   <TableCell>{interview.position}</TableCell>
@@ -227,24 +225,19 @@ export const Interviews = () => {
                   <TableCell>{interview.interviewTime}</TableCell>
                   <TableCell>{getTypeBadge(interview.interviewType)}</TableCell>
                   <TableCell>{interview.interviewer}</TableCell>
+                  <TableCell>{interview.location}</TableCell>
                   <TableCell>{getStatusBadge(interview.status)}</TableCell>
                   <TableCell>{interview.rating ? `${interview.rating}/10` : '-'}</TableCell>
                   <TableCell>
                     <div className={cn("flex gap-1", isRTL && "flex-row-reverse")}>
                       {interview.status === 'scheduled' && (
                         <>
-                          <Button variant="ghost" size="sm" onClick={() => { setSelectedInterview(interview); setFeedbackDialogOpen(true); }}>
-                            <CheckCircle className="w-4 h-4 text-green-600" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleCancel(interview.id)}>
-                            <XCircle className="w-4 h-4 text-destructive" />
-                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => { setSelectedInterview(interview); setFeedbackDialogOpen(true); }}><CheckCircle className="w-4 h-4 text-green-600" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleCancel(interview.id)}><XCircle className="w-4 h-4 text-destructive" /></Button>
                         </>
                       )}
                       {interview.feedback && (
-                        <Button variant="ghost" size="sm" onClick={() => { setSelectedInterview(interview); setFeedbackDialogOpen(true); }}>
-                          <AlertCircle className="w-4 h-4 text-blue-600" />
-                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setSelectedInterview(interview); setFeedbackDialogOpen(true); }}><AlertCircle className="w-4 h-4 text-blue-600" /></Button>
                       )}
                     </div>
                   </TableCell>
@@ -255,7 +248,6 @@ export const Interviews = () => {
         </CardContent>
       </Card>
 
-      {/* Feedback Dialog */}
       <Dialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>{selectedInterview?.status === 'completed' ? t('recruitment.viewFeedback') : t('recruitment.addFeedback')}</DialogTitle></DialogHeader>
@@ -267,14 +259,8 @@ export const Interviews = () => {
               </div>
             ) : (
               <>
-                <div className="space-y-2">
-                  <Label>{t('recruitment.field.rating')} (1-10)</Label>
-                  <Input type="number" min={1} max={10} value={feedbackForm.rating} onChange={e => setFeedbackForm(f => ({ ...f, rating: +e.target.value }))} />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('recruitment.field.feedback')}</Label>
-                  <Textarea value={feedbackForm.feedback} onChange={e => setFeedbackForm(f => ({ ...f, feedback: e.target.value }))} rows={4} placeholder={t('recruitment.feedbackPlaceholder')} />
-                </div>
+                <div className="space-y-2"><Label>{t('recruitment.field.rating')} (1-10)</Label><Input type="number" min={1} max={10} value={feedbackForm.rating} onChange={e => setFeedbackForm(f => ({ ...f, rating: +e.target.value }))} /></div>
+                <div className="space-y-2"><Label>{t('recruitment.field.feedback')}</Label><Textarea value={feedbackForm.feedback} onChange={e => setFeedbackForm(f => ({ ...f, feedback: e.target.value }))} rows={4} placeholder={t('recruitment.feedbackPlaceholder')} /></div>
                 <Button onClick={handleComplete} className="w-full">{t('recruitment.completeInterview')}</Button>
               </>
             )}

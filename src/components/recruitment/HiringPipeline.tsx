@@ -1,98 +1,73 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useRecruitmentData } from '@/contexts/RecruitmentDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, ArrowRight, User, Briefcase, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface PipelineCandidate {
-  id: string;
-  name: string;
-  position: string;
-  department: string;
-  stage: 'applied' | 'screening' | 'interview' | 'assessment' | 'offer' | 'hired';
-  daysInStage: number;
-}
-
-const initialPipeline: PipelineCandidate[] = [];
-
-const stages = ['applied', 'screening', 'interview', 'assessment', 'offer', 'hired'] as const;
+const stages = ['new', 'screening', 'interview', 'offer', 'hired'] as const;
 
 export const HiringPipeline = () => {
   const { t, isRTL } = useLanguage();
   const { toast } = useToast();
-  const [pipeline, setPipeline] = useState<PipelineCandidate[]>(initialPipeline);
-  const [deptFilter, setDeptFilter] = useState('all');
-
-  const filtered = pipeline.filter(c => deptFilter === 'all' || c.department === deptFilter);
+  const { candidates, setCandidates } = useRecruitmentData();
 
   const stageLabels: Record<string, string> = {
-    applied: t('recruitment.pipeline.applied'),
-    screening: t('recruitment.pipeline.screening'),
-    interview: t('recruitment.pipeline.interview'),
-    assessment: t('recruitment.pipeline.assessment'),
-    offer: t('recruitment.pipeline.offer'),
-    hired: t('recruitment.pipeline.hired'),
+    new: t('recruitment.candidateStatus.new'),
+    screening: t('recruitment.candidateStatus.screening'),
+    interview: t('recruitment.candidateStatus.interview'),
+    offer: t('recruitment.candidateStatus.offer'),
+    hired: t('recruitment.candidateStatus.hired'),
   };
 
   const stageColors: Record<string, string> = {
-    applied: 'border-t-blue-500',
+    new: 'border-t-blue-500',
     screening: 'border-t-purple-500',
     interview: 'border-t-amber-500',
-    assessment: 'border-t-cyan-500',
     offer: 'border-t-orange-500',
     hired: 'border-t-green-500',
   };
 
   const stageBgColors: Record<string, string> = {
-    applied: 'bg-blue-50',
-    screening: 'bg-purple-50',
-    interview: 'bg-amber-50',
-    assessment: 'bg-cyan-50',
-    offer: 'bg-orange-50',
-    hired: 'bg-green-50',
+    new: 'bg-blue-50 dark:bg-blue-950/30',
+    screening: 'bg-purple-50 dark:bg-purple-950/30',
+    interview: 'bg-amber-50 dark:bg-amber-950/30',
+    offer: 'bg-orange-50 dark:bg-orange-950/30',
+    hired: 'bg-green-50 dark:bg-green-950/30',
   };
 
+  // Filter out rejected candidates for pipeline
+  const pipelineCandidates = candidates.filter(c => c.status !== 'rejected');
+
   const moveCandidate = (candidateId: string, direction: 'forward' | 'backward') => {
-    setPipeline(prev => prev.map(c => {
+    setCandidates(prev => prev.map(c => {
       if (c.id !== candidateId) return c;
-      const currentIndex = stages.indexOf(c.stage);
+      const currentIndex = stages.indexOf(c.status as any);
+      if (currentIndex === -1) return c;
       const newIndex = direction === 'forward' ? currentIndex + 1 : currentIndex - 1;
       if (newIndex < 0 || newIndex >= stages.length) return c;
-      return { ...c, stage: stages[newIndex], daysInStage: 0 };
+      return { ...c, status: stages[newIndex] };
     }));
     toast({ title: t('recruitment.success'), description: t('recruitment.candidateMoved') });
   };
 
   return (
     <div className="space-y-6">
-      {/* Filter */}
       <Card>
         <CardContent className="p-4">
-          <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
-            <h3 className="font-semibold text-lg">{t('recruitment.pipeline.title')}</h3>
-            <Select value={deptFilter} onValueChange={setDeptFilter}>
-              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('recruitment.filter.allDepts')}</SelectItem>
-                <SelectItem value="تقنية المعلومات">{t('dept.it')}</SelectItem>
-                <SelectItem value="الموارد البشرية">{t('dept.hr')}</SelectItem>
-                <SelectItem value="المالية">{t('dept.finance')}</SelectItem>
-                <SelectItem value="التسويق">{t('dept.marketing')}</SelectItem>
-                <SelectItem value="العمليات">{t('dept.operations')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <h3 className="font-semibold text-lg">{t('recruitment.pipeline.title')}</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            {isRTL ? `إجمالي المرشحين: ${pipelineCandidates.length}` : `Total candidates: ${pipelineCandidates.length}`}
+          </p>
         </CardContent>
       </Card>
 
-      {/* Pipeline Board */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {stages.map(stage => {
-          const stageCandidates = filtered.filter(c => c.stage === stage);
+          const stageCandidates = pipelineCandidates.filter(c => c.status === stage);
           return (
             <div key={stage} className="space-y-3">
               <Card className={cn("border-t-4", stageColors[stage])}>
@@ -112,15 +87,15 @@ export const HiringPipeline = () => {
                           <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
                             <User className="w-3.5 h-3.5 text-primary" />
                           </div>
-                          <p className="font-medium text-sm truncate">{candidate.name}</p>
+                          <p className="font-medium text-sm truncate">{isRTL ? candidate.nameAr : candidate.nameEn || candidate.nameAr}</p>
                         </div>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Briefcase className="w-3 h-3" />
-                          <span className="truncate">{candidate.position}</span>
+                          <span className="truncate">{candidate.appliedPosition}</span>
                         </div>
-                        <p className="text-xs text-muted-foreground">{candidate.daysInStage} {t('recruitment.pipeline.days')}</p>
+                        <p className="text-xs text-muted-foreground">{candidate.department}</p>
                         <div className={cn("flex gap-1 justify-end", isRTL && "flex-row-reverse")}>
-                          {stage !== 'applied' && (
+                          {stage !== 'new' && (
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveCandidate(candidate.id, 'backward')}>
                               {isRTL ? <ArrowRight className="w-3 h-3" /> : <ArrowLeft className="w-3 h-3" />}
                             </Button>
@@ -141,7 +116,6 @@ export const HiringPipeline = () => {
         })}
       </div>
 
-      {/* Summary */}
       <Card>
         <CardHeader><CardTitle>{t('recruitment.pipeline.summary')}</CardTitle></CardHeader>
         <CardContent>
@@ -149,7 +123,7 @@ export const HiringPipeline = () => {
             {stages.map((stage, i) => (
               <div key={stage} className="flex items-center gap-2">
                 <div className={cn("px-4 py-2 rounded-lg text-center", stageBgColors[stage])}>
-                  <p className="text-xl font-bold">{filtered.filter(c => c.stage === stage).length}</p>
+                  <p className="text-xl font-bold">{pipelineCandidates.filter(c => c.status === stage).length}</p>
                   <p className="text-xs text-muted-foreground">{stageLabels[stage]}</p>
                 </div>
                 {i < stages.length - 1 && <ChevronRight className="w-4 h-4 text-muted-foreground" />}

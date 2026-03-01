@@ -8,6 +8,7 @@ import { Candidates } from '@/components/recruitment/Candidates';
 import { Interviews } from '@/components/recruitment/Interviews';
 import { HiringPipeline } from '@/components/recruitment/HiringPipeline';
 import { RecruitmentReports } from '@/components/recruitment/RecruitmentReports';
+import { RecruitmentDataProvider } from '@/contexts/RecruitmentDataContext';
 
 const Recruitment = () => {
   const { t, isRTL } = useLanguage();
@@ -28,35 +29,27 @@ const Recruitment = () => {
         <p className="text-muted-foreground mt-1">{t('recruitment.subtitle')}</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
-        <TabsList className="w-full justify-start mb-6 flex-wrap h-auto gap-1 bg-muted/50 p-1">
-          {tabs.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <RecruitmentDataProvider>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+          <TabsList className="w-full justify-start mb-6 flex-wrap h-auto gap-1 bg-muted/50 p-1">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <TabsContent value="openings">
-          <JobOpenings />
-        </TabsContent>
-        <TabsContent value="candidates">
-          <Candidates />
-        </TabsContent>
-        <TabsContent value="interviews">
-          <Interviews />
-        </TabsContent>
-        <TabsContent value="pipeline">
-          <HiringPipeline />
-        </TabsContent>
-        <TabsContent value="reports">
-          <RecruitmentReports />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="openings"><JobOpenings /></TabsContent>
+          <TabsContent value="candidates"><Candidates /></TabsContent>
+          <TabsContent value="interviews"><Interviews /></TabsContent>
+          <TabsContent value="pipeline"><HiringPipeline /></TabsContent>
+          <TabsContent value="reports"><RecruitmentReports /></TabsContent>
+        </Tabs>
+      </RecruitmentDataProvider>
     </DashboardLayout>
   );
 };

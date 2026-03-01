@@ -1,93 +1,101 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useRecruitmentData } from '@/contexts/RecruitmentDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Download, Printer, FileText, Briefcase, Users, Clock, TrendingUp } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { Download, Printer, Briefcase, Users, Clock, TrendingUp, CheckCircle } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
+const years = Array.from({ length: 11 }, (_, i) => String(2026 + i));
 
 export const RecruitmentReports = () => {
   const { t, isRTL } = useLanguage();
-  const [period, setPeriod] = useState('year');
+  const { jobOpenings, candidates, interviews } = useRecruitmentData();
+  const [selectedYear, setSelectedYear] = useState('2026');
 
-  const monthlyHiring = [
-    { month: t('months.jan'), applications: 45, interviews: 20, hired: 5 },
-    { month: t('months.feb'), applications: 52, interviews: 25, hired: 7 },
-    { month: t('months.mar'), applications: 38, interviews: 18, hired: 4 },
-    { month: t('months.apr'), applications: 60, interviews: 30, hired: 8 },
-    { month: t('months.may'), applications: 55, interviews: 28, hired: 6 },
-    { month: t('months.jun'), applications: 48, interviews: 22, hired: 5 },
-  ];
-
-  const sourceData = [
-    { name: 'LinkedIn', value: 35, color: '#0077B5' },
-    { name: t('recruitment.source.website'), value: 25, color: '#22c55e' },
-    { name: 'Indeed', value: 20, color: '#2164f3' },
-    { name: t('recruitment.source.referral'), value: 15, color: '#f59e0b' },
-    { name: t('recruitment.source.other'), value: 5, color: '#8b5cf6' },
-  ];
-
-  const departmentHiring = [
-    { dept: t('dept.it'), openings: 5, filled: 3 },
-    { dept: t('dept.hr'), openings: 2, filled: 2 },
-    { dept: t('dept.finance'), openings: 3, filled: 1 },
-    { dept: t('dept.marketing'), openings: 2, filled: 0 },
-    { dept: t('dept.operations'), openings: 4, filled: 3 },
-  ];
-
-  const timeToHire = [
-    { month: t('months.jan'), days: 32 },
-    { month: t('months.feb'), days: 28 },
-    { month: t('months.mar'), days: 35 },
-    { month: t('months.apr'), days: 25 },
-    { month: t('months.may'), days: 30 },
-    { month: t('months.jun'), days: 27 },
-  ];
+  // Stats from real data
+  const totalApplications = candidates.length;
+  const totalHired = candidates.filter(c => c.status === 'hired').length;
+  const totalInterviews = interviews.length;
+  const completedInterviews = interviews.filter(i => i.status === 'completed').length;
+  const conversionRate = totalApplications > 0 ? ((totalHired / totalApplications) * 100).toFixed(1) : '0';
 
   const stats = [
-    { label: t('recruitment.reports.totalApplications'), value: '298', icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: t('recruitment.reports.totalHired'), value: '35', icon: Briefcase, color: 'text-green-600', bg: 'bg-green-100' },
-    { label: t('recruitment.reports.avgTimeToHire'), value: '29 ' + t('recruitment.reports.daysUnit'), icon: Clock, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: t('recruitment.reports.conversionRate'), value: '11.7%', icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { label: isRTL ? 'إجمالي المتقدمين' : 'Total Applications', value: String(totalApplications), icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: isRTL ? 'تم التعيين' : 'Hired', value: String(totalHired), icon: Briefcase, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: isRTL ? 'المقابلات المكتملة' : 'Completed Interviews', value: String(completedInterviews), icon: CheckCircle, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: isRTL ? 'معدل التحويل' : 'Conversion Rate', value: `${conversionRate}%`, icon: TrendingUp, color: 'text-amber-600', bg: 'bg-amber-100' },
   ];
 
+  // Candidates by status for pie chart
+  const statusData = useMemo(() => {
+    const statusMap: Record<string, number> = {};
+    candidates.forEach(c => { statusMap[c.status] = (statusMap[c.status] || 0) + 1; });
+    const colors: Record<string, string> = {
+      new: '#3b82f6', screening: '#a855f7', interview: '#f59e0b',
+      offer: '#06b6d4', hired: '#22c55e', rejected: '#ef4444',
+    };
+    const labels: Record<string, string> = {
+      new: t('recruitment.candidateStatus.new'), screening: t('recruitment.candidateStatus.screening'),
+      interview: t('recruitment.candidateStatus.interview'), offer: t('recruitment.candidateStatus.offer'),
+      hired: t('recruitment.candidateStatus.hired'), rejected: t('recruitment.candidateStatus.rejected'),
+    };
+    return Object.entries(statusMap).map(([status, value]) => ({
+      name: labels[status] || status, value, color: colors[status] || '#8b5cf6',
+    }));
+  }, [candidates, t]);
+
+  // Jobs by department for bar chart
+  const deptData = useMemo(() => {
+    const deptMap: Record<string, { openings: number; filled: number }> = {};
+    jobOpenings.forEach(j => {
+      if (!deptMap[j.department]) deptMap[j.department] = { openings: 0, filled: 0 };
+      deptMap[j.department].openings += j.vacancies;
+    });
+    candidates.filter(c => c.status === 'hired').forEach(c => {
+      if (deptMap[c.department]) deptMap[c.department].filled++;
+    });
+    return Object.entries(deptMap).map(([dept, data]) => ({ dept, ...data }));
+  }, [jobOpenings, candidates]);
+
+  // Source analysis
+  const sourceData = useMemo(() => {
+    const sourceMap: Record<string, number> = {};
+    candidates.forEach(c => {
+      const src = c.source || (isRTL ? 'غير محدد' : 'Unknown');
+      sourceMap[src] = (sourceMap[src] || 0) + 1;
+    });
+    const colors = ['#3b82f6', '#22c55e', '#f59e0b', '#a855f7', '#ef4444', '#06b6d4'];
+    return Object.entries(sourceMap).map(([name, value], i) => ({
+      name, value, color: colors[i % colors.length],
+    }));
+  }, [candidates, isRTL]);
+
   const handlePrint = () => window.print();
-  const handleExport = (type: string) => {
-    const data = JSON.stringify(monthlyHiring, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `recruitment-report.${type}`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
       <Card>
         <CardContent className="p-4">
           <div className={cn("flex flex-wrap gap-4 items-center justify-between", isRTL && "flex-row-reverse")}>
-            <Select value={period} onValueChange={setPeriod}>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="month">{t('recruitment.reports.thisMonth')}</SelectItem>
-                <SelectItem value="quarter">{t('recruitment.reports.thisQuarter')}</SelectItem>
-                <SelectItem value="year">{t('recruitment.reports.thisYear')}</SelectItem>
+                {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
               </SelectContent>
             </Select>
             <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
-              <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4" />{t('recruitment.reports.print')}</Button>
-              <Button variant="outline" size="sm" onClick={() => handleExport('pdf')}><Download className="w-4 h-4" />{t('recruitment.reports.exportPDF')}</Button>
-              <Button variant="outline" size="sm" onClick={() => handleExport('xlsx')}><FileText className="w-4 h-4" />{t('recruitment.reports.exportExcel')}</Button>
+              <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4" />{isRTL ? 'طباعة' : 'Print'}</Button>
+              <Button variant="outline" size="sm"><Download className="w-4 h-4" />{isRTL ? 'تصدير' : 'Export'}</Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
           <Card key={i}>
@@ -104,81 +112,112 @@ export const RecruitmentReports = () => {
         ))}
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>{t('recruitment.reports.hiringTrend')}</CardTitle></CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyHiring}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" fontSize={12} />
-                  <YAxis fontSize={12} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="applications" name={t('recruitment.reports.applications')} fill="#3b82f6" />
-                  <Bar dataKey="interviews" name={t('recruitment.reports.interviews')} fill="#f59e0b" />
-                  <Bar dataKey="hired" name={t('recruitment.reports.hired')} fill="#22c55e" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
+        {/* Candidates by Status */}
         <Card>
-          <CardHeader><CardTitle>{t('recruitment.reports.sourceAnalysis')}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{isRTL ? 'المرشحون حسب الحالة' : 'Candidates by Status'}</CardTitle></CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={sourceData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
-                    {sourceData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            {statusData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">{isRTL ? 'لا توجد بيانات' : 'No data'}</p>
+            ) : (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                      {statusData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
+        {/* Source Analysis */}
         <Card>
-          <CardHeader><CardTitle>{t('recruitment.reports.timeToHire')}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{isRTL ? 'مصادر التوظيف' : 'Recruitment Sources'}</CardTitle></CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={timeToHire}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" fontSize={12} />
-                  <YAxis fontSize={12} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="days" name={t('recruitment.reports.daysUnit')} stroke="#8b5cf6" strokeWidth={2} dot={{ fill: '#8b5cf6' }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {sourceData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">{isRTL ? 'لا توجد بيانات' : 'No data'}</p>
+            ) : (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={sourceData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                      {sourceData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
+        {/* Department Hiring */}
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle>{t('recruitment.reports.deptHiring')}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{isRTL ? 'التوظيف حسب القسم' : 'Hiring by Department'}</CardTitle></CardHeader>
           <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={departmentHiring} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" fontSize={12} />
-                  <YAxis dataKey="dept" type="category" fontSize={12} width={100} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="openings" name={t('recruitment.reports.openings')} fill="#3b82f6" />
-                  <Bar dataKey="filled" name={t('recruitment.reports.filled')} fill="#22c55e" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {deptData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">{isRTL ? 'لا توجد بيانات' : 'No data'}</p>
+            ) : (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={deptData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" fontSize={12} />
+                    <YAxis dataKey="dept" type="category" fontSize={12} width={120} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="openings" name={isRTL ? 'الشواغر' : 'Openings'} fill="hsl(var(--primary))" />
+                    <Bar dataKey="filled" name={isRTL ? 'تم شغلها' : 'Filled'} fill="#22c55e" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Job Openings Summary Table */}
+      <Card>
+        <CardHeader><CardTitle>{isRTL ? 'ملخص الوظائف الشاغرة' : 'Job Openings Summary'}</CardTitle></CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{isRTL ? 'الوظيفة' : 'Position'}</TableHead>
+                <TableHead>{isRTL ? 'القسم' : 'Department'}</TableHead>
+                <TableHead>{isRTL ? 'الموقع' : 'Location'}</TableHead>
+                <TableHead>{isRTL ? 'الشواغر' : 'Vacancies'}</TableHead>
+                <TableHead>{isRTL ? 'المتقدمون' : 'Applicants'}</TableHead>
+                <TableHead>{isRTL ? 'الحالة' : 'Status'}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {jobOpenings.length === 0 ? (
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{isRTL ? 'لا توجد بيانات' : 'No data'}</TableCell></TableRow>
+              ) : jobOpenings.map(job => (
+                <TableRow key={job.id}>
+                  <TableCell className="font-medium">{isRTL ? job.titleAr : job.titleEn || job.titleAr}</TableCell>
+                  <TableCell>{job.department}</TableCell>
+                  <TableCell>{job.location}</TableCell>
+                  <TableCell>{job.vacancies}</TableCell>
+                  <TableCell>{candidates.filter(c => c.appliedPosition === (isRTL ? job.titleAr : job.titleEn || job.titleAr)).length}</TableCell>
+                  <TableCell>
+                    <Badge className={job.status === 'open' ? 'bg-green-100 text-green-700' : job.status === 'closed' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
+                      {job.status === 'open' ? t('recruitment.status.open') : job.status === 'closed' ? t('recruitment.status.closed') : t('recruitment.status.onHold')}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };
