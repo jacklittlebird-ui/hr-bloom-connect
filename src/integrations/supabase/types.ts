@@ -1444,6 +1444,8 @@ export type Database = {
           employee_id: string
           end_date: string | null
           id: string
+          location: string | null
+          provider: string | null
           score: number | null
           start_date: string | null
           status: string
@@ -1454,6 +1456,8 @@ export type Database = {
           employee_id: string
           end_date?: string | null
           id?: string
+          location?: string | null
+          provider?: string | null
           score?: number | null
           start_date?: string | null
           status?: string
@@ -1464,6 +1468,8 @@ export type Database = {
           employee_id?: string
           end_date?: string | null
           id?: string
+          location?: string | null
+          provider?: string | null
           score?: number | null
           start_date?: string | null
           status?: string

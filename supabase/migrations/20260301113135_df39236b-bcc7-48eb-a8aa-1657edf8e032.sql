@@ -1,0 +1,1 @@
+ALTER TABLE public.training_records ADD COLUMN provider text, ADD COLUMN location text;

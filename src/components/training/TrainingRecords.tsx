@@ -73,16 +73,28 @@ export const TrainingRecords = () => {
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
   const [newRecord, setNewRecord] = useState({
-    courseId: '', startDate: '', endDate: '', result: 'pending' as 'passed' | 'failed' | 'pending', score: '',
+    courseId: '', startDate: '', endDate: '', result: 'pending' as 'passed' | 'failed' | 'pending', score: '', provider: '', location: '',
   });
+  const [providerOptions, setProviderOptions] = useState<string[]>([]);
+  const [locationOptions, setLocationOptions] = useState<string[]>([]);
+  const [newLocation, setNewLocation] = useState('');
 
-  // Fetch available courses from DB
+  // Fetch available courses and providers from DB
   useEffect(() => {
     const fetchCourses = async () => {
-      const { data } = await supabase.from('training_courses').select('id, name_en, name_ar').eq('is_active', true);
+      const { data } = await supabase.from('training_courses').select('id, name_en, name_ar, provider').eq('is_active', true);
       setCourseOptions((data || []).map((c: any) => ({ id: c.id, nameEn: c.name_en, nameAr: c.name_ar })));
+      // Extract unique providers
+      const providers = [...new Set((data || []).map((c: any) => c.provider).filter(Boolean))] as string[];
+      setProviderOptions(providers);
+    };
+    const fetchLocations = async () => {
+      const { data } = await supabase.from('planned_courses').select('location');
+      const locs = [...new Set((data || []).map((c: any) => c.location).filter(Boolean))] as string[];
+      setLocationOptions(locs);
     };
     fetchCourses();
+    fetchLocations();
   }, []);
 
   const trainingEmployees: Employee[] = useMemo(() => contextEmployees.map((emp) => ({
@@ -139,10 +151,12 @@ export const TrainingRecords = () => {
       end_date: newRecord.endDate || null,
       status: statusMap[newRecord.result],
       score: newRecord.score ? parseFloat(newRecord.score) : null,
+      provider: newRecord.provider || null,
+      location: newRecord.location || null,
     });
     toast({ title: ar ? 'تمت الإضافة' : 'Added' });
     setIsAddRecordOpen(false);
-    setNewRecord({ courseId: '', startDate: '', endDate: '', result: 'pending', score: '' });
+    setNewRecord({ courseId: '', startDate: '', endDate: '', result: 'pending', score: '', provider: '', location: '' });
     // Refresh
     const { data } = await supabase
       .from('training_records')
@@ -301,6 +315,41 @@ export const TrainingRecords = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label>{ar ? 'الجهة المقدمة' : 'Provider'}</Label>
+              <Select value={newRecord.provider} onValueChange={(v) => setNewRecord({ ...newRecord, provider: v })}>
+                <SelectTrigger><SelectValue placeholder={ar ? '-- اختر الجهة --' : '-- Select Provider --'} /></SelectTrigger>
+                <SelectContent>
+                  {providerOptions.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>{ar ? 'مكان الدورة' : 'Course Location'}</Label>
+              <Select value={newRecord.location} onValueChange={(v) => {
+                if (v === '__add_new__') return;
+                setNewRecord({ ...newRecord, location: v });
+              }}>
+                <SelectTrigger><SelectValue placeholder={ar ? '-- اختر المكان --' : '-- Select Location --'} /></SelectTrigger>
+                <SelectContent>
+                  {locationOptions.map(l => (
+                    <SelectItem key={l} value={l}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2 mt-2">
+                <Input placeholder={ar ? 'أضف مكان جديد' : 'Add new location'} value={newLocation} onChange={(e) => setNewLocation(e.target.value)} className="text-sm" />
+                <Button type="button" variant="outline" size="sm" onClick={() => {
+                  if (newLocation.trim() && !locationOptions.includes(newLocation.trim())) {
+                    setLocationOptions(prev => [...prev, newLocation.trim()]);
+                    setNewRecord({ ...newRecord, location: newLocation.trim() });
+                    setNewLocation('');
+                  }
+                }}><Plus className="h-3 w-3" /></Button>
+              </div>
             </div>
             <div><Label>{t('training.startDate')}</Label><Input type="date" value={newRecord.startDate} onChange={(e) => setNewRecord({ ...newRecord, startDate: e.target.value })} /></div>
             <div><Label>{t('training.endDate')}</Label><Input type="date" value={newRecord.endDate} onChange={(e) => setNewRecord({ ...newRecord, endDate: e.target.value })} /></div>
