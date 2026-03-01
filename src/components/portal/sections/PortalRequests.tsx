@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { ClipboardList, Plus } from 'lucide-react';
@@ -21,13 +22,11 @@ export const PortalRequests = () => {
   const requests = useMemo(() => getRequests(PORTAL_EMPLOYEE_ID), [getRequests]);
   const [showDialog, setShowDialog] = useState(false);
   const [reqType, setReqType] = useState('');
+  const [reason, setReason] = useState('');
 
   const reqTypes = [
-    { value: 'intro', ar: 'خطاب تعريف', en: 'Intro Letter' },
-    { value: 'experience', ar: 'شهادة خبرة', en: 'Experience Cert' },
-    { value: 'salary', ar: 'كشف راتب', en: 'Salary Statement' },
-    { value: 'data_update', ar: 'تعديل بيانات', en: 'Data Update' },
-    { value: 'other', ar: 'أخرى', en: 'Other' },
+    { value: 'salary', ar: 'مفردات مرتب', en: 'Salary Statement' },
+    { value: 'data_update', ar: 'طلب تعديل بيانات', en: 'Data Update Request' },
   ];
 
   const statusCls: Record<string, string> = {
@@ -38,10 +37,11 @@ export const PortalRequests = () => {
 
   const handleSubmit = () => {
     if (!reqType) { toast.error(ar ? 'يرجى اختيار نوع الطلب' : 'Please select request type'); return; }
+    if (!reason.trim()) { toast.error(ar ? 'يرجى كتابة السبب' : 'Please enter a reason'); return; }
     const t = reqTypes.find(r => r.value === reqType);
     addRequest({ employeeId: PORTAL_EMPLOYEE_ID, typeAr: t?.ar || '', typeEn: t?.en || '', date: new Date().toISOString().split('T')[0] });
     toast.success(ar ? 'تم تقديم الطلب بنجاح' : 'Request submitted');
-    setShowDialog(false); setReqType('');
+    setShowDialog(false); setReqType(''); setReason('');
   };
 
   return (
@@ -81,16 +81,30 @@ export const PortalRequests = () => {
       </Card>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent><DialogHeader><DialogTitle>{ar ? 'طلب جديد' : 'New Request'}</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label>{ar ? 'نوع الطلب' : 'Request Type'}</Label>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader><DialogTitle>{ar ? 'طلب جديد' : 'New Request'}</DialogTitle></DialogHeader>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label>{ar ? 'نوع الطلب' : 'Request Type'} <span className="text-destructive">*</span></Label>
               <Select value={reqType} onValueChange={setReqType}>
-                <SelectTrigger><SelectValue placeholder={ar ? 'اختر' : 'Select'} /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={ar ? 'اختر نوع الطلب' : 'Select type'} /></SelectTrigger>
                 <SelectContent>{reqTypes.map(t => <SelectItem key={t.value} value={t.value}>{ar ? t.ar : t.en}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>{ar ? 'السبب / التفاصيل' : 'Reason / Details'} <span className="text-destructive">*</span></Label>
+              <Textarea
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                placeholder={ar ? 'اكتب سبب الطلب أو التفاصيل المطلوبة...' : 'Enter the reason or required details...'}
+                rows={5}
+              />
+            </div>
           </div>
-          <DialogFooter><Button onClick={handleSubmit}>{ar ? 'تقديم الطلب' : 'Submit'}</Button></DialogFooter>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setShowDialog(false); setReqType(''); setReason(''); }}>{ar ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleSubmit}>{ar ? 'تقديم الطلب' : 'Submit'}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
