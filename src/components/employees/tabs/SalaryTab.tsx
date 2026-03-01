@@ -19,6 +19,7 @@ import { stationLocations } from '@/data/stationLocations';
 interface SalaryTabProps {
   employee: Employee;
   onUpdate?: (updates: Partial<Employee>) => void;
+  readOnly?: boolean;
 }
 
 interface BankInfo {
@@ -40,7 +41,7 @@ const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 const calcEmployerContributions = (r: Pick<SalaryRecord, 'employerSocialInsurance' | 'healthInsurance' | 'incomeTax'>) =>
   r.employerSocialInsurance + r.healthInsurance + r.incomeTax;
 
-export const SalaryTab = ({ employee, onUpdate }: SalaryTabProps) => {
+export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
   const { salaryRecords, saveSalaryRecord, deleteSalaryRecord } = useSalaryData();

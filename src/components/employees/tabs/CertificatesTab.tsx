@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils';
 interface CertificatesTabProps {
   employee: Employee;
   onUpdate?: (updates: Partial<Employee>) => void;
+  readOnly?: boolean;
 }
 
-export const CertificatesTab = ({ employee, onUpdate }: CertificatesTabProps) => {
+export const CertificatesTab = ({ employee, onUpdate, readOnly }: CertificatesTabProps) => {
   const { t, isRTL } = useLanguage();
 
   const [formData, setFormData] = useState({

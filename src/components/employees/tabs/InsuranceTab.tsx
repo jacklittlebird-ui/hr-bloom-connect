@@ -10,9 +10,10 @@ import { cn } from '@/lib/utils';
 interface InsuranceTabProps {
   employee: Employee;
   onUpdate?: (updates: Partial<Employee>) => void;
+  readOnly?: boolean;
 }
 
-export const InsuranceTab = ({ employee, onUpdate }: InsuranceTabProps) => {
+export const InsuranceTab = ({ employee, onUpdate, readOnly }: InsuranceTabProps) => {
   const { t, isRTL } = useLanguage();
 
   const [formData, setFormData] = useState({

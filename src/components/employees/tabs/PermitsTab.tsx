@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils';
 interface PermitsTabProps {
   employee: Employee;
   onUpdate?: (updates: Partial<Employee>) => void;
+  readOnly?: boolean;
 }
 
-export const PermitsTab = ({ employee, onUpdate }: PermitsTabProps) => {
+export const PermitsTab = ({ employee, onUpdate, readOnly }: PermitsTabProps) => {
   const { t, isRTL } = useLanguage();
 
   const [formData, setFormData] = useState({

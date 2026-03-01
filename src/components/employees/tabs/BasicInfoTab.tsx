@@ -13,9 +13,10 @@ import { stationLocations } from '@/data/stationLocations';
 interface BasicInfoTabProps {
   employee: Employee;
   onUpdate?: (updates: Partial<Employee>) => void;
+  readOnly?: boolean;
 }
 
-export const BasicInfoTab = ({ employee, onUpdate }: BasicInfoTabProps) => {
+export const BasicInfoTab = ({ employee, onUpdate, readOnly }: BasicInfoTabProps) => {
   const { t, isRTL, language } = useLanguage();
   const ar = language === 'ar';
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(employee.avatar);

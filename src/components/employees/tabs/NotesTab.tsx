@@ -21,9 +21,10 @@ interface Note {
 interface NotesTabProps {
   employee: Employee;
   onUpdate?: (updates: Partial<Employee>) => void;
+  readOnly?: boolean;
 }
 
-export const NotesTab = ({ employee, onUpdate }: NotesTabProps) => {
+export const NotesTab = ({ employee, onUpdate, readOnly }: NotesTabProps) => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const [notes, setNotes] = usePersistedState<Note[]>('hr_employee_notes', []);

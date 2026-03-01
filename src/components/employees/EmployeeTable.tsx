@@ -146,6 +146,7 @@ export const EmployeeTable = ({ employees }: EmployeeTableProps) => {
                     size="icon"
                     className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
                     onClick={() => navigate(`/employees/${employee.id}`)}
+                    title={language === 'ar' ? 'تعديل' : 'Edit'}
                   >
                     <Edit className="w-4 h-4" />
                   </Button>
@@ -153,7 +154,8 @@ export const EmployeeTable = ({ employees }: EmployeeTableProps) => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    onClick={() => navigate(`/employees/${employee.id}`)}
+                    onClick={() => navigate(`/employees/${employee.id}/view`)}
+                    title={language === 'ar' ? 'عرض' : 'View'}
                   >
                     <Eye className="w-4 h-4" />
                   </Button>

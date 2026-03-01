@@ -13,6 +13,7 @@ interface LeaveBalanceTabProps {
   employee: Employee;
   onUpdate?: (updates: Partial<Employee>) => void;
   onDirectSave?: (updates: Partial<Employee>) => Promise<void>;
+  readOnly?: boolean;
 }
 
 interface YearlyBalance {
@@ -81,7 +82,7 @@ const leaveCardConfig = [
   },
 ];
 
-export const LeaveBalanceTab = ({ employee, onUpdate, onDirectSave }: LeaveBalanceTabProps) => {
+export const LeaveBalanceTab = ({ employee, onUpdate, onDirectSave, readOnly }: LeaveBalanceTabProps) => {
   const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   

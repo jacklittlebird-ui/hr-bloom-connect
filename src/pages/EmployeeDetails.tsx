@@ -1,12 +1,13 @@
 import { useState, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  ArrowRight, Save, User, Phone, CreditCard, Briefcase, Wallet, Calendar,
+  ArrowRight, Save, Edit, Eye, User, Phone, CreditCard, Briefcase, Wallet, Calendar,
   Shield, FileCheck, Award, Building2, Clock, CalendarDays, MapPin,
   BarChart3, AlertTriangle, FileText, Receipt, HandCoins, GraduationCap, StickyNote,
 } from 'lucide-react';
@@ -70,6 +71,8 @@ const PlaceholderTab = ({ label }: { label: string }) => (
 const EmployeeDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isViewMode = location.pathname.endsWith('/view');
   const { t, isRTL, language } = useLanguage();
   const { getEmployee, updateEmployee } = useEmployeeData();
   const [activeTab, setActiveTab] = useState('basic');
@@ -79,6 +82,10 @@ const EmployeeDetails = () => {
 
   const handleFieldChange = useCallback((updates: Partial<Employee>) => {
     pendingUpdates.current = { ...pendingUpdates.current, ...updates };
+  }, []);
+
+  const readOnlyHandler = useCallback((_updates: Partial<Employee>) => {
+    // no-op in view mode
   }, []);
 
   const employee = getEmployee(id || '');
@@ -118,19 +125,21 @@ const EmployeeDetails = () => {
     }
   };
 
+  const effectiveHandler = isViewMode ? readOnlyHandler : handleFieldChange;
+
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'basic': return <BasicInfoTab employee={employee} onUpdate={handleFieldChange} />;
-      case 'contact': return <ContactInfoTab employee={employee} onUpdate={handleFieldChange} />;
-      case 'identity': return <IdentityTab employee={employee} onUpdate={handleFieldChange} />;
-      case 'job': return <JobInfoTab employee={employee} onUpdate={handleFieldChange} />;
-      case 'salary': return <SalaryTab employee={employee} onUpdate={handleFieldChange} />;
-      case 'leave': return <LeaveBalanceTab employee={employee} onUpdate={handleFieldChange} onDirectSave={async (updates) => { await updateEmployee(employee.id, updates); }} />;
+      case 'basic': return <BasicInfoTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
+      case 'contact': return <ContactInfoTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
+      case 'identity': return <IdentityTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
+      case 'job': return <JobInfoTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
+      case 'salary': return <SalaryTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
+      case 'leave': return <LeaveBalanceTab employee={employee} onUpdate={effectiveHandler} onDirectSave={async (updates) => { if (!isViewMode) await updateEmployee(employee.id, updates); }} readOnly={isViewMode} />;
       case 'leaveRecord': return <LeaveRecordTab employee={employee} />;
       case 'missionRecord': return <MissionRecordTab employee={employee} />;
-      case 'insurance': return <InsuranceTab employee={employee} onUpdate={handleFieldChange} />;
-      case 'permits': return <PermitsTab employee={employee} onUpdate={handleFieldChange} />;
-      case 'certificates': return <CertificatesTab employee={employee} onUpdate={handleFieldChange} />;
+      case 'insurance': return <InsuranceTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
+      case 'permits': return <PermitsTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
+      case 'certificates': return <CertificatesTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
       case 'departments': return <DepartmentsTab employee={employee} />;
       case 'attendanceRecord': return <AttendanceRecordTab employee={employee} />;
       case 'evaluations': return <EvaluationsTab employee={employee} />;
@@ -139,7 +148,7 @@ const EmployeeDetails = () => {
       case 'salaryRecord': return <SalaryRecordTab employee={employee} />;
       case 'loansAdvances': return <LoansAdvancesTab employee={employee} />;
       case 'training': return <TrainingTab employee={employee} />;
-      case 'notes': return <NotesTab employee={employee} onUpdate={handleFieldChange} />;
+      case 'notes': return <NotesTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
       default: return null;
     }
   };
@@ -150,23 +159,53 @@ const EmployeeDetails = () => {
         {/* Header */}
         <div className="bg-primary rounded-xl p-6">
           <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
-            <h1 className="text-2xl font-bold text-primary-foreground">
-              {t('employees.details.title')}
-            </h1>
+            <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+              <h1 className="text-2xl font-bold text-primary-foreground">
+                {t('employees.details.title')}
+              </h1>
+              {isViewMode && (
+                <Badge className="bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30">
+                  <Eye className="w-3 h-3 mr-1" />
+                  {language === 'ar' ? 'وضع العرض' : 'View Mode'}
+                </Badge>
+              )}
+            </div>
             <div className={cn("flex gap-3 items-center", isRTL && "flex-row-reverse")}>
               <NotificationDropdown variant="header" employeeId={employee.employeeId} />
               <Button variant="secondary" size="sm" className="gap-2" onClick={() => navigate('/employees')}>
                 <ArrowRight className={cn("w-4 h-4", !isRTL && "rotate-180")} />
                 {t('employees.details.backToList')}
               </Button>
-              <Button
-                size="sm"
-                className="gap-2 bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground"
-                onClick={handleSave}
-              >
-                <Save className="w-4 h-4" />
-                {t('employees.save')}
-              </Button>
+              {isViewMode ? (
+                <Button
+                  size="sm"
+                  className="gap-2 bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground"
+                  onClick={() => navigate(`/employees/${employee.id}`)}
+                >
+                  <Edit className="w-4 h-4" />
+                  {language === 'ar' ? 'تعديل' : 'Edit'}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => navigate(`/employees/${employee.id}/view`)}
+                  >
+                    <Eye className="w-4 h-4" />
+                    {language === 'ar' ? 'عرض' : 'View'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="gap-2 bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground"
+                    onClick={handleSave}
+                  >
+                    <Save className="w-4 h-4" />
+                    {t('employees.save')}
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -220,8 +259,20 @@ const EmployeeDetails = () => {
         </div>
 
         {/* Tab Content */}
-        <div className="border rounded-xl bg-card overflow-hidden">
-          {renderTabContent()}
+        <div className={cn("border rounded-xl bg-card overflow-hidden", isViewMode && "relative")}>
+          {isViewMode && ['basic', 'contact', 'identity', 'job', 'salary', 'leave', 'insurance', 'permits', 'certificates', 'notes'].includes(activeTab) && (
+            <div className="absolute inset-0 z-10 pointer-events-auto" style={{ background: 'transparent' }}>
+              <style>{`
+                .view-mode-overlay input, .view-mode-overlay select, .view-mode-overlay textarea, .view-mode-overlay button[role="combobox"] {
+                  pointer-events: none !important;
+                  opacity: 0.7 !important;
+                }
+              `}</style>
+            </div>
+          )}
+          <div className={isViewMode && ['basic', 'contact', 'identity', 'job', 'salary', 'leave', 'insurance', 'permits', 'certificates', 'notes'].includes(activeTab) ? 'view-mode-overlay' : ''}>
+            {renderTabContent()}
+          </div>
         </div>
       </div>
     </DashboardLayout>

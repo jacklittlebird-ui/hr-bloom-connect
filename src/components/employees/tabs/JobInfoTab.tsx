@@ -12,9 +12,10 @@ import { supabase } from '@/integrations/supabase/client';
 interface JobInfoTabProps {
   employee: Employee;
   onUpdate?: (updates: Partial<Employee>) => void;
+  readOnly?: boolean;
 }
 
-export const JobInfoTab = ({ employee, onUpdate }: JobInfoTabProps) => {
+export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) => {
   const { t, isRTL } = useLanguage();
 
   const [departments, setDepartments] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
