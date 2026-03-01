@@ -355,7 +355,7 @@ export const PortalSalary = () => {
                 <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
                   <div>
                     <p className="font-bold text-lg">{ar ? slip.employeeName : slip.employeeNameEn}</p>
-                    <p className="text-sm text-muted-foreground">{slip.department} - {slip.employeeId}</p>
+                    <p className="text-sm text-muted-foreground">{slip.department && slip.department.length < 36 ? slip.department : ''} {slip.employeeCode ? `- ${slip.employeeCode}` : ''}</p>
                     <p className="text-sm text-muted-foreground">{st ? (ar ? st.labelAr : st.labelEn) : ''}</p>
                   </div>
                   <Badge variant="outline" className="text-base px-3 py-1">{months[parseInt(slip.month) - 1]} {slip.year}</Badge>
