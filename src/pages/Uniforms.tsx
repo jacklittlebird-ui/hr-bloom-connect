@@ -387,7 +387,7 @@ const Uniforms = () => {
                         const usedPct = 100 - depPct;
                         return (
                           <TableRow key={u.id}>
-                            <TableCell className="font-mono">{u.employeeId}</TableCell>
+                            <TableCell className="font-mono">{emp?.employeeId || u.employeeId}</TableCell>
                             <TableCell>{emp ? (language === 'ar' ? emp.nameAr : emp.nameEn) : '-'}</TableCell>
                             <TableCell>{language === 'ar' ? u.typeAr : u.typeEn}</TableCell>
                             <TableCell>{u.unitPrice.toFixed(2)}</TableCell>
