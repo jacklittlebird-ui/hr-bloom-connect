@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
 import { Building2 } from 'lucide-react';
@@ -15,8 +16,14 @@ const DEPT_CODES = ['PS', 'LL', 'OO', 'RO', 'LC', 'SC', 'IA', 'AD', 'AC', 'WO', 
 
 export const DepartmentsTab = ({ employee, onUpdate, readOnly }: DepartmentsTabProps) => {
   const { t, isRTL } = useLanguage();
+  const [selectedCode, setSelectedCode] = useState((employee as any).deptCode || '');
 
-  const selectedCode = (employee as any).deptCode || '';
+  const handleChange = (val: string) => {
+    setSelectedCode(val);
+    if (!readOnly) {
+      onUpdate?.({ deptCode: val } as any);
+    }
+  };
 
   return (
     <div className="p-6">
@@ -27,7 +34,7 @@ export const DepartmentsTab = ({ employee, onUpdate, readOnly }: DepartmentsTabP
         </div>
         <RadioGroup
           value={selectedCode}
-          onValueChange={(val) => !readOnly && onUpdate?.({ deptCode: val } as any)}
+          onValueChange={handleChange}
           className="flex flex-wrap gap-4"
           dir={isRTL ? 'rtl' : 'ltr'}
           disabled={readOnly}
