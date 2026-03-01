@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Search, Plus, X, Calendar } from 'lucide-react';
+import { Search, Plus, X, Calendar, Edit2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
@@ -38,6 +38,8 @@ interface TrainingRecord {
   endDate: string;
   result: 'passed' | 'failed' | 'pending';
   percentage?: number;
+  provider?: string;
+  location?: string;
 }
 
 interface CourseOption {
@@ -78,6 +80,7 @@ export const TrainingRecords = () => {
   const [providerOptions, setProviderOptions] = useState<string[]>([]);
   const [locationOptions, setLocationOptions] = useState<string[]>([]);
   const [newLocation, setNewLocation] = useState('');
+  const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
 
   // Fetch available courses and providers from DB
   useEffect(() => {
@@ -126,6 +129,8 @@ export const TrainingRecords = () => {
         endDate: r.end_date || '',
         result: r.status === 'completed' ? 'passed' : r.status === 'failed' ? 'failed' : 'pending',
         percentage: r.score || undefined,
+        provider: r.provider || '',
+        location: r.location || '',
       })));
     };
     fetch();
@@ -168,6 +173,8 @@ export const TrainingRecords = () => {
       startDate: r.start_date || '', endDate: r.end_date || '',
       result: r.status === 'completed' ? 'passed' : r.status === 'failed' ? 'failed' : 'pending',
       percentage: r.score || undefined,
+      provider: r.provider || '',
+      location: r.location || '',
     })));
   };
 
@@ -175,6 +182,52 @@ export const TrainingRecords = () => {
     await supabase.from('training_records').delete().eq('id', id);
     setTrainingRecords(prev => prev.filter(r => r.id !== id));
     toast({ title: ar ? 'تم الحذف' : 'Deleted' });
+  };
+
+  const handleEditRecord = (record: TrainingRecord) => {
+    setEditingRecordId(record.id);
+    setNewRecord({
+      courseId: record.courseId,
+      startDate: record.startDate,
+      endDate: record.endDate,
+      result: record.result,
+      score: record.percentage ? String(record.percentage) : '',
+      provider: record.provider || '',
+      location: record.location || '',
+    });
+    setIsAddRecordOpen(true);
+  };
+
+  const handleUpdateRecord = async () => {
+    if (!selectedEmployee || !editingRecordId || !newRecord.courseId) return;
+    const statusMap = { passed: 'completed', failed: 'failed', pending: 'enrolled' } as const;
+    await supabase.from('training_records').update({
+      course_id: newRecord.courseId,
+      start_date: newRecord.startDate || null,
+      end_date: newRecord.endDate || null,
+      status: statusMap[newRecord.result],
+      score: newRecord.score ? parseFloat(newRecord.score) : null,
+      provider: newRecord.provider || null,
+      location: newRecord.location || null,
+    }).eq('id', editingRecordId);
+    toast({ title: ar ? 'تم التعديل' : 'Updated' });
+    setIsAddRecordOpen(false);
+    setEditingRecordId(null);
+    setNewRecord({ courseId: '', startDate: '', endDate: '', result: 'pending', score: '', provider: '', location: '' });
+    // Refresh
+    const { data } = await supabase
+      .from('training_records')
+      .select('*, training_courses(name_en, name_ar)')
+      .eq('employee_id', selectedEmployee.id);
+    setTrainingRecords((data || []).map((r: any) => ({
+      id: r.id, employeeId: r.employee_id, courseId: r.course_id || '',
+      courseName: r.training_courses ? (ar ? r.training_courses.name_ar : r.training_courses.name_en) : '',
+      startDate: r.start_date || '', endDate: r.end_date || '',
+      result: r.status === 'completed' ? 'passed' : r.status === 'failed' ? 'failed' : 'pending',
+      percentage: r.score || undefined,
+      provider: r.provider || '',
+      location: r.location || '',
+    })));
   };
 
   const getResultBadge = (result: string) => {
@@ -268,9 +321,11 @@ export const TrainingRecords = () => {
                 </div>
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                     <TableRow>
                       <TableHead></TableHead>
                       <TableHead>{t('training.courseName')}</TableHead>
+                      <TableHead>{ar ? 'الجهة المقدمة' : 'Provider'}</TableHead>
+                      <TableHead>{ar ? 'المكان' : 'Location'}</TableHead>
                       <TableHead>{t('training.startDate')}</TableHead>
                       <TableHead>{t('training.endDate')}</TableHead>
                       <TableHead>{t('training.result')}</TableHead>
@@ -280,8 +335,15 @@ export const TrainingRecords = () => {
                   <TableBody>
                     {trainingRecords.map(record => (
                       <TableRow key={record.id}>
-                        <TableCell><Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(record.id)}><X className="h-4 w-4" /></Button></TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditRecord(record)}><Edit2 className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(record.id)}><X className="h-4 w-4" /></Button>
+                          </div>
+                        </TableCell>
                         <TableCell>{record.courseName}</TableCell>
+                        <TableCell>{record.provider || '-'}</TableCell>
+                        <TableCell>{record.location || '-'}</TableCell>
                         <TableCell>{record.startDate}</TableCell>
                         <TableCell>{record.endDate}</TableCell>
                         <TableCell>{getResultBadge(record.result)}</TableCell>
@@ -289,7 +351,7 @@ export const TrainingRecords = () => {
                       </TableRow>
                     ))}
                     {trainingRecords.length === 0 && (
-                      <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t('training.noRecords')}</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">{t('training.noRecords')}</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -301,9 +363,9 @@ export const TrainingRecords = () => {
         )}
       </div>
 
-      <Dialog open={isAddRecordOpen} onOpenChange={setIsAddRecordOpen}>
+      <Dialog open={isAddRecordOpen} onOpenChange={(open) => { setIsAddRecordOpen(open); if (!open) { setEditingRecordId(null); setNewRecord({ courseId: '', startDate: '', endDate: '', result: 'pending', score: '', provider: '', location: '' }); } }}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>{t('training.records.add')}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editingRecordId ? (ar ? 'تعديل سجل التدريب' : 'Edit Training Record') : t('training.records.add')}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label>{t('training.courseName')}</Label>
@@ -368,7 +430,7 @@ export const TrainingRecords = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddRecordOpen(false)}>{t('common.cancel')}</Button>
-            <Button onClick={handleAddRecord}>{t('common.save')}</Button>
+            <Button onClick={editingRecordId ? handleUpdateRecord : handleAddRecord}>{t('common.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
