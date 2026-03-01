@@ -44,7 +44,7 @@ const initialAssets: Asset[] = [
   { id: '8', assetCode: 'AST-008', nameAr: 'جهاز كمبيوتر HP', nameEn: 'HP Desktop PC', category: 'desktop', brand: 'HP', model: 'ProDesk 400 G7', serialNumber: 'HP-2024-089', purchaseDate: '2024-08-20', purchasePrice: 15000, status: 'retired', condition: 'poor', location: 'القاهرة', notes: 'تم الاستغناء عنه' },
 ];
 
-const emptyForm = { nameAr: '', nameEn: '', category: 'laptop' as Asset['category'], brand: '', model: '', serialNumber: '', purchaseDate: '', purchasePrice: 0, location: '', notes: '', assignedTo: '' };
+const emptyForm = { nameAr: '', nameEn: '', category: 'laptop' as Asset['category'], brand: '', model: '', serialNumber: '', purchaseDate: '', purchasePrice: 0, location: '', notes: '' };
 
 export const AssetRegistry = () => {
   const { t, isRTL } = useLanguage();
@@ -109,8 +109,7 @@ export const AssetRegistry = () => {
       brand: form.brand, model: form.model, serial_number: form.serialNumber,
       purchase_date: form.purchaseDate || null, purchase_price: form.purchasePrice,
       location: form.location, notes: form.notes,
-      assigned_to: form.assignedTo || null,
-      status: form.assignedTo ? 'assigned' : 'available',
+      status: 'available',
     };
     if (editingAsset) {
       await supabase.from('assets').update(payload).eq('id', editingAsset.id);
@@ -128,7 +127,7 @@ export const AssetRegistry = () => {
 
   const handleEdit = (asset: Asset) => {
     setEditingAsset(asset);
-    setForm({ nameAr: asset.nameAr, nameEn: asset.nameEn, category: asset.category, brand: asset.brand, model: asset.model, serialNumber: asset.serialNumber, purchaseDate: asset.purchaseDate, purchasePrice: asset.purchasePrice, location: asset.location, notes: asset.notes, assignedTo: asset.assignedTo || '' });
+    setForm({ nameAr: asset.nameAr, nameEn: asset.nameEn, category: asset.category, brand: asset.brand, model: asset.model, serialNumber: asset.serialNumber, purchaseDate: asset.purchaseDate, purchasePrice: asset.purchasePrice, location: asset.location, notes: asset.notes });
     setDialogOpen(true);
   };
 
@@ -249,18 +248,6 @@ export const AssetRegistry = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2"><Label>{t('assets.field.purchaseDate')}</Label><Input type="date" value={form.purchaseDate} onChange={e => setForm(f => ({ ...f, purchaseDate: e.target.value }))} /></div>
                     <div className="space-y-2"><Label>{t('assets.field.purchasePrice')}</Label><Input type="number" min={0} value={form.purchasePrice} onChange={e => setForm(f => ({ ...f, purchasePrice: +e.target.value }))} /></div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{isRTL ? 'تعيين لموظف' : 'Assign to Employee'}</Label>
-                    <Select value={form.assignedTo} onValueChange={v => setForm(f => ({ ...f, assignedTo: v === 'none' ? '' : v }))}>
-                      <SelectTrigger><SelectValue placeholder={isRTL ? 'اختر موظف...' : 'Select employee...'} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">{isRTL ? 'بدون تعيين' : 'Not assigned'}</SelectItem>
-                        {activeEmployees.map(emp => (
-                          <SelectItem key={emp.employeeId} value={emp.employeeId}>{isRTL ? emp.nameAr : emp.nameEn} ({emp.employeeId})</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
                   </div>
                   <div className="space-y-2"><Label>{t('assets.field.notes')}</Label><Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} /></div>
                   <Button onClick={handleSave} className="w-full">{t('assets.save')}</Button>
