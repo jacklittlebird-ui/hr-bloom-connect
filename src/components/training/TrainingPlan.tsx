@@ -45,6 +45,7 @@ export const TrainingPlan = () => {
   const [filterStation, setFilterStation] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
+  const [filterCourse, setFilterCourse] = useState('all');
   const [loading, setLoading] = useState(true);
 
   // Fetch departments and stations from DB
@@ -97,19 +98,27 @@ export const TrainingPlan = () => {
     });
   }, [rawRecords, employees, ar]);
 
+  // Unique courses for filter
+  const courseOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    records.forEach(r => { if (r.courseId && r.courseName) map.set(r.courseId, r.courseName); });
+    return [...map.entries()].sort(([, a], [, b]) => a.localeCompare(b));
+  }, [records]);
+
   // Filter records
   const filtered = useMemo(() => {
     return records.filter(r => {
       const deptMatch = filterDept === 'all' || r.department === filterDept;
       const stationMatch = filterStation === 'all' || r.station === filterStation;
-      if (!deptMatch || !stationMatch) return false;
+      const courseMatch = filterCourse === 'all' || r.courseId === filterCourse;
+      if (!deptMatch || !stationMatch || !courseMatch) return false;
       if (!r.plannedDate) return false;
       const d = new Date(r.plannedDate);
       const monthMatch = filterMonth === 'all' || (d.getMonth() + 1) === parseInt(filterMonth);
       const yearMatch = filterYear === 'all' || d.getFullYear() === parseInt(filterYear);
       return monthMatch && yearMatch;
     });
-  }, [records, filterDept, filterStation, filterMonth, filterYear]);
+  }, [records, filterDept, filterStation, filterMonth, filterYear, filterCourse]);
 
   // Group by month
   const grouped = useMemo(() => {
@@ -177,6 +186,18 @@ export const TrainingPlan = () => {
                   <SelectItem value="all">{ar ? 'جميع المحطات' : 'All Stations'}</SelectItem>
                   {stations.map(s => (
                     <SelectItem key={s.id} value={s.id}>{ar ? s.nameAr : s.nameEn}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'الدورة' : 'Course'}</label>
+              <Select value={filterCourse} onValueChange={setFilterCourse}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'جميع الدورات' : 'All Courses'}</SelectItem>
+                  {courseOptions.map(([id, name]) => (
+                    <SelectItem key={id} value={id}>{name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
