@@ -43,7 +43,8 @@ export const TrainingPlan = () => {
   const [rawRecords, setRawRecords] = useState<any[]>([]);
   const [filterDept, setFilterDept] = useState('all');
   const [filterStation, setFilterStation] = useState('all');
-  const [viewMode, setViewMode] = useState<'month' | 'year'>('month');
+  const [filterMonth, setFilterMonth] = useState('all');
+  const [filterYear, setFilterYear] = useState('all');
   const [loading, setLoading] = useState(true);
 
   // Fetch departments and stations from DB
@@ -101,29 +102,30 @@ export const TrainingPlan = () => {
     return records.filter(r => {
       const deptMatch = filterDept === 'all' || r.department === filterDept;
       const stationMatch = filterStation === 'all' || r.station === filterStation;
-      return deptMatch && stationMatch;
+      if (!deptMatch || !stationMatch) return false;
+      if (!r.plannedDate) return false;
+      const d = new Date(r.plannedDate);
+      const monthMatch = filterMonth === 'all' || (d.getMonth() + 1) === parseInt(filterMonth);
+      const yearMatch = filterYear === 'all' || d.getFullYear() === parseInt(filterYear);
+      return monthMatch && yearMatch;
     });
-  }, [records, filterDept, filterStation]);
+  }, [records, filterDept, filterStation, filterMonth, filterYear]);
 
-  // Group by month or year
+  // Group by month
   const grouped = useMemo(() => {
     const groups = new Map<string, PlanRecord[]>();
     filtered.forEach(r => {
       if (!r.plannedDate) return;
       const d = new Date(r.plannedDate);
-      const key = viewMode === 'year'
-        ? `${d.getFullYear()}`
-        : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(r);
     });
-    // Sort keys
     const sorted = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
     return sorted;
-  }, [filtered, viewMode]);
+  }, [filtered]);
 
   const formatGroupLabel = (key: string) => {
-    if (viewMode === 'year') return key;
     const [year, month] = key.split('-');
     const monthNames = ar
       ? ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
@@ -180,12 +182,29 @@ export const TrainingPlan = () => {
               </Select>
             </div>
             <div className="flex-1 min-w-[200px]">
-              <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'عرض حسب' : 'View By'}</label>
-              <Select value={viewMode} onValueChange={(v) => setViewMode(v as 'month' | 'year')}>
+              <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'الشهر' : 'Month'}</label>
+              <Select value={filterMonth} onValueChange={setFilterMonth}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="month">{ar ? 'شهري' : 'Monthly'}</SelectItem>
-                  <SelectItem value="year">{ar ? 'سنوي' : 'Yearly'}</SelectItem>
+                  <SelectItem value="all">{ar ? 'جميع الشهور' : 'All Months'}</SelectItem>
+                  {(ar
+                    ? ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+                    : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+                  ).map((name, i) => (
+                    <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'السنة' : 'Year'}</label>
+              <Select value={filterYear} onValueChange={setFilterYear}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'جميع السنوات' : 'All Years'}</SelectItem>
+                  {Array.from({ length: 26 }, (_, i) => 2025 + i).map(y => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
