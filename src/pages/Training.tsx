@@ -6,9 +6,11 @@ import { Trainers } from '@/components/training/Trainers';
 import { CoursesSyllabus } from '@/components/training/CoursesSyllabus';
 import { CoursesList } from '@/components/training/CoursesList';
 import { TrainingPlan } from '@/components/training/TrainingPlan';
+import { TrainingRecordsReport } from '@/components/training/TrainingRecordsReport';
 
 const Training = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const ar = language === 'ar';
 
   return (
     <DashboardLayout>
@@ -19,12 +21,13 @@ const Training = () => {
         </div>
 
         <Tabs defaultValue="records" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="records">{t('training.tabs.records')}</TabsTrigger>
             <TabsTrigger value="trainers">{t('training.tabs.trainers')}</TabsTrigger>
             <TabsTrigger value="syllabus">{t('training.tabs.syllabus')}</TabsTrigger>
             <TabsTrigger value="courses">{t('training.tabs.courses')}</TabsTrigger>
             <TabsTrigger value="plan">{t('training.tabs.plan')}</TabsTrigger>
+            <TabsTrigger value="reports">{ar ? 'التقارير' : 'Reports'}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="records" className="mt-6">
@@ -45,6 +48,10 @@ const Training = () => {
 
           <TabsContent value="plan" className="mt-6">
             <TrainingPlan />
+          </TabsContent>
+
+          <TabsContent value="reports" className="mt-6">
+            <TrainingRecordsReport />
           </TabsContent>
         </Tabs>
       </div>
