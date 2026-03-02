@@ -205,56 +205,77 @@ export const TrainingRecordsReport = () => {
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            <Select value={filterStation} onValueChange={setFilterStation}>
-              <SelectTrigger><SelectValue placeholder={ar ? 'المحطة' : 'Station'} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                {stations.map(s => (<SelectItem key={s.id} value={s.id}>{ar ? s.nameAr : s.nameEn}</SelectItem>))}
-              </SelectContent>
-            </Select>
-            <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-              <SelectTrigger><SelectValue placeholder={ar ? 'القسم' : 'Department'} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                {departments.map(d => (<SelectItem key={d.id} value={d.id}>{ar ? d.nameAr : d.nameEn}</SelectItem>))}
-              </SelectContent>
-            </Select>
-            <Select value={filterCourse} onValueChange={setFilterCourse}>
-              <SelectTrigger><SelectValue placeholder={ar ? 'الدورة' : 'Course'} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                {courseOptions.map(c => (<SelectItem key={c.id} value={c.id}>{ar ? c.nameAr : c.nameEn}</SelectItem>))}
-              </SelectContent>
-            </Select>
-            <Select value={filterEmployee} onValueChange={setFilterEmployee}>
-              <SelectTrigger><SelectValue placeholder={ar ? 'الموظف' : 'Employee'} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                {contextEmployees.map(e => (<SelectItem key={e.id} value={e.id}>{ar ? e.nameAr : e.nameEn}</SelectItem>))}
-              </SelectContent>
-            </Select>
-            <Select value={filterProvider} onValueChange={setFilterProvider}>
-              <SelectTrigger><SelectValue placeholder={ar ? 'الجهة المقدمة' : 'Provider'} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                {providerOptions.map(p => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
-              </SelectContent>
-            </Select>
-            <Select value={filterYear} onValueChange={setFilterYear}>
-              <SelectTrigger><SelectValue placeholder={ar ? 'السنة' : 'Year'} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                {yearOptions.map(y => (<SelectItem key={y} value={y}>{y}</SelectItem>))}
-              </SelectContent>
-            </Select>
-            <Select value={filterFavorite} onValueChange={setFilterFavorite}>
-              <SelectTrigger><SelectValue placeholder={ar ? 'المفضلة' : 'Favorites'} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                <SelectItem value="yes">{ar ? 'مفضل' : 'Favorites'}</SelectItem>
-                <SelectItem value="no">{ar ? 'غير مفضل' : 'Non-Favorites'}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المحطة' : 'Station'}</label>
+              <Select value={filterStation} onValueChange={setFilterStation}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'المحطة' : 'Station'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                  {stations.map(s => (<SelectItem key={s.id} value={s.id}>{ar ? s.nameAr : s.nameEn}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'القسم' : 'Department'}</label>
+              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'القسم' : 'Department'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                  {departments.map(d => (<SelectItem key={d.id} value={d.id}>{ar ? d.nameAr : d.nameEn}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'الدورة' : 'Course'}</label>
+              <Select value={filterCourse} onValueChange={setFilterCourse}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'الدورة' : 'Course'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                  {courseOptions.map(c => (<SelectItem key={c.id} value={c.id}>{ar ? c.nameAr : c.nameEn}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'الموظف' : 'Employee'}</label>
+              <Select value={filterEmployee} onValueChange={setFilterEmployee}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'الموظف' : 'Employee'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                  {contextEmployees.map(e => (<SelectItem key={e.id} value={e.id}>{ar ? e.nameAr : e.nameEn}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'الجهة المقدمة' : 'Provider'}</label>
+              <Select value={filterProvider} onValueChange={setFilterProvider}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'الجهة المقدمة' : 'Provider'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                  {providerOptions.map(p => (<SelectItem key={p} value={p}>{p}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'السنة' : 'Year'}</label>
+              <Select value={filterYear} onValueChange={setFilterYear}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'السنة' : 'Year'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                  {yearOptions.map(y => (<SelectItem key={y} value={y}>{y}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المفضلة' : 'Favorites'}</label>
+              <Select value={filterFavorite} onValueChange={setFilterFavorite}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'المفضلة' : 'Favorites'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                  <SelectItem value="yes">{ar ? 'مفضل ⭐' : 'Favorites ⭐'}</SelectItem>
+                  <SelectItem value="no">{ar ? 'غير مفضل' : 'Non-Favorites'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
