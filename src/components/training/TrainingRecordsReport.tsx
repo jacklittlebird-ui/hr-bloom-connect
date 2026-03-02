@@ -1,15 +1,16 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Printer, FileText, FileSpreadsheet } from 'lucide-react';
+import { Printer, FileText, FileSpreadsheet, Users, BookOpen, Award, TrendingUp } from 'lucide-react';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
-import { stationLocations } from '@/data/stationLocations';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
+import { Progress } from '@/components/ui/progress';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 interface ReportRecord {
   id: string;
@@ -254,24 +255,148 @@ export const TrainingRecordsReport = () => {
         </CardContent>
       </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-4 text-center">
-          <div className="text-2xl font-bold text-primary">{filtered.length}</div>
-          <div className="text-xs text-muted-foreground">{ar ? 'إجمالي السجلات' : 'Total Records'}</div>
+      {/* Enhanced Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Card><CardContent className="p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10"><BookOpen className="h-5 w-5 text-primary" /></div>
+          <div><p className="text-2xl font-bold">{filtered.length}</p><p className="text-xs text-muted-foreground">{ar ? 'إجمالي السجلات' : 'Total Records'}</p></div>
         </CardContent></Card>
-        <Card><CardContent className="p-4 text-center">
-          <div className="text-2xl font-bold text-stat-green">{filtered.filter(r => r.status === 'completed').length}</div>
-          <div className="text-xs text-muted-foreground">{ar ? 'مكتمل' : 'Completed'}</div>
+        <Card><CardContent className="p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div>
+          <div><p className="text-2xl font-bold">{new Set(filtered.map(r => r.employeeId)).size}</p><p className="text-xs text-muted-foreground">{ar ? 'الموظفين' : 'Employees'}</p></div>
         </CardContent></Card>
-        <Card><CardContent className="p-4 text-center">
-          <div className="text-2xl font-bold text-destructive">{filtered.filter(r => r.status === 'failed').length}</div>
-          <div className="text-xs text-muted-foreground">{ar ? 'راسب' : 'Failed'}</div>
+        <Card><CardContent className="p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-stat-green/10"><TrendingUp className="h-5 w-5 text-stat-green" /></div>
+          <div><p className="text-2xl font-bold">{filtered.filter(r => r.status === 'completed').length}</p><p className="text-xs text-muted-foreground">{ar ? 'مكتمل' : 'Completed'}</p></div>
         </CardContent></Card>
-        <Card><CardContent className="p-4 text-center">
-          <div className="text-2xl font-bold text-accent-foreground">{filtered.filter(r => r.status === 'enrolled').length}</div>
-          <div className="text-xs text-muted-foreground">{ar ? 'مسجل' : 'Enrolled'}</div>
+        <Card><CardContent className="p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-destructive/10"><TrendingUp className="h-5 w-5 text-destructive" /></div>
+          <div><p className="text-2xl font-bold">{filtered.filter(r => r.status === 'failed').length}</p><p className="text-xs text-muted-foreground">{ar ? 'راسب' : 'Failed'}</p></div>
         </CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-muted"><BookOpen className="h-5 w-5 text-muted-foreground" /></div>
+          <div><p className="text-2xl font-bold">{filtered.filter(r => r.status === 'enrolled').length}</p><p className="text-xs text-muted-foreground">{ar ? 'مسجل' : 'Enrolled'}</p></div>
+        </CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10"><Award className="h-5 w-5 text-primary" /></div>
+          <div><p className="text-2xl font-bold">{filtered.filter(r => r.hasCert).length}</p><p className="text-xs text-muted-foreground">{ar ? 'حاصل على شهادة' : 'Certified'}</p></div>
+        </CardContent></Card>
+      </div>
+
+      {/* Completion Progress */}
+      {filtered.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">{ar ? 'معدل النجاح' : 'Success Rate'}</span>
+              <span className="text-sm font-bold text-primary">
+                {Math.round((filtered.filter(r => r.status === 'completed').length / filtered.length) * 100)}%
+              </span>
+            </div>
+            <Progress value={(filtered.filter(r => r.status === 'completed').length / filtered.length) * 100} className="h-2" />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Status Pie Chart */}
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'توزيع الحالات' : 'Status Distribution'}</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: ar ? 'مكتمل' : 'Completed', value: filtered.filter(r => r.status === 'completed').length },
+                    { name: ar ? 'مسجل' : 'Enrolled', value: filtered.filter(r => r.status === 'enrolled').length },
+                    { name: ar ? 'راسب' : 'Failed', value: filtered.filter(r => r.status === 'failed').length },
+                  ].filter(d => d.value > 0)}
+                  cx="50%" cy="50%" outerRadius={80} dataKey="value" label
+                >
+                  <Cell fill="hsl(142, 76%, 36%)" />
+                  <Cell fill="hsl(var(--primary))" />
+                  <Cell fill="hsl(var(--destructive))" />
+                </Pie>
+                <Legend />
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Provider Distribution */}
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'توزيع الجهات المقدمة' : 'Provider Distribution'}</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart layout="vertical" data={(() => {
+                const pMap = new Map<string, number>();
+                filtered.forEach(r => {
+                  const p = r.provider || (ar ? 'غير محدد' : 'Unknown');
+                  pMap.set(p, (pMap.get(p) || 0) + 1);
+                });
+                return [...pMap.entries()].sort(([, a], [, b]) => b - a).slice(0, 6).map(([name, count]) => ({ name: name.length > 20 ? name.substring(0, 20) + '...' : name, count }));
+              })()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" fontSize={11} />
+                <YAxis type="category" dataKey="name" width={120} fontSize={10} />
+                <Tooltip />
+                <Bar dataKey="count" name={ar ? 'العدد' : 'Count'} fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Station Distribution */}
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'توزيع المحطات' : 'Station Distribution'}</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={(() => {
+                const stMap = new Map<string, { name: string; completed: number; other: number }>();
+                filtered.forEach(r => {
+                  const name = r.station || '-';
+                  if (!stMap.has(name)) stMap.set(name, { name, completed: 0, other: 0 });
+                  const entry = stMap.get(name)!;
+                  if (r.status === 'completed') entry.completed++;
+                  else entry.other++;
+                });
+                return [...stMap.values()].sort((a, b) => (b.completed + b.other) - (a.completed + a.other));
+              })()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" fontSize={10} />
+                <YAxis fontSize={11} />
+                <Tooltip />
+                <Bar dataKey="completed" name={ar ? 'مكتمل' : 'Completed'} stackId="a" fill="hsl(142, 76%, 36%)" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="other" name={ar ? 'أخرى' : 'Other'} stackId="a" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Top Courses */}
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'أكثر الدورات' : 'Top Courses'}</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart layout="vertical" data={(() => {
+                const cMap = new Map<string, number>();
+                filtered.forEach(r => {
+                  const name = r.courseName || (ar ? 'غير محدد' : 'Unknown');
+                  cMap.set(name, (cMap.get(name) || 0) + 1);
+                });
+                return [...cMap.entries()].sort(([, a], [, b]) => b - a).slice(0, 6).map(([name, count]) => ({ name: name.length > 20 ? name.substring(0, 20) + '...' : name, count }));
+              })()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" fontSize={11} />
+                <YAxis type="category" dataKey="name" width={120} fontSize={10} />
+                <Tooltip />
+                <Bar dataKey="count" name={ar ? 'العدد' : 'Count'} fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Table */}
