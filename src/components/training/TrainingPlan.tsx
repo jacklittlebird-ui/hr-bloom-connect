@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { CalendarDays, Users, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { stationLocations } from '@/data/stationLocations';
 
 export interface TrainingDebt {
   id: string;
@@ -47,25 +46,28 @@ export const TrainingPlan = () => {
   const [viewMode, setViewMode] = useState<'month' | 'year'>('month');
   const [loading, setLoading] = useState(true);
 
-  // Fetch departments from DB
+  // Fetch departments and stations from DB
   const [departments, setDepartments] = useState<{ id: string; nameEn: string; nameAr: string }[]>([]);
+  const [stations, setStations] = useState<{ id: string; code: string; nameEn: string; nameAr: string }[]>([]);
   useEffect(() => {
     supabase.from('departments').select('id, name_en, name_ar').eq('is_active', true).then(({ data }) => {
       setDepartments((data || []).map((d: any) => ({ id: d.id, nameEn: d.name_en, nameAr: d.name_ar })));
+    });
+    supabase.from('stations').select('id, code, name_en, name_ar').eq('is_active', true).then(({ data }) => {
+      setStations((data || []).map((s: any) => ({ id: s.id, code: s.code, nameEn: s.name_en, nameAr: s.name_ar })));
     });
   }, []);
 
   // Build employee lookup
   const empMap = useMemo(() => {
-    const map = new Map<string, { name: string; code: string; dept: string; deptId: string; station: string; deptCode: string }>();
+    const map = new Map<string, { name: string; code: string; deptId: string; stationId: string; deptCode: string }>();
     employees.forEach(emp => {
       map.set(emp.id, {
         name: ar ? emp.nameAr : emp.nameEn,
         code: emp.employeeId,
-        dept: emp.department,
-        deptId: (emp as any).departmentId || '',
-        station: emp.stationLocation || '',
-        deptCode: (emp as any).deptCode || '',
+        deptId: emp.departmentId || '',
+        stationId: emp.stationId || '',
+        deptCode: emp.deptCode || '',
       });
     });
     return map;
@@ -87,8 +89,8 @@ export const TrainingPlan = () => {
           employeeId: r.employee_id,
           employeeName: emp?.name || r.employee_id,
           employeeCode: emp?.code || '',
-          department: emp?.deptId || emp?.dept || '',
-          station: emp?.station || '',
+          department: emp?.deptId || '',
+          station: emp?.stationId || '',
           deptCode: emp?.deptCode || '',
           courseId: r.course_id || '',
           courseName: r.training_courses ? (ar ? r.training_courses.name_ar : r.training_courses.name_en) : '',
@@ -183,8 +185,8 @@ export const TrainingPlan = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع المحطات' : 'All Stations'}</SelectItem>
-                  {stationLocations.map(s => (
-                    <SelectItem key={s.value} value={s.value}>{ar ? s.labelAr : s.labelEn}</SelectItem>
+                  {stations.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{ar ? s.nameAr : s.nameEn}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -270,7 +272,7 @@ export const TrainingPlan = () => {
                       <TableCell className="font-mono text-xs">{r.employeeCode}</TableCell>
                       <TableCell className="font-medium">{r.employeeName}</TableCell>
                       <TableCell><Badge variant="outline">{r.deptCode || '-'}</Badge></TableCell>
-                      <TableCell>{r.station || '-'}</TableCell>
+                      <TableCell>{stations.find(s => s.id === r.station)?.nameAr || stations.find(s => s.id === r.station)?.nameEn || '-'}</TableCell>
                       <TableCell className="font-mono text-xs">{r.courseCode || '-'}</TableCell>
                       <TableCell>{r.courseName}</TableCell>
                       <TableCell>{r.endDate || '-'}</TableCell>
