@@ -37,24 +37,24 @@ export const PortalLoans = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className={cn("text-2xl font-bold", isRTL && "text-right")}>{ar ? 'قروضي وسلفي' : 'My Loans & Advances'}</h1>
+      <h1 className={cn("text-xl md:text-2xl font-bold", isRTL && "text-right")}>{ar ? 'قروضي وسلفي' : 'My Loans & Advances'}</h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-5 text-center">
-          <p className="text-sm text-muted-foreground">{ar ? 'إجمالي القروض' : 'Total Loans'}</p>
-          <p className="text-2xl font-bold text-primary">{totalLoanAmount.toLocaleString()}</p>
+      <div className="grid grid-cols-2 gap-3 md:gap-4">
+        <Card><CardContent className="p-3 md:p-5 text-center">
+          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'إجمالي القروض' : 'Total Loans'}</p>
+          <p className="text-lg md:text-2xl font-bold text-primary">{totalLoanAmount.toLocaleString()}</p>
         </CardContent></Card>
-        <Card><CardContent className="p-5 text-center">
-          <p className="text-sm text-muted-foreground">{ar ? 'المسدد' : 'Paid'}</p>
-          <p className="text-2xl font-bold text-success">{totalPaid.toLocaleString()}</p>
+        <Card><CardContent className="p-3 md:p-5 text-center">
+          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'المسدد' : 'Paid'}</p>
+          <p className="text-lg md:text-2xl font-bold text-success">{totalPaid.toLocaleString()}</p>
         </CardContent></Card>
-        <Card><CardContent className="p-5 text-center">
-          <p className="text-sm text-muted-foreground">{ar ? 'المتبقي' : 'Remaining'}</p>
-          <p className="text-2xl font-bold text-destructive">{totalRemaining.toLocaleString()}</p>
+        <Card><CardContent className="p-3 md:p-5 text-center">
+          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'المتبقي' : 'Remaining'}</p>
+          <p className="text-lg md:text-2xl font-bold text-destructive">{totalRemaining.toLocaleString()}</p>
         </CardContent></Card>
-        <Card><CardContent className="p-5 text-center">
-          <p className="text-sm text-muted-foreground">{ar ? 'السلف' : 'Advances'}</p>
-          <p className="text-2xl font-bold text-warning">{totalAdvances.toLocaleString()}</p>
+        <Card><CardContent className="p-3 md:p-5 text-center">
+          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'السلف' : 'Advances'}</p>
+          <p className="text-lg md:text-2xl font-bold text-warning">{totalAdvances.toLocaleString()}</p>
         </CardContent></Card>
       </div>
 
@@ -62,6 +62,7 @@ export const PortalLoans = () => {
       <Card>
         <CardHeader><CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}><HandCoins className="w-5 h-5" />{ar ? 'القروض' : 'Loans'}</CardTitle></CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader><TableRow>
               <TableHead className={cn(isRTL && "text-right")}>{ar ? 'رقم القرض' : 'Loan ID'}</TableHead>
@@ -89,6 +90,7 @@ export const PortalLoans = () => {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -97,6 +99,7 @@ export const PortalLoans = () => {
         <Card>
           <CardHeader><CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}><HandCoins className="w-5 h-5" />{ar ? 'السلف' : 'Advances'}</CardTitle></CardHeader>
           <CardContent>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader><TableRow>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الرقم' : 'ID'}</TableHead>
@@ -119,6 +122,7 @@ export const PortalLoans = () => {
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -46,9 +46,9 @@ export const PortalDocuments = () => {
 
   return (
     <div className="space-y-6">
-      <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
-        <h1 className="text-2xl font-bold">{ar ? 'المستندات' : 'Documents'}</h1>
-        <Button onClick={() => setShowDialog(true)}><Upload className="w-4 h-4 mr-1" />{ar ? 'رفع مستند' : 'Upload'}</Button>
+      <div className={cn("flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3", isRTL && "sm:flex-row-reverse")}>
+        <h1 className="text-xl md:text-2xl font-bold">{ar ? 'المستندات' : 'Documents'}</h1>
+        <Button onClick={() => setShowDialog(true)} size="sm"><Upload className="w-4 h-4 me-1" />{ar ? 'رفع مستند' : 'Upload'}</Button>
       </div>
 
       <div className="grid gap-3">

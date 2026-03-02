@@ -46,9 +46,9 @@ export const PortalRequests = () => {
 
   return (
     <div className="space-y-6">
-      <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
-        <h1 className="text-2xl font-bold">{ar ? 'الطلبات' : 'Requests'}</h1>
-        <Button onClick={() => setShowDialog(true)}><Plus className="w-4 h-4 mr-1" />{ar ? 'طلب جديد' : 'New Request'}</Button>
+      <div className={cn("flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3", isRTL && "sm:flex-row-reverse")}>
+        <h1 className="text-xl md:text-2xl font-bold">{ar ? 'الطلبات' : 'Requests'}</h1>
+        <Button onClick={() => setShowDialog(true)} size="sm"><Plus className="w-4 h-4 me-1" />{ar ? 'طلب جديد' : 'New Request'}</Button>
       </div>
 
       <Card>

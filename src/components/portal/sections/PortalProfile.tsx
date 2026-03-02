@@ -44,19 +44,19 @@ export const PortalProfile = () => {
   return (
     <div className="space-y-6">
       <div className={cn(isRTL && "text-right")}>
-        <h1 className="text-2xl font-bold">{ar ? 'ملفي الشخصي' : 'My Profile'}</h1>
-        <p className="text-muted-foreground">{ar ? 'عرض معلوماتك الشخصية' : 'View your personal info'}</p>
+        <h1 className="text-xl md:text-2xl font-bold">{ar ? 'ملفي الشخصي' : 'My Profile'}</h1>
+        <p className="text-sm text-muted-foreground">{ar ? 'عرض معلوماتك الشخصية' : 'View your personal info'}</p>
       </div>
 
       <Card>
-        <CardContent className="p-6">
-          <div className={cn("flex items-center gap-4", isRTL && "flex-row-reverse")}>
-            <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center text-2xl font-bold text-primary">
+        <CardContent className="p-4 md:p-6">
+          <div className={cn("flex flex-col sm:flex-row items-center gap-4", isRTL && "sm:flex-row-reverse")}>
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center text-xl md:text-2xl font-bold text-primary shrink-0">
               {employee.nameAr[0]}
             </div>
-            <div className={cn(isRTL && "text-right")}>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold">{ar ? employee.nameAr : employee.nameEn}</h2>
+            <div className={cn("text-center sm:text-start", isRTL && "sm:text-right")}>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <h2 className="text-lg md:text-xl font-bold">{ar ? employee.nameAr : employee.nameEn}</h2>
                 <Badge className={statusColor}>{statusLabel}</Badge>
               </div>
               <p className="text-sm text-muted-foreground">{employee.jobTitle}</p>

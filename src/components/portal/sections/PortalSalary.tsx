@@ -123,37 +123,37 @@ export const PortalSalary = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className={cn("text-2xl font-bold", isRTL && "text-right")}>{ar ? 'الراتب' : 'Salary'}</h1>
+      <h1 className={cn("text-xl md:text-2xl font-bold", isRTL && "text-right")}>{ar ? 'الراتب' : 'Salary'}</h1>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-5 text-center">
-          <TrendingUp className="w-6 h-6 mx-auto mb-1 text-success" />
-          <p className="text-sm text-muted-foreground">{ar ? 'إجمالي الراتب' : 'Gross Salary'}</p>
-          <p className="text-2xl font-bold text-success">{hasData ? totalEarnings.toLocaleString() : '—'}</p>
+      <div className="grid grid-cols-2 gap-3 md:gap-4">
+        <Card><CardContent className="p-3 md:p-5 text-center">
+          <TrendingUp className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 text-success" />
+          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'إجمالي الراتب' : 'Gross'}</p>
+          <p className="text-lg md:text-2xl font-bold text-success">{hasData ? totalEarnings.toLocaleString() : '—'}</p>
         </CardContent></Card>
-        <Card><CardContent className="p-5 text-center">
-          <TrendingDown className="w-6 h-6 mx-auto mb-1 text-destructive" />
-          <p className="text-sm text-muted-foreground">{ar ? 'الخصومات' : 'Deductions'}</p>
-          <p className="text-2xl font-bold text-destructive">{hasData ? totalDeductions.toLocaleString() : '—'}</p>
+        <Card><CardContent className="p-3 md:p-5 text-center">
+          <TrendingDown className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 text-destructive" />
+          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'الخصومات' : 'Deductions'}</p>
+          <p className="text-lg md:text-2xl font-bold text-destructive">{hasData ? totalDeductions.toLocaleString() : '—'}</p>
         </CardContent></Card>
-        <Card><CardContent className="p-5 text-center">
-          <Wallet className="w-6 h-6 mx-auto mb-1 text-primary" />
-          <p className="text-sm text-muted-foreground">{ar ? 'صافي الراتب' : 'Net Salary'}</p>
-          <p className="text-2xl font-bold text-primary">{hasData ? netSalary.toLocaleString() : '—'}</p>
+        <Card><CardContent className="p-3 md:p-5 text-center">
+          <Wallet className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 text-primary" />
+          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'صافي الراتب' : 'Net'}</p>
+          <p className="text-lg md:text-2xl font-bold text-primary">{hasData ? netSalary.toLocaleString() : '—'}</p>
         </CardContent></Card>
-        <Card><CardContent className="p-5 text-center">
-          <Building2 className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">{ar ? 'مساهمات صاحب العمل' : 'Employer Contributions'}</p>
-          <p className="text-2xl font-bold">{hasData ? totalEmployerContributions.toLocaleString() : '—'}</p>
+        <Card><CardContent className="p-3 md:p-5 text-center">
+          <Building2 className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 text-muted-foreground" />
+          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'مساهمات صاحب العمل' : 'Employer'}</p>
+          <p className="text-lg md:text-2xl font-bold">{hasData ? totalEmployerContributions.toLocaleString() : '—'}</p>
         </CardContent></Card>
       </div>
 
       {hasData && (
         <Tabs defaultValue="breakdown" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="breakdown">{ar ? 'تفاصيل الراتب' : 'Salary Breakdown'}</TabsTrigger>
-            <TabsTrigger value="payslips">{ar ? 'كشوف الرواتب' : 'Payslips'}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-auto">
+            <TabsTrigger value="breakdown" className="text-xs sm:text-sm">{ar ? 'تفاصيل الراتب' : 'Breakdown'}</TabsTrigger>
+            <TabsTrigger value="payslips" className="text-xs sm:text-sm">{ar ? 'كشوف الرواتب' : 'Payslips'}</TabsTrigger>
           </TabsList>
 
           {/* Tab 1: Detailed Breakdown */}
@@ -230,13 +230,13 @@ export const PortalSalary = () => {
 
             {/* Net Salary */}
             <Card className="border-primary/30 bg-primary/5">
-              <CardContent className="p-6">
-                <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
+              <CardContent className="p-4 md:p-6">
+                <div className={cn("flex flex-col sm:flex-row justify-between items-center gap-3", isRTL && "sm:flex-row-reverse")}>
                   <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-                    <Wallet className="w-8 h-8 text-primary" />
-                    <span className="text-xl font-bold">{ar ? 'صافي الراتب' : 'Net Salary'}</span>
+                    <Wallet className="w-6 h-6 md:w-8 md:h-8 text-primary" />
+                    <span className="text-lg md:text-xl font-bold">{ar ? 'صافي الراتب' : 'Net Salary'}</span>
                   </div>
-                  <span className="text-3xl font-bold text-primary">{netSalary.toLocaleString()} <span className="text-base">{ar ? 'ج.م' : 'EGP'}</span></span>
+                  <span className="text-2xl md:text-3xl font-bold text-primary">{netSalary.toLocaleString()} <span className="text-sm md:text-base">{ar ? 'ج.م' : 'EGP'}</span></span>
                 </div>
                 {latest && (
                   <p className={cn("text-sm text-muted-foreground mt-2", isRTL && "text-right")}>

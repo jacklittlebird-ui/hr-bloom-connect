@@ -127,16 +127,16 @@ export const PortalLeaves = () => {
 
   return (
     <div className="space-y-6">
-      <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
-        <h1 className="text-2xl font-bold">{ar ? 'الإجازات والأذونات' : 'Leaves & Permissions'}</h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowPermDialog(true)} variant="outline"><Clock className="w-4 h-4 mr-1" />{ar ? 'طلب إذن' : 'Request Permission'}</Button>
-          <Button onClick={() => setShowLeaveDialog(true)}><Plus className="w-4 h-4 mr-1" />{ar ? 'طلب إجازة' : 'Request Leave'}</Button>
+      <div className={cn("flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3", isRTL && "sm:flex-row-reverse")}>
+        <h1 className="text-xl md:text-2xl font-bold">{ar ? 'الإجازات والأذونات' : 'Leaves & Permissions'}</h1>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button onClick={() => setShowPermDialog(true)} variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm"><Clock className="w-4 h-4 me-1" />{ar ? 'طلب إذن' : 'Permission'}</Button>
+          <Button onClick={() => setShowLeaveDialog(true)} size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm"><Plus className="w-4 h-4 me-1" />{ar ? 'طلب إجازة' : 'Leave'}</Button>
         </div>
       </div>
 
       {/* Balances */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         {balances.map((b, i) => (
           <Card key={i}>
             <CardContent className="p-5">
@@ -165,6 +165,7 @@ export const PortalLeaves = () => {
           <Card>
             <CardHeader><CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}><Calendar className="w-5 h-5" />{ar ? 'طلبات الإجازات' : 'Leave Requests'}</CardTitle></CardHeader>
             <CardContent>
+             <div className="overflow-x-auto">
               <Table>
                 <TableHeader><TableRow>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'النوع' : 'Type'}</TableHead>
@@ -188,6 +189,7 @@ export const PortalLeaves = () => {
                   )}
                 </TableBody>
               </Table>
+             </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -196,6 +198,7 @@ export const PortalLeaves = () => {
           <Card>
             <CardHeader><CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}><Clock className="w-5 h-5" />{ar ? 'طلبات الأذونات' : 'Permission Requests'}</CardTitle></CardHeader>
             <CardContent>
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader><TableRow>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'النوع' : 'Type'}</TableHead>
@@ -219,6 +222,7 @@ export const PortalLeaves = () => {
                   )}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

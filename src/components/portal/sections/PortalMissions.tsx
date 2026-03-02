@@ -86,10 +86,10 @@ export const PortalMissions = () => {
 
   return (
     <div className="space-y-6">
-      <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
-        <h1 className="text-2xl font-bold">{ar ? 'مأمورياتي' : 'My Missions'}</h1>
-        <Button onClick={() => setShowForm(!showForm)}>
-          <Plus className="w-4 h-4 mr-1" />{ar ? 'طلب مأمورية' : 'New Mission'}
+      <div className={cn("flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3", isRTL && "sm:flex-row-reverse")}>
+        <h1 className="text-xl md:text-2xl font-bold">{ar ? 'مأمورياتي' : 'My Missions'}</h1>
+        <Button onClick={() => setShowForm(!showForm)} size="sm">
+          <Plus className="w-4 h-4 me-1" />{ar ? 'طلب مأمورية' : 'New Mission'}
         </Button>
       </div>
 
@@ -170,6 +170,7 @@ export const PortalMissions = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -203,6 +204,7 @@ export const PortalMissions = () => {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
