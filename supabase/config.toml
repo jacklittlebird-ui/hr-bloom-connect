@@ -2,3 +2,9 @@ project_id = "iygkzkglrkdrmuyeuiht"
 
 [functions.setup-user]
 verify_jwt = false
+
+[functions.generate-qr-token]
+verify_jwt = false
+
+[functions.submit-scan]
+verify_jwt = false

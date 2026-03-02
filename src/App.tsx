@@ -39,6 +39,9 @@ import Documents from "./pages/Documents";
 import Uniforms from "./pages/Uniforms";
 import NotFound from "./pages/NotFound";
 import SetupPage from "./pages/SetupPage";
+import AttendanceScan from "./pages/AttendanceScan";
+import AttendanceKiosk from "./pages/AttendanceKiosk";
+import AttendanceAdmin from "./pages/AttendanceAdmin";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +103,11 @@ const AppRoutes = () => (
     
     {/* Station manager portal */}
     <Route path="/station-manager" element={<ProtectedRoute allowedRoles={['station_manager']}><StationManagerPortal /></ProtectedRoute>} />
+    
+    {/* QR Attendance */}
+    <Route path="/attendance/scan" element={<ProtectedRoute allowedRoles={['employee', 'station_manager', 'admin']}><AttendanceScan /></ProtectedRoute>} />
+    <Route path="/attendance/kiosk" element={<ProtectedRoute allowedRoles={['admin', 'station_manager']}><AttendanceKiosk /></ProtectedRoute>} />
+    <Route path="/attendance/admin" element={<ProtectedRoute allowedRoles={['admin']}><AttendanceAdmin /></ProtectedRoute>} />
     
     <Route path="*" element={<NotFound />} />
   </Routes>
