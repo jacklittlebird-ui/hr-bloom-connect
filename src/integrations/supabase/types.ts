@@ -117,6 +117,60 @@ export type Database = {
           },
         ]
       }
+      attendance_events: {
+        Row: {
+          device_id: string
+          employee_id: string | null
+          event_type: string
+          gps_lat: number | null
+          gps_lng: number | null
+          id: string
+          location_id: string | null
+          scan_time: string
+          token_ts: string
+          user_id: string
+        }
+        Insert: {
+          device_id: string
+          employee_id?: string | null
+          event_type: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          location_id?: string | null
+          scan_time?: string
+          token_ts: string
+          user_id: string
+        }
+        Update: {
+          device_id?: string
+          employee_id?: string | null
+          event_type?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          location_id?: string | null
+          scan_time?: string
+          token_ts?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_events_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_events_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "qr_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_records: {
         Row: {
           check_in: string | null
@@ -188,6 +242,33 @@ export type Database = {
           is_active?: boolean
           name_ar?: string
           name_en?: string
+        }
+        Relationships: []
+      }
+      device_alerts: {
+        Row: {
+          device_id: string
+          id: string
+          meta: Json | null
+          reason: string
+          triggered_at: string
+          user_id: string
+        }
+        Insert: {
+          device_id: string
+          id?: string
+          meta?: Json | null
+          reason: string
+          triggered_at?: string
+          user_id: string
+        }
+        Update: {
+          device_id?: string
+          id?: string
+          meta?: Json | null
+          reason?: string
+          triggered_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1244,6 +1325,50 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_locations: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name_ar: string
+          name_en: string
+          radius_m: number | null
+          station_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name_ar: string
+          name_en: string
+          radius_m?: number | null
+          station_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name_ar?: string
+          name_en?: string
+          radius_m?: number | null
+          station_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_locations_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salary_records: {
         Row: {
           basic_salary: number | null
@@ -1552,6 +1677,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_devices: {
+        Row: {
+          bound_at: string
+          device_id: string
+          user_id: string
+        }
+        Insert: {
+          bound_at?: string
+          device_id: string
+          user_id: string
+        }
+        Update: {
+          bound_at?: string
+          device_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_module_permissions: {
         Row: {
