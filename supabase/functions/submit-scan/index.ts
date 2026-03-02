@@ -210,10 +210,12 @@ Deno.serve(async (req) => {
       .eq("user_id", user_id)
       .maybeSingle();
 
+    const empId = roleData?.employee_id || null;
+
     // Insert attendance event
     await admin.from("attendance_events").insert({
       user_id,
-      employee_id: roleData?.employee_id || null,
+      employee_id: empId,
       event_type,
       device_id,
       location_id,
@@ -221,6 +223,46 @@ Deno.serve(async (req) => {
       gps_lat: gps?.lat ?? null,
       gps_lng: gps?.lng ?? null,
     });
+
+    // Sync to attendance_records so employee can see it
+    if (empId) {
+      const nowDate = new Date();
+      const dateStr = nowDate.toISOString().split("T")[0];
+      const nowIso = nowDate.toISOString();
+
+      if (event_type === "check_in") {
+        const isLate = nowDate.getHours() >= 9;
+        // Check if record already exists for today
+        const { data: existing } = await admin
+          .from("attendance_records")
+          .select("id")
+          .eq("employee_id", empId)
+          .eq("date", dateStr)
+          .maybeSingle();
+
+        if (!existing) {
+          await admin.from("attendance_records").insert({
+            employee_id: empId,
+            date: dateStr,
+            check_in: nowIso,
+            status: isLate ? "late" : "present",
+            is_late: isLate,
+          });
+        }
+      } else if (event_type === "check_out") {
+        // Update today's record with check_out
+        const isEarly = nowDate.getHours() < 17;
+        await admin
+          .from("attendance_records")
+          .update({
+            check_out: nowIso,
+            ...(isEarly ? { status: "early-leave" } : {}),
+          })
+          .eq("employee_id", empId)
+          .eq("date", dateStr)
+          .is("check_out", null);
+      }
+    }
 
     return new Response(JSON.stringify({ ok: true, event_type }), {
       headers: { ...corsHeaders, "content-type": "application/json" },
