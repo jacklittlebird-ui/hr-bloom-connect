@@ -226,23 +226,30 @@ Deno.serve(async (req) => {
 
     // Sync to attendance_records so employee can see it
     if (empId) {
-      const nowDate = new Date();
-      const dateStr = nowDate.toISOString().split("T")[0];
-      const nowIso = nowDate.toISOString();
+      // Get employee's station timezone (default: Africa/Cairo)
+      const { data: empData } = await admin
+        .from("employees")
+        .select("station_id, stations(timezone)")
+        .eq("id", empId)
+        .maybeSingle();
+      const tz = (empData?.stations as any)?.timezone || "Africa/Cairo";
+
+      const now = new Date();
+      const nowIso = now.toISOString();
+      // Get local date & hour in the employee's timezone
+      const localDateStr = now.toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
+      const localHour = parseInt(now.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false }));
 
       if (event_type === "check_in") {
-        const isLate = nowDate.getHours() >= 9;
-        // Always insert a new record - allow multiple stamps per day
+        const isLate = localHour >= 9;
         await admin.from("attendance_records").insert({
           employee_id: empId,
-          date: dateStr,
+          date: localDateStr,
           check_in: nowIso,
           status: isLate ? "late" : "present",
           is_late: isLate,
         });
       } else if (event_type === "check_out") {
-        // Find the most recent open record (no check_out) for this employee
-        // This handles overnight shifts - check_in may be from previous day
         const { data: openRecord } = await admin
           .from("attendance_records")
           .select("id, date")
@@ -253,7 +260,7 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (openRecord) {
-          const isEarly = nowDate.getHours() < 17;
+          const isEarly = localHour < 17;
           await admin
             .from("attendance_records")
             .update({
