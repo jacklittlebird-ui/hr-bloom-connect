@@ -100,13 +100,20 @@ export const useReportExport = () => {
     const csv = BOM + [headers, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
+    const downloadName = `${fileName || title}_${new Date().toISOString().slice(0, 10)}.csv`;
+    
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${fileName || title}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = downloadName;
+    link.target = '_blank';
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 1000);
 
     toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
   }, [t]);
@@ -188,13 +195,22 @@ export const useReportExport = () => {
     const csv = BOM + [headersAr, headersEn, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
+    const downloadName = `${fileName || `${titleEn}_${titleAr}`}_${new Date().toISOString().slice(0, 10)}.csv`;
+    
+    // Try multiple download approaches for iframe compatibility
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${fileName || `${titleEn}_${titleAr}`}_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = downloadName;
+    link.target = '_blank';
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    
+    // Fallback: open in new window if click doesn't trigger download
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 1000);
 
     toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
   }, [t]);
