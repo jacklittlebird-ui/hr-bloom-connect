@@ -293,170 +293,7 @@ export const TrainingPlan = () => {
         </CardContent>
       </Card>
 
-      {/* Enhanced Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10"><CalendarDays className="h-5 w-5 text-primary" /></div>
-            <div><p className="text-2xl font-bold">{totalRecords}</p><p className="text-xs text-muted-foreground">{ar ? 'إجمالي السجلات' : 'Total Records'}</p></div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div>
-            <div><p className="text-2xl font-bold">{uniqueEmployees}</p><p className="text-xs text-muted-foreground">{ar ? 'الموظفين' : 'Employees'}</p></div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10"><BookOpen className="h-5 w-5 text-primary" /></div>
-            <div><p className="text-2xl font-bold">{uniqueCourses}</p><p className="text-xs text-muted-foreground">{ar ? 'الدورات' : 'Courses'}</p></div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-stat-green/10"><CheckCircle2 className="h-5 w-5 text-stat-green" /></div>
-            <div><p className="text-2xl font-bold">{filtered.filter(r => r.status === 'completed').length}</p><p className="text-xs text-muted-foreground">{ar ? 'مكتمل' : 'Completed'}</p></div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-muted"><Clock className="h-5 w-5 text-muted-foreground" /></div>
-            <div><p className="text-2xl font-bold">{filtered.filter(r => r.status === 'enrolled').length}</p><p className="text-xs text-muted-foreground">{ar ? 'مسجل' : 'Enrolled'}</p></div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-destructive/10"><AlertTriangle className="h-5 w-5 text-destructive" /></div>
-            <div><p className="text-2xl font-bold">{overdueCount}</p><p className="text-xs text-muted-foreground">{ar ? 'متأخرة' : 'Overdue'}</p></div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Completion Progress */}
-      {totalRecords > 0 && (
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">{ar ? 'نسبة الإنجاز' : 'Completion Rate'}</span>
-              <span className="text-sm font-bold text-primary">{Math.round((filtered.filter(r => r.status === 'completed').length / totalRecords) * 100)}%</span>
-            </div>
-            <Progress value={(filtered.filter(r => r.status === 'completed').length / totalRecords) * 100} className="h-2" />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Monthly Distribution Bar Chart */}
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'التوزيع الشهري' : 'Monthly Distribution'}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={(() => {
-                const monthData = new Map<string, { month: string; count: number; completed: number; overdue: number }>();
-                filtered.forEach(r => {
-                  if (!r.plannedDate) return;
-                  const d = new Date(r.plannedDate);
-                  const monthNames = ar
-                    ? ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
-                    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                  const label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
-                  if (!monthData.has(key)) monthData.set(key, { month: label, count: 0, completed: 0, overdue: 0 });
-                  const entry = monthData.get(key)!;
-                  entry.count++;
-                  if (r.status === 'completed') entry.completed++;
-                  if (isOverdue(r.plannedDate) && r.status !== 'completed') entry.overdue++;
-                });
-                return [...monthData.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, v]) => v);
-              })()}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" fontSize={11} />
-                <YAxis fontSize={11} />
-                <Tooltip />
-                <Bar dataKey="count" name={ar ? 'الإجمالي' : 'Total'} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="completed" name={ar ? 'مكتمل' : 'Completed'} fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="overdue" name={ar ? 'متأخر' : 'Overdue'} fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Status Pie Chart */}
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'توزيع الحالات' : 'Status Distribution'}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={[
-                    { name: ar ? 'مكتمل' : 'Completed', value: filtered.filter(r => r.status === 'completed').length },
-                    { name: ar ? 'مسجل' : 'Enrolled', value: filtered.filter(r => r.status === 'enrolled').length },
-                    { name: ar ? 'راسب' : 'Failed', value: filtered.filter(r => r.status === 'failed').length },
-                  ].filter(d => d.value > 0)}
-                  cx="50%" cy="50%" outerRadius={80} dataKey="value" label
-                >
-                  <Cell fill="hsl(142, 76%, 36%)" />
-                  <Cell fill="hsl(var(--primary))" />
-                  <Cell fill="hsl(var(--destructive))" />
-                </Pie>
-                <Legend />
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Top Courses Bar Chart */}
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'أكثر الدورات' : 'Top Courses'}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart layout="vertical" data={(() => {
-                const courseMap = new Map<string, number>();
-                filtered.forEach(r => {
-                  const name = r.courseName || (ar ? 'غير محدد' : 'Unknown');
-                  courseMap.set(name, (courseMap.get(name) || 0) + 1);
-                });
-                return [...courseMap.entries()].sort(([, a], [, b]) => b - a).slice(0, 6).map(([name, count]) => ({ name: name.length > 20 ? name.substring(0, 20) + '...' : name, count }));
-              })()}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" fontSize={11} />
-                <YAxis type="category" dataKey="name" width={120} fontSize={10} />
-                <Tooltip />
-                <Bar dataKey="count" name={ar ? 'العدد' : 'Count'} fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Station Distribution */}
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'توزيع المحطات' : 'Station Distribution'}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={(() => {
-                const stMap = new Map<string, number>();
-                filtered.forEach(r => {
-                  const stObj = stations.find(s => s.id === r.station);
-                  const name = stObj ? (ar ? stObj.nameAr : stObj.nameEn) : '-';
-                  stMap.set(name, (stMap.get(name) || 0) + 1);
-                });
-                return [...stMap.entries()].sort(([, a], [, b]) => b - a).map(([name, count]) => ({ name, count }));
-              })()}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" fontSize={10} />
-                <YAxis fontSize={11} />
-                <Tooltip />
-                <Bar dataKey="count" name={ar ? 'العدد' : 'Count'} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Grouped Tables */}
+      {/* Grouped Tables FIRST */}
       {loading ? (
         <Card><CardContent className="p-10 text-center text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</CardContent></Card>
       ) : grouped.length === 0 ? (
@@ -514,6 +351,165 @@ export const TrainingPlan = () => {
           </Card>
         ))
       )}
+
+      {/* Stats Cards AFTER tables */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10"><CalendarDays className="h-5 w-5 text-primary" /></div>
+            <div><p className="text-2xl font-bold">{totalRecords}</p><p className="text-xs text-muted-foreground">{ar ? 'إجمالي السجلات' : 'Total Records'}</p></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10"><Users className="h-5 w-5 text-primary" /></div>
+            <div><p className="text-2xl font-bold">{uniqueEmployees}</p><p className="text-xs text-muted-foreground">{ar ? 'الموظفين' : 'Employees'}</p></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10"><BookOpen className="h-5 w-5 text-primary" /></div>
+            <div><p className="text-2xl font-bold">{uniqueCourses}</p><p className="text-xs text-muted-foreground">{ar ? 'الدورات' : 'Courses'}</p></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-stat-green/10"><CheckCircle2 className="h-5 w-5 text-stat-green" /></div>
+            <div><p className="text-2xl font-bold">{filtered.filter(r => r.status === 'completed').length}</p><p className="text-xs text-muted-foreground">{ar ? 'مكتمل' : 'Completed'}</p></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-muted"><Clock className="h-5 w-5 text-muted-foreground" /></div>
+            <div><p className="text-2xl font-bold">{filtered.filter(r => r.status === 'enrolled').length}</p><p className="text-xs text-muted-foreground">{ar ? 'مسجل' : 'Enrolled'}</p></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-destructive/10"><AlertTriangle className="h-5 w-5 text-destructive" /></div>
+            <div><p className="text-2xl font-bold">{overdueCount}</p><p className="text-xs text-muted-foreground">{ar ? 'متأخرة' : 'Overdue'}</p></div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Completion Progress */}
+      {totalRecords > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">{ar ? 'نسبة الإنجاز' : 'Completion Rate'}</span>
+              <span className="text-sm font-bold text-primary">{Math.round((filtered.filter(r => r.status === 'completed').length / totalRecords) * 100)}%</span>
+            </div>
+            <Progress value={(filtered.filter(r => r.status === 'completed').length / totalRecords) * 100} className="h-2" />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'التوزيع الشهري' : 'Monthly Distribution'}</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={(() => {
+                const monthData = new Map<string, { month: string; count: number; completed: number; overdue: number }>();
+                filtered.forEach(r => {
+                  if (!r.plannedDate) return;
+                  const d = new Date(r.plannedDate);
+                  const monthNames = ar
+                    ? ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+                    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                  const label = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+                  if (!monthData.has(key)) monthData.set(key, { month: label, count: 0, completed: 0, overdue: 0 });
+                  const entry = monthData.get(key)!;
+                  entry.count++;
+                  if (r.status === 'completed') entry.completed++;
+                  if (isOverdue(r.plannedDate) && r.status !== 'completed') entry.overdue++;
+                });
+                return [...monthData.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, v]) => v);
+              })()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" fontSize={11} />
+                <YAxis fontSize={11} />
+                <Tooltip />
+                <Bar dataKey="count" name={ar ? 'الإجمالي' : 'Total'} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="completed" name={ar ? 'مكتمل' : 'Completed'} fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="overdue" name={ar ? 'متأخر' : 'Overdue'} fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'توزيع الحالات' : 'Status Distribution'}</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: ar ? 'مكتمل' : 'Completed', value: filtered.filter(r => r.status === 'completed').length },
+                    { name: ar ? 'مسجل' : 'Enrolled', value: filtered.filter(r => r.status === 'enrolled').length },
+                    { name: ar ? 'راسب' : 'Failed', value: filtered.filter(r => r.status === 'failed').length },
+                  ].filter(d => d.value > 0)}
+                  cx="50%" cy="50%" outerRadius={80} dataKey="value" label
+                >
+                  <Cell fill="hsl(142, 76%, 36%)" />
+                  <Cell fill="hsl(var(--primary))" />
+                  <Cell fill="hsl(var(--destructive))" />
+                </Pie>
+                <Legend />
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'أكثر الدورات' : 'Top Courses'}</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart layout="vertical" data={(() => {
+                const courseMap = new Map<string, number>();
+                filtered.forEach(r => {
+                  const name = r.courseName || (ar ? 'غير محدد' : 'Unknown');
+                  courseMap.set(name, (courseMap.get(name) || 0) + 1);
+                });
+                return [...courseMap.entries()].sort(([, a], [, b]) => b - a).slice(0, 6).map(([name, count]) => ({ name: name.length > 20 ? name.substring(0, 20) + '...' : name, count }));
+              })()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" fontSize={11} />
+                <YAxis type="category" dataKey="name" width={120} fontSize={10} />
+                <Tooltip />
+                <Bar dataKey="count" name={ar ? 'العدد' : 'Count'} fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">{ar ? 'توزيع المحطات' : 'Station Distribution'}</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={(() => {
+                const stMap = new Map<string, number>();
+                filtered.forEach(r => {
+                  const stObj = stations.find(s => s.id === r.station);
+                  const name = stObj ? (ar ? stObj.nameAr : stObj.nameEn) : '-';
+                  stMap.set(name, (stMap.get(name) || 0) + 1);
+                });
+                return [...stMap.entries()].sort(([, a], [, b]) => b - a).map(([name, count]) => ({ name, count }));
+              })()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" fontSize={10} />
+                <YAxis fontSize={11} />
+                <Tooltip />
+                <Bar dataKey="count" name={ar ? 'العدد' : 'Count'} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
