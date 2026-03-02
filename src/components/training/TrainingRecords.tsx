@@ -96,8 +96,12 @@ export const TrainingRecords = () => {
       setProviderOptions(providers);
     };
     const fetchLocations = async () => {
-      const { data } = await supabase.from('planned_courses').select('location');
-      const locs = [...new Set((data || []).map((c: any) => c.location).filter(Boolean))] as string[];
+      const [{ data: d1 }, { data: d2 }] = await Promise.all([
+        supabase.from('planned_courses').select('location'),
+        supabase.from('training_records').select('location'),
+      ]);
+      const allLocs = [...(d1 || []), ...(d2 || [])].map((c: any) => c.location).filter(Boolean);
+      const locs = [...new Set(allLocs)] as string[];
       setLocationOptions(locs);
     };
     fetchCourses();
