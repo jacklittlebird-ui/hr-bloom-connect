@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAttendanceData, calculateWorkTime } from '@/contexts/AttendanceDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,22 +7,32 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Clock, Calendar, TrendingUp, LogIn, LogOut } from 'lucide-react';
+import { Clock, Calendar, TrendingUp, LogIn, LogOut, QrCode, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { getOrCreateDeviceId } from '@/lib/device';
+import QrScanner from '@/components/attendance/QrScanner';
 
 export const PortalAttendance = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { language, isRTL } = useLanguage();
+  const { session } = useAuth();
   const ar = language === 'ar';
   const { records, getEmployeeMonthlyRecords, getMonthlyStats, checkIn, checkOut } = useAttendanceData();
   const [month, setMonth] = useState(new Date().getMonth());
   const [year, setYear] = useState(new Date().getFullYear());
   const [currentTime, setCurrentTime] = useState(new Date());
   const [employeeName, setEmployeeName] = useState({ en: '', ar: '', dept: '' });
+
+  // QR Scanner state
+  const [qrMode, setQrMode] = useState(false);
+  const [qrEventType, setQrEventType] = useState<'check_in' | 'check_out'>('check_in');
+  const [qrStatus, setQrStatus] = useState<'idle' | 'scanning' | 'validating' | 'success' | 'error'>('idle');
+  const [qrMessage, setQrMessage] = useState('');
 
   // Fetch employee name for check-in
   useEffect(() => {
@@ -68,6 +78,60 @@ export const PortalAttendance = () => {
     checkOut(todayRecord.id);
     toast.success(ar ? 'تم تسجيل الانصراف بنجاح' : 'Check-out recorded successfully');
   };
+
+  // QR Scan handler
+  const onQrScan = useCallback(async (token: string) => {
+    if (qrStatus === 'validating') return;
+    setQrStatus('validating');
+
+    try {
+      const gps = await new Promise<{ lat?: number; lng?: number; accuracy?: number }>((resolve) => {
+        if (!navigator.geolocation) return resolve({});
+        navigator.geolocation.getCurrentPosition(
+          (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }),
+          () => resolve({}),
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      });
+
+      if (!session?.access_token) {
+        setQrStatus('error');
+        setQrMessage(ar ? 'يرجى تسجيل الدخول أولاً' : 'Please sign in first.');
+        return;
+      }
+
+      const device_id = getOrCreateDeviceId();
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/submit-scan`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ token, event_type: qrEventType, device_id, gps }),
+        }
+      );
+
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        setQrStatus('error');
+        setQrMessage(e.error ?? res.statusText);
+      } else {
+        setQrStatus('success');
+        setQrMessage(
+          qrEventType === 'check_in'
+            ? ar ? 'تم تسجيل الحضور بنجاح ✔' : 'Check-in recorded ✔'
+            : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
+        );
+      }
+    } catch (e: any) {
+      setQrStatus('error');
+      setQrMessage(e.message);
+    }
+  }, [qrStatus, session, qrEventType, ar]);
 
   const months = ar
     ? ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
@@ -172,7 +236,87 @@ export const PortalAttendance = () => {
         </CardContent>
       </Card>
 
-      {/* Stats */}
+      {/* QR Scanner Card */}
+      <Card className="border-primary/20">
+        <CardHeader className="pb-3">
+          <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+            <CardTitle className={cn("flex items-center gap-2 text-lg", isRTL && "flex-row-reverse")}>
+              <QrCode className="w-5 h-5 text-primary" />
+              {ar ? 'تسجيل حضور بـ QR' : 'QR Attendance'}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Event type toggle */}
+          <div className="flex gap-2 justify-center">
+            <Button
+              variant={qrEventType === 'check_in' ? 'default' : 'outline'}
+              onClick={() => setQrEventType('check_in')}
+              className="flex-1 max-w-[160px]"
+            >
+              <LogIn className="h-4 w-4 me-2" />
+              {ar ? 'حضور' : 'Check In'}
+            </Button>
+            <Button
+              variant={qrEventType === 'check_out' ? 'default' : 'outline'}
+              onClick={() => setQrEventType('check_out')}
+              className="flex-1 max-w-[160px]"
+            >
+              <LogOut className="h-4 w-4 me-2" />
+              {ar ? 'انصراف' : 'Check Out'}
+            </Button>
+          </div>
+
+          {/* Scanner area */}
+          {qrMode && qrStatus !== 'success' && qrStatus !== 'error' && qrStatus !== 'validating' && (
+            <div className="flex justify-center">
+              <QrScanner onScan={onQrScan} />
+            </div>
+          )}
+
+          {/* Status messages */}
+          {qrStatus === 'validating' && (
+            <div className="flex items-center justify-center gap-2 text-muted-foreground py-4">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              {ar ? 'جاري التحقق...' : 'Validating...'}
+            </div>
+          )}
+          {qrStatus === 'success' && (
+            <div className="flex items-center justify-center gap-2 text-success py-4">
+              <CheckCircle className="h-5 w-5" />
+              <span className="font-medium">{qrMessage}</span>
+            </div>
+          )}
+          {qrStatus === 'error' && (
+            <div className="flex items-center justify-center gap-2 text-destructive py-4">
+              <XCircle className="h-5 w-5" />
+              <span className="font-medium">{qrMessage}</span>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          {!qrMode && qrStatus === 'idle' && (
+            <Button
+              onClick={() => { setQrMode(true); setQrStatus('scanning'); setQrMessage(''); }}
+              className="w-full"
+              size="lg"
+            >
+              <QrCode className="h-5 w-5 me-2" />
+              {ar ? 'مسح رمز QR' : 'Scan QR Code'}
+            </Button>
+          )}
+          {(qrStatus === 'success' || qrStatus === 'error') && (
+            <Button
+              variant="outline"
+              onClick={() => { setQrStatus('idle'); setQrMessage(''); setQrMode(false); }}
+              className="w-full"
+            >
+              {ar ? 'مسح آخر' : 'Scan Again'}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
           { l: { ar: 'أيام العمل', en: 'Working' }, v: working, c: 'text-primary' },
