@@ -40,7 +40,7 @@ export const TrainingPlan = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { employees } = useEmployeeData();
-  const [records, setRecords] = useState<PlanRecord[]>([]);
+  const [rawRecords, setRawRecords] = useState<any[]>([]);
   const [filterDept, setFilterDept] = useState('all');
   const [filterStation, setFilterStation] = useState('all');
   const [viewMode, setViewMode] = useState<'month' | 'year'>('month');
@@ -58,55 +58,43 @@ export const TrainingPlan = () => {
     });
   }, []);
 
-  // Build employee lookup
-  const empMap = useMemo(() => {
-    const map = new Map<string, { name: string; code: string; deptId: string; stationId: string; deptCode: string }>();
-    employees.forEach(emp => {
-      map.set(emp.id, {
-        name: ar ? emp.nameAr : emp.nameEn,
-        code: emp.employeeId,
-        deptId: emp.departmentId || '',
-        stationId: emp.stationId || '',
-        deptCode: emp.deptCode || '',
-      });
-    });
-    return map;
-  }, [employees, ar]);
-
-  // Fetch training records that have planned_date
+  // Fetch raw training records (only once, not dependent on employees)
   useEffect(() => {
-    const fetch = async () => {
+    const fetchRecords = async () => {
       setLoading(true);
       const { data } = await supabase
         .from('training_records')
         .select('*, training_courses(name_en, name_ar, course_code, validity_years)')
         .not('planned_date', 'is', null);
-
-      const mapped: PlanRecord[] = (data || []).map((r: any) => {
-        const emp = empMap.get(r.employee_id);
-        return {
-          id: r.id,
-          employeeId: r.employee_id,
-          employeeName: emp?.name || r.employee_id,
-          employeeCode: emp?.code || '',
-          department: emp?.deptId || '',
-          station: emp?.stationId || '',
-          deptCode: emp?.deptCode || '',
-          courseId: r.course_id || '',
-          courseName: r.training_courses ? (ar ? r.training_courses.name_ar : r.training_courses.name_en) : '',
-          courseCode: r.training_courses?.course_code || '',
-          endDate: r.end_date || '',
-          plannedDate: r.planned_date || '',
-          validityYears: r.training_courses?.validity_years || 1,
-          status: r.status || 'enrolled',
-          hasCert: r.has_cert || false,
-        };
-      });
-      setRecords(mapped);
+      setRawRecords(data || []);
       setLoading(false);
     };
-    if (empMap.size > 0) fetch();
-  }, [empMap, ar]);
+    fetchRecords();
+  }, []);
+
+  // Build enriched records from raw data + current employee data (always up to date)
+  const records: PlanRecord[] = useMemo(() => {
+    return rawRecords.map((r: any) => {
+      const emp = employees.find(e => e.id === r.employee_id);
+      return {
+        id: r.id,
+        employeeId: r.employee_id,
+        employeeName: emp ? (ar ? emp.nameAr : emp.nameEn) : r.employee_id,
+        employeeCode: emp?.employeeId || '',
+        department: emp?.departmentId || '',
+        station: emp?.stationId || '',
+        deptCode: emp?.deptCode || '',
+        courseId: r.course_id || '',
+        courseName: r.training_courses ? (ar ? r.training_courses.name_ar : r.training_courses.name_en) : '',
+        courseCode: r.training_courses?.course_code || '',
+        endDate: r.end_date || '',
+        plannedDate: r.planned_date || '',
+        validityYears: r.training_courses?.validity_years || 1,
+        status: r.status || 'enrolled',
+        hasCert: r.has_cert || false,
+      };
+    });
+  }, [rawRecords, employees, ar]);
 
   // Filter records
   const filtered = useMemo(() => {
