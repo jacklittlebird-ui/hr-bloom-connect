@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Search, Plus, X, Calendar, Edit2 } from 'lucide-react';
+import { Search, Plus, X, Calendar, Edit2, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
@@ -43,6 +43,7 @@ interface TrainingRecord {
   hasCert?: boolean;
   hasCr?: boolean;
   plannedDate?: string;
+  isFavorite?: boolean;
 }
 
 interface CourseOption {
@@ -142,6 +143,7 @@ export const TrainingRecords = () => {
         hasCert: r.has_cert || false,
         hasCr: r.has_cr || false,
         plannedDate: r.planned_date || '',
+        isFavorite: r.is_favorite || false,
       })));
     };
     fetch();
@@ -192,7 +194,14 @@ export const TrainingRecords = () => {
       hasCert: r.has_cert || false,
       hasCr: r.has_cr || false,
       plannedDate: r.planned_date || '',
+      isFavorite: r.is_favorite || false,
     })));
+  };
+
+  const handleToggleFavorite = async (record: TrainingRecord) => {
+    const newVal = !record.isFavorite;
+    await supabase.from('training_records').update({ is_favorite: newVal } as any).eq('id', record.id);
+    setTrainingRecords(prev => prev.map(r => r.id === record.id ? { ...r, isFavorite: newVal } : r));
   };
 
   const handleDeleteRecord = async (id: string) => {
@@ -253,6 +262,7 @@ export const TrainingRecords = () => {
       hasCert: r.has_cert || false,
       hasCr: r.has_cr || false,
       plannedDate: r.planned_date || '',
+      isFavorite: r.is_favorite || false,
     })));
   };
 
@@ -364,8 +374,11 @@ export const TrainingRecords = () => {
                   <TableBody>
                     {trainingRecords.map(record => (
                       <TableRow key={record.id}>
-                        <TableCell>
+                         <TableCell>
                           <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleToggleFavorite(record)}>
+                              <Star className={cn("h-3.5 w-3.5", record.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
+                            </Button>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditRecord(record)}><Edit2 className="h-3 w-3" /></Button>
                             <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(record.id)}><X className="h-4 w-4" /></Button>
                           </div>

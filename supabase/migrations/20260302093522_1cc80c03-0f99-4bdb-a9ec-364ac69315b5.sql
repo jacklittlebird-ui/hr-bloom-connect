@@ -1,0 +1,1 @@
+ALTER TABLE public.training_records ADD COLUMN is_favorite boolean DEFAULT false;

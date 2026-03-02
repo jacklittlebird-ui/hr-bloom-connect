@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Printer, FileText, FileSpreadsheet, Users, BookOpen, Award, TrendingUp } from 'lucide-react';
+import { Printer, FileText, FileSpreadsheet, Users, BookOpen, Award, TrendingUp, Star } from 'lucide-react';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
@@ -30,6 +30,7 @@ interface ReportRecord {
   score: number | null;
   hasCert: boolean;
   plannedDate: string;
+  isFavorite: boolean;
 }
 
 export const TrainingRecordsReport = () => {
@@ -49,6 +50,7 @@ export const TrainingRecordsReport = () => {
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterProvider, setFilterProvider] = useState('all');
   const [filterYear, setFilterYear] = useState('all');
+  const [filterFavorite, setFilterFavorite] = useState('all');
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -86,6 +88,7 @@ export const TrainingRecordsReport = () => {
           score: r.score,
           hasCert: r.has_cert || false,
           plannedDate: r.planned_date || '',
+          isFavorite: r.is_favorite || false,
         };
       });
       setAllRecords(mapped);
@@ -120,9 +123,13 @@ export const TrainingRecordsReport = () => {
         const year = r.endDate ? r.endDate.substring(0, 4) : '';
         if (year !== filterYear) return false;
       }
+      if (filterFavorite !== 'all') {
+        if (filterFavorite === 'yes' && !r.isFavorite) return false;
+        if (filterFavorite === 'no' && r.isFavorite) return false;
+      }
       return true;
     });
-  }, [allRecords, filterStation, filterCourse, filterEmployee, filterDepartment, filterProvider, filterYear, stations, departments, ar]);
+  }, [allRecords, filterStation, filterCourse, filterEmployee, filterDepartment, filterProvider, filterYear, filterFavorite, stations, departments, ar]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -197,7 +204,7 @@ export const TrainingRecordsReport = () => {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             <Select value={filterStation} onValueChange={setFilterStation}>
               <SelectTrigger><SelectValue placeholder={ar ? 'المحطة' : 'Station'} /></SelectTrigger>
               <SelectContent>
@@ -240,6 +247,14 @@ export const TrainingRecordsReport = () => {
                 {yearOptions.map(y => (<SelectItem key={y} value={y}>{y}</SelectItem>))}
               </SelectContent>
             </Select>
+            <Select value={filterFavorite} onValueChange={setFilterFavorite}>
+              <SelectTrigger><SelectValue placeholder={ar ? 'المفضلة' : 'Favorites'} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                <SelectItem value="yes">{ar ? 'مفضل' : 'Favorites'}</SelectItem>
+                <SelectItem value="no">{ar ? 'غير مفضل' : 'Non-Favorites'}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -262,12 +277,13 @@ export const TrainingRecordsReport = () => {
                   <TableHead>{ar ? 'تاريخ النهاية' : 'End'}</TableHead>
                   <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
                   <TableHead>{ar ? 'الدرجة' : 'Score'}</TableHead>
-                  <TableHead>{ar ? 'شهادة' : 'Cert'}</TableHead>
-                </TableRow>
+                   <TableHead>{ar ? 'شهادة' : 'Cert'}</TableHead>
+                   <TableHead><Star className="h-4 w-4" /></TableHead>
+                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground py-8">{ar ? 'لا توجد سجلات' : 'No records found'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={14} className="text-center text-muted-foreground py-8">{ar ? 'لا توجد سجلات' : 'No records found'}</TableCell></TableRow>
                 ) : filtered.map((r, i) => (
                   <TableRow key={r.id}>
                     <TableCell className="text-muted-foreground">{i + 1}</TableCell>
@@ -282,6 +298,7 @@ export const TrainingRecordsReport = () => {
                     <TableCell>{getStatusBadge(r.status)}</TableCell>
                     <TableCell>{r.score != null ? `${r.score}%` : '-'}</TableCell>
                     <TableCell>{r.hasCert ? '✓' : '-'}</TableCell>
+                    <TableCell>{r.isFavorite ? <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" /> : '-'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

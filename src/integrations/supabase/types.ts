@@ -1449,6 +1449,7 @@ export type Database = {
           has_cert: boolean | null
           has_cr: boolean | null
           id: string
+          is_favorite: boolean | null
           location: string | null
           planned_date: string | null
           provider: string | null
@@ -1464,6 +1465,7 @@ export type Database = {
           has_cert?: boolean | null
           has_cr?: boolean | null
           id?: string
+          is_favorite?: boolean | null
           location?: string | null
           planned_date?: string | null
           provider?: string | null
@@ -1479,6 +1481,7 @@ export type Database = {
           has_cert?: boolean | null
           has_cr?: boolean | null
           id?: string
+          is_favorite?: boolean | null
           location?: string | null
           planned_date?: string | null
           provider?: string | null
