@@ -44,7 +44,7 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
         return String(d.getMonth() + 1).padStart(2, '0') === selectedMonth && String(d.getFullYear()) === selectedYear;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [attendanceLogs, employee.employeeId, selectedMonth, selectedYear]);
+  }, [attendanceLogs, employee.id, selectedMonth, selectedYear]);
 
   const summary = useMemo(() => {
     const present = filteredLogs.filter(l => l.checkIn).length;
