@@ -22,6 +22,7 @@ const AttendanceAdmin = () => {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
   const [stations, setStations] = useState<any[]>([]);
+  const [employeeMap, setEmployeeMap] = useState<Record<string, { name_ar: string; name_en: string; employee_code: string }>>({});
   const [loading, setLoading] = useState(true);
   const [addLocationOpen, setAddLocationOpen] = useState(false);
   const [newLocation, setNewLocation] = useState({
@@ -30,16 +31,26 @@ const AttendanceAdmin = () => {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [eventsRes, alertsRes, locationsRes, stationsRes] = await Promise.all([
+    const [eventsRes, alertsRes, locationsRes, stationsRes, empMapRes] = await Promise.all([
       supabase.from("attendance_events").select("*, employees(name_ar, name_en, employee_code)").order("scan_time", { ascending: false }).limit(200),
       supabase.from("device_alerts").select("*").order("triggered_at", { ascending: false }).limit(100),
       supabase.from("qr_locations").select("*, stations(name_ar, name_en)"),
       supabase.from("stations").select("id, name_ar, name_en").eq("is_active", true),
+      supabase.from("user_roles").select("user_id, employee_id, employees(name_ar, name_en, employee_code)").eq("role", "employee"),
     ]);
     if (eventsRes.data) setEvents(eventsRes.data);
     if (alertsRes.data) setAlerts(alertsRes.data);
     if (locationsRes.data) setLocations(locationsRes.data);
     if (stationsRes.data) setStations(stationsRes.data);
+    if (empMapRes.data) {
+      const map: Record<string, { name_ar: string; name_en: string; employee_code: string }> = {};
+      for (const r of empMapRes.data) {
+        if (r.user_id && (r as any).employees) {
+          map[r.user_id] = (r as any).employees;
+        }
+      }
+      setEmployeeMap(map);
+    }
     setLoading(false);
   };
 
@@ -166,6 +177,7 @@ const AttendanceAdmin = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>{ar ? "الموظف" : "Employee"}</TableHead>
                         <TableHead>{ar ? "السبب" : "Reason"}</TableHead>
                         <TableHead>{ar ? "الجهاز" : "Device"}</TableHead>
                         <TableHead>{ar ? "الوقت" : "Time"}</TableHead>
@@ -173,8 +185,14 @@ const AttendanceAdmin = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {alerts.map((al) => (
+                      {alerts.map((al) => {
+                        const emp = employeeMap[al.user_id];
+                        return (
                         <TableRow key={al.id}>
+                          <TableCell>
+                            <div>{ar ? emp?.name_ar : emp?.name_en || al.user_id?.substring(0, 8)}</div>
+                            {emp?.employee_code && <div className="text-xs text-muted-foreground">{emp.employee_code}</div>}
+                          </TableCell>
                           <TableCell>{alertReasonLabel(al.reason)}</TableCell>
                           <TableCell className="text-xs font-mono">
                             {al.device_id?.substring(0, 12)}...
@@ -186,10 +204,11 @@ const AttendanceAdmin = () => {
                             {al.meta ? JSON.stringify(al.meta) : "-"}
                           </TableCell>
                         </TableRow>
-                      ))}
+                        );
+                      })}
                       {alerts.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                          <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                             {ar ? "لا توجد تنبيهات" : "No alerts"}
                           </TableCell>
                         </TableRow>
