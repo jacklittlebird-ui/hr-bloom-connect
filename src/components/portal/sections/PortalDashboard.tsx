@@ -20,8 +20,8 @@ import QrScanner from '@/components/attendance/QrScanner';
 
 export const PortalDashboard = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
-  const { getEmployeeById } = useEmployeeData();
-  const employee = getEmployeeById(PORTAL_EMPLOYEE_ID);
+  const { getEmployee } = useEmployeeData();
+  const employee = getEmployee(PORTAL_EMPLOYEE_ID);
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { session } = useAuth();
