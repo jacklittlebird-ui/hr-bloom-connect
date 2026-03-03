@@ -152,7 +152,8 @@ export const PortalAttendance = () => {
     working++;
     if (date <= nowDate) pastWorking++;
   }
-  const rate = pastWorking > 0 ? ((stats.present / pastWorking) * 100).toFixed(1) : '0';
+  const totalActualHours = stats.totalHours + stats.totalMinutes / 60;
+  const rate = totalActualHours > 0 ? ((totalActualHours / 192) * 100).toFixed(1) : '0';
 
   const statusBadge = (s: string) => {
     const map: Record<string, { cls: string; ar: string; en: string }> = {
