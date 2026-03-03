@@ -288,7 +288,7 @@ export const PortalAttendance = () => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         {[
           { l: { ar: 'أيام العمل', en: 'Working' }, v: working, c: 'text-primary' },
           { l: { ar: 'حضور', en: 'Present' }, v: stats.present, c: 'text-success' },
@@ -329,8 +329,8 @@ export const PortalAttendance = () => {
             <span className="font-medium">{ar ? 'نسبة الحضور:' : 'Rate:'}</span>
             <Badge variant="outline" className="bg-success/10 text-success text-lg px-3">{rate}%</Badge>
           </div>
-          <div className="overflow-auto max-h-[400px]">
-            <Table>
+          <div className="overflow-x-auto max-h-[400px]">
+            <Table className="min-w-[500px]">
               <TableHeader><TableRow>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'التاريخ' : 'Date'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'اليوم' : 'Day'}</TableHead>

@@ -255,7 +255,8 @@ export const PortalSalary = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  <div className="overflow-x-auto">
+                  <Table className="min-w-[450px]">
                     <TableHeader><TableRow>
                       <TableHead className={cn(isRTL && "text-right")}>{ar ? 'رقم القرض' : 'Loan ID'}</TableHead>
                       <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المبلغ' : 'Amount'}</TableHead>
@@ -282,6 +283,7 @@ export const PortalSalary = () => {
                       </TableRow>
                     </TableBody>
                   </Table>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -296,7 +298,8 @@ export const PortalSalary = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="overflow-x-auto">
+                <Table className="min-w-[500px]">
                   <TableHeader><TableRow>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الشهر' : 'Month'}</TableHead>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الأساسي' : 'Basic'}</TableHead>
@@ -325,6 +328,7 @@ export const PortalSalary = () => {
                     )}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

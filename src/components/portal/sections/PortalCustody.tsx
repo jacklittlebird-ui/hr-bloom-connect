@@ -87,9 +87,9 @@ export const PortalCustody = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className={cn("text-2xl font-bold", isRTL && "text-right")}>{ar ? 'العهد والتعهدات' : 'Custody & Obligations'}</h1>
+      <h1 className={cn("text-xl md:text-2xl font-bold", isRTL && "text-right")}>{ar ? 'العهد والتعهدات' : 'Custody & Obligations'}</h1>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
         <Card><CardContent className="p-4 text-center">
           <CheckCircle className="w-6 h-6 mx-auto mb-1 text-primary" />
           <p className="text-2xl font-bold">{assigned}</p>
@@ -124,7 +124,8 @@ export const PortalCustody = () => {
               {assets.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">{ar ? 'لا توجد أصول معيّنة' : 'No assets assigned'}</p>
               ) : (
-                <Table>
+                <div className="overflow-x-auto">
+                <Table className="min-w-[500px]">
                   <TableHeader><TableRow>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الكود' : 'Code'}</TableHead>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الاسم' : 'Name'}</TableHead>
@@ -149,6 +150,7 @@ export const PortalCustody = () => {
                     })}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -165,7 +167,8 @@ export const PortalCustody = () => {
               {trainingDebts.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">{ar ? 'لا توجد مستحقات تدريب' : 'No training dues'}</p>
               ) : (
-                <Table>
+                <div className="overflow-x-auto">
+                <Table className="min-w-[450px]">
                   <TableHeader><TableRow>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الدورة' : 'Course'}</TableHead>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'تاريخ البداية' : 'Start'}</TableHead>
@@ -188,6 +191,7 @@ export const PortalCustody = () => {
                     })}
                   </TableBody>
                 </Table>
+                </div>
               )}
             </CardContent>
           </Card>

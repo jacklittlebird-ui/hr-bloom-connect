@@ -20,13 +20,13 @@ export const PortalUniforms = () => {
 
   return (
     <div className={cn("space-y-6", isRTL && "text-right")}>
-      <h2 className={cn("text-2xl font-bold flex items-center gap-2", isRTL && "flex-row-reverse")}>
-        <Shirt className="w-6 h-6 text-primary" />
+      <h2 className={cn("text-xl md:text-2xl font-bold flex items-center gap-2", isRTL && "flex-row-reverse")}>
+        <Shirt className="w-5 h-5 md:w-6 md:h-6 text-primary" />
         {language === 'ar' ? 'اليونيفورم' : 'Uniforms'}
       </h2>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-sm text-muted-foreground">{language === 'ar' ? 'عدد الأصناف' : 'Items'}</p>
@@ -70,7 +70,8 @@ export const PortalUniforms = () => {
               {language === 'ar' ? 'لا توجد أصناف يونيفورم حالياً' : 'No uniform items currently'}
             </p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[500px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'الصنف' : 'Type'}</TableHead>
@@ -103,6 +104,7 @@ export const PortalUniforms = () => {
                 })}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
