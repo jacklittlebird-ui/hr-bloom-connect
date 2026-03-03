@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 
 interface QrScannerProps {
   onScan: (token: string) => void;
@@ -6,15 +7,14 @@ interface QrScannerProps {
 
 const QrScanner = ({ onScan }: QrScannerProps) => {
   const [error, setError] = useState("");
-  const scannerRef = useRef<any>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+    const startScanner = async () => {
       try {
-        const { Html5Qrcode } = await import("html5-qrcode");
         if (!mounted) return;
         const scanner = new Html5Qrcode("qr-reader", /* verbose */ false);
         scannerRef.current = scanner;
@@ -40,7 +40,8 @@ const QrScanner = ({ onScan }: QrScannerProps) => {
       } catch (e: any) {
         if (mounted) setError(e?.message ?? "Camera error");
       }
-    })();
+    };
+    startScanner();
 
     return () => {
       mounted = false;
