@@ -35,6 +35,37 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Verify user role (admin or station_manager only)
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      });
+    }
+
+    const serviceClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: roleData } = await serviceClient
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .in("role", ["admin", "station_manager"])
+      .limit(1)
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(JSON.stringify({ error: "Forbidden: insufficient role" }), {
+        status: 403,
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      });
+    }
+
     const { location_id } = await req.json();
     if (!location_id) {
       return new Response(JSON.stringify({ error: "location_id required" }), {
