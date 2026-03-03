@@ -69,8 +69,20 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
         const wt = calculateWorkTime(ci, co);
         // Use DB values only if they are non-zero, otherwise use calculated values
         const hasDbHours = (r.work_hours != null && r.work_hours > 0) || (r.work_minutes != null && r.work_minutes > 0);
-        const finalHours = hasDbHours ? (r.work_hours ?? 0) : wt.hours;
-        const finalMinutes = hasDbHours ? (r.work_minutes ?? 0) : wt.minutes;
+        // Convert DB hours (which may be decimal like 8.33) to integer H:M
+        let finalHours: number;
+        let finalMinutes: number;
+        if (hasDbHours) {
+          const dbH = r.work_hours ?? 0;
+          const dbM = r.work_minutes ?? 0;
+          // If DB stores decimal hours (e.g. 8.33), convert to total minutes first
+          const totalMins = Math.round(dbH * 60 + dbM);
+          finalHours = Math.floor(totalMins / 60);
+          finalMinutes = totalMins % 60;
+        } else {
+          finalHours = wt.hours;
+          finalMinutes = wt.minutes;
+        }
         return {
           id: r.id,
           employeeId: r.employee_id,
