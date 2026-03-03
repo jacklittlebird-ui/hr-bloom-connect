@@ -28,20 +28,20 @@ export const PortalHeader = ({ onToggleSidebar }: PortalHeaderProps) => {
 
   return (
     <header className={cn(
-      "h-16 bg-card border-b border-border flex items-center justify-between px-4 sticky top-0 z-10",
+      "h-14 md:h-16 bg-card border-b border-border flex items-center justify-between px-3 md:px-4 sticky top-0 z-10",
       isRTL && "flex-row-reverse"
     )}>
-      <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-        <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="md:hidden">
+      <div className={cn("flex items-center gap-2 md:gap-3 min-w-0 flex-shrink", isRTL && "flex-row-reverse")}>
+        <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="md:hidden shrink-0">
           <Menu className="w-5 h-5" />
         </Button>
-        <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-            <User className="w-4 h-4 text-primary-foreground" />
+        <div className={cn("flex items-center gap-2 min-w-0", isRTL && "flex-row-reverse")}>
+          <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+            <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary-foreground" />
           </div>
-          <div className={isRTL ? "text-right" : ""}>
-            <p className="text-sm font-semibold leading-tight">{displayName}</p>
-            <p className="text-xs text-muted-foreground">{employeeId}</p>
+          <div className={cn("min-w-0", isRTL ? "text-right" : "")}>
+            <p className="text-xs md:text-sm font-semibold leading-tight truncate">{displayName}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground truncate">{employeeId}</p>
           </div>
         </div>
       </div>

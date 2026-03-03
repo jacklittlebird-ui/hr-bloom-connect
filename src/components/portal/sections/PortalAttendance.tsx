@@ -179,7 +179,7 @@ export const PortalAttendance = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className={cn("text-2xl font-bold", isRTL && "text-right")}>{ar ? 'الحضور والانصراف' : 'Attendance'}</h1>
+      <h1 className={cn("text-xl md:text-2xl font-bold", isRTL && "text-right")}>{ar ? 'الحضور والانصراف' : 'Attendance'}</h1>
 
       {/* QR Scanner Card - Centered */}
       <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
@@ -191,7 +191,7 @@ export const PortalAttendance = () => {
                 {currentTime.toLocaleDateString(ar ? 'ar-EG' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </span>
             </div>
-            <div className="text-3xl md:text-5xl font-bold text-primary font-mono">
+            <div className="text-2xl md:text-5xl font-bold text-primary font-mono">
               {formatTimeClock(currentTime)}
             </div>
 
@@ -296,28 +296,28 @@ export const PortalAttendance = () => {
           { l: { ar: 'غياب', en: 'Absent' }, v: stats.absent, c: 'text-destructive' },
           { l: { ar: 'إجمالي الساعات', en: 'Total Hours' }, v: `${String(stats.totalHours).padStart(2, '0')}:${String(stats.totalMinutes).padStart(2, '0')}`, c: '' },
         ].map((s, i) => (
-          <Card key={i}><CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">{ar ? s.l.ar : s.l.en}</p>
-            <p className={cn("text-2xl font-bold", s.c)}>{s.v}</p>
+          <Card key={i}><CardContent className="p-3 md:p-4 text-center">
+            <p className="text-xs md:text-sm text-muted-foreground truncate">{ar ? s.l.ar : s.l.en}</p>
+            <p className={cn("text-xl md:text-2xl font-bold", s.c)}>{s.v}</p>
           </CardContent></Card>
         ))}
       </div>
 
       {/* Monthly Record */}
       <Card>
-        <CardHeader>
-          <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
-            <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-              <Calendar className="w-5 h-5" />
+        <CardHeader className="p-3 md:p-6">
+          <div className={cn("flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2", isRTL && "sm:flex-row-reverse")}>
+            <CardTitle className={cn("flex items-center gap-2 text-base md:text-lg", isRTL && "flex-row-reverse")}>
+              <Calendar className="w-4 h-4 md:w-5 md:h-5" />
               {ar ? 'سجل الحضور الشهري' : 'Monthly Record'}
             </CardTitle>
             <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
               <Select value={month.toString()} onValueChange={v => setMonth(+v)}>
-                <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[100px] md:w-[120px] h-8 text-xs md:text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>{months.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}</SelectContent>
               </Select>
               <Select value={year.toString()} onValueChange={v => setYear(+v)}>
-                <SelectTrigger className="w-[90px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[80px] md:w-[90px] h-8 text-xs md:text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>{[2024,2025,2026].map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
               </Select>
             </div>
