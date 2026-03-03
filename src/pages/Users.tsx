@@ -149,6 +149,10 @@ const Users = () => {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار المحطة' : 'Please select a station', variant: 'destructive' });
       return;
     }
+    if (form.role === 'employee' && !form.employee_code) {
+      toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار الموظف' : 'Please select an employee', variant: 'destructive' });
+      return;
+    }
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke('setup-user', {
@@ -494,7 +498,7 @@ const Users = () => {
             <div className="space-y-4">
               <div>
                 <Label>{isAr ? 'الاسم الكامل' : 'Full Name'} *</Label>
-                <Input value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} placeholder={isAr ? 'مثال: أحمد محمد' : 'e.g. Ahmed Mohamed'} />
+                <Input value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))} placeholder={isAr ? 'مثال: أحمد محمد' : 'e.g. Ahmed Mohamed'} disabled={form.role === 'employee' && !!form.employee_code} />
               </div>
               <div>
                 <Label>{isAr ? 'البريد الإلكتروني' : 'Email'} *</Label>
@@ -537,9 +541,16 @@ const Users = () => {
               )}
               {form.role === 'employee' && (
                 <div>
-                  <Label>{isAr ? 'رقم الموظف' : 'Employee Code'}</Label>
-                  <Select value={form.employee_code} onValueChange={v => setForm(f => ({ ...f, employee_code: v }))}>
-                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الموظف (اختياري)' : 'Select employee (optional)'} /></SelectTrigger>
+                  <Label>{isAr ? 'اختر الموظف' : 'Select Employee'} *</Label>
+                  <Select value={form.employee_code} onValueChange={v => {
+                    const emp = employees.find(e => e.employee_code === v);
+                    setForm(f => ({
+                      ...f,
+                      employee_code: v,
+                      full_name: emp ? (isAr ? emp.name_ar : emp.name_en) : f.full_name,
+                    }));
+                  }}>
+                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الموظف' : 'Select employee'} /></SelectTrigger>
                     <SelectContent>
                       {employees.map(e => (<SelectItem key={e.employee_code} value={e.employee_code}>{e.employee_code} — {isAr ? e.name_ar : e.name_en}</SelectItem>))}
                     </SelectContent>
