@@ -75,6 +75,12 @@ const Users = () => {
   const [selectedProfileId, setSelectedProfileId] = useState('');
   const [customModules, setCustomModules] = useState<string[]>([]);
 
+  // Edit user dialog
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
+  const [editForm, setEditForm] = useState({ full_name: '', email: '' });
+  const [saving, setSaving] = useState(false);
+
   // Profile management dialog
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<PermissionProfile | null>(null);
@@ -270,6 +276,28 @@ const Users = () => {
     setProfileForm(f => ({ ...f, modules: f.modules.includes(key) ? f.modules.filter(m => m !== key) : [...f.modules, key] }));
   };
 
+  // ========== EDIT USER ==========
+  const openEditUser = (user: SystemUser) => {
+    setEditingUser(user);
+    setEditForm({ full_name: user.full_name, email: user.email });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditUser = async () => {
+    if (!editingUser || !editForm.full_name) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('profiles').update({ full_name: editForm.full_name }).eq('id', editingUser.user_id);
+      if (error) throw error;
+      toast({ title: isAr ? 'تم التحديث' : 'Updated', description: isAr ? 'تم تحديث بيانات المستخدم' : 'User data updated' });
+      setEditDialogOpen(false);
+      fetchAll();
+    } catch (err: any) {
+      toast({ title: isAr ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
+    }
+    setSaving(false);
+  };
+
   // ========== HELPERS ==========
   const filtered = users.filter(u =>
     u.full_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -412,19 +440,23 @@ const Users = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          {user.role !== 'admin' && (user.permission_profile_id || (user.custom_modules && user.custom_modules.length > 0)) ? (
-                            <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
-                              <Button variant="ghost" size="sm" onClick={() => openPermDialog(user)} className="gap-1">
-                                <Edit className="w-4 h-4" />
-                                {isAr ? 'تعديل الصلاحيات' : 'Edit Permissions'}
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button variant="ghost" size="sm" onClick={() => openPermDialog(user)} className="gap-1" disabled={user.role === 'admin'}>
-                              <Shield className="w-4 h-4" />
-                              {user.role === 'admin' ? (isAr ? 'وصول كامل' : 'Full Access') : (isAr ? 'تعيين صلاحيات' : 'Assign Permissions')}
+                          <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                            <Button variant="ghost" size="sm" onClick={() => openEditUser(user)} className="gap-1">
+                              <Edit className="w-4 h-4" />
+                              {isAr ? 'تعديل' : 'Edit'}
                             </Button>
-                          )}
+                            {user.role !== 'admin' && (user.permission_profile_id || (user.custom_modules && user.custom_modules.length > 0)) ? (
+                              <Button variant="ghost" size="sm" onClick={() => openPermDialog(user)} className="gap-1">
+                                <Shield className="w-4 h-4" />
+                                {isAr ? 'الصلاحيات' : 'Permissions'}
+                              </Button>
+                            ) : (
+                              <Button variant="ghost" size="sm" onClick={() => openPermDialog(user)} className="gap-1" disabled={user.role === 'admin'}>
+                                <Shield className="w-4 h-4" />
+                                {user.role === 'admin' ? (isAr ? 'وصول كامل' : 'Full Access') : (isAr ? 'صلاحيات' : 'Permissions')}
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -488,6 +520,35 @@ const Users = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* ========== EDIT USER DIALOG ========== */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{isAr ? 'تعديل بيانات المستخدم' : 'Edit User'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>{isAr ? 'الاسم الكامل' : 'Full Name'} *</Label>
+                <Input value={editForm.full_name} onChange={e => setEditForm(f => ({ ...f, full_name: e.target.value }))} />
+              </div>
+              <div>
+                <Label>{isAr ? 'البريد الإلكتروني' : 'Email'}</Label>
+                <Input value={editForm.email} disabled dir="ltr" className="text-left bg-muted" />
+              </div>
+              {editingUser && (
+                <div>
+                  <Label>{isAr ? 'الدور' : 'Role'}</Label>
+                  <div className="mt-1">{getRoleBadge(editingUser.role)}</div>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+              <Button onClick={handleEditUser} disabled={saving}>{saving ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ' : 'Save')}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* ========== CREATE USER DIALOG ========== */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
