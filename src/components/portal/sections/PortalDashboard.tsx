@@ -149,46 +149,54 @@ export const PortalDashboard = () => {
               {formatTimeClock(currentTime)}
             </div>
 
-            {/* Status indicator */}
-            {hasCheckedIn && !hasCheckedOut && (
-              <div className="inline-flex items-center gap-2 px-3 py-2 bg-success/10 border border-success/20 rounded-lg">
-                <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                <span className="text-success font-medium text-sm md:text-base">
-                  {ar ? `تم الحضور في ${todayRecord?.checkIn}` : `Checked in at ${todayRecord?.checkIn}`}
-                </span>
-              </div>
-            )}
-            {hasCheckedIn && hasCheckedOut && (
-              <div className="inline-flex items-center gap-2 px-3 py-2 bg-muted border border-border rounded-lg">
-                <span className="text-muted-foreground font-medium text-sm md:text-base">
-                  {ar ? `حضور: ${todayRecord?.checkIn} — انصراف: ${todayRecord?.checkOut}` : `In: ${todayRecord?.checkIn} — Out: ${todayRecord?.checkOut}`}
-                </span>
-              </div>
-            )}
-
-            {/* Event type toggle */}
-            <div className="flex gap-2 justify-center">
+            {/* Check-in button + timestamp */}
+            <div className="space-y-2">
               <Button
-                variant={qrEventType === 'check_in' ? 'default' : 'outline'}
-                onClick={() => setQrEventType('check_in')}
-                className="flex-1 max-w-[160px]"
+                onClick={() => {
+                  setQrEventType('check_in');
+                  setQrMode(true);
+                  setQrStatus('scanning');
+                  setQrMessage('');
+                }}
+                className="w-full max-w-[320px] mx-auto"
                 size="lg"
+                disabled={hasCheckedIn && !hasCheckedOut}
               >
-                <LogIn className="h-4 w-4 me-2" />
-                {ar ? 'حضور' : 'Check In'}
+                <LogIn className="h-5 w-5 me-2" />
+                {ar ? 'تسجيل الحضور' : 'Check In'}
               </Button>
-              <Button
-                variant={qrEventType === 'check_out' ? 'default' : 'outline'}
-                onClick={() => setQrEventType('check_out')}
-                className="flex-1 max-w-[160px]"
-                size="lg"
-              >
-                <LogOut className="h-4 w-4 me-2" />
-                {ar ? 'انصراف' : 'Check Out'}
-              </Button>
+              {hasCheckedIn && todayRecord?.checkIn && (
+                <p className="text-sm font-medium text-success">
+                  {ar ? `✔ تم الحضور في ${todayRecord.checkIn}` : `✔ Checked in at ${todayRecord.checkIn}`}
+                </p>
+              )}
             </div>
 
-            {/* Scanner area - centered */}
+            {/* Check-out button + timestamp */}
+            <div className="space-y-2">
+              <Button
+                onClick={() => {
+                  setQrEventType('check_out');
+                  setQrMode(true);
+                  setQrStatus('scanning');
+                  setQrMessage('');
+                }}
+                className="w-full max-w-[320px] mx-auto"
+                size="lg"
+                variant="outline"
+                disabled={!hasCheckedIn || hasCheckedOut}
+              >
+                <LogOut className="h-5 w-5 me-2" />
+                {ar ? 'تسجيل الانصراف' : 'Check Out'}
+              </Button>
+              {hasCheckedOut && todayRecord?.checkOut && (
+                <p className="text-sm font-medium text-muted-foreground">
+                  {ar ? `✔ تم الانصراف في ${todayRecord.checkOut}` : `✔ Checked out at ${todayRecord.checkOut}`}
+                </p>
+              )}
+            </div>
+
+            {/* Scanner area */}
             {qrMode && qrStatus !== 'success' && qrStatus !== 'error' && qrStatus !== 'validating' && (
               <div className="flex justify-center">
                 <div className="w-full max-w-[300px]">
@@ -217,24 +225,13 @@ export const PortalDashboard = () => {
               </div>
             )}
 
-            {/* Action buttons */}
-            {!qrMode && qrStatus === 'idle' && (
-              <Button
-                onClick={() => { setQrMode(true); setQrStatus('scanning'); setQrMessage(''); }}
-                className="w-full max-w-[320px] mx-auto"
-                size="lg"
-              >
-                <QrCode className="h-5 w-5 me-2" />
-                {ar ? 'مسح رمز QR للتسجيل' : 'Scan QR Code'}
-              </Button>
-            )}
             {(qrStatus === 'success' || qrStatus === 'error') && (
               <Button
                 variant="outline"
                 onClick={() => { setQrStatus('idle'); setQrMessage(''); setQrMode(false); }}
                 className="w-full max-w-[320px] mx-auto"
               >
-                {ar ? 'مسح آخر' : 'Scan Again'}
+                {ar ? 'إغلاق' : 'Close'}
               </Button>
             )}
           </div>
