@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { QrCode, RefreshCw, MapPin, ShieldAlert, ShieldCheck, Loader2 } from "lucide-react";
+import { QrCode, RefreshCw, MapPin, ShieldAlert, ShieldCheck, Loader2, LogOut } from "lucide-react";
 import QRCode from "qrcode";
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -22,7 +22,7 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 const AttendanceKiosk = () => {
   const { language } = useLanguage();
-  const { session } = useAuth();
+  const { session, logout } = useAuth();
   const ar = language === "ar";
 
   const [qrSrc, setQrSrc] = useState("");
@@ -216,7 +216,16 @@ const AttendanceKiosk = () => {
       dir={ar ? "rtl" : "ltr"}
     >
       <Card className="w-full max-w-lg">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center relative">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { logout(); }}
+            className="absolute top-2 ltr:right-2 rtl:left-2 text-muted-foreground hover:text-destructive"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">{ar ? "خروج" : "Logout"}</span>
+          </Button>
           <div className="flex justify-center mb-2">
             <QrCode className="h-12 w-12 text-primary" />
           </div>
