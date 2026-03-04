@@ -65,6 +65,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   if (isAuthenticated) {
     if (user?.role === 'employee') return <Navigate to="/employee-portal" replace />;
     if (user?.role === 'station_manager') return <Navigate to="/station-manager" replace />;
+    if (user?.role === 'kiosk') return <Navigate to="/attendance/kiosk" replace />;
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
@@ -106,7 +107,7 @@ const AppRoutes = () => (
     
     {/* QR Attendance */}
     <Route path="/attendance/scan" element={<ProtectedRoute allowedRoles={['employee', 'station_manager', 'admin']}><AttendanceScan /></ProtectedRoute>} />
-    <Route path="/attendance/kiosk" element={<ProtectedRoute allowedRoles={['admin', 'station_manager']}><AttendanceKiosk /></ProtectedRoute>} />
+    <Route path="/attendance/kiosk" element={<ProtectedRoute allowedRoles={['admin', 'station_manager', 'kiosk']}><AttendanceKiosk /></ProtectedRoute>} />
     <Route path="/attendance/admin" element={<ProtectedRoute allowedRoles={['admin']}><AttendanceAdmin /></ProtectedRoute>} />
     
     <Route path="*" element={<NotFound />} />
