@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Shield, AlertTriangle, MapPin, Plus, RefreshCw, Smartphone, Trash2 } from "lucide-react";
+import { Shield, AlertTriangle, MapPin, Plus, RefreshCw, Smartphone, Trash2, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 
 const AttendanceAdmin = () => {
@@ -26,6 +26,8 @@ const AttendanceAdmin = () => {
   const [employeeMap, setEmployeeMap] = useState<Record<string, { name_ar: string; name_en: string; employee_code: string }>>({});
   const [loading, setLoading] = useState(true);
   const [addLocationOpen, setAddLocationOpen] = useState(false);
+  const [editLocationOpen, setEditLocationOpen] = useState(false);
+  const [editingLocation, setEditingLocation] = useState<any>(null);
   const [newLocation, setNewLocation] = useState({
     name_ar: "", name_en: "", station_id: "", latitude: "", longitude: "", radius_m: "150",
   });
@@ -74,6 +76,52 @@ const AttendanceAdmin = () => {
       toast.success(ar ? "تمت إضافة الموقع" : "Location added");
       setAddLocationOpen(false);
       setNewLocation({ name_ar: "", name_en: "", station_id: "", latitude: "", longitude: "", radius_m: "150" });
+      fetchAll();
+    }
+  };
+
+  const openEditLocation = (loc: any) => {
+    setEditingLocation({
+      id: loc.id,
+      name_ar: loc.name_ar,
+      name_en: loc.name_en,
+      station_id: loc.station_id || "",
+      latitude: loc.latitude?.toString() || "",
+      longitude: loc.longitude?.toString() || "",
+      radius_m: loc.radius_m?.toString() || "150",
+      is_active: loc.is_active,
+    });
+    setEditLocationOpen(true);
+  };
+
+  const handleEditLocation = async () => {
+    if (!editingLocation) return;
+    const { error } = await supabase.from("qr_locations").update({
+      name_ar: editingLocation.name_ar,
+      name_en: editingLocation.name_en,
+      station_id: editingLocation.station_id || null,
+      latitude: editingLocation.latitude ? parseFloat(editingLocation.latitude) : null,
+      longitude: editingLocation.longitude ? parseFloat(editingLocation.longitude) : null,
+      radius_m: parseInt(editingLocation.radius_m) || 150,
+      is_active: editingLocation.is_active,
+    }).eq("id", editingLocation.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(ar ? "تم تعديل الموقع" : "Location updated");
+      setEditLocationOpen(false);
+      setEditingLocation(null);
+      fetchAll();
+    }
+  };
+
+  const handleDeleteLocation = async (loc: any) => {
+    if (!window.confirm(ar ? `حذف الموقع "${loc.name_ar}"؟` : `Delete location "${loc.name_en}"?`)) return;
+    const { error } = await supabase.from("qr_locations").delete().eq("id", loc.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success(ar ? "تم حذف الموقع" : "Location deleted");
       fetchAll();
     }
   };
@@ -289,12 +337,13 @@ const AttendanceAdmin = () => {
               <CardContent>
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                     <TableRow>
                       <TableHead>{ar ? "الموقع" : "Location"}</TableHead>
                       <TableHead>{ar ? "المحطة" : "Station"}</TableHead>
                       <TableHead>{ar ? "الإحداثيات" : "Coordinates"}</TableHead>
                       <TableHead>{ar ? "النطاق" : "Radius"}</TableHead>
                       <TableHead>{ar ? "الحالة" : "Status"}</TableHead>
+                      <TableHead>{ar ? "إجراءات" : "Actions"}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -317,11 +366,21 @@ const AttendanceAdmin = () => {
                             {loc.is_active ? (ar ? "نشط" : "Active") : (ar ? "غير نشط" : "Inactive")}
                           </Badge>
                         </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditLocation(loc)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteLocation(loc)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {locations.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                           {ar ? "لا توجد مواقع" : "No locations configured"}
                         </TableCell>
                       </TableRow>
@@ -330,6 +389,59 @@ const AttendanceAdmin = () => {
                 </Table>
               </CardContent>
             </Card>
+
+            {/* Edit Location Dialog */}
+            <Dialog open={editLocationOpen} onOpenChange={setEditLocationOpen}>
+              <DialogContent dir={ar ? "rtl" : "ltr"}>
+                <DialogHeader>
+                  <DialogTitle>{ar ? "تعديل الموقع" : "Edit Location"}</DialogTitle>
+                </DialogHeader>
+                {editingLocation && (
+                  <div className="space-y-3">
+                    <div>
+                      <Label>{ar ? "الاسم بالعربي" : "Name (AR)"}</Label>
+                      <Input value={editingLocation.name_ar} onChange={(e) => setEditingLocation({ ...editingLocation, name_ar: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>{ar ? "الاسم بالإنجليزي" : "Name (EN)"}</Label>
+                      <Input value={editingLocation.name_en} onChange={(e) => setEditingLocation({ ...editingLocation, name_en: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>{ar ? "المحطة" : "Station"}</Label>
+                      <Select value={editingLocation.station_id} onValueChange={(v) => setEditingLocation({ ...editingLocation, station_id: v })}>
+                        <SelectTrigger><SelectValue placeholder={ar ? "اختر محطة" : "Select station"} /></SelectTrigger>
+                        <SelectContent>
+                          {stations.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>{ar ? s.name_ar : s.name_en}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label>{ar ? "خط العرض" : "Latitude"}</Label>
+                        <Input type="number" step="any" value={editingLocation.latitude} onChange={(e) => setEditingLocation({ ...editingLocation, latitude: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>{ar ? "خط الطول" : "Longitude"}</Label>
+                        <Input type="number" step="any" value={editingLocation.longitude} onChange={(e) => setEditingLocation({ ...editingLocation, longitude: e.target.value })} />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>{ar ? "نطاق الجيوفنس (متر)" : "Geofence Radius (m)"}</Label>
+                      <Input type="number" value={editingLocation.radius_m} onChange={(e) => setEditingLocation({ ...editingLocation, radius_m: e.target.value })} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label>{ar ? "نشط" : "Active"}</Label>
+                      <input type="checkbox" checked={editingLocation.is_active} onChange={(e) => setEditingLocation({ ...editingLocation, is_active: e.target.checked })} />
+                    </div>
+                    <Button onClick={handleEditLocation} className="w-full">
+                      {ar ? "حفظ التعديلات" : "Save Changes"}
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="devices">
