@@ -52,6 +52,7 @@ const EmployeePortal = () => {
   const [activeSection, setActiveSection] = useState<PortalSection>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);
@@ -90,8 +91,10 @@ const EmployeePortal = () => {
       setRefreshing(true);
       setPullDistance(50);
       setTimeout(() => {
-        window.location.reload();
-      }, 300);
+        setRefreshKey(k => k + 1);
+        setRefreshing(false);
+        setPullDistance(0);
+      }, 600);
     } else {
       setPullDistance(0);
     }
@@ -147,7 +150,7 @@ const EmployeePortal = () => {
             />
           </div>
           <div className="p-3 md:p-6">
-            <ActiveComponent />
+            <ActiveComponent key={refreshKey} />
           </div>
         </div>
       </div>
