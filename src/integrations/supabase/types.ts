@@ -1584,6 +1584,49 @@ export type Database = {
         }
         Relationships: []
       }
+      training_acknowledgments: {
+        Row: {
+          acknowledged_at: string
+          employee_id: string
+          id: string
+          training_record_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          employee_id: string
+          id?: string
+          training_record_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          employee_id?: string
+          id?: string
+          training_record_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_acknowledgments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_acknowledgments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_acknowledgments_training_record_id_fkey"
+            columns: ["training_record_id"]
+            isOneToOne: false
+            referencedRelation: "training_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_courses: {
         Row: {
           advanced_topics: string | null
@@ -1700,6 +1743,7 @@ export type Database = {
       }
       training_records: {
         Row: {
+          cost: number | null
           course_id: string | null
           created_at: string
           employee_id: string
@@ -1714,8 +1758,10 @@ export type Database = {
           score: number | null
           start_date: string | null
           status: string
+          total_cost: number | null
         }
         Insert: {
+          cost?: number | null
           course_id?: string | null
           created_at?: string
           employee_id: string
@@ -1730,8 +1776,10 @@ export type Database = {
           score?: number | null
           start_date?: string | null
           status?: string
+          total_cost?: number | null
         }
         Update: {
+          cost?: number | null
           course_id?: string | null
           created_at?: string
           employee_id?: string
@@ -1746,6 +1794,7 @@ export type Database = {
           score?: number | null
           start_date?: string | null
           status?: string
+          total_cost?: number | null
         }
         Relationships: [
           {
