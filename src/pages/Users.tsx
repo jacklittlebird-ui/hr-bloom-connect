@@ -304,6 +304,27 @@ const Users = () => {
     setSaving(false);
   };
 
+  // ========== DELETE USER ==========
+  const handleDeleteUser = async (user: SystemUser) => {
+    const confirmed = window.confirm(
+      isAr
+        ? `هل أنت متأكد من حذف المستخدم "${user.full_name}"؟ لا يمكن التراجع عن هذا الإجراء.`
+        : `Are you sure you want to delete "${user.full_name}"? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { user_id: user.user_id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: isAr ? 'تم الحذف' : 'Deleted', description: isAr ? 'تم حذف المستخدم بنجاح' : 'User deleted successfully' });
+      fetchAll();
+    } catch (err: any) {
+      toast({ title: isAr ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
+    }
+  };
+
   // ========== HELPERS ==========
   const filtered = users.filter(u =>
     u.full_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -462,6 +483,10 @@ const Users = () => {
                                 {user.role === 'admin' ? (isAr ? 'وصول كامل' : 'Full Access') : (isAr ? 'صلاحيات' : 'Permissions')}
                               </Button>
                             )}
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user)} className="gap-1 text-destructive hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                              {isAr ? 'حذف' : 'Delete'}
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
