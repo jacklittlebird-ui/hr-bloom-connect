@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAttendanceData } from '@/contexts/AttendanceDataContext';
+import { useReportExport } from '@/hooks/useReportExport';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { List, Search, Building2, MapPin } from 'lucide-react';
+import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const months = [
@@ -25,17 +27,29 @@ const months = [
   { value: '12', ar: 'ديسمبر', en: 'December' },
 ];
 
+const statusLabels: Record<string, { ar: string; en: string }> = {
+  present: { ar: 'حاضر', en: 'Present' },
+  absent: { ar: 'غائب', en: 'Absent' },
+  late: { ar: 'متأخر', en: 'Late' },
+  'early-leave': { ar: 'انصراف مبكر', en: 'Early Leave' },
+  'on-leave': { ar: 'إجازة', en: 'On Leave' },
+  mission: { ar: 'مأمورية', en: 'Mission' },
+  weekend: { ar: 'عطلة', en: 'Weekend' },
+};
+
 interface Station { id: string; name_ar: string; name_en: string; }
 interface Department { id: string; name_ar: string; name_en: string; }
 
 export const AttendanceList = () => {
-  const { t, isRTL, language } = useLanguage();
+  const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
   const { records } = useAttendanceData();
+  const { reportRef, handlePrint, exportBilingualPDF, exportBilingualCSV } = useReportExport();
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1).padStart(2, '0'));
   const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
+  const [selectedDay, setSelectedDay] = useState('all');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,6 +61,14 @@ export const AttendanceList = () => {
   const [employeeDeptMap, setEmployeeDeptMap] = useState<Record<string, string>>({});
 
   const years = Array.from({ length: 3 }, (_, i) => String(now.getFullYear() - i));
+
+  // Generate days for selected month/year
+  const daysInMonth = useMemo(() => {
+    const y = parseInt(selectedYear);
+    const m = parseInt(selectedMonth);
+    const count = new Date(y, m, 0).getDate();
+    return Array.from({ length: count }, (_, i) => String(i + 1).padStart(2, '0'));
+  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     const fetchMeta = async () => {
@@ -78,6 +100,11 @@ export const AttendanceList = () => {
       const yearMatch = String(d.getFullYear()) === selectedYear;
       if (!monthMatch || !yearMatch) return false;
 
+      if (selectedDay !== 'all') {
+        const dayMatch = String(d.getDate()).padStart(2, '0') === selectedDay;
+        if (!dayMatch) return false;
+      }
+
       if (selectedStation !== 'all') {
         const empStation = employeeStationMap[r.employeeId];
         if (empStation !== selectedStation) return false;
@@ -97,7 +124,7 @@ export const AttendanceList = () => {
 
       return true;
     }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [records, selectedMonth, selectedYear, selectedStation, selectedDept, statusFilter, searchTerm, employeeStationMap, employeeDeptMap]);
+  }, [records, selectedMonth, selectedYear, selectedDay, selectedStation, selectedDept, statusFilter, searchTerm, employeeStationMap, employeeDeptMap]);
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
@@ -109,18 +136,9 @@ export const AttendanceList = () => {
       mission: 'bg-purple-100 text-purple-700 border-purple-300',
       weekend: 'bg-muted text-muted-foreground border-border',
     };
-    const labels: Record<string, { ar: string; en: string }> = {
-      present: { ar: 'حاضر', en: 'Present' },
-      absent: { ar: 'غائب', en: 'Absent' },
-      late: { ar: 'متأخر', en: 'Late' },
-      'early-leave': { ar: 'انصراف مبكر', en: 'Early Leave' },
-      'on-leave': { ar: 'إجازة', en: 'On Leave' },
-      mission: { ar: 'مأمورية', en: 'Mission' },
-      weekend: { ar: 'عطلة', en: 'Weekend' },
-    };
     return (
       <Badge variant="outline" className={styles[status] || ''}>
-        {ar ? labels[status]?.ar || status : labels[status]?.en || status}
+        {ar ? statusLabels[status]?.ar || status : statusLabels[status]?.en || status}
       </Badge>
     );
   };
@@ -136,13 +154,65 @@ export const AttendanceList = () => {
     return `${hours}:${String(minutes).padStart(2, '0')}`;
   };
 
+  const getStatusText = (status: string) => statusLabels[status]?.ar || status;
+  const getStatusTextEn = (status: string) => statusLabels[status]?.en || status;
+
+  // Export columns
+  const exportColumns = [
+    { headerAr: 'التاريخ', headerEn: 'Date', key: 'date' },
+    { headerAr: 'الموظف (عربي)', headerEn: 'Employee (AR)', key: 'employeeNameAr' },
+    { headerAr: 'الموظف (إنجليزي)', headerEn: 'Employee (EN)', key: 'employeeName' },
+    { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
+    { headerAr: 'الحضور', headerEn: 'Check In', key: 'checkIn' },
+    { headerAr: 'الانصراف', headerEn: 'Check Out', key: 'checkOut' },
+    { headerAr: 'ساعات العمل', headerEn: 'Work Hours', key: 'workTime' },
+    { headerAr: 'الحالة', headerEn: 'Status', key: 'status' },
+  ];
+
+  const getExportData = () => filteredRecords.map(r => ({
+    date: r.date,
+    employeeNameAr: r.employeeNameAr,
+    employeeName: r.employeeName,
+    department: getDeptName(r.employeeId),
+    checkIn: r.checkIn || '-',
+    checkOut: r.checkOut || '-',
+    workTime: formatWorkTime(r.workHours, r.workMinutes),
+    status: `${getStatusText(r.status)} / ${getStatusTextEn(r.status)}`,
+  }));
+
+  const monthLabel = months.find(m => m.value === selectedMonth);
+  const reportTitle = {
+    ar: `سجل الحضور والانصراف - ${monthLabel?.ar} ${selectedYear}`,
+    en: `Attendance Records - ${monthLabel?.en} ${selectedYear}`,
+  };
+
+  const onPrint = () => handlePrint(ar ? reportTitle.ar : reportTitle.en);
+  const onPDF = () => exportBilingualPDF({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
+  const onExcel = () => exportBilingualCSV({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <List className="w-5 h-5" />
-          {ar ? 'سجل الحضور والانصراف' : 'Attendance Records'}
-        </CardTitle>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <CardTitle className="flex items-center gap-2">
+            <List className="w-5 h-5" />
+            {ar ? 'سجل الحضور والانصراف' : 'Attendance Records'}
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={onPrint} className="gap-1.5">
+              <Printer className="w-4 h-4" />
+              {ar ? 'طباعة' : 'Print'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={onPDF} className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5">
+              <FileText className="w-4 h-4" />
+              PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={onExcel} className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5">
+              <FileSpreadsheet className="w-4 h-4" />
+              Excel
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {/* Filters */}
@@ -187,11 +257,25 @@ export const AttendanceList = () => {
           </Select>
 
           {/* Month */}
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+          <Select value={selectedMonth} onValueChange={(v) => { setSelectedMonth(v); setSelectedDay('all'); }}>
             <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               {months.map(m => (
                 <SelectItem key={m.value} value={m.value}>{ar ? m.ar : m.en}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Day */}
+          <Select value={selectedDay} onValueChange={setSelectedDay}>
+            <SelectTrigger className="w-[100px]">
+              <CalendarDays className="w-4 h-4 shrink-0 opacity-50" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{ar ? 'كل الأيام' : 'All Days'}</SelectItem>
+              {daysInMonth.map(d => (
+                <SelectItem key={d} value={d}>{d}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -225,7 +309,7 @@ export const AttendanceList = () => {
         </p>
 
         {/* Table */}
-        <div className="rounded-md border">
+        <div className="rounded-md border" ref={reportRef}>
           <Table>
             <TableHeader>
               <TableRow>
