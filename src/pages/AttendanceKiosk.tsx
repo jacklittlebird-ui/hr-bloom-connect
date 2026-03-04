@@ -212,7 +212,7 @@ const AttendanceKiosk = () => {
 
   return (
     <div
-      className="min-h-screen bg-background flex items-center justify-center p-4"
+      className="min-h-screen bg-background flex items-center justify-center p-4 font-arabic"
       dir={ar ? "rtl" : "ltr"}
     >
       <Card className="w-full max-w-lg">
