@@ -28,6 +28,11 @@ interface TrainingDebt {
   startDate: string;
   endDate: string;
   score: number | null;
+  cost: number;
+  totalCost: number;
+  plannedDate: string;
+  provider: string;
+  validityYears: number;
 }
 
 export const PortalCustody = () => {
@@ -53,11 +58,18 @@ export const PortalCustody = () => {
     const fetchTraining = async () => {
       const { data } = await supabase
         .from('training_records')
-        .select('*, training_courses(name_ar, name_en)')
+        .select('*, training_courses(name_ar, name_en, validity_years)')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
-        .in('status', ['enrolled', 'failed']);
+        .gt('total_cost', 0);
       if (data) {
-        setTrainingDebts(data.map(t => ({
+        const now = new Date();
+        const filtered = data.filter((t: any) => {
+          if (!t.planned_date) return true;
+          const expiryDate = new Date(t.planned_date);
+          expiryDate.setMonth(expiryDate.getMonth() + 1);
+          return now <= expiryDate;
+        });
+        setTrainingDebts(filtered.map((t: any) => ({
           id: t.id,
           courseNameAr: (t.training_courses as any)?.name_ar || '',
           courseNameEn: (t.training_courses as any)?.name_en || '',
@@ -65,6 +77,11 @@ export const PortalCustody = () => {
           startDate: t.start_date || '',
           endDate: t.end_date || '',
           score: t.score,
+          cost: t.cost || 0,
+          totalCost: t.total_cost || 0,
+          plannedDate: t.planned_date || '',
+          provider: t.provider || '',
+          validityYears: (t.training_courses as any)?.validity_years || 1,
         })));
       }
     };
@@ -83,6 +100,7 @@ export const PortalCustody = () => {
   const statusMap: Record<string, { ar: string; cls: string }> = {
     enrolled: { ar: 'قيد التدريب', cls: 'bg-warning/10 text-warning border-warning' },
     failed: { ar: 'لم يجتاز', cls: 'bg-destructive/10 text-destructive border-destructive' },
+    completed: { ar: 'مكتمل', cls: 'bg-primary/10 text-primary border-primary' },
   };
 
   return (
@@ -171,10 +189,11 @@ export const PortalCustody = () => {
                 <Table className="min-w-[450px]">
                   <TableHeader><TableRow>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الدورة' : 'Course'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'تاريخ البداية' : 'Start'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'تاريخ النهاية' : 'End'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الدرجة' : 'Score'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحالة' : 'Status'}</TableHead>
+                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'تاريخ البداية' : 'Start'}</TableHead>
+                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'تاريخ النهاية' : 'End'}</TableHead>
+                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'قيمة الدورة' : 'Value'}</TableHead>
+                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'تكاليف الدورة' : 'Costs'}</TableHead>
+                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحالة' : 'Status'}</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {trainingDebts.map(t => {
@@ -184,7 +203,8 @@ export const PortalCustody = () => {
                           <TableCell className="font-medium">{ar ? t.courseNameAr : t.courseNameEn}</TableCell>
                           <TableCell>{t.startDate || '—'}</TableCell>
                           <TableCell>{t.endDate || '—'}</TableCell>
-                          <TableCell>{t.score ?? '—'}</TableCell>
+                          <TableCell>{t.cost ? t.cost.toLocaleString() : '—'}</TableCell>
+                          <TableCell className="font-semibold">{t.totalCost ? t.totalCost.toLocaleString() : '—'}</TableCell>
                           <TableCell><Badge variant="outline" className={s.cls}>{ar ? s.ar : t.status}</Badge></TableCell>
                         </TableRow>
                       );
