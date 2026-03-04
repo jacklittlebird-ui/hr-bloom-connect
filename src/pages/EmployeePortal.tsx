@@ -54,22 +54,48 @@ const EmployeePortal = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Pull-to-refresh
-  const mainRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
+  const [pullDistance, setPullDistance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const isPulling = useRef(false);
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartY.current = e.touches[0].clientY;
-  }, []);
-
-  const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (!mainRef.current || refreshing) return;
-    const dy = e.changedTouches[0].clientY - touchStartY.current;
-    if (dy > 100 && mainRef.current.scrollTop <= 0) {
-      setRefreshing(true);
-      window.location.reload();
+    const el = mainRef.current;
+    if (!el || refreshing) return;
+    if (el.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+      isPulling.current = true;
     }
   }, [refreshing]);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isPulling.current || refreshing) return;
+    const el = mainRef.current;
+    if (!el || el.scrollTop > 0) {
+      isPulling.current = false;
+      setPullDistance(0);
+      return;
+    }
+    const dy = e.touches[0].clientY - touchStartY.current;
+    if (dy > 0) {
+      setPullDistance(Math.min(dy * 0.4, 80));
+    }
+  }, [refreshing]);
+
+  const onTouchEnd = useCallback(() => {
+    if (!isPulling.current) return;
+    isPulling.current = false;
+    if (pullDistance > 60 && !refreshing) {
+      setRefreshing(true);
+      setPullDistance(50);
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
+    } else {
+      setPullDistance(0);
+    }
+  }, [pullDistance, refreshing]);
 
   const ActiveComponent = sectionComponents[activeSection];
 
@@ -97,19 +123,33 @@ const EmployeePortal = () => {
             setSidebarCollapsed(!sidebarCollapsed);
           }
         }} />
-        <main
+        <div
           ref={mainRef}
           onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
-          className="flex-1 p-3 md:p-6 overflow-auto min-w-0"
+          className="flex-1 overflow-auto min-w-0 relative"
+          style={{ overscrollBehavior: 'none' }}
         >
-          {refreshing && (
-            <div className="flex justify-center py-3">
-              <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-          <ActiveComponent />
-        </main>
+          {/* Pull-to-refresh indicator */}
+          <div
+            className="flex justify-center items-center overflow-hidden transition-all duration-200"
+            style={{ height: pullDistance > 0 || refreshing ? `${pullDistance}px` : '0px' }}
+          >
+            <div className={cn(
+              "w-6 h-6 border-2 border-primary border-t-transparent rounded-full",
+              refreshing ? "animate-spin" : pullDistance > 60 ? "text-primary" : "opacity-50"
+            )}
+            style={{
+              transform: refreshing ? undefined : `rotate(${pullDistance * 3}deg)`,
+              transition: 'transform 0.1s'
+            }}
+            />
+          </div>
+          <div className="p-3 md:p-6">
+            <ActiveComponent />
+          </div>
+        </div>
       </div>
     </div>
   );
