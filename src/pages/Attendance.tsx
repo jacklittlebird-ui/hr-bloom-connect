@@ -261,7 +261,7 @@ const Attendance = () => {
           </TabsContent>
 
           <TabsContent value="list">
-            <AttendanceList records={attendanceRecords} />
+            <AttendanceList />
           </TabsContent>
 
           <TabsContent value="late">
