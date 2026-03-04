@@ -78,7 +78,7 @@ const Users = () => {
   // Edit user dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', email: '', role: '' as string, station_code: '', employee_code: '' });
   const [saving, setSaving] = useState(false);
 
   // Profile management dialog
@@ -279,7 +279,13 @@ const Users = () => {
   // ========== EDIT USER ==========
   const openEditUser = (user: SystemUser) => {
     setEditingUser(user);
-    setEditForm({ full_name: user.full_name, email: user.email });
+    setEditForm({
+      full_name: user.full_name,
+      email: user.email,
+      role: user.role,
+      station_code: user.station_code || '',
+      employee_code: user.employee_code || '',
+    });
     setEditDialogOpen(true);
   };
 
@@ -530,16 +536,53 @@ const Users = () => {
             <div className="space-y-4">
               <div>
                 <Label>{isAr ? 'الاسم الكامل' : 'Full Name'} *</Label>
-                <Input value={editForm.full_name} onChange={e => setEditForm(f => ({ ...f, full_name: e.target.value }))} />
+                <Input
+                  value={editForm.full_name}
+                  onChange={e => setEditForm(f => ({ ...f, full_name: e.target.value }))}
+                  disabled={editForm.role === 'employee' && !!editForm.employee_code}
+                />
               </div>
               <div>
                 <Label>{isAr ? 'البريد الإلكتروني' : 'Email'}</Label>
                 <Input value={editForm.email} disabled dir="ltr" className="text-left bg-muted" />
               </div>
-              {editingUser && (
+              <div>
+                <Label>{isAr ? 'الدور' : 'Role'}</Label>
+                <Input
+                  value={editForm.role === 'admin' ? (isAr ? 'مدير النظام' : 'Admin') : editForm.role === 'station_manager' ? (isAr ? 'مدير محطة' : 'Station Manager') : (isAr ? 'موظف' : 'Employee')}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+              {editForm.role === 'station_manager' && (
                 <div>
-                  <Label>{isAr ? 'الدور' : 'Role'}</Label>
-                  <div className="mt-1">{getRoleBadge(editingUser.role)}</div>
+                  <Label>{isAr ? 'المحطة' : 'Station'}</Label>
+                  <Input
+                    value={(() => {
+                      const st = stations.find(s => s.code === editForm.station_code);
+                      return st ? (isAr ? st.name_ar : st.name_en) : editForm.station_code;
+                    })()}
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+              )}
+              {editForm.role === 'employee' && (
+                <div>
+                  <Label>{isAr ? 'الموظف' : 'Employee'}</Label>
+                  <Select value={editForm.employee_code} onValueChange={v => {
+                    const emp = employees.find(e => e.employee_code === v);
+                    setEditForm(f => ({
+                      ...f,
+                      employee_code: v,
+                      full_name: emp ? (isAr ? emp.name_ar : emp.name_en) : f.full_name,
+                    }));
+                  }}>
+                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الموظف' : 'Select employee'} /></SelectTrigger>
+                    <SelectContent>
+                      {employees.map(e => (<SelectItem key={e.employee_code} value={e.employee_code}>{e.employee_code} — {isAr ? e.name_ar : e.name_en}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
             </div>
@@ -549,8 +592,6 @@ const Users = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {/* ========== CREATE USER DIALOG ========== */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
