@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { TrainingAcknowledgmentModal } from '@/components/portal/TrainingAcknowledgmentModal';
 import { cn } from '@/lib/utils';
 import { PortalSidebar } from '@/components/portal/PortalSidebar';
 import { PortalHeader } from '@/components/portal/PortalHeader';
@@ -53,6 +54,7 @@ const EmployeePortal = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [ackDismissed, setAckDismissed] = useState(false);
 
   // Pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);
@@ -103,7 +105,9 @@ const EmployeePortal = () => {
   const ActiveComponent = sectionComponents[activeSection];
 
   return (
-    <div className={cn("min-h-screen bg-background flex", isRTL ? "flex-row-reverse font-arabic" : "font-sans")}>
+    <>
+      {!ackDismissed && <TrainingAcknowledgmentModal onAllAcknowledged={() => setAckDismissed(true)} />}
+      <div className={cn("min-h-screen bg-background flex", isRTL ? "flex-row-reverse font-arabic" : "font-sans")}>
       <PortalSidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
@@ -154,7 +158,8 @@ const EmployeePortal = () => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
