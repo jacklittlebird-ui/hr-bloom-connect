@@ -124,24 +124,24 @@ const AttendanceKiosk = () => {
 
     const tick = async () => {
       try {
-        const res = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/generate-qr-token`,
-          {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-              location_id: selectedLocation,
-              gps_lat: userCoords.lat,
-              gps_lng: userCoords.lng,
-            }),
-          }
-        );
+        const url = `https://${projectId}.supabase.co/functions/v1/generate-qr-token`;
+        console.log("[Kiosk] Fetching QR token from:", url);
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            location_id: selectedLocation,
+            gps_lat: userCoords.lat,
+            gps_lng: userCoords.lng,
+          }),
+        });
         const json = await res.json();
+        console.log("[Kiosk] QR response:", res.status, json);
         if (!res.ok) {
-          setError(json.error || "Server error");
+          setError(json.error || `Server error (${res.status})`);
           setQrSrc("");
           return;
         }
@@ -154,8 +154,12 @@ const AttendanceKiosk = () => {
           setQrSrc(src);
           setError("");
           setCountdown(5);
+        } else {
+          setError(ar ? "لم يتم استلام رمز QR من الخادم" : "No QR token received from server");
+          setQrSrc("");
         }
       } catch (e: any) {
+        console.error("[Kiosk] QR fetch error:", e);
         setError(e.message);
       }
     };
