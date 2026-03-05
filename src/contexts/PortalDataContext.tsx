@@ -301,7 +301,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   const addPermission = useCallback(async (req: Omit<PermissionRequest, 'id' | 'status'>) => {
     const permType = Object.entries(permTypeMap).find(([, v]) => v.ar === req.typeAr || v.en === req.typeEn)?.[0] || 'personal';
-    await supabase.from('permission_requests').insert({
+    const { error } = await supabase.from('permission_requests').insert({
       employee_id: req.employeeId,
       permission_type: permType,
       date: req.date,
@@ -309,6 +309,12 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       end_time: req.toTime,
       reason: req.reason,
     });
+    if (error) {
+      if (error.message?.includes('existing leave request')) {
+        throw new Error('LEAVE_CONFLICT');
+      }
+      throw error;
+    }
     await fetchAll();
   }, [fetchAll]);
 

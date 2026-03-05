@@ -93,7 +93,7 @@ export const PortalLeaves = () => {
     setLeaveType(''); setLeaveStartDate(undefined); setLeaveEndDate(undefined); setLeaveReason('');
   };
 
-  const handleSubmitPerm = () => {
+  const handleSubmitPerm = async () => {
     if (!permType || !permDate || !permFrom || !permTo || !permReason) {
       toast.error(ar ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
@@ -111,18 +111,26 @@ export const PortalLeaves = () => {
       return;
     }
     const t = permTypes.find(p => p.value === permType);
-    addPermission({
-      employeeId: PORTAL_EMPLOYEE_ID,
-      typeAr: t?.ar || '',
-      typeEn: t?.en || '',
-      date: format(permDate, 'yyyy-MM-dd'),
-      fromTime: permFrom,
-      toTime: permTo,
-      reason: permReason,
-    });
-    toast.success(ar ? 'تم تقديم طلب الإذن بنجاح' : 'Permission request submitted');
-    setShowPermDialog(false);
-    setPermType(''); setPermDate(undefined); setPermFrom(''); setPermTo(''); setPermReason('');
+    try {
+      await addPermission({
+        employeeId: PORTAL_EMPLOYEE_ID,
+        typeAr: t?.ar || '',
+        typeEn: t?.en || '',
+        date: format(permDate, 'yyyy-MM-dd'),
+        fromTime: permFrom,
+        toTime: permTo,
+        reason: permReason,
+      });
+      toast.success(ar ? 'تم تقديم طلب الإذن بنجاح' : 'Permission request submitted');
+      setShowPermDialog(false);
+      setPermType(''); setPermDate(undefined); setPermFrom(''); setPermTo(''); setPermReason('');
+    } catch (err: any) {
+      if (err.message === 'LEAVE_CONFLICT') {
+        toast.error(ar ? 'لا يمكن طلب إذن في يوم به إجازة مسجلة بالفعل' : 'Cannot request permission on a day with an existing leave request');
+      } else {
+        toast.error(ar ? 'حدث خطأ أثناء تقديم الطلب' : 'Error submitting request');
+      }
+    }
   };
 
   return (
