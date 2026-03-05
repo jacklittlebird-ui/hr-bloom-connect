@@ -79,7 +79,7 @@ const LoginPage = () => {
     <div className={cn(
       "min-h-screen flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary)/0.08)] via-background to-[hsl(var(--stat-blue)/0.08)] p-4",
       isRTL ? "font-arabic" : "font-sans"
-    )} dir={isRTL ? 'rtl' : 'ltr'}>
+    )} dir="rtl">
       <Button
         variant="ghost"
         size="icon"
@@ -123,22 +123,24 @@ const LoginPage = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>{t('كلمة المرور', 'Password')}</Label>
-                    <div className="relative">
+                    <div className="flex gap-2 items-center">
                       <Input
                         type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className="h-11 pe-10"
+                        className="h-11 flex-1"
                         dir="ltr"
                       />
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-11 w-11 shrink-0"
                         onClick={() => setShowPassword(!showPassword)}
-                        className={cn("absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground", isRTL ? "left-3" : "right-3")}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <Button type="submit" className="w-full h-11" disabled={loading}>
