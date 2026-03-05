@@ -14,6 +14,7 @@ import { LeaveApprovals } from '@/components/leaves/LeaveApprovals';
 import { RequestFilters } from '@/components/leaves/RequestFilters';
 import { ViolationsManagement } from '@/components/leaves/ViolationsManagement';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   LeaveRequest,
   PermissionRequest,
@@ -225,7 +226,15 @@ const Leaves = () => {
   const handleNewPermission = async (data: Omit<PermissionRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
     if (!uuid) return;
-    await supabase.from('permission_requests').insert({ employee_id: uuid, permission_type: data.permissionType, date: data.date, start_time: data.fromTime, end_time: data.toTime, hours: data.durationHours, reason: data.reason });
+    const { error } = await supabase.from('permission_requests').insert({ employee_id: uuid, permission_type: data.permissionType, date: data.date, start_time: data.fromTime, end_time: data.toTime, hours: data.durationHours, reason: data.reason });
+    if (error) {
+      if (error.message?.includes('existing leave request')) {
+        toast.error(isRTL ? 'لا يمكن طلب إذن في يوم به إجازة مسجلة بالفعل' : 'Cannot request permission on a day with an existing leave request');
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
     fetchData(); setActiveTab('permissions');
   };
 
