@@ -117,20 +117,20 @@ const LoginPage = () => {
                       placeholder={t('البريد الإلكتروني', 'Email')}
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      className="h-11"
-                      dir="ltr"
+                      className="h-11 text-right"
+                      dir="rtl"
                     />
                   </div>
                   <div className="space-y-2 text-right">
                     <Label className="text-right">{t('كلمة المرور', 'Password')}</Label>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-row-reverse gap-2 items-center">
                       <Input
                         type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className="h-11 flex-1"
-                        dir="ltr"
+                        className="h-11 flex-1 text-right"
+                        dir="rtl"
                       />
                       <Button
                         type="button"
