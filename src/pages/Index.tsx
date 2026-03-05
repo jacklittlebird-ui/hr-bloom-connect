@@ -5,24 +5,22 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { DepartmentChart } from '@/components/dashboard/DepartmentChart';
 import { EmployeeGrowthChart } from '@/components/dashboard/EmployeeGrowthChart';
 import { AttendanceChart } from '@/components/dashboard/AttendanceChart';
+import { LeavesPieChart } from '@/components/dashboard/LeavesPieChart';
+import { TrainingChart } from '@/components/dashboard/TrainingChart';
+import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
+import { SalaryOverviewChart } from '@/components/dashboard/SalaryOverviewChart';
+import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { Button } from '@/components/ui/button';
 import { 
-  Users, 
-  UserCheck, 
-  Building2, 
-  CalendarCheck, 
-  Briefcase, 
-  FileText,
-  Monitor,
-  Star,
-  RefreshCw,
-  BarChart3
+  Users, UserCheck, Building2, CalendarCheck, FileText, Monitor,
+  GraduationCap, Star, DollarSign, Banknote, RefreshCw, BarChart3, Briefcase
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
+  const ar = language === 'ar';
   const [dashStats, setDashStats] = useState({
     totalEmployees: 0,
     activeEmployees: 0,
@@ -30,17 +28,29 @@ const Index = () => {
     todayAttendance: 0,
     pendingLeaves: 0,
     assignedAssets: 0,
+    activeCourses: 0,
+    performanceReviews: 0,
+    activeLoans: 0,
+    payrollThisMonth: 0,
   });
 
   const fetchStats = async () => {
     const today = new Date().toISOString().split('T')[0];
-    const [empRes, deptRes, attRes, leaveRes, assetRes] = await Promise.all([
+    const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    const currentYear = new Date().getFullYear().toString();
+
+    const [empRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes, payrollRes] = await Promise.all([
       supabase.from('employees').select('id, status'),
       supabase.from('departments').select('id').eq('is_active', true),
       supabase.from('attendance_records').select('id').eq('date', today),
       supabase.from('leave_requests').select('id').eq('status', 'pending'),
       supabase.from('assets').select('id').not('assigned_to', 'is', null),
+      supabase.from('planned_courses').select('id').in('status', ['planned', 'in_progress']),
+      supabase.from('performance_reviews').select('id').eq('year', currentYear),
+      supabase.from('loans').select('id').eq('status', 'active'),
+      supabase.from('payroll_entries').select('net_salary').eq('year', currentYear).eq('month', currentMonth),
     ]);
+
     setDashStats({
       totalEmployees: empRes.data?.length || 0,
       activeEmployees: empRes.data?.filter(e => e.status === 'active').length || 0,
@@ -48,6 +58,10 @@ const Index = () => {
       todayAttendance: attRes.data?.length || 0,
       pendingLeaves: leaveRes.data?.length || 0,
       assignedAssets: assetRes.data?.length || 0,
+      activeCourses: courseRes.data?.length || 0,
+      performanceReviews: perfRes.data?.length || 0,
+      activeLoans: loanRes.data?.length || 0,
+      payrollThisMonth: payrollRes.data?.reduce((s, e) => s + (e.net_salary || 0), 0) || 0,
     });
   };
 
@@ -62,15 +76,30 @@ const Index = () => {
     { key: 'dashboard.assignedAssets', value: dashStats.assignedAssets, icon: Monitor, variant: 'pink' as const },
   ];
 
+  const extraStats = [
+    { label: ar ? 'دورات تدريبية نشطة' : 'Active Courses', value: dashStats.activeCourses, icon: GraduationCap, variant: 'green' as const },
+    { label: ar ? 'تقييمات الأداء' : 'Performance Reviews', value: dashStats.performanceReviews, icon: Star, variant: 'yellow' as const },
+    { label: ar ? 'سلف نشطة' : 'Active Loans', value: dashStats.activeLoans, icon: Banknote, variant: 'coral' as const },
+    { label: ar ? 'رواتب الشهر الحالي' : 'This Month Payroll', value: dashStats.payrollThisMonth.toLocaleString(), icon: DollarSign, variant: 'teal' as const },
+  ];
+
   return (
     <DashboardLayout>
       <div className={cn("mb-8", isRTL && "text-right")}>
         <h1 className="text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      {/* Primary Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {stats.map((stat) => (
           <StatCard key={stat.key} title={t(stat.key)} value={stat.value} icon={stat.icon} variant={stat.variant} />
+        ))}
+      </div>
+
+      {/* Extended Module Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {extraStats.map((stat, i) => (
+          <StatCard key={i} title={stat.label} value={stat.value} icon={stat.icon} variant={stat.variant} />
         ))}
       </div>
 
@@ -86,11 +115,29 @@ const Index = () => {
         </div>
       </div>
 
+      {/* Row 1: Department + Employee Growth */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <DepartmentChart />
         <EmployeeGrowthChart />
       </div>
-      <AttendanceChart />
+
+      {/* Row 2: Attendance + Leaves */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <AttendanceChart />
+        <LeavesPieChart />
+      </div>
+
+      {/* Row 3: Training + Performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <TrainingChart />
+        <PerformanceChart />
+      </div>
+
+      {/* Row 4: Salary Overview + Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <SalaryOverviewChart />
+        <RecentActivity />
+      </div>
     </DashboardLayout>
   );
 };
