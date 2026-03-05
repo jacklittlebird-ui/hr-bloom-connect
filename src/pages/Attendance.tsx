@@ -269,7 +269,7 @@ const Attendance = () => {
           </TabsContent>
 
           <TabsContent value="reports">
-            <AttendanceReports records={attendanceRecords} />
+            <AttendanceReports />
           </TabsContent>
 
           <TabsContent value="shifts">
