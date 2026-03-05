@@ -103,15 +103,15 @@ const LoginPage = () => {
           </TabsList>
 
           <TabsContent value="login">
-            <Card className="border-0 shadow-xl">
+             <Card className="border-0 shadow-xl text-right">
               <CardHeader className="pb-4">
-                <CardTitle className="text-lg">{t('تسجيل الدخول', 'Sign In')}</CardTitle>
-                <CardDescription>{t('أدخل بريدك الإلكتروني وكلمة المرور', 'Enter your email and password')}</CardDescription>
+                <CardTitle className="text-lg text-right">{t('تسجيل الدخول', 'Sign In')}</CardTitle>
+                <CardDescription className="text-right">{t('أدخل بريدك الإلكتروني وكلمة المرور', 'Enter your email and password')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{t('البريد الإلكتروني', 'Email')}</Label>
+                  <div className="space-y-2 text-right">
+                    <Label className="text-right">{t('البريد الإلكتروني', 'Email')}</Label>
                     <Input
                       type="email"
                       placeholder={t('البريد الإلكتروني', 'Email')}
@@ -121,8 +121,8 @@ const LoginPage = () => {
                       dir="ltr"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t('كلمة المرور', 'Password')}</Label>
+                  <div className="space-y-2 text-right">
+                    <Label className="text-right">{t('كلمة المرور', 'Password')}</Label>
                     <div className="flex gap-2 items-center">
                       <Input
                         type={showPassword ? 'text' : 'password'}
@@ -148,7 +148,7 @@ const LoginPage = () => {
                   </Button>
                 </form>
 
-                <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border">
+                <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border text-right">
                   <p className="text-xs text-muted-foreground mb-1 font-medium">{t('ملاحظة:', 'Note:')}</p>
                   <p className="text-xs text-muted-foreground">
                     {t('يتم تحديد الدور (مدير/موظف/مدير محطة) تلقائياً بناءً على حسابك', 'Your role (admin/employee/station manager) is determined automatically from your account')}
