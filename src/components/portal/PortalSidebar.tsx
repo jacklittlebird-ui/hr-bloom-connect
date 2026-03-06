@@ -97,7 +97,7 @@ export const PortalSidebar = ({ activeSection, onSectionChange, collapsed, onTog
     <>
       {/* Collapse toggle - desktop only */}
       {!isMobile && (
-        <div className={cn("flex items-center p-3", collapsed ? "justify-center" : isRTL ? "justify-start" : "justify-end")}>
+        <div className={cn("flex items-center p-3", collapsed ? "justify-center" : "justify-start")}>
           <button
             onClick={onToggleCollapse}
             className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors"
@@ -112,10 +112,7 @@ export const PortalSidebar = ({ activeSection, onSectionChange, collapsed, onTog
         {sidebarGroups.map((group, gi) => (
           <div key={gi}>
             {!collapsed && (
-              <p className={cn(
-                "px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60",
-                isRTL && "text-right"
-              )}>
+              <p className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 text-right">
                 {language === 'ar' ? group.labelAr : group.labelEn}
               </p>
             )}
@@ -134,11 +131,10 @@ export const PortalSidebar = ({ activeSection, onSectionChange, collapsed, onTog
                     title={collapsed ? (language === 'ar' ? item.labelAr : item.labelEn) : undefined}
                     className={cn(
                       "w-full flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200",
-                      collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5",
+                      collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5 flex-row-reverse text-right",
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "text-foreground/70 hover:bg-muted hover:text-foreground",
-                      isRTL && !collapsed && "flex-row-reverse text-right"
                     )}
                   >
                     <Icon className="w-5 h-5 shrink-0" />
@@ -158,7 +154,7 @@ export const PortalSidebar = ({ activeSection, onSectionChange, collapsed, onTog
     return (
       <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
         <SheetContent
-          side={isRTL ? 'right' : 'left'}
+          side="right"
           className="w-64 p-0 bg-card border-border"
         >
           <div className="h-full overflow-y-auto pt-4">
@@ -173,8 +169,7 @@ export const PortalSidebar = ({ activeSection, onSectionChange, collapsed, onTog
   return (
     <aside
       className={cn(
-        "h-screen sticky top-0 bg-card border-border flex flex-col transition-all duration-300 overflow-hidden shrink-0",
-        isRTL ? "border-l" : "border-r",
+        "h-screen sticky top-0 bg-card border-border flex flex-col transition-all duration-300 overflow-hidden shrink-0 border-l",
         collapsed ? "w-16" : "w-64"
       )}
     >

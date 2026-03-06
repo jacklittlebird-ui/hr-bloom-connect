@@ -27,32 +27,29 @@ export const PortalHeader = ({ onToggleSidebar }: PortalHeaderProps) => {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <header className={cn(
-      "h-14 md:h-16 bg-card border-b border-border flex items-center justify-between px-3 md:px-4 sticky top-0 z-10",
-      isRTL && "flex-row-reverse"
-    )}>
-      <div className={cn("flex items-center gap-2 md:gap-3 min-w-0 flex-shrink", isRTL && "flex-row-reverse")}>
+    <header dir="rtl" className="h-14 md:h-16 bg-card border-b border-border flex items-center justify-between px-3 md:px-4 sticky top-0 z-10">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-shrink">
         <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="md:hidden shrink-0">
           <Menu className="w-5 h-5" />
         </Button>
-        <div className={cn("flex items-center gap-2 min-w-0", isRTL && "flex-row-reverse")}>
+        <div className="flex items-center gap-2 min-w-0">
           <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
             <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary-foreground" />
           </div>
-          <div className={cn("min-w-0", isRTL ? "text-right" : "")}>
+          <div className="min-w-0 text-right">
             <p className="text-xs md:text-sm font-semibold leading-tight truncate">{displayName}</p>
             <p className="text-[10px] md:text-xs text-muted-foreground truncate">{employeeId}</p>
           </div>
         </div>
       </div>
 
-      <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+      <div className="flex items-center gap-3">
         <h1 className="text-lg font-bold hidden md:block">
           {language === 'ar' ? 'بوابة الموظف' : 'Employee Portal'}
         </h1>
       </div>
 
-      <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+      <div className="flex items-center gap-2">
         <Button
           variant="ghost"
           size="sm"
