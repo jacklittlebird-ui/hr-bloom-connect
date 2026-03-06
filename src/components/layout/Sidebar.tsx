@@ -55,9 +55,7 @@ export const Sidebar = ({ open, onOpenChange, collapsed, onToggleCollapse }: Sid
   const isMobile = useIsMobile();
   const { hasAccess } = useModulePermissions();
 
-  const CollapseIcon = isRTL
-    ? (collapsed ? ChevronLeft : ChevronRight)
-    : (collapsed ? ChevronRight : ChevronLeft);
+  const CollapseIcon = collapsed ? ChevronLeft : ChevronRight;
 
   const visibleMainItems = mainNavItems.filter(item => hasAccess(item.moduleKey));
   const visibleConfigItems = configNavItems.filter(item => hasAccess(item.moduleKey));
@@ -66,7 +64,7 @@ export const Sidebar = ({ open, onOpenChange, collapsed, onToggleCollapse }: Sid
     <>
       {/* Collapse toggle - desktop only */}
       {!isMobile && (
-        <div className={cn("flex items-center p-3", collapsed ? "justify-center" : isRTL ? "justify-start" : "justify-end")}>
+        <div className={cn("flex items-center p-3", collapsed ? "justify-center" : "justify-start")}>
           <button
             onClick={onToggleCollapse}
             className="p-1.5 rounded-md hover:bg-sidebar-accent/50 text-sidebar-foreground/60 transition-colors"
@@ -166,7 +164,7 @@ const NavButton: React.FC<NavButtonProps> = ({ item, t, isRTL, isActive, collaps
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
-        isRTL && !collapsed && "flex-row-reverse text-right"
+        isRTL && !collapsed && "text-right"
       )}
     >
       <Icon className="w-5 h-5 shrink-0" />

@@ -35,10 +35,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
       />
       <main className={cn(
         "pt-16 min-h-screen transition-all duration-300",
-        !isMobile && (sidebarCollapsed
-          ? (isRTL ? "mr-16" : "ml-16")
-          : (isRTL ? "mr-64" : "ml-64")
-        )
+        !isMobile && (sidebarCollapsed ? "ms-16" : "ms-64")
       )}>
         <div className="p-4 md:p-6">
           {children}

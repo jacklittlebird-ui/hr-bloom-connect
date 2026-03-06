@@ -34,7 +34,6 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, va
 
   return (
     <div
-      dir="rtl"
       className={cn(
         "bg-card rounded-xl p-5 shadow-sm border border-border/50 transition-all duration-300",
         "hover:shadow-lg hover:-translate-y-1",
@@ -50,11 +49,11 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, va
         <Icon className="w-7 h-7 text-primary-foreground" />
       </div>
 
-      <div className="flex flex-col flex-1 min-w-0 items-end">
+      <div className="flex flex-col flex-1 min-w-0">
         <span className="text-3xl font-bold text-foreground">{value}</span>
         <span className="text-sm text-muted-foreground truncate">{title}</span>
         {trend && trendValue && (
-          <div className="flex items-center gap-1 mt-1 flex-row-reverse">
+          <div className="flex items-center gap-1 mt-1">
             {(() => {
               const TrendIcon = trendConfig[trend].icon;
               return <TrendIcon className={cn("w-3.5 h-3.5", trendConfig[trend].color)} />;

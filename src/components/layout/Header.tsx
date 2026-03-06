@@ -18,11 +18,8 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
   };
 
   return (
-    <header className={cn(
-      "fixed top-0 left-0 right-0 h-16 bg-primary z-50 flex items-center justify-between px-4 md:px-6",
-      isRTL && "flex-row-reverse"
-    )}>
-      <div className={cn("flex items-center gap-2 md:gap-3", isRTL && "flex-row-reverse")}>
+    <header className="fixed top-0 left-0 right-0 h-16 bg-primary z-50 flex items-center justify-between px-4 md:px-6">
+      <div className="flex items-center gap-2 md:gap-3">
         {onToggleSidebar && (
           <Button
             variant="ghost"
@@ -42,7 +39,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
         </h1>
       </div>
 
-      <div className={cn("flex items-center gap-2 md:gap-4", isRTL && "flex-row-reverse")}>
+      <div className="flex items-center gap-2 md:gap-4">
         <Button
           variant="secondary"
           size="sm"
