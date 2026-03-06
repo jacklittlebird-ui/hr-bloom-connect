@@ -107,21 +107,7 @@ const EmployeePortal = () => {
   return (
     <>
       {!ackDismissed && <TrainingAcknowledgmentModal onAllAcknowledged={() => setAckDismissed(true)} />}
-      <div dir="rtl" className="min-h-screen bg-background flex font-arabic">
-      <PortalSidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        collapsed={isMobile ? false : sidebarCollapsed}
-        onToggleCollapse={() => {
-          if (isMobile) {
-            setMobileOpen(!mobileOpen);
-          } else {
-            setSidebarCollapsed(!sidebarCollapsed);
-          }
-        }}
-        mobileOpen={mobileOpen}
-        onMobileOpenChange={setMobileOpen}
-      />
+      <div dir="rtl" className="min-h-screen bg-background flex flex-row-reverse font-arabic">
       <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-hidden">
         <PortalHeader onToggleSidebar={() => {
           if (isMobile) {
@@ -158,6 +144,20 @@ const EmployeePortal = () => {
           </div>
         </div>
       </div>
+      <PortalSidebar
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        collapsed={isMobile ? false : sidebarCollapsed}
+        onToggleCollapse={() => {
+          if (isMobile) {
+            setMobileOpen(!mobileOpen);
+          } else {
+            setSidebarCollapsed(!sidebarCollapsed);
+          }
+        }}
+        mobileOpen={mobileOpen}
+        onMobileOpenChange={setMobileOpen}
+      />
       </div>
     </>
   );
