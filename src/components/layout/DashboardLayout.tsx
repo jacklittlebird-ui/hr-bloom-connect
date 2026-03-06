@@ -16,7 +16,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className={cn(
+    <div dir={isRTL ? "rtl" : "ltr"} className={cn(
       "min-h-screen bg-background",
       isRTL ? "font-arabic" : "font-sans"
     )}>
