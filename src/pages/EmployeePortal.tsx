@@ -107,7 +107,7 @@ const EmployeePortal = () => {
   return (
     <>
       {!ackDismissed && <TrainingAcknowledgmentModal onAllAcknowledged={() => setAckDismissed(true)} />}
-      <div className={cn("min-h-screen bg-background flex font-arabic", isRTL && "flex-row-reverse")}>
+      <div dir="rtl" className="min-h-screen bg-background flex flex-row-reverse font-arabic">
       <PortalSidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
