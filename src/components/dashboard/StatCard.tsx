@@ -1,72 +1,67 @@
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
   variant: 'coral' | 'blue' | 'purple' | 'teal' | 'green' | 'yellow' | 'pink';
+  trend?: 'up' | 'down' | 'neutral';
+  trendValue?: string;
+  delay?: number;
 }
 
 const variantStyles = {
-  coral: {
-    bg: 'bg-stat-coral-bg',
-    iconBg: 'bg-stat-coral',
-    iconColor: 'text-primary-foreground',
-  },
-  blue: {
-    bg: 'bg-stat-blue-bg',
-    iconBg: 'bg-stat-blue',
-    iconColor: 'text-primary-foreground',
-  },
-  purple: {
-    bg: 'bg-stat-purple-bg',
-    iconBg: 'bg-stat-purple',
-    iconColor: 'text-primary-foreground',
-  },
-  teal: {
-    bg: 'bg-stat-teal-bg',
-    iconBg: 'bg-stat-teal',
-    iconColor: 'text-primary-foreground',
-  },
-  green: {
-    bg: 'bg-stat-green-bg',
-    iconBg: 'bg-stat-green',
-    iconColor: 'text-primary-foreground',
-  },
-  yellow: {
-    bg: 'bg-stat-yellow-bg',
-    iconBg: 'bg-stat-yellow',
-    iconColor: 'text-foreground',
-  },
-  pink: {
-    bg: 'bg-stat-pink-bg',
-    iconBg: 'bg-stat-pink',
-    iconColor: 'text-primary-foreground',
-  },
+  coral: { iconBg: 'bg-stat-coral', hoverBorder: 'hover:border-stat-coral/40' },
+  blue: { iconBg: 'bg-stat-blue', hoverBorder: 'hover:border-stat-blue/40' },
+  purple: { iconBg: 'bg-stat-purple', hoverBorder: 'hover:border-stat-purple/40' },
+  teal: { iconBg: 'bg-stat-teal', hoverBorder: 'hover:border-stat-teal/40' },
+  green: { iconBg: 'bg-stat-green', hoverBorder: 'hover:border-stat-green/40' },
+  yellow: { iconBg: 'bg-stat-yellow', hoverBorder: 'hover:border-stat-yellow/40' },
+  pink: { iconBg: 'bg-stat-pink', hoverBorder: 'hover:border-stat-pink/40' },
 };
 
-export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, variant }) => {
+const trendConfig = {
+  up: { icon: TrendingUp, color: 'text-success' },
+  down: { icon: TrendingDown, color: 'text-destructive' },
+  neutral: { icon: Minus, color: 'text-muted-foreground' },
+};
+
+export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, variant, trend, trendValue, delay = 0 }) => {
   const { isRTL } = useLanguage();
   const styles = variantStyles[variant];
 
   return (
-    <div className={cn(
-      "bg-card rounded-xl p-5 shadow-sm border border-border/50 hover:shadow-md transition-shadow duration-200",
-      "flex items-center gap-4",
-      isRTL && "flex-row-reverse"
-    )}>
+    <div
+      className={cn(
+        "bg-card rounded-xl p-5 shadow-sm border border-border/50 transition-all duration-300",
+        "hover:shadow-lg hover:-translate-y-1",
+        styles.hoverBorder,
+        "flex items-center gap-4 animate-fade-in",
+        isRTL && "flex-row-reverse"
+      )}
+      style={{ animationDelay: `${delay * 0.08}s`, animationFillMode: 'backwards' }}
+    >
       <div className={cn(
-        "w-14 h-14 rounded-xl flex items-center justify-center shrink-0",
+        "w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110",
         styles.iconBg
       )}>
-        <Icon className={cn("w-7 h-7", styles.iconColor)} />
+        <Icon className="w-7 h-7 text-primary-foreground" />
       </div>
-      
-      <div className={cn("flex flex-col", isRTL && "items-end")}>
+
+      <div className={cn("flex flex-col flex-1 min-w-0", isRTL && "items-end")}>
         <span className="text-3xl font-bold text-foreground">{value}</span>
-        <span className="text-sm text-muted-foreground">{title}</span>
+        <span className="text-sm text-muted-foreground truncate">{title}</span>
+        {trend && trendValue && (
+          <div className={cn("flex items-center gap-1 mt-1", isRTL && "flex-row-reverse")}>
+            {(() => {
+              const TrendIcon = trendConfig[trend].icon;
+              return <TrendIcon className={cn("w-3.5 h-3.5", trendConfig[trend].color)} />;
+            })()}
+            <span className={cn("text-xs font-medium", trendConfig[trend].color)}>{trendValue}</span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
+import { WelcomeBanner } from '@/components/dashboard/WelcomeBanner';
+import { SectionHeader } from '@/components/dashboard/SectionHeader';
 import { DepartmentChart } from '@/components/dashboard/DepartmentChart';
 import { EmployeeGrowthChart } from '@/components/dashboard/EmployeeGrowthChart';
 import { AttendanceChart } from '@/components/dashboard/AttendanceChart';
@@ -13,7 +15,7 @@ import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { Button } from '@/components/ui/button';
 import { 
   Users, UserCheck, Building2, CalendarCheck, FileText, Monitor,
-  GraduationCap, Star, DollarSign, Banknote, RefreshCw, BarChart3, Briefcase
+  GraduationCap, Star, DollarSign, Banknote, RefreshCw, BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,12 +70,12 @@ const Index = () => {
   useEffect(() => { fetchStats(); }, []);
 
   const stats = [
-    { key: 'dashboard.totalEmployees', value: dashStats.totalEmployees, icon: Users, variant: 'coral' as const },
-    { key: 'dashboard.activeEmployees', value: dashStats.activeEmployees, icon: UserCheck, variant: 'purple' as const },
-    { key: 'dashboard.departments', value: dashStats.departments, icon: Building2, variant: 'blue' as const },
+    { key: 'dashboard.totalEmployees', value: dashStats.totalEmployees, icon: Users, variant: 'coral' as const, trend: 'up' as const, trendValue: '+3%' },
+    { key: 'dashboard.activeEmployees', value: dashStats.activeEmployees, icon: UserCheck, variant: 'purple' as const, trend: 'up' as const, trendValue: '+2%' },
+    { key: 'dashboard.departments', value: dashStats.departments, icon: Building2, variant: 'blue' as const, trend: 'neutral' as const, trendValue: '0%' },
     { key: 'dashboard.todayAttendance', value: dashStats.todayAttendance, icon: CalendarCheck, variant: 'teal' as const },
     { key: 'dashboard.pendingLeaves', value: dashStats.pendingLeaves, icon: FileText, variant: 'yellow' as const },
-    { key: 'dashboard.assignedAssets', value: dashStats.assignedAssets, icon: Monitor, variant: 'pink' as const },
+    { key: 'dashboard.assignedAssets', value: dashStats.assignedAssets, icon: Monitor, variant: 'pink' as const, trend: 'up' as const, trendValue: '+5' },
   ];
 
   const extraStats = [
@@ -85,58 +87,85 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <div className={cn("mb-8", isRTL && "text-right")}>
-        <h1 className="text-2xl font-bold text-foreground">{t('dashboard.title')}</h1>
-      </div>
+      <WelcomeBanner />
 
       {/* Primary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-        {stats.map((stat) => (
-          <StatCard key={stat.key} title={t(stat.key)} value={stat.value} icon={stat.icon} variant={stat.variant} />
+        {stats.map((stat, i) => (
+          <StatCard
+            key={stat.key}
+            title={t(stat.key)}
+            value={stat.value}
+            icon={stat.icon}
+            variant={stat.variant}
+            trend={stat.trend}
+            trendValue={stat.trendValue}
+            delay={i}
+          />
         ))}
       </div>
 
       {/* Extended Module Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {extraStats.map((stat, i) => (
-          <StatCard key={i} title={stat.label} value={stat.value} icon={stat.icon} variant={stat.variant} />
+          <StatCard
+            key={i}
+            title={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            variant={stat.variant}
+            delay={i + 6}
+          />
         ))}
       </div>
 
-      <div className={cn("flex items-center justify-between mb-6", isRTL && "flex-row-reverse")}>
-        <h2 className="text-xl font-semibold text-foreground">{t('chart.reportsStats')}</h2>
-        <div className={cn("flex gap-3", isRTL && "flex-row-reverse")}>
-          <Button variant="default" className={cn("gap-2", isRTL && "flex-row-reverse")}>
-            <BarChart3 className="w-4 h-4" />{t('chart.advancedReports')}
-          </Button>
-          <Button variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")} onClick={fetchStats}>
-            <RefreshCw className="w-4 h-4" />{t('chart.refresh')}
-          </Button>
+      <SectionHeader title={t('chart.reportsStats')} icon={BarChart3}>
+        <Button variant="default" className={cn("gap-2", isRTL && "flex-row-reverse")}>
+          <BarChart3 className="w-4 h-4" />{t('chart.advancedReports')}
+        </Button>
+        <Button variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")} onClick={fetchStats}>
+          <RefreshCw className="w-4 h-4" />{t('chart.refresh')}
+        </Button>
+      </SectionHeader>
+
+      {/* Row 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+          <DepartmentChart />
+        </div>
+        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+          <EmployeeGrowthChart />
         </div>
       </div>
 
-      {/* Row 1: Department + Employee Growth */}
+      {/* Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <DepartmentChart />
-        <EmployeeGrowthChart />
+        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+          <AttendanceChart />
+        </div>
+        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+          <LeavesPieChart />
+        </div>
       </div>
 
-      {/* Row 2: Attendance + Leaves */}
+      {/* Row 3 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <AttendanceChart />
-        <LeavesPieChart />
+        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+          <TrainingChart />
+        </div>
+        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+          <PerformanceChart />
+        </div>
       </div>
 
-      {/* Row 3: Training + Performance */}
+      {/* Row 4 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <TrainingChart />
-        <PerformanceChart />
-      </div>
-
-      {/* Row 4: Salary Overview + Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <SalaryOverviewChart />
-        <RecentActivity />
+        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+          <SalaryOverviewChart />
+        </div>
+        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+          <RecentActivity />
+        </div>
       </div>
     </DashboardLayout>
   );
