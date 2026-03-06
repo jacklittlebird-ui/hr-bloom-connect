@@ -13,6 +13,7 @@ import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 import { SalaryOverviewChart } from '@/components/dashboard/SalaryOverviewChart';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import { 
   Users, UserCheck, Building2, CalendarCheck, FileText, Monitor,
   GraduationCap, Star, DollarSign, Banknote, RefreshCw, BarChart3, Loader2
@@ -22,6 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const { t, isRTL, language } = useLanguage();
+  const navigate = useNavigate();
   const ar = language === 'ar';
   const [loading, setLoading] = useState(true);
   const [dashStats, setDashStats] = useState({
@@ -129,7 +131,7 @@ const Index = () => {
       </div>
 
       <SectionHeader title={t('chart.reportsStats')} icon={BarChart3}>
-        <Button variant="default" className="gap-2 rounded-xl shadow-sm">
+        <Button variant="default" className="gap-2 rounded-xl shadow-sm" onClick={() => navigate('/reports')}>
           <BarChart3 className="w-4 h-4" />{t('chart.advancedReports')}
         </Button>
         <Button variant="outline" className="gap-2 rounded-xl" onClick={fetchStats} disabled={loading}>
