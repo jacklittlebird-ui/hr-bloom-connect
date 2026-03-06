@@ -132,20 +132,26 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-sans);
+    font-family: 'Baloo Bhaijaan 2', sans-serif !important;
+    -webkit-text-size-adjust: 100%;
   }
 
-  [dir="rtl"] body {
-    font-family: var(--font-arabic);
+  /* Force font on all elements for iOS Safari */
+  body *,
+  input,
+  textarea,
+  select,
+  button {
+    font-family: inherit;
   }
 }
 
 @layer utilities {
   .font-arabic {
-    font-family: var(--font-arabic);
+    font-family: 'Baloo Bhaijaan 2', sans-serif !important;
   }
 
   .font-english {
-    font-family: var(--font-sans);
+    font-family: 'Baloo Bhaijaan 2', sans-serif !important;
   }
 }
