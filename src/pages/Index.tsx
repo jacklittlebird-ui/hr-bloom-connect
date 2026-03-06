@@ -23,6 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const { t, isRTL, language } = useLanguage();
+  const navigate = useNavigate();
   const ar = language === 'ar';
   const [loading, setLoading] = useState(true);
   const [dashStats, setDashStats] = useState({
