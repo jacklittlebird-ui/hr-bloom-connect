@@ -40,14 +40,14 @@ export const WelcomeBanner = () => {
       <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-primary-foreground/10 blur-2xl" />
       <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-primary-foreground/5 blur-xl" />
 
-      <div dir="rtl" className="relative z-10 flex flex-col gap-2 items-end text-right">
+      <div className="relative z-10 flex flex-col gap-2">
         <h1 className="text-2xl md:text-3xl font-bold text-primary-foreground animate-fade-in">
           👋 {greeting}
         </h1>
         <p className="text-primary-foreground/80 text-sm md:text-base max-w-xl animate-fade-in" style={{ animationDelay: '0.1s' }}>
           {subtitle}
         </p>
-        <div className="flex items-center gap-2 mt-2 text-primary-foreground/70 text-xs md:text-sm flex-row-reverse">
+        <div className="flex items-center gap-2 mt-2 text-primary-foreground/70 text-xs md:text-sm">
           <CalendarDays className="w-4 h-4" />
           <span>{today}</span>
         </div>

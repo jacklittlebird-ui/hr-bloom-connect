@@ -120,10 +120,10 @@ const Index = () => {
       </div>
 
       <SectionHeader title={t('chart.reportsStats')} icon={BarChart3}>
-        <Button variant="default" className="gap-2 flex-row-reverse">
+        <Button variant="default" className="gap-2">
           <BarChart3 className="w-4 h-4" />{t('chart.advancedReports')}
         </Button>
-        <Button variant="outline" className="gap-2 flex-row-reverse" onClick={fetchStats}>
+        <Button variant="outline" className="gap-2" onClick={fetchStats}>
           <RefreshCw className="w-4 h-4" />{t('chart.refresh')}
         </Button>
       </SectionHeader>
