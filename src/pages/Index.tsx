@@ -15,7 +15,7 @@ import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { Button } from '@/components/ui/button';
 import { 
   Users, UserCheck, Building2, CalendarCheck, FileText, Monitor,
-  GraduationCap, Star, DollarSign, Banknote, RefreshCw, BarChart3
+  GraduationCap, Star, DollarSign, Banknote, RefreshCw, BarChart3, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +23,7 @@ import { supabase } from '@/integrations/supabase/client';
 const Index = () => {
   const { t, isRTL, language } = useLanguage();
   const ar = language === 'ar';
+  const [loading, setLoading] = useState(true);
   const [dashStats, setDashStats] = useState({
     totalEmployees: 0,
     activeEmployees: 0,
@@ -37,6 +38,7 @@ const Index = () => {
   });
 
   const fetchStats = async () => {
+    setLoading(true);
     const today = new Date().toISOString().split('T')[0];
     const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
     const currentYear = new Date().getFullYear().toString();
@@ -65,6 +67,7 @@ const Index = () => {
       activeLoans: loanRes.data?.length || 0,
       payrollThisMonth: payrollRes.data?.reduce((s, e) => s + (e.net_salary || 0), 0) || 0,
     });
+    setLoading(false);
   };
 
   useEffect(() => { fetchStats(); }, []);
@@ -84,6 +87,12 @@ const Index = () => {
     { label: ar ? 'سلف نشطة' : 'Active Loans', value: dashStats.activeLoans, icon: Banknote, variant: 'coral' as const },
     { label: ar ? 'رواتب الشهر الحالي' : 'This Month Payroll', value: dashStats.payrollThisMonth.toLocaleString(), icon: DollarSign, variant: 'teal' as const },
   ];
+
+  const ChartCard = ({ children }: { children: React.ReactNode }) => (
+    <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group hover:border-border">
+      {children}
+    </div>
+  );
 
   return (
     <DashboardLayout>
@@ -120,52 +129,37 @@ const Index = () => {
       </div>
 
       <SectionHeader title={t('chart.reportsStats')} icon={BarChart3}>
-        <Button variant="default" className="gap-2">
+        <Button variant="default" className="gap-2 rounded-xl shadow-sm">
           <BarChart3 className="w-4 h-4" />{t('chart.advancedReports')}
         </Button>
-        <Button variant="outline" className="gap-2" onClick={fetchStats}>
-          <RefreshCw className="w-4 h-4" />{t('chart.refresh')}
+        <Button variant="outline" className="gap-2 rounded-xl" onClick={fetchStats} disabled={loading}>
+          <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+          {t('chart.refresh')}
         </Button>
       </SectionHeader>
 
       {/* Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-          <DepartmentChart />
-        </div>
-        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-          <EmployeeGrowthChart />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+        <ChartCard><DepartmentChart /></ChartCard>
+        <ChartCard><EmployeeGrowthChart /></ChartCard>
       </div>
 
       {/* Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-          <AttendanceChart />
-        </div>
-        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-          <LeavesPieChart />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+        <ChartCard><AttendanceChart /></ChartCard>
+        <ChartCard><LeavesPieChart /></ChartCard>
       </div>
 
       {/* Row 3 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-          <TrainingChart />
-        </div>
-        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-          <PerformanceChart />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+        <ChartCard><TrainingChart /></ChartCard>
+        <ChartCard><PerformanceChart /></ChartCard>
       </div>
 
       {/* Row 4 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-          <SalaryOverviewChart />
-        </div>
-        <div className="bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-          <RecentActivity />
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+        <ChartCard><SalaryOverviewChart /></ChartCard>
+        <RecentActivity />
       </div>
     </DashboardLayout>
   );
