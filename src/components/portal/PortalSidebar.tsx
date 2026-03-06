@@ -89,9 +89,8 @@ export const PortalSidebar = ({ activeSection, onSectionChange, collapsed, onTog
   const { language, isRTL } = useLanguage();
   const isMobile = useIsMobile();
 
-  const CollapseIcon = isRTL
-    ? (collapsed ? ChevronLeft : ChevronRight)
-    : (collapsed ? ChevronRight : ChevronLeft);
+  // Portal is always RTL
+  const CollapseIcon = collapsed ? ChevronLeft : ChevronRight;
 
   const navContent = (
     <>
