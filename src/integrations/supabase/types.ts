@@ -1051,6 +1051,7 @@ export type Database = {
           employee_id: string
           hours: number
           id: string
+          overtime_type: string
           reason: string | null
           status: string
         }
@@ -1060,6 +1061,7 @@ export type Database = {
           employee_id: string
           hours?: number
           id?: string
+          overtime_type?: string
           reason?: string | null
           status?: string
         }
@@ -1069,6 +1071,7 @@ export type Database = {
           employee_id?: string
           hours?: number
           id?: string
+          overtime_type?: string
           reason?: string | null
           status?: string
         }
