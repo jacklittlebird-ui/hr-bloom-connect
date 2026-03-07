@@ -209,7 +209,7 @@ export const TrainingPlan = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div dir="rtl" className="space-y-6">
       {/* Export Buttons */}
       <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
         <Button variant="outline" size="sm" onClick={handleExportPDF}>

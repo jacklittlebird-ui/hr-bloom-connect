@@ -141,6 +141,7 @@ export const CoursesSyllabus = () => {
   };
 
   return (
+    <div dir="rtl">
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{t('training.syllabus.title')}</CardTitle>

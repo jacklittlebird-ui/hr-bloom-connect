@@ -108,7 +108,7 @@ export const CoursesList = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div dir="rtl" className="space-y-6">
       <Card><CardContent className="p-4">
         <div className="flex gap-4 items-center">
           <div className="relative flex-1">

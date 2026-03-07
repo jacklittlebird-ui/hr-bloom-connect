@@ -81,7 +81,7 @@ export const Trainers = () => {
   const showForm = isAddMode || selectedTrainer;
 
   return (
-    <div className="space-y-6">
+    <div dir="rtl" className="space-y-6">
       {!showForm ? (
         <>
           <div className="flex justify-between items-center">
