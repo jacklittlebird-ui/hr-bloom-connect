@@ -1042,23 +1042,23 @@ const StationManagerPortal = () => {
                     <CardContent className="p-4 space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className={cn("flex items-center gap-1.5", isRTL && "flex-row-reverse")}><TrendingUp className="w-4 h-4 text-[hsl(var(--stat-green))]" />{t('نقاط القوة', 'Strengths')}</Label>
+                          <Label className="flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-[hsl(var(--stat-green))]" />{t('نقاط القوة', 'Strengths')}</Label>
                           <Textarea value={evalStrengths} onChange={e => setEvalStrengths(e.target.value)} className="min-h-[80px]" />
                         </div>
                         <div className="space-y-2">
-                          <Label className={cn("flex items-center gap-1.5", isRTL && "flex-row-reverse")}><Lightbulb className="w-4 h-4 text-[hsl(var(--stat-coral))]" />{t('مجالات التحسين', 'Improvements')}</Label>
+                          <Label className="flex items-center gap-1.5"><Lightbulb className="w-4 h-4 text-[hsl(var(--stat-coral))]" />{t('مجالات التحسين', 'Improvements')}</Label>
                           <Textarea value={evalImprovements} onChange={e => setEvalImprovements(e.target.value)} className="min-h-[80px]" />
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className={cn("flex items-center gap-1.5", isRTL && "flex-row-reverse")}><Target className="w-4 h-4 text-primary" />{t('أهداف الربع القادم', 'Next Quarter Goals')}</Label>
+                        <Label className="flex items-center gap-1.5"><Target className="w-4 h-4 text-primary" />{t('أهداف الربع القادم', 'Next Quarter Goals')}</Label>
                         <Textarea value={evalGoals} onChange={e => setEvalGoals(e.target.value)} className="min-h-[60px]" />
                       </div>
                       <div className="space-y-2">
-                        <Label className={cn("flex items-center gap-1.5", isRTL && "flex-row-reverse")}><MessageSquare className="w-4 h-4 text-primary" />{t('ملاحظات المدير', 'Manager Comments')}</Label>
+                        <Label className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4 text-primary" />{t('ملاحظات المدير', 'Manager Comments')}</Label>
                         <Textarea value={evalComments} onChange={e => setEvalComments(e.target.value)} className="min-h-[60px]" />
                       </div>
-                      <div className={cn("flex gap-2 pt-2", isRTL && "flex-row-reverse")}>
+                      <div className="flex gap-2 pt-2">
                         <Button variant="outline" onClick={() => handleNewEvalSave('draft')} className="gap-1.5"><Save className="w-4 h-4" />{t('حفظ كمسودة', 'Save Draft')}</Button>
                         <Button onClick={() => handleNewEvalSave('submitted')} className="gap-1.5"><Send className="w-4 h-4" />{t('إرسال التقييم', 'Submit')}</Button>
                       </div>
@@ -1266,7 +1266,7 @@ const StationManagerPortal = () => {
       <Dialog open={evalDialog} onOpenChange={v => { if (!v) resetEvalForm(); setEvalDialog(v); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+            <DialogTitle className="flex items-center gap-2">
               <Star className="w-5 h-5 text-primary" />
               {t('إضافة تقييم جديد', 'Add New Evaluation')}
             </DialogTitle>
@@ -1300,7 +1300,7 @@ const StationManagerPortal = () => {
             {/* Criteria */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className={cn("flex items-center gap-2 text-base", isRTL && "flex-row-reverse")}>
+                <CardTitle className="flex items-center gap-2 text-base">
                   <Target className="w-4 h-4 text-primary" />
                   {t('معايير التقييم', 'Evaluation Criteria')}
                 </CardTitle>
@@ -1309,12 +1309,12 @@ const StationManagerPortal = () => {
               <CardContent className="space-y-4">
                 {evalCriteria.map((criterion) => (
                   <div key={criterion.id} className="space-y-1.5">
-                    <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
-                      <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
                         <Label className="text-sm font-medium">{ar ? criterion.nameAr : criterion.name}</Label>
                         <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{criterion.weight}%</span>
                       </div>
-                      <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                      <div className="flex items-center gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star key={star} className={cn("w-5 h-5 cursor-pointer transition-colors hover:scale-110", star <= criterion.score ? "text-[hsl(var(--stat-yellow))] fill-[hsl(var(--stat-yellow))]" : "text-muted-foreground hover:text-[hsl(var(--stat-yellow))]/50")}
                             onClick={() => setEvalCriteria(prev => prev.map(c => c.id === criterion.id ? { ...c, score: star } : c))} />
@@ -1327,12 +1327,12 @@ const StationManagerPortal = () => {
                 ))}
 
                 {/* Overall Score */}
-                <div className={cn("flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>
-                  <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="flex items-center gap-2">
                     <Star className="w-5 h-5 text-[hsl(var(--stat-yellow))] fill-[hsl(var(--stat-yellow))]" />
                     <span className="font-semibold">{t('الدرجة الإجمالية', 'Overall Score')}</span>
                   </div>
-                  <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                  <div className="flex items-center gap-2">
                     <span className={cn("font-bold text-xl", scoreInfo.color)}>{evalOverallScore}</span>
                     <Badge variant="outline" className={cn(scoreInfo.color, "border-current")}>{scoreInfo.label}</Badge>
                   </div>
