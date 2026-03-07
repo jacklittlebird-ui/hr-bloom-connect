@@ -29,6 +29,7 @@ export const MODULE_LABELS: Record<ModuleKey, { ar: string; en: string }> = {
   'documents': { ar: 'المستندات', en: 'Documents' },
   'reports': { ar: 'التقارير', en: 'Reports' },
   'training': { ar: 'التدريب', en: 'Training' },
+  'notifications': { ar: 'الإشعارات', en: 'Notifications' },
   'users': { ar: 'المستخدمين', en: 'Users' },
   'settings': { ar: 'الإعدادات', en: 'Settings' },
 };
