@@ -377,7 +377,6 @@ export const TrainingRecords = () => {
                 <Table>
                   <TableHeader>
                      <TableRow>
-                      <TableHead></TableHead>
                       <TableHead>{t('training.courseName')}</TableHead>
                       <TableHead>{ar ? 'الجهة المقدمة' : 'Provider'}</TableHead>
                       <TableHead>{ar ? 'المكان' : 'Location'}</TableHead>
@@ -390,20 +389,12 @@ export const TrainingRecords = () => {
                        <TableHead>{ar ? 'قيمة الدورة' : 'Course Value'}</TableHead>
                        <TableHead>{ar ? 'تكاليف الدورة' : 'Course Costs'}</TableHead>
                        <TableHead>{ar ? 'تاريخ التخطيط' : 'Planned Date'}</TableHead>
+                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {trainingRecords.map(record => (
                       <TableRow key={record.id}>
-                         <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleToggleFavorite(record)}>
-                              <Star className={cn("h-3.5 w-3.5", record.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditRecord(record)}><Edit2 className="h-3 w-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(record.id)}><X className="h-4 w-4" /></Button>
-                          </div>
-                        </TableCell>
                         <TableCell>{record.courseName}</TableCell>
                         <TableCell>{record.provider || '-'}</TableCell>
                         <TableCell>{record.location || '-'}</TableCell>
@@ -416,6 +407,15 @@ export const TrainingRecords = () => {
                         <TableCell>{record.cost ? record.cost.toLocaleString() : '-'}</TableCell>
                         <TableCell>{record.totalCost ? record.totalCost.toLocaleString() : '-'}</TableCell>
                         <TableCell>{record.plannedDate || '-'}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleToggleFavorite(record)}>
+                              <Star className={cn("h-3.5 w-3.5", record.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditRecord(record)}><Edit2 className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(record.id)}><X className="h-4 w-4" /></Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                     {trainingRecords.length === 0 && (
