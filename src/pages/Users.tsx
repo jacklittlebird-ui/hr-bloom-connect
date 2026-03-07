@@ -26,7 +26,7 @@ interface SystemUser {
   user_id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'station_manager' | 'employee';
+  role: 'admin' | 'station_manager' | 'employee' | 'training_manager';
   station_code?: string;
   station_name?: string;
   employee_code?: string;
@@ -574,7 +574,7 @@ const Users = () => {
               <div>
                 <Label>{isAr ? 'الدور' : 'Role'}</Label>
                 <Input
-                  value={editForm.role === 'admin' ? (isAr ? 'مدير النظام' : 'Admin') : editForm.role === 'station_manager' ? (isAr ? 'مدير محطة' : 'Station Manager') : (isAr ? 'موظف' : 'Employee')}
+                  value={editForm.role === 'admin' ? (isAr ? 'مدير النظام' : 'Admin') : editForm.role === 'station_manager' ? (isAr ? 'مدير محطة' : 'Station Manager') : editForm.role === 'training_manager' ? (isAr ? 'مدير التدريب' : 'Training Manager') : (isAr ? 'موظف' : 'Employee')}
                   disabled
                   className="bg-muted"
                 />
@@ -652,6 +652,7 @@ const Users = () => {
                     <SelectItem value="admin"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير النظام' : 'Admin'}</span></SelectItem>
                     <SelectItem value="station_manager"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {isAr ? 'مدير محطة' : 'Station Manager'}</span></SelectItem>
                     <SelectItem value="employee"><span className="flex items-center gap-2"><User className="w-4 h-4" /> {isAr ? 'موظف' : 'Employee'}</span></SelectItem>
+                    <SelectItem value="training_manager"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير التدريب' : 'Training Manager'}</span></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
