@@ -43,6 +43,7 @@ import SetupPage from "./pages/SetupPage";
 import AttendanceScan from "./pages/AttendanceScan";
 import AttendanceKiosk from "./pages/AttendanceKiosk";
 import AttendanceAdmin from "./pages/AttendanceAdmin";
+import NotificationsPage from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
