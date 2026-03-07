@@ -300,7 +300,7 @@ export const PortalSalary = () => {
                   </TableRow></TableHeader>
                   <TableBody>
                     {payroll.map(p => (
-                      <TableRow key={p.id}>
+                      <TableRow key={`${p.employeeId}-${p.month}-${p.year}`}>
                         <TableCell>{months[parseInt(p.month) - 1]}</TableCell>
                         <TableCell>{p.year}</TableCell>
                         <TableCell className="text-success">{p.gross.toLocaleString()}</TableCell>
