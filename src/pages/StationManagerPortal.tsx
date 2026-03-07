@@ -513,7 +513,7 @@ const StationManagerPortal = () => {
             <Button variant="ghost" size="icon" onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}>
               <Globe className="h-4 w-4" />
             </Button>
-            <NotificationDropdown variant="portal" />
+            <NotificationDropdown variant="portal" portalFilter="station_manager" />
             <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1 md:gap-1.5 text-destructive">
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">{t('خروج', 'Logout')}</span>

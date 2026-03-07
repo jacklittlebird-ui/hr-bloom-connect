@@ -35,7 +35,7 @@ const TrainingPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <NotificationDropdown variant="portal" />
+            <NotificationDropdown variant="portal" portalFilter="training" />
             <Button variant="ghost" size="sm" onClick={logout} className="gap-2 text-destructive hover:text-destructive">
               <LogOut className="w-4 h-4" />
               {ar ? 'خروج' : 'Logout'}
