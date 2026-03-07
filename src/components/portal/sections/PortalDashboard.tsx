@@ -242,7 +242,7 @@ export const PortalDashboard = () => {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
         {stats.map((s, i) => (
           <Card key={i} className={cn("border-0 shadow-sm", s.bg)}>
             <CardContent className="p-4 md:p-5 text-center">
