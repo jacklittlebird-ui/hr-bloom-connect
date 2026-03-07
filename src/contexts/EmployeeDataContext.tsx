@@ -103,6 +103,10 @@ function mapRow(row: any): Employee {
     bankName: row.bank_name || undefined,
     notes: row.notes || undefined,
     deptCode: row.dept_code || undefined,
+    emergencyContactName1: row.emergency_contact_name1 || undefined,
+    emergencyContactMobile1: row.emergency_contact_mobile1 || undefined,
+    emergencyContactName2: row.emergency_contact_name2 || undefined,
+    emergencyContactMobile2: row.emergency_contact_mobile2 || undefined,
   };
 }
 
@@ -188,6 +192,10 @@ async function mapUpdates(updates: Partial<Employee>): Promise<Record<string, an
     jobTitle: 'job_title_ar',
     mobile: 'phone',
     homePhone: 'home_phone',
+    emergencyContactName1: 'emergency_contact_name1',
+    emergencyContactMobile1: 'emergency_contact_mobile1',
+    emergencyContactName2: 'emergency_contact_name2',
+    emergencyContactMobile2: 'emergency_contact_mobile2',
   };
 
   const dbUpdates: Record<string, any> = {};

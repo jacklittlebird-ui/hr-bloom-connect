@@ -87,4 +87,8 @@ export interface Employee {
   bankAccountType?: string;
   bankName?: string;
   deptCode?: string;
+  emergencyContactName1?: string;
+  emergencyContactMobile1?: string;
+  emergencyContactName2?: string;
+  emergencyContactMobile2?: string;
 }

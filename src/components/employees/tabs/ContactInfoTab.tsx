@@ -22,6 +22,10 @@ export const ContactInfoTab = ({ employee, onUpdate, readOnly }: ContactInfoTabP
     address: employee.address || '',
     city: employee.city || '',
     governorate: employee.governorate || '',
+    emergencyContactName1: employee.emergencyContactName1 || '',
+    emergencyContactMobile1: employee.emergencyContactMobile1 || '',
+    emergencyContactName2: employee.emergencyContactName2 || '',
+    emergencyContactMobile2: employee.emergencyContactMobile2 || '',
   });
 
   const updateField = (field: string, value: string) => {
@@ -63,6 +67,33 @@ export const ContactInfoTab = ({ employee, onUpdate, readOnly }: ContactInfoTabP
         <div className="space-y-2">
           <Label className={cn(isRTL && "text-right block")}>{t('employees.fields.governorate')}</Label>
           <Input value={formData.governorate} onChange={e => updateField('governorate', e.target.value)} className={cn(isRTL && "text-right")} />
+        </div>
+      </div>
+
+      {/* Emergency Contacts */}
+      <div className="border-t pt-4">
+        <h3 className={cn("font-semibold text-base mb-4", isRTL && "text-right")}>
+          {isRTL ? 'اتصال في حالات الطوارئ' : 'Emergency Contact'}
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+          <div className="space-y-2">
+            <Label className={cn(isRTL && "text-right block")}>{isRTL ? 'اسم 1' : 'Name 1'}</Label>
+            <Input value={formData.emergencyContactName1} onChange={e => updateField('emergencyContactName1', e.target.value)} className={cn(isRTL && "text-right")} />
+          </div>
+          <div className="space-y-2">
+            <Label className={cn(isRTL && "text-right block")}>{isRTL ? 'موبايل 1' : 'Mobile 1'}</Label>
+            <Input value={formData.emergencyContactMobile1} onChange={e => updateField('emergencyContactMobile1', e.target.value)} className={cn(isRTL && "text-right")} dir="ltr" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label className={cn(isRTL && "text-right block")}>{isRTL ? 'اسم 2' : 'Name 2'}</Label>
+            <Input value={formData.emergencyContactName2} onChange={e => updateField('emergencyContactName2', e.target.value)} className={cn(isRTL && "text-right")} />
+          </div>
+          <div className="space-y-2">
+            <Label className={cn(isRTL && "text-right block")}>{isRTL ? 'موبايل 2' : 'Mobile 2'}</Label>
+            <Input value={formData.emergencyContactMobile2} onChange={e => updateField('emergencyContactMobile2', e.target.value)} className={cn(isRTL && "text-right")} dir="ltr" />
+          </div>
         </div>
       </div>
     </div>

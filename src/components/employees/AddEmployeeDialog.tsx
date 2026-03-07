@@ -128,6 +128,10 @@ export const AddEmployeeDialog = ({ open, onClose }: AddEmployeeDialogProps) => 
         bank_account_type: data.bankAccountType || null,
         bank_name: data.bankName || null,
         notes: data.notes || null,
+        emergency_contact_name1: data.emergencyContactName1 || null,
+        emergency_contact_mobile1: data.emergencyContactMobile1 || null,
+        emergency_contact_name2: data.emergencyContactName2 || null,
+        emergency_contact_mobile2: data.emergencyContactMobile2 || null,
       };
 
       const { error } = await supabase.from('employees').insert(row as any);
