@@ -136,6 +136,17 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Ensure tables inherit direction for RTL support */
+  [dir="rtl"] table,
+  [dir="rtl"] thead,
+  [dir="rtl"] tbody,
+  [dir="rtl"] tr,
+  [dir="rtl"] th,
+  [dir="rtl"] td {
+    direction: rtl;
+    text-align: right;
+  }
+
   /* Force font on all elements for iOS Safari */
   body *,
   input,
