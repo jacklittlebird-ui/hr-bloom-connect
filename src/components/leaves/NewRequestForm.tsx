@@ -122,8 +122,6 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
               <SelectItem value="sick">{t('leaves.types.sick')}</SelectItem>
               <SelectItem value="casual">{t('leaves.types.casual')}</SelectItem>
               <SelectItem value="unpaid">{t('leaves.types.unpaid')}</SelectItem>
-              <SelectItem value="maternity">{t('leaves.types.maternity')}</SelectItem>
-              <SelectItem value="paternity">{t('leaves.types.paternity')}</SelectItem>
             </SelectContent>
           </Select>
         </div>

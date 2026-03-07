@@ -5,7 +5,7 @@ export interface LeaveRequest {
   employeeNameAr: string;
   department: string;
   station: string;
-  leaveType: 'annual' | 'sick' | 'casual' | 'unpaid' | 'maternity' | 'paternity';
+  leaveType: 'annual' | 'sick' | 'casual' | 'unpaid';
   startDate: string;
   endDate: string;
   days: number;

@@ -60,9 +60,25 @@ export const PortalLeaves = () => {
     { value: 'sick', ar: 'مرضية', en: 'Sick' },
     { value: 'casual', ar: 'عارضة', en: 'Casual' },
     { value: 'unpaid', ar: 'بدون راتب', en: 'Unpaid' },
-    { value: 'maternity', ar: 'أمومة', en: 'Maternity' },
-    { value: 'paternity', ar: 'أبوة', en: 'Paternity' },
   ];
+
+  // Check balances for availability
+  const annualBalance = balances.find(b => b.typeEn === 'Annual');
+  const casualBalance = balances.find(b => b.typeEn === 'Casual');
+  const hasAnnualBalance = (annualBalance?.remaining ?? 0) > 0;
+  const hasCasualBalance = (casualBalance?.remaining ?? 0) > 0;
+
+  // Filter available leave types based on balance
+  const availableLeaveTypes = useMemo(() => {
+    if (!hasAnnualBalance && !hasCasualBalance) {
+      return leaveTypes.filter(t => t.value === 'unpaid');
+    }
+    return leaveTypes.filter(t => {
+      if (t.value === 'annual') return hasAnnualBalance;
+      if (t.value === 'casual') return hasCasualBalance;
+      return true;
+    });
+  }, [hasAnnualBalance, hasCasualBalance]);
 
   const permTypes = [
     { value: 'early_leave', ar: 'انصراف مبكر', en: 'Early Leave' },
@@ -78,6 +94,27 @@ export const PortalLeaves = () => {
       toast.error(ar ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
     }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Annual leave: must be future date (not today or before)
+    if (leaveType === 'annual' && leaveStartDate < tomorrow) {
+      toast.error(ar ? 'الإجازة السنوية لا يمكن طلبها في نفس اليوم أو قبله، يجب أن تبدأ من الغد على الأقل' : 'Annual leave must start from tomorrow or later');
+      return;
+    }
+
+    // Sick leave: show warning about medical report
+    if (leaveType === 'sick') {
+      toast.warning(
+        ar ? 'تنبيه: بدون إرسال تقرير طبي معتمد من التأمين الصحي فلن تُقبل الإجازة المرضية' 
+           : 'Warning: Sick leave will not be accepted without an approved medical report from health insurance',
+        { duration: 8000 }
+      );
+    }
+
     const t = leaveTypes.find(l => l.value === leaveType);
     const days = calculateDays();
     addLeaveRequest({
@@ -263,7 +300,10 @@ export const PortalLeaves = () => {
                 <Select value={leaveType} onValueChange={setLeaveType}>
                   <SelectTrigger><SelectValue placeholder={ar ? 'اختر النوع' : 'Select type'} /></SelectTrigger>
                   <SelectContent>
-                    {leaveTypes.map(t => <SelectItem key={t.value} value={t.value}>{ar ? t.ar : t.en}</SelectItem>)}
+                    {availableLeaveTypes.map(t => <SelectItem key={t.value} value={t.value}>{ar ? t.ar : t.en}</SelectItem>)}
+                    {!hasAnnualBalance && !hasCasualBalance && (
+                      <div className="px-3 py-2 text-xs text-destructive">{ar ? 'لا يوجد رصيد سنوي أو عارض - متاح فقط إجازة بدون راتب' : 'No annual or casual balance - only unpaid leave available'}</div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
