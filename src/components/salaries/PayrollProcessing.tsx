@@ -484,12 +484,12 @@ export const PayrollProcessing = () => {
                 <CardHeader className="pb-3">
                   <CardTitle className={cn("flex items-center gap-2 text-lg", isRTL && "flex-row-reverse")}>
                     <Building2 className="h-5 w-5 text-blue-600" />
-                    {ar ? 'مساهمات صاحب العمل' : 'Employer Contributions'}
+                    {ar ? 'مساهمات الشركة' : 'Company Contributions'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {readOnlyField(ar ? 'التأمينات - صاحب العمل' : 'Social Ins. - Employer', employerSocialIns)}
+                    {readOnlyField(ar ? 'التأمينات - الشركة' : 'Social Ins. - Company', employerSocialIns)}
                     {readOnlyField(ar ? 'التأمين الصحي' : 'Health Insurance', healthIns)}
                     {readOnlyField(ar ? 'ضريبة الدخل' : 'Income Tax', incomeTax)}
                   </div>

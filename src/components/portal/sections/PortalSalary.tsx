@@ -64,7 +64,7 @@ export const PortalSalary = () => {
   const getEmployerContributions = (slip: typeof latest) => {
     if (!slip) return [];
     return [
-      { l: ar ? 'حصة صاحب العمل في التأمينات' : 'Employer Social Insurance', v: slip.employerSocialInsurance },
+      { l: ar ? 'حصة الشركة في التأمينات' : 'Company Social Insurance', v: slip.employerSocialInsurance },
       { l: ar ? 'التأمين الصحي' : 'Health Insurance', v: slip.healthInsurance },
       { l: ar ? 'ضريبة الدخل' : 'Income Tax', v: slip.incomeTax },
     ];
@@ -113,7 +113,7 @@ export const PortalSalary = () => {
     <div class="section">${ar?'الخصومات':'Deductions'}</div>
     <table>${getDeductions(slip).filter(x=>x.v>0).map(x=>`<tr><td>${x.l}</td><td>${x.v.toLocaleString()}</td></tr>`).join('')}
     <tr style="font-weight:700;background:#ffebee"><td>${ar?'إجمالي الخصومات':'Total Deductions'}</td><td>${slip.totalDeductions.toLocaleString()}</td></tr></table>
-    <div class="section">${ar?'مساهمات صاحب العمل':'Employer Contributions'}</div>
+    <div class="section">${ar?'مساهمات الشركة':'Company Contributions'}</div>
     <table>${getEmployerContributions(slip).map(x=>`<tr><td>${x.l}</td><td>${x.v.toLocaleString()}</td></tr>`).join('')}</table>
     <div class="total">${ar?'صافي الراتب':'Net Salary'}: ${slip.netSalary.toLocaleString()} ${ar?'ج.م':'EGP'}</div>
     </body></html>`;
@@ -144,7 +144,7 @@ export const PortalSalary = () => {
         </CardContent></Card>
         <Card><CardContent className="p-3 md:p-5 text-center">
           <Building2 className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 text-muted-foreground" />
-          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'مساهمات صاحب العمل' : 'Employer'}</p>
+          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'مساهمات الشركة' : 'Company'}</p>
           <p className="text-lg md:text-2xl font-bold">{hasData ? totalEmployerContributions.toLocaleString() : '—'}</p>
         </CardContent></Card>
       </div>
@@ -209,7 +209,7 @@ export const PortalSalary = () => {
             <Card>
               <CardHeader>
                 <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-                  <Building2 className="w-5 h-5" />{ar ? 'مساهمات صاحب العمل' : 'Employer Contributions'}
+                  <Building2 className="w-5 h-5" />{ar ? 'مساهمات الشركة' : 'Company Contributions'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -222,7 +222,7 @@ export const PortalSalary = () => {
                   ))}
                 </div>
                 <div className={cn("flex justify-between py-3 font-bold bg-muted px-3 rounded mt-4", isRTL && "flex-row-reverse")}>
-                  <span>{ar ? 'إجمالي مساهمات صاحب العمل' : 'Total Employer Contributions'}</span>
+                  <span>{ar ? 'إجمالي مساهمات الشركة' : 'Total Company Contributions'}</span>
                   <span>{totalEmployerContributions.toLocaleString()}</span>
                 </div>
               </CardContent>
@@ -390,7 +390,7 @@ export const PortalSalary = () => {
                 </div>
 
                 <Separator />
-                <h4 className={cn("font-semibold", isRTL && "text-right")}>{ar ? 'مساهمات صاحب العمل' : 'Employer Contributions'}</h4>
+                <h4 className={cn("font-semibold", isRTL && "text-right")}>{ar ? 'مساهمات الشركة' : 'Company Contributions'}</h4>
                 {slipEmployer.map((item, i) => (
                   <div key={i} className={cn("flex justify-between text-sm", isRTL && "flex-row-reverse")}>
                     <span>{item.l}</span><span className="font-mono">{item.v.toLocaleString()}</span>

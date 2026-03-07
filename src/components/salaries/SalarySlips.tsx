@@ -74,8 +74,8 @@ export const SalarySlips = () => {
     <table><tr><th>${ar?'البند':'Item'}</th><th>${ar?'المبلغ':'Amount'}</th></tr>
     ${[{l:ar?'التأمينات الاجتماعية':'Social Insurance',v:slip.employeeInsurance},{l:ar?'القروض':'Loans',v:slip.loanPayment},{l:ar?'السلف':'Advances',v:slip.advanceAmount},{l:ar?'الجوال الشخصي':'Mobile Bill',v:slip.mobileBill},{l:ar?'خصم الإجازة':'Leave Ded.',v:slip.leaveDeduction},{l:ar?'الجزاءات':'Penalties',v:slip.penaltyAmount}].filter(x=>x.v>0).map(x=>`<tr><td>${x.l}</td><td>${x.v.toLocaleString()}</td></tr>`).join('')}
     <tr style="font-weight:700;background:#ffebee"><td>${ar?'إجمالي الخصومات':'Total Deductions'}</td><td>${slip.totalDeductions.toLocaleString()}</td></tr></table>
-    <div class="section">${ar?'مساهمات صاحب العمل':'Employer Contributions'}</div>
-    <table>${[{l:ar?'تأمينات صاحب العمل':'Employer Soc. Ins.',v:slip.employerSocialInsurance},{l:ar?'التأمين الصحي':'Health Ins.',v:slip.healthInsurance},{l:ar?'ضريبة الدخل':'Income Tax',v:slip.incomeTax}].map(x=>`<tr><td>${x.l}</td><td>${x.v.toLocaleString()}</td></tr>`).join('')}</table>
+    <div class="section">${ar?'مساهمات الشركة':'Company Contributions'}</div>
+    <table>${[{l:ar?'تأمينات الشركة':'Company Soc. Ins.',v:slip.employerSocialInsurance},{l:ar?'التأمين الصحي':'Health Ins.',v:slip.healthInsurance},{l:ar?'ضريبة الدخل':'Income Tax',v:slip.incomeTax}].map(x=>`<tr><td>${x.l}</td><td>${x.v.toLocaleString()}</td></tr>`).join('')}</table>
     <div class="total">${ar?'صافي الراتب':'Net Salary'}: ${slip.netSalary.toLocaleString()} ${ar?'ج.م':'EGP'}</div>
     </body></html>`;
     const w = window.open('', '_blank');
@@ -238,7 +238,7 @@ export const SalarySlips = () => {
                 </div>
                 <Separator />
                 <div>
-                  <h4 className={cn("font-semibold text-blue-600 mb-2", isRTL && "text-right")}>{ar ? 'مساهمات صاحب العمل' : 'Employer Contributions'}</h4>
+                  <h4 className={cn("font-semibold text-blue-600 mb-2", isRTL && "text-right")}>{ar ? 'مساهمات الشركة' : 'Company Contributions'}</h4>
                   <div className="space-y-1 text-sm">
                     {[
                       { label: ar ? 'التأمينات الاجتماعية' : 'Social Ins.', value: slip.employerSocialInsurance },

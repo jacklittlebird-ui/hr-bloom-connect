@@ -210,7 +210,7 @@ export const SalaryReports = () => {
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'أجر إضافي' : 'Overtime'}</TableHead>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الخصومات' : 'Deductions'}</TableHead>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الصافي' : 'Net'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'مساهمات صاحب العمل' : 'Employer'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'مساهمات الشركة' : 'Company'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

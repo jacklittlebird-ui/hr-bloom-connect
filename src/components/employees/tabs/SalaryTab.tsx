@@ -240,10 +240,10 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
           <div>
             <h4 className={cn("font-semibold text-sm mb-3 flex items-center gap-2", isRTL && "flex-row-reverse")}>
               <Building2 className="h-4 w-4 text-blue-600" />
-              {ar ? 'مساهمات صاحب العمل' : 'Employer Contributions'}
+              {ar ? 'مساهمات الشركة' : 'Company Contributions'}
             </h4>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {fieldRow(ar ? 'التأمينات الاجتماعية - صاحب العمل' : 'Social Insurance - Employer', 'employerSocialInsurance')}
+              {fieldRow(ar ? 'التأمينات الاجتماعية - الشركة' : 'Social Insurance - Company', 'employerSocialInsurance')}
               {fieldRow(ar ? 'التأمين الصحي' : 'Health Insurance', 'healthInsurance')}
               {fieldRow(ar ? 'ضريبة الدخل' : 'Income Tax', 'incomeTax')}
             </div>
@@ -266,7 +266,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
             </Card>
             <Card className="bg-purple-50 border-purple-200">
               <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">{ar ? 'مساهمات صاحب العمل' : 'Employer Contributions'}</p>
+                <p className="text-xs text-muted-foreground mb-1">{ar ? 'مساهمات الشركة' : 'Company Contributions'}</p>
                 <p className="text-2xl font-bold text-purple-700">{employerTotal.toLocaleString()} <span className="text-sm">{ar ? 'ج.م' : 'EGP'}</span></p>
               </CardContent>
             </Card>
@@ -306,7 +306,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
                     <TableHead className="text-green-700">{ar ? 'الإجمالي' : 'Gross'}</TableHead>
                     <TableHead className="text-destructive">{ar ? 'تأمين موظف' : 'Emp. Ins.'}</TableHead>
                     <TableHead className="text-blue-700">{ar ? 'الصافي' : 'Net'}</TableHead>
-                    <TableHead className="text-purple-700">{ar ? 'مساهمات صاحب العمل' : 'Employer'}</TableHead>
+                    <TableHead className="text-purple-700">{ar ? 'مساهمات الشركة' : 'Company'}</TableHead>
                     <TableHead className="text-center">{ar ? 'إجراءات' : 'Actions'}</TableHead>
                   </TableRow>
                 </TableHeader>
