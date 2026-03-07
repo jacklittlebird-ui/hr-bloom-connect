@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { usePerformanceData, defaultCriteria, calculateScore, CriteriaItem } from '@/contexts/PerformanceDataContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { stationLocations } from '@/data/stationLocations';
@@ -511,6 +512,7 @@ const StationManagerPortal = () => {
             <Button variant="ghost" size="icon" onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}>
               <Globe className="h-4 w-4" />
             </Button>
+            <NotificationDropdown variant="portal" />
             <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-1 md:gap-1.5 text-destructive">
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">{t('خروج', 'Logout')}</span>

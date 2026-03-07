@@ -7,6 +7,7 @@ import { CoursesSyllabus } from '@/components/training/CoursesSyllabus';
 import { CoursesList } from '@/components/training/CoursesList';
 import { TrainingPlan } from '@/components/training/TrainingPlan';
 import { TrainingRecordsReport } from '@/components/training/TrainingRecordsReport';
+import { TrainingStatsCards } from '@/components/training/TrainingStatsCards';
 
 const Training = () => {
   const { t, language } = useLanguage();
@@ -19,6 +20,8 @@ const Training = () => {
           <h1 className="text-3xl font-bold text-foreground">{t('training.title')}</h1>
           <p className="text-muted-foreground mt-1">{t('training.subtitle')}</p>
         </div>
+
+        <TrainingStatsCards />
 
         <Tabs defaultValue="records" className="w-full">
           <TabsList className="grid w-full grid-cols-6">

@@ -20,6 +20,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { QuickActions } from '@/components/dashboard/QuickActions';
+import { LiveStatus } from '@/components/dashboard/LiveStatus';
+import { UpcomingEvents } from '@/components/dashboard/UpcomingEvents';
+import { Announcements } from '@/components/dashboard/Announcements';
 
 const Index = () => {
   const { t, isRTL, language } = useLanguage();
@@ -100,6 +104,12 @@ const Index = () => {
     <DashboardLayout>
       <WelcomeBanner />
 
+      {/* Quick Actions */}
+      <QuickActions />
+
+      {/* Live Status */}
+      <LiveStatus />
+
       {/* Primary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {stats.map((stat, i) => (
@@ -162,6 +172,12 @@ const Index = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
         <ChartCard><SalaryOverviewChart /></ChartCard>
         <RecentActivity />
+      </div>
+
+      {/* Upcoming Events & Announcements */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+        <UpcomingEvents />
+        <Announcements />
       </div>
     </DashboardLayout>
   );
