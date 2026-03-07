@@ -41,6 +41,11 @@ export const PortalLeaves = () => {
   const [permDuration, setPermDuration] = useState('');
   const [permReason, setPermReason] = useState('');
 
+  // Overtime form state
+  const [otType, setOtType] = useState('');
+  const [otDate, setOtDate] = useState<Date>();
+  const [otReason, setOtReason] = useState('');
+
   const calcPermTo = (from: string, duration: string) => {
     if (!from || !duration) return '';
     const [h, m] = from.split(':').map(Number);
@@ -54,6 +59,7 @@ export const PortalLeaves = () => {
   const balances = useMemo(() => getLeaveBalances(PORTAL_EMPLOYEE_ID), [getLeaveBalances]);
   const requests = useMemo(() => getLeaveRequests(PORTAL_EMPLOYEE_ID), [getLeaveRequests]);
   const permissions = useMemo(() => getPermissions(PORTAL_EMPLOYEE_ID), [getPermissions]);
+  const overtimeDays = useMemo(() => getOvertimeDays(PORTAL_EMPLOYEE_ID), [getOvertimeDays]);
 
   const statusCls: Record<string, string> = {
     approved: 'bg-success/10 text-success border-success',
