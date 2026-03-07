@@ -39,26 +39,50 @@ export const TrainingStatsCards = () => {
   }, []);
 
   const cards = [
-    { icon: BookOpen, label: ar ? 'إجمالي السجلات' : 'Total Records', value: stats.totalRecords, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { icon: Award, label: ar ? 'دورات نشطة' : 'Active Courses', value: stats.activeCourses, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { icon: Users, label: ar ? 'موظفون مدربون' : 'Trained Employees', value: stats.trainedEmployees, color: 'text-violet-500', bg: 'bg-violet-500/10' },
-    { icon: TrendingUp, label: ar ? 'إجمالي الدورات' : 'Total Courses', value: stats.totalCourses, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-    { icon: Calendar, label: ar ? 'دورات مخططة' : 'Planned Courses', value: stats.upcomingPlanned, color: 'text-pink-500', bg: 'bg-pink-500/10' },
-    { icon: DollarSign, label: ar ? 'إجمالي التكلفة' : 'Total Cost', value: stats.totalCost.toLocaleString(), color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+    { icon: BookOpen, label: ar ? 'إجمالي السجلات' : 'Total Records', value: stats.totalRecords, gradient: 'from-blue-500 to-blue-600', lightBg: 'bg-blue-50 dark:bg-blue-950/40', ring: 'ring-blue-200 dark:ring-blue-800' },
+    { icon: Award, label: ar ? 'دورات نشطة' : 'Active Courses', value: stats.activeCourses, gradient: 'from-emerald-500 to-teal-600', lightBg: 'bg-emerald-50 dark:bg-emerald-950/40', ring: 'ring-emerald-200 dark:ring-emerald-800' },
+    { icon: Users, label: ar ? 'موظفون مدربون' : 'Trained Employees', value: stats.trainedEmployees, gradient: 'from-violet-500 to-purple-600', lightBg: 'bg-violet-50 dark:bg-violet-950/40', ring: 'ring-violet-200 dark:ring-violet-800' },
+    { icon: TrendingUp, label: ar ? 'إجمالي الدورات' : 'Total Courses', value: stats.totalCourses, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-amber-50 dark:bg-amber-950/40', ring: 'ring-amber-200 dark:ring-amber-800' },
+    { icon: Calendar, label: ar ? 'دورات مخططة' : 'Planned Courses', value: stats.upcomingPlanned, gradient: 'from-pink-500 to-rose-600', lightBg: 'bg-pink-50 dark:bg-pink-950/40', ring: 'ring-pink-200 dark:ring-pink-800' },
+    { icon: DollarSign, label: ar ? 'إجمالي التكلفة' : 'Total Cost', value: stats.totalCost.toLocaleString(), gradient: 'from-cyan-500 to-sky-600', lightBg: 'bg-cyan-50 dark:bg-cyan-950/40', ring: 'ring-cyan-200 dark:ring-cyan-800' },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
       {cards.map((card, i) => (
-        <div key={i} className={cn(
-          "flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 bg-card",
-          "hover:shadow-md transition-all duration-200"
-        )}>
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", card.bg)}>
-            <card.icon className={cn("w-5 h-5", card.color)} />
+        <div
+          key={i}
+          className={cn(
+            "relative overflow-hidden flex flex-col items-center gap-3 p-5 rounded-2xl",
+            "border ring-1 transition-all duration-300",
+            "hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02]",
+            "group cursor-default",
+            card.lightBg, card.ring, "border-transparent"
+          )}
+        >
+          {/* Decorative gradient blob */}
+          <div className={cn(
+            "absolute -top-6 -right-6 w-20 h-20 rounded-full opacity-20 blur-2xl",
+            "bg-gradient-to-br", card.gradient,
+            "group-hover:opacity-30 transition-opacity"
+          )} />
+          
+          <div className={cn(
+            "relative w-12 h-12 rounded-2xl flex items-center justify-center",
+            "bg-gradient-to-br shadow-lg",
+            card.gradient,
+            "group-hover:scale-110 transition-transform duration-300"
+          )}>
+            <card.icon className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xl font-bold text-foreground">{card.value}</span>
-          <span className="text-xs text-muted-foreground text-center leading-tight">{card.label}</span>
+          
+          <span className="relative text-2xl font-extrabold text-foreground tracking-tight">
+            {card.value}
+          </span>
+          
+          <span className="relative text-xs font-medium text-muted-foreground text-center leading-tight">
+            {card.label}
+          </span>
         </div>
       ))}
     </div>
