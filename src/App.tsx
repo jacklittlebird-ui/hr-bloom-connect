@@ -100,6 +100,7 @@ const AppRoutes = () => (
     <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><SiteSettingsPage /></ProtectedRoute>} />
     <Route path="/documents" element={<ProtectedRoute allowedRoles={['admin']}><Documents /></ProtectedRoute>} />
     <Route path="/uniforms" element={<ProtectedRoute allowedRoles={['admin']}><Uniforms /></ProtectedRoute>} />
+    <Route path="/notifications" element={<ProtectedRoute allowedRoles={['admin']}><NotificationsPage /></ProtectedRoute>} />
     
     {/* Employee portal */}
     <Route path="/employee-portal" element={<ProtectedRoute allowedRoles={['employee']}><EmployeePortal /></ProtectedRoute>} />
