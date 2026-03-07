@@ -71,11 +71,11 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut }: CheckInOutProps) 
   }, []);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', { 
+    return date.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-GB', { 
       hour: '2-digit', 
       minute: '2-digit',
       second: '2-digit',
-      hour12: true 
+      hour12: false 
     });
   };
 
@@ -130,7 +130,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut }: CheckInOutProps) 
     onCheckIn(selectedEmpData.id, selectedEmpData.name, selectedEmpData.nameAr, selectedEmpData.department);
     toast({
       title: t('attendance.checkin.success'),
-      description: `${language === 'ar' ? selectedEmpData.nameAr : selectedEmpData.name} - ${currentTime.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}`,
+      description: `${language === 'ar' ? selectedEmpData.nameAr : selectedEmpData.name} - ${currentTime.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}`,
     });
   };
 

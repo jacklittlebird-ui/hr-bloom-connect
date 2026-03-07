@@ -79,7 +79,7 @@ export const WelcomeBanner = () => {
         {/* Quick stats pills */}
         <div className="flex flex-wrap gap-2 md:gap-3">
           {[
-            { icon: Clock, label: ar ? 'الوقت الآن' : 'Current Time', value: now.toLocaleTimeString(ar ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' }) },
+            { icon: Clock, label: ar ? 'الوقت الآن' : 'Current Time', value: now.toLocaleTimeString(ar ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }) },
           ].map((pill, i) => (
             <div key={i} className="flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 border border-primary-foreground/10">
               <pill.icon className="w-4 h-4 text-primary-foreground/70" />

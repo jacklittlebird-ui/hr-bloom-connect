@@ -80,7 +80,7 @@ export const PortalWelcomeBanner = () => {
           <div className="flex flex-col">
             <span className="text-[10px] text-primary-foreground/50 leading-tight">{ar ? 'الوقت الآن' : 'Current Time'}</span>
             <span className="text-sm font-semibold text-primary-foreground leading-tight">
-              {now.toLocaleTimeString(ar ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+              {now.toLocaleTimeString(ar ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
             </span>
           </div>
         </div>
