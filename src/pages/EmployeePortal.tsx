@@ -21,6 +21,7 @@ import { PortalRequests } from '@/components/portal/sections/PortalRequests';
 import { PortalNotifications } from '@/components/portal/sections/PortalNotifications';
 import { PortalSettings } from '@/components/portal/sections/PortalSettings';
 import { PortalUniforms } from '@/components/portal/sections/PortalUniforms';
+import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 
 export type PortalSection =
   | 'dashboard' | 'profile' | 'attendance' | 'leaves'
@@ -140,6 +141,7 @@ const EmployeePortal = () => {
             />
           </div>
           <div className="p-3 md:p-6">
+            <PortalWelcomeBanner />
             <ActiveComponent key={refreshKey} />
           </div>
         </div>

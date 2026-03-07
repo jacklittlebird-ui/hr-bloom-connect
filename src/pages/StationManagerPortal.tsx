@@ -8,6 +8,7 @@ import { NotificationDropdown } from '@/components/notifications/NotificationDro
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { stationLocations } from '@/data/stationLocations';
+import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -522,6 +523,7 @@ const StationManagerPortal = () => {
       </header>
 
       <main className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
+        <PortalWelcomeBanner />
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-[hsl(var(--stat-blue))] to-[hsl(var(--stat-blue)/0.8)] text-white shadow-lg">

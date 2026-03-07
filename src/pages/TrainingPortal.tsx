@@ -13,6 +13,7 @@ import { TrainingRecordsReport } from '@/components/training/TrainingRecordsRepo
 import { TrainingStatsCards } from '@/components/training/TrainingStatsCards';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library } from 'lucide-react';
+import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 
 const TrainingPortal = () => {
   const { language } = useLanguage();
@@ -45,6 +46,7 @@ const TrainingPortal = () => {
 
       {/* Content */}
       <main className="p-4 md:p-6 max-w-[1400px] mx-auto">
+        <PortalWelcomeBanner />
         <TrainingStatsCards />
         <Tabs defaultValue="records" className="w-full">
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-1" dir="rtl">
