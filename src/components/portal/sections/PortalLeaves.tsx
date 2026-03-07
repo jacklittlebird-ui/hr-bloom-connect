@@ -209,6 +209,7 @@ export const PortalLeaves = () => {
         <div className="flex gap-2 w-full sm:w-auto">
           <Button onClick={() => setShowLeaveDialog(true)} size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm"><Plus className="w-4 h-4 me-1" />{ar ? 'طلب إجازة' : 'Leave'}</Button>
           <Button onClick={() => setShowPermDialog(true)} variant="outline" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm"><Clock className="w-4 h-4 me-1" />{ar ? 'طلب إذن' : 'Permission'}</Button>
+          <Button onClick={() => setShowOvertimeDialog(true)} variant="secondary" size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm"><CalendarPlus className="w-4 h-4 me-1" />{ar ? 'إضافة يوم' : 'Overtime'}</Button>
         </div>
       </div>
 
@@ -351,10 +352,7 @@ export const PortalLeaves = () => {
         <TabsContent value="overtime">
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle className="flex items-center gap-2"><CalendarPlus className="w-5 h-5" />{ar ? 'أيام العمل الإضافي' : 'Overtime Days'}</CardTitle>
-                <Button onClick={() => setShowOvertimeDialog(true)} size="sm"><Plus className="w-4 h-4 me-1" />{ar ? 'إضافة يوم' : 'Add Day'}</Button>
-              </div>
+              <CardTitle className="flex items-center gap-2"><CalendarPlus className="w-5 h-5" />{ar ? 'أيام العمل الإضافي' : 'Overtime Days'}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
