@@ -574,7 +574,7 @@ const Users = () => {
               <div>
                 <Label>{isAr ? 'الدور' : 'Role'}</Label>
                 <Input
-                  value={editForm.role === 'admin' ? (isAr ? 'مدير النظام' : 'Admin') : editForm.role === 'station_manager' ? (isAr ? 'مدير محطة' : 'Station Manager') : (isAr ? 'موظف' : 'Employee')}
+                  value={editForm.role === 'admin' ? (isAr ? 'مدير النظام' : 'Admin') : editForm.role === 'station_manager' ? (isAr ? 'مدير محطة' : 'Station Manager') : editForm.role === 'training_manager' ? (isAr ? 'مدير التدريب' : 'Training Manager') : (isAr ? 'موظف' : 'Employee')}
                   disabled
                   className="bg-muted"
                 />
