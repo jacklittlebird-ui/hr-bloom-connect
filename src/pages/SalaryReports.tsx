@@ -413,7 +413,7 @@ const SalaryReports = () => {
       </tr>`;
 
     const headerLabels = ar
-      ? ['الكود','الاسم','القسم','المحطة','الأساسي','مواصلات','حوافز','بدل محطة','بدل محمول','بدل معيشة','أجر إضافي','مكافآت','الإجمالي','تأمينات','قروض','سلف','فاتورة محمول','خصم إجازات','جزاءات','إجمالي الخصومات','الصافي','تأمينات صاحب العمل','تأمين صحي','ضريبة دخل','إجمالي مساهمات ص.ع']
+      ? ['الكود','الاسم','القسم','المحطة','الأساسي','مواصلات','حوافز','بدل محطة','بدل محمول','بدل معيشة','أجر إضافي','مكافآت','الإجمالي','تأمينات','قروض','سلف','فاتورة محمول','خصم إجازات','جزاءات','إجمالي الخصومات','الصافي','تأمينات الشركة','تأمين صحي','ضريبة دخل','إجمالي مساهمات الشركة']
       : ['ID','Name','Dept','Station','Basic','Transport','Incentives','Station All.','Mobile All.','Living All.','Overtime','Bonus','Gross','Insurance','Loans','Advances','Mobile Bill','Leave Ded.','Penalty','Total Ded.','Net','Emp. Ins.','Health Ins.','Income Tax','Total Employer'];
 
     const w = window.open('', '_blank');
@@ -561,7 +561,7 @@ const SalaryReports = () => {
     { header: ar ? 'جزاءات' : 'Penalty', key: 'penalty' },
     { header: ar ? 'إجمالي الخصومات' : 'Total Ded.', key: 'totalDed' },
     { header: ar ? 'الصافي' : 'Net', key: 'net' },
-    { header: ar ? 'تأمينات صاحب العمل' : 'Emp. Ins.', key: 'empIns' },
+    { header: ar ? 'تأمينات الشركة' : 'Emp. Ins.', key: 'empIns' },
     { header: ar ? 'تأمين صحي' : 'Health Ins.', key: 'health' },
     { header: ar ? 'ضريبة دخل' : 'Income Tax', key: 'tax' },
     { header: ar ? 'إجمالي مساهمات ص.ع' : 'Total Employer', key: 'totalEmployer' },
@@ -603,7 +603,7 @@ const SalaryReports = () => {
     { header: ar ? 'جزاءات' : 'Penalty', key: 'penalty' },
     { header: ar ? 'إجمالي خصومات' : 'Tot.Ded', key: 'totalDeductions' },
     { header: ar ? 'الصافي' : 'Net', key: 'net' },
-    { header: ar ? 'تأمينات صاحب العمل' : 'Emp. Ins.', key: 'employerInsurance' },
+    { header: ar ? 'تأمينات الشركة' : 'Emp. Ins.', key: 'employerInsurance' },
     { header: ar ? 'تأمين صحي' : 'Health', key: 'healthInsurance' },
     { header: ar ? 'ضريبة دخل' : 'Tax', key: 'incomeTax' },
     { header: ar ? 'إجمالي مساهمات ص.ع' : 'Total Employer', key: 'totalEmployer' },
@@ -631,7 +631,7 @@ const SalaryReports = () => {
     { header: ar ? 'قروض' : 'Loans', key: 'loans' },
     { header: ar ? 'إجمالي خصومات' : 'Tot.Ded', key: 'totalDeductions' },
     { header: ar ? 'الصافي' : 'Net', key: 'net' },
-    { header: ar ? 'تأمينات صاحب العمل' : 'Emp. Ins.', key: 'employerInsurance' },
+    { header: ar ? 'تأمينات الشركة' : 'Emp. Ins.', key: 'employerInsurance' },
     { header: ar ? 'تأمين صحي' : 'Health', key: 'healthInsurance' },
     { header: ar ? 'ضريبة دخل' : 'Tax', key: 'incomeTax' },
     { header: ar ? 'إجمالي مساهمات ص.ع' : 'Total Employer', key: 'totalEmployer' },
@@ -811,7 +811,7 @@ const SalaryReports = () => {
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الإجمالي' : 'Gross'}</TableHead>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الخصومات' : 'Deductions'}</TableHead>
                     <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الصافي' : 'Net'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'صاحب العمل' : 'Employer'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'مساهمات الشركة' : 'Company'}</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {stationData.map(s => (

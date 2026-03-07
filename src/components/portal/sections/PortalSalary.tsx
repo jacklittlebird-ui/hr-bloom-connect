@@ -85,7 +85,7 @@ export const PortalSalary = () => {
   ] : [];
 
   const employerContributions = latest ? getEmployerContributions(latest) : salaryRecord ? [
-    { l: ar ? 'حصة صاحب العمل في التأمينات' : 'Employer Social Insurance', v: salaryRecord.employerSocialInsurance },
+    { l: ar ? 'حصة الشركة في التأمينات' : 'Company Social Insurance', v: salaryRecord.employerSocialInsurance },
     { l: ar ? 'التأمين الصحي' : 'Health Insurance', v: salaryRecord.healthInsurance },
     { l: ar ? 'ضريبة الدخل' : 'Income Tax', v: salaryRecord.incomeTax },
   ] : [];
