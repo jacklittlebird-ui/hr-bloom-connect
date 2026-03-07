@@ -222,5 +222,6 @@ export const CoursesSyllabus = () => {
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };
