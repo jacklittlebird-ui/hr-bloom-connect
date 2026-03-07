@@ -27,6 +27,8 @@ interface Employee {
   hireDate: string;
   mobile: string;
   jobFunctions: string[];
+  jobTitleAr: string;
+  jobTitleEn: string;
 }
 
 interface TrainingRecord {
@@ -121,6 +123,8 @@ export const TrainingRecords = () => {
     hireDate: emp.hireDate || '',
     mobile: emp.phone || '',
     jobFunctions: (emp as any).deptCode ? [(emp as any).deptCode] : [],
+    jobTitleAr: (emp as any).jobTitleAr || '',
+    jobTitleEn: (emp as any).jobTitleEn || '',
   })), [contextEmployees]);
 
   // Fetch training records from DB when employee is selected
@@ -284,8 +288,8 @@ export const TrainingRecords = () => {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-6">
-      <div className={cn("col-span-3 space-y-4", isRTL && "order-last")}>
+    <div dir="rtl" className="grid grid-cols-12 gap-6">
+      <div className="col-span-3 space-y-4">
         <Card>
           <CardContent className="p-4 space-y-3">
             <div className="relative">
@@ -331,14 +335,16 @@ export const TrainingRecords = () => {
                   <Avatar className="w-24 h-24"><AvatarFallback className="text-2xl">{selectedEmployee.nameEn.charAt(0)}</AvatarFallback></Avatar>
                   <div className="flex-1 space-y-4">
                     <div>
-                      <h2 className="text-2xl font-bold">{language === 'ar' ? selectedEmployee.nameAr : selectedEmployee.nameEn}</h2>
+                      <h2 className="text-2xl font-bold">{ar ? selectedEmployee.nameAr : selectedEmployee.nameEn}</h2>
                       <p className="text-muted-foreground">{selectedEmployee.department}</p>
                     </div>
-                    <div className="grid grid-cols-4 gap-4 text-sm">
+                    <div className="grid grid-cols-3 gap-4 text-sm">
                       <div><span className="text-muted-foreground">{t('training.linkId')}: </span><span className="font-medium">{selectedEmployee.linkId}</span></div>
                       <div><span className="text-muted-foreground">{t('training.station')}: </span><span className="font-medium">{selectedEmployee.station}</span></div>
                       <div><span className="text-muted-foreground">{t('training.hireDate')}: </span><span className="font-medium">{selectedEmployee.hireDate}</span></div>
                       <div><span className="text-muted-foreground">{t('training.mobile')}: </span><span className="font-medium">{selectedEmployee.mobile}</span></div>
+                      <div><span className="text-muted-foreground">{ar ? 'القسم' : 'Department'}: </span><span className="font-medium">{selectedEmployee.department}</span></div>
+                      <div><span className="text-muted-foreground">{ar ? 'الوظيفة' : 'Job Title'}: </span><span className="font-medium">{ar ? selectedEmployee.jobTitleAr : selectedEmployee.jobTitleEn || '-'}</span></div>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-2">{t('training.jobFunction')}</p>
