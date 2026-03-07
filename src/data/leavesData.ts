@@ -27,7 +27,7 @@ export const sampleOvertimeRequests: OvertimeRequest[] = [
 ];
 
 export const sampleLeaveBalances: EmployeeLeaveBalance[] = [
-  { employeeId: 'Emp001', employeeName: 'Galal AbdelRazek', employeeNameAr: 'جلال عبد الرازق', department: 'الإدارة', station: '', annualTotal: 21, annualUsed: 5, annualRemaining: 16, sickTotal: 15, sickUsed: 2, sickRemaining: 13, casualTotal: 7, casualUsed: 1, casualRemaining: 6 },
-  { employeeId: 'Emp002', employeeName: 'Ahmed Mohamed Ali', employeeNameAr: 'أحمد محمد علي', department: 'تقنية المعلومات', station: '', annualTotal: 21, annualUsed: 10, annualRemaining: 11, sickTotal: 15, sickUsed: 5, sickRemaining: 10, casualTotal: 7, casualUsed: 3, casualRemaining: 4 },
-  { employeeId: 'Emp003', employeeName: 'Sara Ahmed Hassan', employeeNameAr: 'سارة أحمد حسن', department: 'الإدارة', station: '', annualTotal: 21, annualUsed: 0, annualRemaining: 21, sickTotal: 15, sickUsed: 0, sickRemaining: 15, casualTotal: 7, casualUsed: 2, casualRemaining: 5 },
+  { employeeId: 'Emp001', employeeName: 'Galal AbdelRazek', employeeNameAr: 'جلال عبد الرازق', department: 'الإدارة', station: '', annualTotal: 21, annualUsed: 5, annualRemaining: 16, sickTotal: 15, sickUsed: 2, sickRemaining: 13, casualTotal: 7, casualUsed: 1, casualRemaining: 6, permissionsTotal: 24, permissionsUsed: 4, permissionsRemaining: 20 },
+  { employeeId: 'Emp002', employeeName: 'Ahmed Mohamed Ali', employeeNameAr: 'أحمد محمد علي', department: 'تقنية المعلومات', station: '', annualTotal: 21, annualUsed: 10, annualRemaining: 11, sickTotal: 15, sickUsed: 5, sickRemaining: 10, casualTotal: 7, casualUsed: 3, casualRemaining: 4, permissionsTotal: 24, permissionsUsed: 8, permissionsRemaining: 16 },
+  { employeeId: 'Emp003', employeeName: 'Sara Ahmed Hassan', employeeNameAr: 'سارة أحمد حسن', department: 'الإدارة', station: '', annualTotal: 21, annualUsed: 0, annualRemaining: 21, sickTotal: 15, sickUsed: 0, sickRemaining: 15, casualTotal: 7, casualUsed: 2, casualRemaining: 5, permissionsTotal: 24, permissionsUsed: 0, permissionsRemaining: 24 },
 ];

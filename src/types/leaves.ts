@@ -87,4 +87,7 @@ export interface EmployeeLeaveBalance {
   casualTotal: number;
   casualUsed: number;
   casualRemaining: number;
+  permissionsTotal: number;
+  permissionsUsed: number;
+  permissionsRemaining: number;
 }

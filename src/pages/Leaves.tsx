@@ -154,6 +154,9 @@ const Leaves = () => {
       const annualUsed = empLeaves.filter(l => l.leave_type === 'annual').reduce((sum, l) => sum + l.days, 0);
       const sickUsed = empLeaves.filter(l => l.leave_type === 'sick').reduce((sum, l) => sum + l.days, 0);
       const casualUsed = empLeaves.filter(l => l.leave_type === 'casual').reduce((sum, l) => sum + l.days, 0);
+      const empPerms = (perms || []).filter(p => p.employee_id === e.id && p.status === 'approved');
+      const permissionsUsed = empPerms.reduce((sum, p) => sum + (p.hours || 0), 0);
+      const permissionsTotal = 24;
       return {
         employeeId: e.id, employeeName: e.name_en, employeeNameAr: e.name_ar,
         department: d ? (language === 'ar' ? d.name_ar : d.name_en) : '',
@@ -163,6 +166,7 @@ const Leaves = () => {
         sickTotal: e.sick_leave_balance || 7, sickUsed,
         sickRemaining: (e.sick_leave_balance || 7) - sickUsed,
         casualTotal: 7, casualUsed, casualRemaining: 7 - casualUsed,
+        permissionsTotal, permissionsUsed, permissionsRemaining: permissionsTotal - permissionsUsed,
       };
     });
     setLeaveBalances(balances);
