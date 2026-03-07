@@ -1,12 +1,20 @@
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
-import { CalendarDays, Activity, Users, Clock } from 'lucide-react';
+import { CalendarDays, Clock } from 'lucide-react';
 
 export const WelcomeBanner = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
 
-  const hour = new Date().getHours();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const hour = now.getHours();
   let greeting: string;
   let emoji: string;
   if (hour < 12) {
@@ -20,7 +28,7 @@ export const WelcomeBanner = () => {
     emoji = '🌙';
   }
 
-  const today = new Date().toLocaleDateString(ar ? 'ar-EG' : 'en-US', {
+  const today = now.toLocaleDateString(ar ? 'ar-EG' : 'en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -71,7 +79,7 @@ export const WelcomeBanner = () => {
         {/* Quick stats pills */}
         <div className="flex flex-wrap gap-2 md:gap-3">
           {[
-            { icon: Clock, label: ar ? 'الوقت الآن' : 'Current Time', value: new Date().toLocaleTimeString(ar ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' }) },
+            { icon: Clock, label: ar ? 'الوقت الآن' : 'Current Time', value: now.toLocaleTimeString(ar ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) },
           ].map((pill, i) => (
             <div key={i} className="flex items-center gap-2 bg-primary-foreground/10 backdrop-blur-sm rounded-full px-4 py-2 border border-primary-foreground/10">
               <pill.icon className="w-4 h-4 text-primary-foreground/70" />
