@@ -7,7 +7,7 @@ import { useModulePermissions, PATH_TO_MODULE, ModuleKey } from '@/hooks/useModu
 import {
   LayoutDashboard, Users, Building2, Clock, FileText, Calendar, Wallet,
   FileBarChart, HandCoins, UserPlus, Star, Monitor, Shirt, FolderOpen, BarChart3,
-  GraduationCap, Settings, Shield, Layers, UserCog, UserCheck,
+  GraduationCap, Settings, Shield, Layers, UserCog, UserCheck, Bell,
   ChevronLeft, ChevronRight,
 } from 'lucide-react';
 
@@ -35,6 +35,7 @@ const mainNavItems: NavItem[] = [
   { key: 'nav.documents', icon: FolderOpen, path: '/documents', moduleKey: 'documents' },
   { key: 'nav.reports', icon: BarChart3, path: '/reports', moduleKey: 'reports' },
   { key: 'nav.training', icon: GraduationCap, path: '/training', moduleKey: 'training' },
+  { key: 'nav.notifications', icon: Bell, path: '/notifications', moduleKey: 'notifications' },
 ];
 
 const configNavItems: NavItem[] = [

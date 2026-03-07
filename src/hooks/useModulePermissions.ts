@@ -7,7 +7,7 @@ export const ALL_MODULES = [
   'dashboard', 'employee-portal', 'employees', 'departments', 'attendance',
   'leaves', 'salaries', 'salary-reports', 'loans', 'recruitment',
   'performance', 'assets', 'uniforms', 'documents', 'reports',
-  'training', 'users', 'settings',
+  'training', 'notifications', 'users', 'settings',
 ] as const;
 
 export type ModuleKey = typeof ALL_MODULES[number];

@@ -28,6 +28,7 @@ const translations: Record<string, Record<Language, string>> = {
   'nav.documents': { en: 'Documents', ar: 'المستندات' },
   'nav.reports': { en: 'Reports', ar: 'التقارير' },
   'nav.training': { en: 'Training', ar: 'التدريب' },
+  'nav.notifications': { en: 'Notifications', ar: 'الإشعارات' },
   'nav.configurations': { en: 'CONFIGURATIONS', ar: 'الإعدادات' },
   'nav.users': { en: 'Users', ar: 'المستخدمين' },
   'nav.groups': { en: 'Groups', ar: 'المجموعات' },
