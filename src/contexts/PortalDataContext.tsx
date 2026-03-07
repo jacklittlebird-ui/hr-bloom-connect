@@ -277,6 +277,26 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       })));
     }
 
+    // Overtime days
+    const { data: otData } = await supabase.from('overtime_requests').select('*').order('created_at', { ascending: false });
+    if (otData) {
+      const otTypeMap: Record<string, { ar: string; en: string }> = {
+        holiday: { ar: 'إجازة رسمية', en: 'Holiday' },
+        weekend: { ar: 'عطلة أسبوعية', en: 'Weekend' },
+        regular: { ar: 'أخرى', en: 'Other' },
+      };
+      setOvertimeDays(otData.map(o => {
+        const t = otTypeMap[o.status] || otTypeMap.regular;
+        return {
+          id: o.id, employeeId: o.employee_id,
+          date: o.date, overtimeType: (o as any).overtime_type || 'regular',
+          typeAr: otTypeMap[(o as any).overtime_type]?.ar || 'أخرى',
+          typeEn: otTypeMap[(o as any).overtime_type]?.en || 'Other',
+          reason: o.reason || '', status: o.status as any,
+        };
+      }));
+    }
+
     // Documents
     const { data: dData } = await supabase.from('employee_documents').select('*').order('uploaded_at', { ascending: false });
     if (dData) {
@@ -361,6 +381,18 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [fetchAll]);
 
   const getViolations = useCallback((empId: string) => violations.filter(v => v.employeeId === empId), [violations]);
+  const getOvertimeDays = useCallback((empId: string) => overtimeDays.filter(o => o.employeeId === empId), [overtimeDays]);
+  
+  const addOvertimeDay = useCallback(async (req: Omit<OvertimeDay, 'id' | 'status'>) => {
+    await supabase.from('overtime_requests').insert({
+      employee_id: req.employeeId,
+      date: req.date,
+      hours: 8,
+      reason: req.reason,
+    });
+    await fetchAll();
+  }, [fetchAll]);
+
   const getRequests = useCallback((empId: string) => requests.filter(r => r.employeeId === empId), [requests]);
   
   const addRequest = useCallback(async (req: Omit<EmployeeRequest, 'id' | 'status'>) => {
@@ -387,6 +419,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       getEvaluations, getTraining,
       getMissions, addMission,
       getViolations,
+      getOvertimeDays, addOvertimeDay,
       getRequests, addRequest,
       getDocuments, addDocument,
     }}>
