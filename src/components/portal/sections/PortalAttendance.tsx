@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Calendar, TrendingUp } from 'lucide-react';
+import { Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle, Timer } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
@@ -60,16 +60,21 @@ export const PortalAttendance = () => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         {[
-          { l: { ar: 'أيام العمل', en: 'Working' }, v: working, c: 'text-primary' },
-          { l: { ar: 'حضور', en: 'Present' }, v: stats.present, c: 'text-success' },
-          { l: { ar: 'تأخير', en: 'Late' }, v: stats.late, c: 'text-warning' },
-          { l: { ar: 'غياب', en: 'Absent' }, v: stats.absent, c: 'text-destructive' },
-          { l: { ar: 'إجمالي الساعات', en: 'Total Hours' }, v: `${String(stats.totalHours).padStart(2, '0')}:${String(stats.totalMinutes).padStart(2, '0')}`, c: '' },
+          { l: { ar: 'أيام العمل', en: 'Working' }, v: working, icon: Calendar, gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+          { l: { ar: 'حضور', en: 'Present' }, v: stats.present, icon: CheckCircle, gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+          { l: { ar: 'تأخير', en: 'Late' }, v: stats.late, icon: AlertTriangle, gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50 dark:bg-amber-950/40' },
+          { l: { ar: 'غياب', en: 'Absent' }, v: stats.absent, icon: XCircle, gradient: 'from-red-500 to-rose-500', bg: 'bg-red-50 dark:bg-red-950/40' },
+          { l: { ar: 'إجمالي الساعات', en: 'Total Hours' }, v: `${String(stats.totalHours).padStart(2, '0')}:${String(stats.totalMinutes).padStart(2, '0')}`, icon: Timer, gradient: 'from-violet-500 to-purple-500', bg: 'bg-violet-50 dark:bg-violet-950/40' },
         ].map((s, i) => (
-          <Card key={i}><CardContent className="p-3 md:p-4 text-center">
-            <p className="text-xs md:text-sm text-muted-foreground truncate">{ar ? s.l.ar : s.l.en}</p>
-            <p className={cn("text-xl md:text-2xl font-bold", s.c)}>{s.v}</p>
-          </CardContent></Card>
+          <Card key={i} className={cn("border-0 shadow-sm", s.bg)}>
+            <CardContent className="p-3 md:p-4 text-center">
+              <div className={cn("w-9 h-9 rounded-lg mx-auto mb-2 flex items-center justify-center bg-gradient-to-br", s.gradient)}>
+                <s.icon className="w-5 h-5 text-white" />
+              </div>
+              <p className="text-xl md:text-2xl font-bold">{s.v}</p>
+              <p className="text-xs md:text-sm text-muted-foreground truncate">{ar ? s.l.ar : s.l.en}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 

@@ -124,26 +124,22 @@ export const PortalSalary = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 md:gap-4">
-        <Card><CardContent className="p-3 md:p-5 text-center">
-          <TrendingUp className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 text-success" />
-          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'إجمالي الراتب' : 'Gross'}</p>
-          <p className="text-lg md:text-2xl font-bold text-success">{hasData ? totalEarnings.toLocaleString() : '—'}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 md:p-5 text-center">
-          <TrendingDown className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 text-destructive" />
-          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'الخصومات' : 'Deductions'}</p>
-          <p className="text-lg md:text-2xl font-bold text-destructive">{hasData ? totalDeductions.toLocaleString() : '—'}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 md:p-5 text-center">
-          <Wallet className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 text-primary" />
-          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'صافي الراتب' : 'Net'}</p>
-          <p className="text-lg md:text-2xl font-bold text-primary">{hasData ? netSalary.toLocaleString() : '—'}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 md:p-5 text-center">
-          <Building2 className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 text-muted-foreground" />
-          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'مساهمات الشركة' : 'Company'}</p>
-          <p className="text-lg md:text-2xl font-bold">{hasData ? totalEmployerContributions.toLocaleString() : '—'}</p>
-        </CardContent></Card>
+        {[
+          { icon: TrendingUp, label: ar ? 'إجمالي الراتب' : 'Gross', value: hasData ? totalEarnings.toLocaleString() : '—', gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+          { icon: TrendingDown, label: ar ? 'الخصومات' : 'Deductions', value: hasData ? totalDeductions.toLocaleString() : '—', gradient: 'from-red-500 to-rose-500', bg: 'bg-red-50 dark:bg-red-950/40' },
+          { icon: Wallet, label: ar ? 'صافي الراتب' : 'Net', value: hasData ? netSalary.toLocaleString() : '—', gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+          { icon: Building2, label: ar ? 'مساهمات الشركة' : 'Company', value: hasData ? totalEmployerContributions.toLocaleString() : '—', gradient: 'from-violet-500 to-purple-500', bg: 'bg-violet-50 dark:bg-violet-950/40' },
+        ].map((s, i) => (
+          <Card key={i} className={cn("border-0 shadow-sm", s.bg)}>
+            <CardContent className="p-3 md:p-5 text-center">
+              <div className={cn("w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center bg-gradient-to-br", s.gradient)}>
+                <s.icon className="w-5 h-5 text-white" />
+              </div>
+              <p className="text-xs md:text-sm text-muted-foreground">{s.label}</p>
+              <p className="text-lg md:text-2xl font-bold">{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {hasData && (

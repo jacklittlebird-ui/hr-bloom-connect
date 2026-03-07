@@ -3,7 +3,7 @@ import { useUniformData, getDepreciationPercent, getCurrentValue } from '@/conte
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Shirt, Info } from 'lucide-react';
+import { Shirt, Info, Hash, Banknote, Coins } from 'lucide-react';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
 
 export const PortalUniforms = () => {
@@ -24,24 +24,21 @@ export const PortalUniforms = () => {
       </h2>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">{language === 'ar' ? 'عدد الأصناف' : 'Items'}</p>
-            <p className="text-2xl font-bold mt-1">{myUniforms.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">{language === 'ar' ? 'القيمة الأصلية' : 'Original Value'}</p>
-            <p className="text-2xl font-bold mt-1">{totalOriginalValue.toLocaleString()}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-sm text-muted-foreground">{language === 'ar' ? 'القيمة المستحقة الحالية' : 'Current Due'}</p>
-            <p className="text-2xl font-bold mt-1 text-primary">{totalCurrentValue.toLocaleString()}</p>
-          </CardContent>
-        </Card>
+        {[
+          { icon: Hash, label: language === 'ar' ? 'عدد الأصناف' : 'Items', value: myUniforms.length, gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+          { icon: Banknote, label: language === 'ar' ? 'القيمة الأصلية' : 'Original Value', value: totalOriginalValue.toLocaleString(), gradient: 'from-slate-500 to-gray-500', bg: 'bg-slate-50 dark:bg-slate-950/40' },
+          { icon: Coins, label: language === 'ar' ? 'القيمة المستحقة الحالية' : 'Current Due', value: totalCurrentValue.toLocaleString(), gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+        ].map((s, i) => (
+          <Card key={i} className={`border-0 shadow-sm ${s.bg}`}>
+            <CardContent className="p-4 text-center">
+              <div className={`w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center bg-gradient-to-br ${s.gradient}`}>
+                <s.icon className="w-5 h-5 text-white" />
+              </div>
+              <p className="text-sm text-muted-foreground">{s.label}</p>
+              <p className="text-2xl font-bold mt-1">{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card className="border-amber-200 bg-amber-50">

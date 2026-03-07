@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { HandCoins } from 'lucide-react';
+import { HandCoins, Banknote, CheckCircle, AlertCircle, Coins } from 'lucide-react';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
 
 export const PortalLoans = () => {
@@ -40,22 +40,22 @@ export const PortalLoans = () => {
       <h1 className="text-xl md:text-2xl font-bold">{ar ? 'قروضي وسلفي' : 'My Loans & Advances'}</h1>
 
       <div className="grid grid-cols-2 gap-3 md:gap-4">
-        <Card><CardContent className="p-3 md:p-5 text-center">
-          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'إجمالي القروض' : 'Total Loans'}</p>
-          <p className="text-lg md:text-2xl font-bold text-primary">{totalLoanAmount.toLocaleString()}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 md:p-5 text-center">
-          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'المسدد' : 'Paid'}</p>
-          <p className="text-lg md:text-2xl font-bold text-success">{totalPaid.toLocaleString()}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 md:p-5 text-center">
-          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'المتبقي' : 'Remaining'}</p>
-          <p className="text-lg md:text-2xl font-bold text-destructive">{totalRemaining.toLocaleString()}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-3 md:p-5 text-center">
-          <p className="text-xs md:text-sm text-muted-foreground">{ar ? 'السلف' : 'Advances'}</p>
-          <p className="text-lg md:text-2xl font-bold text-warning">{totalAdvances.toLocaleString()}</p>
-        </CardContent></Card>
+        {[
+          { icon: Banknote, label: ar ? 'إجمالي القروض' : 'Total Loans', value: totalLoanAmount.toLocaleString(), gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+          { icon: CheckCircle, label: ar ? 'المسدد' : 'Paid', value: totalPaid.toLocaleString(), gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+          { icon: AlertCircle, label: ar ? 'المتبقي' : 'Remaining', value: totalRemaining.toLocaleString(), gradient: 'from-red-500 to-rose-500', bg: 'bg-red-50 dark:bg-red-950/40' },
+          { icon: Coins, label: ar ? 'السلف' : 'Advances', value: totalAdvances.toLocaleString(), gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50 dark:bg-amber-950/40' },
+        ].map((s, i) => (
+          <Card key={i} className={cn("border-0 shadow-sm", s.bg)}>
+            <CardContent className="p-3 md:p-5 text-center">
+              <div className={cn("w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center bg-gradient-to-br", s.gradient)}>
+                <s.icon className="w-5 h-5 text-white" />
+              </div>
+              <p className="text-xs md:text-sm text-muted-foreground">{s.label}</p>
+              <p className="text-lg md:text-2xl font-bold">{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card>

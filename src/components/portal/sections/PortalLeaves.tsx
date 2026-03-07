@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { Calendar, Plus, Clock, CalendarIcon } from 'lucide-react';
+import { Calendar, Plus, Clock, CalendarIcon, Palmtree, HeartPulse, Umbrella } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInDays } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -144,21 +144,38 @@ export const PortalLeaves = () => {
 
       {/* Balances */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        {balances.map((b, i) => (
-          <Card key={i}>
-            <CardContent className="p-5">
-              <p className="font-semibold text-lg">{ar ? b.typeAr : b.typeEn}</p>
-              <div className="flex justify-between mt-3 text-sm">
-                <span className="text-muted-foreground">{ar ? 'الإجمالي' : 'Total'}: <strong>{b.total}</strong></span>
-                <span className="text-destructive">{ar ? 'مستخدم' : 'Used'}: <strong>{b.used}</strong></span>
-                <span className="text-success">{ar ? 'متبقي' : 'Left'}: <strong>{b.remaining}</strong></span>
-              </div>
-              <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full" style={{ width: `${(b.used / b.total) * 100}%` }} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {balances.map((b, i) => {
+          const colorSets = [
+            { gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40', icon: Palmtree },
+            { gradient: 'from-red-500 to-rose-500', bg: 'bg-red-50 dark:bg-red-950/40', icon: HeartPulse },
+            { gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50 dark:bg-amber-950/40', icon: Umbrella },
+            { gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40', icon: Calendar },
+            { gradient: 'from-violet-500 to-purple-500', bg: 'bg-violet-50 dark:bg-violet-950/40', icon: Clock },
+            { gradient: 'from-pink-500 to-rose-500', bg: 'bg-pink-50 dark:bg-pink-950/40', icon: Calendar },
+          ];
+          const cs = colorSets[i % colorSets.length];
+          const IconComp = cs.icon;
+          return (
+            <Card key={i} className={cn("border-0 shadow-sm", cs.bg)}>
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br", cs.gradient)}>
+                    <IconComp className="w-5 h-5 text-white" />
+                  </div>
+                  <p className="font-semibold text-lg">{ar ? b.typeAr : b.typeEn}</p>
+                </div>
+                <div className="flex justify-between mt-3 text-sm">
+                  <span className="text-muted-foreground">{ar ? 'الإجمالي' : 'Total'}: <strong>{b.total}</strong></span>
+                  <span className="text-destructive">{ar ? 'مستخدم' : 'Used'}: <strong>{b.used}</strong></span>
+                  <span className="text-success">{ar ? 'متبقي' : 'Left'}: <strong>{b.remaining}</strong></span>
+                </div>
+                <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full" style={{ width: `${(b.used / b.total) * 100}%` }} />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Tables */}

@@ -114,21 +114,21 @@ export const PortalCustody = () => {
       <h1 className="text-xl md:text-2xl font-bold">{ar ? 'العهد والتعهدات' : 'Custody & Obligations'}</h1>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
-        <Card><CardContent className="p-4 text-center">
-          <CheckCircle className="w-6 h-6 mx-auto mb-1 text-primary" />
-          <p className="text-2xl font-bold">{assigned}</p>
-          <p className="text-xs text-muted-foreground">{ar ? 'عهد بحوزتي' : 'Assigned'}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4 text-center">
-          <Package className="w-6 h-6 mx-auto mb-1 text-muted-foreground" />
-          <p className="text-2xl font-bold">{assets.length}</p>
-          <p className="text-xs text-muted-foreground">{ar ? 'إجمالي الأصول' : 'Total Assets'}</p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4 text-center">
-          <GraduationCap className="w-6 h-6 mx-auto mb-1 text-warning" />
-          <p className="text-2xl font-bold">{trainingDebts.length}</p>
-          <p className="text-xs text-muted-foreground">{ar ? 'مستحقات تدريب' : 'Training Dues'}</p>
-        </CardContent></Card>
+        {[
+          { icon: CheckCircle, label: ar ? 'عهد بحوزتي' : 'Assigned', value: assigned, gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+          { icon: Package, label: ar ? 'إجمالي الأصول' : 'Total Assets', value: assets.length, gradient: 'from-slate-500 to-gray-500', bg: 'bg-slate-50 dark:bg-slate-950/40' },
+          { icon: GraduationCap, label: ar ? 'مستحقات تدريب' : 'Training Dues', value: trainingDebts.length, gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50 dark:bg-amber-950/40' },
+        ].map((s, i) => (
+          <Card key={i} className={cn("border-0 shadow-sm", s.bg)}>
+            <CardContent className="p-4 text-center">
+              <div className={cn("w-10 h-10 rounded-xl mx-auto mb-2 flex items-center justify-center bg-gradient-to-br", s.gradient)}>
+                <s.icon className="w-5 h-5 text-white" />
+              </div>
+              <p className="text-2xl font-bold">{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Tabs defaultValue="assets" dir="rtl">

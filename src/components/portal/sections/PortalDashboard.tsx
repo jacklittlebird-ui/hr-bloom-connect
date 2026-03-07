@@ -124,10 +124,10 @@ export const PortalDashboard = () => {
   };
 
   const stats = [
-    { icon: Clock, labelAr: 'أيام الحضور هذا الشهر', labelEn: 'Attendance Days', value: String(monthlyStats.present), color: 'text-primary' },
-    { icon: Calendar, labelAr: 'رصيد الإجازات', labelEn: 'Leave Balance', value: String(totalLeaveRemaining), color: 'text-success' },
-    { icon: Wallet, labelAr: 'صافي الراتب', labelEn: 'Net Salary', value: latestPayroll ? latestPayroll.netSalary.toLocaleString() : '—', color: 'text-warning' },
-    { icon: Star, labelAr: 'آخر تقييم', labelEn: 'Last Evaluation', value: latestEval ? `${latestEval.score}/${latestEval.maxScore}` : '—', color: 'text-purple-500' },
+    { icon: Clock, labelAr: 'أيام الحضور هذا الشهر', labelEn: 'Attendance Days', value: String(monthlyStats.present), gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
+    { icon: Calendar, labelAr: 'رصيد الإجازات', labelEn: 'Leave Balance', value: String(totalLeaveRemaining), gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+    { icon: Wallet, labelAr: 'صافي الراتب', labelEn: 'Net Salary', value: latestPayroll ? latestPayroll.netSalary.toLocaleString() : '—', gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50 dark:bg-amber-950/40' },
+    { icon: Star, labelAr: 'آخر تقييم', labelEn: 'Last Evaluation', value: latestEval ? `${latestEval.score}/${latestEval.maxScore}` : '—', gradient: 'from-purple-500 to-pink-500', bg: 'bg-purple-50 dark:bg-purple-950/40' },
   ];
 
   return (
@@ -241,9 +241,11 @@ export const PortalDashboard = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((s, i) => (
-          <Card key={i}>
+          <Card key={i} className={cn("border-0 shadow-sm", s.bg)}>
             <CardContent className="p-4 md:p-5 text-center">
-              <s.icon className={cn("w-7 h-7 md:w-8 md:h-8 mx-auto mb-2", s.color)} />
+              <div className={cn("w-10 h-10 md:w-12 md:h-12 rounded-xl mx-auto mb-2 flex items-center justify-center bg-gradient-to-br", s.gradient)}>
+                <s.icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
+              </div>
               <p className="text-xl md:text-2xl font-bold">{s.value}</p>
               <p className="text-xs md:text-sm text-muted-foreground">{ar ? s.labelAr : s.labelEn}</p>
             </CardContent>
@@ -254,13 +256,15 @@ export const PortalDashboard = () => {
       {/* Quick Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Pending Requests */}
-        <Card>
+        <Card className="border-0 shadow-sm bg-orange-50 dark:bg-orange-950/40">
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-3">
-              <Bell className="w-5 h-5 text-warning" />
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-orange-500 to-amber-500">
+                <Bell className="w-5 h-5 text-white" />
+              </div>
               <h3 className="font-semibold">{ar ? 'طلبات معلقة' : 'Pending Requests'}</h3>
             </div>
-            <p className="text-3xl font-bold text-warning text-center">{totalPending}</p>
+            <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 text-center">{totalPending}</p>
             <div className="text-xs text-muted-foreground text-center mt-2 space-y-1">
               {pendingLeaves > 0 && <p>{ar ? `${pendingLeaves} إجازة` : `${pendingLeaves} leave(s)`}</p>}
               {pendingMissions > 0 && <p>{ar ? `${pendingMissions} مأمورية` : `${pendingMissions} mission(s)`}</p>}
@@ -271,10 +275,12 @@ export const PortalDashboard = () => {
         </Card>
 
         {/* Leave Balances */}
-        <Card>
+        <Card className="border-0 shadow-sm bg-sky-50 dark:bg-sky-950/40">
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-3">
-              <Calendar className="w-5 h-5 text-primary" />
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-500 to-blue-500">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
               <h3 className="font-semibold">{ar ? 'أرصدة الإجازات' : 'Leave Balances'}</h3>
             </div>
             <div className="space-y-2">
@@ -290,10 +296,12 @@ export const PortalDashboard = () => {
         </Card>
 
         {/* Latest Evaluation */}
-        <Card>
+        <Card className="border-0 shadow-sm bg-violet-50 dark:bg-violet-950/40">
           <CardContent className="p-5">
             <div className="flex items-center gap-3 mb-3">
-              <Star className="w-5 h-5 text-warning" />
+              <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-500">
+                <Star className="w-5 h-5 text-white" />
+              </div>
               <h3 className="font-semibold">{ar ? 'آخر تقييم' : 'Latest Evaluation'}</h3>
             </div>
             {latestEval ? (
