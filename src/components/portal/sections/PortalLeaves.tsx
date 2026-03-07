@@ -350,6 +350,30 @@ export const PortalLeaves = () => {
         </TabsContent>
 
         <TabsContent value="overtime">
+          {/* Overtime Stats Card */}
+          {(() => {
+            const approvedCount = overtimeDays.filter(o => o.status === 'approved').length;
+            const pendingCount = overtimeDays.filter(o => o.status === 'pending').length;
+            const totalCount = overtimeDays.length;
+            return (
+              <Card className={cn("border-0 shadow-sm bg-emerald-50 dark:bg-emerald-950/40 mb-4")}>
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-emerald-500 to-green-500">
+                      <CalendarPlus className="w-5 h-5 text-white" />
+                    </div>
+                    <p className="font-semibold text-lg">{ar ? 'أيام العمل الإضافي' : 'Overtime Days'}</p>
+                  </div>
+                  <div className="flex justify-between mt-3 text-sm">
+                    <span className="text-muted-foreground">{ar ? 'الإجمالي' : 'Total'}: <strong>{totalCount}</strong></span>
+                    <span className="text-success">{ar ? 'مقبول' : 'Approved'}: <strong>{approvedCount}</strong></span>
+                    <span className="text-warning">{ar ? 'معلق' : 'Pending'}: <strong>{pendingCount}</strong></span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">{ar ? 'الأيام المقبولة تُضاف تلقائياً لرصيد الإجازات السنوية' : 'Approved days are automatically added to annual leave balance'}</p>
+                </CardContent>
+              </Card>
+            );
+          })()}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><CalendarPlus className="w-5 h-5" />{ar ? 'أيام العمل الإضافي' : 'Overtime Days'}</CardTitle>
