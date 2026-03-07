@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { Upload, Trash2, Smartphone, Search, Printer, FileText, FileSpreadsheet, Phone, Users, DollarSign, Calendar, Edit } from 'lucide-react';
+import { Upload, Trash2, Smartphone, Search, Printer, FileText, FileSpreadsheet, Phone, Users, Banknote, Calendar, Edit } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
@@ -213,7 +213,7 @@ export const MobileBills = () => {
         {[
           { label: isRTL ? 'إجمالي الفواتير' : 'Total Bills', value: stats.total, icon: Phone, bgClass: 'bg-stat-blue-bg', iconBg: 'bg-stat-blue' },
           { label: isRTL ? 'قيد الخصم' : 'Pending', value: stats.pending, icon: Calendar, bgClass: 'bg-stat-yellow-bg', iconBg: 'bg-stat-yellow' },
-          { label: isRTL ? 'إجمالي المبالغ' : 'Total Amount', value: `${stats.totalAmount.toLocaleString()}`, icon: DollarSign, bgClass: 'bg-stat-purple-bg', iconBg: 'bg-stat-purple' },
+          { label: isRTL ? 'إجمالي المبالغ' : 'Total Amount', value: `${stats.totalAmount.toLocaleString()}`, icon: Banknote, bgClass: 'bg-stat-purple-bg', iconBg: 'bg-stat-purple' },
           { label: isRTL ? 'المبالغ المخصومة' : 'Deducted', value: `${stats.deductedAmount.toLocaleString()}`, icon: Users, bgClass: 'bg-stat-green-bg', iconBg: 'bg-stat-green' },
         ].map((s, i) => (
           <div key={i} className={cn("rounded-xl p-5 flex items-center gap-4 shadow-sm border border-border/30", s.bgClass, isRTL && "flex-row-reverse")}>

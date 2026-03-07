@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Printer, FileSpreadsheet, Download, Package, DollarSign, Wrench, TrendingUp, MapPin, Users, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Printer, FileSpreadsheet, Download, Package, Coins, Wrench, TrendingUp, MapPin, Users, CheckCircle, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useReportExport } from '@/hooks/useReportExport';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
@@ -168,13 +168,13 @@ export const AssetReports = () => {
 
   const stats = [
     { label: ar ? 'إجمالي الأصول' : 'Total Assets', value: String(filteredAssets.length), icon: Package, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: ar ? 'إجمالي القيمة' : 'Total Value', value: filteredAssets.length > 0 ? `${(totalValue / 1000).toFixed(0)}K` : '0', icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
+    { label: ar ? 'إجمالي القيمة' : 'Total Value', value: filteredAssets.length > 0 ? `${(totalValue / 1000).toFixed(0)}K` : '0', icon: Coins, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-900/30' },
     { label: ar ? 'نسبة الاستخدام' : 'Utilization', value: `${utilization}%`, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/30' },
     { label: ar ? 'قيد الصيانة' : 'Maintenance', value: String(maintenanceCount), icon: Wrench, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/30' },
     { label: ar ? 'متاح' : 'Available', value: String(availableCount), icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
     { label: ar ? 'مُعيّن' : 'Assigned', value: String(assignedCount), icon: Users, color: 'text-violet-600', bg: 'bg-violet-100 dark:bg-violet-900/30' },
     { label: ar ? 'حالة سيئة' : 'Poor Condition', value: String(poorCondCount), icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/30' },
-    { label: ar ? 'متوسط القيمة' : 'Avg Value', value: filteredAssets.length > 0 ? `${(avgValue / 1000).toFixed(0)}K` : '0', icon: DollarSign, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
+    { label: ar ? 'متوسط القيمة' : 'Avg Value', value: filteredAssets.length > 0 ? `${(avgValue / 1000).toFixed(0)}K` : '0', icon: Coins, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/30' },
   ];
 
   const exportColumns = [

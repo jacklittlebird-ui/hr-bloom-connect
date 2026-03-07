@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, UserCheck, Building2, CalendarCheck, FileText, Monitor,
-  GraduationCap, Star, DollarSign, Banknote, RefreshCw, BarChart3, Loader2
+  GraduationCap, Star, UserX, Banknote, RefreshCw, BarChart3, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,7 +93,7 @@ const Index = () => {
     { label: ar ? 'دورات تدريبية نشطة' : 'Active Courses', value: dashStats.activeCourses, icon: GraduationCap, variant: 'green' as const },
     { label: ar ? 'تقييمات الأداء' : 'Performance Reviews', value: dashStats.performanceReviews, icon: Star, variant: 'yellow' as const },
     { label: ar ? 'سلف نشطة' : 'Active Loans', value: dashStats.activeLoans, icon: Banknote, variant: 'coral' as const },
-    { label: ar ? 'غائبون اليوم' : 'Absent Today', value: dashStats.absentToday, icon: DollarSign, variant: 'teal' as const },
+    { label: ar ? 'غائبون اليوم' : 'Absent Today', value: dashStats.absentToday, icon: UserX, variant: 'teal' as const },
   ];
 
   const ChartCard = ({ children }: { children: React.ReactNode }) => (

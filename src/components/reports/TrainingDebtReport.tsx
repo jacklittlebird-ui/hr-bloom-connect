@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Printer, Download, FileText, AlertTriangle, Users, DollarSign, GraduationCap } from 'lucide-react';
+import { Printer, Download, FileText, AlertTriangle, Users, Banknote, GraduationCap } from 'lucide-react';
 import { stationLocations } from '@/data/stationLocations';
 import { TrainingDebt } from '@/components/training/TrainingPlan';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -81,7 +81,7 @@ export const TrainingDebtReport = () => {
   }, [activeDebts, ar]);
 
   const stats = [
-    { label: ar ? 'إجمالي الدين' : 'Total Debt', value: `${totalDebt.toLocaleString()} ${ar ? 'ج.م' : 'EGP'}`, icon: DollarSign, color: 'text-destructive', bg: 'bg-destructive/10' },
+    { label: ar ? 'إجمالي الدين' : 'Total Debt', value: `${totalDebt.toLocaleString()} ${ar ? 'ج.م' : 'EGP'}`, icon: Banknote, color: 'text-destructive', bg: 'bg-destructive/10' },
     { label: ar ? 'موظفين مديونين' : 'Indebted Employees', value: totalEmployees, icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
     { label: ar ? 'دورات نشطة' : 'Active Courses', value: totalCourses, icon: GraduationCap, color: 'text-blue-600', bg: 'bg-blue-100' },
     { label: ar ? 'متوسط الدين' : 'Avg Debt', value: totalEmployees ? `${Math.round(totalDebt / totalEmployees).toLocaleString()}` : '0', icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning/10' },

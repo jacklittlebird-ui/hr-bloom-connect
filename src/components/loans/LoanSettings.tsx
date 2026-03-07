@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Settings, DollarSign, Percent, Calendar, Bell, Shield, Save } from 'lucide-react';
+import { Settings, Banknote, Percent, Calendar, Bell, Shield, Save } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface LoanType {
@@ -141,7 +141,7 @@ export const LoanSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
+                <Banknote className="h-4 w-4" />
                 {t('loans.settings.maxConcurrentLoans')}
               </Label>
               <Input

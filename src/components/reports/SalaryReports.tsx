@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Wallet, TrendingUp, TrendingDown, DollarSign, Download, Printer, FileText } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Banknote, Download, Printer, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
 import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
@@ -67,7 +67,7 @@ export const SalaryReports = () => {
 
   const stats = [
     { label: ar ? 'إجمالي الصافي' : 'Total Net', value: totalPayroll.toLocaleString(), icon: Wallet, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avgSalary.toLocaleString(), icon: DollarSign, color: 'text-success', bg: 'bg-success/10' },
+    { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avgSalary.toLocaleString(), icon: Banknote, color: 'text-success', bg: 'bg-success/10' },
     { label: ar ? 'إجمالي البدلات' : 'Total Allowances', value: totalAllowances.toLocaleString(), icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-100' },
     { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: totalDeductions.toLocaleString(), icon: TrendingDown, color: 'text-destructive', bg: 'bg-destructive/10' },
   ];

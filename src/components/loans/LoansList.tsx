@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Search, Plus, Edit, Trash2, DollarSign, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List } from 'lucide-react';
 import { InstallmentScheduleDialog } from './InstallmentScheduleDialog';
 import { toast } from '@/hooks/use-toast';
 import { stationLocations } from '@/data/stationLocations';
@@ -209,7 +209,7 @@ export const LoansList = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: isRTL ? 'إجمالي القروض' : 'Total Loans', value: stats.totalLoans, icon: DollarSign, bgClass: 'bg-stat-purple-bg', iconBg: 'bg-stat-purple' },
+          { label: isRTL ? 'إجمالي القروض' : 'Total Loans', value: stats.totalLoans, icon: Banknote, bgClass: 'bg-stat-purple-bg', iconBg: 'bg-stat-purple' },
           { label: isRTL ? 'القروض النشطة' : 'Active Loans', value: stats.activeLoans, icon: CheckCircle, bgClass: 'bg-stat-green-bg', iconBg: 'bg-stat-green' },
           { label: isRTL ? 'قيد الانتظار' : 'Pending', value: stats.pendingLoans, icon: Clock, bgClass: 'bg-stat-yellow-bg', iconBg: 'bg-stat-yellow' },
           { label: isRTL ? 'إجمالي المتبقي' : 'Outstanding', value: stats.totalAmount.toLocaleString(), icon: Users, bgClass: 'bg-stat-blue-bg', iconBg: 'bg-stat-blue' },

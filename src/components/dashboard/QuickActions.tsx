@@ -2,7 +2,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
-  UserPlus, CalendarCheck, FileText, DollarSign, GraduationCap, 
+  UserPlus, CalendarCheck, FileText, Banknote, GraduationCap, 
   ClipboardList, Shield, Briefcase
 } from 'lucide-react';
 
@@ -15,7 +15,7 @@ export const QuickActions = () => {
     { icon: UserPlus, label: ar ? 'إضافة موظف' : 'Add Employee', path: '/employees', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400' },
     { icon: CalendarCheck, label: ar ? 'تسجيل حضور' : 'Mark Attendance', path: '/attendance', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
     { icon: FileText, label: ar ? 'طلب إجازة' : 'Leave Request', path: '/leaves', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
-    { icon: DollarSign, label: ar ? 'معالجة الرواتب' : 'Process Payroll', path: '/salaries', color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' },
+    { icon: Banknote, label: ar ? 'معالجة الرواتب' : 'Process Payroll', path: '/salaries', color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' },
     { icon: GraduationCap, label: ar ? 'تدريب جديد' : 'New Training', path: '/training', color: 'bg-pink-500/10 text-pink-600 dark:text-pink-400' },
     { icon: ClipboardList, label: ar ? 'تقييم أداء' : 'Performance Review', path: '/performance', color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' },
     { icon: Shield, label: ar ? 'إدارة الأصول' : 'Manage Assets', path: '/assets', color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400' },

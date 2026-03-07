@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, Users, Award, TrendingUp, Calendar, DollarSign } from 'lucide-react';
+import { BookOpen, Users, Award, TrendingUp, Calendar, Coins } from 'lucide-react';
 
 export const TrainingStatsCards = () => {
   const { language, isRTL } = useLanguage();
@@ -44,7 +44,7 @@ export const TrainingStatsCards = () => {
     { icon: Users, label: ar ? 'موظفون مدربون' : 'Trained Employees', value: stats.trainedEmployees, gradient: 'from-violet-500 to-purple-600', lightBg: 'bg-violet-50 dark:bg-violet-950/40', ring: 'ring-violet-200 dark:ring-violet-800' },
     { icon: TrendingUp, label: ar ? 'إجمالي الدورات' : 'Total Courses', value: stats.totalCourses, gradient: 'from-amber-500 to-orange-600', lightBg: 'bg-amber-50 dark:bg-amber-950/40', ring: 'ring-amber-200 dark:ring-amber-800' },
     { icon: Calendar, label: ar ? 'دورات مخططة' : 'Planned Courses', value: stats.upcomingPlanned, gradient: 'from-pink-500 to-rose-600', lightBg: 'bg-pink-50 dark:bg-pink-950/40', ring: 'ring-pink-200 dark:ring-pink-800' },
-    { icon: DollarSign, label: ar ? 'إجمالي التكلفة' : 'Total Cost', value: stats.totalCost.toLocaleString(), gradient: 'from-cyan-500 to-sky-600', lightBg: 'bg-cyan-50 dark:bg-cyan-950/40', ring: 'ring-cyan-200 dark:ring-cyan-800' },
+    { icon: Coins, label: ar ? 'إجمالي التكلفة' : 'Total Cost', value: stats.totalCost.toLocaleString(), gradient: 'from-cyan-500 to-sky-600', lightBg: 'bg-cyan-50 dark:bg-cyan-950/40', ring: 'ring-cyan-200 dark:ring-cyan-800' },
   ];
 
   return (

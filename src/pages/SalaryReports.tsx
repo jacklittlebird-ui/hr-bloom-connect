@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { Wallet, TrendingUp, TrendingDown, DollarSign, Download, Printer, FileText, Building2, MapPin } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Banknote, Download, Printer, FileText, Building2, MapPin } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, LineChart, Line } from 'recharts';
 import { usePayrollData, ProcessedPayroll } from '@/contexts/PayrollDataContext';
 import { useReportExport } from '@/hooks/useReportExport';
@@ -94,10 +94,10 @@ const SalaryReports = () => {
 
   const stats = [
     { label: ar ? 'إجمالي الصافي' : 'Total Net', value: totalNet.toLocaleString(), icon: Wallet, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: totalGross.toLocaleString(), icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: totalGross.toLocaleString(), icon: Banknote, color: 'text-green-600', bg: 'bg-green-100' },
     { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: totalDeductions.toLocaleString(), icon: TrendingDown, color: 'text-destructive', bg: 'bg-destructive/10' },
     { label: ar ? 'مساهمات الشركة' : 'Company Cost', value: totalEmployer.toLocaleString(), icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avgSalary.toLocaleString(), icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avgSalary.toLocaleString(), icon: Banknote, color: 'text-amber-600', bg: 'bg-amber-100' },
     { label: ar ? 'عدد الموظفين' : 'Employees', value: String(uniqueEmps), icon: Building2, color: 'text-purple-600', bg: 'bg-purple-100' },
   ];
 

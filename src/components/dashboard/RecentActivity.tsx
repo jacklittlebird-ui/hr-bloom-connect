@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Calendar, FileText, DollarSign, GraduationCap, UserPlus, Activity } from 'lucide-react';
+import { Calendar, FileText, Banknote, GraduationCap, UserPlus, Activity } from 'lucide-react';
 
 interface ActivityItem {
   id: string;
@@ -55,7 +55,7 @@ export const RecentActivity = () => {
   }, [ar]);
 
   const iconMap = {
-    leave: Calendar, loan: DollarSign, training: GraduationCap,
+    leave: Calendar, loan: Banknote, training: GraduationCap,
     employee: UserPlus, payroll: FileText,
   };
 
