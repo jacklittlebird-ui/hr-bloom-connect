@@ -99,6 +99,18 @@ export interface Violation {
   status: 'open' | 'closed';
 }
 
+// ===== OVERTIME =====
+export interface OvertimeDay {
+  id: string;
+  employeeId: string;
+  date: string;
+  overtimeType: string;
+  typeAr: string;
+  typeEn: string;
+  reason: string;
+  status: 'approved' | 'pending' | 'rejected';
+}
+
 // ===== REQUESTS =====
 export interface EmployeeRequest {
   id: number;
@@ -145,6 +157,8 @@ interface PortalDataContextType {
   getTraining: (employeeId: string) => TrainingCourse[];
   getMissions: (employeeId: string) => Mission[];
   addMission: (req: Omit<Mission, 'id' | 'status'>) => void;
+  getOvertimeDays: (employeeId: string) => OvertimeDay[];
+  addOvertimeDay: (req: Omit<OvertimeDay, 'id' | 'status'>) => void;
   getViolations: (employeeId: string) => Violation[];
   getRequests: (employeeId: string) => EmployeeRequest[];
   addRequest: (req: Omit<EmployeeRequest, 'id' | 'status'>) => void;
@@ -164,6 +178,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [training, setTraining] = useState<TrainingCourse[]>([]);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [violations, setViolations] = useState<Violation[]>([]);
+  const [overtimeDays, setOvertimeDays] = useState<OvertimeDay[]>([]);
   const [requests, setRequests] = useState<EmployeeRequest[]>([]);
   const [documents, setDocuments] = useState<PortalDocument[]>([]);
 
