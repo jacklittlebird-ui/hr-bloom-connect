@@ -522,24 +522,177 @@ const StationManagerPortal = () => {
       </header>
 
       <main className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card><CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--stat-blue-bg))] flex items-center justify-center"><Users className="h-5 w-5 text-[hsl(var(--stat-blue))]" /></div>
-            <div><p className="text-2xl font-bold">{stationEmployees.length}</p><p className="text-xs text-muted-foreground">{t('الموظفين', 'Employees')}</p></div>
-          </CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--stat-green-bg))] flex items-center justify-center"><Users className="h-5 w-5 text-[hsl(var(--stat-green))]" /></div>
-            <div><p className="text-2xl font-bold">{stationEmployees.filter(e => e.status === 'active').length}</p><p className="text-xs text-muted-foreground">{t('نشط', 'Active')}</p></div>
-          </CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--stat-purple-bg))] flex items-center justify-center"><Star className="h-5 w-5 text-[hsl(var(--stat-purple))]" /></div>
-            <div><p className="text-2xl font-bold">{stationReviews.length}</p><p className="text-xs text-muted-foreground">{t('التقييمات', 'Evaluations')}</p></div>
-          </CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[hsl(var(--stat-coral-bg))] flex items-center justify-center"><AlertTriangle className="h-5 w-5 text-[hsl(var(--stat-coral))]" /></div>
-            <div><p className="text-2xl font-bold">{stationViolations.length}</p><p className="text-xs text-muted-foreground">{t('المخالفات', 'Violations')}</p></div>
-          </CardContent></Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-[hsl(var(--stat-blue))] to-[hsl(var(--stat-blue)/0.8)] text-white shadow-lg">
+            <div className="absolute top-0 end-0 w-20 h-20 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
+            <CardContent className="p-4 md:p-5 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><Users className="h-5 w-5" /></div>
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{t('إجمالي', 'Total')}</span>
+              </div>
+              <p className="text-3xl font-bold">{stationEmployees.length}</p>
+              <p className="text-sm text-white/80 mt-1">{t('الموظفين', 'Employees')}</p>
+              {/* Mini bar */}
+              <div className="mt-3 flex items-end gap-0.5 h-6">
+                {[65, 80, 55, 90, 70, 85, 75].map((h, i) => (
+                  <div key={i} className="flex-1 bg-white/30 rounded-sm" style={{ height: `${h}%` }} />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-[hsl(var(--stat-green))] to-[hsl(var(--stat-green)/0.8)] text-white shadow-lg">
+            <div className="absolute top-0 end-0 w-20 h-20 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
+            <CardContent className="p-4 md:p-5 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><UserCheck className="h-5 w-5" /></div>
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{stationEmployees.length > 0 ? `${Math.round((stationEmployees.filter(e => e.status === 'active').length / stationEmployees.length) * 100)}%` : '0%'}</span>
+              </div>
+              <p className="text-3xl font-bold">{stationEmployees.filter(e => e.status === 'active').length}</p>
+              <p className="text-sm text-white/80 mt-1">{t('نشط', 'Active')}</p>
+              {/* Mini progress ring */}
+              <div className="mt-3 flex items-center gap-2">
+                <div className="relative w-6 h-6">
+                  <svg viewBox="0 0 36 36" className="w-6 h-6 transform -rotate-90">
+                    <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="4" />
+                    <circle cx="18" cy="18" r="15" fill="none" stroke="white" strokeWidth="4" strokeDasharray={`${stationEmployees.length > 0 ? (stationEmployees.filter(e => e.status === 'active').length / stationEmployees.length) * 94 : 0} 94`} strokeLinecap="round" />
+                  </svg>
+                </div>
+                <span className="text-xs text-white/70">{t('من إجمالي الموظفين', 'of total employees')}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-[hsl(var(--stat-purple))] to-[hsl(var(--stat-purple)/0.8)] text-white shadow-lg">
+            <div className="absolute top-0 end-0 w-20 h-20 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
+            <CardContent className="p-4 md:p-5 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><Star className="h-5 w-5" /></div>
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                  {stationReviews.length > 0 ? `${(stationReviews.reduce((s, r) => s + (r.score || 0), 0) / stationReviews.length).toFixed(1)} ⭐` : '-'}
+                </span>
+              </div>
+              <p className="text-3xl font-bold">{stationReviews.length}</p>
+              <p className="text-sm text-white/80 mt-1">{t('التقييمات', 'Evaluations')}</p>
+              {/* Mini dots */}
+              <div className="mt-3 flex items-center gap-1.5">
+                {stationReviews.slice(0, 8).map((r, i) => (
+                  <div key={i} className={cn("w-2.5 h-2.5 rounded-full", (r.score || 0) >= 3.5 ? "bg-white" : "bg-white/40")} />
+                ))}
+                {stationReviews.length === 0 && <span className="text-xs text-white/50">{t('لا توجد تقييمات', 'No evaluations')}</span>}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-[hsl(var(--stat-coral))] to-[hsl(var(--stat-coral)/0.8)] text-white shadow-lg">
+            <div className="absolute top-0 end-0 w-20 h-20 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
+            <CardContent className="p-4 md:p-5 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><AlertTriangle className="h-5 w-5" /></div>
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                  {stationViolations.filter(v => v.status === 'pending').length > 0 ? `${stationViolations.filter(v => v.status === 'pending').length} ${t('معلق', 'pending')}` : t('لا يوجد', 'None')}
+                </span>
+              </div>
+              <p className="text-3xl font-bold">{stationViolations.length}</p>
+              <p className="text-sm text-white/80 mt-1">{t('المخالفات', 'Violations')}</p>
+              {/* Mini status breakdown */}
+              <div className="mt-3 flex gap-1 h-2 rounded-full overflow-hidden bg-white/20">
+                {stationViolations.filter(v => v.status === 'active').length > 0 && (
+                  <div className="bg-white h-full rounded-full" style={{ width: `${(stationViolations.filter(v => v.status === 'active').length / Math.max(stationViolations.length, 1)) * 100}%` }} />
+                )}
+                {stationViolations.filter(v => v.status === 'pending').length > 0 && (
+                  <div className="bg-white/60 h-full rounded-full" style={{ width: `${(stationViolations.filter(v => v.status === 'pending').length / Math.max(stationViolations.length, 1)) * 100}%` }} />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Department Distribution */}
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3">{t('توزيع الأقسام', 'Department Distribution')}</h3>
+              <div className="space-y-2">
+                {(() => {
+                  const deptCounts: Record<string, number> = {};
+                  stationEmployees.forEach(e => { deptCounts[e.department || (ar ? 'غير محدد' : 'N/A')] = (deptCounts[e.department || (ar ? 'غير محدد' : 'N/A')] || 0) + 1; });
+                  const sorted = Object.entries(deptCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                  const max = sorted[0]?.[1] || 1;
+                  return sorted.map(([dept, count], i) => {
+                    const colors = ['bg-[hsl(var(--stat-blue))]', 'bg-[hsl(var(--stat-green))]', 'bg-[hsl(var(--stat-purple))]', 'bg-[hsl(var(--stat-coral))]', 'bg-primary'];
+                    return (
+                      <div key={dept} className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-24 truncate">{dept}</span>
+                        <div className="flex-1 h-5 bg-muted rounded-full overflow-hidden">
+                          <div className={cn("h-full rounded-full transition-all", colors[i % colors.length])} style={{ width: `${(count / max) * 100}%` }} />
+                        </div>
+                        <span className="text-xs font-semibold w-6 text-end">{count}</span>
+                      </div>
+                    );
+                  });
+                })()}
+                {stationEmployees.length === 0 && <p className="text-xs text-muted-foreground text-center py-3">{t('لا توجد بيانات', 'No data')}</p>}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Employee Status */}
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3">{t('حالة الموظفين', 'Employee Status')}</h3>
+              <div className="flex items-center justify-center gap-6">
+                {[
+                  { key: 'active', label: t('نشط', 'Active'), count: stationEmployees.filter(e => e.status === 'active').length, color: 'hsl(var(--stat-green))' },
+                  { key: 'inactive', label: t('غير نشط', 'Inactive'), count: stationEmployees.filter(e => e.status === 'inactive').length, color: 'hsl(var(--stat-coral))' },
+                  { key: 'suspended', label: t('موقوف', 'Suspended'), count: stationEmployees.filter(e => e.status === 'suspended').length, color: 'hsl(var(--stat-purple))' },
+                ].map(item => (
+                  <div key={item.key} className="text-center">
+                    <div className="relative w-14 h-14 mx-auto mb-2">
+                      <svg viewBox="0 0 36 36" className="w-14 h-14 transform -rotate-90">
+                        <circle cx="18" cy="18" r="15" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
+                        <circle cx="18" cy="18" r="15" fill="none" stroke={item.color} strokeWidth="3" strokeDasharray={`${stationEmployees.length > 0 ? (item.count / stationEmployees.length) * 94 : 0} 94`} strokeLinecap="round" />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">{item.count}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Violations Summary */}
+          <Card>
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3">{t('ملخص المخالفات', 'Violations Summary')}</h3>
+              <div className="space-y-2">
+                {(() => {
+                  const typeCounts: Record<string, number> = {};
+                  stationViolations.forEach(v => { typeCounts[v.type] = (typeCounts[v.type] || 0) + 1; });
+                  const sorted = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).slice(0, 4);
+                  if (sorted.length === 0) return <p className="text-xs text-muted-foreground text-center py-6">{t('لا توجد مخالفات', 'No violations')}</p>;
+                  const total = stationViolations.length;
+                  return sorted.map(([type, count]) => {
+                    const vt = violationTypes.find(vv => vv.value === type);
+                    return (
+                      <div key={type} className="flex items-center justify-between">
+                        <span className="text-xs">{ar ? vt?.ar : vt?.en || type}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-[hsl(var(--stat-coral))] rounded-full" style={{ width: `${(count / total) * 100}%` }} />
+                          </div>
+                          <span className="text-xs font-semibold">{count}</span>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Tabs */}
