@@ -47,7 +47,7 @@ const TrainingPortal = () => {
       <main className="p-4 md:p-6 max-w-[1400px] mx-auto">
         <TrainingStatsCards />
         <Tabs defaultValue="records" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-1">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-1" dir="rtl">
             <TabsTrigger value="records" className="gap-1.5 text-xs md:text-sm">
               <BookOpen className="w-4 h-4" />
               {ar ? 'السجلات' : 'Records'}
