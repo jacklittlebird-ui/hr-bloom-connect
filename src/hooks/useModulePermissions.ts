@@ -52,6 +52,7 @@ export const PATH_TO_MODULE: Record<string, ModuleKey> = {
   '/documents': 'documents',
   '/reports': 'reports',
   '/training': 'training',
+  '/notifications': 'notifications',
   '/users': 'users',
   '/groups': 'users',
   '/roles': 'users',
