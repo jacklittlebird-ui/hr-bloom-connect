@@ -19,7 +19,7 @@ const Loans = () => {
         </div>
 
         <Tabs defaultValue="loans" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6" dir="rtl">
             <TabsTrigger value="loans">{t('loans.tabs.loans')}</TabsTrigger>
             <TabsTrigger value="advances">{t('loans.tabs.advances')}</TabsTrigger>
             <TabsTrigger value="installments">{t('loans.tabs.installments')}</TabsTrigger>
