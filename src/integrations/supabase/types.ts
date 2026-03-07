@@ -964,12 +964,16 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
+          department_id: string | null
           desc_ar: string | null
           desc_en: string | null
           employee_id: string | null
           id: string
           is_read: boolean
           module: string
+          sender_name: string | null
+          station_id: string | null
+          target_type: string | null
           title_ar: string
           title_en: string
           type: string
@@ -977,12 +981,16 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          department_id?: string | null
           desc_ar?: string | null
           desc_en?: string | null
           employee_id?: string | null
           id?: string
           is_read?: boolean
           module?: string
+          sender_name?: string | null
+          station_id?: string | null
+          target_type?: string | null
           title_ar: string
           title_en: string
           type?: string
@@ -990,18 +998,29 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          department_id?: string | null
           desc_ar?: string | null
           desc_en?: string | null
           employee_id?: string | null
           id?: string
           is_read?: boolean
           module?: string
+          sender_name?: string | null
+          station_id?: string | null
+          target_type?: string | null
           title_ar?: string
           title_en?: string
           type?: string
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_employee_id_fkey"
             columns: ["employee_id"]
@@ -1014,6 +1033,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
             referencedColumns: ["id"]
           },
         ]
