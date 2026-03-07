@@ -1,0 +1,1 @@
+ALTER TABLE public.overtime_requests ADD COLUMN IF NOT EXISTS overtime_type text NOT NULL DEFAULT 'regular';

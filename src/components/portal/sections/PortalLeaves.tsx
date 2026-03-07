@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { Calendar, Plus, Clock, CalendarIcon, Palmtree, HeartPulse, Umbrella } from 'lucide-react';
+import { Calendar, Plus, Clock, CalendarIcon, Palmtree, HeartPulse, Umbrella, CalendarPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInDays } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,9 +23,10 @@ export const PortalLeaves = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { language } = useLanguage();
   const ar = language === 'ar';
-  const { getLeaveBalances, getLeaveRequests, addLeaveRequest, getPermissions, addPermission } = usePortalData();
+  const { getLeaveBalances, getLeaveRequests, addLeaveRequest, getPermissions, addPermission, getOvertimeDays, addOvertimeDay } = usePortalData();
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showPermDialog, setShowPermDialog] = useState(false);
+  const [showOvertimeDialog, setShowOvertimeDialog] = useState(false);
 
   // Leave form state
   const [leaveType, setLeaveType] = useState('');
@@ -40,6 +41,11 @@ export const PortalLeaves = () => {
   const [permDuration, setPermDuration] = useState('');
   const [permReason, setPermReason] = useState('');
 
+  // Overtime form state
+  const [otType, setOtType] = useState('');
+  const [otDate, setOtDate] = useState<Date>();
+  const [otReason, setOtReason] = useState('');
+
   const calcPermTo = (from: string, duration: string) => {
     if (!from || !duration) return '';
     const [h, m] = from.split(':').map(Number);
@@ -53,6 +59,7 @@ export const PortalLeaves = () => {
   const balances = useMemo(() => getLeaveBalances(PORTAL_EMPLOYEE_ID), [getLeaveBalances]);
   const requests = useMemo(() => getLeaveRequests(PORTAL_EMPLOYEE_ID), [getLeaveRequests]);
   const permissions = useMemo(() => getPermissions(PORTAL_EMPLOYEE_ID), [getPermissions]);
+  const overtimeDays = useMemo(() => getOvertimeDays(PORTAL_EMPLOYEE_ID), [getOvertimeDays]);
 
   const statusCls: Record<string, string> = {
     approved: 'bg-success/10 text-success border-success',
@@ -94,6 +101,12 @@ export const PortalLeaves = () => {
     { value: 'late_arrival', ar: 'تأخير صباحًا', en: 'Late Arrival' },
     { value: 'early_leave', ar: 'انصراف مبكر', en: 'Early Leave' },
     { value: 'midday', ar: 'في منتصف اليوم', en: 'Midday' },
+  ];
+
+  const overtimeTypes = [
+    { value: 'holiday', ar: 'إجازة رسمية', en: 'Holiday' },
+    { value: 'weekend', ar: 'عطلة أسبوعية', en: 'Weekend' },
+    { value: 'regular', ar: 'أخرى', en: 'Other' },
   ];
 
   const calculateDays = () => (leaveStartDate && leaveEndDate ? differenceInDays(leaveEndDate, leaveStartDate) + 1 : 0);
@@ -164,6 +177,28 @@ export const PortalLeaves = () => {
       } else {
         toast.error(ar ? 'حدث خطأ أثناء تقديم الطلب' : 'Error submitting request');
       }
+    }
+  };
+
+  const handleSubmitOvertime = async () => {
+    if (!otType || !otDate || !otReason) {
+      toast.error(ar ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
+      return;
+    }
+    try {
+      await addOvertimeDay({
+        employeeId: PORTAL_EMPLOYEE_ID,
+        date: format(otDate, 'yyyy-MM-dd'),
+        overtimeType: otType,
+        typeAr: overtimeTypes.find(t => t.value === otType)?.ar || '',
+        typeEn: overtimeTypes.find(t => t.value === otType)?.en || '',
+        reason: otReason,
+      });
+      toast.success(ar ? 'تم إضافة يوم العمل الإضافي بنجاح' : 'Overtime day added successfully');
+      setShowOvertimeDialog(false);
+      setOtType(''); setOtDate(undefined); setOtReason('');
+    } catch {
+      toast.error(ar ? 'حدث خطأ' : 'Error submitting');
     }
   };
 
@@ -244,6 +279,7 @@ export const PortalLeaves = () => {
         <TabsList>
           <TabsTrigger value="leaves">{ar ? 'الإجازات' : 'Leaves'}</TabsTrigger>
           <TabsTrigger value="permissions">{ar ? 'الأذونات' : 'Permissions'}</TabsTrigger>
+          <TabsTrigger value="overtime">{ar ? 'أيام العمل الإضافي' : 'Overtime Days'}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="leaves">
@@ -304,6 +340,42 @@ export const PortalLeaves = () => {
                   ))}
                   {permissions.length === 0 && (
                     <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد أذونات' : 'No permissions'}</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="overtime">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2"><CalendarPlus className="w-5 h-5" />{ar ? 'أيام العمل الإضافي' : 'Overtime Days'}</CardTitle>
+                <Button onClick={() => setShowOvertimeDialog(true)} size="sm"><Plus className="w-4 h-4 me-1" />{ar ? 'إضافة يوم' : 'Add Day'}</Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>{ar ? 'النوع' : 'Type'}</TableHead>
+                  <TableHead>{ar ? 'التاريخ' : 'Date'}</TableHead>
+                  <TableHead>{ar ? 'السبب' : 'Reason'}</TableHead>
+                  <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {overtimeDays.map(o => (
+                    <TableRow key={o.id}>
+                      <TableCell>{ar ? o.typeAr : o.typeEn}</TableCell>
+                      <TableCell>{o.date}</TableCell>
+                      <TableCell>{o.reason}</TableCell>
+                      <TableCell><Badge variant="outline" className={statusCls[o.status]}>{ar ? statusLabel[o.status]?.ar : statusLabel[o.status]?.en}</Badge></TableCell>
+                    </TableRow>
+                  ))}
+                  {overtimeDays.length === 0 && (
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد أيام عمل إضافي' : 'No overtime days'}</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -432,6 +504,48 @@ export const PortalLeaves = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowPermDialog(false)}>{ar ? 'إلغاء' : 'Cancel'}</Button>
             <Button onClick={handleSubmitPerm}>{ar ? 'تقديم الطلب' : 'Submit'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Overtime Dialog */}
+      <Dialog open={showOvertimeDialog} onOpenChange={setShowOvertimeDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader><DialogTitle>{ar ? 'إضافة يوم عمل إضافي' : 'Add Overtime Day'}</DialogTitle></DialogHeader>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{ar ? 'نوع الإضافة' : 'Overtime Type'} <span className="text-destructive">*</span></Label>
+                <Select value={otType} onValueChange={setOtType}>
+                  <SelectTrigger><SelectValue placeholder={ar ? 'اختر النوع' : 'Select type'} /></SelectTrigger>
+                  <SelectContent>
+                    {overtimeTypes.map(t => <SelectItem key={t.value} value={t.value}>{ar ? t.ar : t.en}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{ar ? 'التاريخ' : 'Date'} <span className="text-destructive">*</span></Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start font-normal", !otDate && "text-muted-foreground")}>
+                      <CalendarIcon className="me-2 h-4 w-4" />
+                      {otDate ? format(otDate, 'yyyy/MM/dd') : (ar ? 'اختر التاريخ' : 'Pick a date')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-50" align="start">
+                    <CalendarComponent mode="single" selected={otDate} onSelect={setOtDate} initialFocus className="pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{ar ? 'السبب' : 'Reason'} <span className="text-destructive">*</span></Label>
+              <Textarea value={otReason} onChange={e => setOtReason(e.target.value)} placeholder={ar ? 'أدخل السبب' : 'Enter reason'} rows={4} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowOvertimeDialog(false)}>{ar ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleSubmitOvertime}>{ar ? 'إضافة' : 'Add'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
