@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
@@ -16,7 +17,14 @@ export const PortalWelcomeBanner = () => {
     ? (employee?.nameAr || user?.nameAr || '')
     : (employee?.nameEn || user?.name || '');
 
-  const hour = new Date().getHours();
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const hour = now.getHours();
   let greeting: string;
   let emoji: string;
   if (hour < 12) {
@@ -30,7 +38,7 @@ export const PortalWelcomeBanner = () => {
     emoji = '🌙';
   }
 
-  const today = new Date().toLocaleDateString(ar ? 'ar-EG' : 'en-US', {
+  const today = now.toLocaleDateString(ar ? 'ar-EG' : 'en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -72,7 +80,7 @@ export const PortalWelcomeBanner = () => {
           <div className="flex flex-col">
             <span className="text-[10px] text-primary-foreground/50 leading-tight">{ar ? 'الوقت الآن' : 'Current Time'}</span>
             <span className="text-sm font-semibold text-primary-foreground leading-tight">
-              {new Date().toLocaleTimeString(ar ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+              {now.toLocaleTimeString(ar ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </span>
           </div>
         </div>
