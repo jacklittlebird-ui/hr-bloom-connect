@@ -697,13 +697,11 @@ const StationManagerPortal = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="employees" className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
-          <div className="flex justify-end">
-            <TabsList className="inline-grid grid-cols-3" dir="rtl">
-              <TabsTrigger value="employees" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>
-              <TabsTrigger value="evaluations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Star className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقييمات', 'Evaluations')}</span></TabsTrigger>
-              <TabsTrigger value="violations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('المخالفات', 'Violations')}</span></TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="inline-grid grid-cols-3" dir="rtl">
+            <TabsTrigger value="employees" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>
+            <TabsTrigger value="evaluations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Star className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقييمات', 'Evaluations')}</span></TabsTrigger>
+            <TabsTrigger value="violations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('المخالفات', 'Violations')}</span></TabsTrigger>
+          </TabsList>
 
           {/* Employees Tab */}
           <TabsContent value="employees">
@@ -773,13 +771,11 @@ const StationManagerPortal = () => {
           {/* Evaluations Tab - with inner tabs */}
           <TabsContent value="evaluations">
             <Tabs value={evalInnerTab} onValueChange={setEvalInnerTab} className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
-              <div className="flex justify-end">
-                <TabsList className="inline-grid grid-cols-3" dir="rtl">
-                  <TabsTrigger value="dashboard" className="text-xs md:text-sm gap-1"><BarChart3 className="h-3.5 w-3.5" /><span className="hidden sm:inline">{t('لوحة التحكم', 'Dashboard')}</span></TabsTrigger>
-                  <TabsTrigger value="newReview" className="text-xs md:text-sm gap-1"><Star className="h-3.5 w-3.5" /><span className="hidden sm:inline">{t('تقييم جديد', 'New Review')}</span></TabsTrigger>
-                  <TabsTrigger value="reviews" className="text-xs md:text-sm gap-1"><FileText className="h-3.5 w-3.5" /><span className="hidden sm:inline">{t('السجل', 'Records')}</span></TabsTrigger>
-                </TabsList>
-              </div>
+              <TabsList className="inline-grid grid-cols-3" dir="rtl">
+                <TabsTrigger value="dashboard" className="text-xs md:text-sm gap-1"><BarChart3 className="h-3.5 w-3.5" /><span className="hidden sm:inline">{t('لوحة التحكم', 'Dashboard')}</span></TabsTrigger>
+                <TabsTrigger value="newReview" className="text-xs md:text-sm gap-1"><Star className="h-3.5 w-3.5" /><span className="hidden sm:inline">{t('تقييم جديد', 'New Review')}</span></TabsTrigger>
+                <TabsTrigger value="reviews" className="text-xs md:text-sm gap-1"><FileText className="h-3.5 w-3.5" /><span className="hidden sm:inline">{t('السجل', 'Records')}</span></TabsTrigger>
+              </TabsList>
 
               {/* Dashboard */}
               <TabsContent value="dashboard">
