@@ -24,6 +24,7 @@ import Performance from "./pages/Performance";
 import EmployeePortal from "./pages/EmployeePortal";
 import StationManagerPortal from "./pages/StationManagerPortal";
 import Training from "./pages/Training";
+import TrainingPortal from "./pages/TrainingPortal";
 import Loans from "./pages/Loans";
 import Salaries from "./pages/Salaries";
 import Reports from "./pages/Reports";
@@ -66,6 +67,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
     if (user?.role === 'employee') return <Navigate to="/employee-portal" replace />;
     if (user?.role === 'station_manager') return <Navigate to="/station-manager" replace />;
     if (user?.role === 'kiosk') return <Navigate to="/attendance/kiosk" replace />;
+    if (user?.role === 'training_manager') return <Navigate to="/training-portal" replace />;
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
@@ -104,6 +106,9 @@ const AppRoutes = () => (
     
     {/* Station manager portal */}
     <Route path="/station-manager" element={<ProtectedRoute allowedRoles={['station_manager']}><StationManagerPortal /></ProtectedRoute>} />
+    
+    {/* Training portal */}
+    <Route path="/training-portal" element={<ProtectedRoute allowedRoles={['training_manager']}><TrainingPortal /></ProtectedRoute>} />
     
     {/* QR Attendance */}
     <Route path="/attendance/scan" element={<ProtectedRoute allowedRoles={['employee', 'station_manager', 'admin']}><AttendanceScan /></ProtectedRoute>} />
