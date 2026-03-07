@@ -13,82 +13,23 @@ import { toast } from 'sonner';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
 
 export const PortalDocuments = () => {
-  const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { language } = useLanguage();
   const ar = language === 'ar';
-  const { getDocuments, addDocument } = usePortalData();
-  const documents = useMemo(() => getDocuments(PORTAL_EMPLOYEE_ID), [getDocuments]);
-  const [showDialog, setShowDialog] = useState(false);
-  const [docName, setDocName] = useState('');
-  const [docType, setDocType] = useState('');
-
-  const docTypes = [
-    { value: 'contract', ar: 'عقد', en: 'Contract' },
-    { value: 'certificate', ar: 'شهادة', en: 'Certificate' },
-    { value: 'financial', ar: 'مالي', en: 'Financial' },
-    { value: 'identity', ar: 'هوية', en: 'Identity' },
-    { value: 'other', ar: 'أخرى', en: 'Other' },
-  ];
-
-  const handleSubmit = () => {
-    if (!docName || !docType) { toast.error(ar ? 'يرجى ملء جميع الحقول' : 'Please fill all fields'); return; }
-    const t = docTypes.find(d => d.value === docType);
-    addDocument({
-      employeeId: PORTAL_EMPLOYEE_ID,
-      nameAr: docName, nameEn: docName,
-      date: new Date().toISOString().split('T')[0],
-      typeAr: t?.ar || '', typeEn: t?.en || '',
-    });
-    toast.success(ar ? 'تم رفع المستند بنجاح' : 'Document uploaded');
-    setShowDialog(false); setDocName(''); setDocType('');
-  };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h1 className="text-xl md:text-2xl font-bold">{ar ? 'المستندات' : 'Documents'}</h1>
-        <Button onClick={() => setShowDialog(true)} size="sm"><Upload className="w-4 h-4 me-1" />{ar ? 'رفع مستند' : 'Upload'}</Button>
-      </div>
-
-      <div className="grid gap-3">
-        {documents.map((d) => (
-          <Card key={d.id}>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-8 h-8 text-primary" />
-                  <div>
-                    <p className="font-medium">{ar ? d.nameAr : d.nameEn}</p>
-                    <p className="text-xs text-muted-foreground">{d.date}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{ar ? d.typeAr : d.typeEn}</Badge>
-                  <Button variant="ghost" size="icon"><Download className="w-4 h-4" /></Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {documents.length === 0 && (
-          <Card><CardContent className="p-8 text-center text-muted-foreground">{ar ? 'لا توجد مستندات' : 'No documents'}</CardContent></Card>
-        )}
-      </div>
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent><DialogHeader><DialogTitle>{ar ? 'رفع مستند جديد' : 'Upload Document'}</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div><Label>{ar ? 'اسم المستند' : 'Document Name'}</Label><Input value={docName} onChange={e => setDocName(e.target.value)} /></div>
-            <div><Label>{ar ? 'نوع المستند' : 'Document Type'}</Label>
-              <Select value={docType} onValueChange={setDocType}>
-                <SelectTrigger><SelectValue placeholder={ar ? 'اختر' : 'Select'} /></SelectTrigger>
-                <SelectContent>{docTypes.map(t => <SelectItem key={t.value} value={t.value}>{ar ? t.ar : t.en}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
+      <h1 className="text-xl md:text-2xl font-bold">{ar ? 'المستندات' : 'Documents'}</h1>
+      <Card>
+        <CardContent className="p-12 text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center bg-gradient-to-br from-amber-500 to-orange-500">
+            <FileText className="w-8 h-8 text-white" />
           </div>
-          <DialogFooter><Button onClick={handleSubmit}>{ar ? 'رفع' : 'Upload'}</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <h2 className="text-lg font-semibold text-foreground">{ar ? 'قريباً' : 'Coming Soon'}</h2>
+          <p className="text-muted-foreground text-sm max-w-md mx-auto">
+            {ar ? 'هذا القسم قيد التطوير وسيكون متاحاً قريباً' : 'This section is under development and will be available soon'}
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };
