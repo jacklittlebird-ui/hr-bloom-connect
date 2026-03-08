@@ -12,7 +12,7 @@ import { TrainingPlan } from '@/components/training/TrainingPlan';
 import { TrainingRecordsReport } from '@/components/training/TrainingRecordsReport';
 import { TrainingStatsCards } from '@/components/training/TrainingStatsCards';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
-import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library } from 'lucide-react';
+import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library, RefreshCw } from 'lucide-react';
 import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 
 const TrainingPortal = () => {
