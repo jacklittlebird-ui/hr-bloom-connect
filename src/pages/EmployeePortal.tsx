@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { TrainingAcknowledgmentModal } from '@/components/portal/TrainingAcknowledgmentModal';
+import { SystemUsageAcknowledgmentModal } from '@/components/portal/SystemUsageAcknowledgmentModal';
 import { cn } from '@/lib/utils';
 import { PortalSidebar } from '@/components/portal/PortalSidebar';
 import { PortalHeader } from '@/components/portal/PortalHeader';
