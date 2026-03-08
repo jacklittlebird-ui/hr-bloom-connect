@@ -427,26 +427,8 @@ const Employees = () => {
     link.click();
     setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1000);
 
-    // Also export a CSV copy for re-import compatibility
-    const csvHeaders = uniqueColumns.map(c => `"${c.headerAr} | ${c.headerEn}"`).join(',');
-    const csvRows = data.map(row =>
-      uniqueColumns.map(col => {
-        const val = String((row as any)[col.key] ?? '');
-        return `"${val.replace(/"/g, '""')}"`;
-      }).join(',')
-    );
-    const csvContent = '\uFEFF' + [csvHeaders, ...csvRows].join('\n');
-    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const csvUrl = URL.createObjectURL(csvBlob);
-    const csvLink = document.createElement('a');
-    csvLink.href = csvUrl;
-    csvLink.download = `Employees_Full_Report_${new Date().toISOString().slice(0, 10)}.csv`;
-    csvLink.style.display = 'none';
-    document.body.appendChild(csvLink);
-    csvLink.click();
-    setTimeout(() => { document.body.removeChild(csvLink); URL.revokeObjectURL(csvUrl); }, 1200);
 
-    toast({ title: ar ? 'تم التصدير بنجاح (Excel + CSV)' : 'Export completed successfully (Excel + CSV)' });
+    toast({ title: ar ? 'تم التصدير بنجاح' : 'Export completed successfully' });
   };
 
   // Import from CSV
