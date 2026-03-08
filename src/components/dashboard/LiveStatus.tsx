@@ -36,7 +36,7 @@ export const LiveStatus = () => {
 
   return (
     <div className="mb-6">
-      <h2 className={cn("text-lg font-bold text-foreground mb-3 flex items-center gap-2", isRTL && "flex-row-reverse")}>
+      <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
         <span className="relative flex h-3 w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
