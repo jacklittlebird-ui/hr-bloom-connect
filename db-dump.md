@@ -5,14 +5,14 @@ Run this SQL in the **SQL Editor** of a new Supabase project to recreate the ent
 > **Prerequisites:**
 > - A fresh Supabase project
 > - Run this in the SQL Editor (Dashboard → SQL Editor → New Query)
-> - After running, create the Edge Functions separately (`setup-user`, `generate-qr-token`, `submit-scan`, `delete-user`)
-> - Set the required secrets: `QR_HMAC_SECRET`, `SUPABASE_PUBLISHABLE_KEY`
+> - After running, create the Edge Functions separately (`setup-user`, `generate-qr-token`, `submit-scan`, `delete-user`, `send-notification`)
+> - Set the required secrets: `QR_HMAC_SECRET`, `SUPABASE_PUBLISHABLE_KEY`, `LOVABLE_API_KEY`
 
 ```sql
 -- =============================================
 -- 1. ENUMS
 -- =============================================
-CREATE TYPE public.app_role AS ENUM ('admin', 'station_manager', 'employee', 'kiosk');
+CREATE TYPE public.app_role AS ENUM ('admin', 'station_manager', 'employee', 'kiosk', 'training_manager');
 CREATE TYPE public.employee_status AS ENUM ('active', 'inactive', 'suspended');
 
 -- =============================================
@@ -130,6 +130,10 @@ CREATE TABLE public.employees (
   bank_account_number text,
   bank_id_number text,
   bank_account_type text,
+  emergency_contact_name1 text,
+  emergency_contact_mobile1 text,
+  emergency_contact_name2 text,
+  emergency_contact_mobile2 text,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT employees_employee_code_key UNIQUE (employee_code),
@@ -344,12 +348,16 @@ CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   employee_id uuid REFERENCES public.employees(id) ON DELETE CASCADE,
+  department_id uuid REFERENCES public.departments(id),
+  station_id uuid REFERENCES public.stations(id),
   title_ar text NOT NULL,
   title_en text NOT NULL,
   desc_ar text,
   desc_en text,
   type text NOT NULL DEFAULT 'info',
   module text NOT NULL DEFAULT 'general',
+  target_type text DEFAULT 'general',
+  sender_name text,
   is_read boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now()
 );
@@ -360,6 +368,7 @@ CREATE TABLE public.overtime_requests (
   employee_id uuid NOT NULL REFERENCES public.employees(id) ON DELETE CASCADE,
   date date NOT NULL,
   hours numeric NOT NULL DEFAULT 0,
+  overtime_type text NOT NULL DEFAULT 'regular',
   reason text,
   status text NOT NULL DEFAULT 'pending',
   created_at timestamptz NOT NULL DEFAULT now()
@@ -842,6 +851,32 @@ BEGIN
 END;
 $$;
 
+-- update_annual_balance_on_overtime_approval
+CREATE OR REPLACE FUNCTION public.update_annual_balance_on_overtime_approval()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  req_year integer;
+BEGIN
+  IF NEW.status = 'approved' AND (OLD.status IS NULL OR OLD.status <> 'approved') THEN
+    req_year := EXTRACT(YEAR FROM NEW.date);
+    INSERT INTO public.leave_balances (employee_id, year, annual_total)
+    VALUES (NEW.employee_id, req_year, 22)
+    ON CONFLICT (employee_id, year) DO UPDATE
+    SET annual_total = leave_balances.annual_total + 1;
+  END IF;
+  IF OLD.status = 'approved' AND NEW.status <> 'approved' THEN
+    req_year := EXTRACT(YEAR FROM NEW.date);
+    UPDATE public.leave_balances
+    SET annual_total = GREATEST(21, annual_total - 1)
+    WHERE employee_id = NEW.employee_id AND year = req_year;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
 -- auto_attendance_on_mission
 CREATE OR REPLACE FUNCTION public.auto_attendance_on_mission()
 RETURNS trigger
@@ -982,6 +1017,11 @@ CREATE TRIGGER trg_calc_uniform_total
   BEFORE INSERT OR UPDATE ON public.uniforms
   FOR EACH ROW EXECUTE FUNCTION public.calculate_uniform_total();
 
+-- Update annual balance on overtime approval
+CREATE TRIGGER trg_update_annual_balance_on_overtime
+  AFTER UPDATE ON public.overtime_requests
+  FOR EACH ROW EXECUTE FUNCTION public.update_annual_balance_on_overtime_approval();
+
 -- =============================================
 -- 7. ENABLE RLS ON ALL TABLES
 -- =============================================
@@ -1033,15 +1073,18 @@ CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING
 -- ---- departments ----
 CREATE POLICY "Admins manage departments" ON public.departments FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
 CREATE POLICY "Authenticated can read departments" ON public.departments FOR SELECT TO authenticated USING (true);
+CREATE POLICY "tm_read_departments" ON public.departments FOR SELECT TO authenticated USING (has_role(auth.uid(), 'training_manager'));
 
 -- ---- stations ----
 CREATE POLICY "Admins manage stations" ON public.stations FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
 CREATE POLICY "Authenticated can read stations" ON public.stations FOR SELECT TO authenticated USING (true);
+CREATE POLICY "tm_read_stations" ON public.stations FOR SELECT TO authenticated USING (has_role(auth.uid(), 'training_manager'));
 
 -- ---- employees ----
 CREATE POLICY "Admins manage employees" ON public.employees FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
 CREATE POLICY "Employees read own record" ON public.employees FOR SELECT TO authenticated USING (has_role(auth.uid(), 'employee') AND id = get_user_employee_id(auth.uid()));
 CREATE POLICY "Station managers read own station employees" ON public.employees FOR SELECT TO authenticated USING (has_role(auth.uid(), 'station_manager') AND station_id = get_user_station_id(auth.uid()));
+CREATE POLICY "training_manager_read_employees" ON public.employees FOR SELECT TO authenticated USING (has_role(auth.uid(), 'training_manager'));
 
 -- ---- user_roles ----
 CREATE POLICY "Admins manage user_roles" ON public.user_roles FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
@@ -1114,6 +1157,7 @@ CREATE POLICY "emp_mobile_bills_select" ON public.mobile_bills FOR SELECT TO aut
 
 -- ---- notifications ----
 CREATE POLICY "admin_notifs" ON public.notifications FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
+CREATE POLICY "tm_notifs" ON public.notifications FOR ALL TO authenticated USING (has_role(auth.uid(), 'training_manager')) WITH CHECK (has_role(auth.uid(), 'training_manager'));
 CREATE POLICY "user_own_notifs" ON public.notifications FOR SELECT TO authenticated USING (user_id = auth.uid());
 CREATE POLICY "user_update_notifs" ON public.notifications FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
@@ -1143,27 +1187,33 @@ CREATE POLICY "emp_salary" ON public.salary_records FOR SELECT TO authenticated 
 -- ---- training_courses ----
 CREATE POLICY "admin_courses" ON public.training_courses FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
 CREATE POLICY "read_courses" ON public.training_courses FOR SELECT TO authenticated USING (true);
+CREATE POLICY "tm_training_courses" ON public.training_courses FOR ALL TO authenticated USING (has_role(auth.uid(), 'training_manager')) WITH CHECK (has_role(auth.uid(), 'training_manager'));
 
 -- ---- training_records ----
 CREATE POLICY "admin_training" ON public.training_records FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
 CREATE POLICY "emp_training" ON public.training_records FOR SELECT TO authenticated USING (has_role(auth.uid(), 'employee') AND employee_id = get_user_employee_id(auth.uid()));
+CREATE POLICY "tm_training_records" ON public.training_records FOR ALL TO authenticated USING (has_role(auth.uid(), 'training_manager')) WITH CHECK (has_role(auth.uid(), 'training_manager'));
 
 -- ---- training_acknowledgments ----
 CREATE POLICY "admin_ack" ON public.training_acknowledgments FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
 CREATE POLICY "emp_ack_select" ON public.training_acknowledgments FOR SELECT TO authenticated USING (has_role(auth.uid(), 'employee') AND employee_id = get_user_employee_id(auth.uid()));
 CREATE POLICY "emp_ack_insert" ON public.training_acknowledgments FOR INSERT TO authenticated WITH CHECK (has_role(auth.uid(), 'employee') AND employee_id = get_user_employee_id(auth.uid()));
+CREATE POLICY "tm_training_ack" ON public.training_acknowledgments FOR ALL TO authenticated USING (has_role(auth.uid(), 'training_manager')) WITH CHECK (has_role(auth.uid(), 'training_manager'));
 
 -- ---- training_debts ----
 CREATE POLICY "admin_debts" ON public.training_debts FOR ALL USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
 CREATE POLICY "emp_debts" ON public.training_debts FOR SELECT USING (has_role(auth.uid(), 'employee') AND employee_id = get_user_employee_id(auth.uid()));
+CREATE POLICY "tm_training_debts" ON public.training_debts FOR ALL TO authenticated USING (has_role(auth.uid(), 'training_manager')) WITH CHECK (has_role(auth.uid(), 'training_manager'));
 
 -- ---- planned_courses ----
 CREATE POLICY "admin_planned_courses" ON public.planned_courses FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
 CREATE POLICY "read_planned_courses" ON public.planned_courses FOR SELECT TO authenticated USING (true);
+CREATE POLICY "tm_planned_courses" ON public.planned_courses FOR ALL TO authenticated USING (has_role(auth.uid(), 'training_manager')) WITH CHECK (has_role(auth.uid(), 'training_manager'));
 
 -- ---- planned_course_assignments ----
 CREATE POLICY "admin_assignments" ON public.planned_course_assignments FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
 CREATE POLICY "read_assignments" ON public.planned_course_assignments FOR SELECT TO authenticated USING (true);
+CREATE POLICY "tm_planned_assignments" ON public.planned_course_assignments FOR ALL TO authenticated USING (has_role(auth.uid(), 'training_manager')) WITH CHECK (has_role(auth.uid(), 'training_manager'));
 
 -- ---- assets ----
 CREATE POLICY "admin_assets" ON public.assets FOR ALL TO authenticated USING (has_role(auth.uid(), 'admin')) WITH CHECK (has_role(auth.uid(), 'admin'));
@@ -1182,7 +1232,7 @@ CREATE POLICY "sm_violations_all" ON public.violations FOR ALL TO authenticated 
 -- DONE! Database schema fully recreated.
 -- =============================================
 -- Next steps:
--- 1. Deploy Edge Functions (setup-user, generate-qr-token, submit-scan, delete-user)
--- 2. Set secrets: QR_HMAC_SECRET, SUPABASE_PUBLISHABLE_KEY
+-- 1. Deploy Edge Functions (setup-user, generate-qr-token, submit-scan, delete-user, send-notification)
+-- 2. Set secrets: QR_HMAC_SECRET, SUPABASE_PUBLISHABLE_KEY, LOVABLE_API_KEY
 -- 3. Create first admin user via the setup-user edge function
 ```
