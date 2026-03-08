@@ -1001,7 +1001,7 @@ const Employees = () => {
         <EmployeeStatsCards total={counts.all} active={counts.active} departments={departments} newThisMonth={1} />
         <EmployeeFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} activeFilter={activeFilter} onFilterChange={setActiveFilter} counts={counts} />
         <div ref={reportRef}>
-          <EmployeeTable employees={filteredEmployees} />
+          <EmployeeTable employees={filteredEmployees} onDelete={handleDeleteEmployee} />
         </div>
       </div>
       <AddEmployeeDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />
