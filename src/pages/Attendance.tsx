@@ -10,9 +10,11 @@ import { ShiftManagement } from '@/components/attendance/ShiftManagement';
 import { AttendanceRules } from '@/components/attendance/AttendanceRules';
 
 import { EmployeeAssignment } from '@/components/attendance/EmployeeAssignment';
+import { useAttendanceData } from '@/contexts/AttendanceDataContext';
 import { Clock, List, AlertTriangle, BarChart3, Calendar, Settings2, Users, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export interface AttendanceRecord {
   id: string;
