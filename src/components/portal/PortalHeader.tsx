@@ -12,7 +12,7 @@ interface PortalHeaderProps {
   onRefresh?: () => void;
 }
 
-export const PortalHeader = ({ onToggleSidebar }: PortalHeaderProps) => {
+export const PortalHeader = ({ onToggleSidebar, onRefresh }: PortalHeaderProps) => {
   const { language, setLanguage, isRTL } = useLanguage();
   const { user, logout } = useAuth();
   const { getEmployeeById } = useEmployeeData();
