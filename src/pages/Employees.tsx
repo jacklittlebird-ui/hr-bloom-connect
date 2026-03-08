@@ -35,93 +35,202 @@ const Employees = () => {
     return s ? (ar ? s.labelAr : s.labelEn) : val;
   };
 
-  // Bilingual export columns for Excel and PDF
-  const bilingualExportColumns = [
-    { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
-    { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
-    { headerAr: 'الاسم (انجليزي)', headerEn: 'Name (EN)', key: 'nameEn' },
-    { headerAr: 'الاسم الأول', headerEn: 'First Name', key: 'firstName' },
-    { headerAr: 'اسم الأب', headerEn: 'Father Name', key: 'fatherName' },
-    { headerAr: 'اسم العائلة', headerEn: 'Family Name', key: 'familyName' },
-    { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
-    { headerAr: 'كود القسم', headerEn: 'Dept Code', key: 'deptCode' },
-    { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
-    { headerAr: 'المسمى الوظيفي (عربي)', headerEn: 'Job Title (AR)', key: 'jobTitleAr' },
-    { headerAr: 'المسمى الوظيفي (انجليزي)', headerEn: 'Job Title (EN)', key: 'jobTitleEn' },
-    { headerAr: 'المستوى الوظيفي', headerEn: 'Job Level', key: 'jobLevel' },
-    { headerAr: 'الدرجة الوظيفية', headerEn: 'Job Degree', key: 'jobDegree' },
-    { headerAr: 'الهاتف', headerEn: 'Phone', key: 'phone' },
-    { headerAr: 'البريد الإلكتروني', headerEn: 'Email', key: 'email' },
-    { headerAr: 'هاتف المنزل', headerEn: 'Home Phone', key: 'homePhone' },
-    { headerAr: 'الرقم القومي', headerEn: 'National ID', key: 'nationalId' },
-    { headerAr: 'تاريخ إصدار البطاقة', headerEn: 'ID Issue Date', key: 'idIssueDate' },
-    { headerAr: 'تاريخ انتهاء البطاقة', headerEn: 'ID Expiry Date', key: 'idExpiryDate' },
-    { headerAr: 'جهة الإصدار', headerEn: 'Issuing Authority', key: 'issuingAuthority' },
-    { headerAr: 'محافظة الإصدار', headerEn: 'Issuing Governorate', key: 'issuingGovernorate' },
-    { headerAr: 'تاريخ الميلاد', headerEn: 'Birth Date', key: 'birthDate' },
-    { headerAr: 'محل الميلاد', headerEn: 'Birth Place', key: 'birthPlace' },
-    { headerAr: 'محافظة الميلاد', headerEn: 'Birth Governorate', key: 'birthGovernorate' },
-    { headerAr: 'الجنس', headerEn: 'Gender', key: 'gender' },
-    { headerAr: 'الديانة', headerEn: 'Religion', key: 'religion' },
-    { headerAr: 'الجنسية', headerEn: 'Nationality', key: 'nationality' },
-    { headerAr: 'الحالة الاجتماعية', headerEn: 'Marital Status', key: 'maritalStatus' },
-    { headerAr: 'عدد الأطفال', headerEn: 'Children', key: 'childrenCount' },
-    { headerAr: 'المؤهل', headerEn: 'Education', key: 'educationAr' },
-    { headerAr: 'سنة التخرج', headerEn: 'Graduation Year', key: 'graduationYear' },
-    { headerAr: 'العنوان', headerEn: 'Address', key: 'address' },
-    { headerAr: 'المدينة', headerEn: 'City', key: 'city' },
-    { headerAr: 'المحافظة', headerEn: 'Governorate', key: 'governorate' },
-    { headerAr: 'الموقف من التجنيد', headerEn: 'Military Status', key: 'militaryStatus' },
-    { headerAr: 'نوع العقد', headerEn: 'Contract Type', key: 'contractType' },
-    { headerAr: 'حالة التوظيف', headerEn: 'Employment Status', key: 'employmentStatus' },
-    { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hireDate' },
-    { headerAr: 'تم التوظيف بواسطة', headerEn: 'Recruited By', key: 'recruitedBy' },
-    { headerAr: 'مستقيل', headerEn: 'Resigned', key: 'resigned' },
-    { headerAr: 'تاريخ الاستقالة', headerEn: 'Resignation Date', key: 'resignationDate' },
-    { headerAr: 'سبب الاستقالة', headerEn: 'Resignation Reason', key: 'resignationReason' },
-    { headerAr: 'الراتب الأساسي', headerEn: 'Basic Salary', key: 'basicSalary' },
-    { headerAr: 'رصيد الإجازات السنوية', headerEn: 'Annual Leave Balance', key: 'annualLeaveBalance' },
-    { headerAr: 'رصيد الإجازات المرضية', headerEn: 'Sick Leave Balance', key: 'sickLeaveBalance' },
-    { headerAr: 'رقم التأمين الاجتماعي', headerEn: 'Social Insurance No', key: 'socialInsuranceNo' },
-    { headerAr: 'تاريخ بداية التأمين', headerEn: 'Insurance Start Date', key: 'socialInsuranceStartDate' },
-    { headerAr: 'تاريخ نهاية التأمين', headerEn: 'Insurance End Date', key: 'socialInsuranceEndDate' },
-    { headerAr: 'تأمين اجتماعي', headerEn: 'Has Social Insurance', key: 'hasSocialInsurance' },
-    { headerAr: 'تأمين صحي', headerEn: 'Has Health Insurance', key: 'hasHealthInsurance' },
-    { headerAr: 'تأمين صحي حكومي', headerEn: 'Has Gov Health Insurance', key: 'hasGovHealthInsurance' },
-    { headerAr: 'رقم بطاقة التأمين الصحي', headerEn: 'Health Insurance Card', key: 'healthInsuranceCardNo' },
-    { headerAr: 'اسم البنك', headerEn: 'Bank Name', key: 'bankName' },
-    { headerAr: 'رقم الحساب البنكي', headerEn: 'Bank Account', key: 'bankAccountNumber' },
-    { headerAr: 'الرقم التعريفي للبنك', headerEn: 'Bank ID Number', key: 'bankIdNumber' },
-    { headerAr: 'نوع الحساب البنكي', headerEn: 'Bank Account Type', key: 'bankAccountType' },
-    { headerAr: 'تصريح مطار القاهرة المؤقت', headerEn: 'Cairo Airport Temp Permit', key: 'hasCairoAirportTempPermit' },
-    { headerAr: 'تصريح مطار القاهرة السنوي', headerEn: 'Cairo Airport Annual Permit', key: 'hasCairoAirportAnnualPermit' },
-    { headerAr: 'رقم تصريح مطار القاهرة', headerEn: 'Cairo Airport Permit No', key: 'cairoAirportAnnualPermitNo' },
-    { headerAr: 'رقم التصريح المؤقت', headerEn: 'Temp Permit No', key: 'tempPermitNo' },
-    { headerAr: 'رقم التصريح السنوي', headerEn: 'Annual Permit No', key: 'annualPermitNo' },
-    { headerAr: 'تصريح مطارات مؤقت', headerEn: 'Airports Temp Permit', key: 'hasAirportsTempPermit' },
-    { headerAr: 'تصريح مطارات سنوي', headerEn: 'Airports Annual Permit', key: 'hasAirportsAnnualPermit' },
-    { headerAr: 'رقم تصريح المطارات المؤقت', headerEn: 'Airports Temp Permit No', key: 'airportsTempPermitNo' },
-    { headerAr: 'رقم تصريح المطارات السنوي', headerEn: 'Airports Annual Permit No', key: 'airportsAnnualPermitNo' },
-    { headerAr: 'نوع تصريح المطارات', headerEn: 'Airports Permit Type', key: 'airportsPermitType' },
-    { headerAr: 'اسم التصريح (عربي)', headerEn: 'Permit Name (AR)', key: 'permitNameAr' },
-    { headerAr: 'اسم التصريح (انجليزي)', headerEn: 'Permit Name (EN)', key: 'permitNameEn' },
-    { headerAr: 'اسم جهة اتصال الطوارئ 1', headerEn: 'Emergency Contact 1', key: 'emergencyContactName1' },
-    { headerAr: 'هاتف جهة اتصال الطوارئ 1', headerEn: 'Emergency Mobile 1', key: 'emergencyContactMobile1' },
-    { headerAr: 'اسم جهة اتصال الطوارئ 2', headerEn: 'Emergency Contact 2', key: 'emergencyContactName2' },
-    { headerAr: 'هاتف جهة اتصال الطوارئ 2', headerEn: 'Emergency Mobile 2', key: 'emergencyContactMobile2' },
-    { headerAr: 'شهادة المؤهل', headerEn: 'Qualification Cert', key: 'hasQualificationCert' },
-    { headerAr: 'شهادة التجنيد', headerEn: 'Military Cert', key: 'hasMilitaryServiceCert' },
-    { headerAr: 'شهادة الميلاد', headerEn: 'Birth Cert', key: 'hasBirthCert' },
-    { headerAr: 'صورة البطاقة', headerEn: 'ID Copy', key: 'hasIdCopy' },
-    { headerAr: 'التعهد', headerEn: 'Pledge', key: 'hasPledge' },
-    { headerAr: 'العقد', headerEn: 'Contract', key: 'hasContract' },
-    { headerAr: 'الإيصال', headerEn: 'Receipt', key: 'hasReceipt' },
-    { headerAr: 'الحالة', headerEn: 'Status', key: 'status' },
-    { headerAr: 'ملاحظات', headerEn: 'Notes', key: 'notes' },
+  // Tab-grouped export sections
+  const exportSections = [
+    {
+      titleAr: 'المعلومات الأساسية', titleEn: 'Basic Info',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'الاسم (انجليزي)', headerEn: 'Name (EN)', key: 'nameEn' },
+        { headerAr: 'الاسم الأول', headerEn: 'First Name', key: 'firstName' },
+        { headerAr: 'اسم الأب', headerEn: 'Father Name', key: 'fatherName' },
+        { headerAr: 'اسم العائلة', headerEn: 'Family Name', key: 'familyName' },
+        { headerAr: 'تاريخ الميلاد', headerEn: 'Birth Date', key: 'birthDate' },
+        { headerAr: 'محل الميلاد', headerEn: 'Birth Place', key: 'birthPlace' },
+        { headerAr: 'محافظة الميلاد', headerEn: 'Birth Governorate', key: 'birthGovernorate' },
+        { headerAr: 'الجنس', headerEn: 'Gender', key: 'gender' },
+        { headerAr: 'الديانة', headerEn: 'Religion', key: 'religion' },
+        { headerAr: 'الجنسية', headerEn: 'Nationality', key: 'nationality' },
+        { headerAr: 'الحالة الاجتماعية', headerEn: 'Marital Status', key: 'maritalStatus' },
+        { headerAr: 'عدد الأطفال', headerEn: 'Children', key: 'childrenCount' },
+        { headerAr: 'المؤهل', headerEn: 'Education', key: 'educationAr' },
+        { headerAr: 'سنة التخرج', headerEn: 'Graduation Year', key: 'graduationYear' },
+        { headerAr: 'الموقف من التجنيد', headerEn: 'Military Status', key: 'militaryStatus' },
+        { headerAr: 'الحالة', headerEn: 'Status', key: 'status' },
+      ]
+    },
+    {
+      titleAr: 'معلومات الاتصال', titleEn: 'Contact Info',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'الهاتف', headerEn: 'Phone', key: 'phone' },
+        { headerAr: 'هاتف المنزل', headerEn: 'Home Phone', key: 'homePhone' },
+        { headerAr: 'البريد الإلكتروني', headerEn: 'Email', key: 'email' },
+        { headerAr: 'العنوان', headerEn: 'Address', key: 'address' },
+        { headerAr: 'المدينة', headerEn: 'City', key: 'city' },
+        { headerAr: 'المحافظة', headerEn: 'Governorate', key: 'governorate' },
+        { headerAr: 'اسم جهة اتصال الطوارئ 1', headerEn: 'Emergency Contact 1', key: 'emergencyContactName1' },
+        { headerAr: 'هاتف جهة اتصال الطوارئ 1', headerEn: 'Emergency Mobile 1', key: 'emergencyContactMobile1' },
+        { headerAr: 'اسم جهة اتصال الطوارئ 2', headerEn: 'Emergency Contact 2', key: 'emergencyContactName2' },
+        { headerAr: 'هاتف جهة اتصال الطوارئ 2', headerEn: 'Emergency Mobile 2', key: 'emergencyContactMobile2' },
+      ]
+    },
+    {
+      titleAr: 'الهوية والوثائق', titleEn: 'Identity & Documents',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'الرقم القومي', headerEn: 'National ID', key: 'nationalId' },
+        { headerAr: 'تاريخ إصدار البطاقة', headerEn: 'ID Issue Date', key: 'idIssueDate' },
+        { headerAr: 'تاريخ انتهاء البطاقة', headerEn: 'ID Expiry Date', key: 'idExpiryDate' },
+        { headerAr: 'جهة الإصدار', headerEn: 'Issuing Authority', key: 'issuingAuthority' },
+        { headerAr: 'محافظة الإصدار', headerEn: 'Issuing Governorate', key: 'issuingGovernorate' },
+      ]
+    },
+    {
+      titleAr: 'معلومات الوظيفة', titleEn: 'Job Info',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
+        { headerAr: 'كود القسم', headerEn: 'Dept Code', key: 'deptCode' },
+        { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
+        { headerAr: 'المسمى الوظيفي (عربي)', headerEn: 'Job Title (AR)', key: 'jobTitleAr' },
+        { headerAr: 'المسمى الوظيفي (انجليزي)', headerEn: 'Job Title (EN)', key: 'jobTitleEn' },
+        { headerAr: 'المستوى الوظيفي', headerEn: 'Job Level', key: 'jobLevel' },
+        { headerAr: 'الدرجة الوظيفية', headerEn: 'Job Degree', key: 'jobDegree' },
+        { headerAr: 'نوع العقد', headerEn: 'Contract Type', key: 'contractType' },
+        { headerAr: 'حالة التوظيف', headerEn: 'Employment Status', key: 'employmentStatus' },
+        { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hireDate' },
+        { headerAr: 'تم التوظيف بواسطة', headerEn: 'Recruited By', key: 'recruitedBy' },
+        { headerAr: 'مستقيل', headerEn: 'Resigned', key: 'resigned' },
+        { headerAr: 'تاريخ الاستقالة', headerEn: 'Resignation Date', key: 'resignationDate' },
+        { headerAr: 'سبب الاستقالة', headerEn: 'Resignation Reason', key: 'resignationReason' },
+      ]
+    },
+    {
+      titleAr: 'التأمينات', titleEn: 'Insurance',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'تأمين اجتماعي', headerEn: 'Has Social Insurance', key: 'hasSocialInsurance' },
+        { headerAr: 'رقم التأمين الاجتماعي', headerEn: 'Social Insurance No', key: 'socialInsuranceNo' },
+        { headerAr: 'تاريخ بداية التأمين', headerEn: 'Insurance Start Date', key: 'socialInsuranceStartDate' },
+        { headerAr: 'تاريخ نهاية التأمين', headerEn: 'Insurance End Date', key: 'socialInsuranceEndDate' },
+        { headerAr: 'تأمين صحي', headerEn: 'Has Health Insurance', key: 'hasHealthInsurance' },
+        { headerAr: 'تأمين صحي حكومي', headerEn: 'Has Gov Health Insurance', key: 'hasGovHealthInsurance' },
+        { headerAr: 'رقم بطاقة التأمين الصحي', headerEn: 'Health Insurance Card', key: 'healthInsuranceCardNo' },
+      ]
+    },
+    {
+      titleAr: 'التصاريح', titleEn: 'Permits',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'تصريح مطار القاهرة المؤقت', headerEn: 'Cairo Airport Temp Permit', key: 'hasCairoAirportTempPermit' },
+        { headerAr: 'تصريح مطار القاهرة السنوي', headerEn: 'Cairo Airport Annual Permit', key: 'hasCairoAirportAnnualPermit' },
+        { headerAr: 'رقم تصريح مطار القاهرة', headerEn: 'Cairo Airport Permit No', key: 'cairoAirportAnnualPermitNo' },
+        { headerAr: 'رقم التصريح المؤقت', headerEn: 'Temp Permit No', key: 'tempPermitNo' },
+        { headerAr: 'رقم التصريح السنوي', headerEn: 'Annual Permit No', key: 'annualPermitNo' },
+        { headerAr: 'تصريح مطارات مؤقت', headerEn: 'Airports Temp Permit', key: 'hasAirportsTempPermit' },
+        { headerAr: 'تصريح مطارات سنوي', headerEn: 'Airports Annual Permit', key: 'hasAirportsAnnualPermit' },
+        { headerAr: 'رقم تصريح المطارات المؤقت', headerEn: 'Airports Temp Permit No', key: 'airportsTempPermitNo' },
+        { headerAr: 'رقم تصريح المطارات السنوي', headerEn: 'Airports Annual Permit No', key: 'airportsAnnualPermitNo' },
+        { headerAr: 'نوع تصريح المطارات', headerEn: 'Airports Permit Type', key: 'airportsPermitType' },
+        { headerAr: 'اسم التصريح (عربي)', headerEn: 'Permit Name (AR)', key: 'permitNameAr' },
+        { headerAr: 'اسم التصريح (انجليزي)', headerEn: 'Permit Name (EN)', key: 'permitNameEn' },
+      ]
+    },
+    {
+      titleAr: 'الشهادات والوثائق', titleEn: 'Certificates & Documents',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'شهادة المؤهل', headerEn: 'Qualification Cert', key: 'hasQualificationCert' },
+        { headerAr: 'شهادة التجنيد', headerEn: 'Military Cert', key: 'hasMilitaryServiceCert' },
+        { headerAr: 'شهادة الميلاد', headerEn: 'Birth Cert', key: 'hasBirthCert' },
+        { headerAr: 'صورة البطاقة', headerEn: 'ID Copy', key: 'hasIdCopy' },
+        { headerAr: 'التعهد', headerEn: 'Pledge', key: 'hasPledge' },
+        { headerAr: 'العقد', headerEn: 'Contract', key: 'hasContract' },
+        { headerAr: 'الإيصال', headerEn: 'Receipt', key: 'hasReceipt' },
+      ]
+    },
+    {
+      titleAr: 'الأقسام', titleEn: 'Departments',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'كود القسم', headerEn: 'Dept Code', key: 'deptCode' },
+        { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
+        { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
+      ]
+    },
+    {
+      titleAr: 'رصيد الإجازات', titleEn: 'Leave Balance',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'رصيد الإجازات السنوية', headerEn: 'Annual Leave Balance', key: 'annualLeaveBalance' },
+        { headerAr: 'رصيد الإجازات المرضية', headerEn: 'Sick Leave Balance', key: 'sickLeaveBalance' },
+      ]
+    },
+    {
+      titleAr: 'الراتب والبيانات المالية', titleEn: 'Salary & Financial',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'الراتب الأساسي', headerEn: 'Basic Salary', key: 'basicSalary' },
+        { headerAr: 'اسم البنك', headerEn: 'Bank Name', key: 'bankName' },
+        { headerAr: 'رقم الحساب البنكي', headerEn: 'Bank Account', key: 'bankAccountNumber' },
+        { headerAr: 'الرقم التعريفي للبنك', headerEn: 'Bank ID Number', key: 'bankIdNumber' },
+        { headerAr: 'نوع الحساب البنكي', headerEn: 'Bank Account Type', key: 'bankAccountType' },
+      ]
+    },
+    {
+      titleAr: 'أخرى', titleEn: 'Other',
+      columns: [
+        { headerAr: 'كود الموظف', headerEn: 'Employee Code', key: 'employeeId' },
+        { headerAr: 'الاسم (عربي)', headerEn: 'Name (AR)', key: 'nameAr' },
+        { headerAr: 'ملاحظات', headerEn: 'Notes', key: 'notes' },
+        { headerAr: 'المرفقات', headerEn: 'Attachments', key: 'attachments' },
+      ]
+    },
   ];
+
+  // Flat columns for single-table exports
+  const bilingualExportColumns = exportSections.flatMap(s => s.columns).filter((col, idx, arr) => 
+    arr.findIndex(c => c.key === col.key) === idx
+  );
 
   // Single-language columns for PDF fallback
   const exportColumns = bilingualExportColumns.map(c => ({ header: ar ? c.headerAr : c.headerEn, key: c.key }));
+
+  const counts = useMemo(() => ({
+    all: employees.length,
+    active: employees.filter(e => e.status === 'active').length,
+    inactive: employees.filter(e => e.status === 'inactive').length,
+    suspended: employees.filter(e => e.status === 'suspended').length,
+  }), [employees]);
+
+  const departments = useMemo(() => {
+    const depts = new Set(employees.map(e => e.department).filter(d => d !== '-'));
+    return depts.size;
+  }, [employees]);
+
+  const filteredEmployees = useMemo(() => {
+    return employees.filter(emp => {
+      const matchesSearch =
+        emp.nameAr.includes(searchQuery) ||
+        emp.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.department.includes(searchQuery) ||
+        emp.jobTitle.includes(searchQuery);
+      const matchesFilter = activeFilter === 'all' || emp.status === activeFilter;
+      return matchesSearch && matchesFilter;
+    });
+  }, [employees, searchQuery, activeFilter]);
 
   const boolLabel = (v?: boolean) => v ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No');
 
@@ -207,38 +316,78 @@ const Employees = () => {
     hasReceipt: boolLabel(e.hasReceipt),
     status: e.status === 'active' ? (ar ? 'نشط' : 'Active') : e.status === 'inactive' ? (ar ? 'غير نشط' : 'Inactive') : (ar ? 'موقوف' : 'Suspended'),
     notes: e.notes || '-',
+    attachments: e.attachments || '-',
   }));
 
   const reportTitle = ar ? 'تقرير الموظفين' : 'Employee Report';
 
-  const counts = useMemo(() => ({
-    all: employees.length,
-    active: employees.filter(e => e.status === 'active').length,
-    inactive: employees.filter(e => e.status === 'inactive').length,
-    suspended: employees.filter(e => e.status === 'suspended').length,
-  }), [employees]);
-
-  const departments = useMemo(() => {
-    const depts = new Set(employees.map(e => e.department).filter(d => d !== '-'));
-    return depts.size;
-  }, [employees]);
-
-  const filteredEmployees = useMemo(() => {
-    return employees.filter(emp => {
-      const matchesSearch =
-        emp.nameAr.includes(searchQuery) ||
-        emp.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        emp.department.includes(searchQuery) ||
-        emp.jobTitle.includes(searchQuery);
-      const matchesFilter = activeFilter === 'all' || emp.status === activeFilter;
-      return matchesSearch && matchesFilter;
-    });
-  }, [employees, searchQuery, activeFilter]);
-
-  // Export all employees data to Excel
+  // Grouped Excel export with section headers per tab
   const handleExportAll = () => {
-    exportBilingualCSV({ titleAr: 'تقرير الموظفين', titleEn: 'Employee Report', data: getExportData(), columns: bilingualExportColumns, fileName: 'Employees_Report' });
+    const data = getExportData();
+    if (!data.length) {
+      toast({ title: ar ? 'لا توجد بيانات للتصدير' : 'No data to export', variant: 'destructive' });
+      return;
+    }
+
+    const logoUrl = `${window.location.origin}/images/company-logo.png`;
+    const dateStr = `${new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })} — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+
+    let tablesHtml = '';
+    exportSections.forEach((section) => {
+      const cols = section.columns;
+      const headerRow = cols.map(c => 
+        `<th style="background-color:#1e40af;color:white;font-weight:600;font-size:11px;padding:6px 8px;border:1px solid #1e3a8a;text-align:center;"><div style="direction:rtl;">${c.headerAr}</div><div style="font-weight:400;font-size:10px;color:#dbeafe;">${c.headerEn}</div></th>`
+      ).join('');
+
+      const dataRows = data.map((row, i) =>
+        `<tr style="background-color:${i % 2 === 0 ? '#ffffff' : '#f0f4ff'};">${cols.map(col => 
+          `<td style="border:1px solid #d1d5db;padding:8px 10px;font-size:12px;text-align:center;mso-number-format:'\\@';">${String((row as any)[col.key] ?? '')}</td>`
+        ).join('')}</tr>`
+      ).join('');
+
+      tablesHtml += `
+        <tr><td colspan="${cols.length}" style="height:20px;"></td></tr>
+        <tr><td colspan="${cols.length}" style="background-color:#f59e0b;color:white;font-size:14px;font-weight:700;padding:10px 16px;text-align:center;border:2px solid #d97706;">
+          <span style="direction:rtl;">${section.titleAr}</span> — ${section.titleEn}
+        </td></tr>
+        <tr>${headerRow}</tr>
+        ${dataRows}
+      `;
+    });
+
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8">
+        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Employees</x:Name><x:WorksheetOptions><x:DisplayRightToLeft/><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+        <style>td, th { font-family: 'Calibri', 'Arial', sans-serif; }</style>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <td style="text-align:left;padding:8px;vertical-align:middle;" rowspan="3"><img src="${logoUrl}" style="height:60px;width:auto;" /></td>
+            <td colspan="15" style="text-align:center;font-size:22px;font-weight:700;color:#1e40af;padding:12px;direction:rtl;">تقرير بيانات الموظفين الشامل</td>
+          </tr>
+          <tr><td colspan="15" style="text-align:center;font-size:18px;font-weight:600;color:#374151;padding:8px;">Comprehensive Employee Data Report</td></tr>
+          <tr><td colspan="15" style="text-align:center;color:#6b7280;font-size:13px;padding:8px;">${dateStr}</td></tr>
+          ${tablesHtml}
+          <tr><td colspan="15" style="height:20px;"></td></tr>
+          <tr><td colspan="15" style="text-align:center;color:#9ca3af;font-size:11px;padding:12px;">تم إنشاء التقرير بواسطة نظام إدارة الموارد البشرية — Generated by HR Management System</td></tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\uFEFF' + htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Employees_Full_Report_${new Date().toISOString().slice(0, 10)}.xls`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1000);
+    toast({ title: ar ? 'تم التصدير بنجاح' : 'Export completed successfully' });
   };
 
   // Import from CSV
