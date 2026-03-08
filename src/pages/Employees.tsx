@@ -234,6 +234,32 @@ const Employees = () => {
 
   const boolLabel = (v?: boolean) => v ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No');
 
+  const genderLabel = (v?: string) => {
+    if (!v) return '-';
+    const map: Record<string, string> = { male: ar ? 'ذكر' : 'Male', female: ar ? 'أنثى' : 'Female' };
+    return map[v] || v;
+  };
+  const religionLabel = (v?: string) => {
+    if (!v) return '-';
+    const map: Record<string, string> = { muslim: ar ? 'مسلم' : 'Muslim', christian: ar ? 'مسيحي' : 'Christian' };
+    return map[v] || v;
+  };
+  const maritalLabel = (v?: string) => {
+    if (!v) return '-';
+    const map: Record<string, string> = { single: ar ? 'أعزب' : 'Single', married: ar ? 'متزوج' : 'Married', divorced: ar ? 'مطلق' : 'Divorced', widowed: ar ? 'أرمل' : 'Widowed' };
+    return map[v] || v;
+  };
+  const militaryLabel = (v?: string) => {
+    if (!v) return '-';
+    const map: Record<string, string> = { completed: ar ? 'أدى الخدمة' : 'Completed', exempt: ar ? 'معفى' : 'Exempt', postponed: ar ? 'مؤجل' : 'Postponed', 'not-applicable': ar ? 'لا ينطبق' : 'N/A' };
+    return map[v] || v;
+  };
+  const contractLabel = (v?: string) => {
+    if (!v) return '-';
+    const map: Record<string, string> = { permanent: ar ? 'دائم' : 'Permanent', temporary: ar ? 'مؤقت' : 'Temporary', contract: ar ? 'عقد' : 'Contract', partTime: ar ? 'دوام جزئي' : 'Part Time', fullTime: ar ? 'دوام كامل' : 'Full Time' };
+    return map[v] || v;
+  };
+
   const getExportData = () => filteredEmployees.map(e => ({
     employeeId: e.employeeId,
     nameAr: e.nameAr,
@@ -259,18 +285,18 @@ const Employees = () => {
     birthDate: e.birthDate || '-',
     birthPlace: e.birthPlace || '-',
     birthGovernorate: e.birthGovernorate || '-',
-    gender: e.gender || '-',
-    religion: e.religion || '-',
+    gender: genderLabel(e.gender),
+    religion: religionLabel(e.religion),
     nationality: e.nationality || '-',
-    maritalStatus: e.maritalStatus || '-',
+    maritalStatus: maritalLabel(e.maritalStatus),
     childrenCount: e.childrenCount ?? '-',
     educationAr: e.educationAr || '-',
     graduationYear: e.graduationYear || '-',
     address: e.address || '-',
     city: e.city || '-',
     governorate: e.governorate || '-',
-    militaryStatus: e.militaryStatus || '-',
-    contractType: e.contractType || '-',
+    militaryStatus: militaryLabel(e.militaryStatus),
+    contractType: contractLabel(e.contractType),
     employmentStatus: e.employmentStatus || '-',
     hireDate: e.hireDate || '-',
     recruitedBy: e.recruitedBy || '-',
