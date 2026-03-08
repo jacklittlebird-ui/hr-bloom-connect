@@ -20,7 +20,7 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { key: 'nav.dashboard', icon: LayoutDashboard, path: '/', moduleKey: 'dashboard' },
-  { key: 'nav.employeePortal', icon: UserCheck, path: '/employee-portal', moduleKey: 'employee-portal' },
+  
   { key: 'nav.employees', icon: Users, path: '/employees', moduleKey: 'employees' },
   { key: 'nav.departments', icon: Building2, path: '/departments', moduleKey: 'departments' },
   { key: 'nav.attendance', icon: Clock, path: '/attendance', moduleKey: 'attendance' },
