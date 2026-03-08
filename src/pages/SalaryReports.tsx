@@ -671,9 +671,14 @@ const SalaryReports = () => {
 
   return (
     <DashboardLayout>
-      <div className={cn("mb-6", isRTL && "text-right")}>
-        <h1 className="text-2xl font-bold text-foreground">{ar ? 'تقارير الرواتب التحليلية' : 'Salary Analytics Reports'}</h1>
-        <p className="text-muted-foreground mt-1">{ar ? 'تقارير وتحليلات تفصيلية لمسير الرواتب' : 'Detailed payroll analytics and reports'}</p>
+      <div className={cn("flex items-center justify-between mb-6", isRTL && "flex-row-reverse")}>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">{ar ? 'تقارير الرواتب التحليلية' : 'Salary Analytics Reports'}</h1>
+          <p className="text-muted-foreground mt-1">{ar ? 'تقارير وتحليلات تفصيلية لمسير الرواتب' : 'Detailed payroll analytics and reports'}</p>
+        </div>
+        <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
+          <RefreshCw className="w-4 h-4" />
+        </Button>
       </div>
 
       <Card className="mb-6">
