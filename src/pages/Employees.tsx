@@ -426,7 +426,27 @@ const Employees = () => {
     document.body.appendChild(link);
     link.click();
     setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1000);
-    toast({ title: ar ? 'تم التصدير بنجاح' : 'Export completed successfully' });
+
+    // Also export a CSV copy for re-import compatibility
+    const csvHeaders = uniqueColumns.map(c => `"${c.headerAr} | ${c.headerEn}"`).join(',');
+    const csvRows = data.map(row =>
+      uniqueColumns.map(col => {
+        const val = String((row as any)[col.key] ?? '');
+        return `"${val.replace(/"/g, '""')}"`;
+      }).join(',')
+    );
+    const csvContent = '\uFEFF' + [csvHeaders, ...csvRows].join('\n');
+    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvUrl = URL.createObjectURL(csvBlob);
+    const csvLink = document.createElement('a');
+    csvLink.href = csvUrl;
+    csvLink.download = `Employees_Full_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+    csvLink.style.display = 'none';
+    document.body.appendChild(csvLink);
+    csvLink.click();
+    setTimeout(() => { document.body.removeChild(csvLink); URL.revokeObjectURL(csvUrl); }, 1200);
+
+    toast({ title: ar ? 'تم التصدير بنجاح (Excel + CSV)' : 'Export completed successfully (Excel + CSV)' });
   };
 
   // Import from CSV
@@ -465,9 +485,16 @@ const Employees = () => {
   };
 
   // Parse HTML table (from .xls template/export)
-  const parseHtmlTable = (html: string): { headers: string[]; rows: string[][] } => {
+  const parseHtmlTable = (html: string): { headers: string[]; rows: string[][]; isFrameset?: boolean } => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
+    
+    // Detect Excel-saved frameset format (data is in external file, not inline)
+    const frameset = doc.querySelector('frameset');
+    if (frameset) {
+      return { headers: [], rows: [], isFrameset: true };
+    }
+    
     const table = doc.querySelector('table');
     if (!table) return { headers: [], rows: [] };
     const allRows = Array.from(table.querySelectorAll('tr'));
@@ -532,6 +559,15 @@ const Employees = () => {
       if (isHtml) {
         // Parse HTML-based Excel file (template or export)
         const parsed = parseHtmlTable(text);
+        if (parsed.isFrameset) {
+          toast({ 
+            title: ar 
+              ? 'هذا الملف تم حفظه بواسطة Excel بصيغة مختلفة. يرجى استخدام الملف الأصلي المُصدّر من النظام مباشرة دون فتحه وحفظه في Excel أولاً.' 
+              : 'This file was re-saved by Excel in a different format. Please use the original file exported from the system without opening and saving it in Excel first.', 
+            variant: 'destructive' 
+          });
+          return;
+        }
         headers = parsed.headers.map(h => h.toLowerCase());
         dataLines = parsed.rows;
       } else {
