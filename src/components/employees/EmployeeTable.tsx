@@ -180,6 +180,35 @@ export const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
           ))}
         </TableBody>
       </Table>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === 'ar' ? 'تأكيد حذف الموظف' : 'Confirm Employee Deletion'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'ar'
+                ? `هل أنت متأكد من حذف الموظف "${deleteTarget?.nameAr}"؟ لا يمكن التراجع عن هذا الإجراء.`
+                : `Are you sure you want to delete "${deleteTarget?.nameEn}"? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className={cn(isRTL && "flex-row-reverse")}>
+            <AlertDialogCancel>{language === 'ar' ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteTarget && onDelete) {
+                  onDelete(deleteTarget.id);
+                }
+                setDeleteTarget(null);
+              }}
+            >
+              {language === 'ar' ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
