@@ -119,7 +119,7 @@ const EmployeePortal = () => {
           } else {
             setSidebarCollapsed(!sidebarCollapsed);
           }
-        }} />
+        }} onRefresh={() => setRefreshKey(k => k + 1)} />
         <div
           ref={mainRef}
           onTouchStart={onTouchStart}

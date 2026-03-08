@@ -12,13 +12,14 @@ import { TrainingPlan } from '@/components/training/TrainingPlan';
 import { TrainingRecordsReport } from '@/components/training/TrainingRecordsReport';
 import { TrainingStatsCards } from '@/components/training/TrainingStatsCards';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
-import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library } from 'lucide-react';
+import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library, RefreshCw } from 'lucide-react';
 import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 
 const TrainingPortal = () => {
   const { language } = useLanguage();
   const { logout, user } = useAuth();
   const ar = language === 'ar';
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
     <div dir="rtl" className="min-h-screen bg-background font-arabic">
@@ -35,6 +36,9 @@ const TrainingPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)}>
+              <RefreshCw className="w-4 h-4" />
+            </Button>
             <NotificationDropdown variant="portal" portalFilter="training" />
             <Button variant="ghost" size="sm" onClick={logout} className="gap-2 text-destructive hover:text-destructive">
               <LogOut className="w-4 h-4" />
@@ -76,12 +80,12 @@ const TrainingPortal = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="records" className="mt-6"><TrainingRecords /></TabsContent>
-          <TabsContent value="trainers" className="mt-6"><Trainers /></TabsContent>
-          <TabsContent value="syllabus" className="mt-6"><CoursesSyllabus /></TabsContent>
-          <TabsContent value="courses" className="mt-6"><CoursesList /></TabsContent>
-          <TabsContent value="plan" className="mt-6"><TrainingPlan /></TabsContent>
-          <TabsContent value="reports" className="mt-6"><TrainingRecordsReport /></TabsContent>
+          <TabsContent value="records" className="mt-6"><TrainingRecords key={refreshKey} /></TabsContent>
+          <TabsContent value="trainers" className="mt-6"><Trainers key={refreshKey} /></TabsContent>
+          <TabsContent value="syllabus" className="mt-6"><CoursesSyllabus key={refreshKey} /></TabsContent>
+          <TabsContent value="courses" className="mt-6"><CoursesList key={refreshKey} /></TabsContent>
+          <TabsContent value="plan" className="mt-6"><TrainingPlan key={refreshKey} /></TabsContent>
+          <TabsContent value="reports" className="mt-6"><TrainingRecordsReport key={refreshKey} /></TabsContent>
         </Tabs>
       </main>
     </div>

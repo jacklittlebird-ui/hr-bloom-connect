@@ -2,16 +2,17 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { cn } from '@/lib/utils';
-import { Menu, Globe, User, LogOut } from 'lucide-react';
+import { Menu, Globe, User, LogOut, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 
 interface PortalHeaderProps {
   onToggleSidebar: () => void;
+  onRefresh?: () => void;
 }
 
-export const PortalHeader = ({ onToggleSidebar }: PortalHeaderProps) => {
+export const PortalHeader = ({ onToggleSidebar, onRefresh }: PortalHeaderProps) => {
   const { language, setLanguage, isRTL } = useLanguage();
   const { user, logout } = useAuth();
   const { getEmployeeById } = useEmployeeData();
@@ -50,6 +51,11 @@ export const PortalHeader = ({ onToggleSidebar }: PortalHeaderProps) => {
       </div>
 
       <div className="flex items-center gap-2">
+        {onRefresh && (
+          <Button variant="ghost" size="icon" onClick={onRefresh} className="shrink-0">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
