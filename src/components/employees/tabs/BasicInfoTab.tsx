@@ -42,7 +42,52 @@ export const BasicInfoTab = ({ employee, onUpdate, readOnly }: BasicInfoTabProps
     graduationYear: employee.graduationYear || '',
   });
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File, maxSizeKB: number): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        // Scale down if very large
+        const MAX_DIM = 800;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let quality = 0.8;
+        let result = canvas.toDataURL('image/jpeg', quality);
+        // Iteratively reduce quality until under maxSizeKB
+        while (result.length * 0.75 > maxSizeKB * 1024 && quality > 0.05) {
+          quality -= 0.05;
+          result = canvas.toDataURL('image/jpeg', quality);
+        }
+        // If still too large, scale down further
+        if (result.length * 0.75 > maxSizeKB * 1024) {
+          const scale = Math.sqrt((maxSizeKB * 1024) / (result.length * 0.75));
+          canvas.width = Math.round(width * scale);
+          canvas.height = Math.round(height * scale);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          result = canvas.toDataURL('image/jpeg', 0.6);
+        }
+        resolve(result);
+      };
+      img.onerror = reject;
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -53,14 +98,14 @@ export const BasicInfoTab = ({ employee, onUpdate, readOnly }: BasicInfoTabProps
       toast.error(isRTL ? 'حجم الصورة يجب أن يكون أقل من 5 ميجابايت' : 'Image size must be less than 5MB');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const url = event.target?.result as string;
-      setAvatarUrl(url);
-      onUpdate?.({ avatar: url });
-      toast.success(isRTL ? 'تم تحميل الصورة بنجاح' : 'Photo uploaded successfully');
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressImage(file, 30);
+      setAvatarUrl(compressed);
+      onUpdate?.({ avatar: compressed });
+      toast.success(isRTL ? 'تم تحميل الصورة وضغطها بنجاح' : 'Photo uploaded and compressed successfully');
+    } catch {
+      toast.error(isRTL ? 'حدث خطأ أثناء معالجة الصورة' : 'Error processing image');
+    }
   };
 
   const updateField = (field: string, value: string | number) => {
