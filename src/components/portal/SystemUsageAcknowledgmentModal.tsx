@@ -57,7 +57,7 @@ export const SystemUsageAcknowledgmentModal = ({ onAcknowledged }: { onAcknowled
             مرحبًا بك: <strong className="text-foreground">{employeeName}</strong>
           </p>
           <h2 className="text-lg font-bold text-foreground">
-            إقرار استخدام النظام الإلكتروني للموارد البشرية
+            إقرار استخدام النظام الإلكتروني للموارد البشرية لشركة لينك إيرو تريدنج إجنسي
           </h2>
         </div>
 
