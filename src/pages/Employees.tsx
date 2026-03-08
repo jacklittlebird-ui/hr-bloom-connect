@@ -586,12 +586,21 @@ const Employees = () => {
         const values = parseCSVLine(lines[i]);
         const record: Record<string, any> = {};
 
+        const booleanCols = [
+          'has_health_insurance', 'has_gov_health_insurance', 'has_social_insurance',
+          'has_cairo_airport_temp_permit', 'has_cairo_airport_annual_permit',
+          'has_airports_temp_permit', 'has_airports_annual_permit',
+          'has_qualification_cert', 'has_military_service_cert', 'has_birth_cert',
+          'has_id_copy', 'has_pledge', 'has_contract', 'has_receipt', 'resigned',
+        ];
+        const numericCols = ['children_count', 'basic_salary'];
+
         dbColumns.forEach((col, idx) => {
           if (col && values[idx] && values[idx] !== '-') {
-            if (col === 'children_count') {
-              const num = parseInt(values[idx]);
-              if (!isNaN(num)) record[col] = num;
-            } else if (col === 'basic_salary') {
+            if (booleanCols.includes(col)) {
+              const v = values[idx].toLowerCase().trim();
+              record[col] = v === 'true' || v === 'نعم' || v === '1' || v === 'yes';
+            } else if (numericCols.includes(col)) {
               const num = parseFloat(values[idx]);
               if (!isNaN(num)) record[col] = num;
             } else {
