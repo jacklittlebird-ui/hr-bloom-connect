@@ -45,14 +45,11 @@ export const LiveStatus = () => {
       </h2>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {items.map((item, i) => (
-          <div key={i} className={cn(
-            "flex items-center gap-3 p-4 rounded-xl border border-border/50 bg-card",
-            isRTL && "flex-row-reverse"
-          )}>
+          <div key={i} className="flex items-center gap-3 p-4 rounded-xl border border-border/50 bg-card">
             <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", item.bg)}>
               <item.icon className={cn("w-5 h-5", item.color)} />
             </div>
-            <div className={cn(isRTL && "text-right")}>
+            <div>
               <p className="text-2xl font-bold text-foreground">{item.value}</p>
               <p className="text-xs text-muted-foreground">{item.label}</p>
             </div>

@@ -59,7 +59,7 @@ export const WelcomeBanner = () => {
         backgroundSize: '24px 24px'
       }} />
 
-      <div className="relative z-10 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="relative z-10 p-6 md:p-8 flex flex-col md:flex-row-reverse items-start md:items-center justify-between gap-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <span className="text-3xl md:text-4xl">{emoji}</span>

@@ -43,12 +43,11 @@ export const Announcements = () => {
             <div key={n.id} className={cn(
               "flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors",
               !n.read && "bg-primary/5",
-              isRTL && "flex-row-reverse"
             )}>
               <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5", cfg.bg)}>
                 <Icon className={cn("w-4 h-4", cfg.color)} />
               </div>
-              <div className={cn("flex-1 min-w-0", isRTL && "text-right")}>
+              <div className="flex-1 min-w-0">
                 <p className={cn("text-sm leading-tight", !n.read && "font-semibold")}>{ar ? n.titleAr : n.titleEn}</p>
                 {(n.descAr || n.descEn) && (
                   <p className="text-xs text-muted-foreground mt-0.5 truncate">{ar ? n.descAr : n.descEn}</p>
