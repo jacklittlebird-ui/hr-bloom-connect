@@ -762,8 +762,9 @@ const Employees = () => {
         const record: Record<string, any> = {};
 
         dbColumns.forEach((col, idx) => {
-          if (col && values[idx] && values[idx] !== '-' && values[idx] !== '') {
-            const rawVal = values[idx].trim();
+          if (col && values[idx] != null) {
+            const rawVal = String(values[idx]).trim();
+            if (!rawVal || rawVal === '-' || rawVal === '—' || rawVal === 'N/A' || rawVal === 'n/a' || rawVal === 'لا يوجد') continue;
             if (booleanCols.includes(col)) {
               const v = rawVal.toLowerCase();
               if (v in boolRevMap) {
