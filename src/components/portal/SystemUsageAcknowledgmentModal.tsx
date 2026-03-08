@@ -13,7 +13,7 @@ export const SystemUsageAcknowledgmentModal = ({ onAcknowledged }: { onAcknowled
   const employeeId = usePortalEmployee();
   const { getEmployee } = useEmployeeData();
   const employee = getEmployee(employeeId);
-  const employeeName = employee?.nameAr || employee?.name || '';
+  const employeeName = employee?.nameAr || employee?.nameEn || '';
 
   const [checked, setChecked] = useState(false);
 
