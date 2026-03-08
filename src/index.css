@@ -57,14 +57,15 @@
     --stat-pink: 340 75% 55%;
     --stat-pink-bg: 340 75% 95%;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 215 16% 55%;
-    --sidebar-primary: 217 91% 50%;
+    --sidebar-background: 220 30% 14%;
+    --sidebar-foreground: 220 15% 72%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 60% 96%;
-    --sidebar-accent-foreground: 210 80% 55%;
-    --sidebar-border: 220 20% 92%;
-    --sidebar-ring: 210 80% 55%;
+    --sidebar-accent: 220 30% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 25% 20%;
+    --sidebar-ring: 217 91% 60%;
+    --sidebar-muted: 220 20% 40%;
 
     /* Success/Warning Colors */
     --success: 145 65% 42%;
