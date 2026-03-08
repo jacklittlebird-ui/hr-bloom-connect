@@ -151,6 +151,8 @@ export const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => setDeleteTarget(employee)}
+                    title={language === 'ar' ? 'حذف' : 'Delete'}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
