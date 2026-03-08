@@ -134,6 +134,10 @@ const SiteSettings = () => {
 
   const handleReset = () => {
     setConfig(defaultConfig);
+    applyThemeSettings(defaultConfig);
+    try {
+      localStorage.setItem('hr_site_config', JSON.stringify(defaultConfig));
+    } catch {}
     setHasChanges(false);
     toast({ title: isAr ? 'تم الاستعادة' : 'Reset', description: isAr ? 'تم استعادة الإعدادات الافتراضية' : 'Default settings restored' });
   };
