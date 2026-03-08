@@ -517,6 +517,12 @@ const Employees = () => {
 
       let successCount = 0;
       let errorCount = 0;
+      const errorDetails: string[] = [];
+      const unmappedHeaders = headers.filter(h => !headerMap[h]);
+
+      if (unmappedHeaders.length > 0) {
+        console.warn('Unmapped headers:', unmappedHeaders);
+      }
 
       for (let i = 1; i < lines.length; i++) {
         const values = parseCSVLine(lines[i]);
@@ -539,6 +545,13 @@ const Employees = () => {
         // Skip rows without required fields
         if (!record.employee_code || !record.name_ar || !record.name_en) {
           errorCount++;
+          const missing = [];
+          if (!record.employee_code) missing.push(ar ? 'كود الموظف' : 'Employee Code');
+          if (!record.name_ar) missing.push(ar ? 'الاسم عربي' : 'Name AR');
+          if (!record.name_en) missing.push(ar ? 'الاسم انجليزي' : 'Name EN');
+          errorDetails.push(ar
+            ? `صف ${i}: حقول مطلوبة ناقصة (${missing.join(', ')})`
+            : `Row ${i}: Missing required fields (${missing.join(', ')})`);
           continue;
         }
 
@@ -550,16 +563,39 @@ const Employees = () => {
         if (error) {
           console.error('Import error for row', i, error);
           errorCount++;
+          errorDetails.push(ar
+            ? `صف ${i} (${record.employee_code}): ${error.message}`
+            : `Row ${i} (${record.employee_code}): ${error.message}`);
         } else {
           successCount++;
         }
       }
 
-      toast({
-        title: ar
-          ? `تم استيراد ${successCount} موظف بنجاح${errorCount > 0 ? ` (${errorCount} أخطاء)` : ''}`
-          : `Imported ${successCount} employees successfully${errorCount > 0 ? ` (${errorCount} errors)` : ''}`,
-      });
+      // Show result with details
+      if (errorCount > 0) {
+        const detailText = errorDetails.slice(0, 10).join('\n');
+        const moreText = errorDetails.length > 10
+          ? (ar ? `\n... و ${errorDetails.length - 10} أخطاء أخرى` : `\n... and ${errorDetails.length - 10} more errors`)
+          : '';
+        const unmappedText = unmappedHeaders.length > 0
+          ? (ar ? `\n\nأعمدة غير معروفة: ${unmappedHeaders.join(', ')}` : `\n\nUnmapped columns: ${unmappedHeaders.join(', ')}`)
+          : '';
+
+        toast({
+          title: ar
+            ? `تم استيراد ${successCount} موظف بنجاح (${errorCount} أخطاء)`
+            : `Imported ${successCount} successfully (${errorCount} errors)`,
+          description: detailText + moreText + unmappedText,
+          variant: errorCount > 0 && successCount === 0 ? 'destructive' : 'default',
+          duration: 15000,
+        });
+      } else {
+        toast({
+          title: ar
+            ? `تم استيراد ${successCount} موظف بنجاح`
+            : `Imported ${successCount} employees successfully`,
+        });
+      }
 
       await refreshEmployees();
     } catch (err) {
