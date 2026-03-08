@@ -122,6 +122,12 @@ const SiteSettings = () => {
   };
 
   const handleSave = () => {
+    // Ensure theme is applied on save
+    applyThemeSettings(config);
+    // Also force-save to localStorage in case usePersistedState hasn't flushed yet
+    try {
+      localStorage.setItem('hr_site_config', JSON.stringify(config));
+    } catch {}
     setHasChanges(false);
     toast({ title: isAr ? 'تم الحفظ' : 'Saved', description: isAr ? 'تم حفظ إعدادات الموقع بنجاح' : 'Site settings saved successfully' });
   };
