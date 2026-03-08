@@ -68,7 +68,7 @@ const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
 const StationManagerPortal = () => {
   const { user, logout } = useAuth();
   const { language, setLanguage, isRTL } = useLanguage();
-  const { employees } = useEmployeeData();
+  const { employees, refreshEmployees } = useEmployeeData();
   const { reviews, addReview, updateReview } = usePerformanceData();
   const { addNotification } = useNotifications();
   const navigate = useNavigate();
@@ -510,7 +510,7 @@ const StationManagerPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-1 md:gap-2 shrink-0">
-            <Button variant="ghost" size="icon" onClick={() => window.location.reload()}>
+            <Button variant="ghost" size="icon" onClick={() => { refreshEmployees(); toast({ title: language === 'ar' ? 'تم التحديث' : 'Refreshed' }); }}>
               <RefreshCw className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}>

@@ -24,7 +24,7 @@ import { stationLocations } from '@/data/stationLocations';
 const Uniforms = () => {
   const { language, isRTL, t } = useLanguage();
   const { employees } = useEmployeeData();
-  const { uniforms, addUniform, deleteUniform, updateUniform } = useUniformData();
+  const { uniforms, addUniform, deleteUniform, updateUniform, refreshUniforms } = useUniformData();
   const { reportRef, handlePrint, exportToCSV } = useReportExport();
 
   const [employeeId, setEmployeeId] = useState(''); // This stores employee code for display
@@ -169,7 +169,7 @@ const Uniforms = () => {
             <Shirt className="w-7 h-7 text-primary" />
             {language === 'ar' ? 'إدارة يونيفورم الموظفين' : 'Employee Uniform Management'}
           </h1>
-          <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
+          <Button variant="outline" size="icon" onClick={() => { refreshUniforms(); toast.success(language === 'ar' ? 'تم التحديث' : 'Refreshed'); }}>
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>

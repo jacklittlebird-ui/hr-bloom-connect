@@ -41,6 +41,7 @@ export interface ProcessedPayroll {
 
 interface PayrollDataContextType {
   payrollEntries: ProcessedPayroll[];
+  refreshPayroll: () => Promise<void>;
   savePayrollEntry: (entry: ProcessedPayroll) => void;
   savePayrollEntries: (entries: ProcessedPayroll[]) => void;
   getPayrollEntry: (employeeId: string, month: string, year: string) => ProcessedPayroll | undefined;
@@ -230,7 +231,7 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [payrollEntries]);
 
   return (
-    <PayrollDataContext.Provider value={{ payrollEntries, savePayrollEntry, savePayrollEntries, getPayrollEntry, getMonthlyPayroll, getEmployeePayroll }}>
+    <PayrollDataContext.Provider value={{ payrollEntries, refreshPayroll: fetchEntries, savePayrollEntry, savePayrollEntries, getPayrollEntry, getMonthlyPayroll, getEmployeePayroll }}>
       {children}
     </PayrollDataContext.Provider>
   );

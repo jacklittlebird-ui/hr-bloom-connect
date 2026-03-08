@@ -45,6 +45,7 @@ export function isExpired(deliveryDate: string): boolean {
 
 interface UniformDataContextType {
   uniforms: UniformItem[];
+  refreshUniforms: () => Promise<void>;
   addUniform: (item: Omit<UniformItem, 'id'>) => void;
   deleteUniform: (id: number) => void;
   updateUniform: (id: number, updates: Partial<UniformItem>) => void;
@@ -116,7 +117,7 @@ export const UniformDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [uniforms]);
 
   return (
-    <UniformDataContext.Provider value={{ uniforms, addUniform, deleteUniform, updateUniform, getEmployeeUniforms }}>
+    <UniformDataContext.Provider value={{ uniforms, refreshUniforms: fetchUniforms, addUniform, deleteUniform, updateUniform, getEmployeeUniforms }}>
       {children}
     </UniformDataContext.Provider>
   );
