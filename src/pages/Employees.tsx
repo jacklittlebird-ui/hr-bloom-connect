@@ -479,18 +479,17 @@ const Employees = () => {
 
       // Map CSV header to DB column
       const headerMap: Record<string, string> = {
+        // Basic Info
         'employee id': 'employee_code', 'كود الموظف': 'employee_code',
         'name (ar)': 'name_ar', 'الاسم (عربي)': 'name_ar',
         'name (en)': 'name_en', 'الاسم (انجليزي)': 'name_en',
         'first name': 'first_name', 'الاسم الأول': 'first_name',
         'father name': 'father_name', 'اسم الأب': 'father_name',
         'family name': 'family_name', 'اسم العائلة': 'family_name',
-        'phone': 'phone', 'الهاتف': 'phone',
-        'email': 'email', 'البريد الإلكتروني': 'email',
-        'home phone': 'home_phone', 'هاتف المنزل': 'home_phone',
-        'national id': 'national_id', 'الرقم القومي': 'national_id',
+        'station location': 'station_id', 'محطة العمل': 'station_id',
         'birth date': 'birth_date', 'تاريخ الميلاد': 'birth_date',
         'birth place': 'birth_place', 'محل الميلاد': 'birth_place',
+        'birth governorate': 'birth_governorate', 'محافظة الميلاد': 'birth_governorate',
         'gender': 'gender', 'الجنس': 'gender',
         'religion': 'religion', 'الديانة': 'religion',
         'nationality': 'nationality', 'الجنسية': 'nationality',
@@ -498,18 +497,77 @@ const Employees = () => {
         'children': 'children_count', 'عدد الأطفال': 'children_count',
         'education': 'education_ar', 'المؤهل': 'education_ar',
         'graduation year': 'graduation_year', 'سنة التخرج': 'graduation_year',
+        // Contact
+        'phone': 'phone', 'الهاتف': 'phone',
+        'email': 'email', 'البريد الإلكتروني': 'email',
+        'home phone': 'home_phone', 'هاتف المنزل': 'home_phone',
         'address': 'address', 'العنوان': 'address',
         'city': 'city', 'المدينة': 'city',
         'governorate': 'governorate', 'المحافظة': 'governorate',
+        'emergency contact name 1': 'emergency_contact_name1', 'اسم جهة اتصال الطوارئ 1': 'emergency_contact_name1',
+        'emergency contact mobile 1': 'emergency_contact_mobile1', 'موبايل جهة اتصال الطوارئ 1': 'emergency_contact_mobile1',
+        'emergency contact name 2': 'emergency_contact_name2', 'اسم جهة اتصال الطوارئ 2': 'emergency_contact_name2',
+        'emergency contact mobile 2': 'emergency_contact_mobile2', 'موبايل جهة اتصال الطوارئ 2': 'emergency_contact_mobile2',
+        // Identity
+        'national id': 'national_id', 'الرقم القومي': 'national_id',
+        'id issue date': 'id_issue_date', 'تاريخ إصدار البطاقة': 'id_issue_date',
+        'id expiry date': 'id_expiry_date', 'تاريخ انتهاء البطاقة': 'id_expiry_date',
+        'issuing authority': 'issuing_authority', 'جهة الإصدار': 'issuing_authority',
+        'issuing governorate': 'issuing_governorate', 'محافظة الإصدار': 'issuing_governorate',
         'military status': 'military_status', 'الموقف من التجنيد': 'military_status',
-        'contract type': 'contract_type', 'نوع العقد': 'contract_type',
+        // Job Info
+        'department code': 'dept_code', 'القسم (كود)': 'dept_code',
+        'job title (ar)': 'job_title_ar', 'الوظيفة (عربي)': 'job_title_ar',
+        'job title (en)': 'job_title_en', 'الوظيفة (انجليزي)': 'job_title_en',
+        'job title': 'job_title_ar', 'الوظيفة': 'job_title_ar',
+        'job degree': 'job_degree', 'الدرجة الوظيفية': 'job_degree',
+        'job level': 'job_level', 'المستوى الوظيفي': 'job_level',
         'hire date': 'hire_date', 'تاريخ التعيين': 'hire_date',
-        'basic salary': 'basic_salary', 'الراتب الأساسي': 'basic_salary',
+        'recruited by': 'recruited_by', 'جهة التعيين': 'recruited_by',
+        'employment status': 'employment_status', 'الحالة الوظيفية': 'employment_status',
+        'resigned': 'resigned', 'مستقيل': 'resigned',
+        'resignation date': 'resignation_date', 'تاريخ الاستقالة': 'resignation_date',
+        'resignation reason': 'resignation_reason', 'سبب الاستقالة': 'resignation_reason',
+        // Insurance
         'social insurance no': 'social_insurance_no', 'رقم التأمين الاجتماعي': 'social_insurance_no',
-        'health insurance card': 'health_insurance_card_no', 'رقم بطاقة التأمين الصحي': 'health_insurance_card_no',
+        'social insurance start date': 'social_insurance_start_date', 'تاريخ بداية التأمين': 'social_insurance_start_date',
+        'social insurance end date': 'social_insurance_end_date', 'تاريخ نهاية التأمين': 'social_insurance_end_date',
+        'health insurance card no': 'health_insurance_card_no', 'رقم بطاقة التأمين الصحي': 'health_insurance_card_no',
+        'health insurance card': 'health_insurance_card_no',
+        'has health insurance': 'has_health_insurance', 'تأمين صحي': 'has_health_insurance',
+        'has gov health insurance': 'has_gov_health_insurance', 'تأمين صحي حكومي': 'has_gov_health_insurance',
+        'has social insurance': 'has_social_insurance', 'تأمينات اجتماعية': 'has_social_insurance',
+        'contract type': 'contract_type', 'نوع العقد': 'contract_type',
+        // Permits
+        'cairo airport temp permit': 'has_cairo_airport_temp_permit', 'تصريح مطار القاهرة مؤقت': 'has_cairo_airport_temp_permit',
+        'temp permit no': 'temp_permit_no', 'رقم التصريح المؤقت': 'temp_permit_no',
+        'cairo airport annual permit': 'has_cairo_airport_annual_permit', 'تصريح مطار القاهرة سنوي': 'has_cairo_airport_annual_permit',
+        'annual permit no': 'annual_permit_no', 'رقم التصريح السنوي': 'annual_permit_no',
+        'airports temp permit': 'has_airports_temp_permit', 'تصريح المطارات مؤقت': 'has_airports_temp_permit',
+        'airports temp permit no': 'airports_temp_permit_no', 'رقم تصريح المطارات المؤقت': 'airports_temp_permit_no',
+        'airports annual permit': 'has_airports_annual_permit', 'تصريح المطارات سنوي': 'has_airports_annual_permit',
+        'airports annual permit no': 'airports_annual_permit_no', 'رقم تصريح المطارات السنوي': 'airports_annual_permit_no',
+        'airports permit type': 'airports_permit_type', 'نوع تصريح المطارات': 'airports_permit_type',
+        'permit name (en)': 'permit_name_en', 'اسم التصريح (انجليزي)': 'permit_name_en',
+        'permit name (ar)': 'permit_name_ar', 'اسم التصريح (عربي)': 'permit_name_ar',
+        // Certificates
+        'qualification cert': 'has_qualification_cert', 'شهادة مؤهل': 'has_qualification_cert',
+        'military service cert': 'has_military_service_cert', 'شهادة خدمة عسكرية': 'has_military_service_cert',
+        'birth cert': 'has_birth_cert', 'شهادة ميلاد': 'has_birth_cert',
+        'id copy': 'has_id_copy', 'صورة بطاقة': 'has_id_copy',
+        'pledge': 'has_pledge', 'تعهد': 'has_pledge',
+        'contract doc': 'has_contract', 'عقد': 'has_contract',
+        'receipt': 'has_receipt', 'إيصال': 'has_receipt',
+        'attachments': 'attachments', 'مرفقات': 'attachments',
+        // Salary & Bank
+        'basic salary': 'basic_salary', 'الراتب الأساسي': 'basic_salary',
         'bank name': 'bank_name', 'اسم البنك': 'bank_name',
         'bank account': 'bank_account_number', 'رقم الحساب البنكي': 'bank_account_number',
-        'job title': 'job_title_ar', 'الوظيفة': 'job_title_ar',
+        'bank id number': 'bank_id_number', 'رقم id البنكي': 'bank_id_number',
+        'bank account type': 'bank_account_type', 'نوع الحساب البنكي': 'bank_account_type',
+        // Dept Code
+        'dept code': 'dept_code', 'كود القسم': 'dept_code',
+        // Notes
         'notes': 'notes', 'ملاحظات': 'notes',
       };
 
@@ -528,12 +586,21 @@ const Employees = () => {
         const values = parseCSVLine(lines[i]);
         const record: Record<string, any> = {};
 
+        const booleanCols = [
+          'has_health_insurance', 'has_gov_health_insurance', 'has_social_insurance',
+          'has_cairo_airport_temp_permit', 'has_cairo_airport_annual_permit',
+          'has_airports_temp_permit', 'has_airports_annual_permit',
+          'has_qualification_cert', 'has_military_service_cert', 'has_birth_cert',
+          'has_id_copy', 'has_pledge', 'has_contract', 'has_receipt', 'resigned',
+        ];
+        const numericCols = ['children_count', 'basic_salary'];
+
         dbColumns.forEach((col, idx) => {
           if (col && values[idx] && values[idx] !== '-') {
-            if (col === 'children_count') {
-              const num = parseInt(values[idx]);
-              if (!isNaN(num)) record[col] = num;
-            } else if (col === 'basic_salary') {
+            if (booleanCols.includes(col)) {
+              const v = values[idx].toLowerCase().trim();
+              record[col] = v === 'true' || v === 'نعم' || v === '1' || v === 'yes';
+            } else if (numericCols.includes(col)) {
               const num = parseFloat(values[idx]);
               if (!isNaN(num)) record[col] = num;
             } else {
@@ -609,24 +676,78 @@ const Employees = () => {
 
   const downloadTemplate = () => {
     const headersAr = [
+      // المعلومات الأساسية
       'كود الموظف', 'الاسم (عربي)', 'الاسم (انجليزي)', 'الاسم الأول', 'اسم الأب', 'اسم العائلة',
+      'محطة العمل', 'تاريخ الميلاد', 'محل الميلاد', 'محافظة الميلاد',
+      'الجنس', 'الديانة', 'الجنسية', 'الحالة الاجتماعية', 'عدد الأطفال', 'المؤهل', 'سنة التخرج',
+      // بيانات الاتصال
       'الهاتف', 'البريد الإلكتروني', 'هاتف المنزل',
-      'الرقم القومي', 'تاريخ الميلاد', 'محل الميلاد', 'الجنس', 'الديانة', 'الجنسية',
-      'الحالة الاجتماعية', 'عدد الأطفال', 'المؤهل', 'سنة التخرج',
-      'العنوان', 'المدينة', 'المحافظة', 'الموقف من التجنيد',
-      'نوع العقد', 'تاريخ التعيين', 'الوظيفة', 'الراتب الأساسي',
-      'رقم التأمين الاجتماعي', 'رقم بطاقة التأمين الصحي',
-      'اسم البنك', 'رقم الحساب البنكي', 'ملاحظات',
+      'العنوان', 'المدينة', 'المحافظة',
+      'اسم جهة اتصال الطوارئ 1', 'موبايل جهة اتصال الطوارئ 1',
+      'اسم جهة اتصال الطوارئ 2', 'موبايل جهة اتصال الطوارئ 2',
+      // الهوية
+      'الرقم القومي', 'تاريخ إصدار البطاقة', 'تاريخ انتهاء البطاقة',
+      'جهة الإصدار', 'محافظة الإصدار', 'الموقف من التجنيد',
+      // البيانات الوظيفية
+      'القسم (كود)', 'الوظيفة (عربي)', 'الوظيفة (انجليزي)',
+      'الدرجة الوظيفية', 'المستوى الوظيفي', 'تاريخ التعيين', 'جهة التعيين',
+      'الحالة الوظيفية', 'مستقيل', 'تاريخ الاستقالة', 'سبب الاستقالة',
+      // التأمينات
+      'رقم التأمين الاجتماعي', 'تاريخ بداية التأمين', 'تاريخ نهاية التأمين',
+      'رقم بطاقة التأمين الصحي', 'تأمين صحي', 'تأمين صحي حكومي', 'تأمينات اجتماعية',
+      'نوع العقد',
+      // التصاريح
+      'تصريح مطار القاهرة مؤقت', 'رقم التصريح المؤقت',
+      'تصريح مطار القاهرة سنوي', 'رقم التصريح السنوي',
+      'تصريح المطارات مؤقت', 'رقم تصريح المطارات المؤقت',
+      'تصريح المطارات سنوي', 'رقم تصريح المطارات السنوي',
+      'نوع تصريح المطارات', 'اسم التصريح (انجليزي)', 'اسم التصريح (عربي)',
+      // الشهادات
+      'شهادة مؤهل', 'شهادة خدمة عسكرية', 'شهادة ميلاد', 'صورة بطاقة',
+      'تعهد', 'عقد', 'إيصال', 'مرفقات',
+      // الراتب والبنك
+      'الراتب الأساسي', 'اسم البنك', 'رقم الحساب البنكي', 'رقم ID البنكي', 'نوع الحساب البنكي',
+      // كود القسم
+      'كود القسم',
+      // ملاحظات
+      'ملاحظات',
     ];
     const headersEn = [
+      // Basic Info
       'Employee ID', 'Name (AR)', 'Name (EN)', 'First Name', 'Father Name', 'Family Name',
+      'Station Location', 'Birth Date', 'Birth Place', 'Birth Governorate',
+      'Gender', 'Religion', 'Nationality', 'Marital Status', 'Children', 'Education', 'Graduation Year',
+      // Contact
       'Phone', 'Email', 'Home Phone',
-      'National ID', 'Birth Date', 'Birth Place', 'Gender', 'Religion', 'Nationality',
-      'Marital Status', 'Children', 'Education', 'Graduation Year',
-      'Address', 'City', 'Governorate', 'Military Status',
-      'Contract Type', 'Hire Date', 'Job Title', 'Basic Salary',
-      'Social Insurance No', 'Health Insurance Card',
-      'Bank Name', 'Bank Account', 'Notes',
+      'Address', 'City', 'Governorate',
+      'Emergency Contact Name 1', 'Emergency Contact Mobile 1',
+      'Emergency Contact Name 2', 'Emergency Contact Mobile 2',
+      // Identity
+      'National ID', 'ID Issue Date', 'ID Expiry Date',
+      'Issuing Authority', 'Issuing Governorate', 'Military Status',
+      // Job Info
+      'Department Code', 'Job Title (AR)', 'Job Title (EN)',
+      'Job Degree', 'Job Level', 'Hire Date', 'Recruited By',
+      'Employment Status', 'Resigned', 'Resignation Date', 'Resignation Reason',
+      // Insurance
+      'Social Insurance No', 'Social Insurance Start Date', 'Social Insurance End Date',
+      'Health Insurance Card No', 'Has Health Insurance', 'Has Gov Health Insurance', 'Has Social Insurance',
+      'Contract Type',
+      // Permits
+      'Cairo Airport Temp Permit', 'Temp Permit No',
+      'Cairo Airport Annual Permit', 'Annual Permit No',
+      'Airports Temp Permit', 'Airports Temp Permit No',
+      'Airports Annual Permit', 'Airports Annual Permit No',
+      'Airports Permit Type', 'Permit Name (EN)', 'Permit Name (AR)',
+      // Certificates
+      'Qualification Cert', 'Military Service Cert', 'Birth Cert', 'ID Copy',
+      'Pledge', 'Contract Doc', 'Receipt', 'Attachments',
+      // Salary & Bank
+      'Basic Salary', 'Bank Name', 'Bank Account', 'Bank ID Number', 'Bank Account Type',
+      // Dept Code
+      'Dept Code',
+      // Notes
+      'Notes',
     ];
     const headers = ar ? headersAr : headersEn;
     const tableHtml = `
