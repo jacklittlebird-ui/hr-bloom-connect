@@ -607,6 +607,38 @@ const Employees = () => {
     }
   };
 
+  const downloadTemplate = () => {
+    const headersAr = [
+      'كود الموظف', 'الاسم (عربي)', 'الاسم (انجليزي)', 'الاسم الأول', 'اسم الأب', 'اسم العائلة',
+      'الهاتف', 'البريد الإلكتروني', 'هاتف المنزل',
+      'الرقم القومي', 'تاريخ الميلاد', 'محل الميلاد', 'الجنس', 'الديانة', 'الجنسية',
+      'الحالة الاجتماعية', 'عدد الأطفال', 'المؤهل', 'سنة التخرج',
+      'العنوان', 'المدينة', 'المحافظة', 'الموقف من التجنيد',
+      'نوع العقد', 'تاريخ التعيين', 'الوظيفة', 'الراتب الأساسي',
+      'رقم التأمين الاجتماعي', 'رقم بطاقة التأمين الصحي',
+      'اسم البنك', 'رقم الحساب البنكي', 'ملاحظات',
+    ];
+    const headersEn = [
+      'Employee ID', 'Name (AR)', 'Name (EN)', 'First Name', 'Father Name', 'Family Name',
+      'Phone', 'Email', 'Home Phone',
+      'National ID', 'Birth Date', 'Birth Place', 'Gender', 'Religion', 'Nationality',
+      'Marital Status', 'Children', 'Education', 'Graduation Year',
+      'Address', 'City', 'Governorate', 'Military Status',
+      'Contract Type', 'Hire Date', 'Job Title', 'Basic Salary',
+      'Social Insurance No', 'Health Insurance Card',
+      'Bank Name', 'Bank Account', 'Notes',
+    ];
+    const bom = '\uFEFF';
+    const csvContent = bom + (ar ? headersAr : headersEn).join(',') + '\n';
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = ar ? 'قالب_استيراد_الموظفين.csv' : 'employee_import_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -618,17 +650,10 @@ const Employees = () => {
               <Button variant="secondary" size="sm" className="gap-2" onClick={() => handlePrint(reportTitle)}><Printer className="w-4 h-4" />{ar ? 'طباعة' : 'Print'}</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: exportColumns })}><Download className="w-4 h-4" />PDF</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportAll}><FileText className="w-4 h-4" />Excel</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={downloadTemplate}><Download className="w-4 h-4" />{ar ? 'قالب الاستيراد' : 'Template'}</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handleImportClick} disabled={importing}>
                 <Upload className="w-4 h-4" />{importing ? (ar ? 'جاري الاستيراد...' : 'Importing...') : t('employees.importExcel')}
               </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv,.txt"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <Button size="sm" className="gap-2 bg-success hover:bg-success/90 text-success-foreground" onClick={() => setShowAddDialog(true)}><Plus className="w-4 h-4" />{t('employees.addEmployee')}</Button>
             </div>
           </div>
         </div>
