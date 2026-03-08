@@ -219,7 +219,7 @@ const Attendance = () => {
             <h1 className="text-2xl font-bold text-foreground">{t('attendance.title')}</h1>
             <p className="text-muted-foreground">{t('attendance.subtitle')}</p>
           </div>
-          <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
+          <Button variant="outline" size="icon" onClick={() => { refreshAttendance(); toast.success(language === 'ar' ? 'تم التحديث' : 'Refreshed'); }}>
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
