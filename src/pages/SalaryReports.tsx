@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFoo
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { Wallet, TrendingUp, TrendingDown, Banknote, Download, Printer, FileText, Building2, MapPin } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Banknote, Download, Printer, FileText, Building2, MapPin, RefreshCw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, LineChart, Line } from 'recharts';
 import { usePayrollData, ProcessedPayroll } from '@/contexts/PayrollDataContext';
 import { useReportExport } from '@/hooks/useReportExport';
