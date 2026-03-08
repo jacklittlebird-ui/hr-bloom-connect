@@ -36,6 +36,9 @@ const TrainingPortal = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setRefreshKey(k => k + 1)}>
+              <RefreshCw className="w-4 h-4" />
+            </Button>
             <NotificationDropdown variant="portal" portalFilter="training" />
             <Button variant="ghost" size="sm" onClick={logout} className="gap-2 text-destructive hover:text-destructive">
               <LogOut className="w-4 h-4" />
