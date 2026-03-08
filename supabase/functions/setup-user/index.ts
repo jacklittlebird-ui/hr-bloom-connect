@@ -105,6 +105,13 @@ Deno.serve(async (req) => {
 
     const userId = authData.user.id;
 
+    // Ensure profile exists (trigger may not fire for admin-created users)
+    await supabaseAdmin.from('profiles').upsert({
+      id: userId,
+      email,
+      full_name,
+    }, { onConflict: 'id' });
+
     // Resolve station/employee references
     let stationId: string | null = null;
     let employeeId: string | null = null;
