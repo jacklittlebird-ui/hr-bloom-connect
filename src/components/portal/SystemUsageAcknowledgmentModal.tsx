@@ -47,7 +47,7 @@ export const SystemUsageAcknowledgmentModal = ({ onAcknowledged }: { onAcknowled
 
   return (
     <div className="fixed inset-0 z-[99999] bg-black/80 flex items-center justify-center p-4" style={{ direction: 'rtl' }}>
-      <div className="bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col border border-border overflow-hidden">
+      <div className="bg-card rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col border border-border overflow-hidden" style={{ maxHeight: 'calc(90vh - 2rem)' }}>
         {/* Header */}
         <div className="p-5 border-b border-border text-center space-y-2 shrink-0">
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
