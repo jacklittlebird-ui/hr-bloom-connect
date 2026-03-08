@@ -57,6 +57,7 @@ const EmployeePortal = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [ackDismissed, setAckDismissed] = useState(false);
+  const [systemAckDismissed, setSystemAckDismissed] = useState(false);
 
   // Pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);
