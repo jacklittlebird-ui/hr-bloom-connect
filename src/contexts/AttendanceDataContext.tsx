@@ -32,6 +32,7 @@ export const calculateWorkTime = (checkIn: string | null, checkOut: string | nul
 
 interface AttendanceDataContextType {
   records: AttendanceEntry[];
+  refresh: () => Promise<void>;
   checkIn: (employeeId: string, employeeName: string, employeeNameAr: string, department: string) => void;
   checkOut: (recordId: string) => void;
   addMissionAttendance: (employeeId: string, employeeName: string, employeeNameAr: string, department: string, date: string, checkIn: string, checkOut: string, hours: number) => void;
@@ -205,7 +206,7 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
   }, [records]);
 
   return (
-    <AttendanceDataContext.Provider value={{ records, checkIn: checkInFn, checkOut: checkOutFn, addMissionAttendance, getEmployeeRecords, getEmployeeMonthlyRecords, getMonthlyStats }}>
+    <AttendanceDataContext.Provider value={{ records, refresh: fetchRecords, checkIn: checkInFn, checkOut: checkOutFn, addMissionAttendance, getEmployeeRecords, getEmployeeMonthlyRecords, getMonthlyStats }}>
       {children}
     </AttendanceDataContext.Provider>
   );

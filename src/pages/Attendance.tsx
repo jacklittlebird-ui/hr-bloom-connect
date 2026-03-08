@@ -10,9 +10,11 @@ import { ShiftManagement } from '@/components/attendance/ShiftManagement';
 import { AttendanceRules } from '@/components/attendance/AttendanceRules';
 
 import { EmployeeAssignment } from '@/components/attendance/EmployeeAssignment';
+import { useAttendanceData } from '@/contexts/AttendanceDataContext';
 import { Clock, List, AlertTriangle, BarChart3, Calendar, Settings2, Users, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export interface AttendanceRecord {
   id: string;
@@ -152,7 +154,8 @@ export const generateWeeklyData = (): AttendanceRecord[] => {
 };
 
 const Attendance = () => {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
+  const { refresh: refreshAttendance } = useAttendanceData();
   const [activeTab, setActiveTab] = useState('checkin');
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([
     ...sampleAttendanceRecords,
@@ -216,7 +219,7 @@ const Attendance = () => {
             <h1 className="text-2xl font-bold text-foreground">{t('attendance.title')}</h1>
             <p className="text-muted-foreground">{t('attendance.subtitle')}</p>
           </div>
-          <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
+          <Button variant="outline" size="icon" onClick={() => { refreshAttendance(); toast.success(language === 'ar' ? 'تم التحديث' : 'Refreshed'); }}>
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
