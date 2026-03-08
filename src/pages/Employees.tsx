@@ -764,7 +764,7 @@ const Employees = () => {
         dbColumns.forEach((col, idx) => {
           if (col && values[idx] != null) {
             const rawVal = String(values[idx]).trim();
-            if (!rawVal || rawVal === '-' || rawVal === '—' || rawVal === 'N/A' || rawVal === 'n/a' || rawVal === 'لا يوجد') continue;
+            if (!rawVal || rawVal === '-' || rawVal === '—' || rawVal === 'N/A' || rawVal === 'n/a' || rawVal === 'لا يوجد') return;
             if (booleanCols.includes(col)) {
               const v = rawVal.toLowerCase();
               if (v in boolRevMap) {
