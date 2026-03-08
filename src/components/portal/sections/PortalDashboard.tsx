@@ -261,11 +261,11 @@ export const PortalDashboard = () => {
         {/* Pending Requests */}
         <Card className="border-0 shadow-sm bg-orange-50 dark:bg-orange-950/40">
           <CardContent className="p-5">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex flex-row-reverse items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-orange-500 to-amber-500">
                 <Bell className="w-5 h-5 text-white" />
               </div>
-              <h3 className="font-semibold">{ar ? 'طلبات معلقة' : 'Pending Requests'}</h3>
+              <h3 className="font-semibold text-right">{ar ? 'طلبات معلقة' : 'Pending Requests'}</h3>
             </div>
             <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 text-center">{totalPending}</p>
             <div className="text-xs text-muted-foreground text-center mt-2 space-y-1">
