@@ -301,11 +301,11 @@ export const PortalDashboard = () => {
         {/* Latest Evaluation */}
         <Card className="border-0 shadow-sm bg-violet-50 dark:bg-violet-950/40">
           <CardContent className="p-5">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex flex-row-reverse items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-500">
                 <Star className="w-5 h-5 text-white" />
               </div>
-              <h3 className="font-semibold">{ar ? 'آخر تقييم' : 'Latest Evaluation'}</h3>
+              <h3 className="font-semibold text-right">{ar ? 'آخر تقييم' : 'Latest Evaluation'}</h3>
             </div>
             {latestEval ? (
               <div className="text-center space-y-2">
