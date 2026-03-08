@@ -88,7 +88,7 @@ export const RecentActivity = () => {
   return (
     <div className="bg-card rounded-xl shadow-sm border border-border/50 overflow-hidden">
       <div className="p-5 border-b border-border/30">
-        <h3 className={cn("text-lg font-bold text-foreground flex items-center gap-2")}>
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
             <Activity className="w-4 h-4 text-primary" />
           </div>
