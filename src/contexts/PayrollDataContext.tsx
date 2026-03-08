@@ -41,6 +41,7 @@ export interface ProcessedPayroll {
 
 interface PayrollDataContextType {
   payrollEntries: ProcessedPayroll[];
+  refreshPayroll: () => Promise<void>;
   savePayrollEntry: (entry: ProcessedPayroll) => void;
   savePayrollEntries: (entries: ProcessedPayroll[]) => void;
   getPayrollEntry: (employeeId: string, month: string, year: string) => ProcessedPayroll | undefined;
