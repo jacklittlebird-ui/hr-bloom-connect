@@ -99,6 +99,11 @@ const SiteSettings = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const isAr = language === 'ar';
 
+  // Re-apply theme settings when component mounts with saved config
+  useEffect(() => {
+    applyThemeSettings(config);
+  }, []);
+
   const update = (key: keyof SiteConfig, value: any) => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
@@ -117,12 +122,22 @@ const SiteSettings = () => {
   };
 
   const handleSave = () => {
+    // Ensure theme is applied on save
+    applyThemeSettings(config);
+    // Also force-save to localStorage in case usePersistedState hasn't flushed yet
+    try {
+      localStorage.setItem('hr_site_config', JSON.stringify(config));
+    } catch {}
     setHasChanges(false);
     toast({ title: isAr ? 'تم الحفظ' : 'Saved', description: isAr ? 'تم حفظ إعدادات الموقع بنجاح' : 'Site settings saved successfully' });
   };
 
   const handleReset = () => {
     setConfig(defaultConfig);
+    applyThemeSettings(defaultConfig);
+    try {
+      localStorage.setItem('hr_site_config', JSON.stringify(defaultConfig));
+    } catch {}
     setHasChanges(false);
     toast({ title: isAr ? 'تم الاستعادة' : 'Reset', description: isAr ? 'تم استعادة الإعدادات الافتراضية' : 'Default settings restored' });
   };
