@@ -193,7 +193,7 @@ export const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
                 : `Are you sure you want to delete "${deleteTarget?.nameEn}"? This action cannot be undone.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className={cn(isRTL && "flex-row-reverse")}>
+          <AlertDialogFooter>
             <AlertDialogCancel>{language === 'ar' ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
