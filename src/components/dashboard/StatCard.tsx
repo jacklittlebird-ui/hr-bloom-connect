@@ -57,7 +57,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, va
           <Icon className="w-7 h-7 text-primary-foreground drop-shadow-sm" />
         </div>
 
-        <div className="flex flex-col flex-1 min-w-0 text-start">
+        <div className="flex flex-col flex-1 min-w-0 text-right">
           <span className="text-3xl font-bold text-foreground tracking-tight">{value}</span>
           <span className="text-sm text-muted-foreground truncate">{title}</span>
           {trend && trendValue && (
