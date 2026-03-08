@@ -788,6 +788,13 @@ const Employees = () => {
         </div>
       </div>
       <AddEmployeeDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept=".csv,.xls,.xlsx"
+        className="hidden"
+        onChange={handleFileChange}
+      />
     </DashboardLayout>
   );
 };
