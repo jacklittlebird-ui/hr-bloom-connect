@@ -19,6 +19,7 @@ const TrainingPortal = () => {
   const { language } = useLanguage();
   const { logout, user } = useAuth();
   const ar = language === 'ar';
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
     <div dir="rtl" className="min-h-screen bg-background font-arabic">
