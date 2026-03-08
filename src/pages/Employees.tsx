@@ -740,6 +740,37 @@ const Employees = () => {
         'has_id_copy', 'has_pledge', 'has_contract', 'has_receipt', 'resigned',
       ];
       const numericCols = ['children_count', 'basic_salary', 'annual_leave_balance', 'sick_leave_balance'];
+      const dateCols = [
+        'birth_date', 'hire_date', 'resignation_date', 'id_issue_date', 'id_expiry_date',
+        'social_insurance_start_date', 'social_insurance_end_date',
+      ];
+
+      // Helper: convert various date formats to YYYY-MM-DD
+      const normalizeDate = (val: string): string | null => {
+        if (!val || val === '-') return null;
+        // Already YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+        // DD/MM/YYYY or D/M/YYYY
+        const dmy = val.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+        if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+        // MM/DD/YYYY fallback
+        const mdy = val.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+        if (mdy) return `${mdy[3]}-${mdy[1].padStart(2, '0')}-${mdy[2].padStart(2, '0')}`;
+        // Try JS Date parse
+        const d = new Date(val);
+        if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+        return null;
+      };
+
+      // Fetch stations for code→UUID lookup
+      const { data: stationsData } = await supabase.from('stations').select('id, code, name_en, name_ar');
+      const stationLookup = new Map<string, string>();
+      (stationsData || []).forEach(s => {
+        stationLookup.set(s.code.toLowerCase(), s.id);
+        stationLookup.set(s.name_en.toLowerCase(), s.id);
+        stationLookup.set(s.name_ar, s.id);
+        stationLookup.set(s.id, s.id); // UUID passthrough
+      });
 
       // Reverse label maps for localized values from export
       const genderRevMap: Record<string, string> = { 'ذكر': 'male', 'male': 'male', 'أنثى': 'female', 'female': 'female' };
@@ -768,7 +799,14 @@ const Employees = () => {
           if (col && values[idx] != null) {
             const rawVal = String(values[idx]).trim();
             if (!rawVal || rawVal === '-' || rawVal === '—' || rawVal === 'N/A' || rawVal === 'n/a' || rawVal === 'لا يوجد') return;
-            if (booleanCols.includes(col)) {
+            if (dateCols.includes(col)) {
+              const normalized = normalizeDate(rawVal);
+              if (normalized) record[col] = normalized;
+            } else if (col === 'station_id') {
+              const looked = stationLookup.get(rawVal.toLowerCase()) || stationLookup.get(rawVal);
+              if (looked) record[col] = looked;
+              // Skip if not found (don't set invalid UUID)
+            } else if (booleanCols.includes(col)) {
               const v = rawVal.toLowerCase();
               if (v in boolRevMap) {
                 record[col] = boolRevMap[v];
