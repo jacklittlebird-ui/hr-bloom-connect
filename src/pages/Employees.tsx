@@ -427,8 +427,23 @@ const Employees = () => {
     link.click();
     setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1000);
 
+    // Also export a CSV (tab-separated) for re-import
+    const csvHeaders = uniqueColumns.map(c => c.headerAr + ' | ' + c.headerEn).join('\t');
+    const csvRows = data.map(row =>
+      uniqueColumns.map(col => String((row as any)[col.key] ?? '').replace(/\t/g, ' ')).join('\t')
+    );
+    const csvContent = '\uFEFF' + [csvHeaders, ...csvRows].join('\n');
+    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvUrl = URL.createObjectURL(csvBlob);
+    const csvLink = document.createElement('a');
+    csvLink.href = csvUrl;
+    csvLink.download = `Employees_Import_${new Date().toISOString().slice(0, 10)}.csv`;
+    csvLink.style.display = 'none';
+    document.body.appendChild(csvLink);
+    csvLink.click();
+    setTimeout(() => { document.body.removeChild(csvLink); URL.revokeObjectURL(csvUrl); }, 1200);
 
-    toast({ title: ar ? 'تم التصدير بنجاح' : 'Export completed successfully' });
+    toast({ title: ar ? 'تم التصدير بنجاح (Excel + CSV)' : 'Export completed (Excel + CSV)' });
   };
 
   // Import from CSV
@@ -454,7 +469,7 @@ const Employees = () => {
       } else {
         if (ch === '"') {
           inQuotes = true;
-        } else if (ch === ',') {
+        } else if (ch === '\t' || ch === ',') {
           result.push(current.trim());
           current = '';
         } else {
@@ -951,7 +966,7 @@ const Employees = () => {
       <input
         type="file"
         ref={fileInputRef}
-        accept=".xls,.xlsx"
+        accept=".csv,.xls,.xlsx"
         className="hidden"
         onChange={handleFileChange}
       />
