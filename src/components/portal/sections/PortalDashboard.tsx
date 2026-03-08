@@ -134,12 +134,12 @@ export const PortalDashboard = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div dir="rtl" className="space-y-6 text-right">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold">
+        <h1 className="text-xl md:text-2xl font-bold text-right">
           {ar ? 'لوحة التحكم' : 'Dashboard'}
         </h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground text-sm text-right">
           {format(new Date(), 'EEEE, d MMMM yyyy', { locale: ar ? arLocale : enUS })}
         </p>
       </div>
@@ -261,11 +261,11 @@ export const PortalDashboard = () => {
         {/* Pending Requests */}
         <Card className="border-0 shadow-sm bg-orange-50 dark:bg-orange-950/40">
           <CardContent className="p-5">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex flex-row-reverse items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-orange-500 to-amber-500">
                 <Bell className="w-5 h-5 text-white" />
               </div>
-              <h3 className="font-semibold">{ar ? 'طلبات معلقة' : 'Pending Requests'}</h3>
+              <h3 className="font-semibold text-right">{ar ? 'طلبات معلقة' : 'Pending Requests'}</h3>
             </div>
             <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 text-center">{totalPending}</p>
             <div className="text-xs text-muted-foreground text-center mt-2 space-y-1">
@@ -280,15 +280,15 @@ export const PortalDashboard = () => {
         {/* Leave Balances */}
         <Card className="border-0 shadow-sm bg-sky-50 dark:bg-sky-950/40">
           <CardContent className="p-5">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex flex-row-reverse items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-sky-500 to-blue-500">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
-              <h3 className="font-semibold">{ar ? 'أرصدة الإجازات' : 'Leave Balances'}</h3>
+              <h3 className="font-semibold text-right">{ar ? 'أرصدة الإجازات' : 'Leave Balances'}</h3>
             </div>
             <div className="space-y-2">
               {leaveBalances.map((b, i) => (
-                <div key={i} className="flex justify-between text-sm">
+                <div key={i} className="flex flex-row-reverse justify-between text-sm">
                   <span className="text-muted-foreground">{ar ? b.typeAr : b.typeEn}</span>
                   <span className="font-medium">{b.remaining}/{b.total}</span>
                 </div>
@@ -301,11 +301,11 @@ export const PortalDashboard = () => {
         {/* Latest Evaluation */}
         <Card className="border-0 shadow-sm bg-violet-50 dark:bg-violet-950/40">
           <CardContent className="p-5">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex flex-row-reverse items-center gap-3 mb-3">
               <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-violet-500 to-purple-500">
                 <Star className="w-5 h-5 text-white" />
               </div>
-              <h3 className="font-semibold">{ar ? 'آخر تقييم' : 'Latest Evaluation'}</h3>
+              <h3 className="font-semibold text-right">{ar ? 'آخر تقييم' : 'Latest Evaluation'}</h3>
             </div>
             {latestEval ? (
               <div className="text-center space-y-2">
