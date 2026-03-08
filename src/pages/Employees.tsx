@@ -628,13 +628,16 @@ const Employees = () => {
       'Social Insurance No', 'Health Insurance Card',
       'Bank Name', 'Bank Account', 'Notes',
     ];
-    const bom = '\uFEFF';
-    const csvContent = bom + (ar ? headersAr : headersEn).join(',') + '\n';
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const headers = ar ? headersAr : headersEn;
+    const tableHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Template</x:Name><x:WorksheetOptions><x:DisplayRightToLeft/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+      <body><table border="1"><tr>${headers.map(h => `<th style="background:#1e3a5f;color:white;padding:8px;min-width:120px;">${h}</th>`).join('')}</tr><tr>${headers.map(() => '<td></td>').join('')}</tr></table></body></html>`;
+    const blob = new Blob(['\uFEFF' + tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = ar ? 'قالب_استيراد_الموظفين.csv' : 'employee_import_template.csv';
+    a.download = ar ? 'قالب_استيراد_الموظفين.xls' : 'employee_import_template.xls';
     a.click();
     URL.revokeObjectURL(url);
   };
