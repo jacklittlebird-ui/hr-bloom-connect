@@ -99,6 +99,11 @@ const SiteSettings = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const isAr = language === 'ar';
 
+  // Re-apply theme settings when component mounts with saved config
+  useEffect(() => {
+    applyThemeSettings(config);
+  }, []);
+
   const update = (key: keyof SiteConfig, value: any) => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
