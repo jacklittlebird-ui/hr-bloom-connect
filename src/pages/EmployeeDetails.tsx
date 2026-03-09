@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +38,10 @@ import { NotificationDropdown } from '@/components/notifications/NotificationDro
 import { toast } from '@/hooks/use-toast';
 import { Employee } from '@/types/employee';
 
-const detailTabs = [
+// Tabs hidden from HR role (salary-related)
+const HR_HIDDEN_TABS = ['salary', 'salaryRecord'];
+
+const allDetailTabs = [
   { id: 'basic', icon: User, labelKey: 'employees.tabs.basicInfo' },
   { id: 'contact', icon: Phone, labelKey: 'employees.tabs.contactInfo' },
   { id: 'identity', icon: CreditCard, labelKey: 'employees.tabs.identity' },

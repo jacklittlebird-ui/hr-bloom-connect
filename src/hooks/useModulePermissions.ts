@@ -59,6 +59,9 @@ export const PATH_TO_MODULE: Record<string, ModuleKey> = {
   '/settings': 'settings',
 };
 
+// Modules HR cannot access (salary-related)
+const HR_BLOCKED_MODULES: ModuleKey[] = ['salaries', 'salary-reports'];
+
 export function useModulePermissions() {
   const { session, user } = useAuth();
   const userRole = user?.role;
@@ -75,6 +78,13 @@ export function useModulePermissions() {
     // Admins get everything by default
     if (userRole === 'admin') {
       setAllowedModules([...ALL_MODULES]);
+      setLoading(false);
+      return;
+    }
+
+    // HR gets everything except salary modules
+    if (userRole === 'hr') {
+      setAllowedModules(ALL_MODULES.filter(m => !HR_BLOCKED_MODULES.includes(m)));
       setLoading(false);
       return;
     }

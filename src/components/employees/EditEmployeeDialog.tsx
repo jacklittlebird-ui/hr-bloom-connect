@@ -1,4 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Employee } from '@/types/employee';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ interface EditEmployeeDialogProps {
   onClose: () => void;
 }
 
-const tabs = [
+const allTabs = [
   { id: 'basic', icon: User, labelKey: 'employees.tabs.basicInfo' },
   { id: 'contact', icon: Phone, labelKey: 'employees.tabs.contactInfo' },
   { id: 'identity', icon: CreditCard, labelKey: 'employees.tabs.identity' },
