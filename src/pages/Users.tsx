@@ -18,8 +18,9 @@ import { toast } from '@/hooks/use-toast';
 import { ALL_MODULES, MODULE_LABELS, ModuleKey } from '@/hooks/useModulePermissions';
 import {
   Plus, Search, Shield, Users as UsersIcon, UserCheck, MapPin, User,
-  RefreshCw, Eye, EyeOff, Edit, Trash2, Layers, ShieldCheck, Lock, Settings2,
+  RefreshCw, Eye, EyeOff, Edit, Trash2, Layers, ShieldCheck, Lock, Settings2, Upload,
 } from 'lucide-react';
+import { EMPLOYEE_CREDENTIALS } from '@/data/employeeCredentials';
 
 // ========== TYPES ==========
 interface SystemUser {
