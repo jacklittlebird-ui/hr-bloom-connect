@@ -257,6 +257,16 @@ This amount represents the expenses of the aforementioned course. I acknowledge 
                                 </>
                               )}
                             </p>
+                            <div className="mt-4 pt-3 border-t border-border/50 flex flex-col gap-1">
+                              <p className="text-sm font-semibold text-foreground">
+                                {ar ? 'المقر بما فيه:' : 'Acknowledged by:'} <span className="text-primary">{employeeName}</span>
+                              </p>
+                              {ackDates[t.id] && (
+                                <p className="text-xs text-muted-foreground">
+                                  {ar ? 'تاريخ الإقرار:' : 'Acknowledgment date:'} {new Date(ackDates[t.id]).toLocaleDateString(ar ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                </p>
+                              )}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
