@@ -129,7 +129,7 @@ export const PortalDashboard = () => {
 
   const stats = [
     { icon: Clock, labelAr: 'أيام الحضور هذا الشهر', labelEn: 'Attendance Days', value: String(monthlyStats.present), gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
-    { icon: Calendar, labelAr: 'رصيد الإجازات', labelEn: 'Leave Balance', value: String(annualCasualRemaining), gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
+    { icon: Calendar, labelAr: 'رصيد الإجازات المتاح', labelEn: 'Available Leave Balance', value: String(annualCasualRemaining), gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
     { icon: Star, labelAr: 'آخر تقييم', labelEn: 'Last Evaluation', value: latestEval ? `${latestEval.score}/${latestEval.maxScore}` : '—', gradient: 'from-purple-500 to-pink-500', bg: 'bg-purple-50 dark:bg-purple-950/40' },
   ];
 
@@ -286,11 +286,17 @@ export const PortalDashboard = () => {
               </div>
               <h3 className="font-semibold text-right">{ar ? 'أرصدة الإجازات' : 'Leave Balances'}</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {leaveBalances.map((b, i) => (
-                <div key={i} className="flex flex-row-reverse justify-between text-sm">
-                  <span className="text-muted-foreground">{ar ? b.typeAr : b.typeEn}</span>
-                  <span className="font-medium">{b.remaining}/{b.total}</span>
+                <div key={i} className="space-y-1">
+                  <div className="flex flex-row-reverse justify-between text-sm">
+                    <span className="font-medium text-foreground">{ar ? b.typeAr : b.typeEn}</span>
+                  </div>
+                  <div className="flex flex-row-reverse justify-between text-xs text-muted-foreground">
+                    <span>{ar ? 'المستخدم' : 'Used'}: <span className="font-semibold text-destructive">{b.total - b.remaining}</span></span>
+                    <span>{ar ? 'المتبقي' : 'Remaining'}: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{b.remaining}</span></span>
+                    <span>{ar ? 'الإجمالي' : 'Total'}: <span className="font-semibold text-foreground">{b.total}</span></span>
+                  </div>
                 </div>
               ))}
               {leaveBalances.length === 0 && <p className="text-sm text-muted-foreground text-center">{ar ? 'لا توجد أرصدة' : 'No balances'}</p>}
