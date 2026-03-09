@@ -222,8 +222,7 @@ export const PortalCustody = () => {
                                 <TableHead>{ar ? 'الدورة' : 'Course'}</TableHead>
                                 <TableHead>{ar ? 'تاريخ البداية' : 'Start'}</TableHead>
                                 <TableHead>{ar ? 'تاريخ النهاية' : 'End'}</TableHead>
-                                <TableHead>{ar ? 'قيمة الدورة' : 'Value'}</TableHead>
-                                <TableHead>{ar ? 'تكاليف الدورة' : 'Costs'}</TableHead>
+                                <TableHead>{ar ? 'تكاليف التدريب' : 'Training Costs'}</TableHead>
                                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
                               </TableRow></TableHeader>
                               <TableBody>
