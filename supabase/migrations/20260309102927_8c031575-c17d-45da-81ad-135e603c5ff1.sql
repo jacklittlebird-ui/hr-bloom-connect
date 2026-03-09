@@ -1,0 +1,1 @@
+ALTER TABLE public.employees ADD CONSTRAINT employees_employee_code_unique UNIQUE (employee_code);
