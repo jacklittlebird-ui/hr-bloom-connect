@@ -42,6 +42,7 @@ export const PortalCustody = () => {
   const [assets, setAssets] = useState<AssignedAsset[]>([]);
   const [trainingDebts, setTrainingDebts] = useState<TrainingDebt[]>([]);
   const [employeeName, setEmployeeName] = useState('');
+  const [ackDates, setAckDates] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!PORTAL_EMPLOYEE_ID) return;
