@@ -650,6 +650,7 @@ const Users = () => {
                   <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الدور' : 'Select role'} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير النظام' : 'Admin'}</span></SelectItem>
+                    <SelectItem value="hr"><span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> {isAr ? 'موارد بشرية' : 'HR'}</span></SelectItem>
                     <SelectItem value="station_manager"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {isAr ? 'مدير محطة' : 'Station Manager'}</span></SelectItem>
                     <SelectItem value="employee"><span className="flex items-center gap-2"><User className="w-4 h-4" /> {isAr ? 'موظف' : 'Employee'}</span></SelectItem>
                     <SelectItem value="training_manager"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير التدريب' : 'Training Manager'}</span></SelectItem>
