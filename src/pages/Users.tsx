@@ -473,7 +473,7 @@ const Users = () => {
               <Button onClick={() => setDialogOpen(true)} className={cn("gap-2", isRTL && "flex-row-reverse")}>
                 <Plus className="w-4 h-4" /> {isAr ? 'إضافة مستخدم' : 'Add User'}
               </Button>
-              <Button onClick={handleBulkCreate} disabled={bulkCreating} variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")}>
+              <Button onClick={() => handleBulkCreate()} disabled={bulkCreating} variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")}>
                 <Upload className="w-4 h-4" />
                 {bulkCreating
                   ? `${bulkProgress.done}/${bulkProgress.total} (${isAr ? 'تم' : 'created'}: ${bulkProgress.created})`
