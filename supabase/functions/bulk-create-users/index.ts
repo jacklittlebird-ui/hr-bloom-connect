@@ -93,14 +93,8 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Check if email already registered
-        const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-        const emailExists = existingUsers?.users?.some(u => u.email === email);
-        if (emailExists) {
-          results.push({ employee_code, status: 'skipped', error: 'Email already registered' });
-          continue;
-        }
-
+        // Try to create - if email exists, Supabase will return an error
+        
         // Create auth user
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
           email,

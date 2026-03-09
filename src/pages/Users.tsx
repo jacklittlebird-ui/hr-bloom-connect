@@ -93,22 +93,31 @@ const Users = () => {
   const [bulkCreating, setBulkCreating] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0, created: 0, skipped: 0, errors: 0 });
 
-  const handleBulkCreate = async () => {
+  const handleBulkCreate = async (startFromCode?: string) => {
+    // Filter credentials starting from a specific code if provided
+    let credentials = EMPLOYEE_CREDENTIALS;
+    if (startFromCode) {
+      const startIdx = EMPLOYEE_CREDENTIALS.findIndex(([code]) => code === startFromCode);
+      if (startIdx >= 0) {
+        credentials = EMPLOYEE_CREDENTIALS.slice(startIdx);
+      }
+    }
+
     const confirmed = window.confirm(
       isAr
-        ? `هل أنت متأكد من إنشاء حسابات لـ ${EMPLOYEE_CREDENTIALS.length} موظف؟ سيتم استخدام البريد: employee_code@linkagency.com`
-        : `Create accounts for ${EMPLOYEE_CREDENTIALS.length} employees? Email format: employee_code@linkagency.com`
+        ? `هل أنت متأكد من إنشاء حسابات لـ ${credentials.length} موظف؟ ${startFromCode ? `(بدءاً من ${startFromCode})` : ''} سيتم استخدام البريد: employee_code@linkagency.com`
+        : `Create accounts for ${credentials.length} employees? ${startFromCode ? `(starting from ${startFromCode})` : ''} Email format: employee_code@linkagency.com`
     );
     if (!confirmed) return;
 
     setBulkCreating(true);
     const batchSize = 10;
     let totalCreated = 0, totalSkipped = 0, totalErrors = 0;
-    const total = EMPLOYEE_CREDENTIALS.length;
+    const total = credentials.length;
     setBulkProgress({ done: 0, total, created: 0, skipped: 0, errors: 0 });
 
-    for (let i = 0; i < EMPLOYEE_CREDENTIALS.length; i += batchSize) {
-      const batch = EMPLOYEE_CREDENTIALS.slice(i, i + batchSize).map(([employee_code, password]) => ({ employee_code, password }));
+    for (let i = 0; i < credentials.length; i += batchSize) {
+      const batch = credentials.slice(i, i + batchSize).map(([employee_code, password]) => ({ employee_code, password }));
       try {
         const { data, error } = await supabase.functions.invoke('bulk-create-users', {
           body: { users: batch, domain: 'linkagency.com' },
@@ -464,7 +473,7 @@ const Users = () => {
               <Button onClick={() => setDialogOpen(true)} className={cn("gap-2", isRTL && "flex-row-reverse")}>
                 <Plus className="w-4 h-4" /> {isAr ? 'إضافة مستخدم' : 'Add User'}
               </Button>
-              <Button onClick={handleBulkCreate} disabled={bulkCreating} variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")}>
+              <Button onClick={() => handleBulkCreate()} disabled={bulkCreating} variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")}>
                 <Upload className="w-4 h-4" />
                 {bulkCreating
                   ? `${bulkProgress.done}/${bulkProgress.total} (${isAr ? 'تم' : 'created'}: ${bulkProgress.created})`
