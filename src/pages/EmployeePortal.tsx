@@ -48,6 +48,7 @@ const sectionComponents: Record<PortalSection, React.FC> = {
   requests: PortalRequests,
   notifications: PortalNotifications,
   settings: PortalSettings,
+  terms: PortalTerms,
 };
 
 const EmployeePortal = () => {

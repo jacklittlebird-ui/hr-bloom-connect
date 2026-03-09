@@ -6,7 +6,7 @@ import { Sheet, SheetContent } from '@/components/ui/sheet';
 import {
   LayoutDashboard, User, Clock, Calendar, Wallet, HandCoins,
   Star, GraduationCap, Package, FileText, MapPin, Ban,
-  ClipboardList, Bell, Settings, PanelLeftClose, PanelLeftOpen, Shirt,
+  ClipboardList, Bell, Settings, PanelLeftClose, PanelLeftOpen, Shirt, ShieldCheck,
 } from 'lucide-react';
 
 interface SidebarGroup {
