@@ -107,6 +107,25 @@ const EmployeePortal = () => {
 
   const ActiveComponent = sectionComponents[activeSection];
 
+  // Prevent screenshot: blur content when app goes to background
+  const [hidden, setHidden] = useState(false);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      setHidden(document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Prevent context menu (long-press save on mobile)
+    const preventContext = (e: Event) => e.preventDefault();
+    document.addEventListener('contextmenu', preventContext);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener('contextmenu', preventContext);
+    };
+  }, []);
+
   return (
     <>
       {!systemAckDismissed && <SystemUsageAcknowledgmentModal onAcknowledged={() => setSystemAckDismissed(true)} />}
