@@ -97,7 +97,7 @@ export const EmployeeFilters = ({
             </Button>
           )}
         </div>
-        <ScrollArea className="max-h-52">
+        <ScrollArea className="max-h-72">
           <div className="p-1">
             {options.map(opt => (
               <label
