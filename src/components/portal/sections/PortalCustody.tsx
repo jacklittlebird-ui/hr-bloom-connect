@@ -230,7 +230,6 @@ export const PortalCustody = () => {
                                   <TableCell className="font-medium">{courseName}</TableCell>
                                   <TableCell>{t.startDate || '—'}</TableCell>
                                   <TableCell>{t.endDate || '—'}</TableCell>
-                                  <TableCell>{t.cost ? t.cost.toLocaleString() : '—'}</TableCell>
                                   <TableCell className="font-semibold">{t.totalCost ? t.totalCost.toLocaleString() : '—'}</TableCell>
                                   <TableCell><Badge variant="outline" className={s.cls}>{ar ? s.ar : t.status}</Badge></TableCell>
                                 </TableRow>
