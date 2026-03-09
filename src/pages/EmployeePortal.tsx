@@ -29,7 +29,7 @@ export type PortalSection =
   | 'dashboard' | 'profile' | 'attendance' | 'leaves'
   | 'salary' | 'loans' | 'evaluations' | 'training'
   | 'custody' | 'documents' | 'missions' | 'violations'
-  | 'requests' | 'notifications' | 'settings' | 'uniforms';
+  | 'requests' | 'notifications' | 'settings' | 'uniforms' | 'terms';
 
 const sectionComponents: Record<PortalSection, React.FC> = {
   dashboard: PortalDashboard,
