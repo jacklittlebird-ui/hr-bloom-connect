@@ -24,6 +24,8 @@ const Employees = () => {
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [selectedStations, setSelectedStations] = useState<string[]>([]);
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
