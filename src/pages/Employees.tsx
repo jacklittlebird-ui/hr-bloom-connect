@@ -1037,7 +1037,19 @@ const Employees = () => {
           </div>
         </div>
         <EmployeeStatsCards total={counts.all} active={counts.active} departments={departments} newThisMonth={1} />
-        <EmployeeFilters searchQuery={searchQuery} onSearchChange={setSearchQuery} activeFilter={activeFilter} onFilterChange={setActiveFilter} counts={counts} />
+        <EmployeeFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          counts={counts}
+          stations={stationOptions}
+          departments={departmentOptions}
+          selectedStations={selectedStations}
+          onSelectedStationsChange={setSelectedStations}
+          selectedDepartments={selectedDepartments}
+          onSelectedDepartmentsChange={setSelectedDepartments}
+        />
         <div ref={reportRef}>
           <EmployeeTable employees={filteredEmployees} onDelete={handleDeleteEmployee} />
         </div>
