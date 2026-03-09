@@ -71,6 +71,7 @@ const sidebarGroups: SidebarGroup[] = [
     labelEn: 'System',
     items: [
       { key: 'notifications', labelAr: 'الإشعارات', labelEn: 'Notifications', icon: Bell },
+      { key: 'terms', labelAr: 'شروط الاستخدام', labelEn: 'Terms of Use', icon: ShieldCheck },
       { key: 'settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: Settings },
     ],
   },
