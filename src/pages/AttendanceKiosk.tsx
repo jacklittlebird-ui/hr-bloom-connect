@@ -127,39 +127,39 @@ const AttendanceKiosk = () => {
     const tick = async () => {
       try {
         const url = `https://${projectId}.supabase.co/functions/v1/generate-qr-token`;
-        console.log("[Kiosk] Fetching QR token from:", url);
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            location_id: selectedLocation,
-            gps_lat: userCoords.lat,
-            gps_lng: userCoords.lng,
-          }),
-        });
-        const json = await res.json();
-        console.log("[Kiosk] QR response:", res.status, json);
-        if (!res.ok) {
-          setError(json.error || `Server error (${res.status})`);
-          setQrSrc("");
-          return;
+        const results = await Promise.all(
+          Array.from({ length: QR_COUNT }, () =>
+            fetch(url, {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                location_id: selectedLocation,
+                gps_lat: userCoords.lat,
+                gps_lng: userCoords.lng,
+              }),
+            }).then(r => r.json().then(j => ({ ok: r.ok, json: j })))
+          )
+        );
+        const srcs: string[] = [];
+        let hasError = false;
+        for (const r of results) {
+          if (!r.ok || !r.json.token) {
+            hasError = true;
+            srcs.push("");
+          } else {
+            const src = await QRCode.toDataURL(r.json.token, {
+              width: 280,
+              margin: 2,
+              color: { dark: "#000000", light: "#ffffff" },
+            });
+            srcs.push(src);
+          }
         }
-        if (json.token) {
-          const src = await QRCode.toDataURL(json.token, {
-            width: 300,
-            margin: 2,
-            color: { dark: "#000000", light: "#ffffff" },
-          });
-          setQrSrc(src);
-          setError("");
-          setCountdown(5);
-        } else {
-          setError(ar ? "لم يتم استلام رمز QR من الخادم" : "No QR token received from server");
-          setQrSrc("");
-        }
+        setQrSrcs(srcs);
+        if (!hasError) { setError(""); setCountdown(5); }
       } catch (e: any) {
         console.error("[Kiosk] QR fetch error:", e);
         setError(e.message);
