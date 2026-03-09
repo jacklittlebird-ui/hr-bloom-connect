@@ -2203,6 +2203,7 @@ export type Database = {
         | "employee"
         | "kiosk"
         | "training_manager"
+        | "hr"
       employee_status: "active" | "inactive" | "suspended"
     }
     CompositeTypes: {
@@ -2337,6 +2338,7 @@ export const Constants = {
         "employee",
         "kiosk",
         "training_manager",
+        "hr",
       ],
       employee_status: ["active", "inactive", "suspended"],
     },
