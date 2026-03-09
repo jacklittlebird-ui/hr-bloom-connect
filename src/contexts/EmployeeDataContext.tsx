@@ -245,14 +245,14 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const { data, error } = await supabase
         .from('employee_limited_view' as any)
         .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
-        .order('created_at', { ascending: true });
+        .order('employee_code', { ascending: true });
 
       if (error) {
         // Fallback: if view doesn't support joins, query separately
         const { data: viewData, error: viewError } = await supabase
           .from('employee_limited_view' as any)
           .select('*')
-          .order('created_at', { ascending: true });
+          .order('employee_code', { ascending: true });
 
         if (viewError) {
           console.error('Error fetching limited employees:', viewError);
@@ -286,7 +286,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const { data, error } = await supabase
       .from('employees')
       .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
-      .order('created_at', { ascending: true });
+      .order('employee_code', { ascending: true });
 
     if (error) {
       console.error('Error fetching employees:', error);
