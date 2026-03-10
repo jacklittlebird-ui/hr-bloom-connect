@@ -272,7 +272,7 @@ export const EidBonuses = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", isRTL && "direction-rtl")}>
+          <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", isRTL && "direction-rtl")}>
             <div className="space-y-2">
               <Label className={cn(isRTL && "text-right block")}>{ar ? 'اختر العيدية' : 'Select Bonus'}</Label>
               <Select value={bonusNumber} onValueChange={setBonusNumber}>
@@ -297,6 +297,29 @@ export const EidBonuses = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className={cn(isRTL && "text-right block")}>{ar ? 'تاريخ الاحتساب' : 'Calculation Date'}</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !calculationDate && "text-muted-foreground")}>
+                    <CalendarIcon className="w-4 h-4 me-2" />
+                    {calculationDate ? format(calculationDate, 'yyyy-MM-dd') : (ar ? 'اختر تاريخ' : 'Pick a date')}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={calculationDate}
+                    onSelect={(d) => d && setCalculationDate(d)}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              <p className="text-xs text-muted-foreground">
+                {ar ? 'يُستبعد من لم يتم المدة المحددة إلا 10 أيام من هذا التاريخ' : 'Excludes employees under the period minus 10 days from this date'}
+              </p>
             </div>
           </div>
 
