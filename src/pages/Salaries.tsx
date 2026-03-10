@@ -76,6 +76,9 @@ const Salaries = () => {
         <TabsContent value="transfer">
           <SalaryTransfer />
         </TabsContent>
+        <TabsContent value="eid-bonuses">
+          <EidBonuses />
+        </TabsContent>
       </Tabs>
     </DashboardLayout>
   );
