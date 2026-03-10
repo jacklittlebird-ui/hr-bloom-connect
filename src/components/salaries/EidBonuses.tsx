@@ -10,7 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Play, Loader2, Gift, Download } from 'lucide-react';
+import { Play, Loader2, Gift, Printer, FileText, FileSpreadsheet, Search, X } from 'lucide-react';
+import { useReportExport } from '@/hooks/useReportExport';
 
 const JOB_LEVELS = [
   { value: 'worker', label: 'Worker' },
@@ -42,9 +43,26 @@ interface BonusRecord {
   amount: number;
 }
 
+const REPORT_COLUMNS = [
+  { headerAr: '#', headerEn: '#', key: '_index' },
+  { headerAr: 'الاسم', headerEn: 'Name', key: 'employee_name' },
+  { headerAr: 'الرقم الوظيفي', headerEn: 'ID', key: 'employee_code' },
+  { headerAr: 'المحطة', headerEn: 'Station', key: 'station_name' },
+  { headerAr: 'القسم', headerEn: 'Department', key: 'department_name' },
+  { headerAr: 'الوظيفة', headerEn: 'Job Title', key: 'job_title' },
+  { headerAr: 'المستوى', headerEn: 'Level', key: 'job_level' },
+  { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hire_date' },
+  { headerAr: 'رقم الحساب', headerEn: 'Account No.', key: 'bank_account_number' },
+  { headerAr: 'ID البنكي', headerEn: 'Bank ID', key: 'bank_id_number' },
+  { headerAr: 'اسم البنك', headerEn: 'Bank Name', key: 'bank_name' },
+  { headerAr: 'نوع الحساب', headerEn: 'Account Type', key: 'bank_account_type' },
+  { headerAr: 'المبلغ', headerEn: 'Amount', key: 'amount' },
+];
+
 export const EidBonuses = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
+  const { exportBilingualPDF, exportBilingualCSV, handlePrint, reportRef } = useReportExport();
 
   const [bonusNumber, setBonusNumber] = useState('1');
   const [minMonths, setMinMonths] = useState('3');
@@ -54,7 +72,13 @@ export const EidBonuses = () => {
   const [loadingRecords, setLoadingRecords] = useState(false);
   const currentYear = new Date().getFullYear().toString();
 
-  // Load existing records on mount & when bonus number changes
+  // Filters
+  const [searchText, setSearchText] = useState('');
+  const [filterStation, setFilterStation] = useState('all');
+  const [filterDepartment, setFilterDepartment] = useState('all');
+  const [filterLevel, setFilterLevel] = useState('all');
+  const [filterBank, setFilterBank] = useState('all');
+
   useEffect(() => {
     loadExistingRecords();
   }, [bonusNumber]);
@@ -89,8 +113,38 @@ export const EidBonuses = () => {
     setLoadingRecords(false);
   };
 
+  // Unique filter options from records
+  const stations = useMemo(() => [...new Set(records.map(r => r.station_name).filter(Boolean))].sort(), [records]);
+  const departments = useMemo(() => [...new Set(records.map(r => r.department_name).filter(Boolean))].sort(), [records]);
+  const levels = useMemo(() => [...new Set(records.map(r => r.job_level).filter(Boolean))].sort(), [records]);
+  const banks = useMemo(() => [...new Set(records.map(r => r.bank_name).filter(Boolean))].sort(), [records]);
+
+  // Filtered records
+  const filteredRecords = useMemo(() => {
+    return records.filter(r => {
+      if (searchText) {
+        const s = searchText.toLowerCase();
+        if (!r.employee_name.toLowerCase().includes(s) && !r.employee_code.toLowerCase().includes(s)) return false;
+      }
+      if (filterStation !== 'all' && r.station_name !== filterStation) return false;
+      if (filterDepartment !== 'all' && r.department_name !== filterDepartment) return false;
+      if (filterLevel !== 'all' && r.job_level !== filterLevel) return false;
+      if (filterBank !== 'all' && r.bank_name !== filterBank) return false;
+      return true;
+    });
+  }, [records, searchText, filterStation, filterDepartment, filterLevel, filterBank]);
+
+  const hasActiveFilters = searchText || filterStation !== 'all' || filterDepartment !== 'all' || filterLevel !== 'all' || filterBank !== 'all';
+
+  const clearFilters = () => {
+    setSearchText('');
+    setFilterStation('all');
+    setFilterDepartment('all');
+    setFilterLevel('all');
+    setFilterBank('all');
+  };
+
   const handleRun = async () => {
-    // Validate that at least one level has an amount
     const hasAmount = Object.values(levelAmounts).some(v => parseFloat(v) > 0);
     if (!hasAmount) {
       toast.error(ar ? 'يرجى إدخال مبلغ لفئة واحدة على الأقل' : 'Please enter an amount for at least one level');
@@ -99,12 +153,10 @@ export const EidBonuses = () => {
 
     setLoading(true);
     try {
-      // Calculate cutoff date
       const cutoffDate = new Date();
       cutoffDate.setMonth(cutoffDate.getMonth() - parseInt(minMonths));
       const cutoffStr = cutoffDate.toISOString().split('T')[0];
 
-      // Fetch eligible employees with their station & department
       const { data: employees, error: empErr } = await supabase
         .from('employees')
         .select(`
@@ -125,7 +177,6 @@ export const EidBonuses = () => {
         return;
       }
 
-      // Build records
       const bonusRecords: any[] = [];
       for (const emp of employees) {
         const level = emp.job_level || '';
@@ -160,7 +211,6 @@ export const EidBonuses = () => {
         return;
       }
 
-      // Upsert
       const { error: upsertErr } = await supabase
         .from('eid_bonuses')
         .upsert(bonusRecords, { onConflict: 'employee_id,bonus_number,year' });
@@ -176,7 +226,35 @@ export const EidBonuses = () => {
     }
   };
 
-  const totalAmount = useMemo(() => records.reduce((s, r) => s + r.amount, 0), [records]);
+  const totalAmount = useMemo(() => filteredRecords.reduce((s, r) => s + r.amount, 0), [filteredRecords]);
+
+  const getExportData = () => filteredRecords.map((r, i) => ({ ...r, _index: i + 1 }));
+
+  const reportTitle = ar ? `سجل العيدية ${bonusNumber} - ${currentYear}` : `Eid Bonus ${bonusNumber} - ${currentYear}`;
+
+  const handleExportPDF = () => {
+    exportBilingualPDF({
+      titleAr: `سجل العيدية ${bonusNumber} - ${currentYear}`,
+      titleEn: `Eid Bonus ${bonusNumber} Record - ${currentYear}`,
+      data: getExportData(),
+      columns: REPORT_COLUMNS,
+      fileName: `eid_bonus_${bonusNumber}_${currentYear}`,
+    });
+  };
+
+  const handleExportExcel = () => {
+    exportBilingualCSV({
+      titleAr: `سجل العيدية ${bonusNumber} - ${currentYear}`,
+      titleEn: `Eid Bonus ${bonusNumber} Record - ${currentYear}`,
+      data: getExportData(),
+      columns: REPORT_COLUMNS,
+      fileName: `eid_bonus_${bonusNumber}_${currentYear}`,
+    });
+  };
+
+  const handlePrintReport = () => {
+    handlePrint(reportTitle);
+  };
 
   return (
     <div className="space-y-6">
@@ -189,7 +267,6 @@ export const EidBonuses = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Top selectors */}
           <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", isRTL && "direction-rtl")}>
             <div className="space-y-2">
               <Label className={cn(isRTL && "text-right block")}>{ar ? 'اختر العيدية' : 'Select Bonus'}</Label>
@@ -218,7 +295,6 @@ export const EidBonuses = () => {
             </div>
           </div>
 
-          {/* Level amounts grid */}
           <div>
             <Label className={cn("text-sm font-semibold mb-3 block", isRTL && "text-right")}>
               {ar ? 'مبلغ العيدية لكل مستوى وظيفي' : 'Bonus amount per job level'}
@@ -240,7 +316,6 @@ export const EidBonuses = () => {
             </div>
           </div>
 
-          {/* Run button */}
           <div className={cn("flex", isRTL ? "justify-start" : "justify-end")}>
             <Button onClick={handleRun} disabled={loading} className="gap-2 min-w-[180px]">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
@@ -253,15 +328,103 @@ export const EidBonuses = () => {
       {/* Results Card */}
       <Card>
         <CardHeader>
-          <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
-            <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-              {ar ? `سجل العيدية ${bonusNumber} - ${currentYear}` : `Eid Bonus ${bonusNumber} Record - ${currentYear}`}
-              <Badge variant="secondary">{records.length}</Badge>
-            </CardTitle>
+          <div className={cn("flex flex-col gap-4")}>
+            {/* Title row */}
+            <div className={cn("flex items-center justify-between flex-wrap gap-2", isRTL && "flex-row-reverse")}>
+              <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                {ar ? `سجل العيدية ${bonusNumber} - ${currentYear}` : `Eid Bonus ${bonusNumber} Record - ${currentYear}`}
+                <Badge variant="secondary">{filteredRecords.length}{records.length !== filteredRecords.length ? ` / ${records.length}` : ''}</Badge>
+              </CardTitle>
+              {/* Export buttons */}
+              {records.length > 0 && (
+                <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                  <Button variant="outline" size="sm" onClick={handlePrintReport} className="gap-1.5">
+                    <Printer className="w-4 h-4" />
+                    {ar ? 'طباعة' : 'Print'}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
+                    <FileText className="w-4 h-4" />
+                    PDF
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportExcel} className="gap-1.5">
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Excel
+                  </Button>
+                  <Badge variant="outline" className="text-sm px-3 py-1">
+                    {ar ? 'الإجمالي:' : 'Total:'} {totalAmount.toLocaleString()} {ar ? 'ج.م' : 'EGP'}
+                  </Badge>
+                </div>
+              )}
+            </div>
+
+            {/* Filters row */}
             {records.length > 0 && (
-              <Badge variant="outline" className="text-sm px-3 py-1">
-                {ar ? 'الإجمالي:' : 'Total:'} {totalAmount.toLocaleString()} {ar ? 'ج.م' : 'EGP'}
-              </Badge>
+              <div className={cn("flex flex-wrap items-end gap-3", isRTL && "flex-row-reverse")}>
+                {/* Search */}
+                <div className="space-y-1 min-w-[200px]">
+                  <Label className="text-xs text-muted-foreground">{ar ? 'بحث' : 'Search'}</Label>
+                  <div className="relative">
+                    <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-2.5" : "left-2.5")} />
+                    <Input
+                      placeholder={ar ? 'اسم أو رقم وظيفي...' : 'Name or ID...'}
+                      value={searchText}
+                      onChange={e => setSearchText(e.target.value)}
+                      className={cn("h-9", isRTL ? "pr-8" : "pl-8")}
+                    />
+                  </div>
+                </div>
+                {/* Station */}
+                <div className="space-y-1 min-w-[150px]">
+                  <Label className="text-xs text-muted-foreground">{ar ? 'المحطة' : 'Station'}</Label>
+                  <Select value={filterStation} onValueChange={setFilterStation}>
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                      {stations.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Department */}
+                <div className="space-y-1 min-w-[150px]">
+                  <Label className="text-xs text-muted-foreground">{ar ? 'القسم' : 'Department'}</Label>
+                  <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                      {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Level */}
+                <div className="space-y-1 min-w-[130px]">
+                  <Label className="text-xs text-muted-foreground">{ar ? 'المستوى' : 'Level'}</Label>
+                  <Select value={filterLevel} onValueChange={setFilterLevel}>
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                      {levels.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Bank */}
+                <div className="space-y-1 min-w-[150px]">
+                  <Label className="text-xs text-muted-foreground">{ar ? 'البنك' : 'Bank'}</Label>
+                  <Select value={filterBank} onValueChange={setFilterBank}>
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                      {banks.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Clear */}
+                {hasActiveFilters && (
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 gap-1 text-destructive">
+                    <X className="w-3.5 h-3.5" />
+                    {ar ? 'مسح' : 'Clear'}
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </CardHeader>
@@ -274,8 +437,12 @@ export const EidBonuses = () => {
             <div className="text-center py-10 text-muted-foreground">
               {ar ? 'لا توجد سجلات بعد. قم بتشغيل العيدية أولاً.' : 'No records yet. Run the bonus process first.'}
             </div>
+          ) : filteredRecords.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground">
+              {ar ? 'لا توجد نتائج تطابق الفلاتر المحددة' : 'No results match the selected filters'}
+            </div>
           ) : (
-            <div className="overflow-x-auto border rounded-lg">
+            <div className="overflow-x-auto border rounded-lg" ref={reportRef}>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
@@ -285,6 +452,7 @@ export const EidBonuses = () => {
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'القسم' : 'Department'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'الوظيفة' : 'Job Title'}</TableHead>
+                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'المستوى' : 'Level'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'رقم الحساب' : 'Account No.'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'ID البنكي' : 'Bank ID'}</TableHead>
@@ -294,7 +462,7 @@ export const EidBonuses = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {records.map((r, i) => (
+                  {filteredRecords.map((r, i) => (
                     <TableRow key={r.id || r.employee_id}>
                       <TableCell>{i + 1}</TableCell>
                       <TableCell className="font-medium whitespace-nowrap">{r.employee_name}</TableCell>
@@ -302,6 +470,7 @@ export const EidBonuses = () => {
                       <TableCell>{r.station_name}</TableCell>
                       <TableCell>{r.department_name}</TableCell>
                       <TableCell>{r.job_title}</TableCell>
+                      <TableCell>{r.job_level}</TableCell>
                       <TableCell dir="ltr">{r.hire_date}</TableCell>
                       <TableCell>{r.bank_account_number}</TableCell>
                       <TableCell>{r.bank_id_number}</TableCell>
@@ -310,6 +479,13 @@ export const EidBonuses = () => {
                       <TableCell className="font-semibold">{r.amount.toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
+                  {/* Totals row */}
+                  <TableRow className="bg-muted/70 font-bold">
+                    <TableCell colSpan={12} className={cn(isRTL ? "text-right" : "text-left")}>
+                      {ar ? 'الإجمالي' : 'Total'}
+                    </TableCell>
+                    <TableCell className="font-bold">{totalAmount.toLocaleString()}</TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </div>
