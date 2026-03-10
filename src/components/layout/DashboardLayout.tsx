@@ -14,6 +14,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"} className={cn(
@@ -24,18 +25,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         if (isMobile) {
           setSidebarOpen(!sidebarOpen);
         } else {
-          setSidebarCollapsed(!sidebarCollapsed);
+          setSidebarVisible(!sidebarVisible);
         }
       }} />
-      <Sidebar
-        open={sidebarOpen}
-        onOpenChange={setSidebarOpen}
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+      {(isMobile || sidebarVisible) && (
+        <Sidebar
+          open={sidebarOpen}
+          onOpenChange={setSidebarOpen}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+      )}
       <main className={cn(
         "pt-16 min-h-screen transition-all duration-300",
-        !isMobile && (sidebarCollapsed ? "ms-16" : "ms-64")
+        !isMobile && sidebarVisible && (sidebarCollapsed ? "ms-16" : "ms-64")
       )}>
         <div className="p-4 md:p-6">
           {children}
