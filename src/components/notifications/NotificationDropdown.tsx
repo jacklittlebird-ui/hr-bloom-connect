@@ -114,7 +114,7 @@ export const NotificationDropdown = ({ variant = 'header', employeeId, portalFil
               );
             })
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
