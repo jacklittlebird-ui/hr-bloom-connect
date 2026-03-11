@@ -24,9 +24,6 @@ const mainNavItems: NavItem[] = [
   { key: 'nav.employees', icon: Users, path: '/employees', moduleKey: 'employees' },
   { key: 'nav.departments', icon: Building2, path: '/departments', moduleKey: 'departments' },
   { key: 'nav.attendance', icon: Clock, path: '/attendance', moduleKey: 'attendance' },
-  { key: 'nav.attendanceScan', icon: ScanLine, path: '/attendance/scan', moduleKey: 'attendance' },
-  { key: 'nav.attendanceAdmin', icon: ShieldCheck, path: '/attendance/admin', moduleKey: 'attendance' },
-  { key: 'nav.attendanceKiosk', icon: Tv, path: '/attendance/kiosk', moduleKey: 'attendance' },
   { key: 'nav.leaves', icon: Calendar, path: '/leaves', moduleKey: 'leaves' },
   { key: 'nav.salaries', icon: Wallet, path: '/salaries', moduleKey: 'salaries' },
   { key: 'nav.salaryReports', icon: FileBarChart, path: '/salary-reports', moduleKey: 'salary-reports' },
@@ -42,6 +39,9 @@ const mainNavItems: NavItem[] = [
 ];
 
 const configNavItems: NavItem[] = [
+  { key: 'nav.attendanceScan', icon: ScanLine, path: '/attendance/scan', moduleKey: 'attendance' },
+  { key: 'nav.attendanceAdmin', icon: ShieldCheck, path: '/attendance/admin', moduleKey: 'attendance' },
+  { key: 'nav.attendanceKiosk', icon: Tv, path: '/attendance/kiosk', moduleKey: 'attendance' },
   { key: 'nav.users', icon: UserCog, path: '/users', moduleKey: 'users' },
   { key: 'nav.settings', icon: Settings, path: '/settings', moduleKey: 'settings' },
 ];
