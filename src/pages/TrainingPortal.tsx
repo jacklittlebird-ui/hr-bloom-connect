@@ -54,7 +54,7 @@ const TrainingPortal = () => {
         <PortalWelcomeBanner />
         <TrainingStatsCards />
         <Tabs defaultValue="records" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-1" dir="rtl">
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto gap-1" dir="rtl">
             <TabsTrigger value="records" className="gap-1.5 text-xs md:text-sm">
               <BookOpen className="w-4 h-4" />
               {ar ? 'السجلات' : 'Records'}
@@ -78,6 +78,10 @@ const TrainingPortal = () => {
             <TabsTrigger value="reports" className="gap-1.5 text-xs md:text-sm">
               <BarChart3 className="w-4 h-4" />
               {ar ? 'التقارير' : 'Reports'}
+            </TabsTrigger>
+            <TabsTrigger value="id-cards" className="gap-1.5 text-xs md:text-sm">
+              <CreditCard className="w-4 h-4" />
+              {ar ? 'بطاقة الهوية' : 'ID Cards'}
             </TabsTrigger>
           </TabsList>
 
