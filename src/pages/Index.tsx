@@ -143,6 +143,9 @@ const Index = () => {
         ))}
       </div>
 
+      {/* Station Employee Cards */}
+      <StationCards />
+
       <SectionHeader title={t('chart.reportsStats')} icon={BarChart3}>
         <Button variant="default" className="gap-2 rounded-xl shadow-sm" onClick={() => navigate('/reports')}>
           <BarChart3 className="w-4 h-4" />{t('chart.advancedReports')}
