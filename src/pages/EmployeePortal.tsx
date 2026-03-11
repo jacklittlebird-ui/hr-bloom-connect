@@ -61,6 +61,18 @@ const EmployeePortal = () => {
   const [ackDismissed, setAckDismissed] = useState(false);
   const [systemAckDismissed, setSystemAckDismissed] = useState(false);
 
+  // Apply saved portal color on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('portal_primary_color');
+      if (saved) {
+        import('@/lib/themeUtils').then(({ applyThemeSettings }) => {
+          applyThemeSettings({ primaryColor: saved });
+        });
+      }
+    } catch {}
+  }, []);
+
   // Pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
