@@ -27,7 +27,7 @@ interface SystemUser {
   user_id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'station_manager' | 'employee' | 'training_manager';
+  role: 'admin' | 'station_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk';
   station_code?: string;
   station_name?: string;
   employee_code?: string;
