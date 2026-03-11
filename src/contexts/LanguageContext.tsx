@@ -1166,7 +1166,7 @@ const translations: Record<string, Record<Language, string>> = {
   'leaveRecord.leaves': { en: 'Leaves', ar: 'الإجازات' },
   'leaveRecord.permissions': { en: 'Permissions', ar: 'الأذونات' },
   'leaveRecord.extraDays': { en: 'Extra Days', ar: 'الأيام الإضافية' },
-  'leaveRecord.annualLeaveBalance': { en: 'Annual Leave Balance', ar: 'رصيد الإجازات السنوية' },
+  'leaveRecord.annualLeaveBalance': { en: 'Leave Balance', ar: 'رصيد الإجازات' },
   'leaveRecord.permissionsBalance': { en: 'Permissions Balance', ar: 'رصيد الأذونات' },
   'leaveRecord.extraDaysLabel': { en: 'Extra Days', ar: 'الأيام الإضافية' },
   'leaveRecord.dayAvailable': { en: 'day available', ar: 'يوم متاح' },

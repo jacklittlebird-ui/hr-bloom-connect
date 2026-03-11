@@ -188,13 +188,17 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   }, [employee.id]);
 
   const leaveSummary = useMemo(() => {
-    // Use DB balance for the current year if available
+    // Combined balance: annual + casual
     const annualTotal = dbBalance?.annualTotal ?? (employee.annualLeaveBalance || 21);
     const annualUsed = dbBalance?.annualUsed ?? 0;
+    const casualTotal = dbBalance?.casualTotal ?? 2;
+    const casualUsed = dbBalance?.casualUsed ?? 0;
+    const combinedTotal = annualTotal + casualTotal;
+    const combinedUsed = annualUsed + casualUsed;
     return {
-      total: annualTotal,
-      used: annualUsed,
-      remaining: annualTotal - annualUsed,
+      total: combinedTotal,
+      used: combinedUsed,
+      remaining: combinedTotal - combinedUsed,
       approvedCount: employeeLeaves.filter(r => r.status === 'approved').length,
       pendingCount: employeeLeaves.filter(r => r.status === 'pending').length,
       rejectedCount: employeeLeaves.filter(r => r.status === 'rejected').length,
