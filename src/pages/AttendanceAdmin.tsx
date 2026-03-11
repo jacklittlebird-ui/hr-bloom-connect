@@ -184,7 +184,7 @@ const AttendanceAdmin = () => {
                 <CardTitle>{ar ? "سجلات المسح" : "Scan Events"}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-auto max-h-[600px]">
+              <div className="overflow-auto max-h-[600px]">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -195,7 +195,17 @@ const AttendanceAdmin = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {events.map((ev) => (
+                      {events.filter((ev) => {
+                        if (!searchQuery) return true;
+                        const q = searchQuery.toLowerCase();
+                        const emp = (ev.employees as any);
+                        return (
+                          emp?.name_ar?.toLowerCase().includes(q) ||
+                          emp?.name_en?.toLowerCase().includes(q) ||
+                          emp?.employee_code?.toLowerCase().includes(q) ||
+                          ev.device_id?.toLowerCase().includes(q)
+                        );
+                      }).map((ev) => (
                         <TableRow key={ev.id}>
                           <TableCell>
                             {ar
