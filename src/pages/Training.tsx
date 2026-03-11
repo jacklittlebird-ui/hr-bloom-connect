@@ -9,6 +9,7 @@ import { CoursesList } from '@/components/training/CoursesList';
 import { TrainingPlan } from '@/components/training/TrainingPlan';
 import { TrainingRecordsReport } from '@/components/training/TrainingRecordsReport';
 import { TrainingStatsCards } from '@/components/training/TrainingStatsCards';
+import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -34,13 +35,14 @@ const Training = () => {
         <TrainingStatsCards key={`stats-${refreshKey}`} />
 
         <Tabs defaultValue="records" className="w-full">
-          <TabsList className="grid w-full grid-cols-6" dir="rtl">
+          <TabsList className="grid w-full grid-cols-7" dir="rtl">
             <TabsTrigger value="records">{t('training.tabs.records')}</TabsTrigger>
             <TabsTrigger value="trainers">{t('training.tabs.trainers')}</TabsTrigger>
             <TabsTrigger value="syllabus">{t('training.tabs.syllabus')}</TabsTrigger>
             <TabsTrigger value="courses">{t('training.tabs.courses')}</TabsTrigger>
             <TabsTrigger value="plan">{t('training.tabs.plan')}</TabsTrigger>
             <TabsTrigger value="reports">{ar ? 'التقارير' : 'Reports'}</TabsTrigger>
+            <TabsTrigger value="id-cards">{ar ? 'بطاقة الهوية' : 'ID Cards'}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="records" className="mt-6">
@@ -65,6 +67,10 @@ const Training = () => {
 
           <TabsContent value="reports" className="mt-6">
             <TrainingRecordsReport />
+          </TabsContent>
+
+          <TabsContent value="id-cards" className="mt-6">
+            <EmployeeIdCards />
           </TabsContent>
         </Tabs>
       </div>

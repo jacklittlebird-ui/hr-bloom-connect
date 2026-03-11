@@ -11,8 +11,9 @@ import { CoursesList } from '@/components/training/CoursesList';
 import { TrainingPlan } from '@/components/training/TrainingPlan';
 import { TrainingRecordsReport } from '@/components/training/TrainingRecordsReport';
 import { TrainingStatsCards } from '@/components/training/TrainingStatsCards';
+import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
-import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library, RefreshCw } from 'lucide-react';
+import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library, RefreshCw, CreditCard } from 'lucide-react';
 import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 
 const TrainingPortal = () => {
@@ -53,7 +54,7 @@ const TrainingPortal = () => {
         <PortalWelcomeBanner />
         <TrainingStatsCards />
         <Tabs defaultValue="records" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-1" dir="rtl">
+          <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto gap-1" dir="rtl">
             <TabsTrigger value="records" className="gap-1.5 text-xs md:text-sm">
               <BookOpen className="w-4 h-4" />
               {ar ? 'السجلات' : 'Records'}
@@ -78,6 +79,10 @@ const TrainingPortal = () => {
               <BarChart3 className="w-4 h-4" />
               {ar ? 'التقارير' : 'Reports'}
             </TabsTrigger>
+            <TabsTrigger value="id-cards" className="gap-1.5 text-xs md:text-sm">
+              <CreditCard className="w-4 h-4" />
+              {ar ? 'بطاقة الهوية' : 'ID Cards'}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="records" className="mt-6"><TrainingRecords key={refreshKey} /></TabsContent>
@@ -86,6 +91,7 @@ const TrainingPortal = () => {
           <TabsContent value="courses" className="mt-6"><CoursesList key={refreshKey} /></TabsContent>
           <TabsContent value="plan" className="mt-6"><TrainingPlan key={refreshKey} /></TabsContent>
           <TabsContent value="reports" className="mt-6"><TrainingRecordsReport key={refreshKey} /></TabsContent>
+          <TabsContent value="id-cards" className="mt-6"><EmployeeIdCards key={refreshKey} /></TabsContent>
         </Tabs>
       </main>
     </div>
