@@ -112,15 +112,25 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   const [employeePermissions, setEmployeePermissions] = useState<PermissionRecord[]>([]);
   const [employeeOvertime, setEmployeeOvertime] = useState<OvertimeRecord[]>([]);
 
+  // DB balances for current year
+  const [dbBalance, setDbBalance] = useState<{
+    annualTotal: number; annualUsed: number;
+    sickTotal: number; sickUsed: number;
+    casualTotal: number; casualUsed: number;
+    permissionsTotal: number; permissionsUsed: number;
+  } | null>(null);
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       const employeeUuid = employee.id;
+      const currentYear = new Date().getFullYear();
 
-      const [leavesRes, permsRes, overtimeRes] = await Promise.all([
+      const [leavesRes, permsRes, overtimeRes, balanceRes] = await Promise.all([
         supabase.from('leave_requests').select('*').eq('employee_id', employeeUuid).order('created_at', { ascending: false }),
         supabase.from('permission_requests').select('*').eq('employee_id', employeeUuid).order('created_at', { ascending: false }),
         supabase.from('overtime_requests').select('*').eq('employee_id', employeeUuid).order('created_at', { ascending: false }),
+        supabase.from('leave_balances').select('*').eq('employee_id', employeeUuid).eq('year', currentYear).maybeSingle(),
       ]);
 
       if (leavesRes.data) {
@@ -158,6 +168,19 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
         })));
       }
 
+      if (balanceRes.data) {
+        setDbBalance({
+          annualTotal: Number(balanceRes.data.annual_total ?? 21),
+          annualUsed: Number(balanceRes.data.annual_used ?? 0),
+          sickTotal: Number(balanceRes.data.sick_total ?? 5),
+          sickUsed: Number(balanceRes.data.sick_used ?? 0),
+          casualTotal: Number(balanceRes.data.casual_total ?? 2),
+          casualUsed: Number(balanceRes.data.casual_used ?? 0),
+          permissionsTotal: Number(balanceRes.data.permissions_total ?? 12),
+          permissionsUsed: Number(balanceRes.data.permissions_used ?? 0),
+        });
+      }
+
       setLoading(false);
     };
 
@@ -165,27 +188,31 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   }, [employee.id]);
 
   const leaveSummary = useMemo(() => {
-    const approved = employeeLeaves.filter(r => r.status === 'approved');
-    const usedDays = approved.reduce((sum, r) => sum + r.days, 0);
+    // Use DB balance for the current year if available
+    const annualTotal = dbBalance?.annualTotal ?? (employee.annualLeaveBalance || 21);
+    const annualUsed = dbBalance?.annualUsed ?? 0;
     return {
-      total: employee.annualLeaveBalance || 21,
-      used: usedDays,
-      remaining: (employee.annualLeaveBalance || 21) - usedDays,
-      approvedCount: approved.length,
+      total: annualTotal,
+      used: annualUsed,
+      remaining: annualTotal - annualUsed,
+      approvedCount: employeeLeaves.filter(r => r.status === 'approved').length,
       pendingCount: employeeLeaves.filter(r => r.status === 'pending').length,
       rejectedCount: employeeLeaves.filter(r => r.status === 'rejected').length,
     };
-  }, [employeeLeaves, employee.annualLeaveBalance]);
+  }, [employeeLeaves, dbBalance, employee.annualLeaveBalance]);
 
-  const permissionSummary = useMemo(() => ({
-    total: 24,
-    used: employeePermissions.filter(r => r.status === 'approved').reduce((sum, r) => sum + r.durationHours, 0),
-    remaining: 24 - employeePermissions.filter(r => r.status === 'approved').reduce((sum, r) => sum + r.durationHours, 0),
-    approvedCount: employeePermissions.filter(r => r.status === 'approved').length,
-    pendingCount: employeePermissions.filter(r => r.status === 'pending').length,
-    rejectedCount: employeePermissions.filter(r => r.status === 'rejected').length,
-  }), [employeePermissions]);
-
+  const permissionSummary = useMemo(() => {
+    const permTotal = dbBalance?.permissionsTotal ?? 12;
+    const permUsed = dbBalance?.permissionsUsed ?? 0;
+    return {
+      total: permTotal,
+      used: permUsed,
+      remaining: permTotal - permUsed,
+      approvedCount: employeePermissions.filter(r => r.status === 'approved').length,
+      pendingCount: employeePermissions.filter(r => r.status === 'pending').length,
+      rejectedCount: employeePermissions.filter(r => r.status === 'rejected').length,
+    };
+  }, [employeePermissions, dbBalance]);
   const overtimeSummary = useMemo(() => {
     const approved = employeeOvertime.filter(r => r.status === 'approved');
     return {
