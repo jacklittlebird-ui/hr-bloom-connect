@@ -28,12 +28,14 @@ const IdCardPreview = ({ emp }: { emp: EmployeeForId }) => {
   return (
     <div
       className="id-card-container"
+      dir="ltr"
       style={{
         width: '340px',
         height: '215px',
         borderRadius: '14px',
         overflow: 'hidden',
         position: 'relative',
+        direction: 'ltr',
         fontFamily: "'Baloo Bhaijaan 2', sans-serif",
         background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #f8fafc 100%)',
         color: '#1e293b',
