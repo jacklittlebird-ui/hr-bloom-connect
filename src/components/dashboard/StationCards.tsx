@@ -76,31 +76,31 @@ export const StationCards = () => {
           ({ar ? 'الإجمالي' : 'Total'}: {totalEmployees})
         </span>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 xl:grid-cols-7 gap-2">
         {stations.map((station, i) => (
           <div
             key={station.id}
             className={cn(
-              "relative overflow-hidden rounded-xl border border-border/50 p-4",
-              "bg-card hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300",
+              "relative overflow-hidden rounded-lg border border-border/50 px-2 py-2.5",
+              "bg-card hover:shadow-md hover:-translate-y-0.5 transition-all duration-300",
               "group cursor-default"
             )}
           >
             <div className={cn(
-              "absolute top-0 inset-x-0 h-1 bg-gradient-to-r",
+              "absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r",
               colors[i % colors.length]
             )} />
-            <div className="flex flex-col items-center gap-2 text-center">
+            <div className="flex flex-col items-center gap-1 text-center">
               <div className={cn(
-                "w-10 h-10 rounded-xl flex items-center justify-center",
-                "bg-gradient-to-br shadow-md",
+                "w-7 h-7 rounded-lg flex items-center justify-center",
+                "bg-gradient-to-br shadow-sm",
                 colors[i % colors.length],
                 "group-hover:scale-110 transition-transform duration-300"
               )}>
-                <Users className="w-5 h-5 text-white" />
+                <Users className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="text-2xl font-bold text-foreground">{station.emp_count}</span>
-              <span className="text-xs font-medium text-muted-foreground leading-tight line-clamp-1">
+              <span className="text-lg font-bold text-foreground leading-none">{station.emp_count}</span>
+              <span className="text-[10px] font-medium text-muted-foreground leading-tight line-clamp-1">
                 {ar ? station.name_ar : station.name_en}
               </span>
             </div>
