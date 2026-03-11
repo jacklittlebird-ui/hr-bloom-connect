@@ -241,6 +241,7 @@ const translations: Record<string, Record<Language, string>> = {
   'employees.tabs.salaryRecord': { en: 'Salary Record', ar: 'سجل الرواتب' },
   'employees.tabs.loansAdvances': { en: 'Advances & Loans', ar: 'السلف والقروض' },
   'employees.tabs.training': { en: 'Training & Development', ar: 'التدريب والتطوير' },
+  'employees.tabs.companyCard': { en: 'Company Card', ar: 'بطاقة الشركة' },
   'employees.tabs.notes': { en: 'Notes', ar: 'الملاحظات' },
   // Leaves module
   'leaves.title': { en: 'Leave & Requests Management', ar: 'إدارة الإجازات والطلبات' },

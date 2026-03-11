@@ -151,7 +151,7 @@ const IdCardPreview = ({ emp }: { emp: EmployeeForId }) => {
   );
 };
 
-export const EmployeeIdCards = () => {
+export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: string }) => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const [employees, setEmployees] = useState<EmployeeForId[]>([]);
@@ -165,8 +165,12 @@ export const EmployeeIdCards = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    let empQuery = supabase.from('employees').select('id, employee_code, name_en, job_title_en, hire_date, avatar, department_id, station_id, departments(name_en), stations(name_en)').eq('status', 'active').order('name_en');
+    if (filterEmployeeId) {
+      empQuery = empQuery.eq('id', filterEmployeeId);
+    }
     const [empRes, deptRes] = await Promise.all([
-      supabase.from('employees').select('id, employee_code, name_en, job_title_en, hire_date, avatar, department_id, station_id, departments(name_en), stations(name_en)').eq('status', 'active').order('name_en'),
+      empQuery,
       supabase.from('departments').select('id, name_en, name_ar').eq('is_active', true),
     ]);
     if (empRes.data) {
@@ -175,7 +179,7 @@ export const EmployeeIdCards = () => {
     }
     if (deptRes.data) setDepartments(deptRes.data);
     setLoading(false);
-  }, []);
+  }, [filterEmployeeId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

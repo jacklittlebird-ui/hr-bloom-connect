@@ -81,7 +81,7 @@ const TrainingPortal = () => {
             </TabsTrigger>
             <TabsTrigger value="id-cards" className="gap-1.5 text-xs md:text-sm">
               <CreditCard className="w-4 h-4" />
-              {ar ? 'بطاقة الهوية' : 'ID Cards'}
+              {ar ? 'بطاقة الشركة' : 'Company Card'}
             </TabsTrigger>
           </TabsList>
 

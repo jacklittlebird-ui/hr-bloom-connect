@@ -42,7 +42,7 @@ const Training = () => {
             <TabsTrigger value="courses">{t('training.tabs.courses')}</TabsTrigger>
             <TabsTrigger value="plan">{t('training.tabs.plan')}</TabsTrigger>
             <TabsTrigger value="reports">{ar ? 'التقارير' : 'Reports'}</TabsTrigger>
-            <TabsTrigger value="id-cards">{ar ? 'بطاقة الهوية' : 'ID Cards'}</TabsTrigger>
+            <TabsTrigger value="id-cards">{ar ? 'بطاقة الشركة' : 'Company Card'}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="records" className="mt-6">

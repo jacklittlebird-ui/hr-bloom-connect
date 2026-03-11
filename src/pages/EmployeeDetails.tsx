@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   ArrowRight, Save, Edit, Eye, User, Phone, CreditCard, Briefcase, Wallet, Calendar,
   Shield, FileCheck, Award, Building2, Clock, CalendarDays, MapPin,
-  BarChart3, AlertTriangle, FileText, Receipt, HandCoins, GraduationCap, StickyNote,
+  BarChart3, AlertTriangle, FileText, Receipt, HandCoins, GraduationCap, StickyNote, IdCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BasicInfoTab } from '@/components/employees/tabs/BasicInfoTab';
@@ -34,6 +34,7 @@ import { SalaryRecordTab } from '@/components/employees/tabs/SalaryRecordTab';
 import { LoansAdvancesTab } from '@/components/employees/tabs/LoansAdvancesTab';
 import { TrainingTab } from '@/components/employees/tabs/TrainingTab';
 import { NotesTab } from '@/components/employees/tabs/NotesTab';
+import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { toast } from '@/hooks/use-toast';
 import { Employee } from '@/types/employee';
@@ -61,6 +62,7 @@ const allDetailTabs = [
   { id: 'salaryRecord', icon: Receipt, labelKey: 'employees.tabs.salaryRecord' },
   { id: 'loansAdvances', icon: HandCoins, labelKey: 'employees.tabs.loansAdvances' },
   { id: 'training', icon: GraduationCap, labelKey: 'employees.tabs.training' },
+  { id: 'companyCard', icon: IdCard, labelKey: 'employees.tabs.companyCard' },
   { id: 'notes', icon: StickyNote, labelKey: 'employees.tabs.notes' },
 ];
 
@@ -160,6 +162,7 @@ const EmployeeDetails = () => {
       case 'salaryRecord': return <SalaryRecordTab employee={employee} />;
       case 'loansAdvances': return <LoansAdvancesTab employee={employee} />;
       case 'training': return <TrainingTab employee={employee} />;
+      case 'companyCard': return <EmployeeIdCards filterEmployeeId={employee.id} />;
       case 'notes': return <NotesTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
       default: return null;
     }
