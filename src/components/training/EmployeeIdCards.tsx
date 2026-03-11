@@ -34,7 +34,7 @@ const IdCardPreview = ({ emp }: { emp: EmployeeForId }) => {
         borderRadius: '14px',
         overflow: 'hidden',
         position: 'relative',
-        fontFamily: "'Inter', 'Segoe UI', sans-serif",
+        fontFamily: "'Baloo Bhaijaan 2', sans-serif",
         background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #f8fafc 100%)',
         color: '#1e293b',
         boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
