@@ -54,7 +54,7 @@ const TrainingPortal = () => {
         <PortalWelcomeBanner />
         <TrainingStatsCards />
         <Tabs defaultValue="records" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto gap-1" dir="rtl">
+          <TabsList className="flex w-full overflow-x-auto h-auto gap-1 justify-start" dir="rtl">
             <TabsTrigger value="records" className="gap-1.5 text-xs md:text-sm">
               <BookOpen className="w-4 h-4" />
               {ar ? 'السجلات' : 'Records'}
