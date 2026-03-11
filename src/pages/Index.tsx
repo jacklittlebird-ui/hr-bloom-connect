@@ -24,6 +24,7 @@ import { QuickActions } from '@/components/dashboard/QuickActions';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
 import { UpcomingEvents } from '@/components/dashboard/UpcomingEvents';
 import { Announcements } from '@/components/dashboard/Announcements';
+import { StationCards } from '@/components/dashboard/StationCards';
 
 const Index = () => {
   const { t, isRTL, language } = useLanguage();
