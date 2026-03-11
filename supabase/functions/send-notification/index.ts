@@ -1,10 +1,18 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+function decodeJwtPayload(token: string): any {
+  const parts = token.split(".");
+  if (parts.length !== 3) throw new Error("Invalid JWT");
+  const payload = parts[1];
+  const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+  return JSON.parse(decoded);
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,7 +23,6 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("authorization") || "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     if (!authHeader.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -24,20 +31,37 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify caller using getUser
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { authorization: authHeader } },
-    });
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
-      console.error("Auth error:", authError?.message);
+    // Decode JWT to get user ID
+    const token = authHeader.replace("Bearer ", "");
+    let jwtPayload: any;
+    try {
+      jwtPayload = decodeJwtPayload(token);
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid token" }), {
+        status: 401,
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      });
+    }
+
+    const userId = jwtPayload.sub;
+    if (!userId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "content-type": "application/json" },
       });
     }
 
+    // Verify user exists using admin client
     const adminClient = createClient(supabaseUrl, serviceKey);
+    const { data: { user }, error: userError } = await adminClient.auth.admin.getUserById(userId);
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      });
+    }
+
+    // Check role (reuse adminClient from above)
 
     // Check role
     const { data: roles } = await adminClient
