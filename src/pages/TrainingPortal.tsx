@@ -11,8 +11,9 @@ import { CoursesList } from '@/components/training/CoursesList';
 import { TrainingPlan } from '@/components/training/TrainingPlan';
 import { TrainingRecordsReport } from '@/components/training/TrainingRecordsReport';
 import { TrainingStatsCards } from '@/components/training/TrainingStatsCards';
+import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
-import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library, RefreshCw } from 'lucide-react';
+import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library, RefreshCw, CreditCard } from 'lucide-react';
 import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 
 const TrainingPortal = () => {
