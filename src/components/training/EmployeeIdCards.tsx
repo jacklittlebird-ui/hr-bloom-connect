@@ -151,7 +151,7 @@ const IdCardPreview = ({ emp }: { emp: EmployeeForId }) => {
   );
 };
 
-export const EmployeeIdCards = () => {
+export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: string }) => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const [employees, setEmployees] = useState<EmployeeForId[]>([]);
