@@ -39,8 +39,6 @@ export const LeaveCalendar = ({ requests }: LeaveCalendarProps) => {
       sick: 'bg-red-500',
       casual: 'bg-green-500',
       unpaid: 'bg-gray-500',
-      maternity: 'bg-pink-500',
-      paternity: 'bg-purple-500',
     };
     return colors[type] || 'bg-primary';
   };
