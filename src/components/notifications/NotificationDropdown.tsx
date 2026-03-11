@@ -76,7 +76,7 @@ export const NotificationDropdown = ({ variant = 'header', employeeId, portalFil
             )}
           </div>
         </div>
-        <ScrollArea className="max-h-80">
+        <ScrollArea className="max-h-[60vh]">
           {filteredNotifications.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground text-sm">
               {language === 'ar' ? 'لا توجد إشعارات' : 'No notifications'}
