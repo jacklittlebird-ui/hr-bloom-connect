@@ -35,8 +35,6 @@ export const LeaveRequestsList = ({ requests, onDelete }: LeaveRequestsListProps
       sick: 'bg-red-100 text-red-700 border-red-300',
       casual: 'bg-green-100 text-green-700 border-green-300',
       unpaid: 'bg-gray-100 text-gray-700 border-gray-300',
-      maternity: 'bg-pink-100 text-pink-700 border-pink-300',
-      paternity: 'bg-purple-100 text-purple-700 border-purple-300',
     };
     return <Badge variant="outline" className={colors[type]}>{t(`leaves.types.${type}`)}</Badge>;
   };

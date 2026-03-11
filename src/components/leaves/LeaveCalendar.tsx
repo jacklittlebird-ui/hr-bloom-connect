@@ -95,12 +95,8 @@ export const LeaveCalendar = ({ requests }: LeaveCalendarProps) => {
             <span className="text-sm">{t('leaves.types.casual')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-pink-500"></div>
-            <span className="text-sm">{t('leaves.types.maternity')}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-purple-500"></div>
-            <span className="text-sm">{t('leaves.types.paternity')}</span>
+            <div className="w-3 h-3 rounded bg-gray-500"></div>
+            <span className="text-sm">{t('leaves.types.unpaid')}</span>
           </div>
         </div>
 
