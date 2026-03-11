@@ -411,45 +411,47 @@ const NotificationsPage = () => {
                     {ar ? 'لا توجد إشعارات' : 'No notifications'}
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {notifications.slice(0, 50).map(n => {
-                      const Icon = typeIcons[n.type] || Info;
-                      return (
-                        <div
-                          key={n.id}
-                          className={cn(
-                            "flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors",
-                            !n.read && "bg-primary/5 border-primary/20"
-                          )}
-                          onClick={() => markAsRead(n.id)}
-                        >
-                          <Icon className={cn("w-5 h-5 mt-0.5 shrink-0", typeColors[n.type] || 'text-blue-500')} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className={cn("text-sm", !n.read && "font-semibold")}>
-                                {ar ? n.titleAr : n.titleEn}
-                              </p>
-                              {n.targetType && n.targetType !== 'general' && (
-                                <Badge variant="outline" className="text-[10px]">
-                                  {targetTypeLabel(n.targetType)}
-                                </Badge>
-                              )}
-                            </div>
-                            {(n.descAr || n.descEn) && (
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {ar ? n.descAr : n.descEn}
-                              </p>
+                  <ScrollArea className="h-[60vh]">
+                    <div className="space-y-2 pe-2">
+                      {notifications.map(n => {
+                        const Icon = typeIcons[n.type] || Info;
+                        return (
+                          <div
+                            key={n.id}
+                            className={cn(
+                              "flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors",
+                              !n.read && "bg-primary/5 border-primary/20"
                             )}
-                            <div className="flex items-center gap-3 mt-1">
-                              {n.senderName && <span className="text-[10px] text-primary/70">{n.senderName}</span>}
-                              <span className="text-[10px] text-muted-foreground">{formatTime(n.timestamp)}</span>
+                            onClick={() => markAsRead(n.id)}
+                          >
+                            <Icon className={cn("w-5 h-5 mt-0.5 shrink-0", typeColors[n.type] || 'text-blue-500')} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className={cn("text-sm", !n.read && "font-semibold")}>
+                                  {ar ? n.titleAr : n.titleEn}
+                                </p>
+                                {n.targetType && n.targetType !== 'general' && (
+                                  <Badge variant="outline" className="text-[10px]">
+                                    {targetTypeLabel(n.targetType)}
+                                  </Badge>
+                                )}
+                              </div>
+                              {(n.descAr || n.descEn) && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {ar ? n.descAr : n.descEn}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-3 mt-1">
+                                {n.senderName && <span className="text-[10px] text-primary/70">{n.senderName}</span>}
+                                <span className="text-[10px] text-muted-foreground">{formatTime(n.timestamp)}</span>
+                              </div>
                             </div>
+                            {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />}
                           </div>
-                          {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />}
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
                 )}
               </CardContent>
             </Card>
