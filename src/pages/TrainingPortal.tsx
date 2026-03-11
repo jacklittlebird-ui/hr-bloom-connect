@@ -91,6 +91,7 @@ const TrainingPortal = () => {
           <TabsContent value="courses" className="mt-6"><CoursesList key={refreshKey} /></TabsContent>
           <TabsContent value="plan" className="mt-6"><TrainingPlan key={refreshKey} /></TabsContent>
           <TabsContent value="reports" className="mt-6"><TrainingRecordsReport key={refreshKey} /></TabsContent>
+          <TabsContent value="id-cards" className="mt-6"><EmployeeIdCards key={refreshKey} /></TabsContent>
         </Tabs>
       </main>
     </div>

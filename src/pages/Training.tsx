@@ -68,6 +68,10 @@ const Training = () => {
           <TabsContent value="reports" className="mt-6">
             <TrainingRecordsReport />
           </TabsContent>
+
+          <TabsContent value="id-cards" className="mt-6">
+            <EmployeeIdCards />
+          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
