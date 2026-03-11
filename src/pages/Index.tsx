@@ -24,6 +24,7 @@ import { QuickActions } from '@/components/dashboard/QuickActions';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
 import { UpcomingEvents } from '@/components/dashboard/UpcomingEvents';
 import { Announcements } from '@/components/dashboard/Announcements';
+import { StationCards } from '@/components/dashboard/StationCards';
 
 const Index = () => {
   const { t, isRTL, language } = useLanguage();
@@ -141,6 +142,9 @@ const Index = () => {
           />
         ))}
       </div>
+
+      {/* Station Employee Cards */}
+      <StationCards />
 
       <SectionHeader title={t('chart.reportsStats')} icon={BarChart3}>
         <Button variant="default" className="gap-2 rounded-xl shadow-sm" onClick={() => navigate('/reports')}>
