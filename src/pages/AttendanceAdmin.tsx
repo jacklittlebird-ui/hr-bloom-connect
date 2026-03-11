@@ -151,7 +151,7 @@ const AttendanceAdmin = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="events" dir={ar ? "rtl" : "ltr"}>
+        <Tabs defaultValue="events" dir={ar ? "rtl" : "ltr"} onValueChange={() => setSearchQuery("")}>
           <TabsList>
             <TabsTrigger value="events">{ar ? "السجلات" : "Events"}</TabsTrigger>
             <TabsTrigger value="alerts">
@@ -166,6 +166,17 @@ const AttendanceAdmin = () => {
               {ar ? "الأجهزة" : "Devices"}
             </TabsTrigger>
           </TabsList>
+
+          {/* Search Bar */}
+          <div className="relative mt-3 mb-2">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={ar ? "بحث بالاسم أو الكود أو الجهاز..." : "Search by name, code, or device..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="ps-9"
+            />
+          </div>
 
           <TabsContent value="events">
             <Card>
