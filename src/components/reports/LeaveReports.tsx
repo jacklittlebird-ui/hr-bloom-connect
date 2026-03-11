@@ -19,8 +19,7 @@ export const LeaveReports = () => {
   const leaveTypeData = [
     { name: t('leave.types.annual'), value: 450, color: '#3b82f6' },
     { name: t('leave.types.sick'), value: 120, color: '#ef4444' },
-    { name: t('leave.types.personal'), value: 80, color: '#f59e0b' },
-    { name: t('leave.types.maternity'), value: 30, color: '#ec4899' },
+    { name: t('leaves.types.casual'), value: 80, color: '#22c55e' },
     { name: t('leave.types.unpaid'), value: 25, color: '#6b7280' },
   ];
 

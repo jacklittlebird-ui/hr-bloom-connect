@@ -87,8 +87,6 @@ const leaveTypeLabels: Record<string, { en: string; ar: string }> = {
   sick: { en: 'Sick Leave', ar: 'إجازة مرضية' },
   casual: { en: 'Casual Leave', ar: 'إجازة عارضة' },
   unpaid: { en: 'Unpaid Leave', ar: 'إجازة بدون راتب' },
-  maternity: { en: 'Maternity Leave', ar: 'إجازة أمومة' },
-  paternity: { en: 'Paternity Leave', ar: 'إجازة أبوة' },
 };
 
 const permissionTypeLabels: Record<string, { en: string; ar: string }> = {
