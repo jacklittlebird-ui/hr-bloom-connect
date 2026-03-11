@@ -380,7 +380,16 @@ const AttendanceAdmin = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {locations.map((loc) => (
+                    {locations.filter((loc) => {
+                        if (!searchQuery) return true;
+                        const q = searchQuery.toLowerCase();
+                        return (
+                          loc.name_ar?.toLowerCase().includes(q) ||
+                          loc.name_en?.toLowerCase().includes(q) ||
+                          (loc.stations as any)?.name_ar?.toLowerCase().includes(q) ||
+                          (loc.stations as any)?.name_en?.toLowerCase().includes(q)
+                        );
+                      }).map((loc) => (
                       <TableRow key={loc.id}>
                         <TableCell>{ar ? loc.name_ar : loc.name_en}</TableCell>
                         <TableCell>
