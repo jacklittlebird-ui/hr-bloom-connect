@@ -292,33 +292,35 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
 
   return (
     <div className="space-y-6">
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder={ar ? 'بحث بالاسم أو الكود...' : 'Search by name or code...'}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9"
-          />
+      {/* Filters - hidden when viewing single employee */}
+      {!filterEmployeeId && (
+        <div className="flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder={ar ? 'بحث بالاسم أو الكود...' : 'Search by name or code...'}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={deptFilter} onValueChange={setDeptFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder={ar ? 'القسم' : 'Department'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{ar ? 'الكل' : 'All Departments'}</SelectItem>
+              {departments.map(d => (
+                <SelectItem key={d.id} value={d.id}>{ar ? d.name_ar : d.name_en}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Badge variant="secondary" className="gap-1">
+            <CreditCard className="w-3.5 h-3.5" />
+            {filtered.length} {ar ? 'موظف' : 'employees'}
+          </Badge>
         </div>
-        <Select value={deptFilter} onValueChange={setDeptFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder={ar ? 'القسم' : 'Department'} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{ar ? 'الكل' : 'All Departments'}</SelectItem>
-            {departments.map(d => (
-              <SelectItem key={d.id} value={d.id}>{ar ? d.name_ar : d.name_en}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Badge variant="secondary" className="gap-1">
-          <CreditCard className="w-3.5 h-3.5" />
-          {filtered.length} {ar ? 'موظف' : 'employees'}
-        </Badge>
-      </div>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</div>
