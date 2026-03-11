@@ -1,0 +1,1 @@
+ALTER TABLE public.stations ADD COLUMN IF NOT EXISTS checkin_method text NOT NULL DEFAULT 'qr';

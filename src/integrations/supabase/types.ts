@@ -1672,6 +1672,7 @@ export type Database = {
       }
       stations: {
         Row: {
+          checkin_method: string
           code: string
           created_at: string
           id: string
@@ -1681,6 +1682,7 @@ export type Database = {
           timezone: string
         }
         Insert: {
+          checkin_method?: string
           code: string
           created_at?: string
           id?: string
@@ -1690,6 +1692,7 @@ export type Database = {
           timezone?: string
         }
         Update: {
+          checkin_method?: string
           code?: string
           created_at?: string
           id?: string

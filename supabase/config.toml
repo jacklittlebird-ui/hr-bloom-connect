@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.submit-scan]
 verify_jwt = false
+
+[functions.gps-checkin]
+verify_jwt = false

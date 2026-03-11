@@ -17,6 +17,7 @@ import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getOrCreateDeviceId } from '@/lib/device';
 import QrScanner from '@/components/attendance/QrScanner';
+import { GpsCheckinButton } from '@/components/portal/GpsCheckinButton';
 
 export const PortalDashboard = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
@@ -26,13 +27,36 @@ export const PortalDashboard = () => {
   const ar = language === 'ar';
   const { session } = useAuth();
   const { getEmployeePayroll } = usePayrollData();
-  const { records, getMonthlyStats } = useAttendanceData();
+  const { records, getMonthlyStats, refresh: refreshAttendance } = useAttendanceData();
   const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests } = usePortalData();
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const todayRecord = records.find(r => r.employeeId === PORTAL_EMPLOYEE_ID && r.date === today);
   const hasCheckedIn = !!todayRecord?.checkIn;
   const hasCheckedOut = !!todayRecord?.checkOut;
+
+  // Station checkin method
+  const [checkinMethod, setCheckinMethod] = useState<string>('qr');
+  const [methodLoading, setMethodLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMethod = async () => {
+      if (!employee?.stationId) { setMethodLoading(false); return; }
+      const { data } = await supabase
+        .from('stations')
+        .select('checkin_method')
+        .eq('id', employee.stationId)
+        .single();
+      if (data && (data as any).checkin_method) {
+        setCheckinMethod((data as any).checkin_method);
+      }
+      setMethodLoading(false);
+    };
+    fetchMethod();
+  }, [employee?.stationId]);
+
+  const showQr = checkinMethod === 'qr' || checkinMethod === 'both';
+  const showGps = checkinMethod === 'gps' || checkinMethod === 'both';
 
   // QR Scanner state
   const [qrMode, setQrMode] = useState(false);
@@ -110,6 +134,7 @@ export const PortalDashboard = () => {
             ? ar ? 'تم تسجيل الحضور بنجاح ✔' : 'Check-in recorded ✔'
             : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
         );
+        refreshAttendance();
       }
     } catch (e: any) {
       setQrStatus('error');
@@ -144,7 +169,7 @@ export const PortalDashboard = () => {
         </p>
       </div>
 
-      {/* QR Check-in/out Card */}
+      {/* Check-in/out Card */}
       <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
         <CardContent className="p-4 md:p-6">
           <div className="text-center space-y-4">
@@ -152,52 +177,80 @@ export const PortalDashboard = () => {
               {formatTimeClock(currentTime)}
             </div>
 
-            {/* Check-in button + timestamp */}
-            <div className="space-y-2">
-              <Button
-                onClick={() => {
-                  setQrEventType('check_in');
-                  setQrMode(true);
-                  setQrStatus('scanning');
-                  setQrMessage('');
-                }}
-                className="w-full max-w-[320px] mx-auto"
-                size="lg"
-                disabled={hasCheckedIn && !hasCheckedOut}
-              >
-                <LogIn className="h-5 w-5 me-2" />
-                {ar ? 'تسجيل الحضور' : 'Check In'}
-              </Button>
-              {hasCheckedIn && todayRecord?.checkIn && (
-                <p className="text-sm font-medium text-success">
-                  {ar ? `✔ تم الحضور في ${todayRecord.checkIn}` : `✔ Checked in at ${todayRecord.checkIn}`}
-                </p>
-              )}
-            </div>
+            {/* QR buttons */}
+            {showQr && (
+              <>
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => {
+                      setQrEventType('check_in');
+                      setQrMode(true);
+                      setQrStatus('scanning');
+                      setQrMessage('');
+                    }}
+                    className="w-full max-w-[320px] mx-auto"
+                    size="lg"
+                    disabled={hasCheckedIn && !hasCheckedOut}
+                  >
+                    <LogIn className="h-5 w-5 me-2" />
+                    {ar ? 'تسجيل حضور (QR)' : 'Check In (QR)'}
+                  </Button>
+                  {hasCheckedIn && todayRecord?.checkIn && !showGps && (
+                    <p className="text-sm font-medium text-success">
+                      {ar ? `✔ تم الحضور في ${todayRecord.checkIn}` : `✔ Checked in at ${todayRecord.checkIn}`}
+                    </p>
+                  )}
+                </div>
 
-            {/* Check-out button + timestamp */}
-            <div className="space-y-2">
-              <Button
-                onClick={() => {
-                  setQrEventType('check_out');
-                  setQrMode(true);
-                  setQrStatus('scanning');
-                  setQrMessage('');
-                }}
-                className="w-full max-w-[320px] mx-auto"
-                size="lg"
-                variant="outline"
-                disabled={!hasCheckedIn || hasCheckedOut}
-              >
-                <LogOut className="h-5 w-5 me-2" />
-                {ar ? 'تسجيل الانصراف' : 'Check Out'}
-              </Button>
-              {hasCheckedOut && todayRecord?.checkOut && (
-                <p className="text-sm font-medium text-muted-foreground">
-                  {ar ? `✔ تم الانصراف في ${todayRecord.checkOut}` : `✔ Checked out at ${todayRecord.checkOut}`}
-                </p>
-              )}
-            </div>
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => {
+                      setQrEventType('check_out');
+                      setQrMode(true);
+                      setQrStatus('scanning');
+                      setQrMessage('');
+                    }}
+                    className="w-full max-w-[320px] mx-auto"
+                    size="lg"
+                    variant="outline"
+                    disabled={!hasCheckedIn || hasCheckedOut}
+                  >
+                    <LogOut className="h-5 w-5 me-2" />
+                    {ar ? 'تسجيل انصراف (QR)' : 'Check Out (QR)'}
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* GPS buttons */}
+            {showGps && (
+              <div className="space-y-3">
+                <GpsCheckinButton
+                  eventType="check_in"
+                  disabled={hasCheckedIn && !hasCheckedOut}
+                  onSuccess={() => refreshAttendance()}
+                  ar={ar}
+                />
+                <GpsCheckinButton
+                  eventType="check_out"
+                  disabled={!hasCheckedIn || hasCheckedOut}
+                  onSuccess={() => refreshAttendance()}
+                  ar={ar}
+                />
+              </div>
+            )}
+
+            {/* Status timestamps */}
+            {hasCheckedIn && todayRecord?.checkIn && (
+              <p className="text-sm font-medium text-success">
+                {ar ? `✔ تم الحضور في ${todayRecord.checkIn}` : `✔ Checked in at ${todayRecord.checkIn}`}
+              </p>
+            )}
+            {hasCheckedOut && todayRecord?.checkOut && (
+              <p className="text-sm font-medium text-muted-foreground">
+                {ar ? `✔ تم الانصراف في ${todayRecord.checkOut}` : `✔ Checked out at ${todayRecord.checkOut}`}
+              </p>
+            )}
 
             {/* Scanner area */}
             {qrMode && qrStatus !== 'success' && qrStatus !== 'error' && qrStatus !== 'validating' && (

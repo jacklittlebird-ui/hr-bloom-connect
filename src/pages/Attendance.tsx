@@ -8,10 +8,10 @@ import { LateArrivals } from '@/components/attendance/LateArrivals';
 import { AttendanceReports } from '@/components/attendance/AttendanceReports';
 import { ShiftManagement } from '@/components/attendance/ShiftManagement';
 import { AttendanceRules } from '@/components/attendance/AttendanceRules';
-
+import { StationCheckinSettings } from '@/components/attendance/StationCheckinSettings';
 import { EmployeeAssignment } from '@/components/attendance/EmployeeAssignment';
 import { useAttendanceData } from '@/contexts/AttendanceDataContext';
-import { Clock, List, AlertTriangle, BarChart3, Calendar, Settings2, Users, RefreshCw } from 'lucide-react';
+import { Clock, List, AlertTriangle, BarChart3, Calendar, Settings2, Users, RefreshCw, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -225,7 +225,7 @@ const Attendance = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn("grid w-full grid-cols-7 mb-6")} dir="rtl">
+          <TabsList className={cn("grid w-full grid-cols-8 mb-6")} dir="rtl">
             <TabsTrigger value="checkin" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span className="hidden lg:inline">{t('attendance.tabs.checkInOut')}</span>
@@ -258,6 +258,10 @@ const Attendance = () => {
             <TabsTrigger value="assignment" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               <span className="hidden lg:inline">{t('attendance.tabs.assignment')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="station-settings" className="flex items-center gap-2">
+              <Navigation className="w-4 h-4" />
+              <span className="hidden lg:inline">{language === 'ar' ? 'إعدادات المحطات' : 'Station Settings'}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -292,6 +296,10 @@ const Attendance = () => {
 
           <TabsContent value="assignment">
             <EmployeeAssignment />
+          </TabsContent>
+
+          <TabsContent value="station-settings">
+            <StationCheckinSettings />
           </TabsContent>
         </Tabs>
       </div>
