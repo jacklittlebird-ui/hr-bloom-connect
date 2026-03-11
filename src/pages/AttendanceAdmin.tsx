@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Shield, AlertTriangle, MapPin, Plus, RefreshCw, Smartphone, Trash2, Edit2 } from "lucide-react";
+import { Shield, AlertTriangle, MapPin, Plus, RefreshCw, Smartphone, Trash2, Edit2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 const AttendanceAdmin = () => {
