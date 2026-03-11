@@ -35,13 +35,14 @@ const Training = () => {
         <TrainingStatsCards key={`stats-${refreshKey}`} />
 
         <Tabs defaultValue="records" className="w-full">
-          <TabsList className="grid w-full grid-cols-6" dir="rtl">
+          <TabsList className="grid w-full grid-cols-7" dir="rtl">
             <TabsTrigger value="records">{t('training.tabs.records')}</TabsTrigger>
             <TabsTrigger value="trainers">{t('training.tabs.trainers')}</TabsTrigger>
             <TabsTrigger value="syllabus">{t('training.tabs.syllabus')}</TabsTrigger>
             <TabsTrigger value="courses">{t('training.tabs.courses')}</TabsTrigger>
             <TabsTrigger value="plan">{t('training.tabs.plan')}</TabsTrigger>
             <TabsTrigger value="reports">{ar ? 'التقارير' : 'Reports'}</TabsTrigger>
+            <TabsTrigger value="id-cards">{ar ? 'بطاقة الهوية' : 'ID Cards'}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="records" className="mt-6">
