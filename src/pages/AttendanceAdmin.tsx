@@ -31,6 +31,7 @@ const AttendanceAdmin = () => {
   const [newLocation, setNewLocation] = useState({
     name_ar: "", name_en: "", station_id: "", latitude: "", longitude: "", radius_m: "150",
   });
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchAll = async () => {
     setLoading(true);
