@@ -256,8 +256,6 @@ const translations: Record<string, Record<Language, string>> = {
   'leaves.types.sick': { en: 'Sick', ar: 'مرضية' },
   'leaves.types.casual': { en: 'Casual', ar: 'عارضة' },
   'leaves.types.unpaid': { en: 'Unpaid', ar: 'بدون راتب' },
-  'leaves.types.maternity': { en: 'Maternity', ar: 'أمومة' },
-  'leaves.types.paternity': { en: 'Paternity', ar: 'أبوة' },
   'leaves.status.pending': { en: 'Pending', ar: 'معلقة' },
   'leaves.status.approved': { en: 'Approved', ar: 'موافق عليه' },
   'leaves.status.rejected': { en: 'Rejected', ar: 'مرفوض' },
