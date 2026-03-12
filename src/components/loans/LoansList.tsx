@@ -211,6 +211,12 @@ export const LoansList = () => {
     setDeletingLoanId(null);
   };
 
+  const getStationLabel = (empId: string) => {
+    const station = getEmployeeStation(empId);
+    const s = stationLocations.find(st => st.value === station);
+    return s ? (isRTL ? s.labelAr : s.labelEn) : station || '-';
+  };
+
   const exportColumns = [
     { header: isRTL ? 'الموظف' : 'Employee', key: 'employeeName' },
     { header: isRTL ? 'المحطة' : 'Station', key: 'stationLabel' },
@@ -222,13 +228,6 @@ export const LoansList = () => {
     { header: isRTL ? 'الحالة' : 'Status', key: 'status' },
   ];
   const exportData = filteredLoans.map(l => ({ ...l, stationLabel: getStationLabel(l.employeeId), status: isRTL ? statusLabels[l.status].ar : statusLabels[l.status].en }));
-  const exportTitle = isRTL ? 'تقرير القروض' : 'Loans Report';
-
-  const getStationLabel = (empId: string) => {
-    const station = getEmployeeStation(empId);
-    const s = stationLocations.find(st => st.value === station);
-    return s ? (isRTL ? s.labelAr : s.labelEn) : station || '-';
-  };
 
   return (
     <div className="space-y-6">
