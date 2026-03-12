@@ -9,9 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, Plus, Edit, Trash2, Eye, Banknote, Clock, CheckCircle, TrendingUp, Printer, FileText, FileSpreadsheet } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, Banknote, Clock, CheckCircle, TrendingUp, Printer, FileText, FileSpreadsheet, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { stationLocations } from '@/data/stationLocations';
 import { useReportExport } from '@/hooks/useReportExport';
@@ -40,6 +43,7 @@ export const AdvancesList = () => {
   const [viewingAdvance, setViewingAdvance] = useState<Advance | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ employeeId: '', amount: '', deductionMonth: '', reason: '' });
+  const [employeePopoverOpen, setEmployeePopoverOpen] = useState(false);
 
   const selectedEmployee = useMemo(() => activeEmployees.find(e => e.id === formData.employeeId), [formData.employeeId, activeEmployees]);
 
@@ -272,12 +276,42 @@ export const AdvancesList = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>{isRTL ? 'اختر الموظف *' : 'Select Employee *'}</Label>
-              <Select value={formData.employeeId} onValueChange={v => setFormData({ ...formData, employeeId: v })}>
-                <SelectTrigger><SelectValue placeholder={isRTL ? '-- اختر الموظف --' : '-- Select --'} /></SelectTrigger>
-                <SelectContent>
-                  {activeEmployees.map(emp => <SelectItem key={emp.id} value={emp.id}>{isRTL ? emp.nameAr : emp.nameEn}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Popover open={employeePopoverOpen} onOpenChange={setEmployeePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className={cn("w-full justify-between", isRTL && "flex-row-reverse")}>
+                    {selectedEmployee
+                      ? (isRTL ? selectedEmployee.nameAr : selectedEmployee.nameEn)
+                      : (isRTL ? '-- اختر الموظف --' : '-- Select --')}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0 bg-popover z-50" align="start">
+                  <Command>
+                    <CommandInput placeholder={isRTL ? 'ابحث بالاسم أو الكود...' : 'Search by name or code...'} />
+                    <CommandList>
+                      <CommandEmpty>{isRTL ? 'لا يوجد موظف' : 'No employee found'}</CommandEmpty>
+                      <CommandGroup>
+                        {activeEmployees.map(emp => (
+                          <CommandItem
+                            key={emp.id}
+                            value={`${emp.nameAr} ${emp.nameEn} ${emp.employeeId}`}
+                            onSelect={() => {
+                              setFormData({ ...formData, employeeId: emp.id });
+                              setEmployeePopoverOpen(false);
+                            }}
+                          >
+                            <Check className={cn("mr-2 h-4 w-4", formData.employeeId === emp.id ? "opacity-100" : "opacity-0")} />
+                            <div className={cn("flex flex-col", isRTL && "items-end")}>
+                              <span className="font-medium">{isRTL ? emp.nameAr : emp.nameEn}</span>
+                              <span className="text-xs text-muted-foreground">{emp.employeeId} - {emp.department}</span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               {selectedEmployee && <p className="text-sm text-muted-foreground">{isRTL ? 'المحطة/الموقع: ' : 'Station: '}{getStationLabel(selectedEmployee.id)}</p>}
             </div>
             <div className="grid grid-cols-2 gap-4">
