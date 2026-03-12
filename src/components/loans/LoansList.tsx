@@ -64,7 +64,7 @@ export const LoansList = () => {
     if (!employeeSearch.trim()) return activeEmployees;
     const q = employeeSearch.toLowerCase();
     return activeEmployees.filter(e =>
-      e.employeeCode?.toLowerCase().includes(q) ||
+      e.employeeId?.toLowerCase().includes(q) ||
       e.nameAr?.includes(employeeSearch) ||
       e.nameEn?.toLowerCase().includes(q)
     );
