@@ -143,7 +143,11 @@ export const LoansList = () => {
     const monthlyPayment = isManual ? parseFloat(formData.monthlyPayment || '0') : 0;
     const installments = isManual ? (amount > 0 && monthlyPayment > 0 ? Math.ceil(amount / monthlyPayment) : 0) : parseInt(formData.installments);
 
-    if (!formData.employeeId || !formData.amount || !formData.startDate || installments <= 0) {
+    if (!formData.employeeId) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار الموظف من القائمة' : 'Please select an employee from the list', variant: 'destructive' });
+      return;
+    }
+    if (!formData.amount || !formData.startDate || installments <= 0) {
       toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields', variant: 'destructive' });
       return;
     }
