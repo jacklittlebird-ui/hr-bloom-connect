@@ -303,7 +303,7 @@ export const AdvancesList = () => {
                             <Check className={cn("mr-2 h-4 w-4", formData.employeeId === emp.id ? "opacity-100" : "opacity-0")} />
                             <div className={cn("flex flex-col", isRTL && "items-end")}>
                               <span className="font-medium">{isRTL ? emp.nameAr : emp.nameEn}</span>
-                              <span className="text-xs text-muted-foreground">{emp.employeeCode} - {emp.department}</span>
+                              <span className="text-xs text-muted-foreground">{emp.employeeId} - {emp.department}</span>
                             </div>
                           </CommandItem>
                         ))}
