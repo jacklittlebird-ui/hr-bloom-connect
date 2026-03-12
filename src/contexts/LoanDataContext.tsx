@@ -133,7 +133,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const dbUpdates: any = {};
     if (updates.amount !== undefined) dbUpdates.amount = updates.amount;
     if (updates.installments !== undefined) dbUpdates.installments_count = updates.installments;
-    if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
+    if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate.length === 7 ? `${updates.startDate}-01` : updates.startDate;
     if (updates.notes !== undefined) dbUpdates.reason = updates.notes;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.employeeId !== undefined) dbUpdates.employee_id = updates.employeeId;
