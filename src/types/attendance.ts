@@ -280,8 +280,8 @@ export interface AttendanceCalculation {
 export const sampleLocations: Location[] = [
   {
     id: 'loc-hq',
-    name: 'Headquarters',
-    nameAr: 'المقر الرئيسي',
+    name: 'Link Cargo',
+    nameAr: 'لينك كارجو',
     type: 'headquarters',
     code: 'HQ',
     timezone: 'Africa/Cairo',
