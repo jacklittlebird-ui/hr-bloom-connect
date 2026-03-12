@@ -356,7 +356,32 @@ export const PortalSalary = () => {
                   </div>
                 ))}
               </div>
+              <div className="flex justify-between py-2 font-bold bg-destructive/10 px-3 rounded">
+                <span>{ar ? 'إجمالي الخصومات' : 'Total Deductions'}</span>
+                <span className="text-destructive">{selectedSlip.totalDeductions.toLocaleString()}</span>
+              </div>
               <Separator />
+              <div className="space-y-2">
+                <h4 className="font-semibold flex items-center gap-2"><Building2 className="w-4 h-4" />{ar ? 'مساهمات الشركة' : 'Company Contributions'}</h4>
+                {getEmployerContributions(selectedSlip).filter(x => x.v > 0).map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm py-1 border-b">
+                    <span>{item.l}</span>
+                    <span className="font-mono">{item.v.toLocaleString()}</span>
+                  </div>
+                ))}
+                {getEmployerContributions(selectedSlip).filter(x => x.v > 0).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-2">{ar ? 'لا توجد مساهمات' : 'No contributions'}</p>
+                )}
+              </div>
+              <div className="flex justify-between py-2 font-bold bg-muted px-3 rounded">
+                <span>{ar ? 'إجمالي مساهمات الشركة' : 'Total Company Contributions'}</span>
+                <span>{getEmployerContributions(selectedSlip).reduce((s, c) => s + c.v, 0).toLocaleString()}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between py-2 font-bold bg-success/10 px-3 rounded">
+                <span>{ar ? 'إجمالي الراتب' : 'Gross Salary'}</span>
+                <span className="text-success">{selectedSlip.gross.toLocaleString()}</span>
+              </div>
               <div className="flex justify-between font-bold text-lg">
                 <span>{ar ? 'صافي الراتب' : 'Net Salary'}</span>
                 <span className="text-primary">{selectedSlip.netSalary.toLocaleString()} {ar ? 'ج.م' : 'EGP'}</span>
