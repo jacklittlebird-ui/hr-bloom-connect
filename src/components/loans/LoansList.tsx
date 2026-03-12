@@ -132,6 +132,8 @@ export const LoansList = () => {
       calculationMethod: loan.calculationMethod,
       monthlyPayment: loan.calculationMethod === 'manual' ? String(loan.monthlyPayment) : '',
     });
+    const emp = activeEmployees.find(e => e.id === loan.employeeId);
+    setEmployeeSearch(emp ? `${emp.employeeId} - ${isRTL ? emp.nameAr : emp.nameEn}` : loan.employeeName);
     setShowDialog(true);
   };
 
