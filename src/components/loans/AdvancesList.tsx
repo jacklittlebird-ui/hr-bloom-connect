@@ -43,6 +43,7 @@ export const AdvancesList = () => {
   const [viewingAdvance, setViewingAdvance] = useState<Advance | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ employeeId: '', amount: '', deductionMonth: '', reason: '' });
+  const [employeePopoverOpen, setEmployeePopoverOpen] = useState(false);
 
   const selectedEmployee = useMemo(() => activeEmployees.find(e => e.id === formData.employeeId), [formData.employeeId, activeEmployees]);
 
