@@ -240,6 +240,7 @@ This is my acknowledgment of receipt, with full knowledge of the laws governing 
                     );
                   })}
                 </div>
+                </>
               )}
             </CardContent>
           </Card>
