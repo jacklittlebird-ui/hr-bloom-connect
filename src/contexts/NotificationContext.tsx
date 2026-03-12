@@ -41,6 +41,7 @@ const mapRow = (r: any): AppNotification => ({
   type: r.type as AppNotification['type'],
   module: r.module,
   employeeId: r.employee_id || undefined,
+  userId: r.user_id || undefined,
   targetType: r.target_type || 'general',
   senderName: r.sender_name || undefined,
   read: r.is_read,
