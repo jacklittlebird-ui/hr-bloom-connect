@@ -189,6 +189,53 @@ export const PortalCustody = () => {
                   </TableBody>
                 </Table>
                 </div>
+
+                <div className="space-y-4 mt-6">
+                  {assets.map(a => {
+                    const assetName = ar ? a.nameAr : a.nameEn;
+                    const categoryMap: Record<string, { ar: string; en: string }> = {
+                      electronics: { ar: 'إلكترونيات', en: 'Electronics' },
+                      furniture: { ar: 'أثاث', en: 'Furniture' },
+                      vehicles: { ar: 'مركبات', en: 'Vehicles' },
+                      tools: { ar: 'أدوات', en: 'Tools' },
+                      other: { ar: 'أخرى', en: 'Other' },
+                    };
+                    const catLabel = categoryMap[a.category] ? (ar ? categoryMap[a.category].ar : categoryMap[a.category].en) : a.category;
+
+                    return (
+                      <div key={a.id} className="bg-muted/50 border border-border rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="w-4 h-4 text-primary" />
+                          <h4 className="font-bold text-sm text-foreground">{ar ? 'إيصال استلام' : 'Receipt of Custody'}</h4>
+                          <Badge variant="outline" className="text-xs">{a.assetCode}</Badge>
+                        </div>
+                        <p className="text-sm leading-7 text-muted-foreground whitespace-pre-wrap">
+                          {ar ? (
+                            <>
+                              أقر أنا الموقع أدناه <strong className="text-foreground">{employeeName}</strong> أنني تسلمت <strong className="text-primary">{assetName}</strong> فئة <strong className="text-primary">{catLabel}</strong> العلامة التجارية <strong className="text-primary">{a.brand || '—'}</strong> بمبلغ <strong className="text-primary">{a.purchasePrice != null ? a.purchasePrice.toLocaleString() : '—'}</strong> جنيه وذلك كعهدة شخصية من الشركة على سبيل الأمانة، وأتعهد بالمحافظة عليها وتسليمها للشركة متى طُلب مني ذلك.
+
+وهذا إقرار مني بالاستلام مع كامل علمي بأحكام القوانين المنظمة لخيانة الأمانة وهذا إقرار مني بذلك.
+                            </>
+                          ) : (
+                            <>
+                              I, the undersigned <strong className="text-foreground">{employeeName}</strong>, acknowledge that I have received <strong className="text-primary">{assetName}</strong> category <strong className="text-primary">{catLabel}</strong> brand <strong className="text-primary">{a.brand || '—'}</strong> valued at <strong className="text-primary">{a.purchasePrice != null ? a.purchasePrice.toLocaleString() : '—'}</strong> EGP as a personal custody from the company in trust, and I pledge to maintain it and return it to the company whenever requested.
+
+This is my acknowledgment of receipt, with full knowledge of the laws governing breach of trust.
+                            </>
+                          )}
+                        </p>
+                        <div className="mt-4 pt-3 border-t border-border/50 flex flex-col gap-1">
+                          <p className="text-sm font-semibold text-foreground">
+                            {ar ? 'المقر بما فيه:' : 'Acknowledged by:'} <span className="text-primary">{employeeName}</span>
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {ar ? 'تاريخ الإقرار:' : 'Acknowledgment date:'} {a.assignedDate ? new Date(a.assignedDate).toLocaleDateString(ar ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </CardContent>
           </Card>
