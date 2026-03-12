@@ -12,6 +12,7 @@ export interface AppNotification {
   type: 'success' | 'warning' | 'info' | 'error';
   module: string;
   employeeId?: string;
+  userId?: string;
   targetType?: string;
   senderName?: string;
   read: boolean;
