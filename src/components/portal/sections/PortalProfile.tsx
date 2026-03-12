@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { User, Building2, Briefcase, Mail, Phone, CreditCard, Calendar, FileText, Shield, Landmark } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
 
 const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) => (
@@ -49,9 +50,14 @@ export const PortalProfile = () => {
       <Card>
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center text-xl md:text-2xl font-bold text-primary shrink-0">
-              {employee.nameAr[0]}
-            </div>
+            <Avatar className="w-14 h-14 md:w-16 md:h-16 border-2 border-primary shrink-0">
+              {employee.avatar ? (
+                <AvatarImage src={employee.avatar} alt={ar ? employee.nameAr : employee.nameEn} />
+              ) : null}
+              <AvatarFallback className="bg-primary/10 text-primary text-xl md:text-2xl font-bold">
+                {employee.nameAr[0]}
+              </AvatarFallback>
+            </Avatar>
             <div className="text-center sm:text-start">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h2 className="text-lg md:text-xl font-bold">{ar ? employee.nameAr : employee.nameEn}</h2>
