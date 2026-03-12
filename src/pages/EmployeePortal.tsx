@@ -62,6 +62,7 @@ const EmployeePortal = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [ackDismissed, setAckDismissed] = useState(false);
   const [assetAckDismissed, setAssetAckDismissed] = useState(false);
+  const [uniformAckDismissed, setUniformAckDismissed] = useState(false);
   const [systemAckDismissed, setSystemAckDismissed] = useState(false);
 
   // Apply saved portal color on mount
