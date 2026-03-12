@@ -338,12 +338,39 @@ export const LoansList = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>{isRTL ? 'اختر الموظف *' : 'Select Employee *'}</Label>
-              <Select value={formData.employeeId} onValueChange={v => setFormData({ ...formData, employeeId: v })}>
-                <SelectTrigger><SelectValue placeholder={isRTL ? '-- اختر الموظف --' : '-- Select --'} /></SelectTrigger>
-                <SelectContent>
-                  {activeEmployees.map(emp => <SelectItem key={emp.id} value={emp.id}>{isRTL ? emp.nameAr : emp.nameEn}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Input
+                  placeholder={isRTL ? 'ابحث بكود الموظف أو الاسم...' : 'Search by employee code or name...'}
+                  value={employeeSearch}
+                  onChange={e => { setEmployeeSearch(e.target.value); setShowEmployeeDropdown(true); if (!e.target.value) setFormData({ ...formData, employeeId: '' }); }}
+                  onFocus={() => setShowEmployeeDropdown(true)}
+                  className={isRTL ? 'pr-9' : 'pl-9'}
+                />
+                <Search className={`absolute top-3 h-4 w-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
+                {showEmployeeDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {filteredEmployees.length === 0 ? (
+                      <p className="p-3 text-sm text-muted-foreground text-center">{isRTL ? 'لا توجد نتائج' : 'No results'}</p>
+                    ) : (
+                      filteredEmployees.map(emp => (
+                        <button
+                          key={emp.id}
+                          type="button"
+                          className="w-full text-right px-3 py-2 hover:bg-accent text-sm flex items-center justify-between gap-2"
+                          onClick={() => {
+                            setFormData({ ...formData, employeeId: emp.id });
+                            setEmployeeSearch(`${emp.employeeCode} - ${isRTL ? emp.nameAr : emp.nameEn}`);
+                            setShowEmployeeDropdown(false);
+                          }}
+                        >
+                          <span className="font-semibold">{isRTL ? emp.nameAr : emp.nameEn}</span>
+                          <span className="text-muted-foreground text-xs">{emp.employeeCode}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
               {selectedEmployee && <p className="text-sm text-muted-foreground">{isRTL ? 'المحطة/الموقع: ' : 'Station: '}{getStationLabel(selectedEmployee.id)}</p>}
             </div>
             <div className="space-y-2">
