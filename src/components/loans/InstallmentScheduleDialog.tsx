@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -36,28 +38,109 @@ const getMonthLabel = (dateStr: string, lang: string) => {
 
 type InstallmentStatus = 'paid' | 'current' | 'upcoming';
 
+interface InstallmentRow {
+  id: string;
+  installment_number: number;
+  amount: number;
+  due_date: string;
+  status: string;
+}
+
 export const InstallmentScheduleDialog = ({ open, onOpenChange, loan }: InstallmentScheduleProps) => {
   const { isRTL, language } = useLanguage();
+  const [scheduleRows, setScheduleRows] = useState<InstallmentRow[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open || !loan?.id) {
+      setScheduleRows([]);
+      return;
+    }
+
+    let active = true;
+    const fetchInstallments = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('loan_installments')
+        .select('id, installment_number, amount, due_date, status')
+        .eq('loan_id', loan.id)
+        .order('installment_number', { ascending: true });
+
+      if (!active) return;
+      if (error) {
+        setScheduleRows([]);
+      } else {
+        setScheduleRows((data as InstallmentRow[]) || []);
+      }
+      setIsLoading(false);
+    };
+
+    fetchInstallments();
+
+    return () => {
+      active = false;
+    };
+  }, [open, loan?.id]);
 
   if (!loan) return null;
 
-  const progressPercent = loan.installments > 0 ? (loan.paidInstallments / loan.installments) * 100 : 0;
+  const totalInstallmentsCount = scheduleRows.length > 0 ? scheduleRows.length : loan.installments;
+  const paidInstallmentsCount = scheduleRows.length > 0
+    ? scheduleRows.filter((row) => row.status === 'paid').length
+    : loan.paidInstallments;
 
-  const installments = Array.from({ length: loan.installments }, (_, i) => {
-    const date = getInstallmentDate(loan.startDate, i);
-    let status: InstallmentStatus = 'upcoming';
-    if (i < loan.paidInstallments) status = 'paid';
-    else if (i === loan.paidInstallments) status = 'current';
+  const progressPercent = totalInstallmentsCount > 0
+    ? (paidInstallmentsCount / totalInstallmentsCount) * 100
+    : 0;
 
-    return {
-      number: i + 1,
-      date,
-      amount: loan.monthlyPayment,
-      cumulativePaid: Math.min((i + 1) * loan.monthlyPayment, loan.amount),
-      remaining: Math.max(loan.amount - (i + 1) * loan.monthlyPayment, 0),
-      status,
-    };
-  });
+  const installments = (() => {
+    if (scheduleRows.length > 0) {
+      const firstPendingIndex = scheduleRows.findIndex((row) => row.status !== 'paid');
+      let cumulative = 0;
+
+      return scheduleRows.map((row, index) => {
+        const amount = Number(row.amount) || 0;
+        cumulative += amount;
+
+        let status: InstallmentStatus = 'upcoming';
+        if (row.status === 'paid') {
+          status = 'paid';
+        } else if (firstPendingIndex === index) {
+          status = 'current';
+        }
+
+        return {
+          number: row.installment_number,
+          date: row.due_date?.slice(0, 7) || '',
+          amount,
+          cumulativePaid: Math.min(cumulative, loan.amount),
+          remaining: Math.max(loan.amount - cumulative, 0),
+          status,
+        };
+      });
+    }
+
+    let cumulative = 0;
+    return Array.from({ length: loan.installments }, (_, i) => {
+      const amount = i + 1 === loan.installments
+        ? Math.max(loan.amount - (loan.monthlyPayment * (loan.installments - 1)), 0)
+        : loan.monthlyPayment;
+      cumulative += amount;
+
+      let status: InstallmentStatus = 'upcoming';
+      if (i < loan.paidInstallments) status = 'paid';
+      else if (i === loan.paidInstallments) status = 'current';
+
+      return {
+        number: i + 1,
+        date: getInstallmentDate(loan.startDate, i),
+        amount,
+        cumulativePaid: Math.min(cumulative, loan.amount),
+        remaining: Math.max(loan.amount - cumulative, 0),
+        status,
+      };
+    });
+  })();
 
   const statusConfig: Record<InstallmentStatus, { label: string; labelEn: string; icon: typeof CheckCircle; color: string }> = {
     paid: { label: 'مدفوع', labelEn: 'Paid', icon: CheckCircle, color: 'bg-green-100 text-green-700 border-green-300' },
@@ -86,7 +169,7 @@ export const InstallmentScheduleDialog = ({ open, onOpenChange, loan }: Installm
           </div>
           <div className="bg-green-50 rounded-lg p-3 text-center">
             <p className="text-xs text-muted-foreground">{isRTL ? 'المدفوع' : 'Paid'}</p>
-            <p className="font-bold text-green-700">{loan.paidInstallments} / {loan.installments}</p>
+            <p className="font-bold text-green-700">{paidInstallmentsCount} / {totalInstallmentsCount}</p>
           </div>
           <div className="bg-muted/50 rounded-lg p-3 text-center">
             <p className="text-xs text-muted-foreground">{isRTL ? 'نسبة الإنجاز' : 'Progress'}</p>
@@ -109,7 +192,13 @@ export const InstallmentScheduleDialog = ({ open, onOpenChange, loan }: Installm
             </TableRow>
           </TableHeader>
           <TableBody>
-            {installments.map((inst) => {
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  {isRTL ? 'جاري تحميل جدول الأقساط...' : 'Loading installment schedule...'}
+                </TableCell>
+              </TableRow>
+            ) : installments.map((inst) => {
               const config = statusConfig[inst.status];
               const Icon = config.icon;
               return (

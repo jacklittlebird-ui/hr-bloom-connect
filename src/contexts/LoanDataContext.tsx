@@ -154,8 +154,8 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [fetchLoans]);
 
   const recordLoanPayment = useCallback(async (loanId: string) => {
-    // Find the next pending installment
-    const { data: installments } = await supabase
+    // Find next pending installment and mark it paid
+    const { data: installments, error: installmentError } = await supabase
       .from('loan_installments')
       .select('id')
       .eq('loan_id', loanId)
@@ -163,24 +163,40 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       .order('installment_number', { ascending: true })
       .limit(1);
 
-    if (installments && installments.length > 0) {
-      await supabase.from('loan_installments').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', installments[0].id);
+    if (installmentError) throw installmentError;
+    if (!installments || installments.length === 0) {
+      await fetchLoans();
+      return;
     }
 
-    // Update loan counters
-    const loan = loans.find(l => l.id === loanId);
-    if (loan) {
-      const newPaid = loan.paidInstallments + 1;
-      const newPaidAmount = newPaid * loan.monthlyPayment;
-      await supabase.from('loans').update({
+    const { error: payError } = await supabase
+      .from('loan_installments')
+      .update({ status: 'paid', paid_at: new Date().toISOString() })
+      .eq('id', installments[0].id);
+
+    if (payError) throw payError;
+
+    const { data: loanRow, error: loanError } = await supabase
+      .from('loans')
+      .select('paid_count, installments_count')
+      .eq('id', loanId)
+      .single();
+
+    if (loanError) throw loanError;
+
+    const newPaid = Math.min((loanRow.paid_count || 0) + 1, loanRow.installments_count || 1);
+    const { error: updateError } = await supabase
+      .from('loans')
+      .update({
         paid_count: newPaid,
-        remaining: loan.amount - newPaidAmount,
-        status: newPaid >= loan.installments ? 'completed' : 'active',
-      }).eq('id', loanId);
-    }
+        status: newPaid >= (loanRow.installments_count || 1) ? 'completed' : 'active',
+      })
+      .eq('id', loanId);
+
+    if (updateError) throw updateError;
 
     await fetchLoans();
-  }, [loans, fetchLoans]);
+  }, [fetchLoans]);
 
   const addAdvance = useCallback(async (advance: Omit<Advance, 'id'>) => {
     const { error } = await supabase.from('advances').insert({
