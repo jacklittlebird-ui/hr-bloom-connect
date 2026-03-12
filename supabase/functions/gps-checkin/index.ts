@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
       if (existingDevice.device_id !== device_id) {
         // Log alert
         await supabaseAdmin.from("device_alerts").insert({
-          user_id: user.id,
+          user_id: userId,
           device_id,
           reason: "device_mismatch",
           meta: { expected: existingDevice.device_id, got: device_id },
