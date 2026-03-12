@@ -280,8 +280,8 @@ export interface AttendanceCalculation {
 export const sampleLocations: Location[] = [
   {
     id: 'loc-hq',
-    name: 'Headquarters',
-    nameAr: 'المقر الرئيسي',
+    name: 'Link Cargo',
+    nameAr: 'لينك كارجو',
     type: 'headquarters',
     code: 'HQ',
     timezone: 'Africa/Cairo',
@@ -381,9 +381,9 @@ export const sampleAttendanceRules: AttendanceRule[] = [
   {
     id: 'rule-hq-fixed',
     name: 'HQ Fixed Schedule',
-    nameAr: 'دوام ثابت - المقر الرئيسي',
-    description: 'Standard 8AM to 6PM schedule for headquarters employees',
-    descriptionAr: 'دوام ثابت من 8 صباحاً حتى 6 مساءً لموظفي المقر الرئيسي',
+    nameAr: 'دوام ثابت - لينك كارجو',
+    description: 'Standard 8AM to 6PM schedule for Link Cargo employees',
+    descriptionAr: 'دوام ثابت من 8 صباحاً حتى 6 مساءً لموظفي لينك كارجو',
     scheduleType: 'fixed',
     isActive: true,
     fixedSchedule: {
@@ -400,7 +400,7 @@ export const sampleAttendanceRules: AttendanceRule[] = [
   {
     id: 'rule-hq-flexible',
     name: 'HQ Flexible Schedule',
-    nameAr: 'دوام مرن - المقر الرئيسي',
+    nameAr: 'دوام مرن - لينك كارجو',
     description: 'Flexible arrival between 9:00-9:30 AM',
     descriptionAr: 'دوام مرن مع إمكانية الحضور بين 9:00 و 9:30 صباحاً',
     scheduleType: 'flexible',
