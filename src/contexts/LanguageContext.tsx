@@ -507,7 +507,7 @@ const translations: Record<string, Record<Language, string>> = {
   'attendance.rules.daysPerWeek': { en: 'days/week', ar: 'يوم/أسبوع' },
   // Attendance - Locations Management
   'attendance.locations.title': { en: 'Location Management', ar: 'إدارة المواقع' },
-  'attendance.locations.subtitle': { en: 'Configure headquarters and airport locations', ar: 'تكوين مواقع المقر الرئيسي والمطارات' },
+  'attendance.locations.subtitle': { en: 'Configure Link Cargo and airport locations', ar: 'تكوين مواقع لينك كارجو والمطارات' },
   'attendance.locations.addLocation': { en: 'Add Location', ar: 'إضافة موقع' },
   'attendance.locations.nameEn': { en: 'Name (English)', ar: 'الاسم (إنجليزي)' },
   'attendance.locations.nameAr': { en: 'Name (Arabic)', ar: 'الاسم (عربي)' },
