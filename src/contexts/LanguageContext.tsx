@@ -629,7 +629,7 @@ const translations: Record<string, Record<Language, string>> = {
   'attendance.department': { en: 'Department', ar: 'القسم' },
   'attendance.selectDepartment': { en: 'Select Department', ar: 'اختر القسم' },
   'attendance.location': { en: 'Location', ar: 'الموقع' },
-  'attendance.locations.hq': { en: 'Headquarters', ar: 'المقر الرئيسي' },
+  'attendance.locations.hq': { en: 'Link Cargo', ar: 'لينك كارجو' },
   'attendance.locations.airportT1': { en: 'Airport - Terminal 1', ar: 'المطار - صالة 1' },
   'attendance.locations.airportT2': { en: 'Airport - Terminal 2', ar: 'المطار - صالة 2' },
   'attendance.locations.airportT3': { en: 'Airport - Terminal 3', ar: 'المطار - صالة 3' },

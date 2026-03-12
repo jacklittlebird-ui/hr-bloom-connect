@@ -400,7 +400,7 @@ export const sampleAttendanceRules: AttendanceRule[] = [
   {
     id: 'rule-hq-flexible',
     name: 'HQ Flexible Schedule',
-    nameAr: 'دوام مرن - المقر الرئيسي',
+    nameAr: 'دوام مرن - لينك كارجو',
     description: 'Flexible arrival between 9:00-9:30 AM',
     descriptionAr: 'دوام مرن مع إمكانية الحضور بين 9:00 و 9:30 صباحاً',
     scheduleType: 'flexible',
