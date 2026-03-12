@@ -213,6 +213,7 @@ export const LoansList = () => {
 
   const exportColumns = [
     { header: isRTL ? 'الموظف' : 'Employee', key: 'employeeName' },
+    { header: isRTL ? 'المحطة' : 'Station', key: 'stationLabel' },
     { header: isRTL ? 'إجمالي القرض' : 'Total', key: 'amount' },
     { header: isRTL ? 'القسط الشهري' : 'Monthly', key: 'monthlyPayment' },
     { header: isRTL ? 'عدد الأقساط' : 'Installments', key: 'installments' },
@@ -220,7 +221,7 @@ export const LoansList = () => {
     { header: isRTL ? 'المتبقي' : 'Remaining', key: 'remainingAmount' },
     { header: isRTL ? 'الحالة' : 'Status', key: 'status' },
   ];
-  const exportData = filteredLoans.map(l => ({ ...l, status: isRTL ? statusLabels[l.status].ar : statusLabels[l.status].en }));
+  const exportData = filteredLoans.map(l => ({ ...l, stationLabel: getStationLabel(l.employeeId), status: isRTL ? statusLabels[l.status].ar : statusLabels[l.status].en }));
   const exportTitle = isRTL ? 'تقرير القروض' : 'Loans Report';
 
   const getStationLabel = (empId: string) => {
