@@ -196,7 +196,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const updateAdvance = useCallback(async (id: string, updates: Partial<Advance>) => {
     const dbUpdates: any = {};
     if (updates.amount !== undefined) dbUpdates.amount = updates.amount;
-    if (updates.deductionMonth !== undefined) dbUpdates.deduction_month = updates.deductionMonth;
+    if (updates.deductionMonth !== undefined) dbUpdates.deduction_month = updates.deductionMonth.length === 7 ? `${updates.deductionMonth}-01` : updates.deductionMonth;
     if (updates.reason !== undefined) dbUpdates.reason = updates.reason;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.employeeId !== undefined) dbUpdates.employee_id = updates.employeeId;
