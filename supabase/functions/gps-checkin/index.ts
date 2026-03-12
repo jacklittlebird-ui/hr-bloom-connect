@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
 
     // Insert attendance event
     await supabaseAdmin.from("attendance_events").insert({
-      user_id: user.id,
+      user_id: userId,
       employee_id: employeeId,
       event_type,
       device_id,
