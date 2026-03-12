@@ -199,10 +199,12 @@ export const PortalCustody = () => {
                   {assets.map(a => {
                     const assetName = ar ? a.nameAr : a.nameEn;
                     const categoryMap: Record<string, { ar: string; en: string }> = {
-                      electronics: { ar: 'إلكترونيات', en: 'Electronics' },
+                      laptop: { ar: 'لابتوب', en: 'Laptop' },
+                      desktop: { ar: 'كمبيوتر مكتبي', en: 'Desktop' },
+                      phone: { ar: 'هاتف', en: 'Phone' },
+                      printer: { ar: 'طابعة', en: 'Printer' },
                       furniture: { ar: 'أثاث', en: 'Furniture' },
-                      vehicles: { ar: 'مركبات', en: 'Vehicles' },
-                      tools: { ar: 'أدوات', en: 'Tools' },
+                      vehicle: { ar: 'مركبة', en: 'Vehicle' },
                       other: { ar: 'أخرى', en: 'Other' },
                     };
                     const catLabel = categoryMap[a.category] ? (ar ? categoryMap[a.category].ar : categoryMap[a.category].en) : a.category;
