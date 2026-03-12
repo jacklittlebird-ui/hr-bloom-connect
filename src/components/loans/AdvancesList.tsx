@@ -201,6 +201,13 @@ export const AdvancesList = () => {
                   {stationLocations.map(s => <SelectItem key={s.value} value={s.value}>{isRTL ? s.labelAr : s.labelEn}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <Select value={monthFilter} onValueChange={setMonthFilter}>
+                <SelectTrigger className="w-44"><SelectValue placeholder={isRTL ? 'شهر الخصم' : 'Deduction Month'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{isRTL ? 'جميع الأشهر' : 'All Months'}</SelectItem>
+                  {uniqueDeductionMonths.map(m => <SelectItem key={m} value={m}>{getMonthName(m, language)}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)}><Printer className="h-4 w-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })}><FileText className="h-4 w-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'advances' })}><FileSpreadsheet className="h-4 w-4" /></Button>

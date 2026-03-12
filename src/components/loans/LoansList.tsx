@@ -291,6 +291,13 @@ export const LoansList = () => {
                   {stationLocations.map(s => <SelectItem key={s.value} value={s.value}>{isRTL ? s.labelAr : s.labelEn}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <Select value={startDateFilter} onValueChange={setStartDateFilter}>
+                <SelectTrigger className="w-44"><SelectValue placeholder={isRTL ? 'تاريخ بدء الخصم' : 'Start Date'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{isRTL ? 'جميع التواريخ' : 'All Dates'}</SelectItem>
+                  {uniqueStartDates.map(d => <SelectItem key={d} value={d}>{getMonthName(d, language)}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)}><Printer className="h-4 w-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })}><FileText className="h-4 w-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'loans' })}><FileSpreadsheet className="h-4 w-4" /></Button>
