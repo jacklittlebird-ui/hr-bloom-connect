@@ -56,6 +56,7 @@ export const PortalCustody = () => {
         setAssets(data.map(a => ({
           id: a.id, assetCode: a.asset_code, nameEn: a.name_en, nameAr: a.name_ar,
           brand: a.brand || '', model: a.model || '', condition: a.condition || 'good', status: a.status,
+          category: a.category || 'other', purchasePrice: a.purchase_price, assignedDate: a.created_at,
         })));
       }
     };
