@@ -110,6 +110,8 @@ export const LoansList = () => {
     activeLoans: loans.filter(l => l.status === 'active').length,
     pendingLoans: loans.filter(l => l.status === 'pending').length,
     totalAmount: loans.filter(l => l.status === 'active').reduce((sum, l) => sum + l.remainingAmount, 0),
+    totalLoanValue: loans.reduce((sum, l) => sum + l.amount, 0),
+    totalRemaining: loans.reduce((sum, l) => sum + l.remainingAmount, 0),
   };
 
   const resetForm = () => {
@@ -228,12 +230,14 @@ export const LoansList = () => {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
-          { label: isRTL ? 'إجمالي القروض' : 'Total Loans', value: stats.totalLoans, icon: Banknote, bgClass: 'bg-stat-purple-bg', iconBg: 'bg-stat-purple' },
+          { label: isRTL ? 'عدد القروض' : 'Total Loans', value: stats.totalLoans, icon: Banknote, bgClass: 'bg-stat-purple-bg', iconBg: 'bg-stat-purple' },
           { label: isRTL ? 'القروض النشطة' : 'Active Loans', value: stats.activeLoans, icon: CheckCircle, bgClass: 'bg-stat-green-bg', iconBg: 'bg-stat-green' },
           { label: isRTL ? 'قيد الانتظار' : 'Pending', value: stats.pendingLoans, icon: Clock, bgClass: 'bg-stat-yellow-bg', iconBg: 'bg-stat-yellow' },
-          { label: isRTL ? 'إجمالي المتبقي' : 'Outstanding', value: stats.totalAmount.toLocaleString(), icon: Users, bgClass: 'bg-stat-blue-bg', iconBg: 'bg-stat-blue' },
+          { label: isRTL ? 'المتبقي (نشط)' : 'Active Outstanding', value: stats.totalAmount.toLocaleString(), icon: Users, bgClass: 'bg-stat-blue-bg', iconBg: 'bg-stat-blue' },
+          { label: isRTL ? 'إجمالي قيمة القروض' : 'Total Loan Value', value: stats.totalLoanValue.toLocaleString(), icon: CreditCard, bgClass: 'bg-stat-coral-bg', iconBg: 'bg-stat-coral' },
+          { label: isRTL ? 'إجمالي المبالغ المتبقية' : 'Total Remaining', value: stats.totalRemaining.toLocaleString(), icon: List, bgClass: 'bg-stat-pink-bg', iconBg: 'bg-stat-pink' },
         ].map((s, i) => (
           <div key={i} className={`rounded-xl p-5 ${s.bgClass} flex items-center gap-4 shadow-sm border border-border/30`}>
             <div className={`w-12 h-12 rounded-xl ${s.iconBg} flex items-center justify-center shrink-0`}>
