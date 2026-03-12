@@ -59,6 +59,49 @@ export type Database = {
           },
         ]
       }
+      asset_acknowledgments: {
+        Row: {
+          acknowledged_at: string
+          asset_id: string
+          employee_id: string
+          id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          asset_id: string
+          employee_id: string
+          id?: string
+        }
+        Update: {
+          acknowledged_at?: string
+          asset_id?: string
+          employee_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_acknowledgments_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_acknowledgments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_acknowledgments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_code: string
