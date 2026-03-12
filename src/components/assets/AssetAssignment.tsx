@@ -62,6 +62,7 @@ export const AssetAssignment = () => {
   const [assignedAssets, setAssignedAssets] = useState<AssignedAsset[]>([]);
   const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [employeePopoverOpen, setEmployeePopoverOpen] = useState(false);
 
   // Form state
   const [selectedStation, setSelectedStation] = useState('');
