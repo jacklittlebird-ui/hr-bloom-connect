@@ -303,14 +303,9 @@ export const PortalSalary = () => {
                         <TableCell className="text-destructive">{p.totalDeductions.toLocaleString()}</TableCell>
                         <TableCell className="font-bold text-primary">{p.netSalary.toLocaleString()}</TableCell>
                         <TableCell>
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setSelectedSlip(p)}>
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => printSlip(p)}>
-                              <Printer className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          <Button variant="ghost" size="icon" onClick={() => setSelectedSlip(p)}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -386,9 +381,6 @@ export const PortalSalary = () => {
                 <span>{ar ? 'صافي الراتب' : 'Net Salary'}</span>
                 <span className="text-primary">{selectedSlip.netSalary.toLocaleString()} {ar ? 'ج.م' : 'EGP'}</span>
               </div>
-              <Button onClick={() => printSlip(selectedSlip)} className="w-full gap-2">
-                <Printer className="w-4 h-4" />{ar ? 'طباعة' : 'Print'}
-              </Button>
             </div>
           )}
         </DialogContent>
