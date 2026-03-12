@@ -46,10 +46,14 @@ export const LoanReports = () => {
   const [stationFilter, setStationFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState('2025');
 
-  const filteredStationData = useMemo(() =>
-    stationFilter === 'all' ? stationAdvancesData : stationAdvancesData.filter(s => s.station === stationFilter),
-    [stationFilter]
-  );
+  const filteredStationData = useMemo(() => {
+    const data = stationFilter === 'all' ? [...stationAdvancesData] : stationAdvancesData.filter(s => s.station === stationFilter);
+    return data.sort((a, b) => {
+      const nameA = isRTL ? a.stationAr : a.stationEn;
+      const nameB = isRTL ? b.stationAr : b.stationEn;
+      return nameA.localeCompare(nameB, isRTL ? 'ar' : 'en');
+    });
+  }, [stationFilter, isRTL]);
 
   const totalStats = {
     totalLoansAmount: mockReportData.reduce((s, d) => s + d.loansAmount, 0),
