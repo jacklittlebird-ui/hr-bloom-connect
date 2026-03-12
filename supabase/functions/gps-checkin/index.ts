@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
     } else {
       // Bind device
       await supabaseAdmin.from("user_devices").insert({
-        user_id: user.id,
+        user_id: userId,
         device_id,
       });
     }
