@@ -12,6 +12,7 @@ export interface AppNotification {
   type: 'success' | 'warning' | 'info' | 'error';
   module: string;
   employeeId?: string;
+  userId?: string;
   targetType?: string;
   senderName?: string;
   read: boolean;
@@ -40,6 +41,7 @@ const mapRow = (r: any): AppNotification => ({
   type: r.type as AppNotification['type'],
   module: r.module,
   employeeId: r.employee_id || undefined,
+  userId: r.user_id || undefined,
   targetType: r.target_type || 'general',
   senderName: r.sender_name || undefined,
   read: r.is_read,
@@ -91,9 +93,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const getFilteredNotifications = useCallback((portal: PortalFilter, employeeId?: string): AppNotification[] => {
     let filtered = notifications;
 
-    // For employee portal, only show notifications for that specific employee
-    if (portal === 'employee' && employeeId) {
-      filtered = filtered.filter(n => n.employeeId === employeeId);
+    // For employee portal: RLS already filters by user_id = auth.uid()
+    // So all fetched notifications belong to this user - just filter by relevant modules
+    if (portal === 'employee') {
+      const modules = PORTAL_MODULES.employee;
+      if (modules) {
+        filtered = filtered.filter(n => modules.includes(n.module));
+      }
     }
 
     // For station_manager, show relevant modules
