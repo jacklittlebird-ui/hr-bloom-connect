@@ -35,18 +35,20 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
-    // Get user from token
+    // Validate token using getClaims
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseAuth = createClient(supabaseUrl, anonKey, {
       global: { headers: { authorization: authHeader } },
     });
-    const { data: { user }, error: userErr } = await supabaseAuth.auth.getUser();
-    if (userErr || !user) {
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsErr } = await supabaseAuth.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "content-type": "application/json" },
       });
     }
+    const userId = claimsData.claims.sub as string;
 
     const { event_type, gps_lat, gps_lng, gps_accuracy, device_id } = await req.json();
 
