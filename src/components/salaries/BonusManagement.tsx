@@ -226,8 +226,8 @@ export const BonusManagement = () => {
         const pct = parseFloat(levelPercentages[level] || '0');
         if (pct <= 0) continue;
 
-        // Get gross: prefer payroll, fallback to salary_records, fallback to basic_salary from employees
-        let grossSalary = grossMap.get(emp.id) || salaryGrossMap.get(emp.id) || 0;
+        // Get gross: prefer salary_records, fallback to payroll, fallback to basic_salary
+        let grossSalary = salaryGrossMap.get(emp.id) || grossMap.get(emp.id) || 0;
         if (grossSalary <= 0) {
           // Fetch basic salary from employees table
           const { data: empData } = await supabase
