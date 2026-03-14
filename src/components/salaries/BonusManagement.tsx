@@ -117,9 +117,9 @@ export const BonusManagement = () => {
   const levels = useMemo(() => [...new Set(records.map(r => r.job_level).filter(Boolean))].sort(), [records]);
   const banks = useMemo(() => [...new Set(records.map(r => r.bank_name).filter(Boolean))].sort(), [records]);
 
-  // Filtered records
+  // Filtered and sorted records (station asc, then name asc)
   const filteredRecords = useMemo(() => {
-    return records.filter(r => {
+    const filtered = records.filter(r => {
       if (searchText) {
         const s = searchText.toLowerCase();
         if (!r.employee_name.toLowerCase().includes(s) && !r.employee_code.toLowerCase().includes(s)) return false;
@@ -129,6 +129,11 @@ export const BonusManagement = () => {
       if (filterLevel !== 'all' && r.job_level !== filterLevel) return false;
       if (filterBank !== 'all' && r.bank_name !== filterBank) return false;
       return true;
+    });
+    return filtered.sort((a, b) => {
+      const stationA = (a.station_name || '').localeCompare(b.station_name || '', 'ar');
+      if (stationA !== 0) return stationA;
+      return (a.employee_name || '').localeCompare(b.employee_name || '', 'ar');
     });
   }, [records, searchText, filterStation, filterDepartment, filterLevel, filterBank]);
 
