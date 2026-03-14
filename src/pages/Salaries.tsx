@@ -81,6 +81,9 @@ const Salaries = () => {
         <TabsContent value="eid-bonuses">
           <EidBonuses />
         </TabsContent>
+        <TabsContent value="bonus">
+          <BonusManagement />
+        </TabsContent>
       </Tabs>
     </DashboardLayout>
   );
