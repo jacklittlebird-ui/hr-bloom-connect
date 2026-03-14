@@ -370,31 +370,22 @@ export const BonusManagement = () => {
             </div>
           </div>
 
-          <div>
-            <Label className={cn("text-sm font-semibold mb-3 block", isRTL && "text-right")}>
-              {ar ? 'نسبة المكافأة لكل مستوى وظيفي (% من الراتب الإجمالي)' : 'Bonus percentage per job level (% of gross salary)'}
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {JOB_LEVELS.map(level => (
-                <div key={level.value} className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">{level.label}</Label>
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.5"
-                      placeholder="0"
-                      value={levelPercentages[level.value] || ''}
-                      onChange={e => setLevelPercentages(prev => ({ ...prev, [level.value]: e.target.value }))}
-                      className="h-9 pe-8"
-                    />
-                    <span className="absolute top-1/2 -translate-y-1/2 end-2.5 text-xs text-muted-foreground">%</span>
-                  </div>
-                </div>
-              ))}
+          <div className="space-y-2">
+              <Label className={cn(isRTL && "text-right block")}>{ar ? 'نسبة المكافأة (% من الراتب الإجمالي)' : 'Bonus Rate (% of gross salary)'}</Label>
+              <div className="relative w-48">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  placeholder="25"
+                  value={bonusPercentage}
+                  onChange={e => setBonusPercentage(e.target.value)}
+                  className="h-9 pe-8"
+                />
+                <span className="absolute top-1/2 -translate-y-1/2 end-2.5 text-xs text-muted-foreground">%</span>
+              </div>
             </div>
-          </div>
 
           <div className={cn("flex", isRTL ? "justify-start" : "justify-end")}>
             <Button onClick={handleRun} disabled={loading} className="gap-2 min-w-[180px]">
