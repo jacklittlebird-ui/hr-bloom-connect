@@ -16,19 +16,11 @@ import { format } from 'date-fns';
 import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, CalendarIcon } from 'lucide-react';
 import { useReportExport } from '@/hooks/useReportExport';
 
-const JOB_LEVELS = [
-  { value: 'worker', label: 'Worker' },
-  { value: 'driver', label: 'Driver' },
-  { value: 'messenger', label: 'Messenger' },
-  { value: 'junior', label: 'Junior' },
-  { value: 'mid', label: 'Med Level' },
-  { value: 'senior', label: 'Senior' },
-  { value: 'shiftLeader', label: 'Shift Leader' },
-  { value: 'supervisor', label: 'Supervisor' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'director', label: 'Director' },
-  { value: '__unspecified__', label: 'غير محدد / Unspecified' },
-];
+const JOB_LEVELS_LABELS: Record<string, string> = {
+  worker: 'Worker', driver: 'Driver', messenger: 'Messenger', junior: 'Junior',
+  mid: 'Med Level', senior: 'Senior', shiftLeader: 'Shift Leader',
+  supervisor: 'Supervisor', manager: 'Manager', director: 'Director',
+};
 
 interface BonusRecord {
   id?: string;
@@ -75,7 +67,7 @@ export const BonusManagement = () => {
   const [bonusNumber, setBonusNumber] = useState('1');
   const [minMonths, setMinMonths] = useState('3');
   const [calculationDate, setCalculationDate] = useState<Date>(new Date());
-  const [levelPercentages, setLevelPercentages] = useState<Record<string, string>>({});
+  const [bonusPercentage, setBonusPercentage] = useState('');
   const [records, setRecords] = useState<BonusRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingRecords, setLoadingRecords] = useState(false);
@@ -156,9 +148,9 @@ export const BonusManagement = () => {
   };
 
   const handleRun = async () => {
-    const hasPercentage = Object.values(levelPercentages).some(v => parseFloat(v) > 0);
-    if (!hasPercentage) {
-      toast.error(ar ? 'يرجى إدخال نسبة لفئة واحدة على الأقل' : 'Please enter a percentage for at least one level');
+    const pct = parseFloat(bonusPercentage);
+    if (!pct || pct <= 0) {
+      toast.error(ar ? 'يرجى إدخال نسبة المكافأة' : 'Please enter the bonus percentage');
       return;
     }
 
@@ -224,9 +216,6 @@ export const BonusManagement = () => {
       const bonusRecords: any[] = [];
       for (const emp of employees) {
         const level = emp.job_level || '';
-        const levelKey = level || '__unspecified__';
-        const pct = parseFloat(levelPercentages[levelKey] || '0');
-        if (pct <= 0) continue;
 
         // Get gross: prefer salary_records, fallback to payroll, fallback to basic_salary
         let grossSalary = salaryGrossMap.get(emp.id) || grossMap.get(emp.id) || 0;
@@ -381,31 +370,22 @@ export const BonusManagement = () => {
             </div>
           </div>
 
-          <div>
-            <Label className={cn("text-sm font-semibold mb-3 block", isRTL && "text-right")}>
-              {ar ? 'نسبة المكافأة لكل مستوى وظيفي (% من الراتب الإجمالي)' : 'Bonus percentage per job level (% of gross salary)'}
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {JOB_LEVELS.map(level => (
-                <div key={level.value} className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">{level.label}</Label>
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.5"
-                      placeholder="0"
-                      value={levelPercentages[level.value] || ''}
-                      onChange={e => setLevelPercentages(prev => ({ ...prev, [level.value]: e.target.value }))}
-                      className="h-9 pe-8"
-                    />
-                    <span className="absolute top-1/2 -translate-y-1/2 end-2.5 text-xs text-muted-foreground">%</span>
-                  </div>
-                </div>
-              ))}
+          <div className="space-y-2">
+              <Label className={cn(isRTL && "text-right block")}>{ar ? 'نسبة المكافأة (% من الراتب الإجمالي)' : 'Bonus Rate (% of gross salary)'}</Label>
+              <div className="relative w-48">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  placeholder="25"
+                  value={bonusPercentage}
+                  onChange={e => setBonusPercentage(e.target.value)}
+                  className="h-9 pe-8"
+                />
+                <span className="absolute top-1/2 -translate-y-1/2 end-2.5 text-xs text-muted-foreground">%</span>
+              </div>
             </div>
-          </div>
 
           <div className={cn("flex", isRTL ? "justify-start" : "justify-end")}>
             <Button onClick={handleRun} disabled={loading} className="gap-2 min-w-[180px]">
