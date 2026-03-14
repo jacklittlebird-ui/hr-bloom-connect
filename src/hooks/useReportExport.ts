@@ -248,7 +248,7 @@ export const useReportExport = () => {
 
     const htmlContent = `
       <!DOCTYPE html>
-      <html>
+      <html dir="rtl">
       <head>
         <title>${titleEn} - ${titleAr}</title>
         <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
