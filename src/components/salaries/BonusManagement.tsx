@@ -177,24 +177,27 @@ export const BonusManagement = () => {
         return;
       }
 
-      // Gross salary from Salary & Allowances tab (salary_records)
+      // Gross salary from Salary & Allowances tab (salary_records) - batch to avoid URL length limits
       const empIds = employees.map(e => e.id);
-      const { data: salaryData, error: salaryErr } = await supabase
-        .from('salary_records')
-        .select('employee_id, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance')
-        .in('employee_id', empIds)
-        .order('year', { ascending: false });
-
-      if (salaryErr) throw salaryErr;
-
+      const BATCH_SIZE = 100;
       const salaryGrossMap = new Map<string, number>();
-      (salaryData || []).forEach(s => {
-        if (!salaryGrossMap.has(s.employee_id)) {
-          const gross = (s.basic_salary || 0) + (s.transport_allowance || 0) + (s.incentives || 0) +
-            (s.station_allowance || 0) + (s.mobile_allowance || 0) + (s.living_allowance || 0);
-          salaryGrossMap.set(s.employee_id, gross);
-        }
-      });
+
+      for (let i = 0; i < empIds.length; i += BATCH_SIZE) {
+        const batch = empIds.slice(i, i + BATCH_SIZE);
+        const { data: salaryData } = await supabase
+          .from('salary_records')
+          .select('employee_id, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance')
+          .in('employee_id', batch)
+          .order('year', { ascending: false });
+
+        (salaryData || []).forEach(s => {
+          if (!salaryGrossMap.has(s.employee_id)) {
+            const gross = (s.basic_salary || 0) + (s.transport_allowance || 0) + (s.incentives || 0) +
+              (s.station_allowance || 0) + (s.mobile_allowance || 0) + (s.living_allowance || 0);
+            salaryGrossMap.set(s.employee_id, gross);
+          }
+        });
+      }
 
       const bonusRecords: any[] = [];
       for (const emp of employees) {
