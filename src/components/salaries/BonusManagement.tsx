@@ -160,7 +160,7 @@ export const BonusManagement = () => {
       const { data: employees, error: empErr } = await supabase
         .from('employees')
         .select(`
-          id, name_ar, name_en, employee_code, job_level, job_title_ar, job_title_en,
+          id, name_ar, name_en, employee_code, job_level, job_title_ar, job_title_en, basic_salary,
           hire_date, bank_account_number, bank_id_number, bank_name, bank_account_type,
           station_id, department_id,
           stations:station_id (name_ar, name_en),
@@ -177,13 +177,15 @@ export const BonusManagement = () => {
         return;
       }
 
-      // Get gross salary from salary_records (Salary & Allowances tab) - PRIMARY source
+      // Gross salary from Salary & Allowances tab (salary_records)
       const empIds = employees.map(e => e.id);
-      const { data: salaryData } = await supabase
+      const { data: salaryData, error: salaryErr } = await supabase
         .from('salary_records')
         .select('employee_id, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance')
         .in('employee_id', empIds)
         .order('year', { ascending: false });
+
+      if (salaryErr) throw salaryErr;
 
       const salaryGrossMap = new Map<string, number>();
       (salaryData || []).forEach(s => {
@@ -194,36 +196,12 @@ export const BonusManagement = () => {
         }
       });
 
-      // Fallback: payroll entries
-      const { data: payrollData } = await supabase
-        .from('payroll_entries')
-        .select('employee_id, gross')
-        .in('employee_id', empIds)
-        .order('processed_at', { ascending: false });
-
-      const grossMap = new Map<string, number>();
-      (payrollData || []).forEach(p => {
-        if (!grossMap.has(p.employee_id)) {
-          grossMap.set(p.employee_id, p.gross || 0);
-        }
-      });
-
       const bonusRecords: any[] = [];
       for (const emp of employees) {
         const level = emp.job_level || '';
 
-        // Get gross: prefer salary_records, fallback to payroll, fallback to basic_salary
-        let grossSalary = salaryGrossMap.get(emp.id) || grossMap.get(emp.id) || 0;
-        if (grossSalary <= 0) {
-          // Fetch basic salary from employees table
-          const { data: empData } = await supabase
-            .from('employees')
-            .select('basic_salary')
-            .eq('id', emp.id)
-            .single();
-          grossSalary = empData?.basic_salary || 0;
-        }
-
+        const grossFromSalaryTab = salaryGrossMap.get(emp.id) || 0;
+        const grossSalary = grossFromSalaryTab > 0 ? grossFromSalaryTab : (emp.basic_salary || 0);
         if (grossSalary <= 0) continue;
 
         const amount = Math.round((grossSalary * pct / 100) * 100) / 100;
@@ -253,7 +231,7 @@ export const BonusManagement = () => {
       }
 
       if (bonusRecords.length === 0) {
-        toast.info(ar ? 'لا يوجد موظفين بمستويات وظيفية محددة النسب' : 'No employees match the configured levels');
+        toast.info(ar ? 'لا يوجد موظفين برواتب إجمالية صالحة للاحتساب' : 'No employees with valid gross salary for calculation');
         setLoading(false);
         return;
       }
