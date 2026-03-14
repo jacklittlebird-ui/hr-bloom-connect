@@ -16,19 +16,11 @@ import { format } from 'date-fns';
 import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, CalendarIcon } from 'lucide-react';
 import { useReportExport } from '@/hooks/useReportExport';
 
-const JOB_LEVELS = [
-  { value: 'worker', label: 'Worker' },
-  { value: 'driver', label: 'Driver' },
-  { value: 'messenger', label: 'Messenger' },
-  { value: 'junior', label: 'Junior' },
-  { value: 'mid', label: 'Med Level' },
-  { value: 'senior', label: 'Senior' },
-  { value: 'shiftLeader', label: 'Shift Leader' },
-  { value: 'supervisor', label: 'Supervisor' },
-  { value: 'manager', label: 'Manager' },
-  { value: 'director', label: 'Director' },
-  { value: '__unspecified__', label: 'غير محدد / Unspecified' },
-];
+const JOB_LEVELS_LABELS: Record<string, string> = {
+  worker: 'Worker', driver: 'Driver', messenger: 'Messenger', junior: 'Junior',
+  mid: 'Med Level', senior: 'Senior', shiftLeader: 'Shift Leader',
+  supervisor: 'Supervisor', manager: 'Manager', director: 'Director',
+};
 
 interface BonusRecord {
   id?: string;
