@@ -2350,6 +2350,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      notify_employee_and_admins: {
+        Args: {
+          p_desc_ar?: string
+          p_desc_en?: string
+          p_employee_id: string
+          p_module?: string
+          p_title_ar: string
+          p_title_en: string
+          p_type?: string
+        }
+        Returns: undefined
+      }
       upsert_mobile_bill: {
         Args: {
           p_amount: number
