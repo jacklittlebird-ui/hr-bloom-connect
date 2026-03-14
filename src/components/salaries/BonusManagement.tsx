@@ -239,11 +239,14 @@ export const BonusManagement = () => {
         return;
       }
 
-      const { error: upsertErr } = await supabase
-        .from('bonus_records')
-        .upsert(bonusRecords, { onConflict: 'employee_id,bonus_number,year' });
-
-      if (upsertErr) throw upsertErr;
+      // Batch upsert to avoid payload/URL limits
+      for (let i = 0; i < bonusRecords.length; i += BATCH_SIZE) {
+        const batch = bonusRecords.slice(i, i + BATCH_SIZE);
+        const { error: upsertErr } = await supabase
+          .from('bonus_records')
+          .upsert(batch, { onConflict: 'employee_id,bonus_number,year' });
+        if (upsertErr) throw upsertErr;
+      }
 
       toast.success(ar ? `تم تشغيل المكافأة ${bonusNumber} بنجاح - ${bonusRecords.length} موظف` : `Bonus ${bonusNumber} processed - ${bonusRecords.length} employees`);
       loadExistingRecords();
