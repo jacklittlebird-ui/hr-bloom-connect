@@ -147,26 +147,34 @@ const Leaves = () => {
       };
     }));
 
-    // Leave balances
+    // Leave balances - read from leave_balances table for current year
+    const currentYear = new Date().getFullYear();
+    const { data: dbBalances } = await supabase
+      .from('leave_balances')
+      .select('*')
+      .eq('year', currentYear);
+
+    const balanceMap = new Map((dbBalances || []).map(b => [b.employee_id, b]));
+
     const balances: EmployeeLeaveBalance[] = (employees || []).map(e => {
       const d = e.department_id ? deptMap.get(e.department_id) : null;
       const s = e.station_id ? stMap.get(e.station_id) : null;
-      const empLeaves = (leaves || []).filter(l => l.employee_id === e.id && l.status === 'approved');
-      const annualUsed = empLeaves.filter(l => l.leave_type === 'annual').reduce((sum, l) => sum + l.days, 0);
-      const sickUsed = empLeaves.filter(l => l.leave_type === 'sick').reduce((sum, l) => sum + l.days, 0);
-      const casualUsed = empLeaves.filter(l => l.leave_type === 'casual').reduce((sum, l) => sum + l.days, 0);
-      const empPerms = (perms || []).filter(p => p.employee_id === e.id && p.status === 'approved');
-      const permissionsUsed = empPerms.reduce((sum, p) => sum + (p.hours || 0), 0);
-      const permissionsTotal = 24;
+      const lb = balanceMap.get(e.id);
+      const annualTotal = lb ? Number(lb.annual_total) : (e.annual_leave_balance || 21);
+      const annualUsed = lb ? Number(lb.annual_used) : 0;
+      const sickTotal = lb ? Number(lb.sick_total) : (e.sick_leave_balance || 5);
+      const sickUsed = lb ? Number(lb.sick_used) : 0;
+      const casualTotal = lb ? Number(lb.casual_total) : 7;
+      const casualUsed = lb ? Number(lb.casual_used) : 0;
+      const permissionsTotal = lb ? Number(lb.permissions_total) : 12;
+      const permissionsUsed = lb ? Number(lb.permissions_used) : 0;
       return {
         employeeId: e.id, employeeName: e.name_en, employeeNameAr: e.name_ar,
         department: d ? (language === 'ar' ? d.name_ar : d.name_en) : '',
         station: s ? (language === 'ar' ? s.name_ar : s.name_en) : '',
-        annualTotal: e.annual_leave_balance || 21, annualUsed,
-        annualRemaining: (e.annual_leave_balance || 21) - annualUsed,
-        sickTotal: e.sick_leave_balance || 7, sickUsed,
-        sickRemaining: (e.sick_leave_balance || 7) - sickUsed,
-        casualTotal: 7, casualUsed, casualRemaining: 7 - casualUsed,
+        annualTotal, annualUsed, annualRemaining: annualTotal - annualUsed,
+        sickTotal, sickUsed, sickRemaining: sickTotal - sickUsed,
+        casualTotal, casualUsed, casualRemaining: casualTotal - casualUsed,
         permissionsTotal, permissionsUsed, permissionsRemaining: permissionsTotal - permissionsUsed,
       };
     });
