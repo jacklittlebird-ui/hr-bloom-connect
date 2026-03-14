@@ -29,6 +29,7 @@ const Salaries = () => {
     { id: 'mobile-bills', label: isRTL ? 'فواتير الموبايل' : 'Mobile Bills' },
     { id: 'transfer', label: isRTL ? 'تحويل الرواتب' : 'Salary Transfer' },
     { id: 'eid-bonuses', label: isRTL ? 'العيديات' : 'Eid Bonuses' },
+    { id: 'bonus', label: isRTL ? 'المكافأة' : 'Bonus' },
   ];
 
   return (
