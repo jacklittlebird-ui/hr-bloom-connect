@@ -148,9 +148,9 @@ export const BonusManagement = () => {
   };
 
   const handleRun = async () => {
-    const hasPercentage = Object.values(levelPercentages).some(v => parseFloat(v) > 0);
-    if (!hasPercentage) {
-      toast.error(ar ? 'يرجى إدخال نسبة لفئة واحدة على الأقل' : 'Please enter a percentage for at least one level');
+    const pct = parseFloat(bonusPercentage);
+    if (!pct || pct <= 0) {
+      toast.error(ar ? 'يرجى إدخال نسبة المكافأة' : 'Please enter the bonus percentage');
       return;
     }
 
