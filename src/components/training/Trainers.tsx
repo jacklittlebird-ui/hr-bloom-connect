@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
-import { Plus, Trash2, Save, X, Edit2, ChevronLeft, ChevronRight, Camera } from 'lucide-react';
+import { Plus, Trash2, Save, X, Edit2, ChevronLeft, ChevronRight, Camera, Search, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Trainer {
