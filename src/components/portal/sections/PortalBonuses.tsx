@@ -20,12 +20,12 @@ interface BonusRecord {
 export const PortalBonuses = () => {
   const { language } = useLanguage();
   const isAr = language === 'ar';
-  const { employee } = usePortalEmployee();
+  const employeeId = usePortalEmployee();
   const [records, setRecords] = useState<BonusRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!employee?.id) return;
+    if (!employeeId) return;
     const fetch = async () => {
       setLoading(true);
       const { data } = await supabase
