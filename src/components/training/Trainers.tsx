@@ -214,7 +214,7 @@ export const Trainers = () => {
                </TableRow></TableHeader>
                <TableBody>
                  {filtered.length === 0 ? (
-                   <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد نتائج' : 'No results'}</TableCell></TableRow>
+                   <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد نتائج' : 'No results'}</TableCell></TableRow>
                  ) : filtered.map(trainer => (
                    <TableRow key={trainer.id}>
                      <TableCell>{trainer.provider}</TableCell>
