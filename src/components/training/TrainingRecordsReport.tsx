@@ -248,7 +248,7 @@ export const TrainingRecordsReport = () => {
   };
 
   return (
-    <div dir="rtl" className="space-y-4">
+    <div dir={ar ? 'rtl' : 'ltr'} className="space-y-4">
       {/* Header with buttons */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-lg font-semibold">{ar ? 'تقرير سجلات التدريب' : 'Training Records Report'}</h3>
