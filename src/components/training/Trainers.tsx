@@ -243,25 +243,14 @@ export const Trainers = () => {
               </>)}
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex gap-6">
-              <div className="flex flex-col items-center gap-2">
-                <Avatar className="w-32 h-32 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                  <AvatarImage src={formData.photo} />
-                  <AvatarFallback className="text-3xl">{formData.name?.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                  <Camera className="h-4 w-4 mr-2" />{ar ? 'رفع صورة' : 'Upload Photo'}
-                </Button>
-              </div>
-              <div className="flex-1 grid grid-cols-3 gap-4">
-                <div><Label>{t('training.trainers.provider')}</Label><Input value={formData.provider} onChange={(e) => setFormData({ ...formData, provider: e.target.value })} /></div>
-                <div className="col-span-2"><Label>{ar ? 'الاسم' : 'Name'}</Label><Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} /></div>
-                <div className="col-span-2"><Label>{t('training.trainers.jobTitle')}</Label><Input value={formData.jobTitle} onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })} /></div>
-                <div><Label>{t('training.trainers.email')}</Label><Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} /></div>
-                <div><Label>{t('training.trainers.mobNumber')}</Label><Input value={formData.mobNumber} onChange={(e) => setFormData({ ...formData, mobNumber: e.target.value })} /></div>
-              </div>
-            </div>
+           <CardContent className="space-y-6">
+             <div className="grid grid-cols-3 gap-4">
+                 <div><Label>{t('training.trainers.provider')}</Label><Input value={formData.provider} onChange={(e) => setFormData({ ...formData, provider: e.target.value })} /></div>
+                 <div className="col-span-2"><Label>{ar ? 'الاسم' : 'Name'}</Label><Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} /></div>
+                 <div className="col-span-2"><Label>{t('training.trainers.jobTitle')}</Label><Input value={formData.jobTitle} onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })} /></div>
+                 <div><Label>{t('training.trainers.email')}</Label><Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} /></div>
+                 <div><Label>{t('training.trainers.mobNumber')}</Label><Input value={formData.mobNumber} onChange={(e) => setFormData({ ...formData, mobNumber: e.target.value })} /></div>
+             </div>
             <div className="flex justify-center gap-4 pt-4 border-t">
               {!isAddMode && (<Button variant="destructive" onClick={handleDelete}><Trash2 className="h-4 w-4 mr-2" />{t('training.trainers.deleteRecord')}</Button>)}
               <Button variant="outline" onClick={handleSaveAndNew}><Save className="h-4 w-4 mr-2" />{t('training.trainers.saveAndNew')}</Button>
