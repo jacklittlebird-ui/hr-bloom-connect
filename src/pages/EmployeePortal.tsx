@@ -26,6 +26,8 @@ import { PortalSettings } from '@/components/portal/sections/PortalSettings';
 import { PortalUniforms } from '@/components/portal/sections/PortalUniforms';
 import { PortalTerms } from '@/components/portal/sections/PortalTerms';
 import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
+import { PortalEidBonuses } from '@/components/portal/sections/PortalEidBonuses';
+import { PortalBonuses } from '@/components/portal/sections/PortalBonuses';
 
 export type PortalSection =
   | 'dashboard' | 'profile' | 'attendance' | 'leaves'
