@@ -90,8 +90,13 @@ const EmployeeDetails = () => {
 
   // Filter out salary tabs for HR users
   const detailTabs = useMemo(
-    () => isHR ? allDetailTabs.filter(tab => !HR_HIDDEN_TABS.includes(tab.id)) : allDetailTabs,
-    [isHR]
+    () => {
+      let tabs = allDetailTabs;
+      if (isHR) tabs = tabs.filter(tab => !HR_HIDDEN_TABS.includes(tab.id));
+      if (!isAdmin) tabs = tabs.filter(tab => !ADMIN_ONLY_TABS.includes(tab.id));
+      return tabs;
+    },
+    [isHR, isAdmin]
   );
 
   // Accumulate all field changes from all tabs
