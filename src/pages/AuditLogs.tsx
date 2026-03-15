@@ -1,4 +1,4 @@
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import AuditLogs from '@/components/security/AuditLogs';
 
 const AuditLogsPage = () => (
