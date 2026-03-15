@@ -127,6 +127,8 @@ export const Trainers = () => {
       return (!n || t.name.toLowerCase().includes(n) || t.jobTitle.toLowerCase().includes(n))
         && (!p || t.provider.toLowerCase().includes(p));
     });
+  }, [trainers, searchName, searchProvider]);
+
   const handleNewTrainer = () => {
 
     setIsAddMode(true); setSelectedTrainer(null);
