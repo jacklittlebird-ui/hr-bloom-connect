@@ -217,11 +217,24 @@ export const EidBonuses = () => {
         return;
       }
 
-      const { error: upsertErr } = await supabase
+      // Delete old records for this bonus_number and year first
+      const { error: deleteErr } = await supabase
         .from('eid_bonuses')
-        .upsert(bonusRecords, { onConflict: 'employee_id,bonus_number,year' });
+        .delete()
+        .eq('bonus_number', parseInt(bonusNumber))
+        .eq('year', currentYear);
 
-      if (upsertErr) throw upsertErr;
+      if (deleteErr) throw deleteErr;
+
+      // Insert new records in batches
+      const BATCH = 100;
+      for (let i = 0; i < bonusRecords.length; i += BATCH) {
+        const batch = bonusRecords.slice(i, i + BATCH);
+        const { error: insertErr } = await supabase
+          .from('eid_bonuses')
+          .insert(batch);
+        if (insertErr) throw insertErr;
+      }
 
       toast.success(ar ? `تم تشغيل العيدية ${bonusNumber} بنجاح - ${bonusRecords.length} موظف` : `Eid Bonus ${bonusNumber} processed - ${bonusRecords.length} employees`);
       loadExistingRecords();

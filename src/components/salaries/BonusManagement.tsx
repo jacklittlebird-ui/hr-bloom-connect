@@ -245,13 +245,22 @@ export const BonusManagement = () => {
         return;
       }
 
-      // Batch upsert to avoid payload/URL limits
+      // Delete old records for this bonus_number and year first
+      const { error: deleteErr } = await supabase
+        .from('bonus_records')
+        .delete()
+        .eq('bonus_number', parseInt(bonusNumber))
+        .eq('year', currentYear);
+
+      if (deleteErr) throw deleteErr;
+
+      // Insert new records in batches
       for (let i = 0; i < bonusRecords.length; i += BATCH_SIZE) {
         const batch = bonusRecords.slice(i, i + BATCH_SIZE);
-        const { error: upsertErr } = await supabase
+        const { error: insertErr } = await supabase
           .from('bonus_records')
-          .upsert(batch, { onConflict: 'employee_id,bonus_number,year' });
-        if (upsertErr) throw upsertErr;
+          .insert(batch);
+        if (insertErr) throw insertErr;
       }
 
       toast.success(ar ? `تم تشغيل المكافأة ${bonusNumber} بنجاح - ${bonusRecords.length} موظف` : `Bonus ${bonusNumber} processed - ${bonusRecords.length} employees`);
