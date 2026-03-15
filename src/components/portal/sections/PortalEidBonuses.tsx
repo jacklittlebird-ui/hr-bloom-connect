@@ -19,12 +19,12 @@ interface EidRecord {
 export const PortalEidBonuses = () => {
   const { language } = useLanguage();
   const isAr = language === 'ar';
-  const { employee } = usePortalEmployee();
+  const employeeId = usePortalEmployee();
   const [records, setRecords] = useState<EidRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!employee?.id) return;
+    if (!employeeId) return;
     const fetch = async () => {
       setLoading(true);
       const { data } = await supabase
