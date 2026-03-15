@@ -42,6 +42,8 @@ const sectionComponents: Record<PortalSection, React.FC> = {
   attendance: PortalAttendance,
   leaves: PortalLeaves,
   salary: PortalSalary,
+  'eid-bonuses': PortalEidBonuses,
+  bonuses: PortalBonuses,
   loans: PortalLoans,
   evaluations: PortalEvaluations,
   training: PortalTraining,
