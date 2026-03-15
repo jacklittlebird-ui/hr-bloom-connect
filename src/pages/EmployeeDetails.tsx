@@ -42,7 +42,7 @@ import { Employee } from '@/types/employee';
 
 // Tabs hidden from HR role (salary-related)
 const HR_HIDDEN_TABS = ['salary', 'salaryRecord'];
-
+const ADMIN_ONLY_TABS = ['bonusesEid'];
 const allDetailTabs = [
   { id: 'basic', icon: User, labelKey: 'employees.tabs.basicInfo' },
   { id: 'contact', icon: Phone, labelKey: 'employees.tabs.contactInfo' },
