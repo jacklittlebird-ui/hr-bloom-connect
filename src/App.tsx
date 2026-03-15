@@ -44,6 +44,7 @@ import AttendanceScan from "./pages/AttendanceScan";
 import AttendanceKiosk from "./pages/AttendanceKiosk";
 import AttendanceAdmin from "./pages/AttendanceAdmin";
 import NotificationsPage from "./pages/Notifications";
+import AuditLogsPage from "./pages/AuditLogs";
 
 const queryClient = new QueryClient();
 
