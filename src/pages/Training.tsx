@@ -10,6 +10,7 @@ import { TrainingPlan } from '@/components/training/TrainingPlan';
 import { TrainingRecordsReport } from '@/components/training/TrainingRecordsReport';
 import { TrainingStatsCards } from '@/components/training/TrainingStatsCards';
 import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
+import { BulkTrainingImport } from '@/components/training/BulkTrainingImport';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,7 @@ const Training = () => {
           </Button>
         </div>
 
+        <BulkTrainingImport />
         <TrainingStatsCards key={`stats-${refreshKey}`} />
 
         <Tabs defaultValue="records" className="w-full">
