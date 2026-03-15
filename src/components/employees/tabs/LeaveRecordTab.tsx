@@ -428,7 +428,7 @@ const PermissionsContent = ({ permissions, summary }: {
                 return (
                   <tr key={record.id} className={cn("border-b border-border/20", idx % 2 === 0 ? "bg-card" : "bg-muted/30")}>
                     <td className="px-4 py-3 text-sm text-foreground">{language === 'ar' ? typeLabel?.ar : typeLabel?.en}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{record.date}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{formatDate(record.date)}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{record.fromTime} - {record.toTime}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{record.durationHours} {language === 'ar' ? 'ساعة' : 'hrs'}</td>
                     <td className="px-4 py-3"><StatusBadge status={record.status} /></td>
