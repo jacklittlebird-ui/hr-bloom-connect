@@ -130,7 +130,7 @@ export const EidBonuses = () => {
 
   // Filtered records
   const filteredRecords = useMemo(() => {
-    return records.filter(r => {
+    const filtered = records.filter(r => {
       if (searchText) {
         const s = searchText.toLowerCase();
         if (!r.employee_name.toLowerCase().includes(s) && !r.employee_code.toLowerCase().includes(s)) return false;
@@ -141,6 +141,13 @@ export const EidBonuses = () => {
       if (filterBank !== 'all' && r.bank_name !== filterBank) return false;
       return true;
     });
+    // Sort ascending by station then by employee name
+    filtered.sort((a, b) => {
+      const stationA = (a.station_name || '').localeCompare(b.station_name || '', 'ar');
+      if (stationA !== 0) return stationA;
+      return (a.employee_name || '').localeCompare(b.employee_name || '', 'ar');
+    });
+    return filtered;
   }, [records, searchText, filterStation, filterDepartment, filterLevel, filterBank]);
 
   const hasActiveFilters = searchText || filterStation !== 'all' || filterDepartment !== 'all' || filterLevel !== 'all' || filterBank !== 'all';
