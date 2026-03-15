@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, X, ChevronLeft, ChevronRight, Save, Trash2 } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Save, Trash2, Search, X, Filter } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 
 interface CourseSyllabus {
@@ -28,18 +26,24 @@ interface CourseSyllabus {
   examination: string;
 }
 
+const emptyForm: CourseSyllabus = {
+  id: '', courseName: '', provider: '', courseCode: '', editedBy: '',
+  courseDuration: '', courseObjective: '', courseAdministration: '', exercises: '',
+  basicTopics: '', intermediateTopics: '', advancedTopics: '', reference: '', examination: '',
+};
+
 export const CoursesSyllabus = () => {
-  const { t, language, isRTL } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const ar = language === 'ar';
   const [syllabi, setSyllabi] = useState<CourseSyllabus[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAddMode, setIsAddMode] = useState(false);
-  const [formData, setFormData] = useState<CourseSyllabus>({
-    id: '', courseName: '', provider: '', courseCode: '', editedBy: '',
-    courseDuration: '', courseObjective: '', courseAdministration: '', exercises: '',
-    basicTopics: '', intermediateTopics: '', advancedTopics: '', reference: '', examination: '',
-  });
+  const [searchName, setSearchName] = useState('');
+  const [searchCode, setSearchCode] = useState('');
+  const [searchProvider, setSearchProvider] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [formData, setFormData] = useState<CourseSyllabus>(emptyForm);
 
   const fetchSyllabi = async () => {
     const { data } = await supabase
@@ -63,29 +67,45 @@ export const CoursesSyllabus = () => {
       examination: c.examination || '',
     }));
     setSyllabi(mapped);
-    if (mapped.length > 0 && !isAddMode) {
-      setFormData(mapped[0]);
-      setCurrentIndex(0);
-    }
   };
 
   useEffect(() => { fetchSyllabi(); }, []);
 
+  const filtered = useMemo(() => {
+    return syllabi.filter(s => {
+      const n = searchName.toLowerCase();
+      const c = searchCode.toLowerCase();
+      const p = searchProvider.toLowerCase();
+      return (!n || s.courseName.toLowerCase().includes(n))
+        && (!c || s.courseCode.toLowerCase().includes(c))
+        && (!p || s.provider.toLowerCase().includes(p));
+    });
+  }, [syllabi, searchName, searchCode, searchProvider]);
+
+  // Sync form with filtered list
+  useEffect(() => {
+    if (isAddMode) return;
+    if (filtered.length > 0) {
+      const idx = Math.min(currentIndex, filtered.length - 1);
+      setCurrentIndex(idx);
+      setFormData(filtered[idx]);
+    } else {
+      setFormData(emptyForm);
+    }
+  }, [filtered, isAddMode]);
+
   const handleNew = () => {
     setIsAddMode(true);
-    setFormData({
-      id: '', courseName: '', provider: '', courseCode: '', editedBy: '',
-      courseDuration: '', courseObjective: '', courseAdministration: '', exercises: '',
-      basicTopics: '', intermediateTopics: '', advancedTopics: '', reference: '', examination: '',
-    });
+    setFormData(emptyForm);
   };
 
   const handleNavigate = (direction: 'prev' | 'next') => {
     const newIndex = direction === 'prev'
       ? Math.max(0, currentIndex - 1)
-      : Math.min(syllabi.length - 1, currentIndex + 1);
+      : Math.min(filtered.length - 1, currentIndex + 1);
     setCurrentIndex(newIndex);
-    setFormData(syllabi[newIndex]);
+    setFormData(filtered[newIndex]);
+    setIsAddMode(false);
   };
 
   const handleSave = async () => {
@@ -140,35 +160,81 @@ export const CoursesSyllabus = () => {
     fetchSyllabi();
   };
 
+  const clearFilters = () => {
+    setSearchName('');
+    setSearchCode('');
+    setSearchProvider('');
+  };
+
+  const hasFilters = searchName || searchCode || searchProvider;
+
   return (
     <div dir="rtl">
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{t('training.syllabus.title')}</CardTitle>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{t('training.syllabus.editedBy')}:</span>
-          <Select value={formData.editedBy} onValueChange={(val) => setFormData({ ...formData, editedBy: val })}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Hossam Hagag">Hossam Hagag</SelectItem>
-              <SelectItem value="Ahmed Mostafa">Ahmed Mostafa</SelectItem>
-              <SelectItem value="Mohamed Ali">Mohamed Ali</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" size="icon" onClick={handleDelete} disabled={syllabi.length <= 1}>
-            <X className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => handleNavigate('prev')} disabled={currentIndex === 0 || isAddMode}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => handleNavigate('next')} disabled={currentIndex === syllabi.length - 1 || isAddMode}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('common.add')}
-          </Button>
+      <CardHeader className="flex flex-col gap-3">
+        <div className="flex flex-row items-center justify-between">
+          <CardTitle>{t('training.syllabus.title')}</CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={showFilters ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-1.5"
+            >
+              <Filter className="h-4 w-4" />
+              {ar ? 'بحث' : 'Search'}
+              {hasFilters && <span className="bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">{filtered.length}</span>}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => handleNavigate('prev')} disabled={currentIndex === 0 || isAddMode || filtered.length === 0}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => handleNavigate('next')} disabled={currentIndex >= filtered.length - 1 || isAddMode || filtered.length === 0}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button onClick={handleNew}>
+              <Plus className="h-4 w-4 mr-2" />
+              {t('common.add')}
+            </Button>
+          </div>
         </div>
+
+        {showFilters && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 rounded-lg bg-muted/50 border">
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={ar ? 'بحث باسم الدورة...' : 'Search by course name...'}
+                value={searchName}
+                onChange={(e) => { setSearchName(e.target.value); setCurrentIndex(0); }}
+                className="pr-9"
+              />
+            </div>
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={ar ? 'بحث بكود الدورة...' : 'Search by course code...'}
+                value={searchCode}
+                onChange={(e) => { setSearchCode(e.target.value); setCurrentIndex(0); }}
+                className="pr-9"
+              />
+            </div>
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={ar ? 'بحث بالجهة المقدمة...' : 'Search by provider...'}
+                value={searchProvider}
+                onChange={(e) => { setSearchProvider(e.target.value); setCurrentIndex(0); }}
+                className="pr-9"
+              />
+            </div>
+            {hasFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1.5 self-center">
+                <X className="h-4 w-4" />
+                {ar ? 'مسح الفلاتر' : 'Clear'}
+              </Button>
+            )}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-3 gap-4">
@@ -209,10 +275,11 @@ export const CoursesSyllabus = () => {
 
         <div className="flex justify-between items-center pt-4 border-t">
           <span className="text-sm text-muted-foreground">
-            {!isAddMode && syllabi.length > 0 && `${t('training.trainers.record')} ${currentIndex + 1} ${t('common.of')} ${syllabi.length}`}
+            {!isAddMode && filtered.length > 0 && `${t('training.trainers.record')} ${currentIndex + 1} ${t('common.of')} ${filtered.length}`}
+            {hasFilters && ` (${ar ? 'من أصل' : 'out of'} ${syllabi.length})`}
           </span>
           <div className="flex gap-2">
-            <Button variant="destructive" onClick={handleDelete} disabled={syllabi.length <= 1}>
+            <Button variant="destructive" onClick={handleDelete} disabled={filtered.length <= 1 || isAddMode}>
               <Trash2 className="h-4 w-4 mr-2" />{t('common.delete')}
             </Button>
             <Button onClick={handleSave}>
