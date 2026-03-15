@@ -33,8 +33,13 @@ export const CoursesSyllabus = () => {
   const { toast } = useToast();
   const ar = language === 'ar';
   const [syllabi, setSyllabi] = useState<CourseSyllabus[]>([]);
+  const [filteredSyllabi, setFilteredSyllabi] = useState<CourseSyllabus[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAddMode, setIsAddMode] = useState(false);
+  const [searchName, setSearchName] = useState('');
+  const [searchCode, setSearchCode] = useState('');
+  const [searchProvider, setSearchProvider] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const [formData, setFormData] = useState<CourseSyllabus>({
     id: '', courseName: '', provider: '', courseCode: '', editedBy: '',
     courseDuration: '', courseObjective: '', courseAdministration: '', exercises: '',
