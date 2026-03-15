@@ -7,6 +7,7 @@ import {
   LayoutDashboard, User, Clock, Calendar, Wallet, HandCoins,
   Star, GraduationCap, Package, FileText, MapPin, Ban,
   ClipboardList, Bell, Settings, PanelLeftClose, PanelLeftOpen, Shirt, ShieldCheck,
+  Gift, Award,
 } from 'lucide-react';
 
 interface SidebarGroup {
