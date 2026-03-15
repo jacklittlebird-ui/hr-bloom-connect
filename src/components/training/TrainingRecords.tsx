@@ -87,7 +87,7 @@ export const TrainingRecords = () => {
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
   const [newRecord, setNewRecord] = useState({
-    courseId: '', startDate: '', endDate: '', result: 'pending' as 'passed' | 'failed' | 'pending', score: '', provider: '', location: '', hasCert: false, hasCr: false, plannedDate: '', cost: '',
+    courseId: '', startDate: '', endDate: '', result: 'pending' as 'passed' | 'failed' | 'pending', score: '', provider: '', location: '', hasCert: false, hasCr: false, hasSs: false, hasCb: false, plannedDate: '', cost: '',
   });
   const [providerOptions, setProviderOptions] = useState<string[]>([]);
   const [locationOptions, setLocationOptions] = useState<string[]>([]);
