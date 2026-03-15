@@ -242,22 +242,25 @@ export const useReportExport = () => {
       return;
     }
 
+    const dir = isRTL ? 'rtl' : 'ltr';
+    const textAlign = isRTL ? 'right' : 'left';
+
     const tableRows = data.map(row =>
       `<tr>${columns.map(col => `<td>${String(row[col.key] ?? '')}</td>`).join('')}</tr>`
     ).join('');
 
     const htmlContent = `
       <!DOCTYPE html>
-      <html dir="rtl">
+      <html dir="${dir}">
       <head>
         <title>${titleEn} - ${titleAr}</title>
         <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
           * { box-sizing: border-box; }
-          body { font-family: 'Baloo Bhaijaan 2', 'Cairo', sans-serif; padding: 30px; }
+          body { font-family: 'Baloo Bhaijaan 2', 'Cairo', sans-serif; padding: 30px; direction: ${dir}; }
           .title-block { text-align: center; margin-bottom: 20px; }
           .title-ar { font-size: 22px; font-weight: 700; color: #1e40af; direction: rtl; }
-          .title-en { font-size: 18px; font-weight: 600; color: #374151; }
+          .title-en { font-size: 18px; font-weight: 600; color: #374151; direction: ltr; }
           .subtitle { text-align: center; color: #6b7280; margin-bottom: 24px; font-size: 13px; }
           table { width: 100%; border-collapse: collapse; }
           th { background-color: #1e40af; color: white; font-weight: 600; font-size: 11px; padding: 6px 8px; border: 1px solid #1e3a8a; }
@@ -301,7 +304,7 @@ export const useReportExport = () => {
     setTimeout(() => { printWindow.print(); }, 500);
 
     toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
-  }, [t]);
+  }, [isRTL, t]);
 
   return { reportRef, handlePrint, exportToCSV, exportToPDF, exportBilingualCSV, exportBilingualPDF };
 };
