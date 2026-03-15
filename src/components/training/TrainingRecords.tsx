@@ -397,6 +397,8 @@ export const TrainingRecords = () => {
                       <TableHead>{t('training.percentage')}</TableHead>
                        <TableHead>Cert</TableHead>
                        <TableHead>CR</TableHead>
+                       <TableHead>SS</TableHead>
+                       <TableHead>CB</TableHead>
                        <TableHead>{ar ? 'قيمة الدورة' : 'Course Value'}</TableHead>
                        <TableHead>{ar ? 'تكاليف الدورة' : 'Course Costs'}</TableHead>
                        <TableHead>{ar ? 'تاريخ التخطيط' : 'Planned Date'}</TableHead>
