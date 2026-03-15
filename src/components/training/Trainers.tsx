@@ -26,7 +26,7 @@ export const Trainers = () => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const ar = language === 'ar';
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [trainers, setTrainers] = useState<Trainer[]>([
     { id: '1', provider: 'Aeroflot', name: 'Moatasem Mahmoud', jobTitle: 'Director Operations & Training', email: 'mmahmoud@linkagency.com', mobNumber: '100029075', siteAddress: '', status: 'active' },
     { id: '2', provider: 'Link Aero Trading Agency', name: 'Mohamed Mossad', jobTitle: 'Duty Station Manager', email: 'mmossad@linkagency.com', mobNumber: '01001669860', siteAddress: '', status: 'active' },
