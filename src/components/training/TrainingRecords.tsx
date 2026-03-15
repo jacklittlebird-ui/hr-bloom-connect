@@ -44,7 +44,9 @@ interface TrainingRecord {
   provider?: string;
   location?: string;
   hasCert?: boolean;
-  hasCr?: boolean;
+    hasCr?: boolean;
+    hasSs?: boolean;
+    hasCb?: boolean;
   plannedDate?: string;
   isFavorite?: boolean;
   cost?: number;
