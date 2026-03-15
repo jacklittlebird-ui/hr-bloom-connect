@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePerformanceData } from '@/contexts/PerformanceDataContext';
 import { Employee } from '@/types/employee';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { BarChart3, Star } from 'lucide-react';
@@ -75,7 +75,7 @@ export const EvaluationsTab = ({ employee }: EvaluationsTabProps) => {
             ) : (
               empEvals.map(ev => (
                 <TableRow key={ev.id}>
-                  <TableCell>{ev.reviewDate}</TableCell>
+                  <TableCell>{formatDate(ev.reviewDate)}</TableCell>
                   <TableCell>{ev.quarter}</TableCell>
                   <TableCell>{ev.year}</TableCell>
                   <TableCell>

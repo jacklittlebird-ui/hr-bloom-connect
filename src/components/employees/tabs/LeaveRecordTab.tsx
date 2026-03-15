@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { CalendarDays, Clock, PlusCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -363,8 +363,8 @@ const LeavesContent = ({ leaves, summary }: {
                 return (
                   <tr key={record.id} className={cn("border-b border-border/20", idx % 2 === 0 ? "bg-card" : "bg-muted/30")}>
                     <td className="px-4 py-3 text-sm text-foreground">{language === 'ar' ? typeLabel?.ar : typeLabel?.en}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{record.startDate}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{record.endDate}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{formatDate(record.startDate)}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{formatDate(record.endDate)}</td>
                     <td className="px-4 py-3 text-sm text-foreground font-medium">{record.days}</td>
                     <td className="px-4 py-3"><StatusBadge status={record.status} /></td>
                     <td className="px-4 py-3 text-sm text-foreground">{record.reason}</td>
@@ -428,7 +428,7 @@ const PermissionsContent = ({ permissions, summary }: {
                 return (
                   <tr key={record.id} className={cn("border-b border-border/20", idx % 2 === 0 ? "bg-card" : "bg-muted/30")}>
                     <td className="px-4 py-3 text-sm text-foreground">{language === 'ar' ? typeLabel?.ar : typeLabel?.en}</td>
-                    <td className="px-4 py-3 text-sm text-foreground">{record.date}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{formatDate(record.date)}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{record.fromTime} - {record.toTime}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{record.durationHours} {language === 'ar' ? 'ساعة' : 'hrs'}</td>
                     <td className="px-4 py-3"><StatusBadge status={record.status} /></td>
@@ -494,7 +494,7 @@ const OvertimeContent = ({ overtime, summary }: {
             ) : (
               overtime.map((record, idx) => (
                 <tr key={record.id} className={cn("border-b border-border/20", idx % 2 === 0 ? "bg-card" : "bg-muted/30")}>
-                  <td className="px-4 py-3 text-sm text-foreground">{record.date}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{formatDate(record.date)}</td>
                   <td className="px-4 py-3 text-sm text-foreground font-medium">{record.hours}</td>
                   <td className="px-4 py-3 text-sm text-foreground">{record.reason}</td>
                   <td className="px-4 py-3"><StatusBadge status={record.status} /></td>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -114,8 +114,8 @@ export const DocumentsTab = ({ employee }: DocumentsTabProps) => {
                   <TableRow key={doc.id}>
                     <TableCell className="font-medium">{doc.name}</TableCell>
                     <TableCell>{ar ? typeLabel?.ar : typeLabel?.en}</TableCell>
-                    <TableCell>{doc.date}</TableCell>
-                    <TableCell>{doc.expiryDate || '-'}</TableCell>
+                    <TableCell>{formatDate(doc.date)}</TableCell>
+                    <TableCell>{formatDate(doc.expiryDate)}</TableCell>
                     <TableCell className="max-w-[150px] truncate">{doc.notes || '-'}</TableCell>
                     <TableCell>
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => handleDelete(doc.id)}>

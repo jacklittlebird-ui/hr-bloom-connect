@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLoanData } from '@/contexts/LoanDataContext';
 import { Employee } from '@/types/employee';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { HandCoins } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +55,7 @@ export const LoansAdvancesTab = ({ employee }: LoansAdvancesTabProps) => {
                   <TableCell className="font-bold">{l.amount.toLocaleString()}</TableCell>
                   <TableCell>{l.installments}</TableCell>
                   <TableCell>{l.remainingAmount.toLocaleString()}</TableCell>
-                  <TableCell>{l.startDate}</TableCell>
+                  <TableCell>{formatDate(l.startDate)}</TableCell>
                   <TableCell>{statusBadge(l.status)}</TableCell>
                 </TableRow>
               ))
@@ -85,7 +85,7 @@ export const LoansAdvancesTab = ({ employee }: LoansAdvancesTabProps) => {
               empAdvances.map(a => (
                 <TableRow key={a.id}>
                   <TableCell className="font-bold">{a.amount.toLocaleString()}</TableCell>
-                  <TableCell>{a.requestDate}</TableCell>
+                  <TableCell>{formatDate(a.requestDate)}</TableCell>
                   <TableCell>{a.reason}</TableCell>
                   <TableCell>{statusBadge(a.status)}</TableCell>
                 </TableRow>

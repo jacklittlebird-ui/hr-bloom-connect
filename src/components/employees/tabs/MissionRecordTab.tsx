@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -147,7 +147,7 @@ export const MissionRecordTab = ({ employee }: MissionRecordTabProps) => {
                     <td className="px-4 py-3 text-sm text-foreground">
                       {language === 'ar' ? typeLabel?.ar : typeLabel?.en}
                     </td>
-                    <td className="px-4 py-3 text-sm text-foreground">{record.date}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{formatDate(record.date)}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{record.destination || '-'}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{record.reason || '-'}</td>
                     <td className="px-4 py-3"><StatusBadge status={record.status as RecordStatus} /></td>

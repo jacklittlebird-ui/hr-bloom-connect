@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAttendanceData } from '@/contexts/AttendanceDataContext';
 import { Employee } from '@/types/employee';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Clock, LogIn, LogOut } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -110,7 +110,7 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
             ) : (
               filteredLogs.map((log, idx) => (
                 <TableRow key={idx}>
-                  <TableCell>{log.date}</TableCell>
+                  <TableCell>{formatDate(log.date)}</TableCell>
                   <TableCell>
                     <span className="flex items-center gap-1">
                       <LogIn className="w-3 h-3 text-green-500" />
