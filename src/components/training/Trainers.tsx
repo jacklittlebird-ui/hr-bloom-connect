@@ -130,7 +130,7 @@ export const Trainers = () => {
   const handleNewTrainer = () => {
 
     setIsAddMode(true); setSelectedTrainer(null);
-    setFormData({ id: String(trainers.length + 1), provider: '', name: '', jobTitle: '', email: '', mobNumber: '', siteAddress: '', status: 'active' });
+    setFormData({ id: String(trainers.length + 1), provider: '', name: '', jobTitle: '', email: '', mobNumber: '', siteAddress: '' });
   };
 
   const handleEditTrainer = (trainer: Trainer) => {
