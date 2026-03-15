@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { MapPin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
