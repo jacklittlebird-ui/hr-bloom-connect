@@ -7,13 +7,64 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Printer, FileText, FileSpreadsheet, Users, BookOpen, Award, TrendingUp, Star, ChevronDown } from 'lucide-react';
+import { Printer, FileText, FileSpreadsheet, Users, BookOpen, Award, TrendingUp, Star, ChevronDown, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+
+const EmployeeSearchFilter = ({ employees, value, onChange, ar }: { employees: any[]; value: string; onChange: (v: string) => void; ar: boolean }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const selected = employees.find(e => e.id === value);
+  const filtered = employees.filter(e => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return (e.nameAr || '').toLowerCase().includes(s) || (e.nameEn || '').toLowerCase().includes(s) || (e.employeeId || '').toLowerCase().includes(s);
+  });
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-between text-xs font-normal h-10 truncate">
+          {value === 'all' ? (ar ? 'الكل' : 'All') : (selected ? (ar ? selected.nameAr : selected.nameEn) : '')}
+          <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-2" align="start">
+        <div className="flex items-center gap-2 mb-2 border-b pb-2">
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+          <Input
+            placeholder={ar ? 'بحث بالاسم أو الكود...' : 'Search name or code...'}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="h-8 text-sm border-0 p-0 focus-visible:ring-0"
+          />
+        </div>
+        <div className="max-h-60 overflow-y-auto space-y-0.5">
+          <button
+            className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted", value === 'all' && 'bg-accent')}
+            onClick={() => { onChange('all'); setOpen(false); setSearch(''); }}
+          >
+            {ar ? 'الكل' : 'All'}
+          </button>
+          {filtered.map(e => (
+            <button
+              key={e.id}
+              className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", value === e.id && 'bg-accent')}
+              onClick={() => { onChange(e.id); setOpen(false); setSearch(''); }}
+            >
+              {e.employeeId} - {ar ? e.nameAr : e.nameEn}
+            </button>
+          ))}
+          {filtered.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">{ar ? 'لا توجد نتائج' : 'No results'}</p>}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 interface ReportRecord {
   id: string;
@@ -280,13 +331,12 @@ export const TrainingRecordsReport = () => {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">{ar ? 'الموظف' : 'Employee'}</label>
-              <Select value={filterEmployee} onValueChange={setFilterEmployee}>
-                <SelectTrigger><SelectValue placeholder={ar ? 'الموظف' : 'Employee'} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                  {contextEmployees.map(e => (<SelectItem key={e.id} value={e.id}>{ar ? e.nameAr : e.nameEn}</SelectItem>))}
-                </SelectContent>
-              </Select>
+              <EmployeeSearchFilter
+                employees={contextEmployees}
+                value={filterEmployee}
+                onChange={setFilterEmployee}
+                ar={ar}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">{ar ? 'الجهة المقدمة' : 'Provider'}</label>
