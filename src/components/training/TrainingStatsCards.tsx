@@ -22,8 +22,8 @@ export const TrainingStatsCards = () => {
         supabase.from('training_records').select('id', { count: 'exact', head: true }),
         supabase.from('training_records').select('cost'),
         supabase.from('training_records').select('employee_id'),
-        supabase.from('planned_courses').select('id', { count: 'exact', head: true }).in('status', ['scheduled', 'in_progress']),
         supabase.from('training_courses').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('training_courses').select('id', { count: 'exact', head: true }),
         supabase.from('planned_courses').select('id', { count: 'exact', head: true }).eq('status', 'scheduled'),
       ]);
       
