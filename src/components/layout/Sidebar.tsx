@@ -43,6 +43,7 @@ const configNavItems: NavItem[] = [
   { key: 'nav.attendanceAdmin', icon: ShieldCheck, path: '/attendance/admin', moduleKey: 'attendance' },
   { key: 'nav.attendanceKiosk', icon: Tv, path: '/attendance/kiosk', moduleKey: 'attendance' },
   { key: 'nav.users', icon: UserCog, path: '/users', moduleKey: 'users' },
+  { key: 'nav.auditLogs', icon: Shield, path: '/audit-logs', moduleKey: 'settings' },
   { key: 'nav.settings', icon: Settings, path: '/settings', moduleKey: 'settings' },
 ];
 

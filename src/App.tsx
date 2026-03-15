@@ -44,6 +44,7 @@ import AttendanceScan from "./pages/AttendanceScan";
 import AttendanceKiosk from "./pages/AttendanceKiosk";
 import AttendanceAdmin from "./pages/AttendanceAdmin";
 import NotificationsPage from "./pages/Notifications";
+import AuditLogsPage from "./pages/AuditLogs";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const AppRoutes = () => (
     <Route path="/documents" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Documents /></ProtectedRoute>} />
     <Route path="/uniforms" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Uniforms /></ProtectedRoute>} />
     <Route path="/notifications" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><NotificationsPage /></ProtectedRoute>} />
+    <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin']}><AuditLogsPage /></ProtectedRoute>} />
     
     {/* Employee portal */}
     <Route path="/employee-portal" element={<ProtectedRoute allowedRoles={['employee']}><EmployeePortal /></ProtectedRoute>} />

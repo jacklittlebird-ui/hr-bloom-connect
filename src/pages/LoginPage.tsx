@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share } from 'lucide-react';
+import { Building2, Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share, ShieldAlert } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { checkRateLimit, recordLoginAttempt } from '@/lib/security';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -63,9 +64,25 @@ const LoginPage = () => {
       toast({ title: t('يرجى ملء جميع الحقول', 'Please fill all fields'), variant: 'destructive' });
       return;
     }
+    
+    // Rate limiting check
+    const rateCheck = checkRateLimit(email.trim());
+    if (!rateCheck.allowed) {
+      const mins = Math.ceil((rateCheck.remainingMs || 0) / 60000);
+      toast({ 
+        title: t('تم تجاوز عدد المحاولات المسموحة', 'Too many login attempts'), 
+        description: t(`يرجى المحاولة بعد ${mins} دقيقة`, `Please try again in ${mins} minutes`),
+        variant: 'destructive' 
+      });
+      return;
+    }
+    
     setLoading(true);
     const result = await login({ email: email.trim(), password });
     setLoading(false);
+    
+    recordLoginAttempt(email.trim(), result.success);
+    
     if (result.success) {
       toast({ title: t('تم تسجيل الدخول بنجاح', 'Login successful') });
     } else {

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
+import { initSessionMonitor } from '@/lib/security';
 
 export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr';
 
@@ -124,6 +125,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Session timeout monitor - auto logout after 30 min inactivity
+  useEffect(() => {
+    if (!user) return;
+    const cleanup = initSessionMonitor(async () => {
+      console.log('Session expired due to inactivity');
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+    });
+    return cleanup;
+  }, [user]);
 
   const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
