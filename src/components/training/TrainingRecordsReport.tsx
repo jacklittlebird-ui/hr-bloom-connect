@@ -331,13 +331,12 @@ export const TrainingRecordsReport = () => {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">{ar ? 'الموظف' : 'Employee'}</label>
-              <Select value={filterEmployee} onValueChange={setFilterEmployee}>
-                <SelectTrigger><SelectValue placeholder={ar ? 'الموظف' : 'Employee'} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                  {contextEmployees.map(e => (<SelectItem key={e.id} value={e.id}>{ar ? e.nameAr : e.nameEn}</SelectItem>))}
-                </SelectContent>
-              </Select>
+              <EmployeeSearchFilter
+                employees={contextEmployees}
+                value={filterEmployee}
+                onChange={setFilterEmployee}
+                ar={ar}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">{ar ? 'الجهة المقدمة' : 'Provider'}</label>
