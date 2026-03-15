@@ -18,8 +18,7 @@ interface Trainer {
   email: string;
   mobNumber: string;
   siteAddress: string;
-  status: 'active' | 'inactive';
-  
+}
 }
 
 export const Trainers = () => {
