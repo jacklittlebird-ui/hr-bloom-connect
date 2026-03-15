@@ -189,6 +189,8 @@ export const TrainingRecords = () => {
       location: newRecord.location || null,
       has_cert: newRecord.hasCert,
       has_cr: newRecord.hasCr,
+      has_ss: newRecord.hasSs,
+      has_cb: newRecord.hasCb,
       planned_date: newRecord.plannedDate || null,
       cost: costVal,
       total_cost: totalCostVal,
