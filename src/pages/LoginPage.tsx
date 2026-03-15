@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share } from 'lucide-react';
+import { Building2, Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share, ShieldAlert } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { checkRateLimit, recordLoginAttempt } from '@/lib/security';
 
 const LoginPage = () => {
   const { login } = useAuth();
