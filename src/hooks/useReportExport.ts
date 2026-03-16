@@ -34,12 +34,23 @@ interface BilingualExportOptions {
   summaryCards?: SummaryCard[];
 }
 
+function buildSummaryCardsHtml(cards: SummaryCard[]): string {
+  if (!cards || cards.length === 0) return '';
+  const items = cards.map(c => `
+    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:14px 12px;text-align:center;background:#f9fafb;">
+      <div style="font-size:20px;font-weight:700;color:#1e40af;">${c.value}</div>
+      <div style="font-size:11px;color:#6b7280;margin-top:4px;">${c.label}</div>
+    </div>
+  `).join('');
+  return `<div style="display:grid;grid-template-columns:repeat(${cards.length}, 1fr);gap:14px;margin-bottom:20px;">${items}</div>`;
+}
+
 export const useReportExport = () => {
   const { t, isRTL } = useLanguage();
   const reportRef = useRef<HTMLDivElement>(null);
   const logoUrl = `${window.location.origin}/images/company-logo.png`;
 
-  const handlePrint = useCallback((title: string) => {
+  const handlePrint = useCallback((title: string, summaryCards?: SummaryCard[]) => {
     const printContent = reportRef.current;
     if (!printContent) {
       window.print();
@@ -51,6 +62,8 @@ export const useReportExport = () => {
       window.print();
       return;
     }
+
+    const cardsHtml = buildSummaryCardsHtml(summaryCards || []);
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -76,6 +89,7 @@ export const useReportExport = () => {
       <body>
         <h1>${title}</h1>
         <p class="print-date">${new Date().toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        ${cardsHtml}
         ${printContent.innerHTML}
       </body>
       </html>
@@ -182,7 +196,7 @@ export const useReportExport = () => {
   }, [isRTL, t]);
 
   // Bilingual Excel: styled HTML table matching PDF format
-  const exportBilingualCSV = useCallback(({ titleAr, titleEn, data, columns, fileName }: BilingualExportOptions) => {
+  const exportBilingualCSV = useCallback(({ titleAr, titleEn, data, columns, fileName, summaryCards }: BilingualExportOptions) => {
     if (!data.length) {
       toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
       return;
@@ -191,6 +205,16 @@ export const useReportExport = () => {
     const tableRows = data.map((row, i) =>
       `<tr style="background-color:${i % 2 === 0 ? '#ffffff' : '#f0f4ff'};">${columns.map(col => `<td style="border:1px solid #d1d5db;padding:8px 10px;font-size:12px;text-align:center;mso-number-format:'\\@';">${String(row[col.key] ?? '')}</td>`).join('')}</tr>`
     ).join('');
+
+    // Summary cards row for Excel
+    let summaryRow = '';
+    if (summaryCards && summaryCards.length > 0) {
+      summaryRow = `
+        <tr><td colspan="${columns.length}"></td></tr>
+        <tr>${summaryCards.map(c => `<td colspan="${Math.max(1, Math.floor(columns.length / summaryCards.length))}" style="border:1px solid #e5e7eb;background:#f0f4ff;text-align:center;padding:10px;font-size:14px;font-weight:700;color:#1e40af;">${c.value}<br/><span style="font-size:10px;font-weight:400;color:#6b7280;">${c.label}</span></td>`).join('')}</tr>
+        <tr><td colspan="${columns.length}"></td></tr>
+      `;
+    }
 
     const htmlContent = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
@@ -209,7 +233,7 @@ export const useReportExport = () => {
           </tr>
           <tr><td colspan="${columns.length - 1}" style="text-align:center;font-size:18px;font-weight:600;color:#374151;padding:8px;">${titleEn}</td></tr>
           <tr><td colspan="${columns.length - 1}" style="text-align:center;color:#6b7280;font-size:13px;padding:8px;">${new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })} — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>
-          <tr><td colspan="${columns.length}"></td></tr>
+          ${summaryRow}
           <thead>
             <tr>${columns.map(c => `<th style="background-color:#1e40af;color:white;font-weight:600;font-size:11px;padding:6px 8px;border:1px solid #1e3a8a;text-align:center;"><div style="direction:rtl;">${c.headerAr}</div><div style="font-weight:400;font-size:10px;color:#dbeafe;">${c.headerEn}</div></th>`).join('')}</tr>
           </thead>
@@ -242,18 +266,19 @@ export const useReportExport = () => {
   }, [t]);
 
   // Bilingual PDF: dual headers + dual title
-  const exportBilingualPDF = useCallback(({ titleAr, titleEn, data, columns, fileName }: BilingualExportOptions) => {
+  const exportBilingualPDF = useCallback(({ titleAr, titleEn, data, columns, fileName, summaryCards }: BilingualExportOptions) => {
     if (!data.length) {
       toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
       return;
     }
 
     const dir = isRTL ? 'rtl' : 'ltr';
-    const textAlign = isRTL ? 'right' : 'left';
 
     const tableRows = data.map(row =>
       `<tr>${columns.map(col => `<td>${String(row[col.key] ?? '')}</td>`).join('')}</tr>`
     ).join('');
+
+    const cardsHtml = buildSummaryCardsHtml(summaryCards || []);
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -287,6 +312,7 @@ export const useReportExport = () => {
           </div>
         </div>
         <p class="subtitle">${new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })} — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        ${cardsHtml}
         <table>
           <thead>
             <tr>${columns.map(c => `<th><div class="th-ar">${c.headerAr}</div><div class="th-en">${c.headerEn}</div></th>`).join('')}</tr>
