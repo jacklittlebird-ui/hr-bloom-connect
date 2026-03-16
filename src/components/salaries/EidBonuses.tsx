@@ -389,6 +389,27 @@ export const EidBonuses = () => {
         </CardContent>
       </Card>
 
+      {/* Summary Stats Cards */}
+      {records.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {statsCards.map((stat, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+                  <div className={cn("p-2.5 rounded-lg", stat.bg)}>
+                    <stat.icon className={cn("w-5 h-5", stat.color)} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    <p className="text-lg font-bold">{stat.value}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
       {/* Results Card */}
       <Card>
         <CardHeader>
