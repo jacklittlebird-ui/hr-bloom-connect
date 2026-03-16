@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
