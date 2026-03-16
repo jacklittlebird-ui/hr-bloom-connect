@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import html2pdf from 'html2pdf.js';
 import { toast } from '@/hooks/use-toast';
 
 interface ExportColumn {
