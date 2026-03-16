@@ -197,14 +197,14 @@ export const BonusManagement = () => {
         const batch = empIds.slice(i, i + BATCH_SIZE);
         const { data: salaryData } = await supabase
           .from('salary_records')
-          .select('employee_id, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance')
+          .select('employee_id, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance, roster_allowance')
           .in('employee_id', batch)
           .order('year', { ascending: false });
 
         (salaryData || []).forEach(s => {
           if (!salaryGrossMap.has(s.employee_id)) {
             const gross = (s.basic_salary || 0) + (s.transport_allowance || 0) + (s.incentives || 0) +
-              (s.station_allowance || 0) + (s.mobile_allowance || 0) + (s.living_allowance || 0);
+              (s.station_allowance || 0) + (s.mobile_allowance || 0) + (s.living_allowance || 0) + (s.roster_allowance || 0);
             salaryGrossMap.set(s.employee_id, gross);
           }
         });

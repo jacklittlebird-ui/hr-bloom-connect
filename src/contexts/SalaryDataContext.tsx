@@ -12,6 +12,7 @@ export interface SalaryRecord {
   livingAllowance: number;
   stationAllowance: number;
   mobileAllowance: number;
+  rosterAllowance: number;
   employeeInsurance: number;
   employerSocialInsurance: number;
   healthInsurance: number;
@@ -51,6 +52,7 @@ const mapRow = (row: any): SalaryRecord => ({
   livingAllowance: row.living_allowance ?? 0,
   stationAllowance: row.station_allowance ?? 0,
   mobileAllowance: row.mobile_allowance ?? 0,
+  rosterAllowance: row.roster_allowance ?? 0,
   employeeInsurance: row.employee_insurance ?? 0,
   employerSocialInsurance: row.employer_social_insurance ?? 0,
   healthInsurance: row.health_insurance ?? 0,
@@ -99,6 +101,7 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       living_allowance: record.livingAllowance,
       station_allowance: record.stationAllowance,
       mobile_allowance: record.mobileAllowance,
+      roster_allowance: record.rosterAllowance,
       employee_insurance: record.employeeInsurance,
       employer_social_insurance: record.employerSocialInsurance,
       health_insurance: record.healthInsurance,

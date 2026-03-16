@@ -59,7 +59,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
   const [selectedYear, setSelectedYear] = useState('');
   const [formData, setFormData] = useState({
     basicSalary: 0, transportAllowance: 0, incentives: 0, livingAllowance: 0,
-    stationAllowance: 0, mobileAllowance: 0, employeeInsurance: 0,
+    stationAllowance: 0, mobileAllowance: 0, rosterAllowance: 0, employeeInsurance: 0,
     employerSocialInsurance: 0, healthInsurance: 0, incomeTax: 0,
   });
 
@@ -82,7 +82,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
     } else {
       setFormData({
         basicSalary: 0, transportAllowance: 0, incentives: 0, livingAllowance: 0,
-        stationAllowance: 0, mobileAllowance: 0, employeeInsurance: 0,
+        stationAllowance: 0, mobileAllowance: 0, rosterAllowance: 0, employeeInsurance: 0,
         employerSocialInsurance: 0, healthInsurance: 0, incomeTax: 0,
       });
     }
@@ -227,6 +227,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
                   {fieldRow(ar ? 'بدل معيشة' : 'Living Allowance', 'livingAllowance')}
                   {fieldRow(ar ? 'بدل محطات' : 'Station Allowance', 'stationAllowance')}
                   {fieldRow(ar ? 'بدل محمول' : 'Mobile Allowance', 'mobileAllowance')}
+                  {fieldRow(ar ? 'بدل روستر' : 'Roster Allowance', 'rosterAllowance')}
                 </div>
               </div>
 
@@ -312,6 +313,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
                     <TableHead>{ar ? 'معيشة' : 'Living'}</TableHead>
                     <TableHead>{ar ? 'محطات' : 'Station'}</TableHead>
                     <TableHead>{ar ? 'محمول' : 'Mobile'}</TableHead>
+                    <TableHead>{ar ? 'روستر' : 'Roster'}</TableHead>
                     <TableHead className="text-green-700">{ar ? 'الإجمالي' : 'Gross'}</TableHead>
                     <TableHead className="text-destructive">{ar ? 'تأمين موظف' : 'Emp. Ins.'}</TableHead>
                     <TableHead className="text-blue-700">{ar ? 'الصافي' : 'Net'}</TableHead>
@@ -332,6 +334,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
                         <TableCell>{r.livingAllowance.toLocaleString()}</TableCell>
                         <TableCell>{r.stationAllowance.toLocaleString()}</TableCell>
                         <TableCell>{r.mobileAllowance.toLocaleString()}</TableCell>
+                        <TableCell>{r.rosterAllowance.toLocaleString()}</TableCell>
                         <TableCell className="font-bold text-green-700">{calcFullGross(r).toLocaleString()}</TableCell>
                         <TableCell className="text-destructive">{r.employeeInsurance.toLocaleString()}</TableCell>
                         <TableCell className="font-bold text-blue-700">{calcNet(r).toLocaleString()}</TableCell>
