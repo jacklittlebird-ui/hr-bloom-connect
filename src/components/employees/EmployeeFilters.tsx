@@ -111,7 +111,7 @@ export const EmployeeFilters = ({
                   checked={selected.includes(opt.value)}
                   onCheckedChange={() => onChange(toggleValue(selected, opt.value))}
                 />
-                <span className="truncate">{ar ? opt.labelAr : opt.labelEn}</span>
+                <span>{ar ? opt.labelAr : opt.labelEn}</span>
               </label>
             ))}
             {options.length === 0 && (
