@@ -101,6 +101,7 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       living_allowance: record.livingAllowance,
       station_allowance: record.stationAllowance,
       mobile_allowance: record.mobileAllowance,
+      roster_allowance: record.rosterAllowance,
       employee_insurance: record.employeeInsurance,
       employer_social_insurance: record.employerSocialInsurance,
       health_insurance: record.healthInsurance,

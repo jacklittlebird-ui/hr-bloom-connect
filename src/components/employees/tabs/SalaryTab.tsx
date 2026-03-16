@@ -334,6 +334,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
                         <TableCell>{r.livingAllowance.toLocaleString()}</TableCell>
                         <TableCell>{r.stationAllowance.toLocaleString()}</TableCell>
                         <TableCell>{r.mobileAllowance.toLocaleString()}</TableCell>
+                        <TableCell>{r.rosterAllowance.toLocaleString()}</TableCell>
                         <TableCell className="font-bold text-green-700">{calcFullGross(r).toLocaleString()}</TableCell>
                         <TableCell className="text-destructive">{r.employeeInsurance.toLocaleString()}</TableCell>
                         <TableCell className="font-bold text-blue-700">{calcNet(r).toLocaleString()}</TableCell>
