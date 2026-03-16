@@ -178,6 +178,20 @@ export const MobileBills = () => {
     toast({ title: isRTL ? 'تم تحديث الحالة' : 'Status Updated' });
   };
 
+  const handleBulkDeduct = () => {
+    if (monthFilter === 'all') {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار شهر محدد أولاً' : 'Please select a specific month first', variant: 'destructive' });
+      return;
+    }
+    const pendingCount = entries.filter(e => e.deductionMonth === monthFilter && e.status === 'pending').length;
+    if (pendingCount === 0) {
+      toast({ title: isRTL ? 'تنبيه' : 'Notice', description: isRTL ? 'لا توجد فواتير قيد الخصم لهذا الشهر' : 'No pending bills for this month' });
+      return;
+    }
+    setEntries(prev => prev.map(e => e.deductionMonth === monthFilter && e.status === 'pending' ? { ...e, status: 'deducted' as const } : e));
+    toast({ title: isRTL ? 'تم الخصم الجماعي' : 'Bulk Deduction Done', description: isRTL ? `تم خصم ${pendingCount} فاتورة لشهر ${getMonthLabel(monthFilter, language)}` : `${pendingCount} bills deducted for ${getMonthLabel(monthFilter, language)}` });
+  };
+
   const filteredEntries = entries.filter(e => {
     const matchesSearch = e.employeeName.includes(searchQuery) || e.employeeId.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || e.status === statusFilter;
@@ -326,6 +340,12 @@ export const MobileBills = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {monthFilter !== 'all' && entries.some(e => e.deductionMonth === monthFilter && e.status === 'pending') && (
+                <Button variant="default" size="sm" className="gap-1" onClick={handleBulkDeduct}>
+                  <Banknote className="h-4 w-4" />
+                  {isRTL ? 'خصم جماعي' : 'Bulk Deduct'}
+                </Button>
+              )}
               <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)}><Printer className="h-4 w-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })}><FileText className="h-4 w-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'mobile-bills' })}><FileSpreadsheet className="h-4 w-4" /></Button>
