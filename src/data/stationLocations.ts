@@ -13,4 +13,7 @@ export const stationLocations = [
   { value: 'sohag', labelAr: 'سوهاج', labelEn: 'Sohag' },
   { value: 'taba', labelAr: 'طابا', labelEn: 'Taba' },
   { value: 'marsa', labelAr: 'مرسى علم', labelEn: 'Marsa Alam' },
+  { value: 'igs', labelAr: 'الخدمات الأرضية الدولية', labelEn: 'International Ground Services' },
+  { value: 'link_group', labelAr: 'لينك جروب', labelEn: 'Link Group' },
+  { value: 'jordan', labelAr: 'الأردن', labelEn: 'Jordan' },
 ];
