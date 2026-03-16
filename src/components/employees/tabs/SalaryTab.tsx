@@ -227,6 +227,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
                   {fieldRow(ar ? 'بدل معيشة' : 'Living Allowance', 'livingAllowance')}
                   {fieldRow(ar ? 'بدل محطات' : 'Station Allowance', 'stationAllowance')}
                   {fieldRow(ar ? 'بدل محمول' : 'Mobile Allowance', 'mobileAllowance')}
+                  {fieldRow(ar ? 'بدل روستر' : 'Roster Allowance', 'rosterAllowance')}
                 </div>
               </div>
 
