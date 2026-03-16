@@ -97,30 +97,28 @@ export const EmployeeFilters = ({
             </Button>
           )}
         </div>
-        <ScrollArea className="max-h-72">
-          <div className="p-1">
-            {options.map(opt => (
-              <label
-                key={opt.value}
-                className={cn(
-                  "flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-accent text-sm",
-                  isRTL && "flex-row-reverse text-right"
-                )}
-              >
-                <Checkbox
-                  checked={selected.includes(opt.value)}
-                  onCheckedChange={() => onChange(toggleValue(selected, opt.value))}
-                />
-                <span>{ar ? opt.labelAr : opt.labelEn}</span>
-              </label>
-            ))}
-            {options.length === 0 && (
-              <p className="text-xs text-muted-foreground text-center py-3">
-                {ar ? 'لا توجد خيارات' : 'No options'}
-              </p>
-            )}
-          </div>
-        </ScrollArea>
+        <div className="max-h-96 overflow-y-auto p-1">
+          {options.map(opt => (
+            <label
+              key={opt.value}
+              className={cn(
+                "flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-accent text-sm",
+                isRTL && "flex-row-reverse text-right"
+              )}
+            >
+              <Checkbox
+                checked={selected.includes(opt.value)}
+                onCheckedChange={() => onChange(toggleValue(selected, opt.value))}
+              />
+              <span>{ar ? opt.labelAr : opt.labelEn}</span>
+            </label>
+          ))}
+          {options.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-3">
+              {ar ? 'لا توجد خيارات' : 'No options'}
+            </p>
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );
