@@ -204,7 +204,7 @@ export const BonusManagement = () => {
         (salaryData || []).forEach(s => {
           if (!salaryGrossMap.has(s.employee_id)) {
             const gross = (s.basic_salary || 0) + (s.transport_allowance || 0) + (s.incentives || 0) +
-              (s.station_allowance || 0) + (s.mobile_allowance || 0) + (s.living_allowance || 0);
+              (s.station_allowance || 0) + (s.mobile_allowance || 0) + (s.living_allowance || 0) + (s.roster_allowance || 0);
             salaryGrossMap.set(s.employee_id, gross);
           }
         });
