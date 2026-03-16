@@ -79,79 +79,91 @@ export const MobileBills = () => {
       return;
     }
 
-    // Parse CSV
+    // Parse Excel/CSV using xlsx library
     const reader = new FileReader();
     reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (!text) return;
+      const data = event.target?.result;
+      if (!data) return;
 
-      const lines = text.split('\n').filter(l => l.trim());
-      // Skip header row
-      const dataLines = lines.slice(1);
-      const batchId = `B${String(Date.now()).slice(-4)}`;
-      const newEntries: MobileBillEntry[] = [];
-      let skippedCount = 0;
+      try {
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows: any[][] = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-      dataLines.forEach((line, idx) => {
-        const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''));
-        const empId = parts[0];
-        const amount = parseFloat(parts[1]);
-
-        if (!empId || isNaN(amount) || amount <= 0) {
-          skippedCount++;
+        if (rows.length < 2) {
+          toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'الملف فارغ أو لا يحتوي على بيانات' : 'File is empty or has no data', variant: 'destructive' });
+          if (fileInputRef.current) fileInputRef.current.value = '';
           return;
         }
 
-        const employee = employees.find(emp => emp.employeeId === empId);
-        
-        newEntries.push({
-          id: `${Date.now()}-${idx}`,
-          employeeId: empId,
-          employeeName: employee?.nameAr || empId,
-          department: employee?.department || '-',
-          station: employee?.stationLocation || '',
-          billAmount: amount,
-          deductionMonth,
-          status: 'pending',
-          uploadDate: new Date().toISOString().split('T')[0],
-          batchId,
-        });
-      });
+        // Skip header row
+        const dataRows = rows.slice(1);
+        const batchId = `B${String(Date.now()).slice(-4)}`;
+        const newEntries: MobileBillEntry[] = [];
+        let skippedCount = 0;
 
-      if (newEntries.length === 0) {
-        toast({
-          title: isRTL ? 'خطأ' : 'Error',
-          description: isRTL ? 'لم يتم العثور على بيانات صالحة في الملف. تأكد أن الملف يحتوي على عمودين: رقم ID الموظف ومبلغ الفاتورة' : 'No valid data found. Ensure file has two columns: Employee ID and Bill Amount',
-          variant: 'destructive',
-        });
-      } else {
-        let updatedCount = 0;
-        let addedCount = 0;
-        setEntries(prev => {
-          const updated = [...prev];
-          newEntries.forEach(ne => {
-            const existingIdx = updated.findIndex(e => e.employeeId === ne.employeeId && e.deductionMonth === ne.deductionMonth);
-            if (existingIdx !== -1) {
-              updated[existingIdx] = { ...updated[existingIdx], billAmount: ne.billAmount, uploadDate: ne.uploadDate, batchId: ne.batchId };
-              updatedCount++;
-            } else {
-              updated.push(ne);
-              addedCount++;
-            }
+        dataRows.forEach((row, idx) => {
+          const empId = String(row[0] || '').trim();
+          const amount = parseFloat(String(row[1] || ''));
+
+          if (!empId || isNaN(amount) || amount <= 0) {
+            skippedCount++;
+            return;
+          }
+
+          const employee = employees.find(emp => emp.employeeId?.toLowerCase() === empId.toLowerCase());
+          
+          newEntries.push({
+            id: `${Date.now()}-${idx}`,
+            employeeId: employee?.employeeId || empId,
+            employeeName: employee?.nameAr || empId,
+            department: employee?.department || '-',
+            station: employee?.stationLocation || '',
+            billAmount: amount,
+            deductionMonth,
+            status: 'pending',
+            uploadDate: new Date().toISOString().split('T')[0],
+            batchId,
           });
-          return updated;
         });
-        toast({
-          title: isRTL ? 'تم الرفع بنجاح' : 'Upload Successful',
-          description: isRTL
-            ? `تم إضافة ${addedCount} فاتورة${updatedCount > 0 ? ` وتحديث ${updatedCount} فاتورة موجودة` : ''}${skippedCount > 0 ? ` (تم تخطي ${skippedCount} سطر غير صالح)` : ''}`
-            : `${addedCount} added${updatedCount > 0 ? `, ${updatedCount} updated` : ''}${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`,
-        });
+
+        if (newEntries.length === 0) {
+          toast({
+            title: isRTL ? 'خطأ' : 'Error',
+            description: isRTL ? 'لم يتم العثور على بيانات صالحة في الملف. تأكد أن الملف يحتوي على عمودين: رقم ID الموظف ومبلغ الفاتورة' : 'No valid data found. Ensure file has two columns: Employee ID and Bill Amount',
+            variant: 'destructive',
+          });
+        } else {
+          let updatedCount = 0;
+          let addedCount = 0;
+          setEntries(prev => {
+            const updated = [...prev];
+            newEntries.forEach(ne => {
+              const existingIdx = updated.findIndex(e => e.employeeId.toLowerCase() === ne.employeeId.toLowerCase() && e.deductionMonth === ne.deductionMonth);
+              if (existingIdx !== -1) {
+                updated[existingIdx] = { ...updated[existingIdx], billAmount: ne.billAmount, uploadDate: ne.uploadDate, batchId: ne.batchId };
+                updatedCount++;
+              } else {
+                updated.push(ne);
+                addedCount++;
+              }
+            });
+            return updated;
+          });
+          toast({
+            title: isRTL ? 'تم الرفع بنجاح' : 'Upload Successful',
+            description: isRTL
+              ? `تم إضافة ${addedCount} فاتورة${updatedCount > 0 ? ` وتحديث ${updatedCount} فاتورة موجودة` : ''}${skippedCount > 0 ? ` (تم تخطي ${skippedCount} سطر غير صالح)` : ''}`
+              : `${addedCount} added${updatedCount > 0 ? `, ${updatedCount} updated` : ''}${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`,
+          });
+        }
+      } catch (err) {
+        toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'فشل في قراءة الملف. تأكد أن الملف بصيغة Excel أو CSV صحيحة' : 'Failed to read file. Ensure it is a valid Excel or CSV file', variant: 'destructive' });
       }
 
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   };
 
   const handleDelete = () => {
