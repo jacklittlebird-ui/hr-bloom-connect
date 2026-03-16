@@ -273,6 +273,8 @@ export const EidBonuses = () => {
 
   const reportTitle = ar ? `سجل العيدية ${bonusNumber} - ${currentYear}` : `Eid Bonus ${bonusNumber} - ${currentYear}`;
 
+  const getExportSummaryCards = () => statsCards.map(c => ({ label: c.label, value: c.value }));
+
   const handleExportPDF = () => {
     exportBilingualPDF({
       titleAr: `سجل العيدية ${bonusNumber} - ${currentYear}`,
@@ -280,6 +282,7 @@ export const EidBonuses = () => {
       data: getExportData(),
       columns: REPORT_COLUMNS,
       fileName: `eid_bonus_${bonusNumber}_${currentYear}`,
+      summaryCards: getExportSummaryCards(),
     });
   };
 
@@ -290,11 +293,12 @@ export const EidBonuses = () => {
       data: getExportData(),
       columns: REPORT_COLUMNS,
       fileName: `eid_bonus_${bonusNumber}_${currentYear}`,
+      summaryCards: getExportSummaryCards(),
     });
   };
 
   const handlePrintReport = () => {
-    handlePrint(reportTitle);
+    handlePrint(reportTitle, getExportSummaryCards());
   };
 
   return (

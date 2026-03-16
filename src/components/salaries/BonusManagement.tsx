@@ -294,6 +294,8 @@ export const BonusManagement = () => {
 
   const reportTitle = ar ? `سجل المكافأة ${bonusNumber} - ${currentYear}` : `Bonus ${bonusNumber} - ${currentYear}`;
 
+  const getExportSummaryCards = () => statsCards.map(c => ({ label: c.label, value: c.value }));
+
   const handleExportPDF = () => {
     exportBilingualPDF({
       titleAr: `سجل المكافأة ${bonusNumber} - ${currentYear}`,
@@ -301,6 +303,7 @@ export const BonusManagement = () => {
       data: getExportData(),
       columns: REPORT_COLUMNS,
       fileName: `bonus_${bonusNumber}_${currentYear}`,
+      summaryCards: getExportSummaryCards(),
     });
   };
 
@@ -311,11 +314,12 @@ export const BonusManagement = () => {
       data: getExportData(),
       columns: REPORT_COLUMNS,
       fileName: `bonus_${bonusNumber}_${currentYear}`,
+      summaryCards: getExportSummaryCards(),
     });
   };
 
   const handlePrintReport = () => {
-    handlePrint(reportTitle);
+    handlePrint(reportTitle, getExportSummaryCards());
   };
 
   return (
