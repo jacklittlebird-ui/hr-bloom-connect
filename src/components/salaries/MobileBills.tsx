@@ -340,6 +340,13 @@ export const MobileBills = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {monthFilter !== 'all' && (
+                <Badge variant="secondary" className="text-sm px-3 py-1.5">
+                  {isRTL
+                    ? `${filteredEntries.length} فاتورة | ${filteredEntries.reduce((s, e) => s + e.billAmount, 0).toLocaleString()} ج.م`
+                    : `${filteredEntries.length} bills | ${filteredEntries.reduce((s, e) => s + e.billAmount, 0).toLocaleString()} EGP`}
+                </Badge>
+              )}
               {monthFilter !== 'all' && entries.some(e => e.deductionMonth === monthFilter && e.status === 'pending') && (
                 <Button variant="default" size="sm" className="gap-1" onClick={handleBulkDeduct}>
                   <Banknote className="h-4 w-4" />
