@@ -197,7 +197,7 @@ export const BonusManagement = () => {
         const batch = empIds.slice(i, i + BATCH_SIZE);
         const { data: salaryData } = await supabase
           .from('salary_records')
-          .select('employee_id, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance')
+          .select('employee_id, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance, roster_allowance')
           .in('employee_id', batch)
           .order('year', { ascending: false });
 
