@@ -20,12 +20,18 @@ interface ReportExportOptions {
   fileName?: string;
 }
 
+interface SummaryCard {
+  label: string;
+  value: string;
+}
+
 interface BilingualExportOptions {
   titleAr: string;
   titleEn: string;
   data: Record<string, unknown>[];
   columns: BilingualExportColumn[];
   fileName?: string;
+  summaryCards?: SummaryCard[];
 }
 
 export const useReportExport = () => {
