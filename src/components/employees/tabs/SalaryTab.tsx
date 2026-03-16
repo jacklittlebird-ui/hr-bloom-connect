@@ -313,6 +313,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
                     <TableHead>{ar ? 'معيشة' : 'Living'}</TableHead>
                     <TableHead>{ar ? 'محطات' : 'Station'}</TableHead>
                     <TableHead>{ar ? 'محمول' : 'Mobile'}</TableHead>
+                    <TableHead>{ar ? 'روستر' : 'Roster'}</TableHead>
                     <TableHead className="text-green-700">{ar ? 'الإجمالي' : 'Gross'}</TableHead>
                     <TableHead className="text-destructive">{ar ? 'تأمين موظف' : 'Emp. Ins.'}</TableHead>
                     <TableHead className="text-blue-700">{ar ? 'الصافي' : 'Net'}</TableHead>
