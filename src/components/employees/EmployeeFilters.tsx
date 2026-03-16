@@ -88,7 +88,7 @@ export const EmployeeFilters = ({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-56 p-0" align={isRTL ? 'end' : 'start'}>
+      <PopoverContent className="w-72 p-0" align={isRTL ? 'end' : 'start'}>
         <div className="p-2 border-b flex items-center justify-between">
           <span className="text-xs font-medium text-muted-foreground">{label}</span>
           {selected.length > 0 && (
