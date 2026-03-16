@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Play, Loader2, Gift, Printer, FileText, FileSpreadsheet, Search, X, CalendarIcon } from 'lucide-react';
+import { Play, Loader2, Gift, Printer, FileText, FileSpreadsheet, Search, X, CalendarIcon, Users, Building2, Wallet, Landmark } from 'lucide-react';
 import { useReportExport } from '@/hooks/useReportExport';
 
 const JOB_LEVELS = [
@@ -259,6 +259,16 @@ export const EidBonuses = () => {
 
   const totalAmount = useMemo(() => filteredRecords.reduce((s, r) => s + r.amount, 0), [filteredRecords]);
 
+  const uniqueStationsCount = useMemo(() => new Set(filteredRecords.map(r => r.station_name).filter(Boolean)).size, [filteredRecords]);
+  const uniqueBanksCount = useMemo(() => new Set(filteredRecords.map(r => r.bank_name).filter(Boolean)).size, [filteredRecords]);
+
+  const statsCards = useMemo(() => [
+    { label: ar ? 'عدد الموظفين' : 'Employees', value: String(filteredRecords.length), icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: ar ? 'إجمالي المبلغ' : 'Total Amount', value: totalAmount.toLocaleString() + (ar ? ' ج.م' : ' EGP'), icon: Wallet, color: 'text-green-600', bg: 'bg-green-100' },
+    { label: ar ? 'عدد المحطات' : 'Stations', value: String(uniqueStationsCount), icon: Building2, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { label: ar ? 'عدد البنوك' : 'Banks', value: String(uniqueBanksCount), icon: Landmark, color: 'text-amber-600', bg: 'bg-amber-100' },
+  ], [filteredRecords, totalAmount, uniqueStationsCount, uniqueBanksCount, ar]);
+
   const getExportData = () => filteredRecords.map((r, i) => ({ ...r, _index: i + 1, employee_name: ar ? r.employee_name : (r.employee_name_en || r.employee_name) }));
 
   const reportTitle = ar ? `سجل العيدية ${bonusNumber} - ${currentYear}` : `Eid Bonus ${bonusNumber} - ${currentYear}`;
@@ -378,6 +388,27 @@ export const EidBonuses = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Summary Stats Cards */}
+      {records.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {statsCards.map((stat, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+                  <div className={cn("p-2.5 rounded-lg", stat.bg)}>
+                    <stat.icon className={cn("w-5 h-5", stat.color)} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                    <p className="text-lg font-bold">{stat.value}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Results Card */}
       <Card>
