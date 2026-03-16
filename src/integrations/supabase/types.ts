@@ -1780,6 +1780,7 @@ export type Database = {
           income_tax: number | null
           living_allowance: number | null
           mobile_allowance: number | null
+          roster_allowance: number | null
           station_allowance: number | null
           transport_allowance: number | null
           year: string
@@ -1796,6 +1797,7 @@ export type Database = {
           income_tax?: number | null
           living_allowance?: number | null
           mobile_allowance?: number | null
+          roster_allowance?: number | null
           station_allowance?: number | null
           transport_allowance?: number | null
           year: string
@@ -1812,6 +1814,7 @@ export type Database = {
           income_tax?: number | null
           living_allowance?: number | null
           mobile_allowance?: number | null
+          roster_allowance?: number | null
           station_allowance?: number | null
           transport_allowance?: number | null
           year?: string

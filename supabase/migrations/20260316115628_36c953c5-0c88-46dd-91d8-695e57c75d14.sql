@@ -1,0 +1,1 @@
+ALTER TABLE public.salary_records ADD COLUMN roster_allowance numeric DEFAULT 0;
