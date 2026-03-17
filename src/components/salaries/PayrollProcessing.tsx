@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { Wallet, Gift, TrendingDown, Building2, Save, X, FileText, Users, Clock, Search, PlayCircle, Zap } from 'lucide-react';
+import { Wallet, Gift, TrendingDown, Building2, Save, X, FileText, Users, Clock, Search, PlayCircle, Zap, Trash2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
