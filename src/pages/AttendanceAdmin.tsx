@@ -348,12 +348,14 @@ const AttendanceAdmin = () => {
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <Label>{ar ? "خط العرض" : "Latitude"}</Label>
-                          <Input type="number" step="any" value={newLocation.latitude} onChange={(e) => setNewLocation({ ...newLocation, latitude: e.target.value })} />
+                          <Label>{ar ? "خط العرض (Latitude)" : "Latitude"}</Label>
+                          <Input type="number" step="any" placeholder={ar ? "مثال: 27.1788" : "e.g. 27.1788"} value={newLocation.latitude} onChange={(e) => setNewLocation({ ...newLocation, latitude: e.target.value })} />
+                          <p className="text-xs text-muted-foreground mt-1">{ar ? "N - الإحداثي الشمالي" : "N coordinate"}</p>
                         </div>
                         <div>
-                          <Label>{ar ? "خط الطول" : "Longitude"}</Label>
-                          <Input type="number" step="any" value={newLocation.longitude} onChange={(e) => setNewLocation({ ...newLocation, longitude: e.target.value })} />
+                          <Label>{ar ? "خط الطول (Longitude)" : "Longitude"}</Label>
+                          <Input type="number" step="any" placeholder={ar ? "مثال: 33.8069" : "e.g. 33.8069"} value={newLocation.longitude} onChange={(e) => setNewLocation({ ...newLocation, longitude: e.target.value })} />
+                          <p className="text-xs text-muted-foreground mt-1">{ar ? "E - الإحداثي الشرقي" : "E coordinate"}</p>
                         </div>
                       </div>
                       <div>
