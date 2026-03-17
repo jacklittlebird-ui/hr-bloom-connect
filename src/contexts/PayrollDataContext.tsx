@@ -44,6 +44,7 @@ interface PayrollDataContextType {
   refreshPayroll: () => Promise<void>;
   savePayrollEntry: (entry: ProcessedPayroll) => void;
   savePayrollEntries: (entries: ProcessedPayroll[]) => void;
+  deletePayrollEntry: (employeeId: string, month: string, year: string) => Promise<void>;
   getPayrollEntry: (employeeId: string, month: string, year: string) => ProcessedPayroll | undefined;
   getMonthlyPayroll: (month: string, year: string) => ProcessedPayroll[];
   getEmployeePayroll: (employeeId: string) => ProcessedPayroll[];
