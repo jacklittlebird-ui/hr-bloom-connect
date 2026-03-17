@@ -177,6 +177,15 @@ export const PortalDashboard = () => {
               {formatTimeClock(currentTime)}
             </div>
 
+            {/* Scanner area - above buttons */}
+            {showQr && qrMode && qrStatus !== 'success' && qrStatus !== 'error' && qrStatus !== 'validating' && (
+              <div className="flex justify-center">
+                <div className="w-full max-w-[300px]">
+                  <QrScanner onScan={onQrScan} />
+                </div>
+              </div>
+            )}
+
             {/* QR buttons */}
             {showQr && (
               <>
@@ -250,15 +259,6 @@ export const PortalDashboard = () => {
               <p className="text-sm font-medium text-muted-foreground">
                 {ar ? `✔ تم الانصراف في ${todayRecord.checkOut}` : `✔ Checked out at ${todayRecord.checkOut}`}
               </p>
-            )}
-
-            {/* Scanner area */}
-            {qrMode && qrStatus !== 'success' && qrStatus !== 'error' && qrStatus !== 'validating' && (
-              <div className="flex justify-center">
-                <div className="w-full max-w-[300px]">
-                  <QrScanner onScan={onQrScan} />
-                </div>
-              </div>
             )}
 
             {/* Status messages */}
