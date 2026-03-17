@@ -37,13 +37,14 @@ interface BilingualExportOptions {
 
 function buildSummaryCardsHtml(cards: SummaryCard[]): string {
   if (!cards || cards.length === 0) return '';
+  const cols = Math.min(cards.length, 5);
   const items = cards.map(c => `
-    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:14px 12px;text-align:center;background:#f9fafb;">
-      <div style="font-size:20px;font-weight:700;color:#1e40af;">${c.value}</div>
-      <div style="font-size:11px;color:#6b7280;margin-top:4px;">${c.label}</div>
+    <div style="border:1px solid #e5e7eb;border-radius:8px;padding:10px 8px;text-align:center;background:#f9fafb;">
+      <div style="font-size:16px;font-weight:700;color:#1e40af;">${c.value}</div>
+      <div style="font-size:10px;color:#6b7280;margin-top:3px;">${c.label}</div>
     </div>
   `).join('');
-  return `<div style="display:grid;grid-template-columns:repeat(${cards.length}, 1fr);gap:14px;margin-bottom:20px;">${items}</div>`;
+  return `<div style="display:grid;grid-template-columns:repeat(${cols}, 1fr);gap:10px;margin-bottom:20px;">${items}</div>`;
 }
 
 function createExportContainer(html: string): HTMLDivElement {
