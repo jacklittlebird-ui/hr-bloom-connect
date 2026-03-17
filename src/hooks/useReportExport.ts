@@ -46,6 +46,34 @@ function buildSummaryCardsHtml(cards: SummaryCard[]): string {
   return `<div style="display:grid;grid-template-columns:repeat(${cards.length}, 1fr);gap:14px;margin-bottom:20px;">${items}</div>`;
 }
 
+function createExportContainer(html: string): HTMLDivElement {
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.top = '0';
+  container.style.left = '0';
+  container.style.width = '1200px';
+  container.style.opacity = '0';
+  container.style.pointerEvents = 'none';
+  container.style.zIndex = '-1';
+  container.innerHTML = html;
+  document.body.appendChild(container);
+  return container;
+}
+
+function waitForImages(container: HTMLElement): Promise<void> {
+  const images = Array.from(container.querySelectorAll('img'));
+  if (images.length === 0) return Promise.resolve();
+
+  return Promise.all(images.map((img) => {
+    if (img.complete) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+    });
+  })).then(() => undefined);
+}
+
+
 export const useReportExport = () => {
   const { t, isRTL } = useLanguage();
   const reportRef = useRef<HTMLDivElement>(null);
