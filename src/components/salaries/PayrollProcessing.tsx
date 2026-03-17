@@ -23,7 +23,7 @@ export const PayrollProcessing = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { getSalaryRecord, salaryRecords } = useSalaryData();
-  const { savePayrollEntry, savePayrollEntries, getPayrollEntry, getMonthlyPayroll } = usePayrollData();
+  const { savePayrollEntry, savePayrollEntries, deletePayrollEntry, getPayrollEntry, getMonthlyPayroll } = usePayrollData();
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth() + 1).padStart(2, '0'));
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
