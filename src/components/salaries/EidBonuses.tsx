@@ -551,27 +551,63 @@ export const EidBonuses = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRecords.map((r, i) => (
-                    <TableRow key={r.id || r.employee_id}>
-                      <TableCell>{i + 1}</TableCell>
-                      <TableCell className="font-medium whitespace-nowrap">{ar ? r.employee_name : (r.employee_name_en || r.employee_name)}</TableCell>
-                      <TableCell>{r.employee_code}</TableCell>
-                      <TableCell>{r.station_name}</TableCell>
-                      <TableCell>{r.department_name}</TableCell>
-                      <TableCell>{r.job_title}</TableCell>
-                      <TableCell>{r.job_level}</TableCell>
-                      <TableCell dir="ltr">{r.hire_date}</TableCell>
-                      <TableCell>{r.bank_account_number}</TableCell>
-                      <TableCell>{r.bank_id_number}</TableCell>
-                      <TableCell>{r.bank_name}</TableCell>
-                      <TableCell>{r.bank_account_type}</TableCell>
-                      <TableCell className="font-semibold">{r.amount.toLocaleString()}</TableCell>
-                    </TableRow>
-                  ))}
-                  {/* Totals row */}
-                  <TableRow className="bg-muted/70 font-bold">
+                  {(() => {
+                    const rows: React.ReactNode[] = [];
+                    let globalIndex = 0;
+                    let currentStation = '';
+                    let stationTotal = 0;
+                    let stationCount = 0;
+
+                    const flushStation = () => {
+                      if (stationCount > 0) {
+                        rows.push(
+                          <TableRow key={`subtotal-${currentStation}`} className="bg-primary/5 font-semibold border-t-2 border-primary/20">
+                            <TableCell colSpan={12} className={cn(isRTL ? "text-right" : "text-left")}>
+                              {ar ? `مجموع ${currentStation || 'بدون محطة'}` : `${currentStation || 'No Station'} Subtotal`} ({stationCount})
+                            </TableCell>
+                            <TableCell className="font-semibold">{stationTotal.toLocaleString()}</TableCell>
+                          </TableRow>
+                        );
+                      }
+                    };
+
+                    filteredRecords.forEach((r, i) => {
+                      if (r.station_name !== currentStation && i > 0) {
+                        flushStation();
+                        stationTotal = 0;
+                        stationCount = 0;
+                      }
+                      currentStation = r.station_name;
+                      stationTotal += r.amount;
+                      stationCount++;
+                      globalIndex++;
+
+                      rows.push(
+                        <TableRow key={r.id || r.employee_id}>
+                          <TableCell>{globalIndex}</TableCell>
+                          <TableCell className="font-medium whitespace-nowrap">{ar ? r.employee_name : (r.employee_name_en || r.employee_name)}</TableCell>
+                          <TableCell>{r.employee_code}</TableCell>
+                          <TableCell>{r.station_name}</TableCell>
+                          <TableCell>{r.department_name}</TableCell>
+                          <TableCell>{r.job_title}</TableCell>
+                          <TableCell>{r.job_level}</TableCell>
+                          <TableCell dir="ltr">{r.hire_date}</TableCell>
+                          <TableCell>{r.bank_account_number}</TableCell>
+                          <TableCell>{r.bank_id_number}</TableCell>
+                          <TableCell>{r.bank_name}</TableCell>
+                          <TableCell>{r.bank_account_type}</TableCell>
+                          <TableCell className="font-semibold">{r.amount.toLocaleString()}</TableCell>
+                        </TableRow>
+                      );
+                    });
+                    flushStation();
+
+                    return rows;
+                  })()}
+                  {/* Grand Totals row */}
+                  <TableRow className="bg-muted/70 font-bold border-t-2">
                     <TableCell colSpan={12} className={cn(isRTL ? "text-right" : "text-left")}>
-                      {ar ? 'الإجمالي' : 'Total'}
+                      {ar ? 'الإجمالي الكلي' : 'Grand Total'}
                     </TableCell>
                     <TableCell className="font-bold">{totalAmount.toLocaleString()}</TableCell>
                   </TableRow>
