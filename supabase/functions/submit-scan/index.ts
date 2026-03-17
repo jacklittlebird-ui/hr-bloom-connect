@@ -58,21 +58,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validate user via getClaims
-    const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const userClient = createClient(SUPABASE_URL, supabaseAnon, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
+    // Validate user via getUser (service role)
     const token_str = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token_str);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user: authUser }, error: userError } = await admin.auth.getUser(token_str);
+    if (userError || !authUser) {
       return new Response(JSON.stringify({ error: "Invalid user" }), {
         status: 401,
         headers: { ...corsHeaders, "content-type": "application/json" },
       });
     }
-    const user_id = claimsData.claims.sub as string;
+    const user_id = authUser.id;
 
     const body = await req.json();
     const { token, event_type, device_id, gps } = body;
