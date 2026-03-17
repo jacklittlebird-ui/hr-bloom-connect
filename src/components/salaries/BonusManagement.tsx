@@ -284,6 +284,17 @@ export const BonusManagement = () => {
   const uniqueStationsCount = useMemo(() => new Set(filteredRecords.map(r => r.station_name).filter(Boolean)).size, [filteredRecords]);
   const uniqueBanksCount = useMemo(() => new Set(filteredRecords.map(r => r.bank_name).filter(Boolean)).size, [filteredRecords]);
 
+  // Per-station breakdown
+  const stationBreakdown = useMemo(() => {
+    const map = new Map<string, { count: number; total: number }>();
+    filteredRecords.forEach(r => {
+      const key = r.station_name || (ar ? 'بدون محطة' : 'No Station');
+      const prev = map.get(key) || { count: 0, total: 0 };
+      map.set(key, { count: prev.count + 1, total: prev.total + r.amount });
+    });
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0], 'ar'));
+  }, [filteredRecords, ar]);
+
   const statsCards = useMemo(() => [
     { label: ar ? 'عدد الموظفين' : 'Employees', value: String(filteredRecords.length), icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
     { label: ar ? 'إجمالي المكافآت' : 'Total Bonuses', value: totalAmount.toLocaleString() + (ar ? ' ج.م' : ' EGP'), icon: Wallet, color: 'text-green-600', bg: 'bg-green-100' },
@@ -303,7 +314,13 @@ export const BonusManagement = () => {
 
   const reportTitle = ar ? `سجل المكافأة ${bonusNumber} - ${currentYear}` : `Bonus ${bonusNumber} - ${currentYear}`;
 
-  const getExportSummaryCards = () => statsCards.map(c => ({ label: c.label, value: c.value }));
+  const getExportSummaryCards = () => [
+    ...statsCards.map(c => ({ label: c.label, value: c.value })),
+    ...stationBreakdown.map(([name, data]) => ({
+      label: `${name} (${data.count})`,
+      value: data.total.toLocaleString(),
+    })),
+  ];
 
   const handleExportPDF = () => {
     exportBilingualPDF({
@@ -440,7 +457,28 @@ export const BonusManagement = () => {
         </div>
       )}
 
-      {/* Results Card */}
+      {/* Station Breakdown Cards */}
+      {records.length > 0 && stationBreakdown.length > 1 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className={cn("text-sm flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Building2 className="w-4 h-4 text-primary" />
+              {ar ? 'إجمالي كل محطة' : 'Station Totals'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {stationBreakdown.map(([name, data]) => (
+                <div key={name} className="border rounded-lg p-3 bg-muted/30">
+                  <p className="text-xs text-muted-foreground truncate">{name}</p>
+                  <p className="text-base font-bold text-primary mt-1">{data.total.toLocaleString()}</p>
+                  <p className="text-[11px] text-muted-foreground">{data.count} {ar ? 'موظف' : 'employees'}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <div className={cn("flex flex-col gap-4")}>
