@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
   );
 
   // Each line: "empCode,fromDate,toDate,casual,annual,sick,overtime,permission,unpaid"
-  const { lines } = await req.json() as { lines: string[] };
+  const { lines, importReason } = await req.json() as { lines: string[]; importReason?: string };
 
   // Collect unique employee codes
   const codes = [...new Set(lines.map(l => l.split(',')[0]))];
