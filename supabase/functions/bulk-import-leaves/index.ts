@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
         leave_type: 'unpaid',
         start_date: fromDate,
         end_date: toDate,
-        days: Math.max(1, Math.round(unpaid)),
+        days: unpaid,
         status: 'approved',
         reason: 'استيراد جماعي',
       });
