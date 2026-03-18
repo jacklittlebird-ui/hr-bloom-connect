@@ -104,7 +104,7 @@ export const MobileBills = () => {
       setEntries(prev => prev.map(e => {
         const emp = empById[e.employeeId];
         if (emp) {
-          return { ...e, employeeCode: emp.employeeId || '', employeeName: emp.nameAr || emp.name || e.employeeName, department: emp.department || '-', station: emp.stationLocation || '' };
+          return { ...e, employeeCode: emp.employeeId || '', employeeName: emp.nameAr || e.employeeName, department: emp.department || '-', station: emp.stationLocation || '' };
         }
         return e;
       }));
