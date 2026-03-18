@@ -75,7 +75,7 @@ export const MobileBills = () => {
       id: row.id,
       employeeId: row.employee_id,
       employeeCode: emp?.employeeId || '',
-      employeeName: emp?.nameAr || emp?.name || row.employee_id,
+      employeeName: emp?.nameAr || row.employee_id,
       department: emp?.department || '-',
       station: emp?.stationLocation || '',
       billAmount: row.amount || 0,
