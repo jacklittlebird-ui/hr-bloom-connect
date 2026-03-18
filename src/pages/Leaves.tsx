@@ -342,8 +342,8 @@ const Leaves = () => {
             />
           )}
 
-          <TabsContent value="leaves"><LeaveRequestsList requests={filteredLeaves} onDelete={handleDeleteLeave} /></TabsContent>
-          <TabsContent value="permissions"><PermissionRequestsList requests={filteredPermissions} onDelete={handleDeletePermission} /></TabsContent>
+          <TabsContent value="leaves"><LeaveRequestsList requests={filteredLeaves} onDelete={handleDeleteLeave} onEdit={handleEditLeave} /></TabsContent>
+          <TabsContent value="permissions"><PermissionRequestsList requests={filteredPermissions} onDelete={handleDeletePermission} onEdit={handleEditPermission} /></TabsContent>
           <TabsContent value="missions"><MissionRequestsList requests={filteredMissions} onDelete={handleDeleteMission} /></TabsContent>
           <TabsContent value="overtime"><OvertimeRequestsList requests={filteredOvertime} onDelete={handleDeleteOvertime} /></TabsContent>
           <TabsContent value="new">
