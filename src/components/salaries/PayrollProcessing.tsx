@@ -55,7 +55,7 @@ export const PayrollProcessing = () => {
     const [loansRes, advancesRes, billsRes] = await Promise.all([
       supabase.from('loans').select('employee_id, monthly_installment').eq('status', 'active'),
       supabase.from('advances').select('employee_id, amount, deduction_month').eq('status', 'approved'),
-      supabase.from('mobile_bills').select('employee_id, amount, deduction_month').eq('status', 'pending'),
+      supabase.from('mobile_bills').select('employee_id, amount, deduction_month'),
     ]);
     if (loansRes.data) setDbLoans(loansRes.data);
     if (advancesRes.data) setDbAdvances(advancesRes.data);
@@ -69,6 +69,11 @@ export const PayrollProcessing = () => {
     });
     return () => subscription.unsubscribe();
   }, [fetchLoansAndAdvances]);
+
+  // Re-fetch when switching back to payroll tab (month/year change)
+  useEffect(() => {
+    fetchLoansAndAdvances();
+  }, [selectedMonth, selectedYear]);
 
   const getEmployeeMonthlyLoanPayment = useCallback((empId: string) => {
     return dbLoans.filter(l => l.employee_id === empId).reduce((s, l) => s + (l.monthly_installment || 0), 0);
