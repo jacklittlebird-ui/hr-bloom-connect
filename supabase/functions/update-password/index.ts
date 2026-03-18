@@ -13,12 +13,11 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const { user_id, email, password } = await req.json();
+  const { user_id, email, password, reactivate } = await req.json();
 
   let targetId = user_id;
 
   if (!targetId && email) {
-    // Search across pages
     let page = 1;
     const perPage = 1000;
     while (true) {
@@ -33,7 +32,13 @@ Deno.serve(async (req) => {
 
   if (!targetId) return new Response(JSON.stringify({ error: "User not found" }), { status: 404, headers: corsHeaders });
 
-  const { error } = await supabaseAdmin.auth.admin.updateUserById(targetId, { password });
+  const updateData: Record<string, unknown> = {};
+  if (password) updateData.password = password;
+  if (reactivate) {
+    updateData.ban_duration = "none";
+  }
+
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(targetId, updateData);
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders });
 
   return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
