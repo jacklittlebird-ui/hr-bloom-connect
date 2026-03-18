@@ -57,6 +57,8 @@ export const MobileBills = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingEntry, setEditingEntry] = useState<MobileBillEntry | null>(null);
   const [editAmount, setEditAmount] = useState('');
+  const [showBulkDeductDialog, setShowBulkDeductDialog] = useState(false);
+  const [bulkDeductMonth, setBulkDeductMonth] = useState('');
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -192,6 +194,32 @@ export const MobileBills = () => {
     toast({ title: isRTL ? 'تم الخصم الجماعي' : 'Bulk Deduction Done', description: isRTL ? `تم خصم ${pendingCount} فاتورة لشهر ${getMonthLabel(monthFilter, language)}` : `${pendingCount} bills deducted for ${getMonthLabel(monthFilter, language)}` });
   };
 
+  const handleBulkDeductForMonth = () => {
+    if (!bulkDeductMonth) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار الشهر' : 'Please select a month', variant: 'destructive' });
+      return;
+    }
+    const pendingForMonth = entries.filter(e => e.deductionMonth === bulkDeductMonth && e.status === 'pending');
+    if (pendingForMonth.length === 0) {
+      toast({ title: isRTL ? 'تنبيه' : 'Notice', description: isRTL ? 'لا توجد فواتير قيد الخصم لهذا الشهر' : 'No pending bills for this month' });
+      return;
+    }
+    const totalAmount = pendingForMonth.reduce((s, e) => s + e.billAmount, 0);
+    setEntries(prev => prev.map(e => e.deductionMonth === bulkDeductMonth && e.status === 'pending' ? { ...e, status: 'deducted' as const } : e));
+    setShowBulkDeductDialog(false);
+    setBulkDeductMonth('');
+    toast({
+      title: isRTL ? 'تم الخصم الإجمالي' : 'Total Deduction Done',
+      description: isRTL
+        ? `تم خصم ${pendingForMonth.length} فاتورة بإجمالي ${totalAmount.toLocaleString()} ج.م لشهر ${getMonthLabel(bulkDeductMonth, language)}`
+        : `${pendingForMonth.length} bills totaling ${totalAmount.toLocaleString()} EGP deducted for ${getMonthLabel(bulkDeductMonth, language)}`,
+    });
+  };
+
+  const bulkDeductMonthPending = bulkDeductMonth
+    ? entries.filter(e => e.deductionMonth === bulkDeductMonth && e.status === 'pending')
+    : [];
+
   const filteredEntries = entries.filter(e => {
     const matchesSearch = e.employeeName.includes(searchQuery) || e.employeeId.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || e.status === statusFilter;
@@ -291,17 +319,30 @@ export const MobileBills = () => {
               </div>
             </div>
           </div>
-          <div className={cn("mt-4 p-4 rounded-lg bg-muted/50 border border-border/50", isRTL && "text-right")}>
-            <p className="text-sm font-medium text-foreground mb-2">
-              <Smartphone className="h-4 w-4 inline-block mx-1" />
-              {isRTL ? 'تعليمات الملف:' : 'File Instructions:'}
-            </p>
-            <ul className={cn("text-xs text-muted-foreground space-y-1", isRTL ? "list-disc pr-5" : "list-disc pl-5")}>
-              <li>{isRTL ? 'العمود الأول: رقم ID الموظف (مثال: Emp001)' : 'Column 1: Employee ID (e.g., Emp001)'}</li>
-              <li>{isRTL ? 'العمود الثاني: مبلغ فاتورة الموبايل' : 'Column 2: Mobile bill amount'}</li>
-              <li>{isRTL ? 'السطر الأول يعتبر عنوان الأعمدة ويتم تخطيه' : 'First row is treated as header and skipped'}</li>
-              <li>{isRTL ? 'سيتم خصم المبلغ تلقائياً عند معالجة رواتب الشهر المحدد' : 'Amount will be auto-deducted during payroll processing for the selected month'}</li>
-            </ul>
+          <div className={cn("mt-4 flex flex-col md:flex-row gap-4", isRTL && "md:flex-row-reverse")}>
+            <div className={cn("flex-1 p-4 rounded-lg bg-muted/50 border border-border/50", isRTL && "text-right")}>
+              <p className="text-sm font-medium text-foreground mb-2">
+                <Smartphone className="h-4 w-4 inline-block mx-1" />
+                {isRTL ? 'تعليمات الملف:' : 'File Instructions:'}
+              </p>
+              <ul className={cn("text-xs text-muted-foreground space-y-1", isRTL ? "list-disc pr-5" : "list-disc pl-5")}>
+                <li>{isRTL ? 'العمود الأول: رقم ID الموظف (مثال: Emp001)' : 'Column 1: Employee ID (e.g., Emp001)'}</li>
+                <li>{isRTL ? 'العمود الثاني: مبلغ فاتورة الموبايل' : 'Column 2: Mobile bill amount'}</li>
+                <li>{isRTL ? 'السطر الأول يعتبر عنوان الأعمدة ويتم تخطيه' : 'First row is treated as header and skipped'}</li>
+                <li>{isRTL ? 'سيتم خصم المبلغ تلقائياً عند معالجة رواتب الشهر المحدد' : 'Amount will be auto-deducted during payroll processing for the selected month'}</li>
+              </ul>
+            </div>
+            <div className="flex items-center">
+              <Button
+                variant="destructive"
+                size="lg"
+                className="gap-2 whitespace-nowrap"
+                onClick={() => setShowBulkDeductDialog(true)}
+              >
+                <Banknote className="h-5 w-5" />
+                {isRTL ? 'خصم إجمالي لشهر معين' : 'Total Deduction for Month'}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -451,6 +492,65 @@ export const MobileBills = () => {
               setShowEditDialog(false);
               toast({ title: isRTL ? 'تم التحديث' : 'Updated' });
             }}>{isRTL ? 'حفظ' : 'Save'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Bulk Deduct by Month Dialog */}
+      <Dialog open={showBulkDeductDialog} onOpenChange={setShowBulkDeductDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Banknote className="h-5 w-5 text-destructive" />
+              {isRTL ? 'خصم إجمالي لشهر معين' : 'Total Deduction for Month'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{isRTL ? 'اختر الشهر' : 'Select Month'}</Label>
+              <Select value={bulkDeductMonth} onValueChange={setBulkDeductMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder={isRTL ? '-- اختر الشهر --' : '-- Select Month --'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {[...new Set(entries.map(e => e.deductionMonth))].sort().map(m => {
+                    const pendingCount = entries.filter(e => e.deductionMonth === m && e.status === 'pending').length;
+                    return (
+                      <SelectItem key={m} value={m}>
+                        {getMonthLabel(m, language)} {pendingCount > 0 ? `(${pendingCount} ${isRTL ? 'معلقة' : 'pending'})` : `(${isRTL ? 'لا يوجد معلق' : 'none pending'})`}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+            {bulkDeductMonth && (
+              <div className="rounded-lg border border-border p-4 space-y-2">
+                <div className={cn("flex justify-between text-sm", isRTL && "flex-row-reverse")}>
+                  <span className="text-muted-foreground">{isRTL ? 'عدد الفواتير المعلقة' : 'Pending Bills'}</span>
+                  <span className="font-semibold">{bulkDeductMonthPending.length}</span>
+                </div>
+                <div className={cn("flex justify-between text-sm", isRTL && "flex-row-reverse")}>
+                  <span className="text-muted-foreground">{isRTL ? 'إجمالي المبلغ' : 'Total Amount'}</span>
+                  <span className="font-bold text-destructive">
+                    {bulkDeductMonthPending.reduce((s, e) => s + e.billAmount, 0).toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setShowBulkDeductDialog(false); setBulkDeductMonth(''); }}>
+              {isRTL ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!bulkDeductMonth || bulkDeductMonthPending.length === 0}
+              onClick={handleBulkDeductForMonth}
+              className="gap-1"
+            >
+              <Banknote className="h-4 w-4" />
+              {isRTL ? 'تأكيد الخصم' : 'Confirm Deduction'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
