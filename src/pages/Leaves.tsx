@@ -224,6 +224,35 @@ const Leaves = () => {
   const handleDeleteMission = async (id: string) => { await supabase.from('missions').delete().eq('id', id); fetchData(); };
   const handleDeleteOvertime = async (id: string) => { await supabase.from('overtime_requests').delete().eq('id', id); fetchData(); };
 
+  const handleEditLeave = async (data: { id: string; leaveType: string; startDate: string; endDate: string; days: number; status: string; reason: string }) => {
+    const { error } = await supabase.from('leave_requests').update({
+      leave_type: data.leaveType,
+      start_date: data.startDate,
+      end_date: data.endDate,
+      days: data.days,
+      status: data.status,
+      reason: data.reason,
+    }).eq('id', data.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(language === 'ar' ? 'تم تعديل الإجازة بنجاح' : 'Leave updated successfully');
+    fetchData();
+  };
+
+  const handleEditPermission = async (data: { id: string; permissionType: string; date: string; fromTime: string; toTime: string; durationHours: number; status: string; reason: string }) => {
+    const { error } = await supabase.from('permission_requests').update({
+      permission_type: data.permissionType,
+      date: data.date,
+      start_time: data.fromTime,
+      end_time: data.toTime,
+      hours: data.durationHours,
+      status: data.status,
+      reason: data.reason,
+    }).eq('id', data.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(language === 'ar' ? 'تم تعديل الإذن بنجاح' : 'Permission updated successfully');
+    fetchData();
+  };
+
   const resolveEmployeeUUID = async (employeeCode: string): Promise<string | null> => {
     const { data } = await supabase.from('employees').select('id').eq('employee_code', employeeCode).single();
     return data?.id || null;
@@ -313,8 +342,8 @@ const Leaves = () => {
             />
           )}
 
-          <TabsContent value="leaves"><LeaveRequestsList requests={filteredLeaves} onDelete={handleDeleteLeave} /></TabsContent>
-          <TabsContent value="permissions"><PermissionRequestsList requests={filteredPermissions} onDelete={handleDeletePermission} /></TabsContent>
+          <TabsContent value="leaves"><LeaveRequestsList requests={filteredLeaves} onDelete={handleDeleteLeave} onEdit={handleEditLeave} /></TabsContent>
+          <TabsContent value="permissions"><PermissionRequestsList requests={filteredPermissions} onDelete={handleDeletePermission} onEdit={handleEditPermission} /></TabsContent>
           <TabsContent value="missions"><MissionRequestsList requests={filteredMissions} onDelete={handleDeleteMission} /></TabsContent>
           <TabsContent value="overtime"><OvertimeRequestsList requests={filteredOvertime} onDelete={handleDeleteOvertime} /></TabsContent>
           <TabsContent value="new">
