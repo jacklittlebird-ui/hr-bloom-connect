@@ -319,17 +319,30 @@ export const MobileBills = () => {
               </div>
             </div>
           </div>
-          <div className={cn("mt-4 p-4 rounded-lg bg-muted/50 border border-border/50", isRTL && "text-right")}>
-            <p className="text-sm font-medium text-foreground mb-2">
-              <Smartphone className="h-4 w-4 inline-block mx-1" />
-              {isRTL ? 'تعليمات الملف:' : 'File Instructions:'}
-            </p>
-            <ul className={cn("text-xs text-muted-foreground space-y-1", isRTL ? "list-disc pr-5" : "list-disc pl-5")}>
-              <li>{isRTL ? 'العمود الأول: رقم ID الموظف (مثال: Emp001)' : 'Column 1: Employee ID (e.g., Emp001)'}</li>
-              <li>{isRTL ? 'العمود الثاني: مبلغ فاتورة الموبايل' : 'Column 2: Mobile bill amount'}</li>
-              <li>{isRTL ? 'السطر الأول يعتبر عنوان الأعمدة ويتم تخطيه' : 'First row is treated as header and skipped'}</li>
-              <li>{isRTL ? 'سيتم خصم المبلغ تلقائياً عند معالجة رواتب الشهر المحدد' : 'Amount will be auto-deducted during payroll processing for the selected month'}</li>
-            </ul>
+          <div className={cn("mt-4 flex flex-col md:flex-row gap-4", isRTL && "md:flex-row-reverse")}>
+            <div className={cn("flex-1 p-4 rounded-lg bg-muted/50 border border-border/50", isRTL && "text-right")}>
+              <p className="text-sm font-medium text-foreground mb-2">
+                <Smartphone className="h-4 w-4 inline-block mx-1" />
+                {isRTL ? 'تعليمات الملف:' : 'File Instructions:'}
+              </p>
+              <ul className={cn("text-xs text-muted-foreground space-y-1", isRTL ? "list-disc pr-5" : "list-disc pl-5")}>
+                <li>{isRTL ? 'العمود الأول: رقم ID الموظف (مثال: Emp001)' : 'Column 1: Employee ID (e.g., Emp001)'}</li>
+                <li>{isRTL ? 'العمود الثاني: مبلغ فاتورة الموبايل' : 'Column 2: Mobile bill amount'}</li>
+                <li>{isRTL ? 'السطر الأول يعتبر عنوان الأعمدة ويتم تخطيه' : 'First row is treated as header and skipped'}</li>
+                <li>{isRTL ? 'سيتم خصم المبلغ تلقائياً عند معالجة رواتب الشهر المحدد' : 'Amount will be auto-deducted during payroll processing for the selected month'}</li>
+              </ul>
+            </div>
+            <div className="flex items-center">
+              <Button
+                variant="destructive"
+                size="lg"
+                className="gap-2 whitespace-nowrap"
+                onClick={() => setShowBulkDeductDialog(true)}
+              >
+                <Banknote className="h-5 w-5" />
+                {isRTL ? 'خصم إجمالي لشهر معين' : 'Total Deduction for Month'}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
