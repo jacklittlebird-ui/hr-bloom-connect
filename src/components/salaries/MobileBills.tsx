@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,12 +14,13 @@ import { cn } from '@/lib/utils';
 import { Upload, Trash2, Smartphone, Search, Printer, FileText, FileSpreadsheet, Phone, Users, Banknote, Calendar, Edit } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
-import { stationLocations } from '@/data/stationLocations';
+import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 
 interface MobileBillEntry {
   id: string;
-  employeeId: string;
+  employeeId: string; // employee uuid
+  employeeCode: string;
   employeeName: string;
   department: string;
   station: string;
@@ -27,7 +28,6 @@ interface MobileBillEntry {
   deductionMonth: string;
   status: 'pending' | 'deducted';
   uploadDate: string;
-  batchId: string;
 }
 
 const getMonthLabel = (dateStr: string, lang: string) => {
@@ -45,13 +45,9 @@ export const MobileBills = () => {
   const [deductionMonth, setDeductionMonth] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [stationFilter, setStationFilter] = useState('all');
   const [monthFilter, setMonthFilter] = useState('all');
-  const [entries, setEntries] = useState<MobileBillEntry[]>([
-    { id: '1', employeeId: 'Emp001', employeeName: 'جلال عبد الرازق عبد العليم', department: 'تقنية المعلومات', station: 'capital', billAmount: 350, deductionMonth: '2026-02', status: 'pending', uploadDate: '2026-02-01', batchId: 'B001' },
-    { id: '2', employeeId: 'Emp002', employeeName: 'أحمد محمد علي', department: 'الموارد البشرية', station: 'cairo', billAmount: 280, deductionMonth: '2026-02', status: 'pending', uploadDate: '2026-02-01', batchId: 'B001' },
-    { id: '3', employeeId: 'Emp003', employeeName: 'سارة أحمد حسن', department: 'المالية', station: 'cairo', billAmount: 420, deductionMonth: '2026-01', status: 'deducted', uploadDate: '2026-01-05', batchId: 'B000' },
-  ]);
+  const [entries, setEntries] = useState<MobileBillEntry[]>([]);
+  const [loading, setLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -60,7 +56,62 @@ export const MobileBills = () => {
   const [showBulkDeductDialog, setShowBulkDeductDialog] = useState(false);
   const [bulkDeductMonth, setBulkDeductMonth] = useState('');
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Build employee lookup maps
+  const empById = useMemo(() => {
+    const map: Record<string, typeof employees[0]> = {};
+    employees.forEach(e => { if (e.id) map[e.id] = e; });
+    return map;
+  }, [employees]);
+
+  const empByCode = useMemo(() => {
+    const map: Record<string, typeof employees[0]> = {};
+    employees.forEach(e => { if (e.employeeId) map[e.employeeId.toLowerCase()] = e; });
+    return map;
+  }, [employees]);
+
+  const enrichEntry = useCallback((row: any): MobileBillEntry => {
+    const emp = empById[row.employee_id];
+    return {
+      id: row.id,
+      employeeId: row.employee_id,
+      employeeCode: emp?.employeeId || '',
+      employeeName: emp?.nameAr || row.employee_id,
+      department: emp?.department || '-',
+      station: emp?.stationLocation || '',
+      billAmount: row.amount || 0,
+      deductionMonth: row.deduction_month,
+      status: row.status === 'deducted' ? 'deducted' : 'pending',
+      uploadDate: row.created_at ? row.created_at.split('T')[0] : '',
+    };
+  }, [empById]);
+
+  const fetchBills = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from('mobile_bills').select('*').order('created_at', { ascending: false });
+    if (!error && data) {
+      setEntries(data.map(enrichEntry));
+    }
+    setLoading(false);
+  }, [enrichEntry]);
+
+  useEffect(() => {
+    fetchBills();
+  }, [fetchBills]);
+
+  // Re-enrich when employees load
+  useEffect(() => {
+    if (employees.length > 0 && entries.length > 0) {
+      setEntries(prev => prev.map(e => {
+        const emp = empById[e.employeeId];
+        if (emp) {
+          return { ...e, employeeCode: emp.employeeId || '', employeeName: emp.nameAr || e.employeeName, department: emp.department || '-', station: emp.stationLocation || '' };
+        }
+        return e;
+      }));
+    }
+  }, [employees]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -70,20 +121,15 @@ export const MobileBills = () => {
       return;
     }
 
-    const validTypes = [
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-excel',
-      'text/csv',
-    ];
+    const validTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'];
     if (!validTypes.includes(file.type) && !file.name.endsWith('.csv') && !file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
       toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى رفع ملف Excel أو CSV' : 'Please upload an Excel or CSV file', variant: 'destructive' });
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
-    // Parse Excel/CSV using xlsx library
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const data = event.target?.result;
       if (!data) return;
 
@@ -98,69 +144,65 @@ export const MobileBills = () => {
           return;
         }
 
-        // Skip header row
         const dataRows = rows.slice(1);
-        const batchId = `B${String(Date.now()).slice(-4)}`;
-        const newEntries: MobileBillEntry[] = [];
+        let addedCount = 0;
+        let updatedCount = 0;
         let skippedCount = 0;
 
-        dataRows.forEach((row, idx) => {
-          const empId = String(row[0] || '').trim();
+        // Get current user for uploaded_by
+        const { data: { user } } = await supabase.auth.getUser();
+
+        for (const row of dataRows) {
+          const empCode = String(row[0] || '').trim();
           const amount = parseFloat(String(row[1] || ''));
 
-          if (!empId || isNaN(amount) || amount <= 0) {
+          if (!empCode || isNaN(amount) || amount <= 0) {
             skippedCount++;
-            return;
+            continue;
           }
 
-          const employee = employees.find(emp => emp.employeeId?.toLowerCase() === empId.toLowerCase());
-          
-          newEntries.push({
-            id: `${Date.now()}-${idx}`,
-            employeeId: employee?.employeeId || empId,
-            employeeName: employee?.nameAr || empId,
-            department: employee?.department || '-',
-            station: employee?.stationLocation || '',
-            billAmount: amount,
-            deductionMonth,
-            status: 'pending',
-            uploadDate: new Date().toISOString().split('T')[0],
-            batchId,
-          });
-        });
+          // Find employee by code
+          const employee = empByCode[empCode.toLowerCase()];
+          if (!employee?.id) {
+            skippedCount++;
+            continue;
+          }
 
-        if (newEntries.length === 0) {
+          // Upsert using DB function
+          const { data: resultId, error } = await supabase.rpc('upsert_mobile_bill', {
+            p_employee_id: employee.id,
+            p_amount: amount,
+            p_deduction_month: deductionMonth,
+            p_uploaded_by: user?.id || null,
+          });
+
+          if (!error) {
+            // Check if it was an update or insert by checking existing entries
+            const existed = entries.some(e => e.employeeId === employee.id && e.deductionMonth === deductionMonth);
+            if (existed) updatedCount++;
+            else addedCount++;
+          } else {
+            skippedCount++;
+          }
+        }
+
+        if (addedCount === 0 && updatedCount === 0) {
           toast({
             title: isRTL ? 'خطأ' : 'Error',
             description: isRTL ? 'لم يتم العثور على بيانات صالحة في الملف. تأكد أن الملف يحتوي على عمودين: رقم ID الموظف ومبلغ الفاتورة' : 'No valid data found. Ensure file has two columns: Employee ID and Bill Amount',
             variant: 'destructive',
           });
         } else {
-          let updatedCount = 0;
-          let addedCount = 0;
-          setEntries(prev => {
-            const updated = [...prev];
-            newEntries.forEach(ne => {
-              const existingIdx = updated.findIndex(e => e.employeeId.toLowerCase() === ne.employeeId.toLowerCase() && e.deductionMonth === ne.deductionMonth);
-              if (existingIdx !== -1) {
-                updated[existingIdx] = { ...updated[existingIdx], billAmount: ne.billAmount, uploadDate: ne.uploadDate, batchId: ne.batchId };
-                updatedCount++;
-              } else {
-                updated.push(ne);
-                addedCount++;
-              }
-            });
-            return updated;
-          });
           toast({
             title: isRTL ? 'تم الرفع بنجاح' : 'Upload Successful',
             description: isRTL
               ? `تم إضافة ${addedCount} فاتورة${updatedCount > 0 ? ` وتحديث ${updatedCount} فاتورة موجودة` : ''}${skippedCount > 0 ? ` (تم تخطي ${skippedCount} سطر غير صالح)` : ''}`
               : `${addedCount} added${updatedCount > 0 ? `, ${updatedCount} updated` : ''}${skippedCount > 0 ? ` (${skippedCount} skipped)` : ''}`,
           });
+          await fetchBills();
         }
       } catch (err) {
-        toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'فشل في قراءة الملف. تأكد أن الملف بصيغة Excel أو CSV صحيحة' : 'Failed to read file. Ensure it is a valid Excel or CSV file', variant: 'destructive' });
+        toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'فشل في قراءة الملف' : 'Failed to read file', variant: 'destructive' });
       }
 
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -168,33 +210,43 @@ export const MobileBills = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  const handleDelete = () => {
-    if (deletingId) setEntries(prev => prev.filter(e => e.id !== deletingId));
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    const { error } = await supabase.from('mobile_bills').delete().eq('id', deletingId);
+    if (!error) {
+      setEntries(prev => prev.filter(e => e.id !== deletingId));
+      toast({ title: isRTL ? 'تم الحذف' : 'Deleted' });
+    }
     setShowDeleteDialog(false);
     setDeletingId(null);
-    toast({ title: isRTL ? 'تم الحذف' : 'Deleted' });
   };
 
-  const handleMarkDeducted = (id: string) => {
-    setEntries(prev => prev.map(e => e.id === id ? { ...e, status: 'deducted' as const } : e));
-    toast({ title: isRTL ? 'تم تحديث الحالة' : 'Status Updated' });
+  const handleMarkDeducted = async (id: string) => {
+    const { error } = await supabase.from('mobile_bills').update({ status: 'deducted' }).eq('id', id);
+    if (!error) {
+      setEntries(prev => prev.map(e => e.id === id ? { ...e, status: 'deducted' as const } : e));
+      toast({ title: isRTL ? 'تم تحديث الحالة' : 'Status Updated' });
+    }
   };
 
-  const handleBulkDeduct = () => {
+  const handleBulkDeduct = async () => {
     if (monthFilter === 'all') {
       toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار شهر محدد أولاً' : 'Please select a specific month first', variant: 'destructive' });
       return;
     }
-    const pendingCount = entries.filter(e => e.deductionMonth === monthFilter && e.status === 'pending').length;
-    if (pendingCount === 0) {
+    const pendingIds = entries.filter(e => e.deductionMonth === monthFilter && e.status === 'pending').map(e => e.id);
+    if (pendingIds.length === 0) {
       toast({ title: isRTL ? 'تنبيه' : 'Notice', description: isRTL ? 'لا توجد فواتير قيد الخصم لهذا الشهر' : 'No pending bills for this month' });
       return;
     }
-    setEntries(prev => prev.map(e => e.deductionMonth === monthFilter && e.status === 'pending' ? { ...e, status: 'deducted' as const } : e));
-    toast({ title: isRTL ? 'تم الخصم الجماعي' : 'Bulk Deduction Done', description: isRTL ? `تم خصم ${pendingCount} فاتورة لشهر ${getMonthLabel(monthFilter, language)}` : `${pendingCount} bills deducted for ${getMonthLabel(monthFilter, language)}` });
+    const { error } = await supabase.from('mobile_bills').update({ status: 'deducted' }).in('id', pendingIds);
+    if (!error) {
+      setEntries(prev => prev.map(e => pendingIds.includes(e.id) ? { ...e, status: 'deducted' as const } : e));
+      toast({ title: isRTL ? 'تم الخصم الجماعي' : 'Bulk Deduction Done', description: isRTL ? `تم خصم ${pendingIds.length} فاتورة لشهر ${getMonthLabel(monthFilter, language)}` : `${pendingIds.length} bills deducted for ${getMonthLabel(monthFilter, language)}` });
+    }
   };
 
-  const handleBulkDeductForMonth = () => {
+  const handleBulkDeductForMonth = async () => {
     if (!bulkDeductMonth) {
       toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار الشهر' : 'Please select a month', variant: 'destructive' });
       return;
@@ -205,15 +257,30 @@ export const MobileBills = () => {
       return;
     }
     const totalAmount = pendingForMonth.reduce((s, e) => s + e.billAmount, 0);
-    setEntries(prev => prev.map(e => e.deductionMonth === bulkDeductMonth && e.status === 'pending' ? { ...e, status: 'deducted' as const } : e));
-    setShowBulkDeductDialog(false);
-    setBulkDeductMonth('');
-    toast({
-      title: isRTL ? 'تم الخصم الإجمالي' : 'Total Deduction Done',
-      description: isRTL
-        ? `تم خصم ${pendingForMonth.length} فاتورة بإجمالي ${totalAmount.toLocaleString()} ج.م لشهر ${getMonthLabel(bulkDeductMonth, language)}`
-        : `${pendingForMonth.length} bills totaling ${totalAmount.toLocaleString()} EGP deducted for ${getMonthLabel(bulkDeductMonth, language)}`,
-    });
+    const ids = pendingForMonth.map(e => e.id);
+    const { error } = await supabase.from('mobile_bills').update({ status: 'deducted' }).in('id', ids);
+    if (!error) {
+      setEntries(prev => prev.map(e => ids.includes(e.id) ? { ...e, status: 'deducted' as const } : e));
+      setShowBulkDeductDialog(false);
+      setBulkDeductMonth('');
+      toast({
+        title: isRTL ? 'تم الخصم الإجمالي' : 'Total Deduction Done',
+        description: isRTL
+          ? `تم خصم ${pendingForMonth.length} فاتورة بإجمالي ${totalAmount.toLocaleString()} ج.م لشهر ${getMonthLabel(bulkDeductMonth, language)}`
+          : `${pendingForMonth.length} bills totaling ${totalAmount.toLocaleString()} EGP deducted for ${getMonthLabel(bulkDeductMonth, language)}`,
+      });
+    }
+  };
+
+  const handleEditSave = async () => {
+    const newAmount = parseFloat(editAmount);
+    if (!editingEntry || isNaN(newAmount) || newAmount <= 0) return;
+    const { error } = await supabase.from('mobile_bills').update({ amount: newAmount }).eq('id', editingEntry.id);
+    if (!error) {
+      setEntries(prev => prev.map(e => e.id === editingEntry.id ? { ...e, billAmount: newAmount } : e));
+      setShowEditDialog(false);
+      toast({ title: isRTL ? 'تم التحديث' : 'Updated' });
+    }
   };
 
   const bulkDeductMonthPending = bulkDeductMonth
@@ -221,11 +288,10 @@ export const MobileBills = () => {
     : [];
 
   const filteredEntries = entries.filter(e => {
-    const matchesSearch = e.employeeName.includes(searchQuery) || e.employeeId.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = e.employeeName.includes(searchQuery) || e.employeeCode.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || e.status === statusFilter;
-    const matchesStation = stationFilter === 'all' || e.station === stationFilter;
     const matchesMonth = monthFilter === 'all' || e.deductionMonth === monthFilter;
-    return matchesSearch && matchesStatus && matchesStation && matchesMonth;
+    return matchesSearch && matchesStatus && matchesMonth;
   });
 
   const stats = useMemo(() => ({
@@ -237,7 +303,7 @@ export const MobileBills = () => {
 
   const exportTitle = isRTL ? 'تقرير فواتير الموبايل' : 'Mobile Bills Report';
   const exportColumns = [
-    { header: isRTL ? 'رقم الموظف' : 'Employee ID', key: 'employeeId' },
+    { header: isRTL ? 'رقم الموظف' : 'Employee ID', key: 'employeeCode' },
     { header: isRTL ? 'اسم الموظف' : 'Employee', key: 'employeeName' },
     { header: isRTL ? 'القسم' : 'Department', key: 'department' },
     { header: isRTL ? 'مبلغ الفاتورة' : 'Bill Amount', key: 'billAmount' },
@@ -252,7 +318,7 @@ export const MobileBills = () => {
 
   const generateMonths = () => {
     const months: { value: string; label: string }[] = [];
-    for (let year = 2025; year <= 2050; year++) {
+    for (let year = 2025; year <= 2030; year++) {
       for (let month = 1; month <= 12; month++) {
         const val = `${year}-${String(month).padStart(2, '0')}`;
         months.push({ value: val, label: getMonthLabel(val, language) });
@@ -365,13 +431,6 @@ export const MobileBills = () => {
                   <SelectItem value="deducted">{isRTL ? 'تم الخصم' : 'Deducted'}</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={stationFilter} onValueChange={setStationFilter}>
-                <SelectTrigger className="w-40"><SelectValue placeholder={isRTL ? 'المحطة' : 'Station'} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{isRTL ? 'جميع المحطات' : 'All Stations'}</SelectItem>
-                  {stationLocations.map(s => <SelectItem key={s.value} value={s.value}>{isRTL ? s.labelAr : s.labelEn}</SelectItem>)}
-                </SelectContent>
-              </Select>
               <Select value={monthFilter} onValueChange={setMonthFilter}>
                 <SelectTrigger className="w-44"><SelectValue placeholder={isRTL ? 'شهر الخصم' : 'Month'} /></SelectTrigger>
                 <SelectContent>
@@ -417,7 +476,7 @@ export const MobileBills = () => {
             <TableBody>
               {filteredEntries.map(entry => (
                 <TableRow key={entry.id}>
-                  <TableCell className={cn("font-mono text-xs", isRTL && "text-right")}>{entry.employeeId}</TableCell>
+                  <TableCell className={cn("font-mono text-xs", isRTL && "text-right")}>{entry.employeeCode}</TableCell>
                   <TableCell className={cn("font-medium", isRTL && "text-right")}>{entry.employeeName}</TableCell>
                   <TableCell className={cn(isRTL && "text-right")}>{entry.department}</TableCell>
                   <TableCell className={cn("font-semibold", isRTL && "text-right")}>{entry.billAmount.toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}</TableCell>
@@ -448,7 +507,7 @@ export const MobileBills = () => {
             </TableBody>
           </Table>
           {filteredEntries.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">{isRTL ? 'لا توجد فواتير' : 'No bills found'}</div>
+            <div className="text-center py-12 text-muted-foreground">{loading ? (isRTL ? 'جاري التحميل...' : 'Loading...') : (isRTL ? 'لا توجد فواتير' : 'No bills found')}</div>
           )}
         </CardContent>
       </Card>
@@ -465,6 +524,7 @@ export const MobileBills = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
       {/* Edit Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-sm">
@@ -485,16 +545,11 @@ export const MobileBills = () => {
           )}
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={() => {
-              const newAmount = parseFloat(editAmount);
-              if (!editingEntry || isNaN(newAmount) || newAmount <= 0) return;
-              setEntries(prev => prev.map(e => e.id === editingEntry.id ? { ...e, billAmount: newAmount } : e));
-              setShowEditDialog(false);
-              toast({ title: isRTL ? 'تم التحديث' : 'Updated' });
-            }}>{isRTL ? 'حفظ' : 'Save'}</Button>
+            <Button onClick={handleEditSave}>{isRTL ? 'حفظ' : 'Save'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       {/* Bulk Deduct by Month Dialog */}
       <Dialog open={showBulkDeductDialog} onOpenChange={setShowBulkDeductDialog}>
         <DialogContent className="max-w-md">
