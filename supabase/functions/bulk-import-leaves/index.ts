@@ -71,29 +71,31 @@ Deno.serve(async (req) => {
     // Skip rows with all zeros
     if (casual === 0 && annual === 0 && sick === 0 && overtime === 0 && permission === 0 && unpaid === 0) continue;
 
-    // Casual leave
+    const reason = importReason || 'استيراد جماعي';
+
+    // Casual leave (column 4)
     if (casual > 0) {
       leaveInserts.push({
         employee_id: empId,
         leave_type: 'casual',
         start_date: fromDate,
         end_date: toDate,
-        days: Math.max(1, Math.round(casual)),
+        days: casual,
         status: 'approved',
-        reason: 'استيراد جماعي',
+        reason,
       });
     }
 
-    // Second casual leave column
+    // Annual leave (column 5)
     if (annual > 0) {
       leaveInserts.push({
         employee_id: empId,
-        leave_type: 'casual',
+        leave_type: 'annual',
         start_date: fromDate,
         end_date: toDate,
-        days: Math.max(1, Math.round(annual)),
+        days: annual,
         status: 'approved',
-        reason: 'استيراد جماعي',
+        reason,
       });
     }
 
@@ -104,9 +106,9 @@ Deno.serve(async (req) => {
         leave_type: 'sick',
         start_date: fromDate,
         end_date: toDate,
-        days: Math.max(1, Math.round(sick)),
+        days: sick,
         status: 'approved',
-        reason: 'استيراد جماعي',
+        reason,
       });
     }
 
@@ -119,7 +121,7 @@ Deno.serve(async (req) => {
         end_date: toDate,
         days: unpaid,
         status: 'approved',
-        reason: 'استيراد جماعي',
+        reason,
       });
     }
 
@@ -135,7 +137,7 @@ Deno.serve(async (req) => {
         end_time: `${String(endHour).padStart(2, '0')}:00`,
         hours: hours,
         status: 'approved',
-        reason: 'استيراد جماعي',
+        reason,
       });
     }
 
@@ -151,7 +153,7 @@ Deno.serve(async (req) => {
           hours: 8,
           overtime_type: 'regular',
           status: 'approved',
-          reason: 'استيراد جماعي',
+          reason,
         });
       }
     }
