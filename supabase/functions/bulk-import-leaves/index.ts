@@ -84,11 +84,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Annual leave (second column)
+    // Second casual leave column
     if (annual > 0) {
       leaveInserts.push({
         employee_id: empId,
-        leave_type: 'annual',
+        leave_type: 'casual',
         start_date: fromDate,
         end_date: toDate,
         days: Math.max(1, Math.round(annual)),
@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
         leave_type: 'unpaid',
         start_date: fromDate,
         end_date: toDate,
-        days: Math.max(1, Math.round(unpaid)),
+        days: unpaid,
         status: 'approved',
         reason: 'استيراد جماعي',
       });
