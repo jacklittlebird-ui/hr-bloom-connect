@@ -142,10 +142,10 @@ export const EmployeeAssignment = () => {
   // Get employees for bulk assignment preview
   const bulkEmployees = useMemo(() => {
     let list = contextEmployees.filter(e => e.status === 'active');
-    if (bulkData.bulkStationId) {
+    if (bulkData.bulkStationId && bulkData.bulkStationId !== 'all') {
       list = list.filter(e => e.stationId === bulkData.bulkStationId);
     }
-    if (bulkData.bulkDepartmentId) {
+    if (bulkData.bulkDepartmentId && bulkData.bulkDepartmentId !== 'all') {
       list = list.filter(e => e.departmentId === bulkData.bulkDepartmentId);
     }
     return list;
