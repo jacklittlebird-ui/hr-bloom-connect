@@ -6,7 +6,7 @@
 export type LocationType = 'headquarters' | 'airport';
 
 // Attendance Schedule Types
-export type ScheduleType = 'fixed' | 'flexible' | 'shift';
+export type ScheduleType = 'fixed' | 'flexible' | 'shift' | 'fully-flexible';
 
 // Shift Pattern Types
 export type ShiftPattern = '3-shift' | '4-shift';
