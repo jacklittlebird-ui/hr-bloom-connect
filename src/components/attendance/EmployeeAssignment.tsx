@@ -146,7 +146,7 @@ export const EmployeeAssignment = () => {
       list = list.filter(e => e.stationId === bulkData.bulkStationId);
     }
     if (bulkData.bulkDepartmentId) {
-      list = list.filter(e => e.department === bulkData.bulkDepartmentId);
+      list = list.filter(e => e.departmentId === bulkData.bulkDepartmentId);
     }
     return list;
   }, [contextEmployees, bulkData.bulkStationId, bulkData.bulkDepartmentId]);
