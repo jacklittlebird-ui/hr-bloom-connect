@@ -163,7 +163,7 @@ export const AttendanceRules = () => {
               </DialogTitle>
             </DialogHeader>
             <Tabs value={selectedType} onValueChange={(v) => setSelectedType(v as ScheduleType)}>
-              <TabsList className="grid grid-cols-3 mb-4" dir="rtl">
+              <TabsList className="grid grid-cols-4 mb-4" dir="rtl">
                 <TabsTrigger value="fixed" className="gap-2">
                   <Building2 className="w-4 h-4" />
                   {t('attendance.rules.fixed')}
@@ -171,6 +171,10 @@ export const AttendanceRules = () => {
                 <TabsTrigger value="flexible" className="gap-2">
                   <Timer className="w-4 h-4" />
                   {t('attendance.rules.flexible')}
+                </TabsTrigger>
+                <TabsTrigger value="fully-flexible" className="gap-2 text-xs">
+                  <Clock className="w-4 h-4" />
+                  {language === 'ar' ? 'مرن بالكامل' : 'Fully Flex'}
                 </TabsTrigger>
                 <TabsTrigger value="shift" className="gap-2">
                   <Plane className="w-4 h-4" />
