@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { email, password, full_name, role, station_code, employee_code } = await req.json();
+    const { email, password, full_name, role, station_code, employee_code, station_codes } = await req.json();
 
     // Input validation
     if (!email || !password || !full_name || !role) {
@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!['admin', 'station_manager', 'employee', 'kiosk', 'training_manager', 'hr'].includes(role)) {
+    if (!['admin', 'station_manager', 'employee', 'kiosk', 'training_manager', 'hr', 'area_manager'].includes(role)) {
       return new Response(JSON.stringify({ error: 'Invalid role' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -123,6 +123,24 @@ Deno.serve(async (req) => {
         .eq('code', station_code)
         .single();
       stationId = station?.id || null;
+    }
+
+    // Handle area_manager with multiple stations
+    if (role === 'area_manager' && station_codes && Array.isArray(station_codes)) {
+      const stationInserts = [];
+      for (const code of station_codes) {
+        const { data: station } = await supabaseAdmin
+          .from('stations')
+          .select('id')
+          .eq('code', code)
+          .single();
+        if (station?.id) {
+          stationInserts.push({ user_id: userId, station_id: station.id });
+        }
+      }
+      if (stationInserts.length > 0) {
+        await supabaseAdmin.from('area_manager_stations').insert(stationInserts);
+      }
     }
 
     if (role === 'employee' && employee_code) {

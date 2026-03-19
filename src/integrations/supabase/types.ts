@@ -59,6 +59,35 @@ export type Database = {
           },
         ]
       }
+      area_manager_stations: {
+        Row: {
+          created_at: string
+          id: string
+          station_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          station_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          station_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_manager_stations_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_acknowledgments: {
         Row: {
           acknowledged_at: string
@@ -2470,6 +2499,10 @@ export type Database = {
       }
     }
     Functions: {
+      get_area_manager_station_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
       get_user_employee_id: { Args: { _user_id: string }; Returns: string }
       get_user_station_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -2509,6 +2542,7 @@ export type Database = {
         | "kiosk"
         | "training_manager"
         | "hr"
+        | "area_manager"
       employee_status: "active" | "inactive" | "suspended"
     }
     CompositeTypes: {
@@ -2644,6 +2678,7 @@ export const Constants = {
         "kiosk",
         "training_manager",
         "hr",
+        "area_manager",
       ],
       employee_status: ["active", "inactive", "suspended"],
     },

@@ -127,14 +127,31 @@ const StationManagerPortal = () => {
   const [editViolId, setEditViolId] = useState('');
   const [editViolForm, setEditViolForm] = useState({ type: 'absence', description: '', penalty: '', date: '' });
 
+  const isAreaManager = user?.role === 'area_manager';
+  const [selectedStation, setSelectedStation] = useState<string>(user?.station || user?.stations?.[0] || '');
+
+  // For area_manager: list of managed station labels
+  const managedStations = useMemo(() => {
+    if (!isAreaManager || !user?.stations) return [];
+    return user.stations.map(code => {
+      const loc = stationLocations.find(s => s.value === code);
+      return { code, labelAr: loc?.labelAr || code, labelEn: loc?.labelEn || code };
+    });
+  }, [isAreaManager, user?.stations, language]);
+
+  const activeStation = isAreaManager ? selectedStation : user?.station;
+
   const stationName = useMemo(() => {
-    const loc = stationLocations.find(s => s.value === user?.station);
+    const loc = stationLocations.find(s => s.value === activeStation);
     return language === 'ar' ? loc?.labelAr : loc?.labelEn;
-  }, [user?.station, language]);
+  }, [activeStation, language]);
 
   const stationEmployees = useMemo(() => {
-    return employees.filter(e => e.stationLocation === user?.station);
-  }, [employees, user?.station]);
+    if (isAreaManager && selectedStation === 'all') {
+      return employees.filter(e => user?.stations?.includes(e.stationLocation || ''));
+    }
+    return employees.filter(e => e.stationLocation === activeStation);
+  }, [employees, activeStation, isAreaManager, selectedStation, user?.stations]);
 
   // === Attendance state ===
   const [attMonth, setAttMonth] = useState(new Date().getMonth());
@@ -564,8 +581,8 @@ const StationManagerPortal = () => {
               <MapPin className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-bold text-foreground text-sm md:text-base truncate">{t('بوابة مدير المحطة', 'Station Manager Portal')}</h1>
-              <p className="text-[10px] md:text-xs text-muted-foreground truncate">{stationName} - {language === 'ar' ? user?.nameAr : user?.name}</p>
+              <h1 className="font-bold text-foreground text-sm md:text-base truncate">{isAreaManager ? t('بوابة مدير المنطقة', 'Area Manager Portal') : t('بوابة مدير المحطة', 'Station Manager Portal')}</h1>
+              <p className="text-[10px] md:text-xs text-muted-foreground truncate">{isAreaManager ? t('البحر الأحمر والصعيد', 'Red Sea & Upper Egypt') : stationName} - {language === 'ar' ? user?.nameAr : user?.name}</p>
             </div>
           </div>
           <div className="flex items-center gap-1 md:gap-2 shrink-0">
@@ -586,6 +603,39 @@ const StationManagerPortal = () => {
 
       <main className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
         <PortalWelcomeBanner />
+
+        {/* Area Manager Station Selector */}
+        {isAreaManager && managedStations.length > 0 && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-3 md:p-4 flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">{t('اختر المحطة:', 'Select Station:')}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant={selectedStation === 'all' ? 'default' : 'outline'}
+                  onClick={() => setSelectedStation('all')}
+                  className="h-8 text-xs"
+                >
+                  {t('جميع المحطات', 'All Stations')}
+                </Button>
+                {managedStations.map(s => (
+                  <Button
+                    key={s.code}
+                    size="sm"
+                    variant={selectedStation === s.code ? 'default' : 'outline'}
+                    onClick={() => setSelectedStation(s.code)}
+                    className="h-8 text-xs"
+                  >
+                    {language === 'ar' ? s.labelAr : s.labelEn}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-[hsl(var(--stat-blue))] to-[hsl(var(--stat-blue)/0.8)] text-white shadow-lg">
