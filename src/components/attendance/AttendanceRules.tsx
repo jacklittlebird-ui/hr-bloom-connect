@@ -314,7 +314,41 @@ export const AttendanceRules = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
-              
+
+              <TabsContent value="fully-flexible" className="space-y-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{language === 'ar' ? 'إعدادات الحضور المرن بالكامل' : 'Fully Flexible Settings'}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'ar' 
+                        ? 'يمكن للموظف الحضور والانصراف في أي وقت - يتم احتساب الساعات على مدار الشهر'
+                        : 'Employee can check in/out anytime - hours are tracked monthly'}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>{language === 'ar' ? 'إجمالي الساعات الشهرية المطلوبة' : 'Monthly Target Hours'}</Label>
+                      <Input 
+                        type="number" 
+                        value={newRule.fullyFlexibleSchedule?.monthlyTargetHours || 192}
+                        onChange={(e) => setNewRule({
+                          ...newRule,
+                          fullyFlexibleSchedule: {
+                            monthlyTargetHours: Number(e.target.value),
+                            allowAnyTime: true,
+                          }
+                        })}
+                        min={100}
+                        max={300}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'ar' ? '192 ساعة = 8 ساعات × 24 يوم عمل' : '192 hours = 8 hours × 24 working days'}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="shift" className="space-y-4">
                 <Card>
                   <CardHeader className="pb-2">
