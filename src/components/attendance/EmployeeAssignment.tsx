@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,18 +13,25 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, Search, Plus, Edit2, Building2, Plane, Timer,
-  Clock, Calendar, Filter, Trash2, UsersRound, UserPlus
+  Clock, Filter, Trash2, UsersRound, UserPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { sampleAttendanceRules, sampleShiftDefinitions } from '@/types/attendance';
+import { sampleShiftDefinitions, ScheduleType } from '@/types/attendance';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
+interface DbRule {
+  id: string;
+  name: string;
+  name_ar: string;
+  schedule_type: string;
+}
+
 interface Assignment {
   id: string;
   employeeId: string;
-  attendanceRuleId: string;
+  ruleId: string;
   stationId: string;
   stationName: string;
   shiftId?: string;
@@ -41,6 +47,7 @@ export const EmployeeAssignment = () => {
   const ar = language === 'ar';
   const { employees: contextEmployees } = useEmployeeData();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [rules, setRules] = useState<DbRule[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [ruleFilter, setRuleFilter] = useState<string>('all');
@@ -48,49 +55,54 @@ export const EmployeeAssignment = () => {
   const [editingAssignment, setEditingAssignment] = useState<string | null>(null);
   const [assignMode, setAssignMode] = useState<'single' | 'bulk'>('single');
 
-  // Single assignment form
   const [formData, setFormData] = useState({
     employeeId: '',
-    attendanceRuleId: '',
+    ruleId: '',
     stationId: '',
     shiftId: '',
     effectiveFrom: new Date().toISOString().split('T')[0],
   });
 
-  // Bulk assignment form
   const [bulkData, setBulkData] = useState({
-    attendanceRuleId: '',
+    ruleId: '',
     shiftId: '',
     effectiveFrom: new Date().toISOString().split('T')[0],
     bulkStationId: '',
     bulkDepartmentId: '',
   });
 
-  // Employee search in dialog
   const [empSearch, setEmpSearch] = useState('');
-
-  // Fetch stations and departments from DB
   const [stations, setStations] = useState<StationOption[]>([]);
   const [departments, setDepartments] = useState<DeptOption[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [stationsRes, deptsRes] = await Promise.all([
-        supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).order('name_ar'),
-        supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true).order('name_ar'),
-      ]);
-      if (stationsRes.data) {
-        setStations(stationsRes.data.map(s => ({ id: s.id, name: ar ? s.name_ar : s.name_en })));
-      }
-      if (deptsRes.data) {
-        setDepartments(deptsRes.data.map(d => ({ id: d.id, name: ar ? d.name_ar : d.name_en })));
-      }
-    };
-    fetchData();
+  const shifts = sampleShiftDefinitions;
+
+  // Fetch rules, stations, departments, and assignments
+  const fetchAll = useCallback(async () => {
+    const [rulesRes, stationsRes, deptsRes, assignRes] = await Promise.all([
+      supabase.from('attendance_rules').select('id, name, name_ar, schedule_type').eq('is_active', true).order('name'),
+      supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).order('name_ar'),
+      supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true).order('name_ar'),
+      supabase.from('attendance_assignments').select('*, stations(name_ar, name_en)').eq('is_active', true).order('created_at', { ascending: false }),
+    ]);
+    if (rulesRes.data) setRules(rulesRes.data);
+    if (stationsRes.data) setStations(stationsRes.data.map(s => ({ id: s.id, name: ar ? s.name_ar : s.name_en })));
+    if (deptsRes.data) setDepartments(deptsRes.data.map(d => ({ id: d.id, name: ar ? d.name_ar : d.name_en })));
+    if (assignRes.data) {
+      setAssignments(assignRes.data.map((a: any) => ({
+        id: a.id,
+        employeeId: a.employee_id,
+        ruleId: a.rule_id,
+        stationId: a.station_id || '',
+        stationName: a.stations ? (ar ? a.stations.name_ar : a.stations.name_en) : '',
+        shiftId: a.shift_id || undefined,
+        effectiveFrom: a.effective_from,
+        isActive: a.is_active,
+      })));
+    }
   }, [ar]);
 
-  const rules = sampleAttendanceRules;
-  const shifts = sampleShiftDefinitions;
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const getRule = (ruleId: string) => rules.find(r => r.id === ruleId);
   const getShift = (shiftId?: string) => shiftId ? shifts.find(s => s.id === shiftId) : null;
@@ -99,29 +111,30 @@ export const EmployeeAssignment = () => {
   const getRuleBadgeColor = (ruleId: string) => {
     const rule = getRule(ruleId);
     if (!rule) return 'bg-gray-100 text-gray-700';
-    switch (rule.scheduleType) {
+    switch (rule.schedule_type) {
       case 'fixed': return 'bg-blue-100 text-blue-700 border-blue-300';
       case 'flexible': return 'bg-green-100 text-green-700 border-green-300';
       case 'shift': return 'bg-purple-100 text-purple-700 border-purple-300';
       case 'fully-flexible': return 'bg-amber-100 text-amber-700 border-amber-300';
+      default: return 'bg-gray-100 text-gray-700';
     }
   };
 
   const getRuleIcon = (ruleId: string) => {
     const rule = getRule(ruleId);
     if (!rule) return <Clock className="w-4 h-4" />;
-    switch (rule.scheduleType) {
+    switch (rule.schedule_type) {
       case 'fixed': return <Building2 className="w-4 h-4" />;
       case 'flexible': return <Timer className="w-4 h-4" />;
       case 'shift': return <Plane className="w-4 h-4" />;
       case 'fully-flexible': return <Clock className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
     }
   };
 
-  // Filter employees for single selection with search
   const filteredEmployeesForForm = useMemo(() => {
     let list = contextEmployees.filter(e => e.status === 'active');
-    if (formData.stationId) {
+    if (formData.stationId && formData.stationId !== 'all') {
       list = list.filter(e => e.stationId === formData.stationId);
     }
     if (empSearch) {
@@ -139,7 +152,6 @@ export const EmployeeAssignment = () => {
     });
   }, [contextEmployees, formData.stationId, empSearch]);
 
-  // Get employees for bulk assignment preview
   const bulkEmployees = useMemo(() => {
     let list = contextEmployees.filter(e => e.status === 'active');
     if (bulkData.bulkStationId && bulkData.bulkStationId !== 'all') {
@@ -151,8 +163,8 @@ export const EmployeeAssignment = () => {
     return list;
   }, [contextEmployees, bulkData.bulkStationId, bulkData.bulkDepartmentId]);
 
-  const handleSaveAssignment = () => {
-    if (!formData.employeeId || !formData.attendanceRuleId) {
+  const handleSaveAssignment = async () => {
+    if (!formData.employeeId || !formData.ruleId) {
       toast({ title: ar ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields', variant: 'destructive' });
       return;
     }
@@ -160,71 +172,83 @@ export const EmployeeAssignment = () => {
     const emp = getEmployee(formData.employeeId);
 
     if (editingAssignment) {
-      setAssignments(prev => prev.map(a =>
-        a.id === editingAssignment
-          ? { ...a, attendanceRuleId: formData.attendanceRuleId, stationId: formData.stationId, stationName: emp?.stationName || '', shiftId: formData.shiftId || undefined, effectiveFrom: formData.effectiveFrom }
-          : a
-      ));
-      toast({ title: ar ? 'تم تحديث التعيين بنجاح' : 'Assignment updated successfully' });
-    } else {
-      const existing = assignments.find(a => a.employeeId === formData.employeeId && a.isActive);
-      if (existing) {
-        toast({ title: ar ? 'هذا الموظف معين بالفعل' : 'Employee already assigned', variant: 'destructive' });
+      const { error } = await supabase.from('attendance_assignments').update({
+        rule_id: formData.ruleId,
+        station_id: formData.stationId && formData.stationId !== 'all' ? formData.stationId : emp?.stationId || null,
+        shift_id: formData.shiftId || null,
+        effective_from: formData.effectiveFrom,
+      }).eq('id', editingAssignment);
+      if (error) {
+        toast({ title: ar ? 'خطأ في التحديث' : 'Update failed', description: error.message, variant: 'destructive' });
         return;
       }
+      toast({ title: ar ? 'تم تحديث التعيين بنجاح' : 'Assignment updated successfully' });
+    } else {
+      // Deactivate existing active assignment for this employee
+      await supabase.from('attendance_assignments').update({ is_active: false }).eq('employee_id', formData.employeeId).eq('is_active', true);
 
-      const newAssignment: Assignment = {
-        id: `assign-${Date.now()}`,
-        employeeId: formData.employeeId,
-        attendanceRuleId: formData.attendanceRuleId,
-        stationId: formData.stationId || emp?.stationId || '',
-        stationName: emp?.stationName || '',
-        shiftId: formData.shiftId || undefined,
-        effectiveFrom: formData.effectiveFrom,
-        isActive: true,
-      };
-      setAssignments(prev => [...prev, newAssignment]);
+      const { error } = await supabase.from('attendance_assignments').insert({
+        employee_id: formData.employeeId,
+        rule_id: formData.ruleId,
+        station_id: formData.stationId && formData.stationId !== 'all' ? formData.stationId : emp?.stationId || null,
+        shift_id: formData.shiftId || null,
+        effective_from: formData.effectiveFrom,
+        is_active: true,
+      });
+      if (error) {
+        toast({ title: ar ? 'خطأ في التعيين' : 'Assignment failed', description: error.message, variant: 'destructive' });
+        return;
+      }
       toast({ title: ar ? 'تم التعيين بنجاح' : 'Assignment saved successfully' });
     }
 
     resetForm();
     setIsAssignDialogOpen(false);
+    await fetchAll();
   };
 
-  const handleBulkAssign = () => {
-    if (!bulkData.attendanceRuleId || (!bulkData.bulkStationId && !bulkData.bulkDepartmentId)) {
+  const handleBulkAssign = async () => {
+    if (!bulkData.ruleId || (!bulkData.bulkStationId && !bulkData.bulkDepartmentId)) {
       toast({ title: ar ? 'يرجى اختيار القاعدة والمحطة أو القسم' : 'Please select rule and station or department', variant: 'destructive' });
       return;
     }
 
-    let count = 0;
-    const newAssignments: Assignment[] = [];
-    for (const emp of bulkEmployees) {
-      const existing = assignments.find(a => a.employeeId === emp.id && a.isActive);
-      if (existing) continue;
-      newAssignments.push({
-        id: `assign-${Date.now()}-${emp.id}`,
-        employeeId: emp.id,
-        attendanceRuleId: bulkData.attendanceRuleId,
-        stationId: emp.stationId || '',
-        stationName: emp.stationName || '',
-        shiftId: bulkData.shiftId || undefined,
-        effectiveFrom: bulkData.effectiveFrom,
-        isActive: true,
-      });
-      count++;
+    const existingEmpIds = new Set(assignments.filter(a => a.isActive).map(a => a.employeeId));
+    const newEmps = bulkEmployees.filter(e => !existingEmpIds.has(e.id));
+
+    if (newEmps.length === 0) {
+      toast({ title: ar ? 'جميع الموظفين معينين بالفعل' : 'All employees already assigned', variant: 'destructive' });
+      return;
     }
 
-    setAssignments(prev => [...prev, ...newAssignments]);
+    // Batch insert
+    const rows = newEmps.map(emp => ({
+      employee_id: emp.id,
+      rule_id: bulkData.ruleId,
+      station_id: emp.stationId || null,
+      shift_id: bulkData.shiftId || null,
+      effective_from: bulkData.effectiveFrom,
+      is_active: true,
+    }));
+
+    // Insert in batches of 100
+    let count = 0;
+    for (let i = 0; i < rows.length; i += 100) {
+      const batch = rows.slice(i, i + 100);
+      const { error } = await supabase.from('attendance_assignments').insert(batch);
+      if (!error) count += batch.length;
+    }
+
     toast({ title: ar ? `تم تعيين ${count} موظف بنجاح` : `${count} employees assigned successfully` });
     resetForm();
     setIsAssignDialogOpen(false);
+    await fetchAll();
   };
 
   const handleEditAssignment = (assignment: Assignment) => {
     setFormData({
       employeeId: assignment.employeeId,
-      attendanceRuleId: assignment.attendanceRuleId,
+      ruleId: assignment.ruleId,
       stationId: assignment.stationId,
       shiftId: assignment.shiftId || '',
       effectiveFrom: assignment.effectiveFrom,
@@ -234,14 +258,19 @@ export const EmployeeAssignment = () => {
     setIsAssignDialogOpen(true);
   };
 
-  const handleDeleteAssignment = (id: string) => {
-    setAssignments(prev => prev.filter(a => a.id !== id));
+  const handleDeleteAssignment = async (id: string) => {
+    const { error } = await supabase.from('attendance_assignments').delete().eq('id', id);
+    if (error) {
+      toast({ title: ar ? 'خطأ في الحذف' : 'Delete failed', description: error.message, variant: 'destructive' });
+      return;
+    }
     toast({ title: ar ? 'تم حذف التعيين' : 'Assignment deleted' });
+    await fetchAll();
   };
 
   const resetForm = () => {
-    setFormData({ employeeId: '', attendanceRuleId: '', stationId: '', shiftId: '', effectiveFrom: new Date().toISOString().split('T')[0] });
-    setBulkData({ attendanceRuleId: '', shiftId: '', effectiveFrom: new Date().toISOString().split('T')[0], bulkStationId: '', bulkDepartmentId: '' });
+    setFormData({ employeeId: '', ruleId: '', stationId: '', shiftId: '', effectiveFrom: new Date().toISOString().split('T')[0] });
+    setBulkData({ ruleId: '', shiftId: '', effectiveFrom: new Date().toISOString().split('T')[0], bulkStationId: '', bulkDepartmentId: '' });
     setEditingAssignment(null);
     setEmpSearch('');
     setAssignMode('single');
@@ -255,14 +284,14 @@ export const EmployeeAssignment = () => {
       emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase())
     ) : false;
     const matchesStation = stationFilter === 'all' || a.stationId === stationFilter;
-    const matchesRule = ruleFilter === 'all' || a.attendanceRuleId === ruleFilter;
+    const matchesRule = ruleFilter === 'all' || a.ruleId === ruleFilter;
     return (searchTerm === '' || matchesSearch) && matchesStation && matchesRule;
   });
 
-  const selectedRule = getRule(formData.attendanceRuleId);
-  const isShiftRule = selectedRule?.scheduleType === 'shift';
-  const bulkSelectedRule = getRule(bulkData.attendanceRuleId);
-  const isBulkShiftRule = bulkSelectedRule?.scheduleType === 'shift';
+  const selectedRule = getRule(formData.ruleId);
+  const isShiftRule = selectedRule?.schedule_type === 'shift';
+  const bulkSelectedRule = getRule(bulkData.ruleId);
+  const isBulkShiftRule = bulkSelectedRule?.schedule_type === 'shift';
 
   return (
     <div className="space-y-6">
@@ -301,7 +330,6 @@ export const EmployeeAssignment = () => {
 
                 {/* Single Assignment */}
                 <TabsContent value="single" className="space-y-4">
-                  {/* Station filter for employee list */}
                   <div className="space-y-2">
                     <Label>{ar ? 'فلترة بالمحطة (اختياري)' : 'Filter by Station (optional)'}</Label>
                     <Select value={formData.stationId} onValueChange={(v) => setFormData(prev => ({ ...prev, stationId: v, employeeId: '' }))}>
@@ -313,7 +341,6 @@ export const EmployeeAssignment = () => {
                     </Select>
                   </div>
 
-                  {/* Searchable Employee List */}
                   <div className="space-y-2">
                     <Label>{ar ? 'الموظف' : 'Employee'}</Label>
                     <div className="relative">
@@ -355,14 +382,13 @@ export const EmployeeAssignment = () => {
                     </ScrollArea>
                   </div>
 
-                  {/* Attendance Rule */}
                   <div className="space-y-2">
                     <Label>{ar ? 'قاعدة الحضور' : 'Attendance Rule'}</Label>
-                    <Select value={formData.attendanceRuleId} onValueChange={(v) => setFormData(prev => ({ ...prev, attendanceRuleId: v, shiftId: '' }))}>
+                    <Select value={formData.ruleId} onValueChange={(v) => setFormData(prev => ({ ...prev, ruleId: v, shiftId: '' }))}>
                       <SelectTrigger><SelectValue placeholder={ar ? 'اختر القاعدة' : 'Select Rule'} /></SelectTrigger>
                       <SelectContent>
                         {rules.map(rule => (
-                          <SelectItem key={rule.id} value={rule.id}>{ar ? rule.nameAr : rule.name}</SelectItem>
+                          <SelectItem key={rule.id} value={rule.id}>{ar ? rule.name_ar : rule.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -420,10 +446,10 @@ export const EmployeeAssignment = () => {
 
                   <div className="space-y-2">
                     <Label>{ar ? 'قاعدة الحضور' : 'Attendance Rule'}</Label>
-                    <Select value={bulkData.attendanceRuleId} onValueChange={v => setBulkData(prev => ({ ...prev, attendanceRuleId: v, shiftId: '' }))}>
+                    <Select value={bulkData.ruleId} onValueChange={v => setBulkData(prev => ({ ...prev, ruleId: v, shiftId: '' }))}>
                       <SelectTrigger><SelectValue placeholder={ar ? 'اختر القاعدة' : 'Select Rule'} /></SelectTrigger>
                       <SelectContent>
-                        {rules.map(rule => <SelectItem key={rule.id} value={rule.id}>{ar ? rule.nameAr : rule.name}</SelectItem>)}
+                        {rules.map(rule => <SelectItem key={rule.id} value={rule.id}>{ar ? rule.name_ar : rule.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -458,10 +484,10 @@ export const EmployeeAssignment = () => {
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label>{ar ? 'قاعدة الحضور' : 'Attendance Rule'}</Label>
-                  <Select value={formData.attendanceRuleId} onValueChange={(v) => setFormData(prev => ({ ...prev, attendanceRuleId: v, shiftId: '' }))}>
+                  <Select value={formData.ruleId} onValueChange={(v) => setFormData(prev => ({ ...prev, ruleId: v, shiftId: '' }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {rules.map(rule => <SelectItem key={rule.id} value={rule.id}>{ar ? rule.nameAr : rule.name}</SelectItem>)}
+                      {rules.map(rule => <SelectItem key={rule.id} value={rule.id}>{ar ? rule.name_ar : rule.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -517,7 +543,7 @@ export const EmployeeAssignment = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{ar ? 'جميع القواعد' : 'All Rules'}</SelectItem>
-                {rules.map(rule => <SelectItem key={rule.id} value={rule.id}>{ar ? rule.nameAr : rule.name}</SelectItem>)}
+                {rules.map(rule => <SelectItem key={rule.id} value={rule.id}>{ar ? rule.name_ar : rule.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -542,7 +568,7 @@ export const EmployeeAssignment = () => {
             <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
               <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30"><Building2 className="w-5 h-5 text-green-600" /></div>
               <div>
-                <p className="text-2xl font-bold">{new Set(assignments.map(a => a.stationId)).size}</p>
+                <p className="text-2xl font-bold">{new Set(assignments.map(a => a.stationId).filter(Boolean)).size}</p>
                 <p className="text-sm text-muted-foreground">{ar ? 'المحطات المغطاة' : 'Stations Covered'}</p>
               </div>
             </div>
@@ -592,7 +618,7 @@ export const EmployeeAssignment = () => {
                 <TableBody>
                   {filteredAssignments.map((assignment) => {
                     const emp = getEmployee(assignment.employeeId);
-                    const rule = getRule(assignment.attendanceRuleId);
+                    const rule = getRule(assignment.ruleId);
                     const shift = getShift(assignment.shiftId);
                     return (
                       <TableRow key={assignment.id}>
@@ -613,9 +639,9 @@ export const EmployeeAssignment = () => {
                         </TableCell>
                         <TableCell>
                           {rule && (
-                            <Badge variant="outline" className={cn("gap-1", getRuleBadgeColor(assignment.attendanceRuleId))}>
-                              {getRuleIcon(assignment.attendanceRuleId)}
-                              {ar ? rule.nameAr : rule.name}
+                            <Badge variant="outline" className={cn("gap-1", getRuleBadgeColor(assignment.ruleId))}>
+                              {getRuleIcon(assignment.ruleId)}
+                              {ar ? rule.name_ar : rule.name}
                             </Badge>
                           )}
                         </TableCell>

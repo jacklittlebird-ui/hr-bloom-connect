@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,18 +15,53 @@ import {
   Plane, Timer, AlertCircle, CheckCircle2, Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { 
-  AttendanceRule, ScheduleType, 
-  sampleAttendanceRules, sampleLocations 
-} from '@/types/attendance';
+import { AttendanceRule, ScheduleType } from '@/types/attendance';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+
+interface DbRule {
+  id: string;
+  name: string;
+  name_ar: string;
+  description: string;
+  description_ar: string;
+  schedule_type: string;
+  is_active: boolean;
+  fixed_schedule: any;
+  flexible_schedule: any;
+  fully_flexible_schedule: any;
+  shift_schedule: any;
+  weekend_days: any;
+  working_days_per_week: number;
+  max_overtime_hours_daily: number;
+  max_overtime_hours_weekly: number;
+}
+
+const dbToRule = (r: DbRule): AttendanceRule => ({
+  id: r.id,
+  name: r.name,
+  nameAr: r.name_ar,
+  description: r.description || '',
+  descriptionAr: r.description_ar || '',
+  scheduleType: r.schedule_type as ScheduleType,
+  isActive: r.is_active,
+  fixedSchedule: r.fixed_schedule || undefined,
+  flexibleSchedule: r.flexible_schedule || undefined,
+  fullyFlexibleSchedule: r.fully_flexible_schedule || undefined,
+  shiftSchedule: r.shift_schedule || undefined,
+  weekendDays: r.weekend_days || [5, 6],
+  workingDaysPerWeek: r.working_days_per_week || 5,
+  maxOvertimeHoursDaily: r.max_overtime_hours_daily || 4,
+  maxOvertimeHoursWeekly: r.max_overtime_hours_weekly || 20,
+});
 
 export const AttendanceRules = () => {
   const { t, isRTL, language } = useLanguage();
-  const [rules, setRules] = useState<AttendanceRule[]>(sampleAttendanceRules);
-  const [locations] = useState(sampleLocations);
+  const [rules, setRules] = useState<AttendanceRule[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<ScheduleType>('fixed');
+  const [loading, setLoading] = useState(true);
   
   const getDefaultRule = (): Partial<AttendanceRule> => ({
     name: '',
@@ -60,64 +95,77 @@ export const AttendanceRules = () => {
 
   const [newRule, setNewRule] = useState<Partial<AttendanceRule>>(getDefaultRule());
 
+  const fetchRules = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('attendance_rules')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (data) {
+      setRules(data.map(dbToRule));
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchRules(); }, [fetchRules]);
+
   const getScheduleIcon = (type: ScheduleType) => {
     switch (type) {
-      case 'fixed':
-        return <Building2 className="w-5 h-5" />;
-      case 'flexible':
-        return <Timer className="w-5 h-5" />;
-      case 'shift':
-        return <Plane className="w-5 h-5" />;
-      case 'fully-flexible':
-        return <Clock className="w-5 h-5" />;
+      case 'fixed': return <Building2 className="w-5 h-5" />;
+      case 'flexible': return <Timer className="w-5 h-5" />;
+      case 'shift': return <Plane className="w-5 h-5" />;
+      case 'fully-flexible': return <Clock className="w-5 h-5" />;
     }
   };
 
   const getScheduleColor = (type: ScheduleType) => {
     switch (type) {
-      case 'fixed':
-        return 'bg-blue-500';
-      case 'flexible':
-        return 'bg-green-500';
-      case 'shift':
-        return 'bg-purple-500';
-      case 'fully-flexible':
-        return 'bg-amber-500';
+      case 'fixed': return 'bg-blue-500';
+      case 'flexible': return 'bg-green-500';
+      case 'shift': return 'bg-purple-500';
+      case 'fully-flexible': return 'bg-amber-500';
     }
   };
 
-  const handleSaveRule = () => {
+  const handleSaveRule = async () => {
     if (!newRule.name || !newRule.nameAr) return;
 
+    const payload = {
+      name: newRule.name,
+      name_ar: newRule.nameAr,
+      description: newRule.description || '',
+      description_ar: newRule.descriptionAr || '',
+      schedule_type: selectedType,
+      is_active: true,
+      fixed_schedule: selectedType === 'fixed' ? newRule.fixedSchedule : null,
+      flexible_schedule: selectedType === 'flexible' ? newRule.flexibleSchedule : null,
+      fully_flexible_schedule: selectedType === 'fully-flexible' ? newRule.fullyFlexibleSchedule : null,
+      shift_schedule: selectedType === 'shift' ? newRule.shiftSchedule : null,
+      weekend_days: newRule.weekendDays || [5, 6],
+      working_days_per_week: newRule.workingDaysPerWeek || 5,
+      max_overtime_hours_daily: newRule.maxOvertimeHoursDaily || 4,
+      max_overtime_hours_weekly: newRule.maxOvertimeHoursWeekly || 20,
+    };
+
     if (editingRuleId) {
-      setRules(prev => prev.map(r => 
-        r.id === editingRuleId 
-          ? { ...r, ...newRule, scheduleType: selectedType } as AttendanceRule
-          : r
-      ));
+      const { error } = await supabase.from('attendance_rules').update(payload).eq('id', editingRuleId);
+      if (error) {
+        toast({ title: language === 'ar' ? 'خطأ في التحديث' : 'Update failed', description: error.message, variant: 'destructive' });
+        return;
+      }
+      toast({ title: language === 'ar' ? 'تم تحديث القاعدة بنجاح' : 'Rule updated successfully' });
     } else {
-      const rule: AttendanceRule = {
-        id: `rule-${Date.now()}`,
-        name: newRule.name,
-        nameAr: newRule.nameAr,
-        description: newRule.description || '',
-        descriptionAr: newRule.descriptionAr || '',
-        scheduleType: selectedType,
-        isActive: true,
-        weekendDays: newRule.weekendDays || [5, 6],
-        workingDaysPerWeek: newRule.workingDaysPerWeek || 5,
-        maxOvertimeHoursDaily: newRule.maxOvertimeHoursDaily || 4,
-        maxOvertimeHoursWeekly: newRule.maxOvertimeHoursWeekly || 20,
-        fixedSchedule: selectedType === 'fixed' ? newRule.fixedSchedule : undefined,
-        flexibleSchedule: selectedType === 'flexible' ? newRule.flexibleSchedule : undefined,
-        fullyFlexibleSchedule: selectedType === 'fully-flexible' ? newRule.fullyFlexibleSchedule : undefined,
-      };
-      setRules(prev => [...prev, rule]);
+      const { error } = await supabase.from('attendance_rules').insert(payload);
+      if (error) {
+        toast({ title: language === 'ar' ? 'خطأ في الإضافة' : 'Insert failed', description: error.message, variant: 'destructive' });
+        return;
+      }
+      toast({ title: language === 'ar' ? 'تم إضافة القاعدة بنجاح' : 'Rule added successfully' });
     }
 
     setNewRule(getDefaultRule());
     setEditingRuleId(null);
     setIsAddDialogOpen(false);
+    await fetchRules();
   };
 
   const handleEditRule = (rule: AttendanceRule) => {
@@ -127,14 +175,21 @@ export const AttendanceRules = () => {
     setIsAddDialogOpen(true);
   };
 
-  const handleDeleteRule = (ruleId: string) => {
-    setRules(rules.filter(r => r.id !== ruleId));
+  const handleDeleteRule = async (ruleId: string) => {
+    const { error } = await supabase.from('attendance_rules').delete().eq('id', ruleId);
+    if (error) {
+      toast({ title: language === 'ar' ? 'خطأ في الحذف' : 'Delete failed', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: language === 'ar' ? 'تم حذف القاعدة' : 'Rule deleted' });
+    await fetchRules();
   };
 
-  const handleToggleActive = (ruleId: string) => {
-    setRules(rules.map(r => 
-      r.id === ruleId ? { ...r, isActive: !r.isActive } : r
-    ));
+  const handleToggleActive = async (ruleId: string) => {
+    const rule = rules.find(r => r.id === ruleId);
+    if (!rule) return;
+    await supabase.from('attendance_rules').update({ is_active: !rule.isActive }).eq('id', ruleId);
+    await fetchRules();
   };
 
   const resetForm = () => {
@@ -295,25 +350,61 @@ export const AttendanceRules = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>{t('attendance.rules.arrivalStart')}</Label>
-                        <Input type="time" defaultValue="09:00" />
+                        <Input 
+                          type="time" 
+                          value={newRule.flexibleSchedule?.arrivalWindowStart || '09:00'}
+                          onChange={(e) => setNewRule({
+                            ...newRule,
+                            flexibleSchedule: { ...newRule.flexibleSchedule!, arrivalWindowStart: e.target.value }
+                          })}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>{t('attendance.rules.arrivalEnd')}</Label>
-                        <Input type="time" defaultValue="09:30" />
+                        <Input 
+                          type="time" 
+                          value={newRule.flexibleSchedule?.arrivalWindowEnd || '09:30'}
+                          onChange={(e) => setNewRule({
+                            ...newRule,
+                            flexibleSchedule: { ...newRule.flexibleSchedule!, arrivalWindowEnd: e.target.value }
+                          })}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label>{t('attendance.rules.minWorkHours')}</Label>
-                      <Input type="number" defaultValue={8} min={4} max={12} />
+                      <Input 
+                        type="number" 
+                        value={newRule.flexibleSchedule?.minimumWorkHours || 8}
+                        onChange={(e) => setNewRule({
+                          ...newRule,
+                          flexibleSchedule: { ...newRule.flexibleSchedule!, minimumWorkHours: Number(e.target.value) }
+                        })}
+                        min={4} max={12} 
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>{t('attendance.rules.coreStart')}</Label>
-                        <Input type="time" defaultValue="10:00" />
+                        <Input 
+                          type="time" 
+                          value={newRule.flexibleSchedule?.coreHoursStart || '10:00'}
+                          onChange={(e) => setNewRule({
+                            ...newRule,
+                            flexibleSchedule: { ...newRule.flexibleSchedule!, coreHoursStart: e.target.value }
+                          })}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label>{t('attendance.rules.coreEnd')}</Label>
-                        <Input type="time" defaultValue="16:00" />
+                        <Input 
+                          type="time" 
+                          value={newRule.flexibleSchedule?.coreHoursEnd || '16:00'}
+                          onChange={(e) => setNewRule({
+                            ...newRule,
+                            flexibleSchedule: { ...newRule.flexibleSchedule!, coreHoursEnd: e.target.value }
+                          })}
+                        />
                       </div>
                     </div>
                   </CardContent>
@@ -398,11 +489,21 @@ export const AttendanceRules = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{t('attendance.rules.maxDailyOT')}</Label>
-                    <Input type="number" defaultValue={4} min={0} max={8} />
+                    <Input 
+                      type="number" 
+                      value={newRule.maxOvertimeHoursDaily || 4}
+                      onChange={(e) => setNewRule({ ...newRule, maxOvertimeHoursDaily: Number(e.target.value) })}
+                      min={0} max={8} 
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>{t('attendance.rules.maxWeeklyOT')}</Label>
-                    <Input type="number" defaultValue={20} min={0} max={40} />
+                    <Input 
+                      type="number" 
+                      value={newRule.maxOvertimeHoursWeekly || 20}
+                      onChange={(e) => setNewRule({ ...newRule, maxOvertimeHoursWeekly: Number(e.target.value) })}
+                      min={0} max={40} 
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -463,8 +564,8 @@ export const AttendanceRules = () => {
                 <Users className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">156</p>
-                <p className="text-sm text-muted-foreground">{t('attendance.rules.assignedEmployees')}</p>
+                <p className="text-2xl font-bold">{rules.filter(r => r.scheduleType === 'fully-flexible').length}</p>
+                <p className="text-sm text-muted-foreground">{language === 'ar' ? 'مرن بالكامل' : 'Fully Flexible'}</p>
               </div>
             </div>
           </CardContent>
@@ -473,7 +574,16 @@ export const AttendanceRules = () => {
 
       {/* Rules List */}
       <div className="space-y-4">
-        {rules.map((rule) => (
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+          </div>
+        ) : rules.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Settings2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p>{language === 'ar' ? 'لا توجد قواعد حضور بعد. اضغط "إضافة قاعدة" للبدء.' : 'No attendance rules yet. Click "Add Rule" to get started.'}</p>
+          </div>
+        ) : rules.map((rule) => (
           <Card key={rule.id} className={cn("relative", !rule.isActive && "opacity-60")}>
             <div className={cn("absolute top-0 left-0 w-1 h-full rounded-l-lg", getScheduleColor(rule.scheduleType))} />
             <CardHeader>
@@ -482,7 +592,8 @@ export const AttendanceRules = () => {
                   <div className={cn("p-2 rounded-lg", 
                     rule.scheduleType === 'fixed' && "bg-blue-100 dark:bg-blue-900/30",
                     rule.scheduleType === 'flexible' && "bg-green-100 dark:bg-green-900/30",
-                    rule.scheduleType === 'shift' && "bg-purple-100 dark:bg-purple-900/30"
+                    rule.scheduleType === 'shift' && "bg-purple-100 dark:bg-purple-900/30",
+                    rule.scheduleType === 'fully-flexible' && "bg-amber-100 dark:bg-amber-900/30"
                   )}>
                     {getScheduleIcon(rule.scheduleType)}
                   </div>
@@ -549,6 +660,12 @@ export const AttendanceRules = () => {
                             <p className="font-medium">{rule.flexibleSchedule.minimumWorkHours}h</p>
                           </div>
                         </>
+                      )}
+                      {rule.scheduleType === 'fully-flexible' && rule.fullyFlexibleSchedule && (
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">{language === 'ar' ? 'ساعات شهرية' : 'Monthly Hours'}</p>
+                          <p className="font-medium">{rule.fullyFlexibleSchedule.monthlyTargetHours}h</p>
+                        </div>
                       )}
                       {rule.scheduleType === 'shift' && rule.shiftSchedule && (
                         <>
