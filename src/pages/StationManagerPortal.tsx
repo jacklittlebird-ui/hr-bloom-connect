@@ -663,7 +663,7 @@ const StationManagerPortal = () => {
           </Card>
         )}
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-[hsl(var(--stat-blue))] to-[hsl(var(--stat-blue)/0.8)] text-white shadow-lg">
             <div className="absolute top-0 end-0 w-20 h-20 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
             <CardContent className="p-4 md:p-5 relative z-10">
