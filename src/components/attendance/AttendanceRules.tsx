@@ -110,6 +110,7 @@ export const AttendanceRules = () => {
         maxOvertimeHoursWeekly: newRule.maxOvertimeHoursWeekly || 20,
         fixedSchedule: selectedType === 'fixed' ? newRule.fixedSchedule : undefined,
         flexibleSchedule: selectedType === 'flexible' ? newRule.flexibleSchedule : undefined,
+        fullyFlexibleSchedule: selectedType === 'fully-flexible' ? newRule.fullyFlexibleSchedule : undefined,
       };
       setRules(prev => [...prev, rule]);
     }
