@@ -97,53 +97,6 @@ const StationManagerPortal = () => {
 
   useEffect(() => { fetchViolations(); }, [fetchViolations]);
 
-  // === Attendance state ===
-  const [attMonth, setAttMonth] = useState(new Date().getMonth());
-  const [attYear, setAttYear] = useState(new Date().getFullYear());
-  const [attSearch, setAttSearch] = useState('');
-  const [attRecords, setAttRecords] = useState<any[]>([]);
-  const [attLoading, setAttLoading] = useState(false);
-
-  const attMonths = ar
-    ? ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
-    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-  const fetchAttendance = useCallback(async () => {
-    if (stationEmployees.length === 0) { setAttRecords([]); return; }
-    setAttLoading(true);
-    const startDate = `${attYear}-${String(attMonth + 1).padStart(2, '0')}-01`;
-    const endDay = new Date(attYear, attMonth + 1, 0).getDate();
-    const endDate = `${attYear}-${String(attMonth + 1).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
-    const empIds = stationEmployees.map(e => e.id);
-    const { data } = await supabase
-      .from('attendance_records')
-      .select('*')
-      .in('employee_id', empIds)
-      .gte('date', startDate)
-      .lte('date', endDate)
-      .order('date', { ascending: false });
-    setAttRecords(data || []);
-    setAttLoading(false);
-  }, [stationEmployees, attMonth, attYear]);
-
-  useEffect(() => { fetchAttendance(); }, [fetchAttendance]);
-
-  const filteredAttRecords = useMemo(() => {
-    if (!attSearch.trim()) return attRecords;
-    const q = attSearch.trim().toLowerCase();
-    return attRecords.filter(r => {
-      const emp = stationEmployees.find(e => e.id === r.employee_id);
-      return emp && (emp.nameAr.toLowerCase().includes(q) || emp.nameEn.toLowerCase().includes(q) || emp.employeeId.toLowerCase().includes(q));
-    });
-  }, [attRecords, attSearch, stationEmployees]);
-
-  const attStats = useMemo(() => {
-    const present = attRecords.filter(r => r.status === 'present' || r.status === 'late').length;
-    const late = attRecords.filter(r => r.is_late).length;
-    const absent = attRecords.filter(r => r.status === 'absent').length;
-    const totalMinutes = attRecords.reduce((s, r) => s + (r.work_minutes || 0), 0);
-    return { present, late, absent, totalHours: Math.floor(totalMinutes / 60), totalMinutes: totalMinutes % 60 };
-  }, [attRecords]);
 
   // Evaluation dialog state
   const [evalDialog, setEvalDialog] = useState(false);
