@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { email, password, full_name, role, station_code, employee_code } = await req.json();
+    const { email, password, full_name, role, station_code, employee_code, station_codes } = await req.json();
 
     // Input validation
     if (!email || !password || !full_name || !role) {
