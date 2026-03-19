@@ -80,6 +80,24 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     nameAr = emp?.name_ar || nameAr;
   }
 
+  // Get area_manager stations
+  let stationCodes: string[] | undefined;
+  let stationUuids: string[] | undefined;
+  if (role === 'area_manager') {
+    const { data: amStations } = await supabase
+      .from('area_manager_stations')
+      .select('station_id')
+      .eq('user_id', supabaseUser.id);
+    if (amStations && amStations.length > 0) {
+      stationUuids = amStations.map(s => s.station_id);
+      const { data: stationData } = await supabase
+        .from('stations')
+        .select('code')
+        .in('id', stationUuids);
+      stationCodes = stationData?.map(s => s.code) || [];
+    }
+  }
+
   return {
     id: supabaseUser.id,
     name: profile?.full_name || supabaseUser.email || '',
