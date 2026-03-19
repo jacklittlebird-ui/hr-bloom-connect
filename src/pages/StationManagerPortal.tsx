@@ -169,13 +169,20 @@ const StationManagerPortal = () => {
   useEffect(() => { fetchAttendance(); }, [fetchAttendance]);
 
   const filteredAttRecords = useMemo(() => {
-    if (!attSearch.trim()) return attRecords;
-    const q = attSearch.trim().toLowerCase();
-    return attRecords.filter(r => {
-      const emp = stationEmployees.find(e => e.id === r.employee_id);
-      return emp && (emp.nameAr.toLowerCase().includes(q) || emp.nameEn.toLowerCase().includes(q) || emp.employeeId.toLowerCase().includes(q));
-    });
-  }, [attRecords, attSearch, stationEmployees]);
+    let list = attRecords;
+    if (attDeptFilter !== 'all') {
+      const deptEmpIds = new Set(stationEmployees.filter(e => e.department === attDeptFilter).map(e => e.id));
+      list = list.filter(r => deptEmpIds.has(r.employee_id));
+    }
+    if (attSearch.trim()) {
+      const q = attSearch.trim().toLowerCase();
+      list = list.filter(r => {
+        const emp = stationEmployees.find(e => e.id === r.employee_id);
+        return emp && (emp.nameAr.toLowerCase().includes(q) || emp.nameEn.toLowerCase().includes(q) || emp.employeeId.toLowerCase().includes(q));
+      });
+    }
+    return list;
+  }, [attRecords, attSearch, attDeptFilter, stationEmployees]);
 
   const attStats = useMemo(() => {
     const present = attRecords.filter(r => r.status === 'present' || r.status === 'late').length;
