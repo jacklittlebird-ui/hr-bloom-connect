@@ -77,6 +77,8 @@ export const AttendanceRules = () => {
         return 'bg-green-500';
       case 'shift':
         return 'bg-purple-500';
+      case 'fully-flexible':
+        return 'bg-amber-500';
     }
   };
 
