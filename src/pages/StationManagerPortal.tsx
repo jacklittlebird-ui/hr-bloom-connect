@@ -153,7 +153,33 @@ const StationManagerPortal = () => {
     return employees.filter(e => e.stationLocation === activeStation);
   }, [employees, activeStation, isAreaManager, selectedStation, user?.stations]);
 
-  // === Attendance state ===
+  // === Today's attendance for stat cards ===
+  const [todayAttRecords, setTodayAttRecords] = useState<any[]>([]);
+
+  const fetchTodayAttendance = useCallback(async () => {
+    if (stationEmployees.length === 0) { setTodayAttRecords([]); return; }
+    const today = new Date().toISOString().split('T')[0];
+    const empIds = stationEmployees.map(e => e.id);
+    const { data } = await supabase
+      .from('attendance_records')
+      .select('employee_id, status')
+      .in('employee_id', empIds)
+      .eq('date', today);
+    setTodayAttRecords(data || []);
+  }, [stationEmployees]);
+
+  useEffect(() => { fetchTodayAttendance(); }, [fetchTodayAttendance]);
+
+  const todayPresentCount = useMemo(() => {
+    return todayAttRecords.filter(r => ['present', 'late', 'mission'].includes(r.status)).length;
+  }, [todayAttRecords]);
+
+  const todayAbsentCount = useMemo(() => {
+    const activeEmps = stationEmployees.filter(e => e.status === 'active').length;
+    return Math.max(0, activeEmps - todayPresentCount);
+  }, [stationEmployees, todayPresentCount]);
+
+  // === Attendance tab state ===
   const [attMonth, setAttMonth] = useState(new Date().getMonth());
   const [attYear, setAttYear] = useState(new Date().getFullYear());
   const [attSearch, setAttSearch] = useState('');
