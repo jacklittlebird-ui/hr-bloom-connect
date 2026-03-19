@@ -125,6 +125,24 @@ Deno.serve(async (req) => {
       stationId = station?.id || null;
     }
 
+    // Handle area_manager with multiple stations
+    if (role === 'area_manager' && station_codes && Array.isArray(station_codes)) {
+      const stationInserts = [];
+      for (const code of station_codes) {
+        const { data: station } = await supabaseAdmin
+          .from('stations')
+          .select('id')
+          .eq('code', code)
+          .single();
+        if (station?.id) {
+          stationInserts.push({ user_id: userId, station_id: station.id });
+        }
+      }
+      if (stationInserts.length > 0) {
+        await supabaseAdmin.from('area_manager_stations').insert(stationInserts);
+      }
+    }
+
     if (role === 'employee' && employee_code) {
       const { data: emp } = await supabaseAdmin
         .from('employees')
