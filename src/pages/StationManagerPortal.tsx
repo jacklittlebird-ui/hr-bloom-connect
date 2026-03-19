@@ -153,7 +153,33 @@ const StationManagerPortal = () => {
     return employees.filter(e => e.stationLocation === activeStation);
   }, [employees, activeStation, isAreaManager, selectedStation, user?.stations]);
 
-  // === Attendance state ===
+  // === Today's attendance for stat cards ===
+  const [todayAttRecords, setTodayAttRecords] = useState<any[]>([]);
+
+  const fetchTodayAttendance = useCallback(async () => {
+    if (stationEmployees.length === 0) { setTodayAttRecords([]); return; }
+    const today = new Date().toISOString().split('T')[0];
+    const empIds = stationEmployees.map(e => e.id);
+    const { data } = await supabase
+      .from('attendance_records')
+      .select('employee_id, status')
+      .in('employee_id', empIds)
+      .eq('date', today);
+    setTodayAttRecords(data || []);
+  }, [stationEmployees]);
+
+  useEffect(() => { fetchTodayAttendance(); }, [fetchTodayAttendance]);
+
+  const todayPresentCount = useMemo(() => {
+    return todayAttRecords.filter(r => ['present', 'late', 'mission'].includes(r.status)).length;
+  }, [todayAttRecords]);
+
+  const todayAbsentCount = useMemo(() => {
+    const activeEmps = stationEmployees.filter(e => e.status === 'active').length;
+    return Math.max(0, activeEmps - todayPresentCount);
+  }, [stationEmployees, todayPresentCount]);
+
+  // === Attendance tab state ===
   const [attMonth, setAttMonth] = useState(new Date().getMonth());
   const [attYear, setAttYear] = useState(new Date().getFullYear());
   const [attSearch, setAttSearch] = useState('');
@@ -637,7 +663,7 @@ const StationManagerPortal = () => {
           </Card>
         )}
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-[hsl(var(--stat-blue))] to-[hsl(var(--stat-blue)/0.8)] text-white shadow-lg">
             <div className="absolute top-0 end-0 w-20 h-20 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
             <CardContent className="p-4 md:p-5 relative z-10">
@@ -718,6 +744,38 @@ const StationManagerPortal = () => {
                 {stationViolations.filter(v => v.status === 'pending').length > 0 && (
                   <div className="bg-white/60 h-full rounded-full" style={{ width: `${(stationViolations.filter(v => v.status === 'pending').length / Math.max(stationViolations.length, 1)) * 100}%` }} />
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Today Present Card */}
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg">
+            <div className="absolute top-0 end-0 w-20 h-20 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
+            <CardContent className="p-4 md:p-5 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><LogIn className="h-5 w-5" /></div>
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{t('اليوم', 'Today')}</span>
+              </div>
+              <p className="text-3xl font-bold">{todayPresentCount}</p>
+              <p className="text-sm text-white/80 mt-1">{t('الحضور', 'Present')}</p>
+              <div className="mt-3 h-2 rounded-full overflow-hidden bg-white/20">
+                <div className="bg-white h-full rounded-full transition-all" style={{ width: `${stationEmployees.filter(e => e.status === 'active').length > 0 ? (todayPresentCount / stationEmployees.filter(e => e.status === 'active').length) * 100 : 0}%` }} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Today Absent Card */}
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-lg">
+            <div className="absolute top-0 end-0 w-20 h-20 rounded-full bg-white/10 -translate-y-1/2 translate-x-1/2" />
+            <CardContent className="p-4 md:p-5 relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm"><UserX className="h-5 w-5" /></div>
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{t('اليوم', 'Today')}</span>
+              </div>
+              <p className="text-3xl font-bold">{todayAbsentCount}</p>
+              <p className="text-sm text-white/80 mt-1">{t('الغياب', 'Absent')}</p>
+              <div className="mt-3 h-2 rounded-full overflow-hidden bg-white/20">
+                <div className="bg-white h-full rounded-full transition-all" style={{ width: `${stationEmployees.filter(e => e.status === 'active').length > 0 ? (todayAbsentCount / stationEmployees.filter(e => e.status === 'active').length) * 100 : 0}%` }} />
               </div>
             </CardContent>
           </Card>
