@@ -581,8 +581,8 @@ const StationManagerPortal = () => {
               <MapPin className="h-4 w-4 md:h-5 md:w-5 text-primary-foreground" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-bold text-foreground text-sm md:text-base truncate">{t('بوابة مدير المحطة', 'Station Manager Portal')}</h1>
-              <p className="text-[10px] md:text-xs text-muted-foreground truncate">{stationName} - {language === 'ar' ? user?.nameAr : user?.name}</p>
+              <h1 className="font-bold text-foreground text-sm md:text-base truncate">{isAreaManager ? t('بوابة مدير المنطقة', 'Area Manager Portal') : t('بوابة مدير المحطة', 'Station Manager Portal')}</h1>
+              <p className="text-[10px] md:text-xs text-muted-foreground truncate">{isAreaManager ? t('البحر الأحمر والصعيد', 'Red Sea & Upper Egypt') : stationName} - {language === 'ar' ? user?.nameAr : user?.name}</p>
             </div>
           </div>
           <div className="flex items-center gap-1 md:gap-2 shrink-0">
