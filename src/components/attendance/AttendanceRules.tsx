@@ -52,6 +52,10 @@ export const AttendanceRules = () => {
       coreHoursStart: '10:00',
       coreHoursEnd: '16:00',
     },
+    fullyFlexibleSchedule: {
+      monthlyTargetHours: 192,
+      allowAnyTime: true,
+    },
   });
 
   const [newRule, setNewRule] = useState<Partial<AttendanceRule>>(getDefaultRule());
@@ -64,6 +68,8 @@ export const AttendanceRules = () => {
         return <Timer className="w-5 h-5" />;
       case 'shift':
         return <Plane className="w-5 h-5" />;
+      case 'fully-flexible':
+        return <Clock className="w-5 h-5" />;
     }
   };
 
@@ -75,6 +81,8 @@ export const AttendanceRules = () => {
         return 'bg-green-500';
       case 'shift':
         return 'bg-purple-500';
+      case 'fully-flexible':
+        return 'bg-amber-500';
     }
   };
 
@@ -102,6 +110,7 @@ export const AttendanceRules = () => {
         maxOvertimeHoursWeekly: newRule.maxOvertimeHoursWeekly || 20,
         fixedSchedule: selectedType === 'fixed' ? newRule.fixedSchedule : undefined,
         flexibleSchedule: selectedType === 'flexible' ? newRule.flexibleSchedule : undefined,
+        fullyFlexibleSchedule: selectedType === 'fully-flexible' ? newRule.fullyFlexibleSchedule : undefined,
       };
       setRules(prev => [...prev, rule]);
     }
@@ -159,7 +168,7 @@ export const AttendanceRules = () => {
               </DialogTitle>
             </DialogHeader>
             <Tabs value={selectedType} onValueChange={(v) => setSelectedType(v as ScheduleType)}>
-              <TabsList className="grid grid-cols-3 mb-4" dir="rtl">
+              <TabsList className="grid grid-cols-4 mb-4" dir="rtl">
                 <TabsTrigger value="fixed" className="gap-2">
                   <Building2 className="w-4 h-4" />
                   {t('attendance.rules.fixed')}
@@ -167,6 +176,10 @@ export const AttendanceRules = () => {
                 <TabsTrigger value="flexible" className="gap-2">
                   <Timer className="w-4 h-4" />
                   {t('attendance.rules.flexible')}
+                </TabsTrigger>
+                <TabsTrigger value="fully-flexible" className="gap-2 text-xs">
+                  <Clock className="w-4 h-4" />
+                  {language === 'ar' ? 'مرن بالكامل' : 'Fully Flex'}
                 </TabsTrigger>
                 <TabsTrigger value="shift" className="gap-2">
                   <Plane className="w-4 h-4" />
@@ -306,7 +319,41 @@ export const AttendanceRules = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
-              
+
+              <TabsContent value="fully-flexible" className="space-y-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{language === 'ar' ? 'إعدادات الحضور المرن بالكامل' : 'Fully Flexible Settings'}</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {language === 'ar' 
+                        ? 'يمكن للموظف الحضور والانصراف في أي وقت - يتم احتساب الساعات على مدار الشهر'
+                        : 'Employee can check in/out anytime - hours are tracked monthly'}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>{language === 'ar' ? 'إجمالي الساعات الشهرية المطلوبة' : 'Monthly Target Hours'}</Label>
+                      <Input 
+                        type="number" 
+                        value={newRule.fullyFlexibleSchedule?.monthlyTargetHours || 192}
+                        onChange={(e) => setNewRule({
+                          ...newRule,
+                          fullyFlexibleSchedule: {
+                            monthlyTargetHours: Number(e.target.value),
+                            allowAnyTime: true,
+                          }
+                        })}
+                        min={100}
+                        max={300}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {language === 'ar' ? '192 ساعة = 8 ساعات × 24 يوم عمل' : '192 hours = 8 hours × 24 working days'}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="shift" className="space-y-4">
                 <Card>
                   <CardHeader className="pb-2">
