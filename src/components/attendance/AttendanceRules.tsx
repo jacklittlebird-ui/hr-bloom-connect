@@ -52,6 +52,10 @@ export const AttendanceRules = () => {
       coreHoursStart: '10:00',
       coreHoursEnd: '16:00',
     },
+    fullyFlexibleSchedule: {
+      monthlyTargetHours: 192,
+      allowAnyTime: true,
+    },
   });
 
   const [newRule, setNewRule] = useState<Partial<AttendanceRule>>(getDefaultRule());
