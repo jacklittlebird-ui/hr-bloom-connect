@@ -64,6 +64,8 @@ export const AttendanceRules = () => {
         return <Timer className="w-5 h-5" />;
       case 'shift':
         return <Plane className="w-5 h-5" />;
+      case 'fully-flexible':
+        return <Clock className="w-5 h-5" />;
     }
   };
 
