@@ -180,6 +180,17 @@ Deno.serve(async (req) => {
       gps_lng,
     });
 
+    // Check if employee has a fully_flexible attendance rule (no late/early tracking)
+    const { data: assignment } = await supabaseAdmin
+      .from("attendance_assignments")
+      .select("rule_id, attendance_rules(schedule_type)")
+      .eq("employee_id", employeeId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    const scheduleType = (assignment?.attendance_rules as any)?.schedule_type || "fixed";
+    const isFlexible = scheduleType === "fully_flexible" || scheduleType === "flexible";
+
     if (event_type === "check_in") {
       // Close any open record (no check_out) for today before creating a new one
       const { data: openRecord } = await supabaseAdmin
@@ -196,7 +207,7 @@ Deno.serve(async (req) => {
         }).eq("id", openRecord.id);
       }
 
-      const isLate = now.getHours() >= 9;
+      const isLate = !isFlexible && now.getHours() >= 9;
       await supabaseAdmin.from("attendance_records").insert({
         employee_id: employeeId,
         date: dateStr,
@@ -224,7 +235,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      const isEarly = now.getHours() < 17;
+      const isEarly = !isFlexible && now.getHours() < 17;
       await supabaseAdmin.from("attendance_records").update({
         check_out: now.toISOString(),
         status: isEarly ? "early-leave" : undefined,

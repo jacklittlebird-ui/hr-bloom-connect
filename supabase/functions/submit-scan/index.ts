@@ -242,14 +242,24 @@ Deno.serve(async (req) => {
         .maybeSingle();
       const tz = (empData?.stations as any)?.timezone || "Africa/Cairo";
 
+      // Check if employee has a flexible attendance rule
+      const { data: assignment } = await admin
+        .from("attendance_assignments")
+        .select("rule_id, attendance_rules(schedule_type)")
+        .eq("employee_id", empId)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      const scheduleType = (assignment?.attendance_rules as any)?.schedule_type || "fixed";
+      const isFlexible = scheduleType === "fully_flexible" || scheduleType === "flexible";
+
       const now = new Date();
       const nowIso = now.toISOString();
-      // Get local date & hour in the employee's timezone
-      const localDateStr = now.toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
+      const localDateStr = now.toLocaleDateString("en-CA", { timeZone: tz });
       const localHour = parseInt(now.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false }));
 
       if (event_type === "check_in") {
-        const isLate = localHour >= 9;
+        const isLate = !isFlexible && localHour >= 9;
         await admin.from("attendance_records").insert({
           employee_id: empId,
           date: localDateStr,
@@ -268,7 +278,7 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (openRecord) {
-          const isEarly = localHour < 17;
+          const isEarly = !isFlexible && localHour < 17;
           await admin
             .from("attendance_records")
             .update({
