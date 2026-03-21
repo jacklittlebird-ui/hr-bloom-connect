@@ -1053,6 +1053,11 @@ const StationManagerPortal = () => {
             </Card>
           </TabsContent>
 
+          {/* Approvals Tab */}
+          <TabsContent value="approvals">
+            <ManagerApprovals stationEmployees={stationEmployees} />
+          </TabsContent>
+
           <TabsContent value="evaluations">
             <Tabs value={evalInnerTab} onValueChange={setEvalInnerTab} className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
               <TabsList className="inline-grid grid-cols-3" dir="rtl">
