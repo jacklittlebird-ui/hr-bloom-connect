@@ -21,7 +21,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck } from 'lucide-react';
+import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -869,9 +870,10 @@ const StationManagerPortal = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="employees" className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
-          <TabsList className="inline-grid grid-cols-4" dir="rtl">
+          <TabsList className="inline-grid grid-cols-5" dir="rtl">
             <TabsTrigger value="employees" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>
             <TabsTrigger value="attendance" className="gap-1 md:gap-1.5 text-xs md:text-sm"><CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الحضور', 'Attendance')}</span></TabsTrigger>
+            <TabsTrigger value="approvals" className="gap-1 md:gap-1.5 text-xs md:text-sm"><ClipboardCheck className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموافقات', 'Approvals')}</span></TabsTrigger>
             <TabsTrigger value="evaluations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Star className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقييمات', 'Evaluations')}</span></TabsTrigger>
             <TabsTrigger value="violations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('المخالفات', 'Violations')}</span></TabsTrigger>
           </TabsList>
@@ -1049,6 +1051,11 @@ const StationManagerPortal = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Approvals Tab */}
+          <TabsContent value="approvals">
+            <ManagerApprovals stationEmployees={stationEmployees} />
           </TabsContent>
 
           <TabsContent value="evaluations">
