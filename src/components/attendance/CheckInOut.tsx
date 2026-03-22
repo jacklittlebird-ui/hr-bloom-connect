@@ -124,29 +124,41 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const [manualCheckOut, setManualCheckOut] = useState('');
   const [manualNotes, setManualNotes] = useState('');
   const [manualSaving, setManualSaving] = useState(false);
+  const [manualEmployeeSearch, setManualEmployeeSearch] = useState('');
 
   const manualDepartments = useMemo(() => getDepartmentsForStation(manualStation), [contextEmployees, manualStation]);
-  const manualFilteredEmployees = useMemo(() => {
-    return employees.filter(emp => {
+
+  // Build employee list with UUID for manual entry
+  const manualEmployeesList = useMemo(() => {
+    return contextEmployees.filter(emp => {
       if (manualStation !== 'all' && emp.stationId !== manualStation) return false;
       if (manualDept !== 'all' && emp.departmentId !== manualDept) return false;
       return true;
     });
-  }, [employees, manualStation, manualDept]);
+  }, [contextEmployees, manualStation, manualDept]);
+
+  const manualFilteredEmployees = useMemo(() => {
+    if (!manualEmployeeSearch.trim()) return manualEmployeesList;
+    const q = manualEmployeeSearch.trim().toLowerCase();
+    return manualEmployeesList.filter(emp =>
+      emp.nameAr.toLowerCase().includes(q) ||
+      emp.nameEn.toLowerCase().includes(q) ||
+      emp.employeeId.toLowerCase().includes(q)
+    );
+  }, [manualEmployeesList, manualEmployeeSearch]);
 
   const handleManualSave = useCallback(async () => {
-    if (!manualEmployee || !manualDate || !manualCheckIn) {
-      toast({ title: ar ? 'يرجى تعبئة الحقول المطلوبة' : 'Please fill required fields', variant: 'destructive' });
+    if (!manualEmployee || !manualDate || (!manualCheckIn && !manualCheckOut)) {
+      toast({ title: ar ? 'يرجى تعبئة الموظف والتاريخ ووقت الحضور أو الانصراف على الأقل' : 'Please fill employee, date, and at least check-in or check-out time', variant: 'destructive' });
       return;
     }
     setManualSaving(true);
     try {
-      const ciTs = `${manualDate}T${manualCheckIn}:00`;
-      const coTs = manualCheckOut ? `${manualDate}T${manualCheckOut}:00` : null;
+      const ciTs = manualCheckIn ? `${manualDate}T${manualCheckIn}:00` : null;
+      let finalCoTs = manualCheckOut ? `${manualDate}T${manualCheckOut}:00` : null;
 
       // Handle overnight: if checkout is before checkin, add a day
-      let finalCoTs = coTs;
-      if (coTs && manualCheckOut < manualCheckIn) {
+      if (finalCoTs && manualCheckIn && manualCheckOut < manualCheckIn) {
         const nextDay = new Date(manualDate);
         nextDay.setDate(nextDay.getDate() + 1);
         finalCoTs = `${nextDay.toISOString().split('T')[0]}T${manualCheckOut}:00`;
@@ -168,6 +180,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
       setManualCheckOut('');
       setManualNotes('');
       setManualEmployee('');
+      setManualEmployeeSearch('');
       if (onRefresh) await onRefresh();
     } catch (e: any) {
       toast({ title: ar ? 'خطأ في الحفظ' : 'Save failed', description: e.message, variant: 'destructive' });
@@ -467,22 +480,29 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
               </div>
               <div>
                 <Label className="mb-1 block text-sm"><User className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'الموظف' : 'Employee'}</Label>
-                <Select value={manualEmployee} onValueChange={setManualEmployee}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={ar ? 'اختر الموظف' : 'Select Employee'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {manualFilteredEmployees.length === 0 ? (
-                      <div className="p-3 text-center text-muted-foreground text-sm">{ar ? 'لا يوجد موظفين' : 'No employees'}</div>
-                    ) : (
-                      manualFilteredEmployees.map(emp => (
-                        <SelectItem key={emp.id} value={emp.id}>
-                          {ar ? emp.nameAr : emp.name} ({emp.id})
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Input
+                    placeholder={ar ? 'ابحث بالاسم أو الرقم الوظيفي...' : 'Search by name or code...'}
+                    value={manualEmployeeSearch}
+                    onChange={e => setManualEmployeeSearch(e.target.value)}
+                  />
+                  <Select value={manualEmployee} onValueChange={setManualEmployee}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={ar ? 'اختر الموظف' : 'Select Employee'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {manualFilteredEmployees.length === 0 ? (
+                        <div className="p-3 text-center text-muted-foreground text-sm">{ar ? 'لا يوجد موظفين' : 'No employees'}</div>
+                      ) : (
+                        manualFilteredEmployees.map(emp => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {ar ? emp.nameAr : emp.nameEn} ({emp.employeeId})
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -493,7 +513,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
                 <Input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} max={new Date().toISOString().split('T')[0]} />
               </div>
               <div>
-                <Label className="mb-1 block text-sm"><LogIn className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'وقت الحضور' : 'Check-in Time'}</Label>
+                <Label className="mb-1 block text-sm"><LogIn className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'وقت الحضور (اختياري)' : 'Check-in Time (optional)'}</Label>
                 <Input type="time" value={manualCheckIn} onChange={e => setManualCheckIn(e.target.value)} />
               </div>
               <div>
@@ -508,7 +528,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
               <Textarea value={manualNotes} onChange={e => setManualNotes(e.target.value)} placeholder={ar ? 'سبب التسجيل اليدوي...' : 'Reason for manual entry...'} rows={2} />
             </div>
 
-            <Button onClick={handleManualSave} disabled={manualSaving || !manualEmployee || !manualCheckIn} className="gap-2 w-full md:w-auto">
+            <Button onClick={handleManualSave} disabled={manualSaving || !manualEmployee || (!manualCheckIn && !manualCheckOut)} className="gap-2 w-full md:w-auto">
               <Save className="w-4 h-4" />
               {manualSaving ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ التسجيل اليدوي' : 'Save Manual Entry')}
             </Button>
