@@ -133,6 +133,14 @@ const EmployeePortal = () => {
     }
   }, [enablePullToRefresh, pullDistance, refreshing]);
 
+  const touchHandlers = enablePullToRefresh
+    ? {
+        onTouchStart,
+        onTouchMove,
+        onTouchEnd,
+      }
+    : {};
+
   const ActiveComponent = sectionComponents[activeSection];
 
   // Prevent screenshot: blur content when app goes to background
@@ -172,9 +180,7 @@ const EmployeePortal = () => {
         }} onRefresh={() => setRefreshKey(k => k + 1)} />
         <div
           ref={mainRef}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
+          {...touchHandlers}
           className="flex-1 overflow-auto min-w-0 relative"
           style={{
             overscrollBehaviorY: 'contain',
