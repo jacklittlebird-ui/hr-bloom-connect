@@ -17,23 +17,8 @@ import { Clock, LogIn, LogOut, Calendar, Timer, User, MapPin, Building2, PenLine
 import { cn } from '@/lib/utils';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
+import { AttendanceRecord } from '@/pages/Attendance';
 import { toast } from '@/hooks/use-toast';
-
-
-export interface AttendanceRecord {
-  id: string;
-  employeeId: string;
-  employeeName: string;
-  employeeNameAr: string;
-  department: string;
-  date: string;
-  checkIn: string | null;
-  checkOut: string | null;
-  status: 'present' | 'absent' | 'late' | 'early-leave' | 'on-leave';
-  workHours: number;
-  overtime: number;
-  notes?: string;
-}
 
 interface CheckInOutProps {
   records: AttendanceRecord[];
