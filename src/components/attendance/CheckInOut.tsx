@@ -124,15 +124,28 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const [manualCheckOut, setManualCheckOut] = useState('');
   const [manualNotes, setManualNotes] = useState('');
   const [manualSaving, setManualSaving] = useState(false);
+  const [manualEmployeeSearch, setManualEmployeeSearch] = useState('');
 
   const manualDepartments = useMemo(() => getDepartmentsForStation(manualStation), [contextEmployees, manualStation]);
-  const manualFilteredEmployees = useMemo(() => {
-    return employees.filter(emp => {
+
+  // Build employee list with UUID for manual entry
+  const manualEmployeesList = useMemo(() => {
+    return contextEmployees.filter(emp => {
       if (manualStation !== 'all' && emp.stationId !== manualStation) return false;
       if (manualDept !== 'all' && emp.departmentId !== manualDept) return false;
       return true;
     });
-  }, [employees, manualStation, manualDept]);
+  }, [contextEmployees, manualStation, manualDept]);
+
+  const manualFilteredEmployees = useMemo(() => {
+    if (!manualEmployeeSearch.trim()) return manualEmployeesList;
+    const q = manualEmployeeSearch.trim().toLowerCase();
+    return manualEmployeesList.filter(emp =>
+      emp.nameAr.toLowerCase().includes(q) ||
+      emp.nameEn.toLowerCase().includes(q) ||
+      emp.employeeId.toLowerCase().includes(q)
+    );
+  }, [manualEmployeesList, manualEmployeeSearch]);
 
   const handleManualSave = useCallback(async () => {
     if (!manualEmployee || !manualDate || !manualCheckIn) {
