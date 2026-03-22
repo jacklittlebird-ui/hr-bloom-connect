@@ -164,16 +164,40 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
         finalCoTs = `${nextDay.toISOString().split('T')[0]}T${manualCheckOut}:00`;
       }
 
-      const { error } = await supabase.from('attendance_records').insert({
-        employee_id: manualEmployee,
-        date: manualDate,
-        check_in: ciTs,
-        check_out: finalCoTs,
-        status: 'present',
-        notes: manualNotes || (ar ? 'تسجيل يدوي' : 'Manual entry'),
-      });
+      // Check if a record already exists for this employee on this date
+      const { data: existing } = await supabase
+        .from('attendance_records')
+        .select('id, check_in, check_out')
+        .eq('employee_id', manualEmployee)
+        .eq('date', manualDate)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (existing) {
+        // Update existing record - only update fields that are provided
+        const updateData: Record<string, any> = {};
+        if (ciTs && !existing.check_in) updateData.check_in = ciTs;
+        if (ciTs && existing.check_in) updateData.check_in = ciTs; // override check_in if provided
+        if (finalCoTs) updateData.check_out = finalCoTs;
+        if (manualNotes) updateData.notes = manualNotes;
+        if (ciTs) updateData.check_in = ciTs;
+
+        const { error } = await supabase
+          .from('attendance_records')
+          .update(updateData)
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase.from('attendance_records').insert({
+          employee_id: manualEmployee,
+          date: manualDate,
+          check_in: ciTs,
+          check_out: finalCoTs,
+          status: 'present',
+          notes: manualNotes || (ar ? 'تسجيل يدوي' : 'Manual entry'),
+        });
+        if (error) throw error;
+      }
 
       toast({ title: ar ? 'تم حفظ التسجيل اليدوي بنجاح' : 'Manual entry saved successfully' });
       setManualCheckIn('');
