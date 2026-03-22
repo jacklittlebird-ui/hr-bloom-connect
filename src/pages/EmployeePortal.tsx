@@ -166,11 +166,11 @@ const EmployeePortal = () => {
       <div
         dir="rtl"
         className={cn(
-          "min-h-screen bg-background flex flex-row-reverse font-arabic",
+          "h-dvh min-h-screen bg-background flex flex-row-reverse font-arabic overflow-hidden",
           hidden && "blur-lg pointer-events-none"
         )}
       >
-      <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-x-hidden">
+      <div className="flex-1 flex flex-col h-full min-h-0 min-w-0 overflow-x-hidden">
         <PortalHeader onToggleSidebar={() => {
           if (isMobile) {
             setMobileOpen(!mobileOpen);
@@ -181,7 +181,7 @@ const EmployeePortal = () => {
         <div
           ref={mainRef}
           {...touchHandlers}
-          className="flex-1 overflow-auto min-w-0 relative"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden min-w-0 relative"
           style={{
             overscrollBehaviorY: 'contain',
             touchAction: 'auto',
