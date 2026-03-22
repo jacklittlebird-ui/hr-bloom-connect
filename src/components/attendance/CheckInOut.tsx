@@ -164,30 +164,41 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
         finalCoTs = `${nextDay.toISOString().split('T')[0]}T${manualCheckOut}:00`;
       }
 
-      // Check if a record already exists for this employee on this date
-      const { data: existing } = await supabase
+      // Find same-day records and prefer updating an incomplete one instead of inserting a new row
+      const { data: sameDayRecords, error: fetchExistingError } = await supabase
         .from('attendance_records')
-        .select('id, check_in, check_out')
+        .select('id, check_in, check_out, created_at, notes, status')
         .eq('employee_id', manualEmployee)
         .eq('date', manualDate)
-        .maybeSingle();
+        .order('created_at', { ascending: false });
 
-      if (existing) {
-        // Update existing record - only update fields that are provided
-        const updateData: Record<string, any> = {};
-        if (ciTs && !existing.check_in) updateData.check_in = ciTs;
-        if (ciTs && existing.check_in) updateData.check_in = ciTs; // override check_in if provided
-        if (finalCoTs) updateData.check_out = finalCoTs;
-        if (manualNotes) updateData.notes = manualNotes;
+      if (fetchExistingError) throw fetchExistingError;
+
+      const targetRecord =
+        (manualCheckOut && !manualCheckIn
+          ? sameDayRecords?.find(record => !!record.check_in && !record.check_out)
+          : null) ??
+        (manualCheckIn && !manualCheckOut
+          ? sameDayRecords?.find(record => !record.check_in && !!record.check_out)
+          : null) ??
+        sameDayRecords?.find(record => !record.check_in || !record.check_out) ??
+        null;
+
+      if (targetRecord) {
+        const updateData: Record<string, any> = {
+          notes: manualNotes || targetRecord.notes || (ar ? 'تسجيل يدوي' : 'Manual entry'),
+        };
+
         if (ciTs) updateData.check_in = ciTs;
+        if (finalCoTs) updateData.check_out = finalCoTs;
+        if (targetRecord.status !== 'mission') updateData.status = 'present';
 
         const { error } = await supabase
           .from('attendance_records')
           .update(updateData)
-          .eq('id', existing.id);
+          .eq('id', targetRecord.id);
         if (error) throw error;
       } else {
-        // Insert new record
         const { error } = await supabase.from('attendance_records').insert({
           employee_id: manualEmployee,
           date: manualDate,
