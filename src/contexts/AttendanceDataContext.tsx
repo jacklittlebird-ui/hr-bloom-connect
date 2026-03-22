@@ -30,6 +30,9 @@ export const calculateWorkTime = (checkIn: string | null, checkOut: string | nul
   return { hours: Math.floor(diffMinutes / 60), minutes: diffMinutes % 60, totalMinutes: diffMinutes };
 };
 
+const isFlexibleSchedule = (scheduleType?: string | null) =>
+  scheduleType === 'flexible' || scheduleType === 'fully-flexible' || scheduleType === 'fully_flexible';
+
 interface AttendanceDataContextType {
   records: AttendanceEntry[];
   refresh: () => Promise<void>;
@@ -127,7 +130,7 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
       .maybeSingle();
 
     const scheduleType = (assignment?.attendance_rules as any)?.schedule_type || 'fixed';
-    const isFlexible = scheduleType === 'fully_flexible' || scheduleType === 'flexible';
+    const isFlexible = isFlexibleSchedule(scheduleType);
     const isLate = !isFlexible && now.getHours() >= 9;
 
     await supabase.from('attendance_records').insert({
@@ -164,7 +167,7 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
         .maybeSingle();
 
       const scheduleType = (assignment?.attendance_rules as any)?.schedule_type || 'fixed';
-      isFlexible = scheduleType === 'fully_flexible' || scheduleType === 'flexible';
+      isFlexible = isFlexibleSchedule(scheduleType);
     }
 
     const isEarlyLeave = !isFlexible && now.getHours() < 17;

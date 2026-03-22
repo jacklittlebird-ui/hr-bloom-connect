@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       const scheduleType = (assignment?.attendance_rules as any)?.schedule_type || "fixed";
-      const isFlexible = scheduleType === "fully_flexible" || scheduleType === "flexible";
+      const isFlexible = ["flexible", "fully-flexible", "fully_flexible"].includes(scheduleType);
 
       const now = new Date();
       const nowIso = now.toISOString();

@@ -31,9 +31,24 @@ export const PortalDashboard = () => {
   const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests } = usePortalData();
 
   const today = format(new Date(), 'yyyy-MM-dd');
-  const todayRecord = records.find(r => r.employeeId === PORTAL_EMPLOYEE_ID && r.date === today);
-  const hasCheckedIn = !!todayRecord?.checkIn;
-  const hasCheckedOut = !!todayRecord?.checkOut;
+  const employeeRecords = useMemo(
+    () => records.filter(r => r.employeeId === PORTAL_EMPLOYEE_ID),
+    [records, PORTAL_EMPLOYEE_ID]
+  );
+  const todayRecord = useMemo(
+    () => employeeRecords.find(r => r.date === today),
+    [employeeRecords, today]
+  );
+  const latestOpenRecord = useMemo(
+    () => [...employeeRecords]
+      .filter(r => r.checkIn && !r.checkOut)
+      .sort((a, b) => `${b.date}T${b.checkIn ?? ''}`.localeCompare(`${a.date}T${a.checkIn ?? ''}`))[0],
+    [employeeRecords]
+  );
+  const activeRecord = latestOpenRecord ?? todayRecord;
+  const hasCheckedIn = !!activeRecord?.checkIn;
+  const hasCheckedOut = !!activeRecord?.checkOut;
+  const isCrossDayOpenRecord = !!latestOpenRecord && latestOpenRecord.date !== today;
 
   // Station checkin method
   const [checkinMethod, setCheckinMethod] = useState<string>('qr');
@@ -199,14 +214,20 @@ export const PortalDashboard = () => {
                     }}
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
-                    disabled={hasCheckedIn && !hasCheckedOut}
+                  disabled={hasCheckedIn && !hasCheckedOut}
                   >
                     <LogIn className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل حضور (QR)' : 'Check In (QR)'}
                   </Button>
-                  {hasCheckedIn && todayRecord?.checkIn && !showGps && (
+                  {hasCheckedIn && activeRecord?.checkIn && !showGps && (
                     <p className="text-sm font-medium text-success">
-                      {ar ? `✔ تم الحضور في ${todayRecord.checkIn}` : `✔ Checked in at ${todayRecord.checkIn}`}
+                      {isCrossDayOpenRecord
+                        ? ar
+                          ? `✔ يوجد حضور مفتوح من ${activeRecord?.date} الساعة ${activeRecord?.checkIn}`
+                          : `✔ Open check-in from ${activeRecord?.date} at ${activeRecord?.checkIn}`
+                        : ar
+                          ? `✔ تم الحضور في ${activeRecord.checkIn}`
+                          : `✔ Checked in at ${activeRecord.checkIn}`}
                     </p>
                   )}
                 </div>
@@ -250,14 +271,20 @@ export const PortalDashboard = () => {
             )}
 
             {/* Status timestamps */}
-            {hasCheckedIn && todayRecord?.checkIn && (
+            {hasCheckedIn && activeRecord?.checkIn && (
               <p className="text-sm font-medium text-success">
-                {ar ? `✔ تم الحضور في ${todayRecord.checkIn}` : `✔ Checked in at ${todayRecord.checkIn}`}
+                {isCrossDayOpenRecord
+                  ? ar
+                    ? `✔ يوجد حضور مفتوح من ${activeRecord?.date} الساعة ${activeRecord?.checkIn}`
+                    : `✔ Open check-in from ${activeRecord?.date} at ${activeRecord?.checkIn}`
+                  : ar
+                    ? `✔ تم الحضور في ${activeRecord.checkIn}`
+                    : `✔ Checked in at ${activeRecord.checkIn}`}
               </p>
             )}
-            {hasCheckedOut && todayRecord?.checkOut && (
+            {hasCheckedOut && activeRecord?.checkOut && (
               <p className="text-sm font-medium text-muted-foreground">
-                {ar ? `✔ تم الانصراف في ${todayRecord.checkOut}` : `✔ Checked out at ${todayRecord.checkOut}`}
+                {ar ? `✔ تم الانصراف في ${activeRecord.checkOut}` : `✔ Checked out at ${activeRecord.checkOut}`}
               </p>
             )}
 

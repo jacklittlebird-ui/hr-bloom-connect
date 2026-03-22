@@ -189,7 +189,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     const scheduleType = (assignment?.attendance_rules as any)?.schedule_type || "fixed";
-    const isFlexible = scheduleType === "fully_flexible" || scheduleType === "flexible";
+    const isFlexible = ["flexible", "fully-flexible", "fully_flexible"].includes(scheduleType);
 
     if (event_type === "check_in") {
       // Close any open record (no check_out) for today before creating a new one
@@ -222,7 +222,6 @@ Deno.serve(async (req) => {
         .from("attendance_records")
         .select("id")
         .eq("employee_id", employeeId)
-        .eq("date", dateStr)
         .is("check_out", null)
         .order("check_in", { ascending: false })
         .limit(1)
