@@ -513,7 +513,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
                 <Input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} max={new Date().toISOString().split('T')[0]} />
               </div>
               <div>
-                <Label className="mb-1 block text-sm"><LogIn className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'وقت الحضور' : 'Check-in Time'}</Label>
+                <Label className="mb-1 block text-sm"><LogIn className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'وقت الحضور (اختياري)' : 'Check-in Time (optional)'}</Label>
                 <Input type="time" value={manualCheckIn} onChange={e => setManualCheckIn(e.target.value)} />
               </div>
               <div>
