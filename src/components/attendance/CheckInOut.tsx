@@ -1,9 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -11,24 +13,41 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Clock, LogIn, LogOut, Calendar, Timer, User, MapPin, Building2 } from 'lucide-react';
+import { Clock, LogIn, LogOut, Calendar, Timer, User, MapPin, Building2, PenLine, Save, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
-import { AttendanceRecord } from '@/pages/Attendance';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+
+export interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  employeeNameAr: string;
+  department: string;
+  date: string;
+  checkIn: string | null;
+  checkOut: string | null;
+  status: 'present' | 'absent' | 'late' | 'early-leave' | 'on-leave';
+  workHours: number;
+  overtime: number;
+  notes?: string;
+}
 
 interface CheckInOutProps {
   records: AttendanceRecord[];
   onCheckIn: (employeeId: string, employeeName: string, employeeNameAr: string, department: string) => void;
   onCheckOut: (recordId: string) => void;
+  onRefresh?: () => Promise<void>;
 }
 
 
-export const CheckInOut = ({ records, onCheckIn, onCheckOut }: CheckInOutProps) => {
+export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckInOutProps) => {
   const { t, isRTL, language } = useLanguage();
   const { employees: contextEmployees } = useEmployeeData();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const ar = language === 'ar';
 
   const employees = useMemo(() => contextEmployees.map(emp => ({
     id: emp.employeeId,
@@ -109,6 +128,68 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut }: CheckInOutProps) 
   const [selectedStation, setSelectedStation] = useState<string>('all');
   const [selectedDept, setSelectedDept] = useState<string>('all');
   const [selectedEmployee, setSelectedEmployee] = useState<string>('');
+
+  // Manual entry state
+  const [manualMode, setManualMode] = useState(false);
+  const [manualStation, setManualStation] = useState<string>('all');
+  const [manualDept, setManualDept] = useState<string>('all');
+  const [manualEmployee, setManualEmployee] = useState<string>('');
+  const [manualDate, setManualDate] = useState(new Date().toISOString().split('T')[0]);
+  const [manualCheckIn, setManualCheckIn] = useState('');
+  const [manualCheckOut, setManualCheckOut] = useState('');
+  const [manualNotes, setManualNotes] = useState('');
+  const [manualSaving, setManualSaving] = useState(false);
+
+  const manualDepartments = useMemo(() => getDepartmentsForStation(manualStation), [contextEmployees, manualStation]);
+  const manualFilteredEmployees = useMemo(() => {
+    return employees.filter(emp => {
+      if (manualStation !== 'all' && emp.stationId !== manualStation) return false;
+      if (manualDept !== 'all' && emp.departmentId !== manualDept) return false;
+      return true;
+    });
+  }, [employees, manualStation, manualDept]);
+
+  const handleManualSave = useCallback(async () => {
+    if (!manualEmployee || !manualDate || !manualCheckIn) {
+      toast({ title: ar ? 'يرجى تعبئة الحقول المطلوبة' : 'Please fill required fields', variant: 'destructive' });
+      return;
+    }
+    setManualSaving(true);
+    try {
+      const ciTs = `${manualDate}T${manualCheckIn}:00`;
+      const coTs = manualCheckOut ? `${manualDate}T${manualCheckOut}:00` : null;
+
+      // Handle overnight: if checkout is before checkin, add a day
+      let finalCoTs = coTs;
+      if (coTs && manualCheckOut < manualCheckIn) {
+        const nextDay = new Date(manualDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        finalCoTs = `${nextDay.toISOString().split('T')[0]}T${manualCheckOut}:00`;
+      }
+
+      const { error } = await supabase.from('attendance_records').insert({
+        employee_id: manualEmployee,
+        date: manualDate,
+        check_in: ciTs,
+        check_out: finalCoTs,
+        status: 'present',
+        notes: manualNotes || (ar ? 'تسجيل يدوي' : 'Manual entry'),
+      });
+
+      if (error) throw error;
+
+      toast({ title: ar ? 'تم حفظ التسجيل اليدوي بنجاح' : 'Manual entry saved successfully' });
+      setManualCheckIn('');
+      setManualCheckOut('');
+      setManualNotes('');
+      setManualEmployee('');
+      if (onRefresh) await onRefresh();
+    } catch (e: any) {
+      toast({ title: ar ? 'خطأ في الحفظ' : 'Save failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setManualSaving(false);
+    }
+  }, [manualEmployee, manualDate, manualCheckIn, manualCheckOut, manualNotes, ar, onRefresh]);
 
   const mainDepartments = useMemo(() => getDepartmentsForStation(selectedStation), [contextEmployees, selectedStation]);
   
@@ -302,7 +383,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut }: CheckInOutProps) 
 
       {/* Recent Activity */}
       {recentActivity.length > 0 && (
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
               <Timer className="w-5 h-5" />
@@ -360,6 +441,95 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut }: CheckInOutProps) 
           </CardContent>
         </Card>
       )}
+
+      {/* Manual Entry Section */}
+      <Card className="border-dashed border-2 border-primary/30">
+        <CardHeader className="cursor-pointer" onClick={() => setManualMode(!manualMode)}>
+          <CardTitle className={cn("flex items-center gap-2 text-base", isRTL && "flex-row-reverse")}>
+            <PenLine className="w-5 h-5 text-primary" />
+            {ar ? 'تسجيل حضور / انصراف يدوي (في حالة النسيان)' : 'Manual Check-in/out (Forgot to register)'}
+            <Badge variant="outline" className="ms-auto">{manualMode ? (ar ? 'إغلاق' : 'Close') : (ar ? 'فتح' : 'Open')}</Badge>
+          </CardTitle>
+        </CardHeader>
+        {manualMode && (
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/30 text-warning text-sm">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              {ar ? 'هذا التسجيل اليدوي مخصص للحالات التي نسي فيها الموظف تسجيل الحضور أو الانصراف.' : 'This manual entry is for cases where the employee forgot to check in/out.'}
+            </div>
+
+            {/* Filters */}
+            <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", isRTL && "direction-rtl")}>
+              <div>
+                <Label className="mb-1 block text-sm"><MapPin className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'المحطة' : 'Station'}</Label>
+                <Select value={manualStation} onValueChange={v => { setManualStation(v); setManualDept('all'); setManualEmployee(''); }}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{ar ? 'جميع المحطات' : 'All Stations'}</SelectItem>
+                    {stations.map(s => <SelectItem key={s.id} value={s.id}>{s.nameAr}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="mb-1 block text-sm"><Building2 className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'القسم' : 'Department'}</Label>
+                <Select value={manualDept} onValueChange={v => { setManualDept(v); setManualEmployee(''); }}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{ar ? 'جميع الأقسام' : 'All Departments'}</SelectItem>
+                    {manualDepartments.map(d => <SelectItem key={d.id} value={d.id}>{d.nameAr}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="mb-1 block text-sm"><User className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'الموظف' : 'Employee'}</Label>
+                <Select value={manualEmployee} onValueChange={setManualEmployee}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={ar ? 'اختر الموظف' : 'Select Employee'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {manualFilteredEmployees.length === 0 ? (
+                      <div className="p-3 text-center text-muted-foreground text-sm">{ar ? 'لا يوجد موظفين' : 'No employees'}</div>
+                    ) : (
+                      manualFilteredEmployees.map(emp => (
+                        <SelectItem key={emp.id} value={emp.id}>
+                          {ar ? emp.nameAr : emp.name} ({emp.id})
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Date & Time */}
+            <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", isRTL && "direction-rtl")}>
+              <div>
+                <Label className="mb-1 block text-sm"><Calendar className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'التاريخ' : 'Date'}</Label>
+                <Input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} max={new Date().toISOString().split('T')[0]} />
+              </div>
+              <div>
+                <Label className="mb-1 block text-sm"><LogIn className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'وقت الحضور' : 'Check-in Time'}</Label>
+                <Input type="time" value={manualCheckIn} onChange={e => setManualCheckIn(e.target.value)} />
+              </div>
+              <div>
+                <Label className="mb-1 block text-sm"><LogOut className="w-3.5 h-3.5 inline-block mr-1" />{ar ? 'وقت الانصراف (اختياري)' : 'Check-out Time (optional)'}</Label>
+                <Input type="time" value={manualCheckOut} onChange={e => setManualCheckOut(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <Label className="mb-1 block text-sm">{ar ? 'ملاحظات' : 'Notes'}</Label>
+              <Textarea value={manualNotes} onChange={e => setManualNotes(e.target.value)} placeholder={ar ? 'سبب التسجيل اليدوي...' : 'Reason for manual entry...'} rows={2} />
+            </div>
+
+            <Button onClick={handleManualSave} disabled={manualSaving || !manualEmployee || !manualCheckIn} className="gap-2 w-full md:w-auto">
+              <Save className="w-4 h-4" />
+              {manualSaving ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ التسجيل اليدوي' : 'Save Manual Entry')}
+            </Button>
+          </CardContent>
+        )}
+      </Card>
 
     </div>
   );
