@@ -148,18 +148,17 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   }, [manualEmployeesList, manualEmployeeSearch]);
 
   const handleManualSave = useCallback(async () => {
-    if (!manualEmployee || !manualDate || !manualCheckIn) {
-      toast({ title: ar ? 'يرجى تعبئة الحقول المطلوبة' : 'Please fill required fields', variant: 'destructive' });
+    if (!manualEmployee || !manualDate || (!manualCheckIn && !manualCheckOut)) {
+      toast({ title: ar ? 'يرجى تعبئة الموظف والتاريخ ووقت الحضور أو الانصراف على الأقل' : 'Please fill employee, date, and at least check-in or check-out time', variant: 'destructive' });
       return;
     }
     setManualSaving(true);
     try {
-      const ciTs = `${manualDate}T${manualCheckIn}:00`;
-      const coTs = manualCheckOut ? `${manualDate}T${manualCheckOut}:00` : null;
+      const ciTs = manualCheckIn ? `${manualDate}T${manualCheckIn}:00` : null;
+      let finalCoTs = manualCheckOut ? `${manualDate}T${manualCheckOut}:00` : null;
 
       // Handle overnight: if checkout is before checkin, add a day
-      let finalCoTs = coTs;
-      if (coTs && manualCheckOut < manualCheckIn) {
+      if (finalCoTs && manualCheckIn && manualCheckOut < manualCheckIn) {
         const nextDay = new Date(manualDate);
         nextDay.setDate(nextDay.getDate() + 1);
         finalCoTs = `${nextDay.toISOString().split('T')[0]}T${manualCheckOut}:00`;
@@ -181,6 +180,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
       setManualCheckOut('');
       setManualNotes('');
       setManualEmployee('');
+      setManualEmployeeSearch('');
       if (onRefresh) await onRefresh();
     } catch (e: any) {
       toast({ title: ar ? 'خطأ في الحفظ' : 'Save failed', description: e.message, variant: 'destructive' });
