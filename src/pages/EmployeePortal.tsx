@@ -177,7 +177,7 @@ const EmployeePortal = () => {
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
           className="flex-1 overflow-auto min-w-0 relative"
-          style={{ overscrollBehavior: 'none' }}
+          style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}
         >
           {/* Pull-to-refresh indicator */}
           <div
