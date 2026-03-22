@@ -270,6 +270,7 @@ const Attendance = () => {
               records={attendanceRecords} 
               onCheckIn={handleCheckIn} 
               onCheckOut={handleCheckOut} 
+              onRefresh={refreshAttendance}
             />
           </TabsContent>
 
