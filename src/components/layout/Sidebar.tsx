@@ -130,10 +130,10 @@ export const Sidebar = ({ open, onOpenChange, collapsed, onToggleCollapse }: Sid
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
-          side={isRTL ? 'right' : 'left'}
+          side="right"
           className="w-[272px] p-0 bg-sidebar border-sidebar-border"
         >
-          <div className="h-full overflow-y-auto pt-2">
+          <div className="h-full overflow-y-auto overflow-x-hidden pt-4">
             {navContent}
           </div>
         </SheetContent>
@@ -172,11 +172,10 @@ const NavButton: React.FC<NavButtonProps> = ({ item, t, isRTL, isActive, collaps
       title={collapsed ? t(item.key) : undefined}
       className={cn(
         "group w-full flex items-center gap-3 rounded-lg text-[13px] font-medium transition-all duration-150",
-        collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2",
+        collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2 flex-row-reverse text-right",
         isActive
           ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm shadow-sidebar-primary/25"
-          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        isRTL && !collapsed && "text-right"
+          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
       )}
     >
       <Icon className={cn(
