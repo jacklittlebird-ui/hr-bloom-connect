@@ -271,7 +271,35 @@ const AttendanceAdmin = () => {
                             <p className="font-semibold truncate">{ar ? emp?.name_ar : emp?.name_en || al.user_id?.substring(0, 8)}</p>
                             {emp?.employee_code && <p className="text-xs text-muted-foreground">{emp.employee_code}</p>}
                           </div>
-                          {alertReasonLabel(al.reason)}
+                          <div className="flex items-center gap-2 shrink-0">
+                            {alertReasonLabel(al.reason)}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={async () => {
+                                const confirmed = window.confirm(
+                                  ar
+                                    ? `هل تريد مسح جهاز ${emp?.name_ar || "هذا الموظف"}؟`
+                                    : `Clear device for ${emp?.name_en || "this user"}?`
+                                );
+                                if (!confirmed) return;
+                                const { error } = await supabase
+                                  .from("user_devices")
+                                  .delete()
+                                  .eq("user_id", al.user_id)
+                                  .eq("device_id", al.device_id);
+                                if (error) {
+                                  toast.error(error.message);
+                                } else {
+                                  toast.success(ar ? "تم مسح الجهاز بنجاح" : "Device cleared successfully");
+                                  fetchAll();
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 me-1" />
+                              {ar ? "مسح" : "Clear"}
+                            </Button>
+                          </div>
                         </div>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                           <span className="font-mono">{ar ? "الجهاز:" : "Device:"} {al.device_id?.substring(0, 12)}...</span>
