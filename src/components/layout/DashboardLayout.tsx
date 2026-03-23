@@ -18,7 +18,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"} className={cn(
-      "min-h-screen bg-background",
+      "h-dvh min-h-screen bg-background flex flex-col overflow-hidden",
       isRTL ? "font-arabic" : "font-sans"
     )}>
       <Header onToggleSidebar={() => {
@@ -37,9 +37,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         />
       )}
       <main className={cn(
-        "pt-16 min-h-screen transition-all duration-300",
+        "flex-1 min-h-0 pt-16 overflow-y-auto transition-all duration-300",
         !isMobile && sidebarVisible && (sidebarCollapsed ? "ms-16" : "ms-64")
-      )}>
+      )}
+        style={{
+          overscrollBehaviorY: 'contain',
+          touchAction: 'auto',
+          WebkitOverflowScrolling: 'touch' as any,
+        }}
+      >
         <div className="p-4 md:p-6">
           {children}
         </div>
