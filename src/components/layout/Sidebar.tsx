@@ -130,10 +130,10 @@ export const Sidebar = ({ open, onOpenChange, collapsed, onToggleCollapse }: Sid
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
-          side={isRTL ? 'right' : 'left'}
+          side="right"
           className="w-[272px] p-0 bg-sidebar border-sidebar-border"
         >
-          <div className="h-full overflow-y-auto pt-2">
+          <div className="h-full overflow-y-auto overflow-x-hidden pt-4">
             {navContent}
           </div>
         </SheetContent>
