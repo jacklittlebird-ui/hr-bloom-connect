@@ -295,8 +295,8 @@ const AttendanceKiosk = () => {
                           variant="secondary"
                           className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-xs"
                         >
-                          <RefreshCw className="h-3 w-3 animate-spin" />
-                          {countdown}s
+                          <RefreshCw className="h-3 w-3" />
+                          {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
                         </Badge>
                       </>
                     ) : (
