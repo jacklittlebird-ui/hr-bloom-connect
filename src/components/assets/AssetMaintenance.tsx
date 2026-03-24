@@ -97,7 +97,8 @@ export const AssetMaintenance = () => {
     return matchSearch && matchStatus;
   });
 
-  const handleAdd = async () => {
+  const { paginatedItems: paginatedMaint, currentPage: amPage, totalPages: amTotalPages, totalItems: amTotalItems, startIndex: amStart, endIndex: amEnd, setCurrentPage: setAmPage } = usePagination(filtered, 20);
+
     if (!form.assetId || !form.description) {
       toast({ title: t('assets.error'), description: t('assets.fillRequired'), variant: 'destructive' });
       return;
