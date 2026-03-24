@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ===== LEAVES =====
 export interface LeaveBalance {
@@ -169,6 +170,7 @@ interface PortalDataContextType {
 const PortalDataContext = createContext<PortalDataContextType | undefined>(undefined);
 
 export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isAuthenticated } = useAuth();
   // Cache data from Supabase
   const [leaveBalances, setLeaveBalances] = useState<Record<string, LeaveBalance[]>>({});
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
@@ -182,13 +184,31 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [requests, setRequests] = useState<EmployeeRequest[]>([]);
   const [documents, setDocuments] = useState<PortalDocument[]>([]);
 
+  const isAdminOrHr = user?.role === 'admin' || user?.role === 'hr';
+  const employeeUuid = user?.employeeUuid;
+
   const fetchAll = useCallback(async () => {
+    if (!isAuthenticated || !user) return;
+
+    // Kiosk, training_manager, station_manager don't need portal data
+    if (user.role === 'kiosk' || user.role === 'training_manager' || user.role === 'station_manager' || user.role === 'area_manager') {
+      return;
+    }
+
+    // For employees, only fetch their own data. For admin/hr, fetch all.
+    const empFilter = (query: any) => {
+      if (!isAdminOrHr && employeeUuid) {
+        return query.eq('employee_id', employeeUuid);
+      }
+      return query;
+    };
+
     // Leave balances - current year only
     const currentYear = new Date().getFullYear();
-    const { data: lbData } = await supabase.from('leave_balances').select('*').eq('year', currentYear);
+    const { data: lbData } = await empFilter(supabase.from('leave_balances').select('*').eq('year', currentYear));
     if (lbData) {
       const mapped: Record<string, LeaveBalance[]> = {};
-      lbData.forEach(lb => {
+      lbData.forEach((lb: any) => {
         if (!mapped[lb.employee_id]) mapped[lb.employee_id] = [];
         mapped[lb.employee_id].push(
           { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used },
@@ -201,27 +221,27 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     // Leave requests
-    const { data: lrData } = await supabase.from('leave_requests').select('*').order('created_at', { ascending: false });
+    const { data: lrData } = await empFilter(supabase.from('leave_requests').select('*').order('created_at', { ascending: false }));
     if (lrData) {
-      setLeaveRequests(lrData.map(r => {
+      setLeaveRequests(lrData.map((r: any) => {
         const lt = leaveTypeMap[r.leave_type] || { ar: r.leave_type, en: r.leave_type };
         return { id: r.id as any, employeeId: r.employee_id, typeAr: lt.ar, typeEn: lt.en, from: r.start_date, to: r.end_date, days: r.days, status: r.status as any };
       }));
     }
 
     // Permissions
-    const { data: pData } = await supabase.from('permission_requests').select('*').order('created_at', { ascending: false });
+    const { data: pData } = await empFilter(supabase.from('permission_requests').select('*').order('created_at', { ascending: false }));
     if (pData) {
-      setPermissions(pData.map(p => {
+      setPermissions(pData.map((p: any) => {
         const pt = permTypeMap[p.permission_type] || { ar: p.permission_type, en: p.permission_type };
         return { id: p.id as any, employeeId: p.employee_id, typeAr: pt.ar, typeEn: pt.en, date: p.date, fromTime: p.start_time, toTime: p.end_time, reason: p.reason || '', status: p.status as any };
       }));
     }
 
     // Loans
-    const { data: loansData } = await supabase.from('loans').select('*').order('created_at', { ascending: false });
+    const { data: loansData } = await empFilter(supabase.from('loans').select('*').order('created_at', { ascending: false }));
     if (loansData) {
-      setPortalLoans(loansData.map(l => ({
+      setPortalLoans(loansData.map((l: any) => ({
         id: l.id as any, employeeId: l.employee_id,
         typeAr: l.reason || 'قرض', typeEn: l.reason || 'Loan',
         amount: l.amount, paid: (l.paid_count || 0) * (l.monthly_installment || 0),
@@ -231,9 +251,9 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     // Evaluations
-    const { data: prData } = await supabase.from('performance_reviews').select('*').order('created_at', { ascending: false });
+    const { data: prData } = await empFilter(supabase.from('performance_reviews').select('*').order('created_at', { ascending: false }));
     if (prData) {
-      setEvaluations(prData.map(e => ({
+      setEvaluations(prData.map((e: any) => ({
         id: e.id as any, employeeId: e.employee_id,
         period: `${e.quarter} ${e.year}`, score: e.score ?? 0, maxScore: 5,
         reviewerAr: '', reviewerEn: '',
@@ -243,9 +263,9 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     // Training
-    const { data: trData } = await supabase.from('training_records').select('*, training_courses(name_ar, name_en)').order('created_at', { ascending: false });
+    const { data: trData } = await empFilter(supabase.from('training_records').select('*, training_courses(name_ar, name_en)').order('created_at', { ascending: false }));
     if (trData) {
-      setTraining(trData.map(t => ({
+      setTraining(trData.map((t: any) => ({
         id: t.id as any, employeeId: t.employee_id,
         nameAr: (t.training_courses as any)?.name_ar || '',
         nameEn: (t.training_courses as any)?.name_en || '',
@@ -256,9 +276,9 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     // Missions
-    const { data: mData } = await supabase.from('missions').select('*').order('created_at', { ascending: false });
+    const { data: mData } = await empFilter(supabase.from('missions').select('*').order('created_at', { ascending: false }));
     if (mData) {
-      setMissions(mData.map(m => ({
+      setMissions(mData.map((m: any) => ({
         id: m.id as any, employeeId: m.employee_id,
         missionType: m.mission_type as PortalMissionType,
         date: m.date, destAr: m.destination || '', destEn: m.destination || '',
@@ -268,9 +288,9 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     // Violations
-    const { data: vData } = await supabase.from('violations').select('*').order('created_at', { ascending: false });
+    const { data: vData } = await empFilter(supabase.from('violations').select('*').order('created_at', { ascending: false }));
     if (vData) {
-      setViolations(vData.map(v => ({
+      setViolations(vData.map((v: any) => ({
         id: v.id as any, employeeId: v.employee_id,
         date: v.date, typeAr: v.type, typeEn: v.type,
         penaltyAr: v.penalty || '', penaltyEn: v.penalty || '',
@@ -279,14 +299,14 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     // Overtime days
-    const { data: otData } = await supabase.from('overtime_requests').select('*').order('created_at', { ascending: false });
+    const { data: otData } = await empFilter(supabase.from('overtime_requests').select('*').order('created_at', { ascending: false }));
     if (otData) {
       const otTypeMap: Record<string, { ar: string; en: string }> = {
         holiday: { ar: 'إجازة رسمية', en: 'Holiday' },
         weekend: { ar: 'عطلة أسبوعية', en: 'Weekend' },
         regular: { ar: 'أخرى', en: 'Other' },
       };
-      setOvertimeDays(otData.map(o => {
+      setOvertimeDays(otData.map((o: any) => {
         const t = otTypeMap[o.status] || otTypeMap.regular;
         return {
           id: o.id, employeeId: o.employee_id,
@@ -299,24 +319,22 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     // Documents
-    const { data: dData } = await supabase.from('employee_documents').select('*').order('uploaded_at', { ascending: false });
+    const { data: dData } = await empFilter(supabase.from('employee_documents').select('*').order('uploaded_at', { ascending: false }));
     if (dData) {
-      setDocuments(dData.map(d => ({
+      setDocuments(dData.map((d: any) => ({
         id: d.id as any, employeeId: d.employee_id,
         nameAr: d.name, nameEn: d.name,
         date: d.uploaded_at.split('T')[0],
         typeAr: d.type || '', typeEn: d.type || '',
       })));
     }
-  }, []);
+  }, [isAuthenticated, user, isAdminOrHr, employeeUuid]);
 
   useEffect(() => {
-    fetchAll();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') fetchAll();
-    });
-    return () => subscription.unsubscribe();
-  }, [fetchAll]);
+    if (isAuthenticated && user) {
+      fetchAll();
+    }
+  }, [fetchAll, isAuthenticated, user]);
 
   const getLeaveBalances = useCallback((empId: string) => leaveBalances[empId] || [], [leaveBalances]);
   const getLeaveRequests = useCallback((empId: string) => leaveRequests.filter(r => r.employeeId === empId), [leaveRequests]);
