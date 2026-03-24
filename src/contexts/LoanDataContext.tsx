@@ -56,8 +56,12 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [loans, setLoans] = useState<Loan[]>([]);
   const [advances, setAdvances] = useState<Advance[]>([]);
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
+
+  const isAdminRole = user?.role === 'admin' || user?.role === 'hr';
 
   const fetchLoans = useCallback(async () => {
+    if (!isAdminRole) { setLoans([]); return; }
     const { data } = await supabase
       .from('loans')
       .select('*, employees(name_ar, stations(code))')
@@ -81,9 +85,10 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         calculationMethod: 'auto',
       })));
     }
-  }, []);
+  }, [isAdminRole]);
 
   const fetchAdvances = useCallback(async () => {
+    if (!isAdminRole) { setAdvances([]); return; }
     const { data } = await supabase
       .from('advances')
       .select('*, employees(name_ar, stations(code))')
@@ -102,19 +107,20 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         reason: a.reason || '',
       })));
     }
-  }, []);
+  }, [isAdminRole]);
 
   const refreshData = useCallback(async () => {
     await Promise.all([fetchLoans(), fetchAdvances()]);
   }, [fetchLoans, fetchAdvances]);
 
   useEffect(() => {
-    refreshData();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') refreshData();
-    });
-    return () => subscription.unsubscribe();
-  }, [refreshData]);
+    if (isAdminRole) {
+      refreshData();
+    } else {
+      setLoans([]);
+      setAdvances([]);
+    }
+  }, [isAdminRole, refreshData]);
 
   const addLoan = useCallback(async (loan: Omit<Loan, 'id' | 'paidInstallments' | 'paidAmount' | 'remainingAmount' | 'monthlyPayment'> & { monthlyPayment?: number }) => {
     const { error } = await supabase.from('loans').insert({

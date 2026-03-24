@@ -126,8 +126,12 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [rawEntries, setRawEntries] = useState<ProcessedPayroll[]>([]);
   const [employeeMap, setEmployeeMap] = useState<Record<string, { code: string; nameAr: string; nameEn: string; department: string; station: string }>>({});
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
+
+  const isAdminRole = user?.role === 'admin' || user?.role === 'hr';
 
   const fetchEmployeeMap = useCallback(async () => {
+    if (!isAdminRole) return;
     const { data: emps } = await supabase.from('employees').select('id, employee_code, name_ar, name_en, department_id, station_id').order('employee_code');
     const { data: depts } = await supabase.from('departments').select('id, name_ar, name_en');
     const { data: stations } = await supabase.from('stations').select('id, code');
@@ -149,14 +153,15 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       };
     });
     setEmployeeMap(map);
-  }, []);
+  }, [isAdminRole]);
 
   const fetchEntries = useCallback(async () => {
+    if (!isAdminRole) { setRawEntries([]); return; }
     const { data, error } = await supabase.from('payroll_entries').select('*');
     if (!error && data) {
       setRawEntries(data.map(mapRowToEntry));
     }
-  }, []);
+  }, [isAdminRole]);
 
   // Enrich entries with employee data
   const payrollEntries = useMemo(() => {
@@ -177,16 +182,14 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [rawEntries, employeeMap]);
 
   useEffect(() => {
-    fetchEmployeeMap();
-    fetchEntries();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        fetchEmployeeMap();
-        fetchEntries();
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [fetchEntries, fetchEmployeeMap]);
+    if (isAdminRole) {
+      fetchEmployeeMap();
+      fetchEntries();
+    } else {
+      setRawEntries([]);
+      setEmployeeMap({});
+    }
+  }, [isAdminRole, fetchEntries, fetchEmployeeMap]);
 
   const upsertEntry = async (entry: ProcessedPayroll) => {
     const payload = entryToPayload(entry);

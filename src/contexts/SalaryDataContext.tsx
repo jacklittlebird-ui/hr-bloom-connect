@@ -63,24 +63,25 @@ const mapRow = (row: any): SalaryRecord => ({
 export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>([]);
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
+
+  const isAdminRole = user?.role === 'admin' || user?.role === 'hr';
 
   const fetchRecords = useCallback(async () => {
+    if (!isAdminRole) { setSalaryRecords([]); return; }
     const { data, error } = await supabase.from('salary_records').select('*');
     if (!error && data) {
       setSalaryRecords(data.map(mapRow));
     }
-  }, []);
+  }, [isAdminRole]);
 
   useEffect(() => {
-    fetchRecords();
-    // Re-fetch when auth state changes (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        fetchRecords();
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [fetchRecords]);
+    if (isAdminRole) {
+      fetchRecords();
+    } else {
+      setSalaryRecords([]);
+    }
+  }, [isAdminRole, fetchRecords]);
 
   const getSalaryRecord = useCallback((employeeId: string, year: string) => {
     return salaryRecords.find(r => r.employeeId === employeeId && r.year === year);

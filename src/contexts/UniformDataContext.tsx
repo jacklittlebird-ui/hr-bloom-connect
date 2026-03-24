@@ -69,19 +69,23 @@ const mapRow = (r: any): UniformItem => ({
 
 export const UniformDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [uniforms, setUniforms] = useState<UniformItem[]>([]);
+  const { user } = useAuth();
+
+  const isAdminRole = user?.role === 'admin' || user?.role === 'hr';
 
   const fetchUniforms = useCallback(async () => {
+    if (!isAdminRole) { setUniforms([]); return; }
     const { data } = await supabase.from('uniforms').select('*').order('delivery_date', { ascending: false });
     if (data) setUniforms(data.map(mapRow));
-  }, []);
+  }, [isAdminRole]);
 
   useEffect(() => {
-    fetchUniforms();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') fetchUniforms();
-    });
-    return () => subscription.unsubscribe();
-  }, [fetchUniforms]);
+    if (isAdminRole) {
+      fetchUniforms();
+    } else {
+      setUniforms([]);
+    }
+  }, [isAdminRole, fetchUniforms]);
 
   const addUniform = useCallback(async (item: Omit<UniformItem, 'id'>) => {
     await supabase.from('uniforms').insert({
