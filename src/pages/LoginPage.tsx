@@ -108,7 +108,10 @@ const LoginPage = () => {
 
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src="/images/company-logo-vertical.png" alt="Link Aero" className="h-36 w-36 rounded-2xl object-contain mb-4 mx-auto block" />
+          <picture>
+            <source srcSet="/images/company-logo-vertical.webp" type="image/webp" />
+            <img src="/images/company-logo-vertical.png" alt="Link Aero" width="144" height="144" fetchPriority="high" className="h-36 w-36 rounded-2xl object-contain mb-4 mx-auto block" />
+          </picture>
           <h1 className="text-2xl font-bold text-foreground">{t('نظام إدارة الموارد البشرية', 'HR Management System')}</h1>
           <p className="text-muted-foreground mt-1">{t('سجّل دخولك للمتابعة', 'Sign in to continue')}</p>
         </div>
