@@ -329,27 +329,8 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [isAuthenticated, user, fetchEmployees]);
 
-  useEffect(() => {
-    if (!isAuthenticated || !user) return;
-
-    const handleWindowFocus = () => {
-      fetchEmployees();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        handleWindowFocus();
-      }
-    };
-
-    window.addEventListener('focus', handleWindowFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', handleWindowFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [isAuthenticated, user, fetchEmployees]);
+  // Removed aggressive focus/visibility refetch to reduce DB load
+  // Data is fetched once on login and can be refreshed manually via refreshEmployees()
 
   const getEmployee = useCallback((id: string) => {
     return employees.find(e => e.id === id);

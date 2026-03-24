@@ -191,11 +191,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      return { success: false, error: error.message };
+    // Retry up to 3 times on timeout/server errors
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (!error) return { success: true };
+      
+      // Only retry on server/timeout errors (5xx), not auth errors (4xx)
+      const isServerError = error.message?.includes('timeout') || 
+                           error.message?.includes('504') || 
+                           error.message?.includes('500') ||
+                           error.message?.includes('context') ||
+                           error.status === 500 || error.status === 504;
+      
+      if (!isServerError || attempt === 3) {
+        return { success: false, error: error.message };
+      }
+      
+      // Wait before retry (1s, 2s)
+      await new Promise(r => setTimeout(r, attempt * 1000));
     }
-    return { success: true };
+    return { success: false, error: 'Login failed after retries' };
   }, []);
 
   const logout = useCallback(async () => {
