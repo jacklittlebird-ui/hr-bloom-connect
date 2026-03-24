@@ -35,10 +35,17 @@ interface EmployeeTableProps {
   onPageChange?: (page: number) => void;
 }
 
-export const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
+export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize = 30, onPageChange }: EmployeeTableProps) => {
   const { t, isRTL, language } = useLanguage();
   const navigate = useNavigate();
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
+
+  const totalPages = Math.max(1, Math.ceil(employees.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedEmployees = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize;
+    return employees.slice(start, start + pageSize);
+  }, [employees, safeCurrentPage, pageSize]);
 
   const getInitials = (name: string) => {
     return name
