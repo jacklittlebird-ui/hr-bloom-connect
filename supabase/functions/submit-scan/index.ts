@@ -8,6 +8,7 @@ const corsHeaders = {
 const HMAC_SECRET = Deno.env.get("QR_HMAC_SECRET")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const QR_TOKEN_TTL_SECONDS = 60 * 60;
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 function b64urlToBytes(s: string): Uint8Array {
@@ -129,7 +130,8 @@ Deno.serve(async (req) => {
     }
 
     const nowSec = Math.floor(Date.now() / 1000);
-    if (Math.abs(nowSec - tsSec) > 8) {
+    const tokenAgeSeconds = nowSec - tsSec;
+    if (tokenAgeSeconds < -60 || tokenAgeSeconds > QR_TOKEN_TTL_SECONDS) {
       return new Response(JSON.stringify({ error: "Token expired" }), {
         status: 400,
         headers: { ...corsHeaders, "content-type": "application/json" },
