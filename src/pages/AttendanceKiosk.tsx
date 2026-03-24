@@ -160,7 +160,14 @@ const AttendanceKiosk = () => {
           }
         }
         setQrSrcs(srcs);
-        if (!hasError) { setError(""); setCountdown(5); }
+        if (!hasError) {
+          setError("");
+          // Calculate seconds until next 30-min bucket
+          const nowSec = Math.floor(Date.now() / 1000);
+          const bucket = 1800;
+          const nextBucket = (Math.floor(nowSec / bucket) + 1) * bucket;
+          setCountdown(nextBucket - nowSec);
+        }
       } catch (e: any) {
         console.error("[Kiosk] QR fetch error:", e);
         setError(e.message);
@@ -168,10 +175,10 @@ const AttendanceKiosk = () => {
     };
 
     tick();
-    intervalRef.current = window.setInterval(tick, 4800);
+    intervalRef.current = window.setInterval(tick, QR_INTERVAL_MS);
 
     const countdownInterval = window.setInterval(() => {
-      setCountdown((prev) => (prev > 1 ? prev - 1 : 5));
+      setCountdown((prev) => (prev > 1 ? prev - 1 : 0));
     }, 1000);
 
     return () => {
