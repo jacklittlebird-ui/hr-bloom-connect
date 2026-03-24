@@ -517,7 +517,7 @@ export const AssetReports = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAssets.map(a => (
+                  {paginatedReportAssets.map(a => (
                     <TableRow key={a.id}>
                       <TableCell className="font-mono text-sm">{a.assetCode}</TableCell>
                       <TableCell className="font-medium">{ar ? a.nameAr : a.nameEn}</TableCell>
