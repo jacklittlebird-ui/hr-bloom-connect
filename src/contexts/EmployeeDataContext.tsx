@@ -298,9 +298,10 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
 
-    const { data, error } = await supabase
+    // Use simpler query first (no joins) to avoid timeout, then enrich with separate lookups
+    const { data: baseRows, error: baseError } = await supabase
       .from('employees')
-      .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+      .select('*')
       .order('employee_code', { ascending: true });
 
     if (error) {
