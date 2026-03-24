@@ -181,7 +181,7 @@ const AppDataProviders = ({ children }: { children: React.ReactNode }) => {
   const path = location.pathname;
 
   // Never load data providers on public pages or when not authenticated
-  if (path === '/login' || path === '/setup' || path === '/' || !isAuthenticated || !user) {
+  if (path === '/login' || path === '/setup' || !isAuthenticated || !user) {
     return <>{children}</>;
   }
 
