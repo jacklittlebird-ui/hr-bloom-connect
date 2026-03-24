@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLoanData, Advance } from '@/contexts/LoanDataContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
