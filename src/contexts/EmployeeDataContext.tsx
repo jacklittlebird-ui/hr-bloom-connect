@@ -244,6 +244,13 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
 
+    // Employee, kiosk, and training_manager roles don't need the full employee list
+    if (user.role === 'employee' || user.role === 'kiosk' || user.role === 'training_manager') {
+      setEmployees([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     const mapWithRelations = async (rows: any[]) => {
