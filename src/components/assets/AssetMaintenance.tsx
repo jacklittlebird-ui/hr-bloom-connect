@@ -310,6 +310,7 @@ export const AssetMaintenance = () => {
               </TableBody>
             </Table>
           )}
+          <PaginationControls currentPage={amPage} totalPages={amTotalPages} totalItems={amTotalItems} startIndex={amStart} endIndex={amEnd} onPageChange={setAmPage} />
         </CardContent>
       </Card>
     </div>

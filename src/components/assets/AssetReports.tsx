@@ -542,6 +542,7 @@ export const AssetReports = () => {
                   </TableRow>
                 </TableBody>
               </Table>
+              <PaginationControls currentPage={repPage} totalPages={repTotalPages} totalItems={repTotalItems} startIndex={repStart} endIndex={repEnd} onPageChange={setRepPage} />
             ) : (
               <div className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد أصول مسجلة' : 'No assets registered'}</div>
             )}

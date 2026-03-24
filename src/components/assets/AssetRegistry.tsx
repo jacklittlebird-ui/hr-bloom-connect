@@ -309,8 +309,8 @@ export const AssetRegistry = () => {
               ))}
             </TableBody>
           </Table>
+          <PaginationControls currentPage={arPage} totalPages={arTotalPages} totalItems={arTotalItems} startIndex={arStart} endIndex={arEnd} onPageChange={setArPage} />
         </CardContent>
-      </Card>
 
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
