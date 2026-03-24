@@ -12,6 +12,11 @@ import { Building2, Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share
 import { toast } from '@/hooks/use-toast';
 import { checkRateLimit, recordLoginAttempt } from '@/lib/security';
 
+const normalizeArabicDigits = (value: string) =>
+  value.replace(/[٠-٩]/g, (digit) => '٠١٢٣٤٥٦٧٨٩'.indexOf(digit).toString());
+
+const normalizeEmployeeLoginInput = (value: string) => normalizeArabicDigits(value).trim().toLowerCase().replace(/\s+/g, '');
+
 const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -77,11 +82,13 @@ const LoginPage = () => {
       return;
     }
     
+    const loginIdentifier = normalizeEmployeeLoginInput(email);
+
     setLoading(true);
-    const result = await login({ email: email.trim(), password });
+    const result = await login({ email: loginIdentifier, password });
     setLoading(false);
     
-    recordLoginAttempt(email.trim(), result.success);
+    recordLoginAttempt(loginIdentifier, result.success);
     
     if (result.success) {
       toast({ title: t('تم تسجيل الدخول بنجاح', 'Login successful') });
@@ -137,8 +144,8 @@ const LoginPage = () => {
                   <div className="space-y-2 text-right">
                     <Label className="text-right">{t('البريد الإلكتروني', 'Email')}</Label>
                     <Input
-                      type="email"
-                      placeholder={t('البريد الإلكتروني', 'Email')}
+                      type="text"
+                      placeholder={t('البريد الإلكتروني أو كود الموظف', 'Email or employee code')}
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       className="h-11 text-right"
@@ -175,7 +182,7 @@ const LoginPage = () => {
                 <div className="mt-4 p-3 rounded-lg bg-muted/50 border border-border text-right">
                   <p className="text-xs text-muted-foreground mb-1 font-medium">{t('ملاحظة:', 'Note:')}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t('يتم تحديد الدور (مدير/موظف/مدير محطة) تلقائياً بناءً على حسابك', 'Your role (admin/employee/station manager) is determined automatically from your account')}
+                    {t('يمكن للموظف تسجيل الدخول باستخدام كود الموظف مثل emp0154 أو البريد الإلكتروني الكامل', 'Employees can sign in using an employee code مثل emp0154 or the full email address')}
                   </p>
                 </div>
               </CardContent>
