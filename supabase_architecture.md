@@ -1,969 +1,1044 @@
-# HR System — Supabase Architecture
+# Supabase Architecture Document
+## HR Management System — Link Agency
 
-> **Last Updated:** 2026-03-08  
-> **Database:** PostgreSQL via Lovable Cloud (Supabase)  
-> **Project ID:** `iygkzkglrkdrmuyeuiht`
-
----
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Enums](#enums)
-3. [Entity Relationship Diagram](#entity-relationship-diagram)
-4. [Role-Based Access Model](#role-based-access-model)
-5. [Core Tables](#core-tables)
-6. [Module Tables](#module-tables)
-7. [Views](#views)
-8. [Database Functions](#database-functions)
-9. [Triggers](#triggers)
-10. [Indexes](#indexes)
-11. [Unique Constraints](#unique-constraints)
-12. [RLS Policy Summary](#rls-policy-summary)
-13. [Edge Functions](#edge-functions)
-14. [Realtime Publications](#realtime-publications)
-15. [Secrets](#secrets)
-16. [Migration Guide — Recreate from Scratch](#migration-guide--recreate-from-scratch)
+**Last Updated:** 2026-03-24  
+**Project ID:** iygkzkglrkdrmuyeuiht  
+**Total Tables:** 43 (all with RLS enabled)  
+**Total Views:** 1  
+**Total Functions:** 35  
+**Total Triggers:** 65  
+**Edge Functions:** 11  
 
 ---
 
-## Overview
-
-This document describes the **complete** Postgres schema, RLS policies, functions, triggers, indexes, and edge functions for the HR management system. The system supports five roles: **admin**, **station_manager**, **employee**, **kiosk**, and **training_manager**, all enforced via Row-Level Security.
-
-**Total Tables:** 35 (33 base tables + 1 view + profiles)  
-**All tables have RLS enabled.**
-
----
-
-## Enums
+## Roles
 
 ```sql
-CREATE TYPE public.app_role AS ENUM ('admin', 'station_manager', 'employee', 'kiosk', 'training_manager');
+CREATE TYPE public.app_role AS ENUM ('admin', 'station_manager', 'employee', 'kiosk', 'training_manager', 'hr', 'area_manager');
 CREATE TYPE public.employee_status AS ENUM ('active', 'inactive', 'suspended');
 ```
 
+### Role Hierarchy
+
+| Role | Access Level |
+|------|-------------|
+| `admin` | Full CRUD on all tables |
+| `hr` | Full CRUD on most tables (except payroll_entries, audit_logs) |
+| `station_manager` | Read employees in own station, manage attendance/leaves for station |
+| `area_manager` | Like station_manager but across multiple assigned stations |
+| `training_manager` | Manage training courses, records, debts, planned courses |
+| `employee` | Read own data only (attendance, leaves, salary, etc.) |
+| `kiosk` | Generate QR tokens for attendance |
+
 ---
 
-## Entity Relationship Diagram
+## Entity Relationship Overview
 
 ```mermaid
 erDiagram
-    auth_users ||--o| profiles : "1:1 (FK cascade)"
-    auth_users ||--o{ user_roles : "1:N (FK cascade)"
-    profiles ||--o| employees : "linked via user_id"
-    
-    stations ||--o{ employees : "1:N"
-    departments ||--o{ employees : "1:N"
-    stations ||--o{ user_roles : "station_managers"
-    stations ||--o{ qr_locations : "1:N"
-    
+    auth_users ||--o{ profiles : "1:1"
+    auth_users ||--o{ user_roles : "1:N"
+    user_roles }o--|| employees : "optional"
+    user_roles }o--|| stations : "optional"
+    employees }o--|| departments : "N:1"
+    employees }o--|| stations : "N:1"
     employees ||--o{ attendance_records : "1:N"
     employees ||--o{ attendance_events : "1:N"
-    employees ||--o{ salary_records : "1:N"
-    employees ||--o{ payroll_entries : "1:N"
-    employees ||--o{ loans : "1:N"
-    employees ||--o{ advances : "1:N"
-    employees ||--o{ loan_installments : "1:N (via loan)"
-    employees ||--o{ performance_reviews : "1:N"
-    employees ||--o{ training_records : "1:N"
-    employees ||--o{ training_acknowledgments : "1:N"
-    employees ||--o{ training_debts : "1:N"
-    employees ||--o{ missions : "1:N"
-    employees ||--o{ violations : "1:N"
-    employees ||--o{ mobile_bills : "1:N"
     employees ||--o{ leave_requests : "1:N"
     employees ||--o{ leave_balances : "1:N"
     employees ||--o{ permission_requests : "1:N"
     employees ||--o{ overtime_requests : "1:N"
+    employees ||--o{ missions : "1:N"
+    employees ||--o{ salary_records : "1:N"
+    employees ||--o{ payroll_entries : "1:N"
+    employees ||--o{ loans : "1:N"
+    employees ||--o{ loan_installments : "1:N"
+    employees ||--o{ advances : "1:N"
+    employees ||--o{ mobile_bills : "1:N"
+    employees ||--o{ training_records : "1:N"
+    employees ||--o{ training_debts : "1:N"
+    employees ||--o{ violations : "1:N"
+    employees ||--o{ performance_reviews : "1:N"
     employees ||--o{ uniforms : "1:N"
+    employees ||--o{ assets : "assigned_to"
+    employees ||--o{ bonus_records : "1:N"
+    employees ||--o{ eid_bonuses : "1:N"
     employees ||--o{ employee_documents : "1:N"
-    employees ||--o{ notifications : "1:N"
-    employees ||--o{ planned_course_assignments : "1:N"
-
-    loans ||--o{ loan_installments : "1:N (FK cascade)"
-    training_courses ||--o{ training_records : "1:N"
-    training_courses ||--o{ planned_courses : "1:N (optional)"
-    planned_courses ||--o{ planned_course_assignments : "1:N"
-    training_records ||--o{ training_acknowledgments : "1:N"
-    
-    user_roles ||--o| employees : "FK set null"
-    permission_profiles ||--o{ user_module_permissions : "profile_id"
-    
-    departments ||--o{ notifications : "department_id"
-    stations ||--o{ notifications : "station_id"
+    employees ||--o{ attendance_assignments : "1:N"
+    attendance_assignments }o--|| attendance_rules : "N:1"
+    loans ||--o{ loan_installments : "1:N"
+    training_records }o--|| training_courses : "N:1"
+    planned_courses }o--|| training_courses : "optional"
+    planned_course_assignments }o--|| planned_courses : "N:1"
+    planned_course_assignments }o--|| employees : "N:1"
+    attendance_events }o--|| qr_locations : "N:1"
+    qr_locations }o--|| stations : "N:1"
+    area_manager_stations }o--|| stations : "N:1"
+    asset_acknowledgments }o--|| assets : "N:1"
+    asset_acknowledgments }o--|| employees : "N:1"
+    training_acknowledgments }o--|| training_records : "N:1"
+    uniform_acknowledgments }o--|| uniforms : "N:1"
+    notifications }o--|| departments : "optional"
+    notifications }o--|| employees : "optional"
 ```
 
 ---
 
-## Role-Based Access Model
-
-```mermaid
-flowchart TD
-    A[Supabase Auth] --> B{user_roles table}
-    B --> C[admin]
-    B --> D[station_manager]
-    B --> E[employee]
-    B --> F[kiosk]
-    B --> G[training_manager]
-
-    C --> H[Full CRUD on all tables]
-    D --> I[Read/Write own station employees]
-    D --> J[Create violations - with approval workflow]
-    D --> K[Create/Edit performance reviews]
-    E --> L[Read own data only]
-    E --> M[Submit leave/mission/permission/overtime requests]
-    F --> N[QR attendance scanning only]
-    G --> O[Full CRUD on training tables]
-    G --> P[Read employees and departments]
-    G --> Q[Manage notifications]
-```
-
----
-
-## Core Tables
-
-### 1. `stations`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| code | text UNIQUE | NO | | e.g. 'cairo', 'alex' |
-| name_ar | text | NO | | |
-| name_en | text | NO | | |
-| timezone | text | NO | 'Africa/Cairo' | |
-| is_active | boolean | NO | true | |
-| created_at | timestamptz | NO | now() | |
-
-**FK:** None  
-**RLS:** Admin full CRUD; Authenticated read; Training manager read
-
-### 2. `departments`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| name_ar | text | NO | | |
-| name_en | text | NO | | |
-| is_active | boolean | NO | true | |
-| created_at | timestamptz | NO | now() | |
-
-**FK:** None  
-**RLS:** Admin full CRUD; Authenticated read; Training manager read
-
-### 3. `profiles`
-Mirrors `auth.users` for queryable user data. Auto-created by trigger on auth.users INSERT.
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | | = auth.users.id |
-| email | text | YES | | |
-| full_name | text | YES | | |
-| avatar_url | text | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**FK:** `profiles.id → auth.users(id) ON DELETE CASCADE`  
-**RLS:** Self-read, self-update; Admin read all; **No INSERT/DELETE from client**
-
-### 4. `user_roles`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| user_id | uuid | NO | | FK auth.users(id) CASCADE |
-| role | app_role | NO | | admin, station_manager, employee, kiosk, training_manager |
-| station_id | uuid | YES | | FK stations(id), for station_manager |
-| employee_id | uuid | YES | | FK employees(id) SET NULL, for employee role |
-
-**UNIQUE:** (user_id, role)  
-**RLS:** Admin full CRUD; Users read own roles
-
-### 5. `user_module_permissions`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| user_id | uuid UNIQUE | NO | | |
-| profile_id | uuid | YES | | FK permission_profiles |
-| custom_modules | jsonb | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full CRUD; Users read own permissions
-
-### 6. `permission_profiles`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| name_ar | text | NO | | |
-| name_en | text | NO | | |
-| description_ar | text | YES | | |
-| description_en | text | YES | | |
-| modules | jsonb | NO | '[]' | Array of module access definitions |
-| is_system | boolean | NO | false | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full CRUD; Authenticated read
-
-### 7. `user_devices`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| user_id | uuid | NO | | |
-| device_id | text UNIQUE | NO | | Device fingerprint |
-| bound_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full CRUD; Users read own device
-
-### 8. `device_alerts`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| user_id | uuid | NO | | |
-| device_id | text | NO | | |
-| reason | text | NO | | |
-| meta | jsonb | YES | | |
-| triggered_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full CRUD only
-
----
-
-## Module Tables
-
-### 9. `employees`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| user_id | uuid | YES | | FK auth.users SET NULL |
-| employee_code | text UNIQUE | NO | | e.g. 'Emp001' |
-| name_ar | text | NO | | |
-| name_en | text | NO | | |
-| station_id | uuid | YES | | FK stations(id) |
-| department_id | uuid | YES | | FK departments(id) |
-| job_title_ar | text | YES | '' | |
-| job_title_en | text | YES | '' | |
-| phone | text | YES | '' | |
-| email | text | YES | '' | |
-| status | employee_status | NO | 'active' | |
-| hire_date | date | YES | | |
-| birth_date | date | YES | | |
-| gender | text | YES | | |
-| national_id | text | YES | | |
-| basic_salary | numeric | YES | 0 | |
-| bank_name | text | YES | | |
-| bank_account_number | text | YES | | |
-| bank_id_number | text | YES | | |
-| bank_account_type | text | YES | | |
-| contract_type | text | YES | | |
-| first_name | text | YES | | |
-| father_name | text | YES | | |
-| family_name | text | YES | | |
-| birth_place | text | YES | | |
-| birth_governorate | text | YES | | |
-| religion | text | YES | | |
-| nationality | text | YES | | |
-| marital_status | text | YES | | |
-| children_count | integer | YES | 0 | |
-| education_ar | text | YES | | |
-| graduation_year | text | YES | | |
-| home_phone | text | YES | | |
-| address | text | YES | | |
-| city | text | YES | | |
-| governorate | text | YES | | |
-| id_issue_date | date | YES | | |
-| id_expiry_date | date | YES | | |
-| issuing_authority | text | YES | | |
-| issuing_governorate | text | YES | | |
-| military_status | text | YES | | |
-| dept_code | text | YES | | |
-| job_level | text | YES | | |
-| job_degree | text | YES | | |
-| recruited_by | text | YES | | |
-| employment_status | text | YES | 'active' | |
-| resignation_date | date | YES | | |
-| resignation_reason | text | YES | | |
-| resigned | boolean | YES | false | |
-| social_insurance_no | text | YES | | |
-| social_insurance_start_date | date | YES | | |
-| social_insurance_end_date | date | YES | | |
-| health_insurance_card_no | text | YES | | |
-| has_health_insurance | boolean | YES | false | |
-| has_gov_health_insurance | boolean | YES | false | |
-| has_social_insurance | boolean | YES | false | |
-| has_cairo_airport_temp_permit | boolean | YES | false | |
-| has_cairo_airport_annual_permit | boolean | YES | false | |
-| has_airports_temp_permit | boolean | YES | false | |
-| has_airports_annual_permit | boolean | YES | false | |
-| temp_permit_no | text | YES | | |
-| annual_permit_no | text | YES | | |
-| airports_temp_permit_no | text | YES | | |
-| airports_annual_permit_no | text | YES | | |
-| airports_permit_type | text | YES | | |
-| permit_name_en | text | YES | | |
-| permit_name_ar | text | YES | | |
-| has_qualification_cert | boolean | YES | false | |
-| has_military_service_cert | boolean | YES | false | |
-| has_birth_cert | boolean | YES | false | |
-| has_id_copy | boolean | YES | false | |
-| has_pledge | boolean | YES | false | |
-| has_contract | boolean | YES | false | |
-| has_receipt | boolean | YES | false | |
-| attachments | text | YES | | |
-| annual_leave_balance | numeric | YES | 21 | |
-| sick_leave_balance | numeric | YES | 7 | |
-| avatar | text | YES | | |
-| notes | text | YES | | |
-| emergency_contact_name1 | text | YES | | |
-| emergency_contact_mobile1 | text | YES | | |
-| emergency_contact_name2 | text | YES | | |
-| emergency_contact_mobile2 | text | YES | | |
-| created_at | timestamptz | NO | now() | |
-| updated_at | timestamptz | NO | now() | Auto-updated by trigger |
-
-**RLS:** Admin full CRUD; Station manager read own station; Employee read own record; Training manager read all
-
-### 10. `attendance_records`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| date | date | NO | | |
-| check_in | timestamptz | YES | | |
-| check_out | timestamptz | YES | | |
-| work_hours | numeric | YES | 0 | Computed by trigger |
-| work_minutes | integer | YES | 0 | Computed by trigger |
-| status | text | NO | 'present' | present, absent, late, mission |
-| is_late | boolean | YES | false | |
-| notes | text | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read/insert/update own; Station manager read/insert own station
-
-### 11. `attendance_events`
-QR-based attendance scan events.
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| user_id | uuid | NO | | Scanning user |
-| employee_id | uuid | YES | | FK employees |
-| event_type | text | NO | | check_in / check_out |
-| scan_time | timestamptz | NO | now() | |
-| token_ts | timestamptz | NO | | QR token timestamp |
-| device_id | text | NO | | |
-| location_id | uuid | YES | | FK qr_locations |
-| gps_lat | double precision | YES | | |
-| gps_lng | double precision | YES | | |
-
-**RLS:** Admin full; Users read own events
-
-### 12. `qr_locations`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| name_ar | text | NO | | |
-| name_en | text | NO | | |
-| station_id | uuid | YES | | FK stations |
-| latitude | double precision | YES | | |
-| longitude | double precision | YES | | |
-| radius_m | integer | YES | 150 | Geofence radius |
-| is_active | boolean | NO | true | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full CRUD; Authenticated read active locations
-
-### 13. `salary_records`
-Annual salary structure per employee.
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| year | text | NO | | |
-| basic_salary | numeric | YES | 0 | |
-| transport_allowance | numeric | YES | 0 | |
-| incentives | numeric | YES | 0 | |
-| living_allowance | numeric | YES | 0 | |
-| station_allowance | numeric | YES | 0 | |
-| mobile_allowance | numeric | YES | 0 | |
-| employee_insurance | numeric | YES | 0 | |
-| employer_social_insurance | numeric | YES | 0 | |
-| health_insurance | numeric | YES | 0 | |
-| income_tax | numeric | YES | 0 | |
-| created_at | timestamptz | NO | now() | |
-
-**UNIQUE:** (employee_id, year)  
-**RLS:** Admin full; Employee read own
-
-### 14. `payroll_entries`
-Monthly processed payroll.
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| month | text | NO | | '01'–'12' |
-| year | text | NO | | |
-| basic_salary | numeric | YES | 0 | |
-| transport_allowance | numeric | YES | 0 | |
-| incentives | numeric | YES | 0 | |
-| station_allowance | numeric | YES | 0 | |
-| mobile_allowance | numeric | YES | 0 | |
-| living_allowance | numeric | YES | 0 | |
-| overtime_pay | numeric | YES | 0 | |
-| bonus_type | text | YES | 'amount' | |
-| bonus_value | numeric | YES | 0 | |
-| bonus_amount | numeric | YES | 0 | Computed by trigger |
-| gross | numeric | YES | 0 | Computed by trigger |
-| employee_insurance | numeric | YES | 0 | |
-| employer_social_insurance | numeric | YES | 0 | |
-| health_insurance | numeric | YES | 0 | |
-| income_tax | numeric | YES | 0 | |
-| loan_payment | numeric | YES | 0 | |
-| advance_amount | numeric | YES | 0 | |
-| mobile_bill | numeric | YES | 0 | |
-| leave_days | numeric | YES | 0 | |
-| leave_deduction | numeric | YES | 0 | Computed by trigger |
-| penalty_type | text | YES | 'amount' | |
-| penalty_value | numeric | YES | 0 | |
-| penalty_amount | numeric | YES | 0 | Computed by trigger |
-| total_deductions | numeric | YES | 0 | Computed by trigger |
-| net_salary | numeric | YES | 0 | Computed by trigger |
-| processed_at | timestamptz | NO | now() | |
-
-**UNIQUE:** (employee_id, month, year)  
-**RLS:** Admin full; Employee read own
-
-### 15. `loans`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| amount | numeric | NO | | |
-| monthly_installment | numeric | YES | 0 | Computed by trigger |
-| installments_count | integer | NO | 1 | |
-| paid_count | integer | YES | 0 | |
-| remaining | numeric | YES | 0 | |
-| status | text | NO | 'active' | active, completed, defaulted |
-| start_date | date | NO | CURRENT_DATE | |
-| reason | text | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read own
-
-### 16. `loan_installments`
-Auto-generated by trigger on loan creation.
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| loan_id | uuid | NO | | FK loans CASCADE |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| installment_number | integer | NO | | |
-| amount | numeric | NO | | |
-| due_date | date | NO | | |
-| status | text | NO | 'pending' | pending, paid, overdue |
-| paid_at | timestamptz | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read own
-
-### 17. `advances`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| amount | numeric | NO | | |
-| deduction_month | text | NO | | YYYY-MM |
-| status | text | NO | 'pending' | pending, approved, deducted |
-| reason | text | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read own
-
-### 18. `performance_reviews`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| reviewer_id | uuid | YES | | FK auth.users |
-| quarter | text | NO | | Q1-Q4 |
-| year | text | NO | | |
-| score | numeric | YES | 0 | Computed from criteria |
-| status | text | NO | 'draft' | draft, submitted, approved |
-| criteria | jsonb | YES | '[]' | [{name, score, weight}] |
-| strengths | text | YES | | |
-| improvements | text | YES | | |
-| goals | text | YES | | |
-| manager_comments | text | YES | | |
-| review_date | date | YES | CURRENT_DATE | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read own; Station manager full for own station
-
-### 19. `training_courses`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| name_ar | text | NO | | |
-| name_en | text | NO | | |
-| course_code | text | YES | '' | |
-| description | text | YES | | |
-| duration_hours | integer | YES | 0 | |
-| course_duration | text | YES | '' | |
-| course_objective | text | YES | '' | |
-| basic_topics | text | YES | '' | |
-| intermediate_topics | text | YES | '' | |
-| advanced_topics | text | YES | '' | |
-| exercises | text | YES | '' | |
-| examination | text | YES | '' | |
-| reference_material | text | YES | '' | |
-| course_administration | text | YES | '' | |
-| provider | text | YES | '' | |
-| edited_by | text | YES | '' | |
-| validity_years | integer | YES | 1 | |
-| is_active | boolean | YES | true | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full CRUD; Authenticated read; Training manager full CRUD
-
-### 20. `training_records`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| course_id | uuid | YES | | FK training_courses |
-| status | text | NO | 'enrolled' | enrolled, completed, cancelled |
-| start_date | date | YES | | |
-| end_date | date | YES | | |
-| planned_date | date | YES | | Auto-calculated |
-| score | numeric | YES | | |
-| cost | numeric | YES | 0 | |
-| total_cost | numeric | YES | 0 | |
-| provider | text | YES | | |
-| location | text | YES | | |
-| has_cert | boolean | YES | false | |
-| has_cr | boolean | YES | false | |
-| is_favorite | boolean | YES | false | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read own; Training manager full CRUD
-
-### 21. `training_acknowledgments`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| training_record_id | uuid | NO | | FK training_records |
-| employee_id | uuid | NO | | FK employees |
-| acknowledged_at | timestamptz | NO | now() | |
-
-**UNIQUE:** (training_record_id, employee_id)  
-**RLS:** Admin full; Employee insert/read own; Training manager full CRUD
-
-### 22. `training_debts`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees |
-| course_name | text | NO | | |
-| cost | numeric | NO | 0 | |
-| actual_date | date | NO | | |
-| expiry_date | date | NO | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read own; Training manager full CRUD
-
-### 23. `planned_courses`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| course_id | uuid | YES | | FK training_courses |
-| course_code | text | NO | '' | |
-| course_name | text | NO | '' | |
-| planned_date | date | YES | | |
-| duration | text | YES | '' | |
-| location | text | YES | '' | |
-| trainer | text | YES | '' | |
-| provider | text | YES | '' | |
-| participants | integer | YES | 0 | |
-| cost | numeric | YES | 0 | |
-| status | text | NO | 'scheduled' | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full CRUD; Authenticated read; Training manager full CRUD
-
-### 24. `planned_course_assignments`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| planned_course_id | uuid | NO | | FK planned_courses |
-| employee_id | uuid | NO | | FK employees |
-| actual_date | date | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**UNIQUE:** (planned_course_id, employee_id)  
-**RLS:** Admin full CRUD; Authenticated read; Training manager full CRUD
-
-### 25. `missions`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| mission_type | text | NO | 'full_day' | morning, evening, full_day |
-| destination | text | YES | | |
-| reason | text | YES | | |
-| date | date | NO | | |
-| check_in | time | YES | | Auto-set by type |
-| check_out | time | YES | | Auto-set by type |
-| hours | numeric | YES | 0 | |
-| status | text | NO | 'pending' | pending, approved, rejected |
-| approved_by | uuid | YES | | FK auth.users |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee insert/read own
-
-### 26. `violations`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| created_by | uuid | YES | | FK auth.users |
-| type | text | NO | | |
-| description | text | YES | | |
-| penalty | text | YES | | |
-| date | date | NO | CURRENT_DATE | |
-| status | text | NO | 'pending' | pending, active, resolved |
-| approved_by | uuid | YES | | FK auth.users |
-| approved_at | timestamptz | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read own; Station manager full for own station
-
-### 27. `mobile_bills`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| amount | numeric | NO | 0 | |
-| deduction_month | text | NO | | YYYY-MM |
-| status | text | NO | 'pending' | pending, deducted |
-| uploaded_by | uuid | YES | | FK auth.users |
-| created_at | timestamptz | NO | now() | |
-
-**UNIQUE:** (employee_id, deduction_month) — supports upsert  
-**RLS:** Admin full; Employee read own
-
-### 28. `leave_requests`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| leave_type | text | NO | | annual, sick, casual, emergency, unpaid |
-| start_date | date | NO | | |
-| end_date | date | NO | | |
-| days | integer | NO | 1 | |
-| reason | text | YES | | |
-| status | text | NO | 'pending' | pending, approved, rejected |
-| approved_by | uuid | YES | | FK auth.users |
-| rejection_reason | text | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee insert/read own
-
-### 29. `leave_balances`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees |
-| year | integer | NO | | |
-| annual_total | numeric | NO | 21 | |
-| annual_used | numeric | NO | 0 | |
-| sick_total | numeric | NO | 15 | |
-| sick_used | numeric | NO | 0 | |
-| casual_total | numeric | NO | 7 | |
-| casual_used | numeric | NO | 0 | |
-| permissions_total | numeric | NO | 24 | |
-| permissions_used | numeric | NO | 0 | |
-| created_at | timestamptz | NO | now() | |
-
-**UNIQUE:** (employee_id, year)  
-**RLS:** Admin full; Employee read own
-
-### 30. `permission_requests`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| permission_type | text | NO | | |
-| date | date | NO | | |
-| start_time | time | NO | | |
-| end_time | time | NO | | |
-| hours | numeric | YES | 0 | |
-| reason | text | YES | | |
-| status | text | NO | 'pending' | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee insert/read own
-
-### 31. `overtime_requests`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| date | date | NO | | |
-| hours | numeric | NO | 0 | |
-| overtime_type | text | NO | 'regular' | regular, holiday, etc. |
-| reason | text | YES | | |
-| status | text | NO | 'pending' | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee insert/read own
-
-### 32. `uniforms`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| type_ar | text | NO | | |
-| type_en | text | NO | | |
-| quantity | integer | NO | 1 | |
-| unit_price | numeric | YES | 0 | |
-| total_price | numeric | YES | 0 | Computed by trigger |
-| delivery_date | date | NO | | |
-| notes | text | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read own
-
-### 33. `employee_documents`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| employee_id | uuid | NO | | FK employees CASCADE |
-| name | text | NO | | |
-| type | text | YES | | |
-| file_url | text | YES | | |
-| uploaded_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Employee read own
-
-### 34. `notifications`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| user_id | uuid | YES | | FK auth.users |
-| employee_id | uuid | YES | | FK employees |
-| department_id | uuid | YES | | FK departments |
-| station_id | uuid | YES | | FK stations |
-| title_ar | text | NO | | |
-| title_en | text | NO | | |
-| desc_ar | text | YES | | |
-| desc_en | text | YES | | |
-| type | text | NO | 'info' | success, warning, info, error |
-| module | text | NO | 'general' | |
-| target_type | text | YES | 'general' | general, department, station, individual |
-| sender_name | text | YES | | |
-| is_read | boolean | NO | false | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full; Training manager full; User read/update own
-
-### 35. `assets`
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| id | uuid PK | NO | gen_random_uuid() | |
-| asset_code | text UNIQUE | NO | | |
-| name_ar | text | NO | | |
-| name_en | text | NO | | |
-| category | text | NO | 'other' | |
-| brand | text | YES | | |
-| model | text | YES | | |
-| serial_number | text | YES | | |
-| purchase_date | date | YES | | |
-| purchase_price | numeric | YES | 0 | |
-| status | text | NO | 'available' | available, assigned, maintenance, retired |
-| condition | text | YES | 'good' | |
-| location | text | YES | | |
-| assigned_to | uuid | YES | | FK employees |
-| notes | text | YES | | |
-| created_at | timestamptz | NO | now() | |
-
-**RLS:** Admin full CRUD; Authenticated read
+## Tables (43 total)
+
+### advances
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| amount | numeric | No | — |
+| deduction_month | text | No | — |
+| status | text | No | 'pending' |
+| reason | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### area_manager_stations
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| user_id | uuid | No | — |
+| station_id | uuid | No | — |
+| created_at | timestamptz | No | now() |
+
+### asset_acknowledgments
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| asset_id | uuid | No | — |
+| employee_id | uuid | No | — |
+| acknowledged_at | timestamptz | No | now() |
+
+### assets
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| asset_code | text | No | — |
+| name_ar | text | No | — |
+| name_en | text | No | — |
+| category | text | No | 'other' |
+| brand | text | Yes | — |
+| model | text | Yes | — |
+| serial_number | text | Yes | — |
+| purchase_date | date | Yes | — |
+| purchase_price | numeric | Yes | 0 |
+| status | text | No | 'available' |
+| condition | text | Yes | 'good' |
+| location | text | Yes | — |
+| assigned_to | uuid | Yes | — |
+| notes | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### attendance_assignments
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| rule_id | uuid | No | — |
+| station_id | uuid | Yes | — |
+| shift_id | text | Yes | — |
+| effective_from | date | No | CURRENT_DATE |
+| is_active | boolean | No | true |
+| created_at | timestamptz | No | now() |
+
+### attendance_events
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| user_id | uuid | No | — |
+| employee_id | uuid | Yes | — |
+| event_type | text | No | — |
+| device_id | text | No | — |
+| location_id | uuid | Yes | — |
+| gps_lat | float8 | Yes | — |
+| gps_lng | float8 | Yes | — |
+| token_ts | timestamptz | No | — |
+| scan_time | timestamptz | No | now() |
+
+### attendance_records
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| date | date | No | — |
+| check_in | timestamptz | Yes | — |
+| check_out | timestamptz | Yes | — |
+| work_hours | numeric | Yes | 0 |
+| work_minutes | integer | Yes | 0 |
+| status | text | No | 'present' |
+| is_late | boolean | Yes | false |
+| notes | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### attendance_rules
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| name | text | No | — |
+| name_ar | text | No | — |
+| description | text | Yes | '' |
+| description_ar | text | Yes | '' |
+| schedule_type | text | No | 'fixed' |
+| is_active | boolean | No | true |
+| fixed_schedule | jsonb | Yes | — |
+| flexible_schedule | jsonb | Yes | — |
+| fully_flexible_schedule | jsonb | Yes | — |
+| shift_schedule | jsonb | Yes | — |
+| weekend_days | jsonb | Yes | '[5, 6]' |
+| working_days_per_week | integer | Yes | 5 |
+| max_overtime_hours_daily | numeric | Yes | 4 |
+| max_overtime_hours_weekly | numeric | Yes | 20 |
+| created_at | timestamptz | No | now() |
+
+### audit_logs
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| user_id | uuid | No | — |
+| action_type | text | No | — |
+| affected_table | text | No | — |
+| record_id | text | Yes | — |
+| old_data | jsonb | Yes | — |
+| new_data | jsonb | Yes | — |
+| ip_address | text | Yes | — |
+| user_agent | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### bonus_records
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| year | text | No | — |
+| bonus_number | integer | No | — |
+| percentage | numeric | No | 0 |
+| gross_salary | numeric | No | 0 |
+| amount | numeric | No | 0 |
+| hire_date | date | Yes | — |
+| job_level | text | Yes | — |
+| employee_name | text | Yes | — |
+| employee_code | text | Yes | — |
+| station_name | text | Yes | — |
+| department_name | text | Yes | — |
+| job_title | text | Yes | — |
+| bank_account_number | text | Yes | — |
+| bank_id_number | text | Yes | — |
+| bank_name | text | Yes | — |
+| bank_account_type | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### departments
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| name_ar | text | No | — |
+| name_en | text | No | — |
+| is_active | boolean | No | true |
+| created_at | timestamptz | No | now() |
+
+### device_alerts
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| user_id | uuid | No | — |
+| device_id | text | No | — |
+| reason | text | No | — |
+| meta | jsonb | Yes | — |
+| triggered_at | timestamptz | No | now() |
+
+### eid_bonuses
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| year | text | No | — |
+| bonus_number | integer | No | — |
+| amount | numeric | No | 0 |
+| hire_date | date | Yes | — |
+| employee_name | text | Yes | — |
+| employee_code | text | Yes | — |
+| station_name | text | Yes | — |
+| department_name | text | Yes | — |
+| job_title | text | Yes | — |
+| job_level | text | Yes | — |
+| bank_account_type | text | Yes | — |
+| bank_account_number | text | Yes | — |
+| bank_id_number | text | Yes | — |
+| bank_name | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### employee_documents
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| name | text | No | — |
+| file_path | text | No | — |
+| file_type | text | Yes | — |
+| notes | text | Yes | — |
+| uploaded_at | timestamptz | No | now() |
+
+### employees
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| user_id | uuid | Yes | — |
+| employee_code | text | No | — |
+| name_ar | text | No | — |
+| name_en | text | No | — |
+| first_name | text | Yes | — |
+| father_name | text | Yes | — |
+| family_name | text | Yes | — |
+| station_id | uuid | Yes | — |
+| department_id | uuid | Yes | — |
+| job_title_ar | text | Yes | '' |
+| job_title_en | text | Yes | '' |
+| job_level | text | Yes | — |
+| job_degree | text | Yes | — |
+| dept_code | text | Yes | — |
+| phone | text | Yes | '' |
+| email | text | Yes | '' |
+| gender | text | Yes | — |
+| avatar | text | Yes | — |
+| status | employee_status | No | 'active' |
+| employment_status | text | Yes | 'active' |
+| contract_type | text | Yes | — |
+| hire_date | date | Yes | — |
+| resignation_date | date | Yes | — |
+| resigned | boolean | Yes | false |
+| resignation_reason | text | Yes | — |
+| birth_date | date | Yes | — |
+| birth_place | text | Yes | — |
+| birth_governorate | text | Yes | — |
+| religion | text | Yes | — |
+| nationality | text | Yes | — |
+| marital_status | text | Yes | — |
+| children_count | integer | Yes | 0 |
+| education_ar | text | Yes | — |
+| graduation_year | text | Yes | — |
+| military_status | text | Yes | — |
+| national_id | text | Yes | — |
+| id_issue_date | date | Yes | — |
+| id_expiry_date | date | Yes | — |
+| issuing_authority | text | Yes | — |
+| address | text | Yes | — |
+| city | text | Yes | — |
+| governorate | text | Yes | — |
+| social_insurance_no | text | Yes | — |
+| social_insurance_start_date | date | Yes | — |
+| social_insurance_end_date | date | Yes | — |
+| health_insurance_card_no | text | Yes | — |
+| has_health_insurance | boolean | Yes | false |
+| has_social_insurance | boolean | Yes | false |
+| basic_salary | numeric | Yes | 0 |
+| bank_name | text | Yes | — |
+| bank_account_number | text | Yes | — |
+| bank_id_number | text | Yes | — |
+| bank_account_type | text | Yes | — |
+| annual_leave_balance | numeric | Yes | 21 |
+| sick_leave_balance | numeric | Yes | 7 |
+| notes | text | Yes | — |
+| created_at | timestamptz | No | now() |
+| updated_at | timestamptz | No | now() |
+
+### leave_balances
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| year | integer | No | — |
+| annual_total | numeric | Yes | 21 |
+| annual_used | numeric | Yes | 0 |
+| sick_total | numeric | Yes | 7 |
+| sick_used | numeric | Yes | 0 |
+| casual_total | numeric | Yes | 7 |
+| casual_used | numeric | Yes | 0 |
+| permissions_used | numeric | Yes | 0 |
+| created_at | timestamptz | No | now() |
+
+### leave_requests
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| leave_type | text | No | — |
+| start_date | date | No | — |
+| end_date | date | No | — |
+| days | numeric | No | 1 |
+| reason | text | Yes | — |
+| status | text | No | 'pending' |
+| rejection_reason | text | Yes | — |
+| approved_by | uuid | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### loan_installments
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| loan_id | uuid | No | — |
+| employee_id | uuid | No | — |
+| installment_number | integer | No | — |
+| amount | numeric | No | 0 |
+| due_date | date | No | — |
+| status | text | No | 'pending' |
+| paid_at | timestamptz | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### loans
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| amount | numeric | No | 0 |
+| monthly_installment | numeric | Yes | 0 |
+| installments_count | integer | Yes | 1 |
+| paid_count | integer | Yes | 0 |
+| remaining | numeric | Yes | 0 |
+| start_date | date | No | — |
+| status | text | No | 'active' |
+| reason | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### missions
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| date | date | No | — |
+| mission_type | text | No | 'full_day' |
+| destination | text | Yes | — |
+| reason | text | Yes | — |
+| check_in | time | Yes | — |
+| check_out | time | Yes | — |
+| status | text | No | 'pending' |
+| approved_by | uuid | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### mobile_bills
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| amount | numeric | No | 0 |
+| deduction_month | text | No | — |
+| status | text | No | 'pending' |
+| uploaded_by | uuid | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### notifications
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| user_id | uuid | No | — |
+| employee_id | uuid | Yes | — |
+| department_id | uuid | Yes | — |
+| title_ar | text | No | — |
+| title_en | text | Yes | — |
+| desc_ar | text | Yes | — |
+| desc_en | text | Yes | — |
+| type | text | Yes | 'info' |
+| module | text | Yes | 'general' |
+| target_type | text | Yes | — |
+| is_read | boolean | Yes | false |
+| created_at | timestamptz | No | now() |
+
+### overtime_requests
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| date | date | No | — |
+| hours | numeric | No | 0 |
+| overtime_type | text | No | 'regular' |
+| reason | text | Yes | — |
+| status | text | No | 'pending' |
+| created_at | timestamptz | No | now() |
+
+### payroll_entries
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| month | text | No | — |
+| year | text | No | — |
+| basic_salary | numeric | Yes | 0 |
+| transport_allowance | numeric | Yes | 0 |
+| incentives | numeric | Yes | 0 |
+| station_allowance | numeric | Yes | 0 |
+| mobile_allowance | numeric | Yes | 0 |
+| living_allowance | numeric | Yes | 0 |
+| overtime_pay | numeric | Yes | 0 |
+| bonus_type | text | Yes | 'amount' |
+| bonus_value | numeric | Yes | 0 |
+| bonus_amount | numeric | Yes | 0 |
+| gross | numeric | Yes | 0 |
+| employee_insurance | numeric | Yes | 0 |
+| loan_payment | numeric | Yes | 0 |
+| advance_amount | numeric | Yes | 0 |
+| mobile_bill | numeric | Yes | 0 |
+| leave_days | numeric | Yes | 0 |
+| leave_deduction | numeric | Yes | 0 |
+| penalty_type | text | Yes | 'amount' |
+| penalty_value | numeric | Yes | 0 |
+| penalty_amount | numeric | Yes | 0 |
+| total_deductions | numeric | Yes | 0 |
+| net_salary | numeric | Yes | 0 |
+| employer_social_insurance | numeric | Yes | 0 |
+| health_insurance | numeric | Yes | 0 |
+| income_tax | numeric | Yes | 0 |
+| processed_at | timestamptz | No | now() |
+
+### performance_reviews
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| year | text | No | — |
+| quarter | text | No | — |
+| score | numeric | Yes | — |
+| status | text | No | 'draft' |
+| reviewer_id | uuid | Yes | — |
+| comments | text | Yes | — |
+| strengths | text | Yes | — |
+| improvements | text | Yes | — |
+| goals | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### permission_profiles
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| name_ar | text | No | — |
+| name_en | text | No | — |
+| modules | jsonb | No | '[]' |
+| created_at | timestamptz | No | now() |
+
+### permission_requests
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| date | date | No | — |
+| start_time | time | No | — |
+| end_time | time | No | — |
+| hours | numeric | Yes | 0 |
+| permission_type | text | No | — |
+| reason | text | Yes | — |
+| status | text | No | 'pending' |
+| created_at | timestamptz | No | now() |
+
+### planned_course_assignments
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| planned_course_id | uuid | No | — |
+| employee_id | uuid | No | — |
+| actual_date | date | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### planned_courses
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| course_id | uuid | Yes | — |
+| course_code | text | No | '' |
+| course_name | text | No | '' |
+| provider | text | Yes | '' |
+| duration | text | Yes | '' |
+| trainer | text | Yes | '' |
+| location | text | Yes | '' |
+| planned_date | date | Yes | — |
+| participants | integer | Yes | 0 |
+| cost | numeric | Yes | 0 |
+| status | text | No | 'scheduled' |
+| created_at | timestamptz | No | now() |
+
+### profiles
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | — |
+| email | text | Yes | — |
+| full_name | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### qr_locations
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| station_id | uuid | Yes | — |
+| name_ar | text | No | — |
+| name_en | text | No | — |
+| latitude | float8 | Yes | — |
+| longitude | float8 | Yes | — |
+| radius_m | integer | Yes | 150 |
+| is_active | boolean | No | true |
+| created_at | timestamptz | No | now() |
+
+### salary_records
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| year | text | No | — |
+| basic_salary | numeric | Yes | 0 |
+| transport_allowance | numeric | Yes | 0 |
+| incentives | numeric | Yes | 0 |
+| station_allowance | numeric | Yes | 0 |
+| mobile_allowance | numeric | Yes | 0 |
+| living_allowance | numeric | Yes | 0 |
+| employee_insurance | numeric | Yes | 0 |
+| employer_social_insurance | numeric | Yes | 0 |
+| health_insurance | numeric | Yes | 0 |
+| income_tax | numeric | Yes | 0 |
+| notes | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### stations
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| code | text | No | — |
+| name_ar | text | No | — |
+| name_en | text | No | — |
+| timezone | text | No | 'Africa/Cairo' |
+| checkin_method | text | No | 'qr' |
+| is_active | boolean | No | true |
+| created_at | timestamptz | No | now() |
+
+### training_acknowledgments
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| training_record_id | uuid | No | — |
+| employee_id | uuid | No | — |
+| acknowledged_at | timestamptz | No | now() |
+
+### training_courses
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| code | text | No | — |
+| name_ar | text | No | — |
+| name_en | text | No | — |
+| category | text | Yes | — |
+| description | text | Yes | — |
+| duration_hours | numeric | Yes | — |
+| is_active | boolean | No | true |
+| created_at | timestamptz | No | now() |
+
+### training_debts
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| course_name | text | No | — |
+| cost | numeric | No | 0 |
+| actual_date | date | No | — |
+| expiry_date | date | No | — |
+| created_at | timestamptz | No | now() |
+
+### training_records
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| course_id | uuid | Yes | — |
+| status | text | No | 'enrolled' |
+| start_date | date | Yes | — |
+| end_date | date | Yes | — |
+| planned_date | date | Yes | — |
+| score | numeric | Yes | — |
+| provider | text | Yes | — |
+| location | text | Yes | — |
+| cost | numeric | Yes | 0 |
+| total_cost | numeric | Yes | 0 |
+| has_cert | boolean | Yes | false |
+| has_cr | boolean | Yes | false |
+| has_ss | boolean | Yes | false |
+| has_cb | boolean | Yes | false |
+| is_favorite | boolean | Yes | false |
+| created_at | timestamptz | No | now() |
+
+### uniform_acknowledgments
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| uniform_id | uuid | No | — |
+| employee_id | uuid | No | — |
+| acknowledged_at | timestamptz | No | now() |
+
+### uniforms
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| type_ar | text | No | — |
+| type_en | text | No | — |
+| quantity | integer | No | 1 |
+| unit_price | numeric | Yes | 0 |
+| total_price | numeric | Yes | 0 |
+| delivery_date | date | No | — |
+| notes | text | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### user_devices
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| user_id | uuid | No | — |
+| device_id | text | No | — |
+| device_info | jsonb | Yes | — |
+| bound_at | timestamptz | No | now() |
+
+### user_module_permissions
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| user_id | uuid | No | — |
+| profile_id | uuid | Yes | — |
+| custom_modules | jsonb | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### user_roles
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| user_id | uuid | No | — |
+| role | app_role | No | — |
+| station_id | uuid | Yes | — |
+| employee_id | uuid | Yes | — |
+| created_at | timestamptz | No | now() |
+
+### violations
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|--------|
+| id | uuid | No | gen_random_uuid() |
+| employee_id | uuid | No | — |
+| type | text | No | — |
+| description | text | Yes | — |
+| penalty | text | Yes | — |
+| date | date | No | CURRENT_DATE |
+| status | text | No | 'pending' |
+| created_by | uuid | Yes | — |
+| approved_by | uuid | Yes | — |
+| approved_at | timestamptz | Yes | — |
+| created_at | timestamptz | No | now() |
 
 ---
 
 ## Views
 
-### `employee_limited_view`
-Restricted view of employees for station managers — excludes sensitive data (salary, national ID, bank details, insurance).
+### employee_limited_view
+
+A restricted view of the `employees` table exposing non-sensitive columns for station managers:
 
 ```sql
+CREATE OR REPLACE VIEW public.employee_limited_view AS
 SELECT id, employee_code, name_ar, name_en, first_name, father_name, family_name,
-       station_id, department_id, dept_code, job_title_ar, job_title_en, job_level,
-       job_degree, phone, email, gender, status, hire_date, contract_type,
-       employment_status, resigned, resignation_date, avatar, user_id, created_at, updated_at
+       email, phone, gender, avatar, status, employment_status, contract_type,
+       hire_date, resignation_date, resigned, department_id, station_id,
+       job_title_ar, job_title_en, job_level, job_degree, dept_code, user_id,
+       created_at, updated_at
 FROM employees;
 ```
 
-**No RLS on view** — access controlled via the querying role's policies on `employees`.
-
 ---
 
-## Database Functions
+## Database Functions (35 total)
 
+### Security & Role Functions
 | Function | Type | Purpose |
 |----------|------|---------|
-| `handle_new_user()` | SECURITY DEFINER | Creates profile on auth.users INSERT |
-| `has_role(_user_id uuid, _role app_role)` | SECURITY DEFINER, STABLE | Check role without RLS recursion |
-| `get_user_station_id(_user_id uuid)` | SECURITY DEFINER, STABLE | Get station_id for station_manager |
-| `get_user_employee_id(_user_id uuid)` | SECURITY DEFINER, STABLE | Get employee_id for employee |
-| `update_updated_at()` | SECURITY DEFINER | Sets updated_at = now() |
-| `calculate_work_hours()` | SECURITY DEFINER | Computes work_hours/work_minutes from check_in/check_out |
-| `generate_loan_installments()` | SECURITY DEFINER | Auto-generates loan_installments rows |
-| `calculate_payroll_net()` | SECURITY DEFINER | Computes gross, deductions, net_salary |
-| `auto_attendance_on_mission()` | SECURITY DEFINER | Creates attendance record on mission approval |
-| `update_leave_balance_on_approval()` | SECURITY DEFINER | Deducts/restores leave balance on approval/un-approval |
-| `update_annual_balance_on_overtime_approval()` | SECURITY DEFINER | Adds/removes 1 annual leave day on overtime approval |
-| `prevent_permission_on_leave_day()` | SECURITY DEFINER | Blocks permission request on leave day |
-| `upsert_mobile_bill(...)` | SECURITY DEFINER, RPC | Upserts mobile bill by employee+month |
-| `calculate_uniform_total()` | SECURITY DEFINER | Computes total_price = quantity × unit_price |
+| `has_role(uuid, app_role)` | SQL, SECURITY DEFINER | Check if user has a specific role |
+| `get_user_station_id(uuid)` | SQL, SECURITY DEFINER | Get station_id for station_manager |
+| `get_user_employee_id(uuid)` | SQL, SECURITY DEFINER | Get employee_id for employee role |
+| `get_area_manager_station_ids(uuid)` | SQL, SECURITY DEFINER | Get all station_ids for area_manager |
+| `handle_new_user()` | Trigger | Auto-create profile on auth.users INSERT |
+| `update_updated_at()` | Trigger | Update updated_at timestamp |
+| `audit_trigger_func()` | Trigger, SECURITY DEFINER | Log INSERT/UPDATE/DELETE to audit_logs |
+
+### Calculation Functions
+| Function | Type | Purpose |
+|----------|------|---------|
+| `calculate_work_hours()` | Trigger | Calculate work_hours/minutes from check_in/out |
+| `calculate_payroll_net()` | Trigger | Calculate gross, deductions, net_salary |
+| `calculate_loan_fields()` | Trigger | Calculate loan installment amounts |
+| `calculate_uniform_total()` | Trigger | Calculate total_price from quantity × unit_price |
+| `generate_loan_installments()` | Trigger | Create installment rows on loan INSERT |
+| `recalculate_loan_on_update()` | Trigger | Regenerate installments on loan UPDATE |
+| `upsert_mobile_bill(uuid, numeric, text, uuid)` | RPC | Upsert mobile bill with ON CONFLICT |
+
+### Leave/Balance Functions
+| Function | Type | Purpose |
+|----------|------|---------|
+| `update_leave_balance_on_approval()` | Trigger | Update leave_balances when leave approved/rejected |
+| `reverse_leave_balance_on_delete()` | Trigger | Reverse balance on approved leave deletion |
+| `update_permission_balance_on_approval()` | Trigger | Update permissions_used on approval |
+| `reverse_permission_balance_on_delete()` | Trigger | Reverse permission balance on delete |
+| `update_annual_balance_on_overtime_approval()` | Trigger | Add 1 day to annual leave on overtime approval |
+| `reverse_overtime_balance_on_delete()` | Trigger | Reverse annual balance on overtime delete |
+| `prevent_permission_on_leave_day()` | Trigger | Block permission request on leave day |
+| `auto_attendance_on_mission()` | Trigger | Create attendance record on mission approval |
+
+### Notification Functions
+| Function | Type | Purpose |
+|----------|------|---------|
+| `notify_employee_and_admins(...)` | RPC, SECURITY DEFINER | Send notification to employee + all admins/HR |
+| `notify_on_advance_insert()` | Trigger | Notify on new advance |
+| `notify_on_asset_assignment()` | Trigger | Notify on asset assignment change |
+| `notify_on_bonus_record()` | Trigger | Notify on bonus record |
+| `notify_on_leave_status_change()` | Trigger | Notify on leave approval/rejection |
+| `notify_on_loan_insert()` | Trigger | Notify on new loan |
+| `notify_on_mission_status_change()` | Trigger | Notify on mission approval/rejection |
+| `notify_on_overtime_status_change()` | Trigger | Notify on overtime approval/rejection |
+| `notify_on_payroll_entry()` | Trigger | Notify on payroll processing |
+| `notify_on_performance_review()` | Trigger | Notify on performance review create/complete |
+| `notify_on_permission_status_change()` | Trigger | Notify on permission approval/rejection |
+| `notify_on_training_assignment()` | Trigger | Notify on training course assignment |
+| `notify_on_uniform_assignment()` | Trigger | Notify on uniform delivery |
 
 ---
 
-## Triggers
+## Triggers (65 total)
 
-| Trigger | Table | Event | Function |
-|---------|-------|-------|----------|
-| `trg_employees_updated_at` | employees | BEFORE UPDATE | `update_updated_at()` |
-| `trg_calc_work_hours` | attendance_records | BEFORE INSERT/UPDATE | `calculate_work_hours()` |
-| `trg_calc_payroll` | payroll_entries | BEFORE INSERT/UPDATE | `calculate_payroll_net()` |
-| `trg_generate_loan_installments` | loans | BEFORE INSERT | `generate_loan_installments()` |
-| `trg_generate_installments` | loans | AFTER INSERT | `generate_loan_installments()` ⚠️ duplicate |
-| `trg_auto_attendance_mission` | missions | AFTER UPDATE | `auto_attendance_on_mission()` |
-| `trg_update_leave_balance` | leave_requests | AFTER UPDATE | `update_leave_balance_on_approval()` |
-| `trg_update_leave_balance_insert` | leave_requests | AFTER INSERT | `update_leave_balance_on_approval()` |
-| `trg_prevent_permission_on_leave_day` | permission_requests | BEFORE INSERT | `prevent_permission_on_leave_day()` |
-| `trg_calc_uniform_total` | uniforms | BEFORE INSERT/UPDATE | `calculate_uniform_total()` |
-| `trg_update_annual_balance_on_overtime` | overtime_requests | AFTER UPDATE | `update_annual_balance_on_overtime_approval()` |
-
-> ⚠️ Note: `loans` table has 2 triggers calling the same function — `trg_generate_loan_installments` and `trg_generate_installments`. Consider removing one to avoid double installment generation.
-
----
-
-## Indexes
-
-| Table | Index | Type | Columns |
-|-------|-------|------|---------|
-| advances | idx_advances_emp | btree | employee_id |
-| assets | idx_assets_assigned | btree | assigned_to |
-| assets | idx_assets_status | btree | status |
-| attendance_events | idx_attendance_events_user_time | btree | user_id, scan_time DESC |
-| attendance_events | idx_attendance_events_employee | btree | employee_id, scan_time DESC |
-| attendance_records | idx_attendance_emp | btree | employee_id |
-| attendance_records | idx_attendance_employee_date | btree | employee_id, date |
-| attendance_records | idx_attendance_emp_date | btree | employee_id, date ⚠️ duplicate |
-| attendance_records | idx_attendance_status | btree | status |
-| attendance_records | idx_attendance_date | btree | date |
-| employee_documents | idx_documents_employee | btree | employee_id |
-| employees | idx_emp_status / idx_employees_status | btree | status ⚠️ duplicate |
-| employees | idx_employees_code | btree | employee_code |
-| employees | idx_employees_department / idx_emp_dept | btree | department_id ⚠️ duplicate |
-| employees | idx_employees_station / idx_emp_station | btree | station_id ⚠️ duplicate |
-| employees | idx_emp_user | btree | user_id |
-| leave_requests | idx_leave_emp / idx_leaves_employee | btree | employee_id ⚠️ duplicate |
-| leave_requests | idx_leave_status / idx_leaves_status | btree | status ⚠️ duplicate |
-| loan_installments | idx_installments_status | btree | status |
-| loan_installments | idx_installments_due | btree | due_date |
-| loan_installments | idx_installments_loan | btree | loan_id |
-| loan_installments | idx_installments_employee | btree | employee_id |
-| loans | idx_loans_employee | btree | employee_id |
-
-> ⚠️ Several duplicate indexes exist. Consider cleanup in a future migration.
-
----
-
-## Unique Constraints
-
-| Table | Constraint | Columns |
-|-------|-----------|---------|
-| stations | uq_station_code, stations_code_key | (code) ⚠️ duplicate |
-| employees | uq_employee_code, employees_employee_code_key | (employee_code) ⚠️ duplicate |
-| salary_records | salary_records_employee_id_year_key, uq_salary_emp_year | (employee_id, year) ⚠️ duplicate |
-| payroll_entries | payroll_entries_employee_id_month_year_key, uq_payroll_emp_month_year | (employee_id, month, year) ⚠️ duplicate |
-| mobile_bills | uq_mobile_bill_emp_month, mobile_bills_employee_id_deduction_month_key | (employee_id, deduction_month) ⚠️ duplicate |
-| assets | assets_asset_code_key | (asset_code) |
-| leave_balances | leave_balances_employee_id_year_key | (employee_id, year) |
-| planned_course_assignments | planned_course_assignments_planned_course_id_employee_id_key | (planned_course_id, employee_id) |
-| user_module_permissions | user_module_permissions_user_id_key | (user_id) |
-| user_devices | user_devices_device_id_key | (device_id) |
-| user_roles | user_roles_user_id_role_key | (user_id, role) |
-| training_acknowledgments | training_acknowledgments_training_record_id_employee_id_key | (training_record_id, employee_id) |
+| Table | Trigger | Event | Function |
+|-------|---------|-------|----------|
+| advances | audit_advances | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| advances | trg_notify_advance_insert | INSERT | notify_on_advance_insert() |
+| assets | audit_assets | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| assets | trg_notify_asset_assignment | UPDATE | notify_on_asset_assignment() |
+| attendance_records | trg_calc_work_hours | INSERT/UPDATE | calculate_work_hours() |
+| bonus_records | audit_bonus_records | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| bonus_records | trg_notify_bonus_record | INSERT | notify_on_bonus_record() |
+| eid_bonuses | audit_eid_bonuses | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| employees | audit_employees | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| employees | trg_employees_updated_at | UPDATE | update_updated_at() |
+| leave_requests | audit_leave_requests | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| leave_requests | trg_notify_leave_status | UPDATE | notify_on_leave_status_change() |
+| leave_requests | trg_reverse_leave_on_delete | DELETE | reverse_leave_balance_on_delete() |
+| leave_requests | trg_update_leave_balance | UPDATE | update_leave_balance_on_approval() |
+| leave_requests | trg_update_leave_balance_insert | INSERT | update_leave_balance_on_approval() |
+| loans | audit_loans | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| loans | trg_calc_loan_fields | INSERT | calculate_loan_fields() |
+| loans | trg_generate_installments | INSERT | generate_loan_installments() |
+| loans | trg_notify_loan_insert | INSERT | notify_on_loan_insert() |
+| loans | trg_recalculate_loan_on_update | UPDATE | recalculate_loan_on_update() |
+| missions | trg_auto_attendance_mission | UPDATE | auto_attendance_on_mission() |
+| missions | trg_notify_mission_status | UPDATE | notify_on_mission_status_change() |
+| overtime_requests | trg_notify_overtime_status | UPDATE | notify_on_overtime_status_change() |
+| overtime_requests | trg_overtime_annual_balance | UPDATE | update_annual_balance_on_overtime_approval() |
+| overtime_requests | trg_reverse_overtime_on_delete | DELETE | reverse_overtime_balance_on_delete() |
+| payroll_entries | audit_payroll_entries | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| payroll_entries | trg_calc_payroll | INSERT/UPDATE | calculate_payroll_net() |
+| payroll_entries | trg_notify_payroll_entry | INSERT | notify_on_payroll_entry() |
+| performance_reviews | audit_performance_reviews | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| performance_reviews | trg_notify_performance_review | INSERT/UPDATE | notify_on_performance_review() |
+| permission_requests | trg_notify_permission_status | UPDATE | notify_on_permission_status_change() |
+| permission_requests | trg_permission_balance | UPDATE | update_permission_balance_on_approval() |
+| permission_requests | trg_prevent_permission_on_leave_day | INSERT | prevent_permission_on_leave_day() |
+| permission_requests | trg_reverse_permission_on_delete | DELETE | reverse_permission_balance_on_delete() |
+| planned_course_assignments | trg_notify_training_assignment | INSERT | notify_on_training_assignment() |
+| profiles | audit_profiles | INSERT/UPDATE/DELETE | audit_trigger_func() |
+| uniforms | trg_calc_uniform_total | INSERT/UPDATE | calculate_uniform_total() |
+| uniforms | trg_notify_uniform_assignment | INSERT | notify_on_uniform_assignment() |
+| user_roles | audit_user_roles | INSERT/UPDATE/DELETE | audit_trigger_func() |
 
 ---
 
 ## RLS Policy Summary
 
-All 35 tables have RLS **enabled**. Policy pattern:
+All 43 tables have RLS enabled. Common patterns:
 
-| Role | Access Pattern |
-|------|---------------|
-| **Admin** | `has_role(auth.uid(), 'admin')` → Full CRUD on all tables |
-| **Station Manager** | `has_role(auth.uid(), 'station_manager') AND employee.station_id = get_user_station_id(auth.uid())` → Scoped to own station for employees, attendance, violations, performance |
-| **Employee** | `has_role(auth.uid(), 'employee') AND employee_id = get_user_employee_id(auth.uid())` → Own data only |
-| **Kiosk** | Uses `attendance_events` via edge function (service role) |
-| **Training Manager** | `has_role(auth.uid(), 'training_manager')` → Full CRUD on training tables (courses, records, acknowledgments, debts, planned courses, assignments); Read employees/departments/stations; Manage notifications |
+| Pattern | Description |
+|---------|-------------|
+| Admin ALL | `has_role(auth.uid(), 'admin')` — full CRUD |
+| HR ALL | `has_role(auth.uid(), 'hr')` — full CRUD (most tables) |
+| Employee SELECT | `employee_id = get_user_employee_id(auth.uid())` — own data only |
+| Employee INSERT | Same as SELECT, for submitting requests |
+| Station Manager SELECT | `employee_id IN (SELECT id FROM employees WHERE station_id = get_user_station_id(...))` |
+| Station Manager UPDATE | Same scope for approvals |
+| Area Manager SELECT/UPDATE | Uses `get_area_manager_station_ids()` for multi-station scope |
+| Training Manager ALL | `has_role(auth.uid(), 'training_manager')` — training tables only |
+| Kiosk | QR token generation only |
+| Public read | stations, departments (authenticated only) |
+
+### Tables with audit_logs restrictions
+- `audit_logs`: Admin INSERT + SELECT only (no UPDATE/DELETE)
+
+### Tables with payroll restrictions  
+- `payroll_entries`: Admin ALL + Employee self-read (NO HR access)
+- `salary_records`: Admin ALL + Employee self-read (NO HR access)
 
 ---
 
-## Edge Functions
+## Edge Functions (11 total)
 
-| Function | JWT Verify | Purpose |
-|----------|-----------|---------|
-| `setup-user` | false | Create users with roles (first admin bootstrapping or admin-only) |
-| `generate-qr-token` | false | Generate HMAC-signed QR tokens for attendance |
-| `submit-scan` | false | Process QR attendance scan, validate device, geofence, create attendance record |
-| `delete-user` | true | Delete user and all associated records |
-| `send-notification` | true | Send targeted notifications to users/departments/stations |
+| Function | JWT Required | Description |
+|----------|-------------|-------------|
+| `setup-user` | No (verify_jwt=false) | Creates auth user + profile + role. First admin = no auth required |
+| `delete-user` | No (verify_jwt=false) | Deletes user: clears employee link, roles, permissions, devices, profile, auth |
+| `bulk-create-users` | No (verify_jwt=false) | Bulk-creates employee accounts from employee_code + password array |
+| `generate-qr-token` | No (verify_jwt=false) | Generates HMAC-signed QR token after server-side geofence check |
+| `submit-scan` | No (verify_jwt=false) | Processes QR scan: validates token, geofence, device binding, records attendance |
+| `gps-checkin` | No (verify_jwt=false) | GPS-based check-in/out with geofence validation and device binding |
+| `send-notification` | No (verify_jwt=false) | Sends notifications to users/departments/stations/broadcast |
+| `bulk-import-leaves` | No (verify_jwt=false) | Bulk imports leave/permission/overtime requests from CSV data |
+| `bulk-import-training` | No (verify_jwt=false) | Bulk imports training records from CSV data |
+| `update-password` | No (verify_jwt=false) | Admin-only: updates user password and unbans account |
+| `signout-user` | No (verify_jwt=false) | Admin-only: invalidates all user sessions via temporary ban |
 
 ---
 
 ## Realtime Publications
 
-No tables are currently published to `supabase_realtime`.
+No tables are currently configured for Supabase Realtime subscriptions.
+
+---
+
+## Key Indexes
+
+Performance indexes on frequently queried columns:
+
+- **employees**: employee_code, station_id, department_id, status, user_id, email, created_at
+- **attendance_records**: employee_id, date, employee_id+date (composite), status
+- **attendance_events**: employee_id, user_id+scan_time
+- **leave_requests**: employee_id, status
+- **loans**: employee_id, status
+- **loan_installments**: loan_id, employee_id, due_date, status
+- **payroll_entries**: employee_id, month+year, employee_id+month+year (unique)
+- **salary_records**: employee_id, employee_id+year (unique)
+- **mobile_bills**: employee_id, deduction_month, employee_id+deduction_month (unique)
+- **notifications**: user_id, employee_id, is_read
+- **audit_logs**: user_id, action_type, affected_table, created_at
+- **training_records**: employee_id, course_id
+- **performance_reviews**: employee_id, year+quarter
+- **missions**: employee_id, date, status
+
+## Unique Constraints
+
+| Table | Constraint |
+|-------|-----------|
+| employees | employee_code |
+| stations | code |
+| attendance_assignments | employee_id + is_active |
+| bonus_records | employee_id + bonus_number + year |
+| eid_bonuses | employee_id + bonus_number + year |
+| leave_balances | employee_id + year |
+| mobile_bills | employee_id + deduction_month |
+| payroll_entries | employee_id + month + year |
+| salary_records | employee_id + year |
+| planned_course_assignments | planned_course_id + employee_id |
+| asset_acknowledgments | asset_id + employee_id |
+| training_acknowledgments | training_record_id + employee_id |
+| uniform_acknowledgments | uniform_id + employee_id |
+| area_manager_stations | user_id + station_id |
+
+---
+
+## Foreign Keys
+
+| Table.Column | References |
+|-------------|-----------|
+| advances.employee_id | employees(id) ON DELETE CASCADE |
+| area_manager_stations.user_id | auth.users(id) ON DELETE CASCADE |
+| area_manager_stations.station_id | stations(id) ON DELETE CASCADE |
+| asset_acknowledgments.asset_id | assets(id) ON DELETE CASCADE |
+| asset_acknowledgments.employee_id | employees(id) ON DELETE CASCADE |
+| assets.assigned_to | employees(id) ON DELETE SET NULL |
+| attendance_assignments.employee_id | employees(id) ON DELETE CASCADE |
+| attendance_assignments.rule_id | attendance_rules(id) ON DELETE CASCADE |
+| attendance_assignments.station_id | stations(id) |
+| attendance_events.employee_id | employees(id) ON DELETE CASCADE |
+| attendance_events.location_id | qr_locations(id) |
+| attendance_records.employee_id | employees(id) ON DELETE CASCADE |
+| bonus_records.employee_id | employees(id) ON DELETE CASCADE |
+| eid_bonuses.employee_id | employees(id) ON DELETE CASCADE |
+| employee_documents.employee_id | employees(id) ON DELETE CASCADE |
+| employees.department_id | departments(id) |
+| employees.station_id | stations(id) |
+| employees.user_id | auth.users(id) ON DELETE SET NULL |
+| leave_balances.employee_id | employees(id) ON DELETE CASCADE |
+| leave_requests.employee_id | employees(id) ON DELETE CASCADE |
+| leave_requests.approved_by | auth.users(id) |
+| loan_installments.loan_id | loans(id) ON DELETE CASCADE |
+| loan_installments.employee_id | employees(id) ON DELETE CASCADE |
+| loans.employee_id | employees(id) ON DELETE CASCADE |
+| missions.employee_id | employees(id) ON DELETE CASCADE |
+| missions.approved_by | auth.users(id) |
+| mobile_bills.employee_id | employees(id) ON DELETE CASCADE |
+| mobile_bills.uploaded_by | auth.users(id) |
+| notifications.user_id | auth.users(id) ON DELETE CASCADE |
+| notifications.employee_id | employees(id) ON DELETE CASCADE |
+| notifications.department_id | departments(id) |
+| overtime_requests.employee_id | employees(id) ON DELETE CASCADE |
+| payroll_entries.employee_id | employees(id) ON DELETE CASCADE |
+| performance_reviews.employee_id | employees(id) ON DELETE CASCADE |
+| permission_requests.employee_id | employees(id) ON DELETE CASCADE |
+| planned_course_assignments.planned_course_id | planned_courses(id) ON DELETE CASCADE |
+| planned_course_assignments.employee_id | employees(id) ON DELETE CASCADE |
+| qr_locations.station_id | stations(id) |
+| training_records.employee_id | employees(id) ON DELETE CASCADE |
+| training_records.course_id | training_courses(id) |
+| uniforms.employee_id | employees(id) ON DELETE CASCADE |
+| user_devices.user_id | auth.users(id) ON DELETE CASCADE |
+| user_module_permissions.user_id | auth.users(id) ON DELETE CASCADE |
+| user_roles.user_id | auth.users(id) ON DELETE CASCADE |
+| violations.employee_id | employees(id) ON DELETE CASCADE |
 
 ---
 
 ## Secrets
 
-| Name | Purpose |
-|------|---------|
-| LOVABLE_API_KEY | Lovable AI integration |
-| QR_HMAC_SECRET | HMAC signing for QR attendance tokens |
-| SUPABASE_URL | Auto-configured |
-| SUPABASE_ANON_KEY | Auto-configured |
-| SUPABASE_SERVICE_ROLE_KEY | Auto-configured |
-| SUPABASE_DB_URL | Auto-configured |
-| SUPABASE_PUBLISHABLE_KEY | Auto-configured |
-
----
-
-## Migration Guide — Recreate from Scratch
-
-If you need to recreate this database from scratch on a new Supabase project, use the full SQL dump in `db-dump.md`. Run the SQL scripts **in order**:
-
-1. **Create Enums** — `app_role` (5 values), `employee_status`
-2. **Create Core Tables** — stations, departments, profiles, employees, user_roles, permission_profiles, user_module_permissions, user_devices, device_alerts
-3. **Create Module Tables** — All remaining tables (attendance, salary, training, leaves, etc.)
-4. **Create View** — `employee_limited_view`
-5. **Create Functions** — All 14 database functions
-6. **Create Triggers** — All 11 triggers
-7. **Create Indexes** — All performance indexes
-8. **Enable RLS & Create Policies** — On all 35 tables
-9. **Deploy Edge Functions** — `setup-user`, `generate-qr-token`, `submit-scan`, `delete-user`, `send-notification`
-10. **Bootstrap First Admin** — via `setup-user` edge function (no auth required when no admins exist)
-11. **Configure Secrets** — `QR_HMAC_SECRET`, `LOVABLE_API_KEY`
-
-### Notes for Migration
-
-- ⚠️ **Duplicate indexes/constraints exist** in the current DB. The migration script above removes duplicates.
-- ⚠️ **Duplicate loan trigger** (`trg_generate_loan_installments` + `trg_generate_installments`). Only one is included above.
-- The `handle_new_user` trigger must be created on `auth.users` — this requires elevated privileges.
-- Edge functions must be deployed separately.
-- No realtime publications are currently active.
-- No storage buckets are currently configured.
+| Key | Usage |
+|-----|-------|
+| SUPABASE_URL | Edge functions |
+| SUPABASE_SERVICE_ROLE_KEY | Edge functions (admin operations) |
+| SUPABASE_ANON_KEY | Edge functions (user auth verification) |
+| QR_HMAC_SECRET | QR token signing/verification |
