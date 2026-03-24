@@ -101,6 +101,8 @@ export const AssetRegistry = () => {
     return matchSearch && matchStatus && matchCategory;
   });
 
+  const { paginatedItems: paginatedAssets, currentPage: arPage, totalPages: arTotalPages, totalItems: arTotalItems, startIndex: arStart, endIndex: arEnd, setCurrentPage: setArPage } = usePagination(filtered, 20);
+
   const handleSave = async () => {
     if (!form.nameAr || !form.brand) {
       toast({ title: t('assets.error'), description: t('assets.fillRequired'), variant: 'destructive' });
