@@ -3,6 +3,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const QR_TOKEN_TTL_SECONDS = 60 * 60;
+
 const HMAC_SECRET = Deno.env.get("QR_HMAC_SECRET")!;
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -127,13 +129,12 @@ Deno.serve(async (req) => {
     }
 
     const now = Math.floor(Date.now() / 1000);
-    const ts5 = now - (now % 5);
-    const payload = `${ts5}:${location_id}`;
+    const payload = `${now}:${location_id}`;
     const signature = await hmacSign(payload);
     const token = `${btoa(payload)}.${signature}`;
 
     return new Response(
-      JSON.stringify({ token, expiresAt: (ts5 + 5) * 1000 }),
+      JSON.stringify({ token, expiresAt: (now + QR_TOKEN_TTL_SECONDS) * 1000 }),
       { headers: { ...corsHeaders, "content-type": "application/json" } }
     );
   } catch (e) {

@@ -12,10 +12,27 @@ import { Building2, Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share
 import { toast } from '@/hooks/use-toast';
 import { checkRateLimit, recordLoginAttempt } from '@/lib/security';
 
+const AUTH_STORAGE_KEY = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`;
+
 const normalizeArabicDigits = (value: string) =>
   value.replace(/[٠-٩]/g, (digit) => '٠١٢٣٤٥٦٧٨٩'.indexOf(digit).toString());
 
 const normalizeEmployeeLoginInput = (value: string) => normalizeArabicDigits(value).trim().toLowerCase().replace(/\s+/g, '');
+
+const resetLocalAuthState = async () => {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+  sessionStorage.removeItem(AUTH_STORAGE_KEY);
+
+  if ('serviceWorker' in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  }
+
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  }
+};
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -31,6 +48,8 @@ const LoginPage = () => {
   const t = (ar: string, en: string) => language === 'ar' ? ar : en;
 
   useEffect(() => {
+    resetLocalAuthState().catch(console.error);
+
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true);
@@ -85,6 +104,7 @@ const LoginPage = () => {
     const loginIdentifier = normalizeEmployeeLoginInput(email);
 
     setLoading(true);
+    await resetLocalAuthState().catch(console.error);
     const result = await login({ email: loginIdentifier, password });
     setLoading(false);
     
