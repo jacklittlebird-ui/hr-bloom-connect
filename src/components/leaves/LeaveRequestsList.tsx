@@ -102,14 +102,14 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests.length === 0 ? (
+                {paginatedItems.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={(onDelete || onEdit) ? 8 : 7} className="text-center text-muted-foreground py-8">
                       {t('leaves.list.noRequests')}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  requests.map((request) => (
+                  paginatedItems.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
                       <TableCell>{request.department}</TableCell>
