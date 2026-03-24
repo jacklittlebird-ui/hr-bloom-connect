@@ -422,6 +422,7 @@ const Uniforms = () => {
                     )}
                   </TableBody>
                 </Table>
+                <PaginationControls currentPage={uniPage} totalPages={uniTotalPages} totalItems={uniTotalItems} startIndex={uniStart} endIndex={uniEnd} onPageChange={setUniPage} />
               </CardContent>
             </Card>
           </TabsContent>
