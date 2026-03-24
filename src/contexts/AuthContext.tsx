@@ -163,6 +163,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let loadingTimeout: ReturnType<typeof setTimeout>;
+
+    // Safety: if loading takes more than 8 seconds, stop loading so login page shows
+    loadingTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 8000);
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       setSession(newSession);
@@ -172,10 +179,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const profile = await fetchUserProfile(newSession.user);
           setUser(profile);
           setLoading(false);
+          clearTimeout(loadingTimeout);
         }, 0);
       } else {
         setUser(null);
         setLoading(false);
+        clearTimeout(loadingTimeout);
       }
     });
 
@@ -187,9 +196,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(profile);
       }
       setLoading(false);
+      clearTimeout(loadingTimeout);
+    }).catch(() => {
+      // If getSession fails (timeout/network), stop loading so login page shows
+      setLoading(false);
+      clearTimeout(loadingTimeout);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(loadingTimeout);
+    };
   }, []);
 
   // Session timeout monitor - auto logout after 30 min inactivity
