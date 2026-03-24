@@ -1,4 +1,5 @@
-export async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label = 'request'): Promise<T> {
+export async function withTimeout<T>(promiseOrThenable: Promise<T> | PromiseLike<T>, timeoutMs: number, label = 'request'): Promise<T> {
+  const promise = Promise.resolve(promiseOrThenable);
   let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
 
   const timeoutPromise = new Promise<never>((_, reject) => {
