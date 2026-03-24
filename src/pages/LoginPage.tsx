@@ -86,7 +86,14 @@ const LoginPage = () => {
     if (result.success) {
       toast({ title: t('تم تسجيل الدخول بنجاح', 'Login successful') });
     } else {
-      toast({ title: t('بيانات الدخول غير صحيحة', 'Invalid credentials'), description: result.error, variant: 'destructive' });
+      const isTimeout = result.error?.includes('timeout') || result.error?.includes('504') || result.error?.includes('retries');
+      toast({ 
+        title: isTimeout 
+          ? t('الخادم مشغول، يرجى المحاولة مرة أخرى', 'Server is busy, please try again') 
+          : t('بيانات الدخول غير صحيحة', 'Invalid credentials'), 
+        description: isTimeout ? undefined : result.error, 
+        variant: 'destructive' 
+      });
     }
   };
 
