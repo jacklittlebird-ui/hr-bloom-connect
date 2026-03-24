@@ -286,12 +286,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const normalizedEmail = normalizeLoginIdentifier(email);
 
     try {
-      // Acquire a slot from the concurrency limiter (max 25)
+      // Acquire a slot from the concurrency limiter (max 50)
       await acquireLoginSlot();
     } catch {
       loginInFlight = false;
       return { success: false, error: 'Server is busy, please try again' };
     }
+
+    const loginStart = Date.now();
+    let hadError = false;
 
     try {
       await clearBrokenLocalSession();
@@ -309,12 +312,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           error.status === 504;
 
         if (!isServerError || attempt === 3) {
+          hadError = true;
           return { success: false, error: error.message };
         }
         await new Promise((r) => setTimeout(r, attempt * 1000));
       }
+      hadError = true;
       return { success: false, error: 'Login failed after retries' };
     } finally {
+      recordLoginMetric(Date.now() - loginStart, hadError);
       releaseSlot();
       loginInFlight = false;
     }
