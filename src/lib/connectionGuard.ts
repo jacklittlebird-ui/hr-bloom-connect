@@ -10,6 +10,7 @@ const LOGIN_QUEUE_TIMEOUT_MS = 15_000;
 /** Emails that always get immediate login slots (no queue) */
 const PRIORITY_EMAILS = new Set([
   'admin@linkagency.com',
+  'jishak@linkagency.com',
 ]);
 
 let activeLogins = 0;
