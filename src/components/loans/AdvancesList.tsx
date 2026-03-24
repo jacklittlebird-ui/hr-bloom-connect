@@ -76,6 +76,8 @@ export const AdvancesList = () => {
     return matchesSearch && matchesStatus && matchesStation && matchesMonth;
   });
 
+  const { paginatedItems: paginatedAdvances, currentPage: advPage, totalPages: advTotalPages, totalItems: advTotalItems, startIndex: advStart, endIndex: advEnd, setCurrentPage: setAdvPage } = usePagination(filteredAdvances);
+
   const stats = {
     total: advances.length,
     pending: advances.filter(a => a.status === 'pending').length,
