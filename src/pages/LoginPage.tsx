@@ -102,6 +102,7 @@ const LoginPage = () => {
         size="icon"
         className="fixed top-4 left-4 z-50"
         onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+        aria-label={t('تغيير اللغة', 'Change language')}
       >
         <Globe className="h-5 w-5" />
       </Button>
