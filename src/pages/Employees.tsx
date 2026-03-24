@@ -269,6 +269,9 @@ const Employees = () => {
     });
   }, [employees, searchQuery, activeFilter, selectedStations, selectedDepartments]);
 
+  // Reset to page 1 when filters change
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, activeFilter, selectedStations, selectedDepartments]);
+
   const boolLabel = (v?: boolean) => v ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No');
 
   const genderLabel = (v?: string) => {
