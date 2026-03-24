@@ -243,7 +243,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (newSession?.user) {
         setTimeout(async () => {
           try {
-            const profile = await fetchUserProfile(newSession.user);
+            let profile = await fetchUserProfile(newSession.user);
+            // Retry once after 3s if profile fetch failed (DB under load)
+            if (!profile) {
+              await new Promise((r) => setTimeout(r, 3000));
+              profile = await fetchUserProfile(newSession.user);
+            }
             setUser(profile);
           } catch (error) {
             await recoverAuthState(error);
