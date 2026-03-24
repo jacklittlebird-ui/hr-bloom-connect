@@ -28,6 +28,8 @@ const Employees = () => {
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 30;
 
   const ar = isRTL;
 
