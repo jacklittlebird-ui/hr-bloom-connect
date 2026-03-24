@@ -1,6 +1,5 @@
 const CACHE_NAME = "hr-link-v1";
 const PRECACHE = ["/", "/manifest.json"];
-const EXCLUDED_PATHS = ["/auth/v1/", "/rest/v1/", "/functions/v1/", "/storage/v1/", "/realtime/v1/"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
@@ -22,10 +21,6 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   // Never cache POST requests (scan submits must be online)
   if (request.method !== "GET") return;
-  const url = new URL(request.url);
-  if (url.origin !== self.location.origin || EXCLUDED_PATHS.some((path) => url.pathname.startsWith(path))) {
-    return;
-  }
   // Network-first strategy
   event.respondWith(
     fetch(request)

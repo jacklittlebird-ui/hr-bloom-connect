@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 export interface CriteriaItem {
   name: string;
@@ -73,26 +72,22 @@ const mapRow = (r: any): PerformanceReview => ({
 
 export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [reviews, setReviews] = useState<PerformanceReview[]>([]);
-  const { user } = useAuth();
-
-  const isAdminRole = user?.role === 'admin' || user?.role === 'hr';
 
   const fetchReviews = useCallback(async () => {
-    if (!isAdminRole) { setReviews([]); return; }
     const { data } = await supabase
       .from('performance_reviews')
       .select('*, employees(name_ar)')
       .order('created_at', { ascending: false });
     if (data) setReviews(data.map(mapRow));
-  }, [isAdminRole]);
+  }, []);
 
   useEffect(() => {
-    if (isAdminRole) {
-      fetchReviews();
-    } else {
-      setReviews([]);
-    }
-  }, [isAdminRole, fetchReviews]);
+    fetchReviews();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') fetchReviews();
+    });
+    return () => subscription.unsubscribe();
+  }, [fetchReviews]);
 
   const addReview = useCallback(async (review: Omit<PerformanceReview, 'id'>) => {
     const { error } = await supabase.from('performance_reviews').insert({

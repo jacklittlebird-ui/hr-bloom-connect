@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { withTimeout } from '@/lib/asyncControl';
 
 export type PortalFilter = 'admin' | 'employee' | 'station_manager' | 'training' | 'kiosk' | 'all';
 
@@ -62,33 +60,35 @@ const PORTAL_MODULES: Record<PortalFilter, string[] | null> = {
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const { user, isAuthenticated, loading } = useAuth();
-  const userId = user?.supabaseUserId ?? null;
+  const [userId, setUserId] = useState<string | null>(null);
 
   const fetchNotifications = useCallback(async () => {
-    if (!isAuthenticated || !userId) {
-      setNotifications([]);
-      return;
-    }
-
-    const { data } = await withTimeout(supabase
+    const { data } = await supabase
       .from('notifications')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(50), 8000, 'notifications');
+      .limit(100);
     if (data) setNotifications(data.map(mapRow));
-  }, [isAuthenticated, userId]);
+  }, []);
 
   useEffect(() => {
-    if (loading) return;
-
-    if (!isAuthenticated || !userId) {
-      setNotifications([]);
-      return;
-    }
-
-    fetchNotifications();
-  }, [fetchNotifications, isAuthenticated, loading, userId]);
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserId(data.user.id);
+        fetchNotifications();
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUserId(session.user.id);
+        fetchNotifications();
+      } else if (event === 'SIGNED_OUT') {
+        setUserId(null);
+        setNotifications([]);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [fetchNotifications]);
 
   const getFilteredNotifications = useCallback((portal: PortalFilter, employeeId?: string): AppNotification[] => {
     let filtered = notifications;

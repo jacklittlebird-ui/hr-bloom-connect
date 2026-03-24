@@ -52,7 +52,7 @@ const Leaves = () => {
   const [empStationMap, setEmpStationMap] = useState<Map<string, string>>(new Map());
 
   const fetchData = async () => {
-    const { data: employees } = await supabase.from('employees').select('id, employee_code, name_en, name_ar, department_id, station_id, annual_leave_balance, sick_leave_balance, hire_date').order('employee_code');
+    const { data: employees } = await supabase.from('employees').select('id, employee_code, name_en, name_ar, department_id, station_id, annual_leave_balance, sick_leave_balance').order('employee_code');
     const { data: deptData } = await supabase.from('departments').select('id, name_ar, name_en');
     const { data: stationData } = await supabase.from('stations').select('id, name_ar, name_en');
 
@@ -169,7 +169,7 @@ const Leaves = () => {
       const permissionsTotal = lb ? Number(lb.permissions_total) : 12;
       const permissionsUsed = lb ? Number(lb.permissions_used) : 0;
       return {
-        employeeId: e.id, employeeName: e.name_en, employeeNameAr: e.name_ar, hireDate: e.hire_date || undefined,
+        employeeId: e.id, employeeName: e.name_en, employeeNameAr: e.name_ar,
         department: d ? (language === 'ar' ? d.name_ar : d.name_en) : '',
         station: s ? (language === 'ar' ? s.name_ar : s.name_en) : '',
         annualTotal, annualUsed, annualRemaining: annualTotal - annualUsed,

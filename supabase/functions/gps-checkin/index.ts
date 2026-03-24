@@ -192,22 +192,19 @@ Deno.serve(async (req) => {
     const isFlexible = ["flexible", "fully-flexible", "fully_flexible"].includes(scheduleType);
 
     if (event_type === "check_in") {
-      // Close any stale open record before creating a new one
-      const { data: staleRecord } = await supabaseAdmin
+      // Close any open record (no check_out) for today before creating a new one
+      const { data: openRecord } = await supabaseAdmin
         .from("attendance_records")
         .select("id")
         .eq("employee_id", employeeId)
+        .eq("date", dateStr)
         .is("check_out", null)
-        .not("status", "eq", "auto-closed")
-        .order("check_in", { ascending: false })
-        .limit(1)
         .maybeSingle();
 
-      if (staleRecord) {
+      if (openRecord) {
         await supabaseAdmin.from("attendance_records").update({
-          status: "auto-closed",
-          notes: "إغلاق تلقائي - حضور جديد / Auto-closed - new check-in",
-        }).eq("id", staleRecord.id);
+          check_out: now.toISOString(),
+        }).eq("id", openRecord.id);
       }
 
       const isLate = !isFlexible && now.getHours() >= 9;
@@ -220,13 +217,12 @@ Deno.serve(async (req) => {
         notes: `GPS - ${matchedLocation.name_ar}`,
       });
     } else {
-      // check_out — find the latest open record (not auto-closed)
+      // check_out — find the latest open record for today
       const { data: openRecord } = await supabaseAdmin
         .from("attendance_records")
         .select("id")
         .eq("employee_id", employeeId)
         .is("check_out", null)
-        .not("status", "eq", "auto-closed")
         .order("check_in", { ascending: false })
         .limit(1)
         .maybeSingle();

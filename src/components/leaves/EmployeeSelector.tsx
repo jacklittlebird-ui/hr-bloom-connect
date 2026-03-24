@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -6,16 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check, ChevronsUpDown, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-
-interface MinimalEmployee {
-  id: string;
-  employee_code: string;
-  name_ar: string;
-  name_en: string;
-  department_name: string;
-  status: string;
-}
+import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 
 interface EmployeeSelectorProps {
   value: string;
@@ -26,34 +17,11 @@ interface EmployeeSelectorProps {
 export const EmployeeSelector = ({ value, onChange, label }: EmployeeSelectorProps) => {
   const { t, isRTL, language } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [employees, setEmployees] = useState<MinimalEmployee[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('employees')
-        .select('id, employee_code, name_ar, name_en, status, departments(name_ar)')
-        .eq('status', 'active')
-        .order('employee_code', { ascending: true });
+  const { employees } = useEmployeeData();
+  const activeEmployees = useMemo(() => employees.filter(e => e.status === 'active'), [employees]);
 
-      if (!error && data) {
-        setEmployees(data.map((row: any) => ({
-          id: row.id,
-          employee_code: row.employee_code,
-          name_ar: row.name_ar,
-          name_en: row.name_en,
-          department_name: row.departments?.name_ar || '-',
-          status: row.status,
-        })));
-      }
-      setLoading(false);
-    };
-    fetchEmployees();
-  }, []);
-
-  const selectedEmployee = employees.find(e => e.employee_code === value);
+  const selectedEmployee = activeEmployees.find(e => e.employeeId === value);
 
   return (
     <div className="space-y-2">
@@ -71,8 +39,8 @@ export const EmployeeSelector = ({ value, onChange, label }: EmployeeSelectorPro
             className={cn("w-full justify-between", isRTL && "flex-row-reverse")}
           >
             {selectedEmployee
-              ? `${language === 'ar' ? selectedEmployee.name_ar : selectedEmployee.name_en} (${selectedEmployee.employee_code})`
-              : loading ? (language === 'ar' ? 'جاري التحميل...' : 'Loading...') : t('leaves.newRequest.selectEmployee')}
+              ? (language === 'ar' ? selectedEmployee.nameAr : selectedEmployee.nameEn)
+              : t('leaves.newRequest.selectEmployee')}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -82,24 +50,24 @@ export const EmployeeSelector = ({ value, onChange, label }: EmployeeSelectorPro
             <CommandList className="max-h-[300px] overflow-y-auto">
               <CommandEmpty>{t('leaves.newRequest.noEmployeeFound')}</CommandEmpty>
               <CommandGroup>
-                {employees.map((emp) => (
+                {activeEmployees.map((emp) => (
                   <CommandItem
-                    key={emp.employee_code}
-                    value={`${emp.name_ar} ${emp.name_en} ${emp.employee_code}`}
+                    key={emp.employeeId}
+                    value={`${emp.nameAr} ${emp.nameEn} ${emp.employeeId}`}
                     onSelect={() => {
-                      onChange(emp.employee_code);
+                      onChange(emp.employeeId);
                       setOpen(false);
                     }}
                   >
                     <Check
-                      className={cn("mr-2 h-4 w-4 shrink-0", value === emp.employee_code ? "opacity-100" : "opacity-0")}
+                      className={cn("mr-2 h-4 w-4 shrink-0", value === emp.employeeId ? "opacity-100" : "opacity-0")}
                     />
                     <div className={cn("flex flex-col min-w-0", isRTL && "items-end")}>
                       <span className="font-medium truncate">
-                        {language === 'ar' ? emp.name_ar : emp.name_en}
+                        {language === 'ar' ? emp.nameAr : emp.nameEn}
                       </span>
                       <span className="text-xs text-muted-foreground truncate">
-                        {emp.employee_code} - {emp.department_name}
+                        {emp.employeeId} - {emp.department}
                       </span>
                     </div>
                   </CommandItem>

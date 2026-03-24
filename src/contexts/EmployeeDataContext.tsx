@@ -3,12 +3,6 @@ import { Employee } from '@/types/employee';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { getCachedValue, setCachedValue } from '@/lib/runtimeCache';
-import { withTimeout } from '@/lib/asyncControl';
-
-const DEPT_CACHE_KEY = 'emp_departments';
-const STATION_CACHE_KEY = 'emp_stations';
-const LOOKUP_CACHE_TTL = 5 * 60_000; // 5 min
 
 interface EmployeeDataContextType {
   employees: Employee[];
@@ -244,54 +238,17 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { isAuthenticated, user } = useAuth();
 
   const fetchEmployees = useCallback(async () => {
-    if (!isAuthenticated || !user) {
-      setEmployees([]);
-      setLoading(false);
-      return;
-    }
-
-    // Employee, kiosk, and training_manager roles don't need the full employee list
-    if (user.role === 'employee' || user.role === 'kiosk' || user.role === 'training_manager') {
-      setEmployees([]);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
 
-    const mapWithRelations = async (rows: any[]) => {
-      // Use cached lookups to avoid hammering DB
-      let depts = getCachedValue<any[]>(DEPT_CACHE_KEY);
-      let stns = getCachedValue<any[]>(STATION_CACHE_KEY);
-
-      if (!depts || !stns) {
-        const [deptsRes, stationsRes] = await Promise.all([
-          withTimeout(supabase.from('departments').select('id, name_ar, name_en'), 8000, 'departments'),
-          withTimeout(supabase.from('stations').select('id, code, name_ar, name_en'), 8000, 'stations'),
-        ]);
-        depts = deptsRes.data || [];
-        stns = stationsRes.data || [];
-        setCachedValue(DEPT_CACHE_KEY, depts, LOOKUP_CACHE_TTL);
-        setCachedValue(STATION_CACHE_KEY, stns, LOOKUP_CACHE_TTL);
-      }
-
-      const deptMap = new Map(depts.map((d: any) => [d.id, d]));
-      const stationMap = new Map(stns.map((s: any) => [s.id, s]));
-
-      return rows.map((row: any) => {
-        const dept = deptMap.get(row.department_id);
-        const station = stationMap.get(row.station_id);
-        return mapRow({ ...row, departments: dept || null, stations: station || null });
-      });
-    };
-
-    if (user.role === 'station_manager') {
+    // Station managers get limited view (no sensitive data like national_id, bank, salary, insurance)
+    if (user?.role === 'station_manager') {
       const { data, error } = await supabase
         .from('employee_limited_view' as any)
         .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
         .order('employee_code', { ascending: true });
 
       if (error) {
+        // Fallback: if view doesn't support joins, query separately
         const { data: viewData, error: viewError } = await supabase
           .from('employee_limited_view' as any)
           .select('*')
@@ -304,7 +261,19 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return;
         }
 
-        setEmployees(await mapWithRelations(viewData || []));
+        // Fetch departments and stations for mapping
+        const [deptsRes, stationsRes] = await Promise.all([
+          supabase.from('departments').select('id, name_ar, name_en'),
+          supabase.from('stations').select('id, code, name_ar, name_en'),
+        ]);
+        const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
+        const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
+
+        setEmployees((viewData || []).map((row: any) => {
+          const dept = deptMap.get(row.department_id);
+          const station = stationMap.get(row.station_id);
+          return mapRow({ ...row, departments: dept || null, stations: station || null });
+        }));
         setLoading(false);
         return;
       }
@@ -314,34 +283,29 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
 
-    // Use simpler query (no joins) to avoid timeout, then enrich with separate lookups
-    const { data: baseRows, error: baseError } = await withTimeout(supabase
+    const { data, error } = await supabase
       .from('employees')
-      .select('*')
-      .order('employee_code', { ascending: true }), 15000, 'employees');
+      .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+      .order('employee_code', { ascending: true });
 
-    if (baseError) {
-      console.error('Error fetching employees:', baseError);
+    if (error) {
+      console.error('Error fetching employees:', error);
       setEmployees([]);
-      setLoading(false);
-      return;
+    } else {
+      setEmployees((data || []).map(mapRow));
     }
-
-    setEmployees(await mapWithRelations(baseRows || []));
     setLoading(false);
-  }, [isAuthenticated, user]);
+  }, [user?.role]);
 
+  // Re-fetch when auth state changes (login/logout)
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated) {
       fetchEmployees();
     } else {
       setEmployees([]);
       setLoading(false);
     }
-  }, [isAuthenticated, user, fetchEmployees]);
-
-  // Removed aggressive focus/visibility refetch to reduce DB load
-  // Data is fetched once on login and can be refreshed manually via refreshEmployees()
+  }, [isAuthenticated, fetchEmployees]);
 
   const getEmployee = useCallback((id: string) => {
     return employees.find(e => e.id === id);

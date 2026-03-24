@@ -25,27 +25,14 @@ const AttendanceKiosk = () => {
   const { language } = useLanguage();
   const { session, logout } = useAuth();
   const ar = language === "ar";
-  const QR_REFRESH_INTERVAL_SECONDS = 60 * 60;
 
   const QR_COUNT = 3;
   const [qrSrcs, setQrSrcs] = useState<string[]>(["", "", ""]);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [countdown, setCountdown] = useState(QR_REFRESH_INTERVAL_SECONDS);
+  const [countdown, setCountdown] = useState(5);
   const [error, setError] = useState("");
   const intervalRef = useRef<number>();
-
-  const formatCountdown = (value: number) => {
-    const hours = Math.floor(value / 3600);
-    const minutes = Math.floor((value % 3600) / 60);
-    const seconds = value % 60;
-
-    if (hours > 0) {
-      return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-    }
-
-    return `${minutes}:${String(seconds).padStart(2, "0")}`;
-  };
 
   // Geolocation state
   const [geoStatus, setGeoStatus] = useState<"checking" | "allowed" | "denied" | "out_of_range" | "no_coords">("checking");
@@ -131,7 +118,7 @@ const AttendanceKiosk = () => {
     }
   }, [userCoords, selectedLocation, locations, ar]);
 
-  // Generate QR token every hour — only if location is verified
+  // Generate QR token every 4.8s — only if location is verified
   useEffect(() => {
     if (!selectedLocation || !session?.access_token || geoStatus !== "allowed" || !userCoords) return;
 
@@ -172,7 +159,7 @@ const AttendanceKiosk = () => {
           }
         }
         setQrSrcs(srcs);
-        if (!hasError) { setError(""); setCountdown(QR_REFRESH_INTERVAL_SECONDS); }
+        if (!hasError) { setError(""); setCountdown(5); }
       } catch (e: any) {
         console.error("[Kiosk] QR fetch error:", e);
         setError(e.message);
@@ -180,10 +167,10 @@ const AttendanceKiosk = () => {
     };
 
     tick();
-    intervalRef.current = window.setInterval(tick, QR_REFRESH_INTERVAL_SECONDS * 1000);
+    intervalRef.current = window.setInterval(tick, 4800);
 
     const countdownInterval = window.setInterval(() => {
-      setCountdown((prev) => (prev > 1 ? prev - 1 : QR_REFRESH_INTERVAL_SECONDS));
+      setCountdown((prev) => (prev > 1 ? prev - 1 : 5));
     }, 1000);
 
     return () => {
@@ -301,7 +288,7 @@ const AttendanceKiosk = () => {
                           className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-xs"
                         >
                           <RefreshCw className="h-3 w-3 animate-spin" />
-                           {formatCountdown(countdown)}
+                          {countdown}s
                         </Badge>
                       </>
                     ) : (

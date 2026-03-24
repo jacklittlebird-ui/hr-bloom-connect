@@ -3,7 +3,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { Activity, Users, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
-import { EMERGENCY_DISABLE_DASHBOARD_AUTO_REFRESH } from '@/lib/emergencyLoad';
 
 export const LiveStatus = () => {
   const { language, isRTL } = useLanguage();
@@ -13,26 +12,20 @@ export const LiveStatus = () => {
   const fetchLive = async () => {
     const today = new Date().toISOString().split('T')[0];
     const [attRes, leaveRes, missionRes, lateRes] = await Promise.all([
-      supabase.from('attendance_records').select('*', { count: 'exact', head: true }).eq('date', today).not('check_in', 'is', null),
-      supabase.from('leave_requests').select('*', { count: 'exact', head: true }).eq('status', 'approved').lte('start_date', today).gte('end_date', today),
-      supabase.from('missions').select('*', { count: 'exact', head: true }).eq('status', 'approved').eq('date', today),
-      supabase.from('attendance_records').select('*', { count: 'exact', head: true }).eq('date', today).eq('is_late', true),
+      supabase.from('attendance_records').select('id').eq('date', today).not('check_in', 'is', null),
+      supabase.from('leave_requests').select('id').eq('status', 'approved').lte('start_date', today).gte('end_date', today),
+      supabase.from('missions').select('id').eq('status', 'approved').eq('date', today),
+      supabase.from('attendance_records').select('id').eq('date', today).eq('is_late', true),
     ]);
     setStats({
-      checkedIn: attRes.count || 0,
-      onLeave: leaveRes.count || 0,
-      onMission: missionRes.count || 0,
-      late: lateRes.count || 0,
+      checkedIn: attRes.data?.length || 0,
+      onLeave: leaveRes.data?.length || 0,
+      onMission: missionRes.data?.length || 0,
+      late: lateRes.data?.length || 0,
     });
   };
 
-  useEffect(() => {
-    fetchLive();
-    if (!EMERGENCY_DISABLE_DASHBOARD_AUTO_REFRESH) {
-      const iv = setInterval(fetchLive, 120000);
-      return () => clearInterval(iv);
-    }
-  }, []);
+  useEffect(() => { fetchLive(); const iv = setInterval(fetchLive, 60000); return () => clearInterval(iv); }, []);
 
   const items = [
     { icon: CheckCircle, label: ar ? 'حاضرون الآن' : 'Checked In', value: stats.checkedIn, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
