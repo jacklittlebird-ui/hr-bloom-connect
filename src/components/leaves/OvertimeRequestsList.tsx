@@ -95,6 +95,7 @@ export const OvertimeRequestsList = ({ requests, onDelete }: OvertimeRequestsLis
               </TableBody>
             </Table>
           </div>
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} startIndex={startIndex} endIndex={endIndex} onPageChange={setCurrentPage} />
         </CardContent>
       </Card>
 
