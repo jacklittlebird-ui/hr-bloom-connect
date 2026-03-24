@@ -19,6 +19,7 @@ interface MissionRequestsListProps {
 export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListProps) => {
   const { t, isRTL, language } = useLanguage();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { paginatedItems, currentPage, totalPages, totalItems, startIndex, endIndex, setCurrentPage } = usePagination(requests);
 
   const getStatusBadge = (status: MissionRequest['status']) => {
     switch (status) {
