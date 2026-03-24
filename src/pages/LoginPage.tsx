@@ -159,6 +159,7 @@ const LoginPage = () => {
                         size="icon"
                         className="h-11 w-11 shrink-0"
                         onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? t('إخفاء كلمة المرور', 'Hide password') : t('إظهار كلمة المرور', 'Show password')}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
