@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useCallback, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
@@ -147,18 +147,6 @@ const permTypeMap: Record<string, { ar: string; en: string }> = {
   personal: { ar: 'شخصي', en: 'Personal' },
 };
 
-// Specific column selections per table (NO SELECT *)
-const LEAVE_BALANCE_COLS = 'employee_id, annual_total, annual_used, sick_total, sick_used, casual_total, casual_used, permissions_total, permissions_used';
-const LEAVE_REQUEST_COLS = 'id, employee_id, leave_type, start_date, end_date, days, status';
-const PERMISSION_COLS = 'id, employee_id, permission_type, date, start_time, end_time, reason, status';
-const LOAN_COLS = 'id, employee_id, amount, paid_count, monthly_installment, remaining, reason, status';
-const PERF_REVIEW_COLS = 'id, employee_id, quarter, year, score, status, strengths';
-const TRAINING_COLS = 'id, employee_id, status, start_date, end_date, training_courses(name_ar, name_en)';
-const MISSION_COLS = 'id, employee_id, mission_type, date, destination, reason, status';
-const VIOLATION_COLS = 'id, employee_id, date, type, penalty, status';
-const OVERTIME_COLS = 'id, employee_id, date, overtime_type, reason, status';
-const DOC_COLS = 'id, employee_id, name, type, uploaded_at';
-
 interface PortalDataContextType {
   getLeaveBalances: (employeeId: string) => LeaveBalance[];
   getLeaveRequests: (employeeId: string) => LeaveRequest[];
@@ -178,6 +166,14 @@ interface PortalDataContextType {
   addRequest: (req: Omit<EmployeeRequest, 'id' | 'status'>) => void;
   getDocuments: (employeeId: string) => PortalDocument[];
   addDocument: (doc: Omit<PortalDocument, 'id'>) => void;
+  // Lazy loaders — call to fetch data for a specific section
+  ensureLeaves: () => Promise<void>;
+  ensureLoans: () => Promise<void>;
+  ensureEvaluations: () => Promise<void>;
+  ensureTraining: () => Promise<void>;
+  ensureMissions: () => Promise<void>;
+  ensureViolations: () => Promise<void>;
+  ensureDocuments: () => Promise<void>;
 }
 
 const PortalDataContext = createContext<PortalDataContextType | undefined>(undefined);
@@ -186,6 +182,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { user } = useAuth();
   const isEmployee = user?.role === 'employee';
   const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
+  const LIMIT = 30;
 
   const [leaveBalances, setLeaveBalances] = useState<Record<string, LeaveBalance[]>>({});
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
@@ -199,50 +196,33 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [requests, setRequests] = useState<EmployeeRequest[]>([]);
   const [documents, setDocuments] = useState<PortalDocument[]>([]);
 
-  const fetchAll = useCallback(async () => {
-    if (isEmployee && !scopedEmployeeId) return;
+  // Track which sections have been loaded
+  const loaded = useRef<Set<string>>(new Set());
 
-    const cacheKey = `portal_${scopedEmployeeId || 'all'}`;
-    
-    await debouncedFetch(cacheKey, async () => {
+  // ─── Lazy Section Fetchers ─────────────────────────────────────────────
+
+  const ensureLeaves = useCallback(async () => {
+    if (loaded.current.has('leaves') || (isEmployee && !scopedEmployeeId)) return;
+    loaded.current.add('leaves');
+
+    await debouncedFetch(`portal_leaves_${scopedEmployeeId || 'all'}`, async () => {
       const currentYear = new Date().getFullYear();
-      const limit = 50;
-
-      // Build scoped queries with specific columns
-      const lbQuery = supabase.from('leave_balances').select(LEAVE_BALANCE_COLS).eq('year', currentYear);
-      const lrQuery = supabase.from('leave_requests').select(LEAVE_REQUEST_COLS).order('created_at', { ascending: false }).limit(limit);
-      const pQuery = supabase.from('permission_requests').select(PERMISSION_COLS).order('created_at', { ascending: false }).limit(limit);
-      const loansQuery = supabase.from('loans').select(LOAN_COLS).order('created_at', { ascending: false }).limit(20);
-      const prQuery = supabase.from('performance_reviews').select(PERF_REVIEW_COLS).order('created_at', { ascending: false }).limit(20);
-      const trQuery = supabase.from('training_records').select(TRAINING_COLS).order('created_at', { ascending: false }).limit(20);
-      const mQuery = supabase.from('missions').select(MISSION_COLS).order('created_at', { ascending: false }).limit(limit);
-      const vQuery = supabase.from('violations').select(VIOLATION_COLS).order('created_at', { ascending: false }).limit(20);
-      const otQuery = supabase.from('overtime_requests').select(OVERTIME_COLS).order('created_at', { ascending: false }).limit(limit);
-      const dQuery = supabase.from('employee_documents').select(DOC_COLS).order('uploaded_at', { ascending: false }).limit(20);
+      const lbQuery = supabase.from('leave_balances').select('employee_id, annual_total, annual_used, sick_total, sick_used, casual_total, casual_used, permissions_total, permissions_used').eq('year', currentYear);
+      const lrQuery = supabase.from('leave_requests').select('id, employee_id, leave_type, start_date, end_date, days, status').order('created_at', { ascending: false }).limit(LIMIT);
+      const pQuery = supabase.from('permission_requests').select('id, employee_id, permission_type, date, start_time, end_time, reason, status').order('created_at', { ascending: false }).limit(LIMIT);
+      const otQuery = supabase.from('overtime_requests').select('id, employee_id, date, overtime_type, reason, status').order('created_at', { ascending: false }).limit(LIMIT);
 
       if (scopedEmployeeId) {
         lbQuery.eq('employee_id', scopedEmployeeId);
         lrQuery.eq('employee_id', scopedEmployeeId);
         pQuery.eq('employee_id', scopedEmployeeId);
-        loansQuery.eq('employee_id', scopedEmployeeId);
-        prQuery.eq('employee_id', scopedEmployeeId);
-        trQuery.eq('employee_id', scopedEmployeeId);
-        mQuery.eq('employee_id', scopedEmployeeId);
-        vQuery.eq('employee_id', scopedEmployeeId);
         otQuery.eq('employee_id', scopedEmployeeId);
-        dQuery.eq('employee_id', scopedEmployeeId);
       }
 
       try {
-        const [lbRes, lrRes, pRes, loansRes, prRes, trRes, mRes, vRes, otRes, dRes] = await Promise.all([
-          lbQuery, lrQuery, pQuery, loansQuery, prQuery, trQuery, mQuery, vQuery, otQuery, dQuery,
-        ]);
+        const [lbRes, lrRes, pRes, otRes] = await Promise.all([lbQuery, lrQuery, pQuery, otQuery]);
+        trackQuery('portal_leaves', (lbRes.data?.length || 0) + (lrRes.data?.length || 0) + (pRes.data?.length || 0) + (otRes.data?.length || 0));
 
-        const totalRows = [lbRes, lrRes, pRes, loansRes, prRes, trRes, mRes, vRes, otRes, dRes]
-          .reduce((sum, r) => sum + (r.data?.length || 0), 0);
-        trackQuery('portal', totalRows);
-
-        // Leave balances
         if (lbRes.data) {
           const mapped: Record<string, LeaveBalance[]> = {};
           lbRes.data.forEach((lb: any) => {
@@ -271,56 +251,6 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           }));
         }
 
-        if (loansRes.data) {
-          setPortalLoans(loansRes.data.map((l: any) => ({
-            id: l.id as any, employeeId: l.employee_id,
-            typeAr: l.reason || 'قرض', typeEn: l.reason || 'Loan',
-            amount: l.amount, paid: (l.paid_count || 0) * (l.monthly_installment || 0),
-            remaining: l.remaining || 0, installment: l.monthly_installment || 0,
-            status: l.status === 'completed' ? 'paid' as const : 'active' as const,
-          })));
-        }
-
-        if (prRes.data) {
-          setEvaluations(prRes.data.map((e: any) => ({
-            id: e.id as any, employeeId: e.employee_id,
-            period: `${e.quarter} ${e.year}`, score: e.score ?? 0, maxScore: 5,
-            reviewerAr: '', reviewerEn: '',
-            status: e.status === 'approved' || e.status === 'submitted' ? 'completed' as const : 'pending' as const,
-            notesAr: e.strengths || '', notesEn: e.strengths || '',
-          })));
-        }
-
-        if (trRes.data) {
-          setTraining(trRes.data.map((t: any) => ({
-            id: t.id as any, employeeId: t.employee_id,
-            nameAr: (t.training_courses as any)?.name_ar || '',
-            nameEn: (t.training_courses as any)?.name_en || '',
-            progress: t.status === 'completed' ? 100 : t.status === 'enrolled' ? 50 : 0,
-            status: t.status === 'completed' ? 'completed' as const : t.status === 'enrolled' ? 'in-progress' as const : 'planned' as const,
-            startDate: t.start_date || '', endDate: t.end_date || '',
-          })));
-        }
-
-        if (mRes.data) {
-          setMissions(mRes.data.map((m: any) => ({
-            id: m.id as any, employeeId: m.employee_id,
-            missionType: m.mission_type as PortalMissionType,
-            date: m.date, destAr: m.destination || '', destEn: m.destination || '',
-            reasonAr: m.reason || '', reasonEn: m.reason || '',
-            status: m.status as any,
-          })));
-        }
-
-        if (vRes.data) {
-          setViolations(vRes.data.map((v: any) => ({
-            id: v.id as any, employeeId: v.employee_id,
-            date: v.date, typeAr: v.type, typeEn: v.type,
-            penaltyAr: v.penalty || '', penaltyEn: v.penalty || '',
-            status: v.status === 'approved' ? 'closed' as const : 'open' as const,
-          })));
-        }
-
         if (otRes.data) {
           const otTypeMap: Record<string, { ar: string; en: string }> = {
             holiday: { ar: 'إجازة رسمية', en: 'Holiday' },
@@ -335,9 +265,160 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             reason: o.reason || '', status: o.status as any,
           })));
         }
+      } catch (err) {
+        console.error('Portal leaves fetch error:', err);
+        loaded.current.delete('leaves');
+      }
+      return true;
+    }, { ttlMs: 30_000 });
+  }, [isEmployee, scopedEmployeeId]);
 
-        if (dRes.data) {
-          setDocuments(dRes.data.map((d: any) => ({
+  const ensureLoans = useCallback(async () => {
+    if (loaded.current.has('loans') || (isEmployee && !scopedEmployeeId)) return;
+    loaded.current.add('loans');
+
+    await debouncedFetch(`portal_loans_${scopedEmployeeId || 'all'}`, async () => {
+      const q = supabase.from('loans').select('id, employee_id, amount, paid_count, monthly_installment, remaining, reason, status').order('created_at', { ascending: false }).limit(20);
+      if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
+      try {
+        const { data } = await q;
+        trackQuery('portal_loans', data?.length || 0);
+        if (data) {
+          setPortalLoans(data.map((l: any) => ({
+            id: l.id as any, employeeId: l.employee_id,
+            typeAr: l.reason || 'قرض', typeEn: l.reason || 'Loan',
+            amount: l.amount, paid: (l.paid_count || 0) * (l.monthly_installment || 0),
+            remaining: l.remaining || 0, installment: l.monthly_installment || 0,
+            status: l.status === 'completed' ? 'paid' as const : 'active' as const,
+          })));
+        }
+      } catch (err) {
+        console.error('Portal loans fetch error:', err);
+        loaded.current.delete('loans');
+      }
+      return true;
+    }, { ttlMs: 60_000 });
+  }, [isEmployee, scopedEmployeeId]);
+
+  const ensureEvaluations = useCallback(async () => {
+    if (loaded.current.has('evaluations') || (isEmployee && !scopedEmployeeId)) return;
+    loaded.current.add('evaluations');
+
+    await debouncedFetch(`portal_evals_${scopedEmployeeId || 'all'}`, async () => {
+      const q = supabase.from('performance_reviews').select('id, employee_id, quarter, year, score, status, strengths').order('created_at', { ascending: false }).limit(20);
+      if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
+      try {
+        const { data } = await q;
+        trackQuery('portal_evals', data?.length || 0);
+        if (data) {
+          setEvaluations(data.map((e: any) => ({
+            id: e.id as any, employeeId: e.employee_id,
+            period: `${e.quarter} ${e.year}`, score: e.score ?? 0, maxScore: 5,
+            reviewerAr: '', reviewerEn: '',
+            status: e.status === 'approved' || e.status === 'submitted' ? 'completed' as const : 'pending' as const,
+            notesAr: e.strengths || '', notesEn: e.strengths || '',
+          })));
+        }
+      } catch (err) {
+        console.error('Portal evals fetch error:', err);
+        loaded.current.delete('evaluations');
+      }
+      return true;
+    }, { ttlMs: 120_000 });
+  }, [isEmployee, scopedEmployeeId]);
+
+  const ensureTraining = useCallback(async () => {
+    if (loaded.current.has('training') || (isEmployee && !scopedEmployeeId)) return;
+    loaded.current.add('training');
+
+    await debouncedFetch(`portal_training_${scopedEmployeeId || 'all'}`, async () => {
+      const q = supabase.from('training_records').select('id, employee_id, status, start_date, end_date').order('created_at', { ascending: false }).limit(20);
+      if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
+      try {
+        const { data } = await q;
+        trackQuery('portal_training', data?.length || 0);
+        if (data) {
+          setTraining(data.map((t: any) => ({
+            id: t.id as any, employeeId: t.employee_id,
+            nameAr: '', nameEn: '',
+            progress: t.status === 'completed' ? 100 : t.status === 'enrolled' ? 50 : 0,
+            status: t.status === 'completed' ? 'completed' as const : t.status === 'enrolled' ? 'in-progress' as const : 'planned' as const,
+            startDate: t.start_date || '', endDate: t.end_date || '',
+          })));
+        }
+      } catch (err) {
+        console.error('Portal training fetch error:', err);
+        loaded.current.delete('training');
+      }
+      return true;
+    }, { ttlMs: 120_000 });
+  }, [isEmployee, scopedEmployeeId]);
+
+  const ensureMissions = useCallback(async () => {
+    if (loaded.current.has('missions') || (isEmployee && !scopedEmployeeId)) return;
+    loaded.current.add('missions');
+
+    await debouncedFetch(`portal_missions_${scopedEmployeeId || 'all'}`, async () => {
+      const q = supabase.from('missions').select('id, employee_id, mission_type, date, destination, reason, status').order('created_at', { ascending: false }).limit(LIMIT);
+      if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
+      try {
+        const { data } = await q;
+        trackQuery('portal_missions', data?.length || 0);
+        if (data) {
+          setMissions(data.map((m: any) => ({
+            id: m.id as any, employeeId: m.employee_id,
+            missionType: m.mission_type as PortalMissionType,
+            date: m.date, destAr: m.destination || '', destEn: m.destination || '',
+            reasonAr: m.reason || '', reasonEn: m.reason || '',
+            status: m.status as any,
+          })));
+        }
+      } catch (err) {
+        console.error('Portal missions fetch error:', err);
+        loaded.current.delete('missions');
+      }
+      return true;
+    }, { ttlMs: 30_000 });
+  }, [isEmployee, scopedEmployeeId]);
+
+  const ensureViolations = useCallback(async () => {
+    if (loaded.current.has('violations') || (isEmployee && !scopedEmployeeId)) return;
+    loaded.current.add('violations');
+
+    await debouncedFetch(`portal_violations_${scopedEmployeeId || 'all'}`, async () => {
+      const q = supabase.from('violations').select('id, employee_id, date, type, penalty, status').order('created_at', { ascending: false }).limit(20);
+      if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
+      try {
+        const { data } = await q;
+        trackQuery('portal_violations', data?.length || 0);
+        if (data) {
+          setViolations(data.map((v: any) => ({
+            id: v.id as any, employeeId: v.employee_id,
+            date: v.date, typeAr: v.type, typeEn: v.type,
+            penaltyAr: v.penalty || '', penaltyEn: v.penalty || '',
+            status: v.status === 'approved' ? 'closed' as const : 'open' as const,
+          })));
+        }
+      } catch (err) {
+        console.error('Portal violations fetch error:', err);
+        loaded.current.delete('violations');
+      }
+      return true;
+    }, { ttlMs: 120_000 });
+  }, [isEmployee, scopedEmployeeId]);
+
+  const ensureDocuments = useCallback(async () => {
+    if (loaded.current.has('documents') || (isEmployee && !scopedEmployeeId)) return;
+    loaded.current.add('documents');
+
+    await debouncedFetch(`portal_docs_${scopedEmployeeId || 'all'}`, async () => {
+      const q = supabase.from('employee_documents').select('id, employee_id, name, type, uploaded_at').order('uploaded_at', { ascending: false }).limit(20);
+      if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
+      try {
+        const { data } = await q;
+        trackQuery('portal_docs', data?.length || 0);
+        if (data) {
+          setDocuments(data.map((d: any) => ({
             id: d.id as any, employeeId: d.employee_id,
             nameAr: d.name, nameEn: d.name,
             date: d.uploaded_at.split('T')[0],
@@ -345,28 +426,14 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           })));
         }
       } catch (err) {
-        console.error('PortalDataContext fetchAll error:', err);
+        console.error('Portal docs fetch error:', err);
+        loaded.current.delete('documents');
       }
-      return true; // cache marker
-    }, { ttlMs: 30_000 });
+      return true;
+    }, { ttlMs: 120_000 });
   }, [isEmployee, scopedEmployeeId]);
 
-  const hasMounted = useRef(false);
-  useEffect(() => {
-    if (hasMounted.current) return;
-    hasMounted.current = true;
-    fetchAll();
-  }, [fetchAll]);
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        invalidateCache('portal_');
-        fetchAll();
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [fetchAll]);
+  // ─── Getters ───────────────────────────────────────────────────────────
 
   const getLeaveBalances = useCallback((empId: string) => leaveBalances[empId] || [], [leaveBalances]);
   const getLeaveRequests = useCallback((empId: string) => leaveRequests.filter(r => r.employeeId === empId), [leaveRequests]);
@@ -380,9 +447,10 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       end_date: req.to,
       days: req.days,
     });
-    invalidateCache('portal_');
-    await fetchAll();
-  }, [fetchAll]);
+    invalidateCache('portal_leaves');
+    loaded.current.delete('leaves');
+    await ensureLeaves();
+  }, [ensureLeaves]);
 
   const getPermissions = useCallback((empId: string) => permissions.filter(p => p.employeeId === empId), [permissions]);
   
@@ -400,9 +468,10 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (error.message?.includes('existing leave request')) throw new Error('LEAVE_CONFLICT');
       throw error;
     }
-    invalidateCache('portal_');
-    await fetchAll();
-  }, [fetchAll]);
+    invalidateCache('portal_leaves');
+    loaded.current.delete('leaves');
+    await ensureLeaves();
+  }, [ensureLeaves]);
 
   const getLoans = useCallback((empId: string) => portalLoans.filter(l => l.employeeId === empId), [portalLoans]);
   
@@ -413,9 +482,10 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       installments_count: Math.ceil(req.amount / req.installment),
       reason: req.typeAr,
     });
-    invalidateCache('portal_');
-    await fetchAll();
-  }, [fetchAll]);
+    invalidateCache('portal_loans');
+    loaded.current.delete('loans');
+    await ensureLoans();
+  }, [ensureLoans]);
 
   const getEvaluations = useCallback((empId: string) => evaluations.filter(e => e.employeeId === empId), [evaluations]);
   const getTraining = useCallback((empId: string) => training.filter(t => t.employeeId === empId), [training]);
@@ -429,9 +499,10 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       destination: req.destAr || req.destEn,
       reason: req.reasonAr || req.reasonEn,
     });
-    invalidateCache('portal_');
-    await fetchAll();
-  }, [fetchAll]);
+    invalidateCache('portal_missions');
+    loaded.current.delete('missions');
+    await ensureMissions();
+  }, [ensureMissions]);
 
   const getViolations = useCallback((empId: string) => violations.filter(v => v.employeeId === empId), [violations]);
   const getOvertimeDays = useCallback((empId: string) => overtimeDays.filter(o => o.employeeId === empId), [overtimeDays]);
@@ -444,9 +515,10 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       reason: req.reason,
       overtime_type: req.overtimeType,
     } as any);
-    invalidateCache('portal_');
-    await fetchAll();
-  }, [fetchAll]);
+    invalidateCache('portal_leaves');
+    loaded.current.delete('leaves');
+    await ensureLeaves();
+  }, [ensureLeaves]);
 
   const getRequests = useCallback((empId: string) => requests.filter(r => r.employeeId === empId), [requests]);
   
@@ -462,9 +534,10 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       name: doc.nameAr || doc.nameEn,
       type: doc.typeEn || doc.typeAr,
     });
-    invalidateCache('portal_');
-    await fetchAll();
-  }, [fetchAll]);
+    invalidateCache('portal_docs');
+    loaded.current.delete('documents');
+    await ensureDocuments();
+  }, [ensureDocuments]);
 
   return (
     <PortalDataContext.Provider value={{
@@ -477,6 +550,8 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       getOvertimeDays, addOvertimeDay,
       getRequests, addRequest,
       getDocuments, addDocument,
+      ensureLeaves, ensureLoans, ensureEvaluations,
+      ensureTraining, ensureMissions, ensureViolations, ensureDocuments,
     }}>
       {children}
     </PortalDataContext.Provider>
