@@ -77,6 +77,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppRoutes = () => (
+  <Suspense fallback={<LoadingScreen />}>
   <Routes>
     <Route path="/login" element={<AuthRoute><LoginPage /></AuthRoute>} />
     <Route path="/setup" element={<SetupPage />} />
