@@ -94,9 +94,10 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
       v.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       v.employeeNameAr.includes(searchQuery);
     const matchStatus = filterStatus === 'all' || v.status === filterStatus;
-    // dept/station filtering would need empDeptMap but we have it inline
     return matchSearch && matchStatus;
   });
+
+  const { paginatedItems, currentPage, totalPages, totalItems, startIndex, endIndex, setCurrentPage } = usePagination(filtered);
 
   const pendingCount = violations.filter(v => v.status === 'pending').length;
 
