@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 
 export interface UniformItem {
   id: number;
@@ -54,8 +56,11 @@ interface UniformDataContextType {
 
 const UniformDataContext = createContext<UniformDataContextType | undefined>(undefined);
 
+// Specific columns instead of SELECT *
+const UNIFORM_COLS = 'id, employee_id, type_ar, type_en, quantity, unit_price, total_price, delivery_date, notes';
+
 const mapRow = (r: any): UniformItem => ({
-  id: r.id, // UUID but cast
+  id: r.id,
   employeeId: r.employee_id,
   typeAr: r.type_ar,
   typeEn: r.type_en,
@@ -68,16 +73,39 @@ const mapRow = (r: any): UniformItem => ({
 
 export const UniformDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [uniforms, setUniforms] = useState<UniformItem[]>([]);
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+  const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
   const fetchUniforms = useCallback(async () => {
-    const { data } = await supabase.from('uniforms').select('*').order('delivery_date', { ascending: false });
-    if (data) setUniforms(data.map(mapRow));
-  }, []);
+    const cacheKey = `uniforms_${scopedEmployeeId || 'all'}`;
+    
+    const result = await debouncedFetch(cacheKey, async () => {
+      let query = supabase.from('uniforms').select(UNIFORM_COLS).order('delivery_date', { ascending: false });
+      if (isEmployee && scopedEmployeeId) {
+        query = query.eq('employee_id', scopedEmployeeId).limit(50);
+      }
+      const { data } = await query;
+      trackQuery('uniforms', data?.length || 0);
+      return (data || []).map(mapRow);
+    }, { ttlMs: 120_000 });
+
+    setUniforms(result);
+  }, [isEmployee, scopedEmployeeId]);
+
+  const hasMounted = useRef(false);
+  useEffect(() => {
+    if (hasMounted.current) return;
+    hasMounted.current = true;
+    fetchUniforms();
+  }, [fetchUniforms]);
 
   useEffect(() => {
-    fetchUniforms();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') fetchUniforms();
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        invalidateCache('uniforms_');
+        fetchUniforms();
+      }
     });
     return () => subscription.unsubscribe();
   }, [fetchUniforms]);
@@ -92,11 +120,13 @@ export const UniformDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       delivery_date: item.deliveryDate,
       notes: item.notes || null,
     });
+    invalidateCache('uniforms_');
     await fetchUniforms();
   }, [fetchUniforms]);
 
   const deleteUniform = useCallback(async (id: number) => {
     await supabase.from('uniforms').delete().eq('id', id as any);
+    invalidateCache('uniforms_');
     await fetchUniforms();
   }, [fetchUniforms]);
 
@@ -109,6 +139,7 @@ export const UniformDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (updates.deliveryDate !== undefined) payload.delivery_date = updates.deliveryDate;
     if (updates.notes !== undefined) payload.notes = updates.notes;
     await supabase.from('uniforms').update(payload).eq('id', id as any);
+    invalidateCache('uniforms_');
     await fetchUniforms();
   }, [fetchUniforms]);
 

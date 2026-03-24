@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { Employee } from '@/types/employee';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 
 interface EmployeeDataContextType {
   employees: Employee[];
@@ -241,77 +242,68 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
+    const cacheKey = `employees_${scopedEmployeeId || user?.role || 'all'}`;
 
-    // Employee role: fetch only their own record - massive performance win
-    if (isEmployee && scopedEmployeeId) {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
-        .eq('id', scopedEmployeeId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching employee profile:', error);
-        setEmployees([]);
-      } else if (data) {
-        setEmployees([mapRow(data)]);
-      }
-      setLoading(false);
-      return;
-    }
-
-    // Station managers get limited view
-    if (user?.role === 'station_manager') {
-      const { data, error } = await supabase
-        .from('employee_limited_view' as any)
-        .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
-        .order('employee_code', { ascending: true });
-
-      if (error) {
-        const { data: viewData, error: viewError } = await supabase
-          .from('employee_limited_view' as any)
-          .select('*')
-          .order('employee_code', { ascending: true });
-
-        if (viewError) {
-          console.error('Error fetching limited employees:', viewError);
-          setEmployees([]);
-          setLoading(false);
-          return;
+    try {
+      const result = await debouncedFetch(cacheKey, async () => {
+        // Employee role: fetch only their own record
+        if (isEmployee && scopedEmployeeId) {
+          const { data, error } = await supabase
+            .from('employees')
+            .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+            .eq('id', scopedEmployeeId)
+            .single();
+          trackQuery('employees', data ? 1 : 0);
+          if (error) { console.error('Error fetching employee profile:', error); return []; }
+          return data ? [mapRow(data)] : [];
         }
 
-        const [deptsRes, stationsRes] = await Promise.all([
-          supabase.from('departments').select('id, name_ar, name_en'),
-          supabase.from('stations').select('id, code, name_ar, name_en'),
-        ]);
-        const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
-        const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
+        // Station managers get limited view
+        if (user?.role === 'station_manager') {
+          const { data, error } = await supabase
+            .from('employee_limited_view' as any)
+            .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+            .order('employee_code', { ascending: true });
 
-        setEmployees((viewData || []).map((row: any) => {
-          const dept = deptMap.get(row.department_id);
-          const station = stationMap.get(row.station_id);
-          return mapRow({ ...row, departments: dept || null, stations: station || null });
-        }));
-        setLoading(false);
-        return;
-      }
+          if (error) {
+            const { data: viewData, error: viewError } = await supabase
+              .from('employee_limited_view' as any)
+              .select('id, employee_code, name_ar, name_en, department_id, station_id, status, job_title_ar, phone, avatar')
+              .order('employee_code', { ascending: true });
 
-      setEmployees((data || []).map(mapRow));
-      setLoading(false);
-      return;
-    }
+            if (viewError) { console.error('Error fetching limited employees:', viewError); return []; }
+            trackQuery('employees', viewData?.length || 0);
 
-    // Admin/HR: fetch all
-    const { data, error } = await supabase
-      .from('employees')
-      .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
-      .order('employee_code', { ascending: true });
+            const [deptsRes, stationsRes] = await Promise.all([
+              supabase.from('departments').select('id, name_ar, name_en'),
+              supabase.from('stations').select('id, code, name_ar, name_en'),
+            ]);
+            const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
+            const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
 
-    if (error) {
-      console.error('Error fetching employees:', error);
-      setEmployees([]);
-    } else {
-      setEmployees((data || []).map(mapRow));
+            return (viewData || []).map((row: any) => {
+              const dept = deptMap.get(row.department_id);
+              const station = stationMap.get(row.station_id);
+              return mapRow({ ...row, departments: dept || null, stations: station || null });
+            });
+          }
+          trackQuery('employees', data?.length || 0);
+          return (data || []).map(mapRow);
+        }
+
+        // Admin/HR: fetch all
+        const { data, error } = await supabase
+          .from('employees')
+          .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+          .order('employee_code', { ascending: true });
+        trackQuery('employees', data?.length || 0);
+        if (error) { console.error('Error fetching employees:', error); return []; }
+        return (data || []).map(mapRow);
+      }, { ttlMs: 60_000 });
+
+      setEmployees(result);
+    } catch (err) {
+      console.error('fetchEmployees error:', err);
     }
     setLoading(false);
   }, [user?.role, isEmployee, scopedEmployeeId]);

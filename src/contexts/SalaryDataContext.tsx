@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 
 export interface SalaryRecord {
   year: string;
@@ -19,11 +21,9 @@ export interface SalaryRecord {
   incomeTax: number;
 }
 
-/** Gross = basic + transport + incentives + station + mobile (livingAllowance excluded - entered monthly) */
 export const calcGross = (r: Omit<SalaryRecord, 'year' | 'employeeId' | 'stationLocation'>) =>
   r.basicSalary + r.transportAllowance + r.incentives + r.stationAllowance + r.mobileAllowance;
 
-/** Gross including living allowance (for display in salary record) */
 export const calcFullGross = (r: Omit<SalaryRecord, 'year' | 'employeeId' | 'stationLocation'>) =>
   r.basicSalary + r.transportAllowance + r.incentives + r.livingAllowance + r.stationAllowance + r.mobileAllowance;
 
@@ -41,7 +41,9 @@ interface SalaryDataContextType {
 
 const SalaryDataContext = createContext<SalaryDataContextType | undefined>(undefined);
 
-// Map DB row to SalaryRecord (employeeId = employee uuid id, not code)
+const SALARY_COLS = 'employee_id, year, basic_salary, transport_allowance, incentives, living_allowance, station_allowance, mobile_allowance, roster_allowance, employee_insurance, employer_social_insurance, health_insurance, income_tax';
+const EMPLOYEE_SALARY_COLS = 'employee_id, year, basic_salary, transport_allowance, incentives, living_allowance, station_allowance, mobile_allowance, roster_allowance, employee_insurance';
+
 const mapRow = (row: any): SalaryRecord => ({
   year: row.year,
   employeeId: row.employee_id,
@@ -62,19 +64,40 @@ const mapRow = (row: any): SalaryRecord => ({
 export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [salaryRecords, setSalaryRecords] = useState<SalaryRecord[]>([]);
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+  const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
   const fetchRecords = useCallback(async () => {
-    const { data, error } = await supabase.from('salary_records').select('*');
-    if (!error && data) {
-      setSalaryRecords(data.map(mapRow));
-    }
-  }, []);
+    const cacheKey = `salary_${scopedEmployeeId || 'all'}`;
+    
+    const result = await debouncedFetch(cacheKey, async () => {
+      let query;
+      if (isEmployee && scopedEmployeeId) {
+        query = supabase.from('salary_records').select(EMPLOYEE_SALARY_COLS).eq('employee_id', scopedEmployeeId).limit(5);
+      } else {
+        query = supabase.from('salary_records').select(SALARY_COLS);
+      }
+      const { data, error } = await query;
+      trackQuery('salary', data?.length || 0);
+      if (!error && data) return data.map(mapRow);
+      return [];
+    }, { ttlMs: 120_000 });
+
+    setSalaryRecords(result);
+  }, [isEmployee, scopedEmployeeId]);
+
+  const hasMounted = useRef(false);
+  useEffect(() => {
+    if (hasMounted.current) return;
+    hasMounted.current = true;
+    fetchRecords();
+  }, [fetchRecords]);
 
   useEffect(() => {
-    fetchRecords();
-    // Re-fetch when auth state changes (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        invalidateCache('salary_');
         fetchRecords();
       }
     });
@@ -91,7 +114,6 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [salaryRecords]);
 
   const saveSalaryRecord = useCallback(async (record: SalaryRecord) => {
-    // Upsert based on employee_id + year
     const payload = {
       employee_id: record.employeeId,
       year: record.year,
@@ -108,44 +130,25 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       income_tax: record.incomeTax,
     };
 
-    // Check if record exists
     const existing = salaryRecords.find(r => r.employeeId === record.employeeId && r.year === record.year);
     
     if (existing) {
-      const { error } = await supabase
-        .from('salary_records')
-        .update(payload)
-        .eq('employee_id', record.employeeId)
-        .eq('year', record.year);
-      if (error) {
-        console.error('Error updating salary record:', error);
-        return;
-      }
+      const { error } = await supabase.from('salary_records').update(payload).eq('employee_id', record.employeeId).eq('year', record.year);
+      if (error) { console.error('Error updating salary record:', error); return; }
     } else {
-      const { error } = await supabase
-        .from('salary_records')
-        .insert(payload);
-      if (error) {
-        console.error('Error inserting salary record:', error);
-        return;
-      }
+      const { error } = await supabase.from('salary_records').insert(payload);
+      if (error) { console.error('Error inserting salary record:', error); return; }
     }
 
-    // Refresh from DB
+    invalidateCache('salary_');
     await fetchRecords();
     addNotification({ titleAr: `تم حفظ سجل الراتب`, titleEn: `Salary record saved`, type: 'success', module: 'salary' });
   }, [salaryRecords, addNotification, fetchRecords]);
 
   const deleteSalaryRecord = useCallback(async (employeeId: string, year: string) => {
-    const { error } = await supabase
-      .from('salary_records')
-      .delete()
-      .eq('employee_id', employeeId)
-      .eq('year', year);
-    if (error) {
-      console.error('Error deleting salary record:', error);
-      return;
-    }
+    const { error } = await supabase.from('salary_records').delete().eq('employee_id', employeeId).eq('year', year);
+    if (error) { console.error('Error deleting salary record:', error); return; }
+    invalidateCache('salary_');
     await fetchRecords();
     addNotification({ titleAr: `تم حذف سجل الراتب`, titleEn: `Salary record deleted`, type: 'warning', module: 'salary' });
   }, [addNotification, fetchRecords]);

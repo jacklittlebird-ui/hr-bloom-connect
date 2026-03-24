@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 
 export interface CriteriaItem {
   name: string;
@@ -51,6 +53,10 @@ interface PerformanceDataContextType {
 
 const PerformanceDataContext = createContext<PerformanceDataContextType | undefined>(undefined);
 
+// Specific columns - no SELECT *
+const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, employees(name_ar)';
+const EMPLOYEE_PERF_COLS = 'id, employee_id, quarter, year, score, status, review_date, strengths, improvements';
+
 const mapRow = (r: any): PerformanceReview => ({
   id: r.id,
   employeeId: r.employee_id,
@@ -72,19 +78,41 @@ const mapRow = (r: any): PerformanceReview => ({
 
 export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [reviews, setReviews] = useState<PerformanceReview[]>([]);
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+  const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
   const fetchReviews = useCallback(async () => {
-    const { data } = await supabase
-      .from('performance_reviews')
-      .select('*, employees(name_ar)')
-      .order('created_at', { ascending: false });
-    if (data) setReviews(data.map(mapRow));
-  }, []);
+    const cacheKey = `performance_${scopedEmployeeId || 'all'}`;
+    
+    const result = await debouncedFetch(cacheKey, async () => {
+      let query;
+      if (isEmployee && scopedEmployeeId) {
+        query = supabase.from('performance_reviews').select(EMPLOYEE_PERF_COLS).eq('employee_id', scopedEmployeeId).order('created_at', { ascending: false }).limit(20);
+      } else {
+        query = supabase.from('performance_reviews').select(ADMIN_PERF_COLS).order('created_at', { ascending: false });
+      }
+      const { data } = await query;
+      trackQuery('performance', data?.length || 0);
+      return (data || []).map(mapRow);
+    }, { ttlMs: 60_000 });
+
+    setReviews(result);
+  }, [isEmployee, scopedEmployeeId]);
+
+  const hasMounted = useRef(false);
+  useEffect(() => {
+    if (hasMounted.current) return;
+    hasMounted.current = true;
+    fetchReviews();
+  }, [fetchReviews]);
 
   useEffect(() => {
-    fetchReviews();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') fetchReviews();
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        invalidateCache('performance_');
+        fetchReviews();
+      }
     });
     return () => subscription.unsubscribe();
   }, [fetchReviews]);
@@ -105,6 +133,7 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
       criteria: review.criteria ? JSON.parse(JSON.stringify(review.criteria)) : null,
     });
     if (error) { console.error('addReview error:', error); throw error; }
+    invalidateCache('performance_');
     await fetchReviews();
   }, [fetchReviews]);
 
@@ -125,11 +154,13 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
 
     const { error } = await supabase.from('performance_reviews').update(payload).eq('id', id);
     if (error) { console.error('updateReview error:', error); throw error; }
+    invalidateCache('performance_');
     await fetchReviews();
   }, [fetchReviews]);
 
   const deleteReview = useCallback(async (id: string) => {
     await supabase.from('performance_reviews').delete().eq('id', id);
+    invalidateCache('performance_');
     await fetchReviews();
   }, [fetchReviews]);
 

@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 
 export interface Loan {
   id: string;
-  employeeId: string; // UUID from employees table
+  employeeId: string;
   employeeName: string;
   station: string;
   amount: number;
@@ -21,7 +23,7 @@ export interface Loan {
 
 export interface Advance {
   id: string;
-  employeeId: string; // UUID from employees table
+  employeeId: string;
   employeeName: string;
   station: string;
   amount: number;
@@ -51,23 +53,38 @@ interface LoanDataContextType {
 
 const LoanDataContext = createContext<LoanDataContextType | undefined>(undefined);
 
+// Specific columns instead of SELECT *
+const LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, employees(name_ar, stations(code))';
+const EMPLOYEE_LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason';
+const ADVANCE_COLS = 'id, employee_id, amount, created_at, deduction_month, status, reason, employees(name_ar, stations(code))';
+const EMPLOYEE_ADVANCE_COLS = 'id, employee_id, amount, created_at, deduction_month, status, reason';
+
 export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [advances, setAdvances] = useState<Advance[]>([]);
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+  const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
   const fetchLoans = useCallback(async () => {
-    const { data } = await supabase
-      .from('loans')
-      .select('*, employees(name_ar, stations(code))')
-      .order('created_at', { ascending: false });
-
-    if (data) {
-      setLoans(data.map(l => ({
+    const cacheKey = `loans_${scopedEmployeeId || 'all'}`;
+    
+    const result = await debouncedFetch(cacheKey, async () => {
+      let query;
+      if (isEmployee && scopedEmployeeId) {
+        query = supabase.from('loans').select(EMPLOYEE_LOAN_COLS).eq('employee_id', scopedEmployeeId).order('created_at', { ascending: false }).limit(20);
+      } else {
+        query = supabase.from('loans').select(LOAN_COLS).order('created_at', { ascending: false });
+      }
+      const { data } = await query;
+      trackQuery('loans', data?.length || 0);
+      
+      return (data || []).map((l: any) => ({
         id: l.id,
         employeeId: l.employee_id,
-        employeeName: (l.employees as any)?.name_ar || '',
-        station: (l.employees as any)?.stations?.code || '',
+        employeeName: l.employees?.name_ar || '',
+        station: l.employees?.stations?.code || '',
         amount: l.amount,
         installments: l.installments_count,
         monthlyPayment: l.monthly_installment || 0,
@@ -77,43 +94,67 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         startDate: l.start_date,
         status: l.status as Loan['status'],
         notes: l.reason || '',
-        calculationMethod: 'auto',
-      })));
-    }
-  }, []);
+        calculationMethod: 'auto' as const,
+      }));
+    }, { ttlMs: 60_000 });
+    
+    setLoans(result);
+  }, [isEmployee, scopedEmployeeId]);
 
   const fetchAdvances = useCallback(async () => {
-    const { data } = await supabase
-      .from('advances')
-      .select('*, employees(name_ar, stations(code))')
-      .order('created_at', { ascending: false });
-
-    if (data) {
-      setAdvances(data.map(a => ({
+    const cacheKey = `advances_${scopedEmployeeId || 'all'}`;
+    
+    const result = await debouncedFetch(cacheKey, async () => {
+      let query;
+      if (isEmployee && scopedEmployeeId) {
+        query = supabase.from('advances').select(EMPLOYEE_ADVANCE_COLS).eq('employee_id', scopedEmployeeId).order('created_at', { ascending: false }).limit(20);
+      } else {
+        query = supabase.from('advances').select(ADVANCE_COLS).order('created_at', { ascending: false });
+      }
+      const { data } = await query;
+      trackQuery('advances', data?.length || 0);
+      
+      return (data || []).map((a: any) => ({
         id: a.id,
         employeeId: a.employee_id,
-        employeeName: (a.employees as any)?.name_ar || '',
-        station: (a.employees as any)?.stations?.code || '',
+        employeeName: a.employees?.name_ar || '',
+        station: a.employees?.stations?.code || '',
         amount: a.amount,
         requestDate: a.created_at.split('T')[0],
         deductionMonth: a.deduction_month,
         status: a.status as Advance['status'],
         reason: a.reason || '',
-      })));
-    }
-  }, []);
+      }));
+    }, { ttlMs: 60_000 });
+    
+    setAdvances(result);
+  }, [isEmployee, scopedEmployeeId]);
 
   const refreshData = useCallback(async () => {
+    invalidateCache('loans_');
+    invalidateCache('advances_');
     await Promise.all([fetchLoans(), fetchAdvances()]);
   }, [fetchLoans, fetchAdvances]);
 
+  const hasMounted = useRef(false);
   useEffect(() => {
-    refreshData();
+    if (hasMounted.current) return;
+    hasMounted.current = true;
+    fetchLoans();
+    fetchAdvances();
+  }, [fetchLoans, fetchAdvances]);
+
+  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') refreshData();
+      if (event === 'SIGNED_IN') {
+        invalidateCache('loans_');
+        invalidateCache('advances_');
+        fetchLoans();
+        fetchAdvances();
+      }
     });
     return () => subscription.unsubscribe();
-  }, [refreshData]);
+  }, [fetchLoans, fetchAdvances]);
 
   const addLoan = useCallback(async (loan: Omit<Loan, 'id' | 'paidInstallments' | 'paidAmount' | 'remainingAmount' | 'monthlyPayment'> & { monthlyPayment?: number }) => {
     const { error } = await supabase.from('loans').insert({
@@ -127,6 +168,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
     if (error) throw error;
     addNotification({ titleAr: `تم إضافة قرض جديد: ${loan.employeeName}`, titleEn: `New loan added: ${loan.employeeName}`, type: 'info', module: 'loan' });
+    invalidateCache('loans_');
     await fetchLoans();
   }, [addNotification, fetchLoans]);
 
@@ -142,19 +184,19 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const { error } = await supabase.from('loans').update(dbUpdates).eq('id', id);
     if (error) throw error;
+    invalidateCache('loans_');
     await fetchLoans();
   }, [fetchLoans]);
 
   const deleteLoan = useCallback(async (id: string) => {
-    // Delete installments first
     await supabase.from('loan_installments').delete().eq('loan_id', id);
     const { error } = await supabase.from('loans').delete().eq('id', id);
     if (error) throw error;
+    invalidateCache('loans_');
     await fetchLoans();
   }, [fetchLoans]);
 
   const recordLoanPayment = useCallback(async (loanId: string) => {
-    // Find next pending installment and mark it paid
     const { data: installments, error: installmentError } = await supabase
       .from('loan_installments')
       .select('id')
@@ -165,36 +207,23 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     if (installmentError) throw installmentError;
     if (!installments || installments.length === 0) {
+      invalidateCache('loans_');
       await fetchLoans();
       return;
     }
 
-    const { error: payError } = await supabase
-      .from('loan_installments')
-      .update({ status: 'paid', paid_at: new Date().toISOString() })
-      .eq('id', installments[0].id);
+    await supabase.from('loan_installments').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', installments[0].id);
 
-    if (payError) throw payError;
-
-    const { data: loanRow, error: loanError } = await supabase
-      .from('loans')
-      .select('paid_count, installments_count')
-      .eq('id', loanId)
-      .single();
-
+    const { data: loanRow, error: loanError } = await supabase.from('loans').select('paid_count, installments_count').eq('id', loanId).single();
     if (loanError) throw loanError;
 
     const newPaid = Math.min((loanRow.paid_count || 0) + 1, loanRow.installments_count || 1);
-    const { error: updateError } = await supabase
-      .from('loans')
-      .update({
-        paid_count: newPaid,
-        status: newPaid >= (loanRow.installments_count || 1) ? 'completed' : 'active',
-      })
-      .eq('id', loanId);
+    await supabase.from('loans').update({
+      paid_count: newPaid,
+      status: newPaid >= (loanRow.installments_count || 1) ? 'completed' : 'active',
+    }).eq('id', loanId);
 
-    if (updateError) throw updateError;
-
+    invalidateCache('loans_');
     await fetchLoans();
   }, [fetchLoans]);
 
@@ -208,6 +237,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
     if (error) throw error;
     addNotification({ titleAr: `تم إضافة سلفة جديدة: ${advance.employeeName}`, titleEn: `New advance added: ${advance.employeeName}`, type: 'info', module: 'loan' });
+    invalidateCache('advances_');
     await fetchAdvances();
   }, [addNotification, fetchAdvances]);
 
@@ -221,12 +251,14 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const { error } = await supabase.from('advances').update(dbUpdates).eq('id', id);
     if (error) throw error;
+    invalidateCache('advances_');
     await fetchAdvances();
   }, [fetchAdvances]);
 
   const deleteAdvance = useCallback(async (id: string) => {
     const { error } = await supabase.from('advances').delete().eq('id', id);
     if (error) throw error;
+    invalidateCache('advances_');
     await fetchAdvances();
   }, [fetchAdvances]);
 
@@ -235,15 +267,11 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [loans]);
 
   const getEmployeeMonthlyLoanPayment = useCallback((employeeId: string) => {
-    return loans
-      .filter(l => l.employeeId === employeeId && l.status === 'active')
-      .reduce((sum, l) => sum + l.monthlyPayment, 0);
+    return loans.filter(l => l.employeeId === employeeId && l.status === 'active').reduce((sum, l) => sum + l.monthlyPayment, 0);
   }, [loans]);
 
   const getEmployeeAdvanceForMonth = useCallback((employeeId: string, month: string) => {
-    return advances
-      .filter(a => a.employeeId === employeeId && a.deductionMonth === month && a.status === 'approved')
-      .reduce((sum, a) => sum + a.amount, 0);
+    return advances.filter(a => a.employeeId === employeeId && a.deductionMonth === month && a.status === 'approved').reduce((sum, a) => sum + a.amount, 0);
   }, [advances]);
 
   return (

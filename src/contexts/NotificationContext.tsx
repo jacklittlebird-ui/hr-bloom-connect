@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 
 export type PortalFilter = 'admin' | 'employee' | 'station_manager' | 'training' | 'kiosk' | 'all';
 
@@ -32,6 +33,9 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+// Specific columns instead of SELECT *
+const NOTIFICATION_COLS = 'id, title_ar, title_en, desc_ar, desc_en, type, module, employee_id, user_id, target_type, sender_name, is_read, created_at';
+
 const mapRow = (r: any): AppNotification => ({
   id: r.id,
   titleAr: r.title_ar,
@@ -48,9 +52,8 @@ const mapRow = (r: any): AppNotification => ({
   timestamp: r.created_at,
 });
 
-// Module mappings per portal
 const PORTAL_MODULES: Record<PortalFilter, string[] | null> = {
-  admin: null, // sees everything
+  admin: null,
   employee: ['general', 'employee', 'salary', 'payroll', 'attendance', 'leave', 'loan', 'training', 'performance', 'portal', 'asset'],
   station_manager: ['general', 'attendance', 'performance', 'employee'],
   training: ['general', 'training'],
@@ -63,24 +66,34 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [userId, setUserId] = useState<string | null>(null);
 
   const fetchNotifications = useCallback(async () => {
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(100);
-    if (data) setNotifications(data.map(mapRow));
+    const result = await debouncedFetch('notifications', async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select(NOTIFICATION_COLS)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      trackQuery('notifications', data?.length || 0);
+      return (data || []).map(mapRow);
+    }, { ttlMs: 30_000 });
+    
+    setNotifications(result);
   }, []);
 
+  const hasMounted = useRef(false);
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUserId(data.user.id);
-        fetchNotifications();
+        if (!hasMounted.current) {
+          hasMounted.current = true;
+          fetchNotifications();
+        }
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setUserId(session.user.id);
+        invalidateCache('notifications');
         fetchNotifications();
       } else if (event === 'SIGNED_OUT') {
         setUserId(null);
@@ -91,42 +104,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [fetchNotifications]);
 
   const getFilteredNotifications = useCallback((portal: PortalFilter, employeeId?: string): AppNotification[] => {
-    let filtered = notifications;
-
-    // For employee portal: RLS already filters by user_id = auth.uid()
-    // So all fetched notifications belong to this user - just filter by relevant modules
-    if (portal === 'employee') {
-      const modules = PORTAL_MODULES.employee;
-      if (modules) {
-        filtered = filtered.filter(n => modules.includes(n.module));
-      }
-    }
-
-    // For station_manager, show relevant modules
-    if (portal === 'station_manager') {
-      const modules = PORTAL_MODULES.station_manager;
-      if (modules) {
-        filtered = filtered.filter(n => modules.includes(n.module));
-      }
-    }
-
-    // For training portal
-    if (portal === 'training') {
-      const modules = PORTAL_MODULES.training;
-      if (modules) {
-        filtered = filtered.filter(n => modules.includes(n.module));
-      }
-    }
-
-    // For kiosk
-    if (portal === 'kiosk') {
-      const modules = PORTAL_MODULES.kiosk;
-      if (modules) {
-        filtered = filtered.filter(n => modules.includes(n.module));
-      }
-    }
-
-    return filtered;
+    const modules = PORTAL_MODULES[portal];
+    if (!modules) return notifications;
+    return notifications.filter(n => modules.includes(n.module));
   }, [notifications]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -153,8 +133,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       target_type: n.targetType || 'general',
     };
     await supabase.from('notifications').insert(payload);
-    fetchNotifications();
-  }, [userId, fetchNotifications]);
+    // Don't immediately refetch - the optimistic update is sufficient
+  }, [userId]);
 
   const markAsRead = useCallback(async (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
