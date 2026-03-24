@@ -22,10 +22,11 @@ export const RecentActivity = () => {
     const load = async () => {
       const items: ActivityItem[] = [];
 
+      // Reduced limits: 2 per type instead of 3 (total 6 vs 9 rows)
       const [leavesRes, loansRes, empRes] = await Promise.all([
-        supabase.from('leave_requests').select('id, status, created_at, leave_type').order('created_at', { ascending: false }).limit(3),
-        supabase.from('loans').select('id, status, created_at, amount').order('created_at', { ascending: false }).limit(3),
-        supabase.from('employees').select('id, name_ar, name_en, created_at').order('created_at', { ascending: false }).limit(3),
+        supabase.from('leave_requests').select('id, status, created_at, leave_type').order('created_at', { ascending: false }).limit(2),
+        supabase.from('loans').select('id, status, created_at, amount').order('created_at', { ascending: false }).limit(2),
+        supabase.from('employees').select('id, name_ar, name_en, created_at').order('created_at', { ascending: false }).limit(2),
       ]);
 
       leavesRes.data?.forEach(l => items.push({
@@ -49,7 +50,7 @@ export const RecentActivity = () => {
       }));
 
       items.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-      setActivities(items.slice(0, 8));
+      setActivities(items.slice(0, 6));
     };
     load();
   }, [ar]);

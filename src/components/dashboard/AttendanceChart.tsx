@@ -10,17 +10,38 @@ export const AttendanceChart = () => {
   useEffect(() => {
     const fetch = async () => {
       const now = new Date();
+      // Calculate date range for last 6 days
+      const endDate = now.toISOString().split('T')[0];
+      const startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 5);
+      const startStr = startDate.toISOString().split('T')[0];
+
+      // Single batch query instead of 6 sequential queries
+      const { data: records } = await supabase
+        .from('attendance_records')
+        .select('date, is_late')
+        .gte('date', startStr)
+        .lte('date', endDate);
+
+      if (!records) return;
+
+      // Group by date client-side
+      const dateMap: Record<string, { attendance: number; late: number }> = {};
+      records.forEach(r => {
+        if (!dateMap[r.date]) dateMap[r.date] = { attendance: 0, late: 0 };
+        dateMap[r.date].attendance++;
+        if (r.is_late) dateMap[r.date].late++;
+      });
+
       const days: { day: string; attendance: number; late: number }[] = [];
-      // Last 6 working days
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now);
         d.setDate(d.getDate() - i);
         const dateStr = d.toISOString().split('T')[0];
-        const { data: records } = await supabase.from('attendance_records').select('id, is_late').eq('date', dateStr);
         days.push({
           day: d.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { weekday: 'short' }),
-          attendance: records?.length || 0,
-          late: records?.filter(r => r.is_late).length || 0,
+          attendance: dateMap[dateStr]?.attendance || 0,
+          late: dateMap[dateStr]?.late || 0,
         });
       }
       setData(days);

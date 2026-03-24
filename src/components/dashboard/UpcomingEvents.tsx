@@ -22,10 +22,11 @@ export const UpcomingEvents = () => {
       const nextMonth = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
       const result: UpcomingEvent[] = [];
 
+      // Fetch only minimal columns needed
       const [trainRes, leaveRes, loanRes] = await Promise.all([
-        supabase.from('planned_courses').select('id, course_name, planned_date').gte('planned_date', today).lte('planned_date', nextMonth).order('planned_date').limit(5),
-        supabase.from('leave_requests').select('id, leave_type, start_date').eq('status', 'approved').gte('start_date', today).order('start_date').limit(5),
-        supabase.from('loan_installments').select('id, due_date, amount').eq('status', 'pending').gte('due_date', today).lte('due_date', nextMonth).order('due_date').limit(5),
+        supabase.from('planned_courses').select('id, course_name, planned_date').gte('planned_date', today).lte('planned_date', nextMonth).order('planned_date').limit(3),
+        supabase.from('leave_requests').select('id, leave_type, start_date').eq('status', 'approved').gte('start_date', today).order('start_date').limit(3),
+        supabase.from('loan_installments').select('id, due_date, amount').eq('status', 'pending').gte('due_date', today).lte('due_date', nextMonth).order('due_date').limit(3),
       ]);
 
       trainRes.data?.forEach(r => result.push({ id: r.id, title: r.course_name, date: r.planned_date || '', type: 'training' }));
@@ -33,7 +34,7 @@ export const UpcomingEvents = () => {
       loanRes.data?.forEach(r => result.push({ id: r.id, title: ar ? `قسط ${r.amount}` : `Installment ${r.amount}`, date: r.due_date, type: 'loan' }));
 
       result.sort((a, b) => a.date.localeCompare(b.date));
-      setEvents(result.slice(0, 8));
+      setEvents(result.slice(0, 6));
     };
     fetchEvents();
   }, [ar]);

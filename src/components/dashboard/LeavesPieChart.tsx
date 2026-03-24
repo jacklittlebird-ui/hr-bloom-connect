@@ -12,15 +12,16 @@ export const LeavesPieChart = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data: leaves } = await supabase.from('leave_requests').select('status');
-      if (!leaves) return;
-      const pending = leaves.filter(l => l.status === 'pending').length;
-      const approved = leaves.filter(l => l.status === 'approved').length;
-      const rejected = leaves.filter(l => l.status === 'rejected').length;
+      // Use count queries instead of fetching all rows
+      const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
+        supabase.from('leave_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('leave_requests').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('leave_requests').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
+      ]);
       setData([
-        { name: ar ? 'معلقة' : 'Pending', value: pending },
-        { name: ar ? 'معتمدة' : 'Approved', value: approved },
-        { name: ar ? 'مرفوضة' : 'Rejected', value: rejected },
+        { name: ar ? 'معلقة' : 'Pending', value: pendingRes.count || 0 },
+        { name: ar ? 'معتمدة' : 'Approved', value: approvedRes.count || 0 },
+        { name: ar ? 'مرفوضة' : 'Rejected', value: rejectedRes.count || 0 },
       ].filter(d => d.value > 0));
     };
     load();

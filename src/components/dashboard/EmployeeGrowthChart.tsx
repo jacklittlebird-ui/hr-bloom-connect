@@ -9,9 +9,9 @@ export const EmployeeGrowthChart = () => {
 
   useEffect(() => {
     const fetch = async () => {
+      // Only fetch created_at column
       const { data: employees } = await supabase.from('employees').select('created_at');
       if (!employees) return;
-      // Build cumulative count by month for last 6 months
       const now = new Date();
       const months: { month: string; employees: number }[] = [];
       for (let i = 5; i >= 0; i--) {

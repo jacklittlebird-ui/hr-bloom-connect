@@ -10,6 +10,7 @@ export const TrainingChart = () => {
 
   useEffect(() => {
     const load = async () => {
+      // Only fetch status column
       const { data: courses } = await supabase.from('planned_courses').select('status');
       if (!courses) return;
       const statusMap: Record<string, number> = {};

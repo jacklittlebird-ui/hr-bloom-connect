@@ -11,6 +11,7 @@ export const SalaryOverviewChart = () => {
   useEffect(() => {
     const load = async () => {
       const year = new Date().getFullYear().toString();
+      // Only fetch month and net_salary columns
       const { data: entries } = await supabase.from('payroll_entries').select('month, net_salary').eq('year', year);
       if (!entries) return;
       const monthMap: Record<string, number> = {};

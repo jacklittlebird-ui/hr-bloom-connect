@@ -11,6 +11,7 @@ export const PerformanceChart = () => {
   useEffect(() => {
     const load = async () => {
       const year = new Date().getFullYear().toString();
+      // Only fetch quarter and score columns
       const { data: reviews } = await supabase.from('performance_reviews').select('quarter, score').eq('year', year);
       if (!reviews) return;
       const qMap: Record<string, { total: number; count: number }> = {};

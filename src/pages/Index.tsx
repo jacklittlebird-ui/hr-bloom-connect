@@ -12,11 +12,12 @@ import { TrainingChart } from '@/components/dashboard/TrainingChart';
 import { PerformanceChart } from '@/components/dashboard/PerformanceChart';
 import { SalaryOverviewChart } from '@/components/dashboard/SalaryOverviewChart';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
+import { LazyChart } from '@/components/dashboard/LazyChart';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, UserCheck, Building2, CalendarCheck, FileText, Monitor,
-  GraduationCap, Star, UserX, Banknote, RefreshCw, BarChart3, Loader2
+  GraduationCap, Star, UserX, Banknote, RefreshCw, BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,7 +34,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [dashStats, setDashStats] = useState({
     totalEmployees: 0,
-    inactiveEmployees: 0,
+    activeEmployees: 0,
     departments: 0,
     todayAttendance: 0,
     pendingLeaves: 0,
@@ -49,31 +50,33 @@ const Index = () => {
     const today = new Date().toISOString().split('T')[0];
     const currentYear = new Date().getFullYear().toString();
 
-    const [empRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes] = await Promise.all([
-      supabase.from('employees').select('id, status'),
-      supabase.from('departments').select('id').eq('is_active', true),
-      supabase.from('attendance_records').select('id').eq('date', today),
-      supabase.from('leave_requests').select('id').eq('status', 'pending'),
-      supabase.from('assets').select('id').not('assigned_to', 'is', null),
-      supabase.from('planned_courses').select('id').in('status', ['planned', 'in_progress']),
-      supabase.from('performance_reviews').select('id').eq('year', currentYear),
-      supabase.from('loans').select('id').eq('status', 'active'),
+    // Use head:true count queries — zero rows transferred, only count header
+    const [totalEmpRes, activeEmpRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes] = await Promise.all([
+      supabase.from('employees').select('id', { count: 'exact', head: true }),
+      supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('departments').select('id', { count: 'exact', head: true }).eq('is_active', true),
+      supabase.from('attendance_records').select('id', { count: 'exact', head: true }).eq('date', today),
+      supabase.from('leave_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('assets').select('id', { count: 'exact', head: true }).not('assigned_to', 'is', null),
+      supabase.from('planned_courses').select('id', { count: 'exact', head: true }).in('status', ['planned', 'in_progress']),
+      supabase.from('performance_reviews').select('id', { count: 'exact', head: true }).eq('year', currentYear),
+      supabase.from('loans').select('id', { count: 'exact', head: true }).eq('status', 'active'),
     ]);
 
-    const totalActive = empRes.data?.filter(e => e.status === 'active').length || 0;
-    const totalEmps = empRes.data?.length || 0;
-    const todayAtt = attRes.data?.length || 0;
+    const totalEmps = totalEmpRes.count || 0;
+    const totalActive = activeEmpRes.count || 0;
+    const todayAtt = attRes.count || 0;
 
     setDashStats({
       totalEmployees: totalEmps,
-      inactiveEmployees: totalEmps - totalActive,
-      departments: deptRes.data?.length || 0,
+      activeEmployees: totalActive,
+      departments: deptRes.count || 0,
       todayAttendance: todayAtt,
-      pendingLeaves: leaveRes.data?.length || 0,
-      assignedAssets: assetRes.data?.length || 0,
-      activeCourses: courseRes.data?.length || 0,
-      performanceReviews: perfRes.data?.length || 0,
-      activeLoans: loanRes.data?.length || 0,
+      pendingLeaves: leaveRes.count || 0,
+      assignedAssets: assetRes.count || 0,
+      activeCourses: courseRes.count || 0,
+      performanceReviews: perfRes.count || 0,
+      activeLoans: loanRes.count || 0,
       absentToday: Math.max(0, totalActive - todayAtt),
     });
     setLoading(false);
@@ -83,7 +86,7 @@ const Index = () => {
 
   const stats = [
     { key: 'dashboard.totalEmployees', value: dashStats.totalEmployees, icon: Users, variant: 'coral' as const, trend: 'up' as const, trendValue: '+3%' },
-    { key: 'dashboard.inactiveEmployees', value: dashStats.inactiveEmployees, icon: UserCheck, variant: 'purple' as const },
+    { key: 'dashboard.inactiveEmployees', value: dashStats.totalEmployees - dashStats.activeEmployees, icon: UserCheck, variant: 'purple' as const },
     { key: 'dashboard.departments', value: dashStats.departments, icon: Building2, variant: 'blue' as const, trend: 'neutral' as const, trendValue: '0%' },
     { key: 'dashboard.todayAttendance', value: dashStats.todayAttendance, icon: CalendarCheck, variant: 'teal' as const },
     { key: 'dashboard.pendingLeaves', value: dashStats.pendingLeaves, icon: FileText, variant: 'yellow' as const },
@@ -106,44 +109,23 @@ const Index = () => {
   return (
     <DashboardLayout>
       <WelcomeBanner />
-
-      {/* Quick Actions */}
       <QuickActions />
-
-      {/* Live Status */}
       <LiveStatus />
 
       {/* Primary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
         {stats.map((stat, i) => (
-          <StatCard
-            key={stat.key}
-            title={t(stat.key)}
-            value={stat.value}
-            icon={stat.icon}
-            variant={stat.variant}
-            trend={stat.trend}
-            trendValue={stat.trendValue}
-            delay={i}
-          />
+          <StatCard key={stat.key} title={t(stat.key)} value={stat.value} icon={stat.icon} variant={stat.variant} trend={stat.trend} trendValue={stat.trendValue} delay={i} />
         ))}
       </div>
 
       {/* Extended Module Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {extraStats.map((stat, i) => (
-          <StatCard
-            key={i}
-            title={stat.label}
-            value={stat.value}
-            icon={stat.icon}
-            variant={stat.variant}
-            delay={i + 6}
-          />
+          <StatCard key={i} title={stat.label} value={stat.value} icon={stat.icon} variant={stat.variant} delay={i + 6} />
         ))}
       </div>
 
-      {/* Station Employee Cards */}
       <StationCards />
 
       <SectionHeader title={t('chart.reportsStats')} icon={BarChart3}>
@@ -156,31 +138,24 @@ const Index = () => {
         </Button>
       </SectionHeader>
 
-      {/* Row 1 */}
+      {/* Charts — lazy loaded on scroll */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-        <ChartCard><DepartmentChart /></ChartCard>
-        <ChartCard><EmployeeGrowthChart /></ChartCard>
+        <LazyChart><ChartCard><DepartmentChart /></ChartCard></LazyChart>
+        <LazyChart><ChartCard><EmployeeGrowthChart /></ChartCard></LazyChart>
       </div>
-
-      {/* Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-        <ChartCard><AttendanceChart /></ChartCard>
-        <ChartCard><LeavesPieChart /></ChartCard>
+        <LazyChart><ChartCard><AttendanceChart /></ChartCard></LazyChart>
+        <LazyChart><ChartCard><LeavesPieChart /></ChartCard></LazyChart>
       </div>
-
-      {/* Row 3 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-        <ChartCard><TrainingChart /></ChartCard>
-        <ChartCard><PerformanceChart /></ChartCard>
+        <LazyChart><ChartCard><TrainingChart /></ChartCard></LazyChart>
+        <LazyChart><ChartCard><PerformanceChart /></ChartCard></LazyChart>
       </div>
-
-      {/* Row 4 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-        <ChartCard><SalaryOverviewChart /></ChartCard>
+        <LazyChart><ChartCard><SalaryOverviewChart /></ChartCard></LazyChart>
         <RecentActivity />
       </div>
 
-      {/* Upcoming Events & Announcements */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
         <UpcomingEvents />
         <Announcements />

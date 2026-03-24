@@ -20,6 +20,7 @@ export const DepartmentChart = () => {
 
   useEffect(() => {
     const fetch = async () => {
+      // Only fetch department_id column instead of full employee rows
       const { data: employees } = await supabase.from('employees').select('department_id');
       const { data: departments } = await supabase.from('departments').select('id, name_ar, name_en');
       if (!employees || !departments) return;
