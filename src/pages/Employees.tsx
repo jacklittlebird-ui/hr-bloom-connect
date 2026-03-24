@@ -1053,7 +1053,13 @@ const Employees = () => {
           onSelectedDepartmentsChange={setSelectedDepartments}
         />
         <div ref={reportRef}>
-          <EmployeeTable employees={filteredEmployees} onDelete={handleDeleteEmployee} />
+          <EmployeeTable
+            employees={filteredEmployees}
+            onDelete={handleDeleteEmployee}
+            currentPage={currentPage}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
       <AddEmployeeDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />

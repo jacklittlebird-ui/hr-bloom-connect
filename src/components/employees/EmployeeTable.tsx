@@ -191,6 +191,57 @@ export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize =
         </TableBody>
       </Table>
 
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className={cn("flex items-center justify-between px-4 py-3 border-t", isRTL && "flex-row-reverse")}>
+          <span className="text-sm text-muted-foreground">
+            {language === 'ar'
+              ? `عرض ${((safeCurrentPage - 1) * pageSize) + 1} - ${Math.min(safeCurrentPage * pageSize, employees.length)} من ${employees.length}`
+              : `Showing ${((safeCurrentPage - 1) * pageSize) + 1} - ${Math.min(safeCurrentPage * pageSize, employees.length)} of ${employees.length}`}
+          </span>
+          <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safeCurrentPage <= 1}
+              onClick={() => onPageChange?.(safeCurrentPage - 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 2)
+              .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                typeof p === 'string' ? (
+                  <span key={`e${i}`} className="px-1 text-muted-foreground">…</span>
+                ) : (
+                  <Button
+                    key={p}
+                    variant={p === safeCurrentPage ? 'default' : 'outline'}
+                    size="sm"
+                    className="min-w-[32px]"
+                    onClick={() => onPageChange?.(p)}
+                  >
+                    {p}
+                  </Button>
+                )
+              )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safeCurrentPage >= totalPages}
+              onClick={() => onPageChange?.(safeCurrentPage + 1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
           <AlertDialogHeader>
