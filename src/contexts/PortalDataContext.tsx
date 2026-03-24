@@ -208,129 +208,140 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // Leave balances - current year only
     const currentYear = new Date().getFullYear();
-    const { data: lbData } = await withTimeout(empFilter(supabase.from('leave_balances').select('*').eq('year', currentYear)), PORTAL_QUERY_TIMEOUT, 'leave_balances');
-    if (lbData) {
-      const mapped: Record<string, LeaveBalance[]> = {};
-      lbData.forEach((lb: any) => {
-        if (!mapped[lb.employee_id]) mapped[lb.employee_id] = [];
-        mapped[lb.employee_id].push(
-          { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used },
-          { typeAr: 'مرضية', typeEn: 'Sick', total: lb.sick_total, used: lb.sick_used, remaining: lb.sick_total - lb.sick_used },
-          { typeAr: 'عارضة', typeEn: 'Casual', total: lb.casual_total, used: lb.casual_used, remaining: lb.casual_total - lb.casual_used },
-          { typeAr: 'الأذونات', typeEn: 'Permissions', total: lb.permissions_total, used: lb.permissions_used, remaining: lb.permissions_total - lb.permissions_used },
-        );
-      });
-      setLeaveBalances(mapped);
-    }
+    try {
+      const { data: lbData } = await withTimeout(empFilter(supabase.from('leave_balances').select('*').eq('year', currentYear)), PORTAL_QUERY_TIMEOUT, 'leave_balances') as any;
+      if (lbData) {
+        const mapped: Record<string, LeaveBalance[]> = {};
+        lbData.forEach((lb: any) => {
+          if (!mapped[lb.employee_id]) mapped[lb.employee_id] = [];
+          mapped[lb.employee_id].push(
+            { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used },
+            { typeAr: 'مرضية', typeEn: 'Sick', total: lb.sick_total, used: lb.sick_used, remaining: lb.sick_total - lb.sick_used },
+            { typeAr: 'عارضة', typeEn: 'Casual', total: lb.casual_total, used: lb.casual_used, remaining: lb.casual_total - lb.casual_used },
+            { typeAr: 'الأذونات', typeEn: 'Permissions', total: lb.permissions_total, used: lb.permissions_used, remaining: lb.permissions_total - lb.permissions_used },
+          );
+        });
+        setLeaveBalances(mapped);
+      }
+    } catch { /* timeout */ }
 
-    // Leave requests
-    const { data: lrData } = await withTimeout(empFilter(supabase.from('leave_requests').select('*').order('created_at', { ascending: false }).limit(200)), PORTAL_QUERY_TIMEOUT, 'leave_requests');
-    if (lrData) {
-      setLeaveRequests(lrData.map((r: any) => {
-        const lt = leaveTypeMap[r.leave_type] || { ar: r.leave_type, en: r.leave_type };
-        return { id: r.id as any, employeeId: r.employee_id, typeAr: lt.ar, typeEn: lt.en, from: r.start_date, to: r.end_date, days: r.days, status: r.status as any };
-      }));
-    }
+    try {
+      const { data: lrData } = await withTimeout(empFilter(supabase.from('leave_requests').select('*').order('created_at', { ascending: false }).limit(200)), PORTAL_QUERY_TIMEOUT, 'leave_requests') as any;
+      if (lrData) {
+        setLeaveRequests(lrData.map((r: any) => {
+          const lt = leaveTypeMap[r.leave_type] || { ar: r.leave_type, en: r.leave_type };
+          return { id: r.id as any, employeeId: r.employee_id, typeAr: lt.ar, typeEn: lt.en, from: r.start_date, to: r.end_date, days: r.days, status: r.status as any };
+        }));
+      }
+    } catch { /* timeout */ }
 
-    // Permissions
-    const { data: pData } = await withTimeout(empFilter(supabase.from('permission_requests').select('*').order('created_at', { ascending: false }).limit(200)), PORTAL_QUERY_TIMEOUT, 'permissions');
-    if (pData) {
-      setPermissions(pData.map((p: any) => {
-        const pt = permTypeMap[p.permission_type] || { ar: p.permission_type, en: p.permission_type };
-        return { id: p.id as any, employeeId: p.employee_id, typeAr: pt.ar, typeEn: pt.en, date: p.date, fromTime: p.start_time, toTime: p.end_time, reason: p.reason || '', status: p.status as any };
-      }));
-    }
+    try {
+      const { data: pData } = await withTimeout(empFilter(supabase.from('permission_requests').select('*').order('created_at', { ascending: false }).limit(200)), PORTAL_QUERY_TIMEOUT, 'permissions') as any;
+      if (pData) {
+        setPermissions(pData.map((p: any) => {
+          const pt = permTypeMap[p.permission_type] || { ar: p.permission_type, en: p.permission_type };
+          return { id: p.id as any, employeeId: p.employee_id, typeAr: pt.ar, typeEn: pt.en, date: p.date, fromTime: p.start_time, toTime: p.end_time, reason: p.reason || '', status: p.status as any };
+        }));
+      }
+    } catch { /* timeout */ }
 
-    // Loans
-    const { data: loansData } = await withTimeout(empFilter(supabase.from('loans').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'loans');
-    if (loansData) {
-      setPortalLoans(loansData.map((l: any) => ({
-        id: l.id as any, employeeId: l.employee_id,
-        typeAr: l.reason || 'قرض', typeEn: l.reason || 'Loan',
-        amount: l.amount, paid: (l.paid_count || 0) * (l.monthly_installment || 0),
-        remaining: l.remaining || 0, installment: l.monthly_installment || 0,
-        status: l.status === 'completed' ? 'paid' as const : 'active' as const,
-      })));
-    }
+    try {
+      const { data: loansData } = await withTimeout(empFilter(supabase.from('loans').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'loans') as any;
+      if (loansData) {
+        setPortalLoans(loansData.map((l: any) => ({
+          id: l.id as any, employeeId: l.employee_id,
+          typeAr: l.reason || 'قرض', typeEn: l.reason || 'Loan',
+          amount: l.amount, paid: (l.paid_count || 0) * (l.monthly_installment || 0),
+          remaining: l.remaining || 0, installment: l.monthly_installment || 0,
+          status: l.status === 'completed' ? 'paid' as const : 'active' as const,
+        })));
+      }
+    } catch { /* timeout */ }
 
-    // Evaluations
-    const { data: prData } = await withTimeout(empFilter(supabase.from('performance_reviews').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'perf_reviews');
-    if (prData) {
-      setEvaluations(prData.map((e: any) => ({
-        id: e.id as any, employeeId: e.employee_id,
-        period: `${e.quarter} ${e.year}`, score: e.score ?? 0, maxScore: 5,
-        reviewerAr: '', reviewerEn: '',
-        status: e.status === 'approved' || e.status === 'submitted' ? 'completed' as const : 'pending' as const,
-        notesAr: e.strengths || '', notesEn: e.strengths || '',
-      })));
-    }
+    try {
+      const { data: prData } = await withTimeout(empFilter(supabase.from('performance_reviews').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'perf_reviews') as any;
+      if (prData) {
+        setEvaluations(prData.map((e: any) => ({
+          id: e.id as any, employeeId: e.employee_id,
+          period: `${e.quarter} ${e.year}`, score: e.score ?? 0, maxScore: 5,
+          reviewerAr: '', reviewerEn: '',
+          status: e.status === 'approved' || e.status === 'submitted' ? 'completed' as const : 'pending' as const,
+          notesAr: e.strengths || '', notesEn: e.strengths || '',
+        })));
+      }
+    } catch { /* timeout */ }
 
-    // Training
-    const { data: trData } = await withTimeout(empFilter(supabase.from('training_records').select('*, training_courses(name_ar, name_en)').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'training');
-    if (trData) {
-      setTraining(trData.map((t: any) => ({
-        id: t.id as any, employeeId: t.employee_id,
-        nameAr: (t.training_courses as any)?.name_ar || '',
-        nameEn: (t.training_courses as any)?.name_en || '',
-        progress: t.status === 'completed' ? 100 : t.status === 'enrolled' ? 50 : 0,
-        status: t.status === 'completed' ? 'completed' as const : t.status === 'enrolled' ? 'in-progress' as const : 'planned' as const,
-        startDate: t.start_date || '', endDate: t.end_date || '',
-      })));
-    }
+    try {
+      const { data: trData } = await withTimeout(empFilter(supabase.from('training_records').select('*, training_courses(name_ar, name_en)').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'training') as any;
+      if (trData) {
+        setTraining(trData.map((t: any) => ({
+          id: t.id as any, employeeId: t.employee_id,
+          nameAr: (t.training_courses as any)?.name_ar || '',
+          nameEn: (t.training_courses as any)?.name_en || '',
+          progress: t.status === 'completed' ? 100 : t.status === 'enrolled' ? 50 : 0,
+          status: t.status === 'completed' ? 'completed' as const : t.status === 'enrolled' ? 'in-progress' as const : 'planned' as const,
+          startDate: t.start_date || '', endDate: t.end_date || '',
+        })));
+      }
+    } catch { /* timeout */ }
 
-    // Missions
-    const { data: mData } = await withTimeout(empFilter(supabase.from('missions').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'missions');
-    if (mData) {
-      setMissions(mData.map((m: any) => ({
-        id: m.id as any, employeeId: m.employee_id,
-        missionType: m.mission_type as PortalMissionType,
-        date: m.date, destAr: m.destination || '', destEn: m.destination || '',
-        reasonAr: m.reason || '', reasonEn: m.reason || '',
-        status: m.status as any,
-      })));
-    }
+    try {
+      const { data: mData } = await withTimeout(empFilter(supabase.from('missions').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'missions') as any;
+      if (mData) {
+        setMissions(mData.map((m: any) => ({
+          id: m.id as any, employeeId: m.employee_id,
+          missionType: m.mission_type as PortalMissionType,
+          date: m.date, destAr: m.destination || '', destEn: m.destination || '',
+          reasonAr: m.reason || '', reasonEn: m.reason || '',
+          status: m.status as any,
+        })));
+      }
+    } catch { /* timeout */ }
 
-    // Violations
-    const { data: vData } = await withTimeout(empFilter(supabase.from('violations').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'violations');
-    if (vData) {
-      setViolations(vData.map((v: any) => ({
-        id: v.id as any, employeeId: v.employee_id,
-        date: v.date, typeAr: v.type, typeEn: v.type,
-        penaltyAr: v.penalty || '', penaltyEn: v.penalty || '',
-        status: v.status === 'approved' ? 'closed' as const : 'open' as const,
-      })));
-    }
+    try {
+      const { data: vData } = await withTimeout(empFilter(supabase.from('violations').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'violations') as any;
+      if (vData) {
+        setViolations(vData.map((v: any) => ({
+          id: v.id as any, employeeId: v.employee_id,
+          date: v.date, typeAr: v.type, typeEn: v.type,
+          penaltyAr: v.penalty || '', penaltyEn: v.penalty || '',
+          status: v.status === 'approved' ? 'closed' as const : 'open' as const,
+        })));
+      }
+    } catch { /* timeout */ }
 
-    // Overtime days
-    const { data: otData } = await withTimeout(empFilter(supabase.from('overtime_requests').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'overtime');
-    if (otData) {
-      const otTypeMap: Record<string, { ar: string; en: string }> = {
-        holiday: { ar: 'إجازة رسمية', en: 'Holiday' },
-        weekend: { ar: 'عطلة أسبوعية', en: 'Weekend' },
-        regular: { ar: 'أخرى', en: 'Other' },
-      };
-      setOvertimeDays(otData.map((o: any) => {
-        const t = otTypeMap[o.status] || otTypeMap.regular;
-        return {
-          id: o.id, employeeId: o.employee_id,
-          date: o.date, overtimeType: (o as any).overtime_type || 'regular',
-          typeAr: otTypeMap[(o as any).overtime_type]?.ar || 'أخرى',
-          typeEn: otTypeMap[(o as any).overtime_type]?.en || 'Other',
-          reason: o.reason || '', status: o.status as any,
+    try {
+      const { data: otData } = await withTimeout(empFilter(supabase.from('overtime_requests').select('*').order('created_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'overtime') as any;
+      if (otData) {
+        const otTypeMap: Record<string, { ar: string; en: string }> = {
+          holiday: { ar: 'إجازة رسمية', en: 'Holiday' },
+          weekend: { ar: 'عطلة أسبوعية', en: 'Weekend' },
+          regular: { ar: 'أخرى', en: 'Other' },
         };
-      }));
-    }
+        setOvertimeDays(otData.map((o: any) => {
+          const t = otTypeMap[o.status] || otTypeMap.regular;
+          return {
+            id: o.id, employeeId: o.employee_id,
+            date: o.date, overtimeType: (o as any).overtime_type || 'regular',
+            typeAr: otTypeMap[(o as any).overtime_type]?.ar || 'أخرى',
+            typeEn: otTypeMap[(o as any).overtime_type]?.en || 'Other',
+            reason: o.reason || '', status: o.status as any,
+          };
+        }));
+      }
+    } catch { /* timeout */ }
 
-    // Documents
-    const { data: dData } = await withTimeout(empFilter(supabase.from('employee_documents').select('*').order('uploaded_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'documents');
-    if (dData) {
-      setDocuments(dData.map((d: any) => ({
-        id: d.id as any, employeeId: d.employee_id,
-        nameAr: d.name, nameEn: d.name,
-        date: d.uploaded_at.split('T')[0],
-        typeAr: d.type || '', typeEn: d.type || '',
-      })));
-    }
+    try {
+      const { data: dData } = await withTimeout(empFilter(supabase.from('employee_documents').select('*').order('uploaded_at', { ascending: false }).limit(100)), PORTAL_QUERY_TIMEOUT, 'documents') as any;
+      if (dData) {
+        setDocuments(dData.map((d: any) => ({
+          id: d.id as any, employeeId: d.employee_id,
+          nameAr: d.name, nameEn: d.name,
+          date: d.uploaded_at.split('T')[0],
+          typeAr: d.type || '', typeEn: d.type || '',
+        })));
+      }
+    } catch { /* timeout */ }
   }, [isAuthenticated, user, isAdminOrHr, employeeUuid]);
 
   useEffect(() => {

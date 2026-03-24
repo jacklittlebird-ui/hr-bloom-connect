@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,37 +15,36 @@ import { UniformDataProvider } from "@/contexts/UniformDataContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { PerformanceDataProvider } from "@/contexts/PerformanceDataContext";
-import LoginPage from "./pages/LoginPage";
-import Index from "./pages/Index";
-import Employees from "./pages/Employees";
-import EmployeeDetails from "./pages/EmployeeDetails";
-import Leaves from "./pages/Leaves";
-import Attendance from "./pages/Attendance";
-import Performance from "./pages/Performance";
-import EmployeePortal from "./pages/EmployeePortal";
-import StationManagerPortal from "./pages/StationManagerPortal";
-import Training from "./pages/Training";
-import TrainingPortal from "./pages/TrainingPortal";
-import Loans from "./pages/Loans";
-import Salaries from "./pages/Salaries";
-import Reports from "./pages/Reports";
-import SalaryReports from "./pages/SalaryReports";
-import Departments from "./pages/Departments";
-import Recruitment from "./pages/Recruitment";
-import Assets from "./pages/Assets";
-import Users from "./pages/Users";
-import Groups from "./pages/Groups";
-import Roles from "./pages/Roles";
-import SiteSettingsPage from "./pages/SiteSettings";
-import Documents from "./pages/Documents";
-import Uniforms from "./pages/Uniforms";
-import NotFound from "./pages/NotFound";
-import SetupPage from "./pages/SetupPage";
-import AttendanceScan from "./pages/AttendanceScan";
-import AttendanceKiosk from "./pages/AttendanceKiosk";
-import AttendanceAdmin from "./pages/AttendanceAdmin";
-import NotificationsPage from "./pages/Notifications";
-import AuditLogsPage from "./pages/AuditLogs";
+
+const LoginPage = React.lazy(() => import("./pages/LoginPage"));
+const Index = React.lazy(() => import("./pages/Index"));
+const Employees = React.lazy(() => import("./pages/Employees"));
+const EmployeeDetails = React.lazy(() => import("./pages/EmployeeDetails"));
+const Leaves = React.lazy(() => import("./pages/Leaves"));
+const Attendance = React.lazy(() => import("./pages/Attendance"));
+const Performance = React.lazy(() => import("./pages/Performance"));
+const EmployeePortal = React.lazy(() => import("./pages/EmployeePortal"));
+const StationManagerPortal = React.lazy(() => import("./pages/StationManagerPortal"));
+const Training = React.lazy(() => import("./pages/Training"));
+const TrainingPortal = React.lazy(() => import("./pages/TrainingPortal"));
+const Loans = React.lazy(() => import("./pages/Loans"));
+const Salaries = React.lazy(() => import("./pages/Salaries"));
+const Reports = React.lazy(() => import("./pages/Reports"));
+const SalaryReports = React.lazy(() => import("./pages/SalaryReports"));
+const Departments = React.lazy(() => import("./pages/Departments"));
+const Recruitment = React.lazy(() => import("./pages/Recruitment"));
+const Assets = React.lazy(() => import("./pages/Assets"));
+const Users = React.lazy(() => import("./pages/Users"));
+const SiteSettingsPage = React.lazy(() => import("./pages/SiteSettings"));
+const Documents = React.lazy(() => import("./pages/Documents"));
+const Uniforms = React.lazy(() => import("./pages/Uniforms"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+const SetupPage = React.lazy(() => import("./pages/SetupPage"));
+const AttendanceScan = React.lazy(() => import("./pages/AttendanceScan"));
+const AttendanceKiosk = React.lazy(() => import("./pages/AttendanceKiosk"));
+const AttendanceAdmin = React.lazy(() => import("./pages/AttendanceAdmin"));
+const NotificationsPage = React.lazy(() => import("./pages/Notifications"));
+const AuditLogsPage = React.lazy(() => import("./pages/AuditLogs"));
 
 const queryClient = new QueryClient();
 
@@ -77,6 +77,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppRoutes = () => (
+  <Suspense fallback={<LoadingScreen />}>
   <Routes>
     <Route path="/login" element={<AuthRoute><LoginPage /></AuthRoute>} />
     <Route path="/setup" element={<SetupPage />} />
@@ -123,6 +124,7 @@ const AppRoutes = () => (
     
     <Route path="*" element={<NotFound />} />
   </Routes>
+  </Suspense>
 );
 
 const FullAdminProviders = ({ children }: { children: React.ReactNode }) => (
