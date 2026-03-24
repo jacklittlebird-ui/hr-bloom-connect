@@ -80,6 +80,8 @@ export const PerformanceList = () => {
     return matchesSearch && matchesStatus && matchesQuarter && matchesYear && matchesStation && matchesDepartment;
   });
 
+  const { paginatedItems: paginatedReviews, currentPage: revPage, totalPages: revTotalPages, totalItems: revTotalItems, startIndex: revStart, endIndex: revEnd, setCurrentPage: setRevPage } = usePagination(filteredReviews);
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved': return <Badge className="bg-stat-green/10 text-stat-green hover:bg-stat-green/20">{t('performance.status.approved')}</Badge>;
