@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -28,6 +28,8 @@ const Employees = () => {
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 30;
 
   const ar = isRTL;
 
@@ -266,6 +268,9 @@ const Employees = () => {
       return matchesSearch && matchesFilter && matchesStation && matchesDept;
     });
   }, [employees, searchQuery, activeFilter, selectedStations, selectedDepartments]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, activeFilter, selectedStations, selectedDepartments]);
 
   const boolLabel = (v?: boolean) => v ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No');
 
@@ -1051,7 +1056,13 @@ const Employees = () => {
           onSelectedDepartmentsChange={setSelectedDepartments}
         />
         <div ref={reportRef}>
-          <EmployeeTable employees={filteredEmployees} onDelete={handleDeleteEmployee} />
+          <EmployeeTable
+            employees={filteredEmployees}
+            onDelete={handleDeleteEmployee}
+            currentPage={currentPage}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+          />
         </div>
       </div>
       <AddEmployeeDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />

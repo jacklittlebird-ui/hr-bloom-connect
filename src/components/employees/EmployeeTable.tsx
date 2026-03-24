@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
 import { useNavigate } from 'react-router-dom';
@@ -23,19 +23,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Trash2, Edit, Eye, AlertTriangle } from 'lucide-react';
+import { Trash2, Edit, Eye, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { stationLocations } from '@/data/stationLocations';
 
 interface EmployeeTableProps {
   employees: Employee[];
   onDelete?: (employeeId: string) => void;
+  currentPage?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
+export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize = 30, onPageChange }: EmployeeTableProps) => {
   const { t, isRTL, language } = useLanguage();
   const navigate = useNavigate();
   const [deleteTarget, setDeleteTarget] = useState<Employee | null>(null);
+
+  const totalPages = Math.max(1, Math.ceil(employees.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedEmployees = useMemo(() => {
+    const start = (safeCurrentPage - 1) * pageSize;
+    return employees.slice(start, start + pageSize);
+  }, [employees, safeCurrentPage, pageSize]);
 
   const getInitials = (name: string) => {
     return name
@@ -104,7 +114,7 @@ export const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {employees.map((employee) => (
+          {paginatedEmployees.map((employee) => (
             <TableRow key={employee.id} className="hover:bg-muted/50">
               <TableCell>
                 <Avatar className="w-10 h-10">
@@ -180,6 +190,57 @@ export const EmployeeTable = ({ employees, onDelete }: EmployeeTableProps) => {
           ))}
         </TableBody>
       </Table>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className={cn("flex items-center justify-between px-4 py-3 border-t", isRTL && "flex-row-reverse")}>
+          <span className="text-sm text-muted-foreground">
+            {language === 'ar'
+              ? `عرض ${((safeCurrentPage - 1) * pageSize) + 1} - ${Math.min(safeCurrentPage * pageSize, employees.length)} من ${employees.length}`
+              : `Showing ${((safeCurrentPage - 1) * pageSize) + 1} - ${Math.min(safeCurrentPage * pageSize, employees.length)} of ${employees.length}`}
+          </span>
+          <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safeCurrentPage <= 1}
+              onClick={() => onPageChange?.(safeCurrentPage - 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 2)
+              .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                typeof p === 'string' ? (
+                  <span key={`e${i}`} className="px-1 text-muted-foreground">…</span>
+                ) : (
+                  <Button
+                    key={p}
+                    variant={p === safeCurrentPage ? 'default' : 'outline'}
+                    size="sm"
+                    className="min-w-[32px]"
+                    onClick={() => onPageChange?.(p)}
+                  >
+                    {p}
+                  </Button>
+                )
+              )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={safeCurrentPage >= totalPages}
+              onClick={() => onPageChange?.(safeCurrentPage + 1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
