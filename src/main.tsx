@@ -1,5 +1,4 @@
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
 import "./index.css";
 import { applyThemeSettings } from "./lib/themeUtils";
 
@@ -27,6 +26,7 @@ applyThemeSettings();
 
 resetBrokenClientState()
   .catch(console.error)
-  .finally(() => {
+  .finally(async () => {
+    const { default: App } = await import("./App.tsx");
     createRoot(document.getElementById("root")!).render(<App />);
   });
