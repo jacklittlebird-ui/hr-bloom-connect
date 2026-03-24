@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePortalData } from '@/contexts/PortalDataContext';
 import { Card, CardContent } from '@/components/ui/card';
