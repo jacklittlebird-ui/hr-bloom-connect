@@ -34,84 +34,113 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
-  // Get roles
-  const { data: roles } = await supabase
-    .from('user_roles')
-    .select('role, station_id, employee_id')
-    .eq('user_id', supabaseUser.id);
-
-  if (!roles || roles.length === 0) return null;
-
-  const userRole = roles[0];
-  const role = userRole.role as UserRole;
-
-  // Get profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, email')
-    .eq('id', supabaseUser.id)
-    .single();
-
-  let stationCode: string | undefined;
-  let employeeCode: string | undefined;
-  let nameAr = profile?.full_name || supabaseUser.email || '';
-
-  // Get station code if station_manager
-  if (role === 'station_manager' && userRole.station_id) {
-    const { data: station } = await supabase
-      .from('stations')
-      .select('code, name_ar')
-      .eq('id', userRole.station_id)
-      .single();
-    stationCode = station?.code;
-    nameAr = station?.name_ar ? `مدير محطة ${station.name_ar}` : nameAr;
-  }
-
-  // Get employee info if employee
-  let employeeUuid: string | undefined;
-  if (role === 'employee' && userRole.employee_id) {
-    employeeUuid = userRole.employee_id;
-    const { data: emp } = await supabase
-      .from('employees')
-      .select('employee_code, name_ar, name_en')
-      .eq('id', userRole.employee_id)
-      .single();
-    employeeCode = emp?.employee_code;
-    nameAr = emp?.name_ar || nameAr;
-  }
-
-  // Get area_manager stations
-  let stationCodes: string[] | undefined;
-  let stationUuids: string[] | undefined;
-  if (role === 'area_manager') {
-    const { data: amStations } = await supabase
-      .from('area_manager_stations')
-      .select('station_id')
+  try {
+    const { data: roles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('role, station_id, employee_id')
       .eq('user_id', supabaseUser.id);
-    if (amStations && amStations.length > 0) {
-      stationUuids = amStations.map(s => s.station_id);
-      const { data: stationData } = await supabase
-        .from('stations')
-        .select('code')
-        .in('id', stationUuids);
-      stationCodes = stationData?.map(s => s.code) || [];
-    }
-  }
 
-  return {
-    id: supabaseUser.id,
-    name: profile?.full_name || supabaseUser.email || '',
-    nameAr,
-    email: supabaseUser.email,
-    employeeId: employeeCode,
-    employeeUuid,
-    role,
-    station: stationCode,
-    stationId: userRole.station_id || undefined,
-    stations: stationCodes,
-    stationIds: stationUuids,
-    supabaseUserId: supabaseUser.id,
-  };
+    if (rolesError) {
+      console.error('Error fetching user roles:', rolesError);
+      return null;
+    }
+
+    if (!roles || roles.length === 0) return null;
+
+    const userRole = roles[0];
+    const role = userRole.role as UserRole;
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', supabaseUser.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.warn('Profile lookup failed, continuing with auth user data:', profileError);
+    }
+
+    let stationCode: string | undefined;
+    let employeeCode: string | undefined;
+    let nameAr = profile?.full_name || supabaseUser.email || '';
+
+    if (role === 'station_manager' && userRole.station_id) {
+      const { data: station, error: stationError } = await supabase
+        .from('stations')
+        .select('code, name_ar')
+        .eq('id', userRole.station_id)
+        .maybeSingle();
+
+      if (stationError) {
+        console.warn('Station lookup failed:', stationError);
+      }
+
+      stationCode = station?.code;
+      nameAr = station?.name_ar ? `مدير محطة ${station.name_ar}` : nameAr;
+    }
+
+    let employeeUuid: string | undefined;
+    if (role === 'employee' && userRole.employee_id) {
+      employeeUuid = userRole.employee_id;
+      const { data: emp, error: empError } = await supabase
+        .from('employees')
+        .select('employee_code, name_ar, name_en')
+        .eq('id', userRole.employee_id)
+        .maybeSingle();
+
+      if (empError) {
+        console.warn('Employee lookup failed:', empError);
+      }
+
+      employeeCode = emp?.employee_code;
+      nameAr = emp?.name_ar || nameAr;
+    }
+
+    let stationCodes: string[] | undefined;
+    let stationUuids: string[] | undefined;
+    if (role === 'area_manager') {
+      const { data: amStations, error: amStationsError } = await supabase
+        .from('area_manager_stations')
+        .select('station_id')
+        .eq('user_id', supabaseUser.id);
+
+      if (amStationsError) {
+        console.warn('Area manager stations lookup failed:', amStationsError);
+      }
+
+      if (amStations && amStations.length > 0) {
+        stationUuids = amStations.map((s) => s.station_id);
+        const { data: stationData, error: stationDataError } = await supabase
+          .from('stations')
+          .select('code')
+          .in('id', stationUuids);
+
+        if (stationDataError) {
+          console.warn('Area manager station code lookup failed:', stationDataError);
+        }
+
+        stationCodes = stationData?.map((s) => s.code) || [];
+      }
+    }
+
+    return {
+      id: supabaseUser.id,
+      name: profile?.full_name || supabaseUser.email || '',
+      nameAr,
+      email: supabaseUser.email,
+      employeeId: employeeCode,
+      employeeUuid,
+      role,
+      station: stationCode,
+      stationId: userRole.station_id || undefined,
+      stations: stationCodes,
+      stationIds: stationUuids,
+      supabaseUserId: supabaseUser.id,
+    };
+  } catch (error) {
+    console.error('Unexpected error fetching user profile:', error);
+    return null;
+  }
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

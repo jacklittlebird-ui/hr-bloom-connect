@@ -238,17 +238,37 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { isAuthenticated, user } = useAuth();
 
   const fetchEmployees = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      setEmployees([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
-    // Station managers get limited view (no sensitive data like national_id, bank, salary, insurance)
-    if (user?.role === 'station_manager') {
+    const mapWithRelations = async (rows: any[]) => {
+      const [deptsRes, stationsRes] = await Promise.all([
+        supabase.from('departments').select('id, name_ar, name_en'),
+        supabase.from('stations').select('id, code, name_ar, name_en'),
+      ]);
+
+      const deptMap = new Map((deptsRes.data || []).map((d) => [d.id, d]));
+      const stationMap = new Map((stationsRes.data || []).map((s) => [s.id, s]));
+
+      return rows.map((row: any) => {
+        const dept = deptMap.get(row.department_id);
+        const station = stationMap.get(row.station_id);
+        return mapRow({ ...row, departments: dept || null, stations: station || null });
+      });
+    };
+
+    if (user.role === 'station_manager') {
       const { data, error } = await supabase
         .from('employee_limited_view' as any)
         .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
         .order('employee_code', { ascending: true });
 
       if (error) {
-        // Fallback: if view doesn't support joins, query separately
         const { data: viewData, error: viewError } = await supabase
           .from('employee_limited_view' as any)
           .select('*')
@@ -261,19 +281,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return;
         }
 
-        // Fetch departments and stations for mapping
-        const [deptsRes, stationsRes] = await Promise.all([
-          supabase.from('departments').select('id, name_ar, name_en'),
-          supabase.from('stations').select('id, code, name_ar, name_en'),
-        ]);
-        const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
-        const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
-
-        setEmployees((viewData || []).map((row: any) => {
-          const dept = deptMap.get(row.department_id);
-          const station = stationMap.get(row.station_id);
-          return mapRow({ ...row, departments: dept || null, stations: station || null });
-        }));
+        setEmployees(await mapWithRelations(viewData || []));
         setLoading(false);
         return;
       }
@@ -289,23 +297,57 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       .order('employee_code', { ascending: true });
 
     if (error) {
-      console.error('Error fetching employees:', error);
-      setEmployees([]);
-    } else {
-      setEmployees((data || []).map(mapRow));
-    }
-    setLoading(false);
-  }, [user?.role]);
+      console.warn('Joined employee query failed, retrying without joins:', error);
 
-  // Re-fetch when auth state changes (login/logout)
+      const { data: baseRows, error: baseError } = await supabase
+        .from('employees')
+        .select('*')
+        .order('employee_code', { ascending: true });
+
+      if (baseError) {
+        console.error('Error fetching employees:', baseError);
+        setEmployees([]);
+        setLoading(false);
+        return;
+      }
+
+      setEmployees(await mapWithRelations(baseRows || []));
+      setLoading(false);
+      return;
+    }
+
+    setEmployees((data || []).map(mapRow));
+    setLoading(false);
+  }, [isAuthenticated, user]);
+
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       fetchEmployees();
     } else {
       setEmployees([]);
       setLoading(false);
     }
-  }, [isAuthenticated, fetchEmployees]);
+  }, [isAuthenticated, user, fetchEmployees]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const handleWindowFocus = () => {
+      fetchEmployees();
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        handleWindowFocus();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus);
+      document.removeEventListener('visibilitychange', handleWindowFocus);
+    };
+  }, [isAuthenticated, user, fetchEmployees]);
 
   const getEmployee = useCallback((id: string) => {
     return employees.find(e => e.id === id);
