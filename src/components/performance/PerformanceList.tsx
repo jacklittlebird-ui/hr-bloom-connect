@@ -261,6 +261,7 @@ export const PerformanceList = () => {
               </TableBody>
             </Table>
           </div>
+          <PaginationControls currentPage={revPage} totalPages={revTotalPages} totalItems={revTotalItems} startIndex={revStart} endIndex={revEnd} onPageChange={setRevPage} />
 
           {filteredReviews.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">{t('performance.list.noResults')}</div>

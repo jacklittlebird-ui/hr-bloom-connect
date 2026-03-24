@@ -280,6 +280,7 @@ export const AdvancesList = () => {
             ))}
           </div>
           {filteredAdvances.length === 0 && <div className="text-center py-12 text-muted-foreground">{isRTL ? 'لا توجد سلف' : 'No advances found'}</div>}
+          <PaginationControls currentPage={advPage} totalPages={advTotalPages} totalItems={advTotalItems} startIndex={advStart} endIndex={advEnd} onPageChange={setAdvPage} />
         </CardContent>
       </Card>
 

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRecruitmentData, Candidate } from '@/contexts/RecruitmentDataContext';
 import { Card, CardContent } from '@/components/ui/card';
