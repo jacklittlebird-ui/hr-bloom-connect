@@ -154,7 +154,7 @@ const AttendanceAdmin = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="events" dir={ar ? "rtl" : "ltr"} onValueChange={() => { setSearchQuery(""); setAlertsPage(0); }}>
+        <Tabs defaultValue="events" dir={ar ? "rtl" : "ltr"} onValueChange={() => { setSearchQuery(""); setAlertsPage(0); setEventsPage(0); setDevicesPage(0); }}>
           <TabsList>
             <TabsTrigger value="events">{ar ? "السجلات" : "Events"}</TabsTrigger>
             <TabsTrigger value="alerts">
