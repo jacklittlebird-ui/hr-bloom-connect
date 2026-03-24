@@ -49,34 +49,38 @@ const Index = () => {
     const today = new Date().toISOString().split('T')[0];
     const currentYear = new Date().getFullYear().toString();
 
-    const [empRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes] = await Promise.all([
-      supabase.from('employees').select('id, status'),
-      supabase.from('departments').select('id').eq('is_active', true),
-      supabase.from('attendance_records').select('id').eq('date', today),
-      supabase.from('leave_requests').select('id').eq('status', 'pending'),
-      supabase.from('assets').select('id').not('assigned_to', 'is', null),
-      supabase.from('planned_courses').select('id').in('status', ['planned', 'in_progress']),
-      supabase.from('performance_reviews').select('id').eq('year', currentYear),
-      supabase.from('loans').select('id').eq('status', 'active'),
-    ]);
+    try {
+      const [empTotalRes, empActiveRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes] = await Promise.all([
+        supabase.from('employees').select('*', { count: 'exact', head: true }),
+        supabase.from('employees').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('departments').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('attendance_records').select('*', { count: 'exact', head: true }).eq('date', today),
+        supabase.from('leave_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('assets').select('*', { count: 'exact', head: true }).not('assigned_to', 'is', null),
+        supabase.from('planned_courses').select('*', { count: 'exact', head: true }).in('status', ['planned', 'in_progress']),
+        supabase.from('performance_reviews').select('*', { count: 'exact', head: true }).eq('year', currentYear),
+        supabase.from('loans').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      ]);
 
-    const totalActive = empRes.data?.filter(e => e.status === 'active').length || 0;
-    const totalEmps = empRes.data?.length || 0;
-    const todayAtt = attRes.data?.length || 0;
+      const totalEmps = empTotalRes.count || 0;
+      const totalActive = empActiveRes.count || 0;
+      const todayAtt = attRes.count || 0;
 
-    setDashStats({
-      totalEmployees: totalEmps,
-      inactiveEmployees: totalEmps - totalActive,
-      departments: deptRes.data?.length || 0,
-      todayAttendance: todayAtt,
-      pendingLeaves: leaveRes.data?.length || 0,
-      assignedAssets: assetRes.data?.length || 0,
-      activeCourses: courseRes.data?.length || 0,
-      performanceReviews: perfRes.data?.length || 0,
-      activeLoans: loanRes.data?.length || 0,
-      absentToday: Math.max(0, totalActive - todayAtt),
-    });
-    setLoading(false);
+      setDashStats({
+        totalEmployees: totalEmps,
+        inactiveEmployees: totalEmps - totalActive,
+        departments: deptRes.count || 0,
+        todayAttendance: todayAtt,
+        pendingLeaves: leaveRes.count || 0,
+        assignedAssets: assetRes.count || 0,
+        activeCourses: courseRes.count || 0,
+        performanceReviews: perfRes.count || 0,
+        activeLoans: loanRes.count || 0,
+        absentToday: Math.max(0, totalActive - todayAtt),
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchStats(); }, []);
