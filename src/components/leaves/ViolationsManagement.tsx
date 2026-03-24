@@ -220,7 +220,15 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map(v => {
+                  filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      <Ban className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                      {ar ? 'لا توجد مخالفات' : 'No violations'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedItems.map(v => {
                     const typeLabel = violationTypes[v.type];
                     return (
                       <TableRow key={v.id}>
@@ -252,6 +260,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
                       </TableRow>
                     );
                   })
+                )
                 )}
               </TableBody>
             </Table>
