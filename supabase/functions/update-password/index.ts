@@ -13,6 +13,27 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
+  // --- Auth: require Bearer token ---
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+  }
+  const token = authHeader.replace("Bearer ", "");
+  const { data: { user: caller }, error: authErr } = await supabaseAdmin.auth.getUser(token);
+  if (authErr || !caller) {
+    return new Response(JSON.stringify({ error: "Invalid token" }), { status: 401, headers: corsHeaders });
+  }
+
+  // --- Role: require admin ---
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", caller.id)
+    .eq("role", "admin");
+  if (!roles?.length) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: corsHeaders });
+  }
+
   const { user_id, email, password, reactivate } = await req.json();
 
   let targetId = user_id;
