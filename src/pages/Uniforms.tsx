@@ -44,6 +44,7 @@ const Uniforms = () => {
   const [editForm, setEditForm] = useState({ typeAr: '', typeEn: '', quantity: 1, unitPrice: 0, deliveryDate: '', notes: '' });
 
   const activeEmployees = useMemo(() => employees.filter(e => e.status === 'active'), [employees]);
+  const { paginatedItems: paginatedUniforms, currentPage: uniPage, totalPages: uniTotalPages, totalItems: uniTotalItems, startIndex: uniStart, endIndex: uniEnd, setCurrentPage: setUniPage } = usePagination(uniforms, 20);
   const selectedEmployee = activeEmployees.find(e => e.id === employeeUUID);
 
   const addRow = () => setItems(prev => [...prev, { typeIndex: '', quantity: 1, unitPrice: 0 }]);
