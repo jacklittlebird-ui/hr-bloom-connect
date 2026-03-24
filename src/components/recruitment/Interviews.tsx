@@ -220,7 +220,7 @@ export const Interviews = () => {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground py-8">{isRTL ? 'لا توجد مقابلات' : 'No interviews'}</TableCell></TableRow>
-              ) : filtered.map(interview => (
+              ) : paginatedInterviews.map(interview => (
                 <TableRow key={interview.id}>
                   <TableCell className="font-medium">{interview.candidateName}</TableCell>
                   <TableCell>{interview.position}</TableCell>
