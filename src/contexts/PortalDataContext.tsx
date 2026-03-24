@@ -338,9 +338,10 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           id: d.id as any, employeeId: d.employee_id,
           nameAr: d.name, nameEn: d.name,
           date: d.uploaded_at.split('T')[0],
-        typeAr: d.type || '', typeEn: d.type || '',
-      })));
-    }
+          typeAr: d.type || '', typeEn: d.type || '',
+        })));
+      }
+    } catch { /* timeout */ }
   }, [isAuthenticated, user, isAdminOrHr, employeeUuid]);
 
   useEffect(() => {
