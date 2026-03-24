@@ -27,6 +27,7 @@ const AttendanceKiosk = () => {
   const ar = language === "ar";
 
   const QR_COUNT = 3;
+  const QR_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
   const [qrSrcs, setQrSrcs] = useState<string[]>(["", "", ""]);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("");
