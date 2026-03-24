@@ -125,34 +125,96 @@ const AppRoutes = () => (
   </Routes>
 );
 
+const FullAdminProviders = ({ children }: { children: React.ReactNode }) => (
+  <EmployeeDataProvider>
+    <SalaryDataProvider>
+      <PayrollDataProvider>
+        <AttendanceDataProvider>
+          <LoanDataProvider>
+            <UniformDataProvider>
+              <PortalDataProvider>
+                <PerformanceDataProvider>{children}</PerformanceDataProvider>
+              </PortalDataProvider>
+            </UniformDataProvider>
+          </LoanDataProvider>
+        </AttendanceDataProvider>
+      </PayrollDataProvider>
+    </SalaryDataProvider>
+  </EmployeeDataProvider>
+);
+
+const EmployeePortalProviders = ({ children }: { children: React.ReactNode }) => (
+  <EmployeeDataProvider>
+    <SalaryDataProvider>
+      <PayrollDataProvider>
+        <AttendanceDataProvider>
+          <LoanDataProvider>
+            <UniformDataProvider>
+              <PortalDataProvider>
+                <PerformanceDataProvider>{children}</PerformanceDataProvider>
+              </PortalDataProvider>
+            </UniformDataProvider>
+          </LoanDataProvider>
+        </AttendanceDataProvider>
+      </PayrollDataProvider>
+    </SalaryDataProvider>
+  </EmployeeDataProvider>
+);
+
+const StationManagerProviders = ({ children }: { children: React.ReactNode }) => (
+  <EmployeeDataProvider>
+    <AttendanceDataProvider>
+      <PerformanceDataProvider>{children}</PerformanceDataProvider>
+    </AttendanceDataProvider>
+  </EmployeeDataProvider>
+);
+
+const KioskProviders = ({ children }: { children: React.ReactNode }) => (
+  <EmployeeDataProvider>{children}</EmployeeDataProvider>
+);
+
+const AppDataProviders = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const { user } = useAuth();
+  const path = location.pathname;
+
+  if (path === '/login' || path === '/setup' || path === '/') {
+    return <>{children}</>;
+  }
+
+  if (path.startsWith('/employee-portal')) {
+    return <EmployeePortalProviders>{children}</EmployeePortalProviders>;
+  }
+
+  if (path.startsWith('/station-manager')) {
+    return <StationManagerProviders>{children}</StationManagerProviders>;
+  }
+
+  if (path.startsWith('/attendance/kiosk')) {
+    return <KioskProviders>{children}</KioskProviders>;
+  }
+
+  if (user?.role === 'admin' || user?.role === 'hr') {
+    return <FullAdminProviders>{children}</FullAdminProviders>;
+  }
+
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
         <NotificationProvider>
-          <EmployeeDataProvider>
-            <SalaryDataProvider>
-              <PayrollDataProvider>
-                <AttendanceDataProvider>
-                  <LoanDataProvider>
-                    <UniformDataProvider>
-                      <PortalDataProvider>
-                        <PerformanceDataProvider>
-                          <TooltipProvider>
-                            <Toaster />
-                            <Sonner />
-                            <BrowserRouter>
-                              <AppRoutes />
-                            </BrowserRouter>
-                          </TooltipProvider>
-                        </PerformanceDataProvider>
-                      </PortalDataProvider>
-                    </UniformDataProvider>
-                  </LoanDataProvider>
-                </AttendanceDataProvider>
-              </PayrollDataProvider>
-            </SalaryDataProvider>
-          </EmployeeDataProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppDataProviders>
+                <AppRoutes />
+              </AppDataProviders>
+            </BrowserRouter>
+          </TooltipProvider>
         </NotificationProvider>
       </AuthProvider>
     </LanguageProvider>
