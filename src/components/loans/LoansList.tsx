@@ -308,11 +308,7 @@ export const LoansList = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {(() => {
-            const { paginatedItems: paginatedLoans, currentPage: loanPage, totalPages: loanTotalPages, totalItems: loanTotalItems, startIndex: loanStart, endIndex: loanEnd, setCurrentPage: setLoanPage } = usePagination(filteredLoans);
-            return (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {paginatedLoans.map(loan => {
               const progressPercent = loan.installments > 0 ? (loan.paidInstallments / loan.installments) * 100 : 0;
               return (
