@@ -322,26 +322,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await clearBrokenLocalSession();
 
+      let signInResult: any = null;
       for (let attempt = 1; attempt <= 3; attempt++) {
-        const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
-        if (!error) return { success: true };
-
-        const isServerError =
-          error.message?.includes('timeout') ||
-          error.message?.includes('504') ||
-          error.message?.includes('500') ||
-          error.message?.includes('context') ||
-          error.status === 500 ||
-          error.status === 504;
-
-        if (!isServerError || attempt === 3) {
-          hadError = true;
-          return { success: false, error: error.message };
+        const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+        if (!error && data?.user) {
+          signInResult = data;
+          break;
         }
-        await new Promise((r) => setTimeout(r, attempt * 1000));
+
+        if (error) {
+          const isServerError =
+            error.message?.includes('timeout') ||
+            error.message?.includes('504') ||
+            error.message?.includes('500') ||
+            error.message?.includes('context') ||
+            error.status === 500 ||
+            error.status === 504;
+
+          if (!isServerError || attempt === 3) {
+            hadError = true;
+            return { success: false, error: error.message };
+          }
+          await new Promise((r) => setTimeout(r, attempt * 1000));
+        }
       }
-      hadError = true;
-      return { success: false, error: 'Login failed after retries' };
+
+      if (!signInResult?.user) {
+        hadError = true;
+        return { success: false, error: 'Login failed after retries' };
+      }
+
+      // Auth succeeded — now verify profile loads before declaring success
+      let profile: AuthUser | null = null;
+      for (let profileAttempt = 1; profileAttempt <= 4; profileAttempt++) {
+        profile = await fetchUserProfile(signInResult.user);
+        if (profile) break;
+        if (profileAttempt < 4) {
+          await new Promise((r) => setTimeout(r, profileAttempt * 2000));
+        }
+      }
+
+      if (!profile) {
+        // Profile failed to load — sign out to avoid stuck state
+        hadError = true;
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        return { success: false, error: 'السيرفر مشغول، يرجى المحاولة مرة أخرى بعد لحظات' };
+      }
+
+      // Profile loaded successfully — set user state directly
+      setUser(profile);
+      return { success: true };
     } finally {
       recordLoginMetric(Date.now() - loginStart, hadError);
       releaseSlot();
