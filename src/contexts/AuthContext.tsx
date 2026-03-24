@@ -83,18 +83,36 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     await throttle();
 
     // 1. Role lookup — user_roles has unique(user_id, role), indexed
-    const { data: roles, error: rolesError } = await withTimeout(
-      supabase
-        .from('user_roles')
-        .select('role, station_id, employee_id')
-        .eq('user_id', supabaseUser.id)
-        .limit(1),
-      5000,
-      'user_roles'
-    );
+    // Use longer timeout and retry for resilience under load
+    let roles: any[] | null = null;
+    let rolesError: any = null;
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const result = await withTimeout(
+        supabase
+          .from('user_roles')
+          .select('role, station_id, employee_id')
+          .eq('user_id', supabaseUser.id)
+          .limit(1),
+        10000,
+        'user_roles'
+      ).catch((err: any) => ({ data: null, error: err }));
+
+      if ('error' in result && result.error) {
+        rolesError = result.error;
+        if (attempt < 3) {
+          await new Promise((r) => setTimeout(r, attempt * 1500));
+          continue;
+        }
+      } else {
+        roles = (result as any).data;
+        rolesError = (result as any).error;
+        break;
+      }
+    }
 
     if (rolesError || !roles?.length) {
-      if (rolesError) console.error('Role lookup error:', rolesError.message);
+      if (rolesError) console.error('Role lookup error:', rolesError.message || rolesError);
       return null;
     }
 
@@ -225,7 +243,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (newSession?.user) {
         setTimeout(async () => {
           try {
-            const profile = await fetchUserProfile(newSession.user);
+            let profile = await fetchUserProfile(newSession.user);
+            // Retry once after 3s if profile fetch failed (DB under load)
+            if (!profile) {
+              await new Promise((r) => setTimeout(r, 3000));
+              profile = await fetchUserProfile(newSession.user);
+            }
             setUser(profile);
           } catch (error) {
             await recoverAuthState(error);
