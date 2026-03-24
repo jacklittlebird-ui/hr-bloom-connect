@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePerformanceData, CriteriaItem, PerformanceReview, defaultCriteria, calculateScore } from '@/contexts/PerformanceDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
