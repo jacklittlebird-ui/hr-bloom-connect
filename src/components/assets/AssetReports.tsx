@@ -503,6 +503,7 @@ export const AssetReports = () => {
         <CardContent>
           <div ref={reportRef} className="overflow-x-auto">
             {filteredAssets.length > 0 ? (
+              <>
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
@@ -543,6 +544,7 @@ export const AssetReports = () => {
                 </TableBody>
               </Table>
               <PaginationControls currentPage={repPage} totalPages={repTotalPages} totalItems={repTotalItems} startIndex={repStart} endIndex={repEnd} onPageChange={setRepPage} />
+              </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد أصول مسجلة' : 'No assets registered'}</div>
             )}
