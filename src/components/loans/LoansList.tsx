@@ -114,6 +114,8 @@ export const LoansList = () => {
     return matchesSearch && matchesStatus && matchesStation && matchesStartDate;
   });
 
+  const { paginatedItems: paginatedLoans, currentPage: loanPage, totalPages: loanTotalPages, totalItems: loanTotalItems, startIndex: loanStart, endIndex: loanEnd, setCurrentPage: setLoanPage } = usePagination(filteredLoans);
+
   const stats = {
     totalLoans: loans.length,
     activeLoans: loans.filter(l => l.status === 'active').length,
