@@ -259,6 +259,24 @@ Deno.serve(async (req) => {
       const localHour = parseInt(now.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false }));
 
       if (event_type === "check_in") {
+        // Close any stale open record before creating a new one
+        const { data: staleRecord } = await admin
+          .from("attendance_records")
+          .select("id")
+          .eq("employee_id", empId)
+          .is("check_out", null)
+          .not("status", "eq", "auto-closed")
+          .order("check_in", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (staleRecord) {
+          await admin.from("attendance_records").update({
+            status: "auto-closed",
+            notes: "إغلاق تلقائي - حضور جديد / Auto-closed - new check-in",
+          }).eq("id", staleRecord.id);
+        }
+
         const isLate = !isFlexible && localHour >= 9;
         await admin.from("attendance_records").insert({
           employee_id: empId,
