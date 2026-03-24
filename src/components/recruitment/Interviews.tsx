@@ -251,6 +251,7 @@ export const Interviews = () => {
           </Table>
           <PaginationControls currentPage={intPage} totalPages={intTotalPages} totalItems={intTotalItems} startIndex={intStart} endIndex={intEnd} onPageChange={setIntPage} />
         </CardContent>
+      </Card>
 
       <Dialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
         <DialogContent>

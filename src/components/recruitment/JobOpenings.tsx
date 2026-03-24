@@ -242,6 +242,7 @@ export const JobOpenings = () => {
           </Table>
           <PaginationControls currentPage={jobPage} totalPages={jobTotalPages} totalItems={jobTotalItems} startIndex={jobStart} endIndex={jobEnd} onPageChange={setJobPage} />
         </CardContent>
+      </Card>
 
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
         <DialogContent className="max-w-lg">

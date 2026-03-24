@@ -319,5 +319,4 @@ export const AssetAssignment = () => {
     </div>
   );
 };
-  );
 };
