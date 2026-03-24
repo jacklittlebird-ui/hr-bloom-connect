@@ -27,7 +27,8 @@ export const PortalMissions = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { language } = useLanguage();
   const ar = language === 'ar';
-  const { getMissions, addMission } = usePortalData();
+  const { getMissions, addMission, ensureMissions } = usePortalData();
+  useEffect(() => { ensureMissions(); }, [ensureMissions]);
   const missions = useMemo(() => getMissions(PORTAL_EMPLOYEE_ID), [getMissions, PORTAL_EMPLOYEE_ID]);
   const [showForm, setShowForm] = useState(false);
   const [missionType, setMissionType] = useState<string>('');
