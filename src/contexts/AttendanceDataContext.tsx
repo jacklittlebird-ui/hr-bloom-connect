@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useCallback, useMemo, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface AttendanceEntry {
   id: string;
@@ -56,57 +57,103 @@ const formatTime = (ts: string | null): string | null => {
   } catch { return null; }
 };
 
+const mapRecord = (r: any): AttendanceEntry => {
+  const ci = formatTime(r.check_in);
+  const co = formatTime(r.check_out);
+  const wt = calculateWorkTime(ci, co);
+  const hasDbHours = (r.work_hours != null && r.work_hours > 0) || (r.work_minutes != null && r.work_minutes > 0);
+  let finalHours: number;
+  let finalMinutes: number;
+  if (hasDbHours) {
+    const dbM = r.work_minutes ?? 0;
+    const totalMins = dbM > 0 ? Math.round(dbM) : Math.round((r.work_hours ?? 0) * 60);
+    finalHours = Math.floor(totalMins / 60);
+    finalMinutes = totalMins % 60;
+  } else {
+    finalHours = wt.hours;
+    finalMinutes = wt.minutes;
+  }
+  return {
+    id: r.id,
+    employeeId: r.employee_id,
+    employeeName: (r.employees as any)?.name_en || '',
+    employeeNameAr: (r.employees as any)?.name_ar || '',
+    department: (r.employees as any)?.departments?.name_ar || '',
+    date: r.date,
+    checkIn: ci,
+    checkOut: co,
+    status: r.status as AttendanceEntry['status'],
+    isMission: r.status === 'mission',
+    workHours: finalHours,
+    workMinutes: finalMinutes,
+    overtime: Math.max(0, finalHours - 8),
+    notes: r.notes || undefined,
+  };
+};
+
 export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [records, setRecords] = useState<AttendanceEntry[]>([]);
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+  const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
   const fetchRecords = useCallback(async () => {
+    // Employee role: fetch only their own records (no JOINs needed, minimal columns)
+    if (isEmployee && scopedEmployeeId) {
+      const { data } = await supabase
+        .from('attendance_records')
+        .select('id, employee_id, date, check_in, check_out, status, work_hours, work_minutes, notes, is_late')
+        .eq('employee_id', scopedEmployeeId)
+        .order('date', { ascending: false })
+        .limit(200);
+      if (data) {
+        setRecords(data.map(r => {
+          const ci = formatTime(r.check_in);
+          const co = formatTime(r.check_out);
+          const wt = calculateWorkTime(ci, co);
+          const hasDbHours = (r.work_hours != null && r.work_hours > 0) || (r.work_minutes != null && r.work_minutes > 0);
+          let finalHours: number, finalMinutes: number;
+          if (hasDbHours) {
+            const dbM = r.work_minutes ?? 0;
+            const totalMins = dbM > 0 ? Math.round(dbM) : Math.round((r.work_hours ?? 0) * 60);
+            finalHours = Math.floor(totalMins / 60);
+            finalMinutes = totalMins % 60;
+          } else {
+            finalHours = wt.hours;
+            finalMinutes = wt.minutes;
+          }
+          return {
+            id: r.id,
+            employeeId: r.employee_id,
+            employeeName: '',
+            employeeNameAr: '',
+            department: '',
+            date: r.date,
+            checkIn: ci,
+            checkOut: co,
+            status: r.status as AttendanceEntry['status'],
+            isMission: r.status === 'mission',
+            workHours: finalHours,
+            workMinutes: finalMinutes,
+            overtime: Math.max(0, finalHours - 8),
+            notes: r.notes || undefined,
+          };
+        }));
+      }
+      return;
+    }
+
+    // Admin/HR: fetch all with JOINs
     const { data } = await supabase
       .from('attendance_records')
       .select('*, employees(name_en, name_ar, department_id, departments(name_ar))')
       .order('date', { ascending: false })
       .limit(1000);
     if (data) {
-      setRecords(data.map(r => {
-        const ci = formatTime(r.check_in);
-        const co = formatTime(r.check_out);
-        const wt = calculateWorkTime(ci, co);
-        // Use DB values only if they are non-zero, otherwise use calculated values
-        const hasDbHours = (r.work_hours != null && r.work_hours > 0) || (r.work_minutes != null && r.work_minutes > 0);
-        // DB trigger sets work_minutes = total diff in minutes (e.g. 500 for 8h20m)
-        // and work_hours = decimal hours (e.g. 8.33). They are NOT additive.
-        // Use work_minutes as the single source of truth if available.
-        let finalHours: number;
-        let finalMinutes: number;
-        if (hasDbHours) {
-          const dbM = r.work_minutes ?? 0;
-          // work_minutes is the total minutes; if it's 0 but work_hours exists, derive from work_hours
-          const totalMins = dbM > 0 ? Math.round(dbM) : Math.round((r.work_hours ?? 0) * 60);
-          finalHours = Math.floor(totalMins / 60);
-          finalMinutes = totalMins % 60;
-        } else {
-          finalHours = wt.hours;
-          finalMinutes = wt.minutes;
-        }
-        return {
-          id: r.id,
-          employeeId: r.employee_id,
-          employeeName: (r.employees as any)?.name_en || '',
-          employeeNameAr: (r.employees as any)?.name_ar || '',
-          department: (r.employees as any)?.departments?.name_ar || '',
-          date: r.date,
-          checkIn: ci,
-          checkOut: co,
-          status: r.status as AttendanceEntry['status'],
-          isMission: r.status === 'mission',
-          workHours: finalHours,
-          workMinutes: finalMinutes,
-          overtime: Math.max(0, finalHours - 8),
-          notes: r.notes || undefined,
-        };
-      }));
+      setRecords(data.map(mapRecord));
     }
-  }, []);
+  }, [isEmployee, scopedEmployeeId]);
 
   useEffect(() => {
     fetchRecords();
@@ -121,7 +168,6 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     const dateString = now.toISOString().split('T')[0];
     const checkInTs = now.toISOString();
 
-    // Check if employee has a flexible attendance rule
     const { data: assignment } = await supabase
       .from('attendance_assignments')
       .select('rule_id, attendance_rules(schedule_type)')
@@ -156,7 +202,6 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
 
     const record = records.find(r => r.id === recordId);
 
-    // Check if employee has a flexible attendance rule
     let isFlexible = false;
     if (record) {
       const { data: assignment } = await supabase
@@ -189,11 +234,9 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
   }, [records, addNotification, fetchRecords]);
 
   const addMissionAttendance = useCallback(async (employeeId: string, employeeName: string, employeeNameAr: string, department: string, date: string, checkInTime: string, checkOutTime: string, hours: number) => {
-    // Build full timestamps
     const ciTs = `${date}T${checkInTime}:00`;
     const coTs = `${date}T${checkOutTime}:00`;
 
-    // Delete existing record for same employee+date
     await supabase.from('attendance_records').delete().eq('employee_id', employeeId).eq('date', date);
 
     await supabase.from('attendance_records').insert({

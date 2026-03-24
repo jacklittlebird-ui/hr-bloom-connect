@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useCallback, useState, useEffect, useMemo } from 'react';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ProcessedPayroll {
@@ -125,8 +126,14 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [rawEntries, setRawEntries] = useState<ProcessedPayroll[]>([]);
   const [employeeMap, setEmployeeMap] = useState<Record<string, { code: string; nameAr: string; nameEn: string; department: string; station: string }>>({});
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+  const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
   const fetchEmployeeMap = useCallback(async () => {
+    // Employee role doesn't need the full employee map for payroll enrichment
+    if (isEmployee) return;
+
     const { data: emps } = await supabase.from('employees').select('id, employee_code, name_ar, name_en, department_id, station_id').order('employee_code');
     const { data: depts } = await supabase.from('departments').select('id, name_ar, name_en');
     const { data: stations } = await supabase.from('stations').select('id, code');
@@ -148,14 +155,19 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       };
     });
     setEmployeeMap(map);
-  }, []);
+  }, [isEmployee]);
 
   const fetchEntries = useCallback(async () => {
-    const { data, error } = await supabase.from('payroll_entries').select('*');
+    // Employee role: only fetch their own payroll entries
+    let query = supabase.from('payroll_entries').select('*');
+    if (isEmployee && scopedEmployeeId) {
+      query = query.eq('employee_id', scopedEmployeeId);
+    }
+    const { data, error } = await query;
     if (!error && data) {
       setRawEntries(data.map(mapRowToEntry));
     }
-  }, []);
+  }, [isEmployee, scopedEmployeeId]);
 
   // Enrich entries with employee data
   const payrollEntries = useMemo(() => {
@@ -189,7 +201,6 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const upsertEntry = async (entry: ProcessedPayroll) => {
     const payload = entryToPayload(entry);
-    // Check if exists
     const { data: existing } = await supabase
       .from('payroll_entries')
       .select('id')

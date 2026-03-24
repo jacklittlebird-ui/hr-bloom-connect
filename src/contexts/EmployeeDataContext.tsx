@@ -236,11 +236,31 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [loading, setLoading] = useState(true);
   const { addNotification } = useNotifications();
   const { isAuthenticated, user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+  const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
 
-    // Station managers get limited view (no sensitive data like national_id, bank, salary, insurance)
+    // Employee role: fetch only their own record - massive performance win
+    if (isEmployee && scopedEmployeeId) {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+        .eq('id', scopedEmployeeId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching employee profile:', error);
+        setEmployees([]);
+      } else if (data) {
+        setEmployees([mapRow(data)]);
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Station managers get limited view
     if (user?.role === 'station_manager') {
       const { data, error } = await supabase
         .from('employee_limited_view' as any)
@@ -248,7 +268,6 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .order('employee_code', { ascending: true });
 
       if (error) {
-        // Fallback: if view doesn't support joins, query separately
         const { data: viewData, error: viewError } = await supabase
           .from('employee_limited_view' as any)
           .select('*')
@@ -261,7 +280,6 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return;
         }
 
-        // Fetch departments and stations for mapping
         const [deptsRes, stationsRes] = await Promise.all([
           supabase.from('departments').select('id, name_ar, name_en'),
           supabase.from('stations').select('id, code, name_ar, name_en'),
@@ -283,6 +301,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
 
+    // Admin/HR: fetch all
     const { data, error } = await supabase
       .from('employees')
       .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
@@ -295,9 +314,8 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setEmployees((data || []).map(mapRow));
     }
     setLoading(false);
-  }, [user?.role]);
+  }, [user?.role, isEmployee, scopedEmployeeId]);
 
-  // Re-fetch when auth state changes (login/logout)
   useEffect(() => {
     if (isAuthenticated) {
       fetchEmployees();

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 // ===== LEAVES =====
 export interface LeaveBalance {
@@ -169,6 +170,10 @@ interface PortalDataContextType {
 const PortalDataContext = createContext<PortalDataContextType | undefined>(undefined);
 
 export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const isEmployee = user?.role === 'employee';
+  const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
+
   // Cache data from Supabase
   const [leaveBalances, setLeaveBalances] = useState<Record<string, LeaveBalance[]>>({});
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
@@ -183,132 +188,160 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [documents, setDocuments] = useState<PortalDocument[]>([]);
 
   const fetchAll = useCallback(async () => {
-    // Leave balances - current year only
+    // If employee role but no employeeUuid yet, skip fetching
+    if (isEmployee && !scopedEmployeeId) return;
+
     const currentYear = new Date().getFullYear();
-    const { data: lbData } = await supabase.from('leave_balances').select('*').eq('year', currentYear);
-    if (lbData) {
-      const mapped: Record<string, LeaveBalance[]> = {};
-      lbData.forEach(lb => {
-        if (!mapped[lb.employee_id]) mapped[lb.employee_id] = [];
-        mapped[lb.employee_id].push(
-          { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used },
-          { typeAr: 'مرضية', typeEn: 'Sick', total: lb.sick_total, used: lb.sick_used, remaining: lb.sick_total - lb.sick_used },
-          { typeAr: 'عارضة', typeEn: 'Casual', total: lb.casual_total, used: lb.casual_used, remaining: lb.casual_total - lb.casual_used },
-          { typeAr: 'الأذونات', typeEn: 'Permissions', total: lb.permissions_total, used: lb.permissions_used, remaining: lb.permissions_total - lb.permissions_used },
-        );
-      });
-      setLeaveBalances(mapped);
+
+    // Build scoped queries - employee role only fetches their own data
+    const lbQuery = supabase.from('leave_balances').select('*').eq('year', currentYear);
+    const lrQuery = supabase.from('leave_requests').select('*').order('created_at', { ascending: false });
+    const pQuery = supabase.from('permission_requests').select('*').order('created_at', { ascending: false });
+    const loansQuery = supabase.from('loans').select('*').order('created_at', { ascending: false });
+    const prQuery = supabase.from('performance_reviews').select('*').order('created_at', { ascending: false });
+    const trQuery = supabase.from('training_records').select('*, training_courses(name_ar, name_en)').order('created_at', { ascending: false });
+    const mQuery = supabase.from('missions').select('*').order('created_at', { ascending: false });
+    const vQuery = supabase.from('violations').select('*').order('created_at', { ascending: false });
+    const otQuery = supabase.from('overtime_requests').select('*').order('created_at', { ascending: false });
+    const dQuery = supabase.from('employee_documents').select('*').order('uploaded_at', { ascending: false });
+
+    // Scope all queries to this employee's data only
+    if (scopedEmployeeId) {
+      lbQuery.eq('employee_id', scopedEmployeeId);
+      lrQuery.eq('employee_id', scopedEmployeeId);
+      pQuery.eq('employee_id', scopedEmployeeId);
+      loansQuery.eq('employee_id', scopedEmployeeId);
+      prQuery.eq('employee_id', scopedEmployeeId);
+      trQuery.eq('employee_id', scopedEmployeeId);
+      mQuery.eq('employee_id', scopedEmployeeId);
+      vQuery.eq('employee_id', scopedEmployeeId);
+      otQuery.eq('employee_id', scopedEmployeeId);
+      dQuery.eq('employee_id', scopedEmployeeId);
     }
 
-    // Leave requests
-    const { data: lrData } = await supabase.from('leave_requests').select('*').order('created_at', { ascending: false });
-    if (lrData) {
-      setLeaveRequests(lrData.map(r => {
-        const lt = leaveTypeMap[r.leave_type] || { ar: r.leave_type, en: r.leave_type };
-        return { id: r.id as any, employeeId: r.employee_id, typeAr: lt.ar, typeEn: lt.en, from: r.start_date, to: r.end_date, days: r.days, status: r.status as any };
-      }));
-    }
+    try {
+      const [lbRes, lrRes, pRes, loansRes, prRes, trRes, mRes, vRes, otRes, dRes] = await Promise.all([
+        lbQuery, lrQuery, pQuery, loansQuery, prQuery, trQuery, mQuery, vQuery, otQuery, dQuery,
+      ]);
 
-    // Permissions
-    const { data: pData } = await supabase.from('permission_requests').select('*').order('created_at', { ascending: false });
-    if (pData) {
-      setPermissions(pData.map(p => {
-        const pt = permTypeMap[p.permission_type] || { ar: p.permission_type, en: p.permission_type };
-        return { id: p.id as any, employeeId: p.employee_id, typeAr: pt.ar, typeEn: pt.en, date: p.date, fromTime: p.start_time, toTime: p.end_time, reason: p.reason || '', status: p.status as any };
-      }));
-    }
+      // Leave balances
+      if (lbRes.data) {
+        const mapped: Record<string, LeaveBalance[]> = {};
+        lbRes.data.forEach(lb => {
+          if (!mapped[lb.employee_id]) mapped[lb.employee_id] = [];
+          mapped[lb.employee_id].push(
+            { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used },
+            { typeAr: 'مرضية', typeEn: 'Sick', total: lb.sick_total, used: lb.sick_used, remaining: lb.sick_total - lb.sick_used },
+            { typeAr: 'عارضة', typeEn: 'Casual', total: lb.casual_total, used: lb.casual_used, remaining: lb.casual_total - lb.casual_used },
+            { typeAr: 'الأذونات', typeEn: 'Permissions', total: lb.permissions_total, used: lb.permissions_used, remaining: lb.permissions_total - lb.permissions_used },
+          );
+        });
+        setLeaveBalances(mapped);
+      }
 
-    // Loans
-    const { data: loansData } = await supabase.from('loans').select('*').order('created_at', { ascending: false });
-    if (loansData) {
-      setPortalLoans(loansData.map(l => ({
-        id: l.id as any, employeeId: l.employee_id,
-        typeAr: l.reason || 'قرض', typeEn: l.reason || 'Loan',
-        amount: l.amount, paid: (l.paid_count || 0) * (l.monthly_installment || 0),
-        remaining: l.remaining || 0, installment: l.monthly_installment || 0,
-        status: l.status === 'completed' ? 'paid' as const : 'active' as const,
-      })));
-    }
+      // Leave requests
+      if (lrRes.data) {
+        setLeaveRequests(lrRes.data.map(r => {
+          const lt = leaveTypeMap[r.leave_type] || { ar: r.leave_type, en: r.leave_type };
+          return { id: r.id as any, employeeId: r.employee_id, typeAr: lt.ar, typeEn: lt.en, from: r.start_date, to: r.end_date, days: r.days, status: r.status as any };
+        }));
+      }
 
-    // Evaluations
-    const { data: prData } = await supabase.from('performance_reviews').select('*').order('created_at', { ascending: false });
-    if (prData) {
-      setEvaluations(prData.map(e => ({
-        id: e.id as any, employeeId: e.employee_id,
-        period: `${e.quarter} ${e.year}`, score: e.score ?? 0, maxScore: 5,
-        reviewerAr: '', reviewerEn: '',
-        status: e.status === 'approved' || e.status === 'submitted' ? 'completed' as const : 'pending' as const,
-        notesAr: e.strengths || '', notesEn: e.strengths || '',
-      })));
-    }
+      // Permissions
+      if (pRes.data) {
+        setPermissions(pRes.data.map(p => {
+          const pt = permTypeMap[p.permission_type] || { ar: p.permission_type, en: p.permission_type };
+          return { id: p.id as any, employeeId: p.employee_id, typeAr: pt.ar, typeEn: pt.en, date: p.date, fromTime: p.start_time, toTime: p.end_time, reason: p.reason || '', status: p.status as any };
+        }));
+      }
 
-    // Training
-    const { data: trData } = await supabase.from('training_records').select('*, training_courses(name_ar, name_en)').order('created_at', { ascending: false });
-    if (trData) {
-      setTraining(trData.map(t => ({
-        id: t.id as any, employeeId: t.employee_id,
-        nameAr: (t.training_courses as any)?.name_ar || '',
-        nameEn: (t.training_courses as any)?.name_en || '',
-        progress: t.status === 'completed' ? 100 : t.status === 'enrolled' ? 50 : 0,
-        status: t.status === 'completed' ? 'completed' as const : t.status === 'enrolled' ? 'in-progress' as const : 'planned' as const,
-        startDate: t.start_date || '', endDate: t.end_date || '',
-      })));
-    }
+      // Loans
+      if (loansRes.data) {
+        setPortalLoans(loansRes.data.map(l => ({
+          id: l.id as any, employeeId: l.employee_id,
+          typeAr: l.reason || 'قرض', typeEn: l.reason || 'Loan',
+          amount: l.amount, paid: (l.paid_count || 0) * (l.monthly_installment || 0),
+          remaining: l.remaining || 0, installment: l.monthly_installment || 0,
+          status: l.status === 'completed' ? 'paid' as const : 'active' as const,
+        })));
+      }
 
-    // Missions
-    const { data: mData } = await supabase.from('missions').select('*').order('created_at', { ascending: false });
-    if (mData) {
-      setMissions(mData.map(m => ({
-        id: m.id as any, employeeId: m.employee_id,
-        missionType: m.mission_type as PortalMissionType,
-        date: m.date, destAr: m.destination || '', destEn: m.destination || '',
-        reasonAr: m.reason || '', reasonEn: m.reason || '',
-        status: m.status as any,
-      })));
-    }
+      // Evaluations
+      if (prRes.data) {
+        setEvaluations(prRes.data.map(e => ({
+          id: e.id as any, employeeId: e.employee_id,
+          period: `${e.quarter} ${e.year}`, score: e.score ?? 0, maxScore: 5,
+          reviewerAr: '', reviewerEn: '',
+          status: e.status === 'approved' || e.status === 'submitted' ? 'completed' as const : 'pending' as const,
+          notesAr: e.strengths || '', notesEn: e.strengths || '',
+        })));
+      }
 
-    // Violations
-    const { data: vData } = await supabase.from('violations').select('*').order('created_at', { ascending: false });
-    if (vData) {
-      setViolations(vData.map(v => ({
-        id: v.id as any, employeeId: v.employee_id,
-        date: v.date, typeAr: v.type, typeEn: v.type,
-        penaltyAr: v.penalty || '', penaltyEn: v.penalty || '',
-        status: v.status === 'approved' ? 'closed' as const : 'open' as const,
-      })));
-    }
+      // Training
+      if (trRes.data) {
+        setTraining(trRes.data.map(t => ({
+          id: t.id as any, employeeId: t.employee_id,
+          nameAr: (t.training_courses as any)?.name_ar || '',
+          nameEn: (t.training_courses as any)?.name_en || '',
+          progress: t.status === 'completed' ? 100 : t.status === 'enrolled' ? 50 : 0,
+          status: t.status === 'completed' ? 'completed' as const : t.status === 'enrolled' ? 'in-progress' as const : 'planned' as const,
+          startDate: t.start_date || '', endDate: t.end_date || '',
+        })));
+      }
 
-    // Overtime days
-    const { data: otData } = await supabase.from('overtime_requests').select('*').order('created_at', { ascending: false });
-    if (otData) {
-      const otTypeMap: Record<string, { ar: string; en: string }> = {
-        holiday: { ar: 'إجازة رسمية', en: 'Holiday' },
-        weekend: { ar: 'عطلة أسبوعية', en: 'Weekend' },
-        regular: { ar: 'أخرى', en: 'Other' },
-      };
-      setOvertimeDays(otData.map(o => {
-        const t = otTypeMap[o.status] || otTypeMap.regular;
-        return {
-          id: o.id, employeeId: o.employee_id,
-          date: o.date, overtimeType: (o as any).overtime_type || 'regular',
-          typeAr: otTypeMap[(o as any).overtime_type]?.ar || 'أخرى',
-          typeEn: otTypeMap[(o as any).overtime_type]?.en || 'Other',
-          reason: o.reason || '', status: o.status as any,
+      // Missions
+      if (mRes.data) {
+        setMissions(mRes.data.map(m => ({
+          id: m.id as any, employeeId: m.employee_id,
+          missionType: m.mission_type as PortalMissionType,
+          date: m.date, destAr: m.destination || '', destEn: m.destination || '',
+          reasonAr: m.reason || '', reasonEn: m.reason || '',
+          status: m.status as any,
+        })));
+      }
+
+      // Violations
+      if (vRes.data) {
+        setViolations(vRes.data.map(v => ({
+          id: v.id as any, employeeId: v.employee_id,
+          date: v.date, typeAr: v.type, typeEn: v.type,
+          penaltyAr: v.penalty || '', penaltyEn: v.penalty || '',
+          status: v.status === 'approved' ? 'closed' as const : 'open' as const,
+        })));
+      }
+
+      // Overtime days
+      if (otRes.data) {
+        const otTypeMap: Record<string, { ar: string; en: string }> = {
+          holiday: { ar: 'إجازة رسمية', en: 'Holiday' },
+          weekend: { ar: 'عطلة أسبوعية', en: 'Weekend' },
+          regular: { ar: 'أخرى', en: 'Other' },
         };
-      }));
-    }
+        setOvertimeDays(otRes.data.map(o => {
+          const t = otTypeMap[o.status] || otTypeMap.regular;
+          return {
+            id: o.id, employeeId: o.employee_id,
+            date: o.date, overtimeType: (o as any).overtime_type || 'regular',
+            typeAr: otTypeMap[(o as any).overtime_type]?.ar || 'أخرى',
+            typeEn: otTypeMap[(o as any).overtime_type]?.en || 'Other',
+            reason: o.reason || '', status: o.status as any,
+          };
+        }));
+      }
 
-    // Documents
-    const { data: dData } = await supabase.from('employee_documents').select('*').order('uploaded_at', { ascending: false });
-    if (dData) {
-      setDocuments(dData.map(d => ({
-        id: d.id as any, employeeId: d.employee_id,
-        nameAr: d.name, nameEn: d.name,
-        date: d.uploaded_at.split('T')[0],
-        typeAr: d.type || '', typeEn: d.type || '',
-      })));
+      // Documents
+      if (dRes.data) {
+        setDocuments(dRes.data.map(d => ({
+          id: d.id as any, employeeId: d.employee_id,
+          nameAr: d.name, nameEn: d.name,
+          date: d.uploaded_at.split('T')[0],
+          typeAr: d.type || '', typeEn: d.type || '',
+        })));
+      }
+    } catch (err) {
+      console.error('PortalDataContext fetchAll error:', err);
     }
-  }, []);
+  }, [isEmployee, scopedEmployeeId]);
 
   useEffect(() => {
     fetchAll();
@@ -398,7 +431,6 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const getRequests = useCallback((empId: string) => requests.filter(r => r.employeeId === empId), [requests]);
   
   const addRequest = useCallback(async (req: Omit<EmployeeRequest, 'id' | 'status'>) => {
-    // Requests don't have a dedicated table, store as notification for now
     setRequests(prev => [...prev, { ...req, id: Date.now(), status: 'pending' as const }]);
   }, []);
 
