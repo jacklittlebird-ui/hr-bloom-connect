@@ -31,7 +31,7 @@ const AttendanceKiosk = () => {
   const [qrSrcs, setQrSrcs] = useState<string[]>(["", "", ""]);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(30 * 60); // 30 min in seconds
   const [error, setError] = useState("");
   const intervalRef = useRef<number>();
 
