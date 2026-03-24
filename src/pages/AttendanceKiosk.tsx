@@ -167,10 +167,10 @@ const AttendanceKiosk = () => {
     };
 
     tick();
-    intervalRef.current = window.setInterval(tick, 4800);
+    intervalRef.current = window.setInterval(tick, 30000);
 
     const countdownInterval = window.setInterval(() => {
-      setCountdown((prev) => (prev > 1 ? prev - 1 : 5));
+      setCountdown((prev) => (prev > 1 ? prev - 1 : 30));
     }, 1000);
 
     return () => {
