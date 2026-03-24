@@ -124,6 +124,7 @@ const AppRoutes = () => (
     
     <Route path="*" element={<NotFound />} />
   </Routes>
+  </Suspense>
 );
 
 const App = () => (
