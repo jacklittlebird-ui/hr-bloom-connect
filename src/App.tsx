@@ -128,33 +128,33 @@ const AppRoutes = () => (
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
-      <NotificationProvider>
       <AuthProvider>
-      <EmployeeDataProvider>
-      <SalaryDataProvider>
-      <PayrollDataProvider>
-      <AttendanceDataProvider>
-      <LoanDataProvider>
-      <UniformDataProvider>
-      <PortalDataProvider>
-      <PerformanceDataProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-      </PerformanceDataProvider>
-      </PortalDataProvider>
-      </UniformDataProvider>
-      </LoanDataProvider>
-      </AttendanceDataProvider>
-      </PayrollDataProvider>
-      </SalaryDataProvider>
-      </EmployeeDataProvider>
+        <NotificationProvider>
+          <EmployeeDataProvider>
+            <SalaryDataProvider>
+              <PayrollDataProvider>
+                <AttendanceDataProvider>
+                  <LoanDataProvider>
+                    <UniformDataProvider>
+                      <PortalDataProvider>
+                        <PerformanceDataProvider>
+                          <TooltipProvider>
+                            <Toaster />
+                            <Sonner />
+                            <BrowserRouter>
+                              <AppRoutes />
+                            </BrowserRouter>
+                          </TooltipProvider>
+                        </PerformanceDataProvider>
+                      </PortalDataProvider>
+                    </UniformDataProvider>
+                  </LoanDataProvider>
+                </AttendanceDataProvider>
+              </PayrollDataProvider>
+            </SalaryDataProvider>
+          </EmployeeDataProvider>
+        </NotificationProvider>
       </AuthProvider>
-      </NotificationProvider>
     </LanguageProvider>
   </QueryClientProvider>
 );
