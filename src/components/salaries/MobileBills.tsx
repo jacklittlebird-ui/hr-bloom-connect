@@ -513,6 +513,7 @@ export const MobileBills = () => {
           {filteredEntries.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">{loading ? (isRTL ? 'جاري التحميل...' : 'Loading...') : (isRTL ? 'لا توجد فواتير' : 'No bills found')}</div>
           )}
+          <PaginationControls currentPage={billPage} totalPages={billTotalPages} totalItems={billTotalItems} startIndex={billStart} endIndex={billEnd} onPageChange={setBillPage} />
         </CardContent>
       </Card>
 

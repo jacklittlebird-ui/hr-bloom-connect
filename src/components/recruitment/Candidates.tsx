@@ -215,6 +215,7 @@ export const Candidates = () => {
               ))}
             </TableBody>
           </Table>
+          <PaginationControls currentPage={candPage} totalPages={candTotalPages} totalItems={candTotalItems} startIndex={candStart} endIndex={candEnd} onPageChange={setCandPage} />
         </CardContent>
       </Card>
 
