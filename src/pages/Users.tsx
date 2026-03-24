@@ -402,7 +402,8 @@ const Users = () => {
     return a.role.localeCompare(b.role) || a.full_name.localeCompare(b.full_name);
   });
 
-  const getRoleBadge = (role: string) => {
+  const { paginatedItems: paginatedUsers, currentPage, totalPages, totalItems, startIndex, endIndex, setCurrentPage } = usePagination(filtered, 20);
+
     switch (role) {
       case 'admin': return <Badge className="bg-primary/10 text-primary border-primary/30">{isAr ? 'مدير النظام' : 'Admin'}</Badge>;
       case 'hr': return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">{isAr ? 'موارد بشرية' : 'HR'}</Badge>;
