@@ -44,10 +44,10 @@ export const EmployeeSelector = ({ value, onChange, label }: EmployeeSelectorPro
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0 bg-popover z-50" align="start">
-          <Command>
-            <CommandInput placeholder={t('leaves.newRequest.searchEmployee')} />
-            <CommandList>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-[320px] p-0 bg-popover z-50" align="start">
+          <Command shouldFilter={true}>
+            <CommandInput placeholder={language === 'ar' ? 'ابحث بالاسم أو الرقم الوظيفي...' : 'Search by name or employee code...'} />
+            <CommandList className="max-h-[300px] overflow-y-auto">
               <CommandEmpty>{t('leaves.newRequest.noEmployeeFound')}</CommandEmpty>
               <CommandGroup>
                 {activeEmployees.map((emp) => (
@@ -60,13 +60,13 @@ export const EmployeeSelector = ({ value, onChange, label }: EmployeeSelectorPro
                     }}
                   >
                     <Check
-                      className={cn("mr-2 h-4 w-4", value === emp.employeeId ? "opacity-100" : "opacity-0")}
+                      className={cn("mr-2 h-4 w-4 shrink-0", value === emp.employeeId ? "opacity-100" : "opacity-0")}
                     />
-                    <div className={cn("flex flex-col", isRTL && "items-end")}>
-                      <span className="font-medium">
+                    <div className={cn("flex flex-col min-w-0", isRTL && "items-end")}>
+                      <span className="font-medium truncate">
                         {language === 'ar' ? emp.nameAr : emp.nameEn}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground truncate">
                         {emp.employeeId} - {emp.department}
                       </span>
                     </div>
