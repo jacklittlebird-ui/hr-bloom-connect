@@ -293,7 +293,7 @@ export const AssetAssignment = () => {
                     {ar ? 'لا توجد أصول معيّنة' : 'No assigned assets'}
                   </TableCell>
                 </TableRow>
-              ) : filtered.map(a => (
+              ) : paginatedAssigned.map(a => (
                 <TableRow key={a.id}>
                   <TableCell className="font-mono text-sm">{a.assetCode}</TableCell>
                   <TableCell className="font-medium">{ar ? a.nameAr : a.nameEn}</TableCell>
