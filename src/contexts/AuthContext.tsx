@@ -7,9 +7,11 @@ import { getCachedValue, setCachedValue } from '@/lib/runtimeCache';
 
 const AUTH_PROFILE_CACHE_KEY = 'auth_profile_';
 const AUTH_PROFILE_CACHE_TTL = 5 * 60_000; // 5 min
+const AUTH_STORAGE_KEY = `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`;
 
 // Prevent duplicate concurrent login calls
 let loginInFlight = false;
+let authRecoveryInFlight = false;
 
 export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager';
 
@@ -26,6 +28,31 @@ const normalizeLoginIdentifier = (value: string) => {
 
   return `${normalized}@${EMPLOYEE_EMAIL_DOMAIN}`;
 };
+
+const isNetworkAuthError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  return /failed to fetch|network|authretryablefetcherror|refresh_token|timeout/i.test(message);
+};
+
+async function clearBrokenLocalSession() {
+  if (authRecoveryInFlight) return;
+  authRecoveryInFlight = true;
+
+  try {
+    await supabase.auth.signOut({ scope: 'local' });
+  } catch {
+    // Ignore network-related signout issues; we still remove local state below.
+  }
+
+  try {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  } catch {
+    // Ignore storage access issues.
+  } finally {
+    authRecoveryInFlight = false;
+  }
+}
 
 export interface AuthUser {
   id: string;
@@ -182,21 +209,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let loadingTimeout: ReturnType<typeof setTimeout>;
 
+    const recoverAuthState = async (error?: unknown) => {
+      if (!error || !isNetworkAuthError(error)) return;
+      await clearBrokenLocalSession();
+      setUser(null);
+      setSession(null);
+    };
+
     // Safety: if loading takes more than 8 seconds, stop loading so login page shows
     loadingTimeout = setTimeout(() => {
       setLoading(false);
     }, 8000);
 
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession);
       if (newSession?.user) {
         // Use setTimeout to avoid potential deadlocks with Supabase client
         setTimeout(async () => {
-          const profile = await fetchUserProfile(newSession.user);
-          setUser(profile);
-          setLoading(false);
-          clearTimeout(loadingTimeout);
+          try {
+            const profile = await fetchUserProfile(newSession.user);
+            setUser(profile);
+          } catch (error) {
+            await recoverAuthState(error);
+          } finally {
+            setLoading(false);
+            clearTimeout(loadingTimeout);
+          }
         }, 0);
       } else {
         setUser(null);
@@ -209,12 +248,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
       setSession(initialSession);
       if (initialSession?.user) {
-        const profile = await fetchUserProfile(initialSession.user);
-        setUser(profile);
+        try {
+          const profile = await fetchUserProfile(initialSession.user);
+          setUser(profile);
+        } catch (error) {
+          await recoverAuthState(error);
+        }
       }
       setLoading(false);
       clearTimeout(loadingTimeout);
-    }).catch(() => {
+    }).catch(async (error) => {
+      await recoverAuthState(error);
       // If getSession fails (timeout/network), stop loading so login page shows
       setLoading(false);
       clearTimeout(loadingTimeout);
@@ -248,6 +292,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const normalizedEmail = normalizeLoginIdentifier(email);
 
     try {
+      await clearBrokenLocalSession();
+
       // Retry up to 3 times on timeout/server errors
       for (let attempt = 1; attempt <= 3; attempt++) {
         const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
