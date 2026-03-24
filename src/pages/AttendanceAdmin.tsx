@@ -251,8 +251,8 @@ const AttendanceAdmin = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 max-h-[600px] overflow-auto">
-                  {alerts.filter((al) => {
+                {(() => {
+                  const filteredAlerts = alerts.filter((al) => {
                     if (!searchQuery) return true;
                     const q = searchQuery.toLowerCase();
                     const emp = employeeMap[al.user_id];
@@ -263,61 +263,99 @@ const AttendanceAdmin = () => {
                       al.device_id?.toLowerCase().includes(q) ||
                       al.reason?.toLowerCase().includes(q)
                     );
-                  }).map((al) => {
-                    const emp = employeeMap[al.user_id];
-                    return (
-                      <div key={al.id} className="border rounded-lg p-3 space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="font-semibold truncate">{ar ? emp?.name_ar : emp?.name_en || al.user_id?.substring(0, 8)}</p>
-                            {emp?.employee_code && <p className="text-xs text-muted-foreground">{emp.employee_code}</p>}
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {alertReasonLabel(al.reason)}
+                  });
+                  const totalPages = Math.ceil(filteredAlerts.length / ALERTS_PER_PAGE);
+                  const paged = filteredAlerts.slice(alertsPage * ALERTS_PER_PAGE, (alertsPage + 1) * ALERTS_PER_PAGE);
+
+                  return (
+                    <>
+                      <div className="space-y-3">
+                        {paged.map((al) => {
+                          const emp = employeeMap[al.user_id];
+                          return (
+                            <div key={al.id} className="border rounded-lg p-3 space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="font-semibold truncate">{ar ? emp?.name_ar : emp?.name_en || al.user_id?.substring(0, 8)}</p>
+                                  {emp?.employee_code && <p className="text-xs text-muted-foreground">{emp.employee_code}</p>}
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  {alertReasonLabel(al.reason)}
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={async () => {
+                                      const confirmed = window.confirm(
+                                        ar
+                                          ? `هل تريد مسح جهاز ${emp?.name_ar || "هذا الموظف"}؟`
+                                          : `Clear device for ${emp?.name_en || "this user"}?`
+                                      );
+                                      if (!confirmed) return;
+                                      const { error } = await supabase
+                                        .from("user_devices")
+                                        .delete()
+                                        .eq("user_id", al.user_id)
+                                        .eq("device_id", al.device_id);
+                                      if (error) {
+                                        toast.error(error.message);
+                                      } else {
+                                        toast.success(ar ? "تم مسح الجهاز بنجاح" : "Device cleared successfully");
+                                        fetchAll();
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 me-1" />
+                                    {ar ? "مسح" : "Clear"}
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                <span className="font-mono">{ar ? "الجهاز:" : "Device:"} {al.device_id?.substring(0, 12)}...</span>
+                                <span>{new Date(al.triggered_at).toLocaleString(ar ? "ar-EG" : "en-US")}</span>
+                              </div>
+                              {al.meta && (
+                                <p className="text-xs text-muted-foreground break-all">{JSON.stringify(al.meta)}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {filteredAlerts.length === 0 && (
+                          <p className="text-center text-muted-foreground py-8">
+                            {ar ? "لا توجد تنبيهات" : "No alerts"}
+                          </p>
+                        )}
+                      </div>
+
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t">
+                          <span className="text-sm text-muted-foreground">
+                            {ar
+                              ? `عرض ${alertsPage * ALERTS_PER_PAGE + 1}–${Math.min((alertsPage + 1) * ALERTS_PER_PAGE, filteredAlerts.length)} من ${filteredAlerts.length}`
+                              : `Showing ${alertsPage * ALERTS_PER_PAGE + 1}–${Math.min((alertsPage + 1) * ALERTS_PER_PAGE, filteredAlerts.length)} of ${filteredAlerts.length}`}
+                          </span>
+                          <div className="flex gap-2">
                             <Button
-                              variant="destructive"
+                              variant="outline"
                               size="sm"
-                              onClick={async () => {
-                                const confirmed = window.confirm(
-                                  ar
-                                    ? `هل تريد مسح جهاز ${emp?.name_ar || "هذا الموظف"}؟`
-                                    : `Clear device for ${emp?.name_en || "this user"}?`
-                                );
-                                if (!confirmed) return;
-                                const { error } = await supabase
-                                  .from("user_devices")
-                                  .delete()
-                                  .eq("user_id", al.user_id)
-                                  .eq("device_id", al.device_id);
-                                if (error) {
-                                  toast.error(error.message);
-                                } else {
-                                  toast.success(ar ? "تم مسح الجهاز بنجاح" : "Device cleared successfully");
-                                  fetchAll();
-                                }
-                              }}
+                              disabled={alertsPage === 0}
+                              onClick={() => setAlertsPage((p) => p - 1)}
                             >
-                              <Trash2 className="h-4 w-4 me-1" />
-                              {ar ? "مسح" : "Clear"}
+                              {ar ? "السابق" : "Previous"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={alertsPage >= totalPages - 1}
+                              onClick={() => setAlertsPage((p) => p + 1)}
+                            >
+                              {ar ? "التالي" : "Next"}
                             </Button>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          <span className="font-mono">{ar ? "الجهاز:" : "Device:"} {al.device_id?.substring(0, 12)}...</span>
-                          <span>{new Date(al.triggered_at).toLocaleString(ar ? "ar-EG" : "en-US")}</span>
-                        </div>
-                        {al.meta && (
-                          <p className="text-xs text-muted-foreground break-all">{JSON.stringify(al.meta)}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {alerts.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">
-                      {ar ? "لا توجد تنبيهات" : "No alerts"}
-                    </p>
-                  )}
-                </div>
+                      )}
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
           </TabsContent>
