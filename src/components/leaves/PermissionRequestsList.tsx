@@ -36,6 +36,7 @@ export const PermissionRequestsList = ({ requests, onDelete, onEdit }: Permissio
   const { t, isRTL, language } = useLanguage();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editData, setEditData] = useState<PermissionEditData | null>(null);
+  const { paginatedItems, currentPage, totalPages, totalItems, startIndex, endIndex, setCurrentPage } = usePagination(requests);
 
   const getStatusBadge = (status: PermissionRequest['status']) => {
     switch (status) {
