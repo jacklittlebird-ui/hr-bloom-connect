@@ -192,7 +192,7 @@ export const PayrollProcessing = () => {
     const pt = empId === selectedEmployee ? penaltyType : 'amount';
     const pv = empId === selectedEmployee ? (pt === 'days' ? normalizeQuarterInput(penaltyValue) : penaltyValue) : 0;
     const penaltyDailyRate = sr.basicSalary / 30;
-    const pa = pt === 'amount' ? pv : pt === 'days' ? roundToNearestQuarter(penaltyDailyRate * pv) : Math.round((pv / 100) * bg);
+    const pa = pt === 'amount' ? pv : pt === 'days' ? roundToNearestEighth(penaltyDailyRate * pv) : Math.round((pv / 100) * bg);
     const td = sr.employeeInsurance + lp + aa + mb + lded + pa;
 
     return {
