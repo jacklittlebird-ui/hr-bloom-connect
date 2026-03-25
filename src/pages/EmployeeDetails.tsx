@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   ArrowRight, Save, Edit, Eye, User, Phone, CreditCard, Briefcase, Wallet, Calendar,
   Shield, FileCheck, Award, Building2, Clock, CalendarDays, MapPin,
-  BarChart3, AlertTriangle, FileText, Receipt, HandCoins, GraduationCap, StickyNote, IdCard, Gift,
+  BarChart3, AlertTriangle, FileText, Receipt, HandCoins, GraduationCap, StickyNote, IdCard, Gift, Landmark,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BasicInfoTab } from '@/components/employees/tabs/BasicInfoTab';
