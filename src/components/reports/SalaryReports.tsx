@@ -258,6 +258,71 @@ export const SalaryReports = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Employee Detail Table */}
+        {employeeDetail.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader><CardTitle>{ar ? 'تفصيل الموظفين' : 'Employee Detail'}</CardTitle></CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className={cn(isRTL && "text-right")}>#</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الكود' : 'Code'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الموظف' : 'Employee'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'القسم' : 'Dept'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الأساسي' : 'Basic'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'البدلات' : 'Allowances'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المكافآت' : 'Bonuses'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'أجر إضافي' : 'Overtime'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الخصومات' : 'Deductions'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الصافي' : 'Net'}</TableHead>
+                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الأشهر' : 'Months'}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(() => {
+                    let currentStation = '';
+                    let idx = 0;
+                    return employeeDetail.map(([id, v]) => {
+                      const st = stationLocations.find(s => s.value === v.station);
+                      const stName = st ? (ar ? st.labelAr : st.labelEn) : v.station;
+                      const showStationHeader = v.station !== currentStation;
+                      currentStation = v.station;
+                      idx++;
+                      return (
+                        <React.Fragment key={id}>
+                          {showStationHeader && (
+                            <TableRow className="bg-muted/50">
+                              <TableCell colSpan={12} className={cn("font-bold text-primary", isRTL && "text-right")}>
+                                📍 {stName}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          <TableRow>
+                            <TableCell className={cn(isRTL && "text-right")}>{idx}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{v.code}</TableCell>
+                            <TableCell className={cn("font-medium", isRTL && "text-right")}>{ar ? v.name : v.nameEn}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stName}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{v.dept}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{v.basic.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{v.allowances.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{v.bonuses.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{v.overtime.toLocaleString()}</TableCell>
+                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{v.deductions.toLocaleString()}</TableCell>
+                            <TableCell className={cn("font-bold", isRTL && "text-right")}>{v.net.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{v.months}</TableCell>
+                          </TableRow>
+                        </React.Fragment>
+                      );
+                    });
+                  })()}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
