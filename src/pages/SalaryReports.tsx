@@ -349,6 +349,41 @@ const SalaryReports = () => {
     });
   }, [filtered, compareDisplayText, ar]);
 
+  // Group sorted records by station for subtotals
+  const detailedByStation = useMemo(() => {
+    const groups = new Map<string, ProcessedPayroll[]>();
+    detailedSortedRecords.forEach(r => {
+      const key = r.stationLocation || '__none__';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(r);
+    });
+    return groups;
+  }, [detailedSortedRecords]);
+
+  const calcStationTotals = (records: ProcessedPayroll[]) => ({
+    count: records.length,
+    basic: records.reduce((s, e) => s + e.basicSalary, 0),
+    transport: records.reduce((s, e) => s + e.transportAllowance, 0),
+    incentives: records.reduce((s, e) => s + e.incentives, 0),
+    stationAllow: records.reduce((s, e) => s + e.stationAllowance, 0),
+    mobileAllow: records.reduce((s, e) => s + e.mobileAllowance, 0),
+    living: records.reduce((s, e) => s + e.livingAllowance, 0),
+    overtime: records.reduce((s, e) => s + e.overtimePay, 0),
+    bonus: records.reduce((s, e) => s + e.bonusAmount, 0),
+    gross: records.reduce((s, e) => s + e.gross, 0),
+    insurance: records.reduce((s, e) => s + e.employeeInsurance, 0),
+    loans: records.reduce((s, e) => s + e.loanPayment, 0),
+    advances: records.reduce((s, e) => s + e.advanceAmount, 0),
+    mobileBill: records.reduce((s, e) => s + e.mobileBill, 0),
+    leaveDed: records.reduce((s, e) => s + e.leaveDeduction, 0),
+    penalty: records.reduce((s, e) => s + e.penaltyAmount, 0),
+    totalDed: records.reduce((s, e) => s + e.totalDeductions, 0),
+    net: records.reduce((s, e) => s + e.netSalary, 0),
+    empIns: records.reduce((s, e) => s + e.employerSocialInsurance, 0),
+    health: records.reduce((s, e) => s + e.healthInsurance, 0),
+    tax: records.reduce((s, e) => s + e.incomeTax, 0),
+  });
+
   // Print detailed monthly report
   const handlePrintMonthlyDetail = useCallback(() => {
     const title = ar
