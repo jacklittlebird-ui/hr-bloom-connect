@@ -50,6 +50,7 @@ const allDetailTabs = [
   { id: 'identity', icon: CreditCard, labelKey: 'employees.tabs.identity' },
   { id: 'job', icon: Briefcase, labelKey: 'employees.tabs.jobInfo' },
   { id: 'salary', icon: Wallet, labelKey: 'employees.tabs.salary' },
+  { id: 'bankAccount', icon: Landmark, labelKey: 'employees.tabs.bankAccount' },
   { id: 'leave', icon: Calendar, labelKey: 'employees.tabs.leaveBalance' },
   { id: 'insurance', icon: Shield, labelKey: 'employees.tabs.insurance' },
   { id: 'permits', icon: FileCheck, labelKey: 'employees.tabs.permits' },
