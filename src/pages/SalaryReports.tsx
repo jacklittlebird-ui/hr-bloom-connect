@@ -327,6 +327,28 @@ const SalaryReports = () => {
     return st ? (ar ? st.labelAr : st.labelEn) : val;
   };
 
+  const compareDisplayText = useCallback(
+    (a: string, b: string) => a.localeCompare(b, ar ? 'ar' : 'en', { numeric: true, sensitivity: 'base' }),
+    [ar],
+  );
+
+  const detailedSortedRecords = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      const stationOrder = compareDisplayText(getStationLabel(a.stationLocation || ''), getStationLabel(b.stationLocation || ''));
+      if (stationOrder !== 0) return stationOrder;
+
+      const nameA = (ar ? a.employeeName : (a.employeeNameEn || a.employeeName) || '').trim();
+      const nameB = (ar ? b.employeeName : (b.employeeNameEn || b.employeeName) || '').trim();
+      const nameOrder = compareDisplayText(nameA, nameB);
+      if (nameOrder !== 0) return nameOrder;
+
+      const monthOrder = compareDisplayText(a.month || '', b.month || '');
+      if (monthOrder !== 0) return monthOrder;
+
+      return compareDisplayText(a.employeeCode || a.employeeId || '', b.employeeCode || b.employeeId || '');
+    });
+  }, [filtered, compareDisplayText, ar]);
+
   // Print detailed monthly report
   const handlePrintMonthlyDetail = useCallback(() => {
     const title = ar
@@ -356,7 +378,7 @@ const SalaryReports = () => {
       tax: filtered.reduce((s, e) => s + e.incomeTax, 0),
     };
 
-    const rows = filtered.map(e => `
+    const rows = detailedSortedRecords.map(e => `
       <tr>
         <td>${e.employeeCode || e.employeeId}</td>
         <td>${ar ? e.employeeName : e.employeeNameEn}</td>
@@ -442,7 +464,7 @@ const SalaryReports = () => {
         <div class="summary-card"><div class="val">${totals.totalDed.toLocaleString()}</div><div class="lbl">${ar ? 'إجمالي الخصومات' : 'Total Deductions'}</div></div>
         <div class="summary-card"><div class="val">${totals.net.toLocaleString()}</div><div class="lbl">${ar ? 'إجمالي الصافي' : 'Total Net'}</div></div>
         <div class="summary-card"><div class="val">${(totals.empIns + totals.health + totals.tax).toLocaleString()}</div><div class="lbl">${ar ? 'مساهمات الشركة' : 'Company Cost'}</div></div>
-        <div class="summary-card"><div class="val">${filtered.length}</div><div class="lbl">${ar ? 'عدد السجلات' : 'Records'}</div></div>
+        <div class="summary-card"><div class="val">${detailedSortedRecords.length}</div><div class="lbl">${ar ? 'عدد السجلات' : 'Records'}</div></div>
         <div class="summary-card"><div class="val">${uniqueEmps}</div><div class="lbl">${ar ? 'عدد الموظفين' : 'Employees'}</div></div>
       </div>
       <table><thead><tr>${headerLabels.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}${totalRow}</tbody></table>
@@ -450,7 +472,7 @@ const SalaryReports = () => {
     w.document.close();
     w.focus();
     setTimeout(() => w.print(), 600);
-  }, [filtered, ar, selectedMonth, selectedYear]);
+  }, [filtered, detailedSortedRecords, ar, selectedMonth, selectedYear, uniqueEmps]);
 
   // Print monthly summary (totals per month)
   const handlePrintMonthlySummary = useCallback(() => {
@@ -525,7 +547,7 @@ const SalaryReports = () => {
   }, [activeMonths, ar, selectedYear]);
 
   // Export helpers
-  const getDetailExportData = () => filtered.map(e => ({
+  const getDetailExportData = () => detailedSortedRecords.map(e => ({
     id: e.employeeCode || e.employeeId,
     name: ar ? e.employeeName : e.employeeNameEn,
     dept: e.department,
@@ -567,7 +589,7 @@ const SalaryReports = () => {
     { header: ar ? 'إجمالي مساهمات ص.ع' : 'Total Employer', key: 'totalEmployer' },
   ];
 
-  const getDetailExportDataFull = () => filtered.map(e => ({
+  const getDetailExportDataFull = () => detailedSortedRecords.map(e => ({
     ...getDetailExportData().find(d => d.id === (e.employeeCode || e.employeeId) && d.net === e.netSalary) || {},
     id: e.employeeCode || e.employeeId,
     name: ar ? e.employeeName : e.employeeNameEn,
@@ -909,7 +931,7 @@ const SalaryReports = () => {
                     ))}
                   </TableRow></TableHeader>
                   <TableBody>
-                    {filtered.map((e, i) => (
+                    {detailedSortedRecords.map((e, i) => (
                       <TableRow key={i}>
                         <TableCell className={cn("font-mono text-xs", isRTL && "text-right")}>{e.employeeCode || e.employeeId}</TableCell>
                         <TableCell className={cn("font-medium whitespace-nowrap", isRTL && "text-right")}>{ar ? e.employeeName : e.employeeNameEn}</TableCell>
