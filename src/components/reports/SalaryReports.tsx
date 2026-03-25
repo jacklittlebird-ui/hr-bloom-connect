@@ -262,7 +262,61 @@ export const SalaryReports = () => {
         {/* Employee Detail Table */}
         {employeeDetail.length > 0 && (
           <Card className="mt-6">
-            <CardHeader><CardTitle>{ar ? 'تفصيل الموظفين' : 'Employee Detail'}</CardTitle></CardHeader>
+            <CardHeader>
+              <div className={cn("flex flex-wrap gap-4 justify-between items-center", isRTL && "flex-row-reverse")}>
+                <CardTitle>{ar ? 'تفصيل الموظفين' : 'Employee Detail'}</CardTitle>
+                <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const empDetailTitle = ar ? 'تفصيل رواتب الموظفين' : 'Employee Salary Detail';
+                    handlePrint(empDetailTitle);
+                  }}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    const empExportData: Record<string, unknown>[] = [];
+                    let currentSt = '';
+                    let idx = 0;
+                    employeeDetail.forEach(([, v]) => {
+                      const st = stationLocations.find(s => s.value === v.station);
+                      const stName = st ? (ar ? st.labelAr : st.labelEn) : v.station;
+                      if (v.station !== currentSt) {
+                        if (currentSt !== '') {
+                          const stationEmps = employeeDetail.filter(([, e]) => e.station === currentSt);
+                          const prevSt = stationLocations.find(s => s.value === currentSt);
+                          empExportData.push({
+                            idx: '', code: '', name: ar ? 'مجموع المحطة' : 'Station Subtotal', station: prevSt ? (ar ? prevSt.labelAr : prevSt.labelEn) : currentSt, dept: `${stationEmps.length}`,
+                            basic: stationEmps.reduce((s, [, e]) => s + e.basic, 0), allowances: stationEmps.reduce((s, [, e]) => s + e.allowances, 0),
+                            bonuses: stationEmps.reduce((s, [, e]) => s + e.bonuses, 0), overtime: stationEmps.reduce((s, [, e]) => s + e.overtime, 0),
+                            deductions: stationEmps.reduce((s, [, e]) => s + e.deductions, 0), net: stationEmps.reduce((s, [, e]) => s + e.net, 0), months: '',
+                          });
+                        }
+                        currentSt = v.station;
+                      }
+                      idx++;
+                      empExportData.push({ idx, code: v.code, name: ar ? v.name : v.nameEn, station: stName, dept: v.dept, basic: v.basic, allowances: v.allowances, bonuses: v.bonuses, overtime: v.overtime, deductions: v.deductions, net: v.net, months: v.months });
+                    });
+                    // Last station subtotal
+                    if (currentSt !== '') {
+                      const stationEmps = employeeDetail.filter(([, e]) => e.station === currentSt);
+                      const prevSt = stationLocations.find(s => s.value === currentSt);
+                      empExportData.push({
+                        idx: '', code: '', name: ar ? 'مجموع المحطة' : 'Station Subtotal', station: prevSt ? (ar ? prevSt.labelAr : prevSt.labelEn) : currentSt, dept: `${stationEmps.length}`,
+                        basic: stationEmps.reduce((s, [, e]) => s + e.basic, 0), allowances: stationEmps.reduce((s, [, e]) => s + e.allowances, 0),
+                        bonuses: stationEmps.reduce((s, [, e]) => s + e.bonuses, 0), overtime: stationEmps.reduce((s, [, e]) => s + e.overtime, 0),
+                        deductions: stationEmps.reduce((s, [, e]) => s + e.deductions, 0), net: stationEmps.reduce((s, [, e]) => s + e.net, 0), months: '',
+                      });
+                    }
+                    const empCols = [
+                      { header: '#', key: 'idx' }, { header: ar ? 'الكود' : 'Code', key: 'code' }, { header: ar ? 'الموظف' : 'Employee', key: 'name' },
+                      { header: ar ? 'المحطة' : 'Station', key: 'station' }, { header: ar ? 'القسم' : 'Dept', key: 'dept' },
+                      { header: ar ? 'الأساسي' : 'Basic', key: 'basic' }, { header: ar ? 'البدلات' : 'Allowances', key: 'allowances' },
+                      { header: ar ? 'المكافآت' : 'Bonuses', key: 'bonuses' }, { header: ar ? 'أجر إضافي' : 'Overtime', key: 'overtime' },
+                      { header: ar ? 'الخصومات' : 'Deductions', key: 'deductions' }, { header: ar ? 'الصافي' : 'Net', key: 'net' },
+                      { header: ar ? 'الأشهر' : 'Months', key: 'months' },
+                    ];
+                    exportToCSV({ title: ar ? 'تفصيل رواتب الموظفين' : 'Employee_Salary_Detail', data: empExportData, columns: empCols });
+                  }}><FileText className="w-4 h-4 mr-1" />{ar ? 'Excel' : 'Excel'}</Button>
+                </div>
+              </div>
+            </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
@@ -285,38 +339,70 @@ export const SalaryReports = () => {
                   {(() => {
                     let currentStation = '';
                     let idx = 0;
-                    return employeeDetail.map(([id, v]) => {
+                    const rows: React.ReactNode[] = [];
+                    employeeDetail.forEach(([id, v], i) => {
                       const st = stationLocations.find(s => s.value === v.station);
                       const stName = st ? (ar ? st.labelAr : st.labelEn) : v.station;
-                      const showStationHeader = v.station !== currentStation;
-                      currentStation = v.station;
-                      idx++;
-                      return (
-                        <React.Fragment key={id}>
-                          {showStationHeader && (
-                            <TableRow className="bg-muted/50">
-                              <TableCell colSpan={12} className={cn("font-bold text-primary", isRTL && "text-right")}>
-                                📍 {stName}
-                              </TableCell>
-                            </TableRow>
-                          )}
-                          <TableRow>
-                            <TableCell className={cn(isRTL && "text-right")}>{idx}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{v.code}</TableCell>
-                            <TableCell className={cn("font-medium", isRTL && "text-right")}>{ar ? v.name : v.nameEn}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stName}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{v.dept}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{v.basic.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{v.allowances.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{v.bonuses.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{v.overtime.toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{v.deductions.toLocaleString()}</TableCell>
-                            <TableCell className={cn("font-bold", isRTL && "text-right")}>{v.net.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{v.months}</TableCell>
+                      // Station subtotal for previous station
+                      if (v.station !== currentStation && currentStation !== '') {
+                        const prevEmps = employeeDetail.filter(([, e]) => e.station === currentStation);
+                        const prevSt = stationLocations.find(s => s.value === currentStation);
+                        rows.push(
+                          <TableRow key={`subtotal-${currentStation}`} className="bg-primary/10 font-bold">
+                            <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{ar ? `مجموع ${prevSt ? prevSt.labelAr : currentStation} (${prevEmps.length})` : `${prevSt ? prevSt.labelEn : currentStation} Total (${prevEmps.length})`}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.basic, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.allowances, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.bonuses, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.overtime, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.deductions, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.net, 0).toLocaleString()}</TableCell>
+                            <TableCell></TableCell>
                           </TableRow>
-                        </React.Fragment>
+                        );
+                      }
+                      if (v.station !== currentStation) {
+                        currentStation = v.station;
+                        rows.push(
+                          <TableRow key={`header-${v.station}`} className="bg-muted/50">
+                            <TableCell colSpan={12} className={cn("font-bold text-primary", isRTL && "text-right")}>📍 {stName}</TableCell>
+                          </TableRow>
+                        );
+                      }
+                      idx++;
+                      rows.push(
+                        <TableRow key={id}>
+                          <TableCell className={cn(isRTL && "text-right")}>{idx}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{v.code}</TableCell>
+                          <TableCell className={cn("font-medium", isRTL && "text-right")}>{ar ? v.name : v.nameEn}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{stName}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{v.dept}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{v.basic.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{v.allowances.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{v.bonuses.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{v.overtime.toLocaleString()}</TableCell>
+                          <TableCell className={cn("text-destructive", isRTL && "text-right")}>{v.deductions.toLocaleString()}</TableCell>
+                          <TableCell className={cn("font-bold", isRTL && "text-right")}>{v.net.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{v.months}</TableCell>
+                        </TableRow>
                       );
+                      // Last station subtotal
+                      if (i === employeeDetail.length - 1) {
+                        const lastEmps = employeeDetail.filter(([, e]) => e.station === currentStation);
+                        rows.push(
+                          <TableRow key={`subtotal-${currentStation}-last`} className="bg-primary/10 font-bold">
+                            <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{ar ? `مجموع ${stName} (${lastEmps.length})` : `${stName} Total (${lastEmps.length})`}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.basic, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.allowances, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.bonuses, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.overtime, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.deductions, 0).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.net, 0).toLocaleString()}</TableCell>
+                            <TableCell></TableCell>
+                          </TableRow>
+                        );
+                      }
                     });
+                    return rows;
                   })()}
                 </TableBody>
               </Table>
