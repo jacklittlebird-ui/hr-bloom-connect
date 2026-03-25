@@ -264,6 +264,11 @@ const Attendance = () => {
               <Navigation className="w-4 h-4" />
               <span className="hidden lg:inline">{language === 'ar' ? 'إعدادات المحطات' : 'Station Settings'}</span>
             </TabsTrigger>
+            <TabsTrigger value="hours-by-station" className="flex items-center gap-2">
+              <Timer className="w-4 h-4" />
+              <span className="hidden lg:inline">{language === 'ar' ? 'ساعات المحطات' : 'Station Hours'}</span>
+            </TabsTrigger>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="checkin">
