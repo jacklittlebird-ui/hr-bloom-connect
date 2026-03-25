@@ -46,15 +46,6 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
   const ar = language === 'ar';
   const { salaryRecords, saveSalaryRecord, deleteSalaryRecord } = useSalaryData();
 
-  const [bankInfo, setBankInfo] = useState<BankInfo>({
-    accountNumber: employee.bankAccountNumber || '',
-    bankId: employee.bankIdNumber || '',
-    accountType: employee.bankAccountType || '',
-    bankName: employee.bankName || '',
-  });
-  const [banks, setBanks] = useState(defaultBanks);
-  const [showAddBank, setShowAddBank] = useState(false);
-  const [newBank, setNewBank] = useState({ labelAr: '', labelEn: '' });
 
   const [selectedYear, setSelectedYear] = useState('');
   const [formData, setFormData] = useState({
