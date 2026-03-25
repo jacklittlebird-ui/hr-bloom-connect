@@ -1,0 +1,1 @@
+UPDATE stations SET code = 'lkcargo_alex' WHERE code = 'LKCARGO-ALX';
