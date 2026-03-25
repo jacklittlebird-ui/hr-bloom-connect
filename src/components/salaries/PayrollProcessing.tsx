@@ -112,12 +112,13 @@ export const PayrollProcessing = () => {
   const mobileBill = useMemo(() => getEmployeeMobileBill(selectedEmployee, period), [selectedEmployee, period, getEmployeeMobileBill]);
 
   // Daily rate based on baseGross (excluding livingAllowance and overtimePay)
+  const roundToNearestQuarter = (value: number) => Math.round(value * 4) / 4;
   const baseDailyRate = baseGross / 30;
   const leaveDeduction = Math.round(baseDailyRate * leaveDays * 100) / 100;
   const basicSalary = salaryRecord?.basicSalary || 0;
   const penaltyAmount = useMemo(() => {
     if (penaltyType === 'amount') return penaltyValue;
-    if (penaltyType === 'days') return Math.round((basicSalary / 30) * penaltyValue);
+    if (penaltyType === 'days') return roundToNearestQuarter((basicSalary / 30) * penaltyValue);
     return Math.round((penaltyValue / 100) * baseGross);
   }, [penaltyType, penaltyValue, basicSalary, baseGross]);
 
