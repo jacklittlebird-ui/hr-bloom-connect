@@ -86,9 +86,11 @@ export const WorkHoursByStation = () => {
               recordCount: 0,
             };
           }
-          const hours = Number(r.work_hours || 0);
           const mins = Number(r.work_minutes || 0);
-          empMap[empId].totalMinutes += hours * 60 + mins;
+          const hours = Number(r.work_hours || 0);
+          // work_minutes stores TOTAL minutes; only fall back to work_hours if no minutes
+          const totalMins = mins > 0 ? Math.round(mins) : Math.round(hours * 60);
+          empMap[empId].totalMinutes += totalMins;
           empMap[empId].recordCount++;
         });
 
