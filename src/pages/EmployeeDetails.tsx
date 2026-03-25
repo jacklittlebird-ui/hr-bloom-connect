@@ -287,7 +287,7 @@ const EmployeeDetails = () => {
 
         {/* Tab Content */}
         <div className={cn("border rounded-xl bg-card overflow-hidden", isViewMode && "relative")}>
-          {isViewMode && ['basic', 'contact', 'identity', 'job', 'salary', 'leave', 'insurance', 'permits', 'certificates', 'notes'].includes(activeTab) && (
+          {isViewMode && ['basic', 'contact', 'identity', 'job', 'salary', 'bankAccount', 'leave', 'insurance', 'permits', 'certificates', 'notes'].includes(activeTab) && (
             <div className="absolute inset-0 z-10 pointer-events-auto" style={{ background: 'transparent' }}>
               <style>{`
                 .view-mode-overlay input, .view-mode-overlay select, .view-mode-overlay textarea, .view-mode-overlay button[role="combobox"] {
