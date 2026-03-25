@@ -23,8 +23,6 @@ interface SalaryTabProps {
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 
-const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
-
 const calcEmployerContributions = (r: Pick<SalaryRecord, 'employerSocialInsurance' | 'healthInsurance' | 'incomeTax'>) =>
   r.employerSocialInsurance + r.healthInsurance + r.incomeTax;
 
