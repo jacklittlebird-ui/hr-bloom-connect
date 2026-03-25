@@ -16,4 +16,5 @@ export const stationLocations = [
   { value: 'igs', labelAr: 'الخدمات الأرضية الدولية', labelEn: 'International Ground Services' },
   { value: 'link_group', labelAr: 'لينك جروب', labelEn: 'Link Group' },
   { value: 'jordan', labelAr: 'الأردن', labelEn: 'Jordan' },
+  { value: 'lkcargo_alex', labelAr: 'لينك كارجو - الإسكندرية', labelEn: 'Link Cargo - Alexandria' },
 ];
