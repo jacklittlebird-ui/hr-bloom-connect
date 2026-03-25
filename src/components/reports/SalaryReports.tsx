@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePayrollData } from '@/contexts/PayrollDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,40 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
 
+interface EmployeeDetailRow {
+  id: string;
+  name: string;
+  nameEn: string;
+  displayName: string;
+  code: string;
+  dept: string;
+  station: string;
+  stationName: string;
+  basic: number;
+  allowances: number;
+  bonuses: number;
+  overtime: number;
+  deductions: number;
+  net: number;
+  months: number;
+}
+
+type EmployeeGroupedRow =
+  | { type: 'header'; key: string; stationName: string }
+  | { type: 'detail'; key: string; index: number; employee: EmployeeDetailRow }
+  | {
+      type: 'subtotal';
+      key: string;
+      stationName: string;
+      count: number;
+      basic: number;
+      allowances: number;
+      bonuses: number;
+      overtime: number;
+      deductions: number;
+      net: number;
+    };
+
 export const SalaryReports = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
@@ -19,50 +53,66 @@ export const SalaryReports = () => {
   const [station, setStation] = useState('all');
   const { reportRef, handlePrint, exportToCSV, exportToPDF } = useReportExport();
 
-  const filtered = useMemo(() =>
-    payrollEntries.filter(e => e.year === selectedYear && (station === 'all' || e.stationLocation === station)),
-    [payrollEntries, selectedYear, station]
+  const filtered = useMemo(
+    () => payrollEntries.filter((e) => e.year === selectedYear && (station === 'all' || e.stationLocation === station)),
+    [payrollEntries, selectedYear, station],
   );
 
   const monthNames = ar
-    ? ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
-    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    ? ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
+    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  const monthlySalaries = useMemo(() =>
-    monthNames.map((name, i) => {
-      const m = String(i + 1).padStart(2, '0');
-      const me = filtered.filter(e => e.month === m);
-      return {
-        month: name,
-        basic: me.reduce((s, e) => s + e.basicSalary, 0),
-        allowances: me.reduce((s, e) => s + e.transportAllowance + e.incentives + e.livingAllowance + e.stationAllowance + e.mobileAllowance + e.overtimePay, 0),
-        deductions: me.reduce((s, e) => s + e.totalDeductions, 0),
-        net: me.reduce((s, e) => s + e.netSalary, 0),
-        bonuses: me.reduce((s, e) => s + e.bonusAmount, 0),
-        count: me.length,
-      };
-    }), [filtered, monthNames]
+  const getStationDisplayName = (stationValue: string) => {
+    const stationMatch = stationLocations.find((item) => item.value === stationValue);
+    return stationMatch ? (ar ? stationMatch.labelAr : stationMatch.labelEn) : stationValue || (ar ? 'بدون محطة' : 'No Station');
+  };
+
+  const compareDisplayText = (a: string, b: string) =>
+    a.localeCompare(b, ar ? 'ar' : 'en', { numeric: true, sensitivity: 'base' });
+
+  const monthlySalaries = useMemo(
+    () =>
+      monthNames.map((name, i) => {
+        const m = String(i + 1).padStart(2, '0');
+        const me = filtered.filter((e) => e.month === m);
+        return {
+          month: name,
+          basic: me.reduce((s, e) => s + e.basicSalary, 0),
+          allowances: me.reduce(
+            (s, e) => s + e.transportAllowance + e.incentives + e.livingAllowance + e.stationAllowance + e.mobileAllowance + e.overtimePay,
+            0,
+          ),
+          deductions: me.reduce((s, e) => s + e.totalDeductions, 0),
+          net: me.reduce((s, e) => s + e.netSalary, 0),
+          bonuses: me.reduce((s, e) => s + e.bonusAmount, 0),
+          count: me.length,
+        };
+      }),
+    [filtered, monthNames],
   );
 
-  const activeMonths = monthlySalaries.filter(m => m.count > 0);
+  const activeMonths = monthlySalaries.filter((m) => m.count > 0);
 
-  // By station
   const stationSalaries = useMemo(() => {
     const map = new Map<string, number>();
-    filtered.forEach(e => {
+    filtered.forEach((e) => {
       map.set(e.stationLocation, (map.get(e.stationLocation) || 0) + e.netSalary);
     });
     const colors = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316'];
-    return Array.from(map.entries()).map(([key, value], i) => {
-      const st = stationLocations.find(s => s.value === key);
-      return { name: st ? (ar ? st.labelAr : st.labelEn) : key, value, color: colors[i % colors.length] };
-    });
+    return Array.from(map.entries()).map(([key, value], i) => ({
+      name: getStationDisplayName(key),
+      value,
+      color: colors[i % colors.length],
+    }));
   }, [filtered, ar]);
 
   const totalPayroll = filtered.reduce((s, e) => s + e.netSalary, 0);
-  const totalAllowances = filtered.reduce((s, e) => s + e.transportAllowance + e.incentives + e.livingAllowance + e.stationAllowance + e.mobileAllowance + e.overtimePay, 0);
+  const totalAllowances = filtered.reduce(
+    (s, e) => s + e.transportAllowance + e.incentives + e.livingAllowance + e.stationAllowance + e.mobileAllowance + e.overtimePay,
+    0,
+  );
   const totalDeductions = filtered.reduce((s, e) => s + e.totalDeductions, 0);
-  const uniqueEmps = new Set(filtered.map(e => e.employeeId)).size;
+  const uniqueEmps = new Set(filtered.map((e) => e.employeeId)).size;
   const avgSalary = uniqueEmps > 0 ? Math.round(totalPayroll / uniqueEmps) : 0;
 
   const stats = [
@@ -73,7 +123,7 @@ export const SalaryReports = () => {
   ];
 
   const reportTitle = ar ? 'تقارير الرواتب' : 'Salary Reports';
-  const getExportData = () => activeMonths.map(d => ({ month: d.month, basic: d.basic, allowances: d.allowances, deductions: d.deductions, net: d.net, bonuses: d.bonuses }));
+  const getExportData = () => activeMonths.map((d) => ({ month: d.month, basic: d.basic, allowances: d.allowances, deductions: d.deductions, net: d.net, bonuses: d.bonuses }));
   const getExportColumns = () => [
     { header: ar ? 'الشهر' : 'Month', key: 'month' },
     { header: ar ? 'الأساسي' : 'Basic', key: 'basic' },
@@ -83,10 +133,9 @@ export const SalaryReports = () => {
     { header: ar ? 'الصافي' : 'Net', key: 'net' },
   ];
 
-  // Detail by station table
   const stationDetail = useMemo(() => {
     const map = new Map<string, { employees: number; basic: number; allowances: number; bonuses: number; overtime: number; deductions: number; net: number; employer: number }>();
-    filtered.forEach(e => {
+    filtered.forEach((e) => {
       if (!map.has(e.stationLocation)) map.set(e.stationLocation, { employees: 0, basic: 0, allowances: 0, bonuses: 0, overtime: 0, deductions: 0, net: 0, employer: 0 });
       const s = map.get(e.stationLocation)!;
       s.basic += e.basicSalary;
@@ -97,21 +146,43 @@ export const SalaryReports = () => {
       s.net += e.netSalary;
       s.employer += e.employerSocialInsurance + e.healthInsurance + e.incomeTax;
     });
-    // Count unique employees per station
+
     const empMap = new Map<string, Set<string>>();
-    filtered.forEach(e => {
+    filtered.forEach((e) => {
       if (!empMap.has(e.stationLocation)) empMap.set(e.stationLocation, new Set());
       empMap.get(e.stationLocation)!.add(e.employeeId);
     });
-    empMap.forEach((v, k) => { if (map.has(k)) map.get(k)!.employees = v.size; });
-    return Array.from(map.entries());
-  }, [filtered]);
+    empMap.forEach((v, k) => {
+      if (map.has(k)) map.get(k)!.employees = v.size;
+    });
 
-  // Employee detail sorted by station then name
+    return Array.from(map.entries()).sort((a, b) => compareDisplayText(getStationDisplayName(a[0]), getStationDisplayName(b[0])));
+  }, [filtered, ar]);
+
   const employeeDetail = useMemo(() => {
-    const map = new Map<string, { name: string; nameEn: string; code: string; dept: string; station: string; basic: number; allowances: number; bonuses: number; overtime: number; deductions: number; net: number; months: number }>();
-    filtered.forEach(e => {
-      if (!map.has(e.employeeId)) map.set(e.employeeId, { name: e.employeeName, nameEn: e.employeeNameEn, code: e.employeeCode, dept: e.department, station: e.stationLocation, basic: 0, allowances: 0, bonuses: 0, overtime: 0, deductions: 0, net: 0, months: 0 });
+    const map = new Map<string, EmployeeDetailRow>();
+
+    filtered.forEach((e) => {
+      if (!map.has(e.employeeId)) {
+        map.set(e.employeeId, {
+          id: e.employeeId,
+          name: e.employeeName,
+          nameEn: e.employeeNameEn,
+          displayName: ar ? e.employeeName : (e.employeeNameEn || e.employeeName),
+          code: e.employeeCode,
+          dept: e.department,
+          station: e.stationLocation,
+          stationName: getStationDisplayName(e.stationLocation),
+          basic: 0,
+          allowances: 0,
+          bonuses: 0,
+          overtime: 0,
+          deductions: 0,
+          net: 0,
+          months: 0,
+        });
+      }
+
       const emp = map.get(e.employeeId)!;
       emp.basic += e.basicSalary;
       emp.allowances += e.transportAllowance + e.incentives + e.livingAllowance + e.stationAllowance + e.mobileAllowance;
@@ -121,37 +192,150 @@ export const SalaryReports = () => {
       emp.net += e.netSalary;
       emp.months += 1;
     });
-    return Array.from(map.entries()).sort((a, b) => {
-      const stA = a[1].station; const stB = b[1].station;
-      if (stA !== stB) return stA.localeCompare(stB);
-      const nameA = ar ? a[1].name : a[1].nameEn;
-      const nameB = ar ? b[1].name : b[1].nameEn;
-      return nameA.localeCompare(nameB);
+
+    return Array.from(map.values()).sort((a, b) => {
+      const stationOrder = compareDisplayText(a.stationName, b.stationName);
+      if (stationOrder !== 0) return stationOrder;
+      return compareDisplayText(a.displayName, b.displayName);
     });
   }, [filtered, ar]);
+
+  const employeeDetailGroupedRows = useMemo(() => {
+    const rows: EmployeeGroupedRow[] = [];
+    let currentStation = '';
+    let currentStationName = '';
+    let stationEmployees: EmployeeDetailRow[] = [];
+    let detailIndex = 0;
+
+    const pushSubtotal = () => {
+      if (!stationEmployees.length) return;
+      rows.push({
+        type: 'subtotal',
+        key: `subtotal-${currentStation || 'no-station'}`,
+        stationName: currentStationName,
+        count: stationEmployees.length,
+        basic: stationEmployees.reduce((sum, emp) => sum + emp.basic, 0),
+        allowances: stationEmployees.reduce((sum, emp) => sum + emp.allowances, 0),
+        bonuses: stationEmployees.reduce((sum, emp) => sum + emp.bonuses, 0),
+        overtime: stationEmployees.reduce((sum, emp) => sum + emp.overtime, 0),
+        deductions: stationEmployees.reduce((sum, emp) => sum + emp.deductions, 0),
+        net: stationEmployees.reduce((sum, emp) => sum + emp.net, 0),
+      });
+    };
+
+    employeeDetail.forEach((employee) => {
+      if (employee.station !== currentStation) {
+        pushSubtotal();
+        currentStation = employee.station;
+        currentStationName = employee.stationName;
+        stationEmployees = [];
+        rows.push({ type: 'header', key: `header-${employee.station || 'no-station'}`, stationName: employee.stationName });
+      }
+
+      detailIndex += 1;
+      stationEmployees.push(employee);
+      rows.push({ type: 'detail', key: employee.id, index: detailIndex, employee });
+    });
+
+    pushSubtotal();
+    return rows;
+  }, [employeeDetail]);
+
+  const employeeDetailExportData = useMemo(
+    () =>
+      employeeDetailGroupedRows.map((row) => {
+        if (row.type === 'header') {
+          return {
+            idx: '',
+            code: '',
+            name: row.stationName,
+            station: row.stationName,
+            dept: '',
+            basic: '',
+            allowances: '',
+            bonuses: '',
+            overtime: '',
+            deductions: '',
+            net: '',
+            months: '',
+          };
+        }
+
+        if (row.type === 'subtotal') {
+          return {
+            idx: '',
+            code: '',
+            name: ar ? 'مجموع المحطة' : 'Station Subtotal',
+            station: row.stationName,
+            dept: String(row.count),
+            basic: row.basic,
+            allowances: row.allowances,
+            bonuses: row.bonuses,
+            overtime: row.overtime,
+            deductions: row.deductions,
+            net: row.net,
+            months: '',
+          };
+        }
+
+        return {
+          idx: row.index,
+          code: row.employee.code,
+          name: row.employee.displayName,
+          station: row.employee.stationName,
+          dept: row.employee.dept,
+          basic: row.employee.basic,
+          allowances: row.employee.allowances,
+          bonuses: row.employee.bonuses,
+          overtime: row.employee.overtime,
+          deductions: row.employee.deductions,
+          net: row.employee.net,
+          months: row.employee.months,
+        };
+      }),
+    [employeeDetailGroupedRows, ar],
+  );
+
+  const employeeDetailColumns = useMemo(
+    () => [
+      { header: '#', key: 'idx' },
+      { header: ar ? 'الكود' : 'Code', key: 'code' },
+      { header: ar ? 'الموظف' : 'Employee', key: 'name' },
+      { header: ar ? 'المحطة' : 'Station', key: 'station' },
+      { header: ar ? 'القسم' : 'Dept', key: 'dept' },
+      { header: ar ? 'الأساسي' : 'Basic', key: 'basic' },
+      { header: ar ? 'البدلات' : 'Allowances', key: 'allowances' },
+      { header: ar ? 'المكافآت' : 'Bonuses', key: 'bonuses' },
+      { header: ar ? 'أجر إضافي' : 'Overtime', key: 'overtime' },
+      { header: ar ? 'الخصومات' : 'Deductions', key: 'deductions' },
+      { header: ar ? 'الصافي' : 'Net', key: 'net' },
+      { header: ar ? 'الأشهر' : 'Months', key: 'months' },
+    ],
+    [ar],
+  );
 
   return (
     <div className="space-y-6">
       <Card>
         <CardContent className="p-4">
-          <div className={cn("flex flex-wrap gap-4 items-center justify-between", isRTL && "flex-row-reverse")}>
-            <div className={cn("flex gap-4", isRTL && "flex-row-reverse")}>
+          <div className={cn('flex flex-wrap gap-4 items-center justify-between', isRTL && 'flex-row-reverse')}>
+            <div className={cn('flex gap-4', isRTL && 'flex-row-reverse')}>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
-                <SelectContent>{Array.from({ length: 11 }, (_, i) => String(2025 + i)).map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+                <SelectContent>{Array.from({ length: 11 }, (_, i) => String(2025 + i)).map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
               </Select>
               <Select value={station} onValueChange={setStation}>
                 <SelectTrigger className="w-44"><SelectValue placeholder={ar ? 'المحطة' : 'Station'} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع المحطات' : 'All'}</SelectItem>
-                  {stationLocations.map(s => <SelectItem key={s.value} value={s.value}>{ar ? s.labelAr : s.labelEn}</SelectItem>)}
+                  {stationLocations.map((s) => <SelectItem key={s.value} value={s.value}>{ar ? s.labelAr : s.labelEn}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
+            <div className={cn('flex gap-2', isRTL && 'flex-row-reverse')}>
               <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)}><Printer className="w-4 h-4 mr-2" />{ar ? 'طباعة' : 'Print'}</Button>
-              <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: getExportColumns() })}><Download className="w-4 h-4 mr-2" />{ar ? 'PDF' : 'PDF'}</Button>
-              <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: reportTitle, data: getExportData(), columns: getExportColumns() })}><FileText className="w-4 h-4 mr-2" />{ar ? 'Excel' : 'Excel'}</Button>
+              <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: getExportColumns() })}><Download className="w-4 h-4 mr-2" />PDF</Button>
+              <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: reportTitle, data: getExportData(), columns: getExportColumns() })}><FileText className="w-4 h-4 mr-2" />Excel</Button>
             </div>
           </div>
         </CardContent>
@@ -161,8 +345,8 @@ export const SalaryReports = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((stat, i) => (
             <Card key={i}><CardContent className="p-6">
-              <div className={cn("flex items-center gap-4", isRTL && "flex-row-reverse")}>
-                <div className={cn("p-3 rounded-lg", stat.bg)}><stat.icon className={cn("w-6 h-6", stat.color)} /></div>
+              <div className={cn('flex items-center gap-4', isRTL && 'flex-row-reverse')}>
+                <div className={cn('p-3 rounded-lg', stat.bg)}><stat.icon className={cn('w-6 h-6', stat.color)} /></div>
                 <div><p className="text-sm text-muted-foreground">{stat.label}</p><p className="text-2xl font-bold">{stat.value}</p></div>
               </div>
             </CardContent></Card>
@@ -175,7 +359,7 @@ export const SalaryReports = () => {
             <CardContent><div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={activeMonths}>
-                  <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" fontSize={12} /><YAxis fontSize={12} tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
+                  <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" fontSize={12} /><YAxis fontSize={12} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
                   <Tooltip formatter={(v: number) => v.toLocaleString()} /><Legend />
                   <Area type="monotone" dataKey="net" name={ar ? 'الصافي' : 'Net'} stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} />
                   <Area type="monotone" dataKey="basic" name={ar ? 'الأساسي' : 'Basic'} stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />
@@ -190,8 +374,7 @@ export const SalaryReports = () => {
               {stationSalaries.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={stationSalaries} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
+                    <Pie data={stationSalaries} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}>
                       {stationSalaries.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                     <Tooltip formatter={(v: number) => v.toLocaleString()} />
@@ -217,7 +400,6 @@ export const SalaryReports = () => {
           </Card>
         </div>
 
-        {/* Station Detail Table */}
         {stationDetail.length > 0 && (
           <Card className="mt-6">
             <CardHeader><CardTitle>{ar ? 'تفصيل الرواتب بالمحطة/الموقع' : 'Salary Detail by Station'}</CardTitle></CardHeader>
@@ -225,95 +407,45 @@ export const SalaryReports = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الموظفين' : 'Employees'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الأساسي' : 'Basic'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'البدلات' : 'Allowances'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المكافآت' : 'Bonuses'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'أجر إضافي' : 'Overtime'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الخصومات' : 'Deductions'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الصافي' : 'Net'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'مساهمات الشركة' : 'Company'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'المحطة' : 'Station'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الموظفين' : 'Employees'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الأساسي' : 'Basic'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'البدلات' : 'Allowances'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'المكافآت' : 'Bonuses'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'أجر إضافي' : 'Overtime'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الخصومات' : 'Deductions'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الصافي' : 'Net'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'مساهمات الشركة' : 'Company'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {stationDetail.map(([key, v]) => {
-                    const st = stationLocations.find(s => s.value === key);
-                    return (
-                      <TableRow key={key}>
-                        <TableCell className={cn("font-medium", isRTL && "text-right")}>{st ? (ar ? st.labelAr : st.labelEn) : key}</TableCell>
-                        <TableCell className={cn(isRTL && "text-right")}>{v.employees}</TableCell>
-                        <TableCell className={cn(isRTL && "text-right")}>{v.basic.toLocaleString()}</TableCell>
-                        <TableCell className={cn(isRTL && "text-right")}>{v.allowances.toLocaleString()}</TableCell>
-                        <TableCell className={cn(isRTL && "text-right")}>{v.bonuses.toLocaleString()}</TableCell>
-                        <TableCell className={cn(isRTL && "text-right")}>{v.overtime.toLocaleString()}</TableCell>
-                        <TableCell className={cn("text-destructive", isRTL && "text-right")}>{v.deductions.toLocaleString()}</TableCell>
-                        <TableCell className={cn("font-bold", isRTL && "text-right")}>{v.net.toLocaleString()}</TableCell>
-                        <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{v.employer.toLocaleString()}</TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {stationDetail.map(([key, v]) => (
+                    <TableRow key={key}>
+                      <TableCell className={cn('font-medium', isRTL && 'text-right')}>{getStationDisplayName(key)}</TableCell>
+                      <TableCell className={cn(isRTL && 'text-right')}>{v.employees}</TableCell>
+                      <TableCell className={cn(isRTL && 'text-right')}>{v.basic.toLocaleString()}</TableCell>
+                      <TableCell className={cn(isRTL && 'text-right')}>{v.allowances.toLocaleString()}</TableCell>
+                      <TableCell className={cn(isRTL && 'text-right')}>{v.bonuses.toLocaleString()}</TableCell>
+                      <TableCell className={cn(isRTL && 'text-right')}>{v.overtime.toLocaleString()}</TableCell>
+                      <TableCell className={cn('text-destructive', isRTL && 'text-right')}>{v.deductions.toLocaleString()}</TableCell>
+                      <TableCell className={cn('font-bold', isRTL && 'text-right')}>{v.net.toLocaleString()}</TableCell>
+                      <TableCell className={cn('text-blue-600', isRTL && 'text-right')}>{v.employer.toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         )}
 
-        {/* Employee Detail Table */}
         {employeeDetail.length > 0 && (
           <Card className="mt-6">
             <CardHeader>
-              <div className={cn("flex flex-wrap gap-4 justify-between items-center", isRTL && "flex-row-reverse")}>
+              <div className={cn('flex flex-wrap gap-4 justify-between items-center', isRTL && 'flex-row-reverse')}>
                 <CardTitle>{ar ? 'تفصيل الموظفين' : 'Employee Detail'}</CardTitle>
-                <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    const empDetailTitle = ar ? 'تفصيل رواتب الموظفين' : 'Employee Salary Detail';
-                    handlePrint(empDetailTitle);
-                  }}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    const empExportData: Record<string, unknown>[] = [];
-                    let currentSt = '';
-                    let idx = 0;
-                    employeeDetail.forEach(([, v]) => {
-                      const st = stationLocations.find(s => s.value === v.station);
-                      const stName = st ? (ar ? st.labelAr : st.labelEn) : v.station;
-                      if (v.station !== currentSt) {
-                        if (currentSt !== '') {
-                          const stationEmps = employeeDetail.filter(([, e]) => e.station === currentSt);
-                          const prevSt = stationLocations.find(s => s.value === currentSt);
-                          empExportData.push({
-                            idx: '', code: '', name: ar ? 'مجموع المحطة' : 'Station Subtotal', station: prevSt ? (ar ? prevSt.labelAr : prevSt.labelEn) : currentSt, dept: `${stationEmps.length}`,
-                            basic: stationEmps.reduce((s, [, e]) => s + e.basic, 0), allowances: stationEmps.reduce((s, [, e]) => s + e.allowances, 0),
-                            bonuses: stationEmps.reduce((s, [, e]) => s + e.bonuses, 0), overtime: stationEmps.reduce((s, [, e]) => s + e.overtime, 0),
-                            deductions: stationEmps.reduce((s, [, e]) => s + e.deductions, 0), net: stationEmps.reduce((s, [, e]) => s + e.net, 0), months: '',
-                          });
-                        }
-                        currentSt = v.station;
-                      }
-                      idx++;
-                      empExportData.push({ idx, code: v.code, name: ar ? v.name : v.nameEn, station: stName, dept: v.dept, basic: v.basic, allowances: v.allowances, bonuses: v.bonuses, overtime: v.overtime, deductions: v.deductions, net: v.net, months: v.months });
-                    });
-                    // Last station subtotal
-                    if (currentSt !== '') {
-                      const stationEmps = employeeDetail.filter(([, e]) => e.station === currentSt);
-                      const prevSt = stationLocations.find(s => s.value === currentSt);
-                      empExportData.push({
-                        idx: '', code: '', name: ar ? 'مجموع المحطة' : 'Station Subtotal', station: prevSt ? (ar ? prevSt.labelAr : prevSt.labelEn) : currentSt, dept: `${stationEmps.length}`,
-                        basic: stationEmps.reduce((s, [, e]) => s + e.basic, 0), allowances: stationEmps.reduce((s, [, e]) => s + e.allowances, 0),
-                        bonuses: stationEmps.reduce((s, [, e]) => s + e.bonuses, 0), overtime: stationEmps.reduce((s, [, e]) => s + e.overtime, 0),
-                        deductions: stationEmps.reduce((s, [, e]) => s + e.deductions, 0), net: stationEmps.reduce((s, [, e]) => s + e.net, 0), months: '',
-                      });
-                    }
-                    const empCols = [
-                      { header: '#', key: 'idx' }, { header: ar ? 'الكود' : 'Code', key: 'code' }, { header: ar ? 'الموظف' : 'Employee', key: 'name' },
-                      { header: ar ? 'المحطة' : 'Station', key: 'station' }, { header: ar ? 'القسم' : 'Dept', key: 'dept' },
-                      { header: ar ? 'الأساسي' : 'Basic', key: 'basic' }, { header: ar ? 'البدلات' : 'Allowances', key: 'allowances' },
-                      { header: ar ? 'المكافآت' : 'Bonuses', key: 'bonuses' }, { header: ar ? 'أجر إضافي' : 'Overtime', key: 'overtime' },
-                      { header: ar ? 'الخصومات' : 'Deductions', key: 'deductions' }, { header: ar ? 'الصافي' : 'Net', key: 'net' },
-                      { header: ar ? 'الأشهر' : 'Months', key: 'months' },
-                    ];
-                    exportToCSV({ title: ar ? 'تفصيل رواتب الموظفين' : 'Employee_Salary_Detail', data: empExportData, columns: empCols });
-                  }}><FileText className="w-4 h-4 mr-1" />{ar ? 'Excel' : 'Excel'}</Button>
+                <div className={cn('flex gap-2', isRTL && 'flex-row-reverse')}>
+                  <Button variant="outline" size="sm" onClick={() => handlePrint(ar ? 'تفصيل رواتب الموظفين' : 'Employee Salary Detail')}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
+                  <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: ar ? 'تفصيل رواتب الموظفين' : 'Employee_Salary_Detail', data: employeeDetailExportData, columns: employeeDetailColumns })}><FileText className="w-4 h-4 mr-1" />Excel</Button>
                 </div>
               </div>
             </CardHeader>
@@ -321,89 +453,62 @@ export const SalaryReports = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className={cn(isRTL && "text-right")}>#</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الكود' : 'Code'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الموظف' : 'Employee'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'القسم' : 'Dept'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الأساسي' : 'Basic'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'البدلات' : 'Allowances'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المكافآت' : 'Bonuses'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'أجر إضافي' : 'Overtime'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الخصومات' : 'Deductions'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الصافي' : 'Net'}</TableHead>
-                    <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الأشهر' : 'Months'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>#</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الكود' : 'Code'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الموظف' : 'Employee'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'المحطة' : 'Station'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'القسم' : 'Dept'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الأساسي' : 'Basic'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'البدلات' : 'Allowances'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'المكافآت' : 'Bonuses'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'أجر إضافي' : 'Overtime'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الخصومات' : 'Deductions'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الصافي' : 'Net'}</TableHead>
+                    <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الأشهر' : 'Months'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(() => {
-                    let currentStation = '';
-                    let idx = 0;
-                    const rows: React.ReactNode[] = [];
-                    employeeDetail.forEach(([id, v], i) => {
-                      const st = stationLocations.find(s => s.value === v.station);
-                      const stName = st ? (ar ? st.labelAr : st.labelEn) : v.station;
-                      // Station subtotal for previous station
-                      if (v.station !== currentStation && currentStation !== '') {
-                        const prevEmps = employeeDetail.filter(([, e]) => e.station === currentStation);
-                        const prevSt = stationLocations.find(s => s.value === currentStation);
-                        rows.push(
-                          <TableRow key={`subtotal-${currentStation}`} className="bg-primary/10 font-bold">
-                            <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{ar ? `مجموع ${prevSt ? prevSt.labelAr : currentStation} (${prevEmps.length})` : `${prevSt ? prevSt.labelEn : currentStation} Total (${prevEmps.length})`}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.basic, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.allowances, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.bonuses, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.overtime, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.deductions, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{prevEmps.reduce((s, [, e]) => s + e.net, 0).toLocaleString()}</TableCell>
-                            <TableCell></TableCell>
-                          </TableRow>
-                        );
-                      }
-                      if (v.station !== currentStation) {
-                        currentStation = v.station;
-                        rows.push(
-                          <TableRow key={`header-${v.station}`} className="bg-muted/50">
-                            <TableCell colSpan={12} className={cn("font-bold text-primary", isRTL && "text-right")}>📍 {stName}</TableCell>
-                          </TableRow>
-                        );
-                      }
-                      idx++;
-                      rows.push(
-                        <TableRow key={id}>
-                          <TableCell className={cn(isRTL && "text-right")}>{idx}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{v.code}</TableCell>
-                          <TableCell className={cn("font-medium", isRTL && "text-right")}>{ar ? v.name : v.nameEn}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{stName}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{v.dept}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{v.basic.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{v.allowances.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{v.bonuses.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{v.overtime.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-destructive", isRTL && "text-right")}>{v.deductions.toLocaleString()}</TableCell>
-                          <TableCell className={cn("font-bold", isRTL && "text-right")}>{v.net.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{v.months}</TableCell>
+                  {employeeDetailGroupedRows.map((row) => {
+                    if (row.type === 'header') {
+                      return (
+                        <TableRow key={row.key} className="bg-muted/50">
+                          <TableCell colSpan={12} className={cn('font-bold text-primary', isRTL && 'text-right')}>📍 {row.stationName}</TableCell>
                         </TableRow>
                       );
-                      // Last station subtotal
-                      if (i === employeeDetail.length - 1) {
-                        const lastEmps = employeeDetail.filter(([, e]) => e.station === currentStation);
-                        rows.push(
-                          <TableRow key={`subtotal-${currentStation}-last`} className="bg-primary/10 font-bold">
-                            <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{ar ? `مجموع ${stName} (${lastEmps.length})` : `${stName} Total (${lastEmps.length})`}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.basic, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.allowances, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.bonuses, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.overtime, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.deductions, 0).toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{lastEmps.reduce((s, [, e]) => s + e.net, 0).toLocaleString()}</TableCell>
-                            <TableCell></TableCell>
-                          </TableRow>
-                        );
-                      }
-                    });
-                    return rows;
-                  })()}
+                    }
+
+                    if (row.type === 'subtotal') {
+                      return (
+                        <TableRow key={row.key} className="bg-primary/10 font-bold">
+                          <TableCell colSpan={5} className={cn(isRTL && 'text-right')}>{ar ? `مجموع ${row.stationName} (${row.count})` : `${row.stationName} Total (${row.count})`}</TableCell>
+                          <TableCell className={cn(isRTL && 'text-right')}>{row.basic.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && 'text-right')}>{row.allowances.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && 'text-right')}>{row.bonuses.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && 'text-right')}>{row.overtime.toLocaleString()}</TableCell>
+                          <TableCell className={cn('text-destructive', isRTL && 'text-right')}>{row.deductions.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && 'text-right')}>{row.net.toLocaleString()}</TableCell>
+                          <TableCell></TableCell>
+                        </TableRow>
+                      );
+                    }
+
+                    return (
+                      <TableRow key={row.key}>
+                        <TableCell className={cn(isRTL && 'text-right')}>{row.index}</TableCell>
+                        <TableCell className={cn(isRTL && 'text-right')}>{row.employee.code}</TableCell>
+                        <TableCell className={cn('font-medium', isRTL && 'text-right')}>{row.employee.displayName}</TableCell>
+                        <TableCell className={cn(isRTL && 'text-right')}>{row.employee.stationName}</TableCell>
+                        <TableCell className={cn(isRTL && 'text-right')}>{row.employee.dept}</TableCell>
+                        <TableCell className={cn(isRTL && 'text-right')}>{row.employee.basic.toLocaleString()}</TableCell>
+                        <TableCell className={cn(isRTL && 'text-right')}>{row.employee.allowances.toLocaleString()}</TableCell>
+                        <TableCell className={cn(isRTL && 'text-right')}>{row.employee.bonuses.toLocaleString()}</TableCell>
+                        <TableCell className={cn(isRTL && 'text-right')}>{row.employee.overtime.toLocaleString()}</TableCell>
+                        <TableCell className={cn('text-destructive', isRTL && 'text-right')}>{row.employee.deductions.toLocaleString()}</TableCell>
+                        <TableCell className={cn('font-bold', isRTL && 'text-right')}>{row.employee.net.toLocaleString()}</TableCell>
+                        <TableCell className={cn(isRTL && 'text-right')}>{row.employee.months}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
