@@ -107,6 +107,29 @@ export const SalaryReports = () => {
     return Array.from(map.entries());
   }, [filtered]);
 
+  // Employee detail sorted by station then name
+  const employeeDetail = useMemo(() => {
+    const map = new Map<string, { name: string; nameEn: string; code: string; dept: string; station: string; basic: number; allowances: number; bonuses: number; overtime: number; deductions: number; net: number; months: number }>();
+    filtered.forEach(e => {
+      if (!map.has(e.employeeId)) map.set(e.employeeId, { name: e.employeeName, nameEn: e.employeeNameEn, code: e.employeeCode, dept: e.department, station: e.stationLocation, basic: 0, allowances: 0, bonuses: 0, overtime: 0, deductions: 0, net: 0, months: 0 });
+      const emp = map.get(e.employeeId)!;
+      emp.basic += e.basicSalary;
+      emp.allowances += e.transportAllowance + e.incentives + e.livingAllowance + e.stationAllowance + e.mobileAllowance;
+      emp.bonuses += e.bonusAmount;
+      emp.overtime += e.overtimePay;
+      emp.deductions += e.totalDeductions;
+      emp.net += e.netSalary;
+      emp.months += 1;
+    });
+    return Array.from(map.entries()).sort((a, b) => {
+      const stA = a[1].station; const stB = b[1].station;
+      if (stA !== stB) return stA.localeCompare(stB);
+      const nameA = ar ? a[1].name : a[1].nameEn;
+      const nameB = ar ? b[1].name : b[1].nameEn;
+      return nameA.localeCompare(nameB);
+    });
+  }, [filtered, ar]);
+
   return (
     <div className="space-y-6">
       <Card>
