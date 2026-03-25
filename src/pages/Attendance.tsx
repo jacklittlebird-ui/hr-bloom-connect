@@ -11,7 +11,8 @@ import { AttendanceRules } from '@/components/attendance/AttendanceRules';
 import { StationCheckinSettings } from '@/components/attendance/StationCheckinSettings';
 import { EmployeeAssignment } from '@/components/attendance/EmployeeAssignment';
 import { useAttendanceData } from '@/contexts/AttendanceDataContext';
-import { Clock, List, AlertTriangle, BarChart3, Calendar, Settings2, Users, RefreshCw, Navigation } from 'lucide-react';
+import { WorkHoursByStation } from '@/components/attendance/WorkHoursByStation';
+import { Clock, List, AlertTriangle, BarChart3, Calendar, Settings2, Users, RefreshCw, Navigation, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -225,7 +226,7 @@ const Attendance = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn("grid w-full grid-cols-8 mb-6")} dir="rtl">
+          <TabsList className={cn("grid w-full grid-cols-9 mb-6")} dir="rtl">
             <TabsTrigger value="checkin" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span className="hidden lg:inline">{t('attendance.tabs.checkInOut')}</span>
@@ -263,6 +264,10 @@ const Attendance = () => {
               <Navigation className="w-4 h-4" />
               <span className="hidden lg:inline">{language === 'ar' ? 'إعدادات المحطات' : 'Station Settings'}</span>
             </TabsTrigger>
+            <TabsTrigger value="hours-by-station" className="flex items-center gap-2">
+              <Timer className="w-4 h-4" />
+              <span className="hidden lg:inline">{language === 'ar' ? 'ساعات المحطات' : 'Station Hours'}</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="checkin">
@@ -279,7 +284,7 @@ const Attendance = () => {
           </TabsContent>
 
           <TabsContent value="late">
-            <LateArrivals records={attendanceRecords.filter(r => r.status === 'late')} />
+            <LateArrivals />
           </TabsContent>
 
           <TabsContent value="reports">
@@ -294,13 +299,16 @@ const Attendance = () => {
             <AttendanceRules />
           </TabsContent>
 
-
           <TabsContent value="assignment">
             <EmployeeAssignment />
           </TabsContent>
 
           <TabsContent value="station-settings">
             <StationCheckinSettings />
+          </TabsContent>
+
+          <TabsContent value="hours-by-station">
+            <WorkHoursByStation />
           </TabsContent>
         </Tabs>
       </div>
