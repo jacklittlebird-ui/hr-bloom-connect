@@ -49,9 +49,10 @@ function buildSummaryCardsHtml(cards: SummaryCard[]): string {
 
 function createExportContainer(html: string): HTMLDivElement {
   const container = document.createElement('div');
-  container.style.position = 'fixed';
+  container.style.position = 'absolute';
   container.style.top = '0';
   container.style.left = '-10000px';
+  container.style.overflow = 'hidden';
   container.style.width = '1200px';
   container.style.background = '#ffffff';
   container.style.zIndex = '-9999';

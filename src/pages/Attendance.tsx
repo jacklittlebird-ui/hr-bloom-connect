@@ -266,7 +266,7 @@ const Attendance = () => {
             </TabsTrigger>
             <TabsTrigger value="hours-by-station" className="flex items-center gap-2">
               <Timer className="w-4 h-4" />
-              <span className="hidden lg:inline">{language === 'ar' ? 'ساعات المحطات' : 'Station Hours'}</span>
+              <span className="hidden lg:inline">{language === 'ar' ? 'ساعات العمل الشهرية' : 'Monthly Hours'}</span>
             </TabsTrigger>
           </TabsList>
 
