@@ -49,6 +49,8 @@ export const PayrollProcessing = () => {
   const [dbMobileBills, setDbMobileBills] = useState<{ employee_id: string; amount: number; deduction_month: string }[]>([]);
 
   const period = `${selectedYear}-${selectedMonth}`;
+  const roundToNearestQuarter = (value: number) => Math.round(value * 4) / 4;
+  const normalizeQuarterInput = (value: number) => roundToNearestQuarter(value || 0);
 
   // Fetch active loans, approved advances, and mobile bills from DB
   const fetchLoansAndAdvances = useCallback(async () => {
@@ -112,7 +114,6 @@ export const PayrollProcessing = () => {
   const mobileBill = useMemo(() => getEmployeeMobileBill(selectedEmployee, period), [selectedEmployee, period, getEmployeeMobileBill]);
 
   // Daily rate based on baseGross (excluding livingAllowance and overtimePay)
-  const roundToNearestQuarter = (value: number) => Math.round(value * 4) / 4;
   const baseDailyRate = baseGross / 30;
   const leaveDeduction = roundToNearestQuarter(baseDailyRate * leaveDays);
   const basicSalary = salaryRecord?.basicSalary || 0;
@@ -161,9 +162,9 @@ export const PayrollProcessing = () => {
       setOvertimePay(existing.overtimePay);
       setBonusType(existing.bonusType);
       setBonusValue(existing.bonusValue);
-      setLeaveDays(existing.leaveDays);
+      setLeaveDays(normalizeQuarterInput(existing.leaveDays));
       setPenaltyType(existing.penaltyType);
-      setPenaltyValue(existing.penaltyValue);
+      setPenaltyValue(existing.penaltyType === 'days' ? normalizeQuarterInput(existing.penaltyValue) : existing.penaltyValue);
     } else {
       const sr = getSalaryRecord(empId, selectedYear);
       if (sr) setLivingAllowance(sr.livingAllowance);
@@ -185,12 +186,13 @@ export const PayrollProcessing = () => {
     const lp = getEmployeeMonthlyLoanPayment(empId);
     const aa = getEmployeeAdvanceForMonth(empId, period);
     const mb = getEmployeeMobileBill(empId, period);
-    const ld = empId === selectedEmployee ? leaveDays : 0;
-    const dr = bg / 30;
-    const lded = roundToNearestQuarter(dr * ld);
+    const ld = empId === selectedEmployee ? normalizeQuarterInput(leaveDays) : 0;
+    const leaveDailyRate = bg / 30;
+    const lded = roundToNearestQuarter(leaveDailyRate * ld);
     const pt = empId === selectedEmployee ? penaltyType : 'amount';
-    const pv = empId === selectedEmployee ? penaltyValue : 0;
-    const pa = pt === 'amount' ? pv : pt === 'days' ? roundToNearestQuarter(dr * pv) : Math.round((pv / 100) * bg);
+    const pv = empId === selectedEmployee ? (pt === 'days' ? normalizeQuarterInput(penaltyValue) : penaltyValue) : 0;
+    const penaltyDailyRate = sr.basicSalary / 30;
+    const pa = pt === 'amount' ? pv : pt === 'days' ? roundToNearestQuarter(penaltyDailyRate * pv) : Math.round((pv / 100) * bg);
     const td = sr.employeeInsurance + lp + aa + mb + lded + pa;
 
     return {
@@ -537,7 +539,7 @@ export const PayrollProcessing = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <Label className={cn("text-xs", isRTL && "text-right block")}>{ar ? 'عدد الأيام' : 'Days'}</Label>
-                        <Input type="number" step="0.25" value={leaveDays || ''} onChange={e => setLeaveDays(Math.round(parseFloat(e.target.value) * 4) / 4 || 0)} className={cn("h-9 text-sm", isRTL && "text-right")} min={0} />
+                        <Input type="number" step="0.25" value={leaveDays || ''} onChange={e => setLeaveDays(normalizeQuarterInput(parseFloat(e.target.value)))} className={cn("h-9 text-sm", isRTL && "text-right")} min={0} />
                       </div>
                       {readOnlyField(ar ? 'قيمة الخصم (تلقائي)' : 'Deduction (Auto)', leaveDeduction)}
                     </div>
@@ -561,7 +563,7 @@ export const PayrollProcessing = () => {
                         <Label className={cn("text-xs", isRTL && "text-right block")}>
                           {penaltyType === 'amount' ? (ar ? 'قيمة الجزاء' : 'Amount') : penaltyType === 'days' ? (ar ? 'عدد الأيام' : 'Days') : (ar ? 'النسبة %' : '%')}
                         </Label>
-                        <Input type="number" step={penaltyType === 'days' ? '0.25' : 'any'} value={penaltyValue || ''} onChange={e => { const v = parseFloat(e.target.value) || 0; setPenaltyValue(penaltyType === 'days' ? Math.round(v * 4) / 4 : v); }} className={cn("h-9 text-sm", isRTL && "text-right")} min={0} />
+                        <Input type="number" step={penaltyType === 'days' ? '0.25' : 'any'} value={penaltyValue || ''} onChange={e => { const v = parseFloat(e.target.value) || 0; setPenaltyValue(penaltyType === 'days' ? normalizeQuarterInput(v) : v); }} className={cn("h-9 text-sm", isRTL && "text-right")} min={0} />
                       </div>
                       {penaltyType !== 'amount' && readOnlyField(ar ? 'قيمة الجزاء' : 'Penalty Value', penaltyAmount)}
                     </div>
