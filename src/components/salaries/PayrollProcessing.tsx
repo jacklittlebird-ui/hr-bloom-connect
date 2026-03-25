@@ -114,7 +114,7 @@ export const PayrollProcessing = () => {
   // Daily rate based on baseGross (excluding livingAllowance and overtimePay)
   const roundToNearestQuarter = (value: number) => Math.round(value * 4) / 4;
   const baseDailyRate = baseGross / 30;
-  const leaveDeduction = Math.round(baseDailyRate * leaveDays * 100) / 100;
+  const leaveDeduction = roundToNearestQuarter(baseDailyRate * leaveDays);
   const basicSalary = salaryRecord?.basicSalary || 0;
   const penaltyAmount = useMemo(() => {
     if (penaltyType === 'amount') return penaltyValue;
@@ -155,7 +155,6 @@ export const PayrollProcessing = () => {
   const handleSelectEmployee = (empId: string) => {
     setSelectedEmployee(empId);
     handleReset();
-    // Load existing processed data
     const existing = getPayrollEntry(empId, selectedMonth, selectedYear);
     if (existing) {
       setLivingAllowance(existing.livingAllowance);
@@ -166,7 +165,6 @@ export const PayrollProcessing = () => {
       setPenaltyType(existing.penaltyType);
       setPenaltyValue(existing.penaltyValue);
     } else {
-      // Pre-fill living allowance from salary record
       const sr = getSalaryRecord(empId, selectedYear);
       if (sr) setLivingAllowance(sr.livingAllowance);
     }
@@ -188,9 +186,8 @@ export const PayrollProcessing = () => {
     const aa = getEmployeeAdvanceForMonth(empId, period);
     const mb = getEmployeeMobileBill(empId, period);
     const ld = empId === selectedEmployee ? leaveDays : 0;
-    // Use baseGross (bg) for daily rate calculations (excludes livingAllowance and overtimePay)
     const dr = bg / 30;
-    const lded = Math.round(dr * ld * 100) / 100;
+    const lded = roundToNearestQuarter(dr * ld);
     const pt = empId === selectedEmployee ? penaltyType : 'amount';
     const pv = empId === selectedEmployee ? penaltyValue : 0;
     const pa = pt === 'amount' ? pv : pt === 'days' ? roundToNearestQuarter(dr * pv) : Math.round((pv / 100) * bg);
@@ -203,17 +200,33 @@ export const PayrollProcessing = () => {
       employeeNameEn: emp.nameEn,
       department: emp.department,
       stationLocation: emp.stationLocation || sr.stationLocation,
-      month: selectedMonth, year: selectedYear,
-      basicSalary: sr.basicSalary, transportAllowance: sr.transportAllowance,
-      incentives: sr.incentives, stationAllowance: sr.stationAllowance, mobileAllowance: sr.mobileAllowance,
-      livingAllowance: la, overtimePay: ot,
-      bonusType: bt, bonusValue: bv, bonusAmount: ba,
+      month: selectedMonth,
+      year: selectedYear,
+      basicSalary: sr.basicSalary,
+      transportAllowance: sr.transportAllowance,
+      incentives: sr.incentives,
+      stationAllowance: sr.stationAllowance,
+      mobileAllowance: sr.mobileAllowance,
+      livingAllowance: la,
+      overtimePay: ot,
+      bonusType: bt,
+      bonusValue: bv,
+      bonusAmount: ba,
       gross: g,
-      employeeInsurance: sr.employeeInsurance, loanPayment: lp, advanceAmount: aa, mobileBill: mb,
-      leaveDays: ld, leaveDeduction: lded,
-      penaltyType: pt, penaltyValue: pv, penaltyAmount: pa,
-      totalDeductions: td, netSalary: g + ba - td,
-      employerSocialInsurance: sr.employerSocialInsurance, healthInsurance: sr.healthInsurance, incomeTax: sr.incomeTax,
+      employeeInsurance: sr.employeeInsurance,
+      loanPayment: lp,
+      advanceAmount: aa,
+      mobileBill: mb,
+      leaveDays: ld,
+      leaveDeduction: lded,
+      penaltyType: pt,
+      penaltyValue: pv,
+      penaltyAmount: pa,
+      totalDeductions: td,
+      netSalary: g + ba - td,
+      employerSocialInsurance: sr.employerSocialInsurance,
+      healthInsurance: sr.healthInsurance,
+      incomeTax: sr.incomeTax,
       processedAt: new Date().toISOString().split('T')[0],
     };
   };
