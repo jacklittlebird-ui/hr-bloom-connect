@@ -147,7 +147,7 @@ export const AttendanceList = () => {
       .select('*, employees(name_en, name_ar, department_id, station_id, departments(name_ar))', { count: 'exact' })
       .gte('date', startDate)
       .lte('date', endDate)
-      .order('date', { ascending: false });
+      .order('check_in', { ascending: false, nullsFirst: false });
 
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter);
