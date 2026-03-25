@@ -119,7 +119,7 @@ export const PayrollProcessing = () => {
   const basicSalary = salaryRecord?.basicSalary || 0;
   const penaltyAmount = useMemo(() => {
     if (penaltyType === 'amount') return penaltyValue;
-    if (penaltyType === 'days') return roundToNearestQuarter((basicSalary / 30) * penaltyValue);
+    if (penaltyType === 'days') return roundToNearestEighth((basicSalary / 30) * penaltyValue);
     return Math.round((penaltyValue / 100) * baseGross);
   }, [penaltyType, penaltyValue, basicSalary, baseGross]);
 
