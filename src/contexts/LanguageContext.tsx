@@ -106,6 +106,7 @@ const translations: Record<string, Record<Language, string>> = {
   'employees.tabs.other': { en: 'Other', ar: 'أخرى' },
   'employees.tabs.leaveBalance': { en: 'Leave Balance', ar: 'رصيد الإجازات' },
   'employees.tabs.salary': { en: 'Salary & Allowances', ar: 'الرواتب والبدلات' },
+  'employees.tabs.bankAccount': { en: 'Bank Account', ar: 'الحساب البنكي' },
   'employees.fields.employeeId': { en: 'Employee ID', ar: 'رقم الموظف' },
   'employees.fields.stationLocation': { en: 'Station/Location', ar: 'المحطة/الموقع' },
   'employees.fields.enterStation': { en: 'Enter Station', ar: 'ادخل المحطة' },
