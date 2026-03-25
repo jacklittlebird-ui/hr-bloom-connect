@@ -189,7 +189,7 @@ export const PayrollProcessing = () => {
     const ld = empId === selectedEmployee ? leaveDays : 0;
     // Use baseGross (bg) for daily rate calculations (excludes livingAllowance and overtimePay)
     const dr = bg / 30;
-    const lded = Math.round(dr * ld);
+    const lded = Math.round(dr * ld * 100) / 100;
     const pt = empId === selectedEmployee ? penaltyType : 'amount';
     const pv = empId === selectedEmployee ? penaltyValue : 0;
     const pa = pt === 'amount' ? pv : pt === 'days' ? Math.round(dr * pv) : Math.round((pv / 100) * bg);
