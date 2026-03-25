@@ -563,7 +563,7 @@ export const PayrollProcessing = () => {
                         <Label className={cn("text-xs", isRTL && "text-right block")}>
                           {penaltyType === 'amount' ? (ar ? 'قيمة الجزاء' : 'Amount') : penaltyType === 'days' ? (ar ? 'عدد الأيام' : 'Days') : (ar ? 'النسبة %' : '%')}
                         </Label>
-                        <Input type="number" step={penaltyType === 'days' ? '0.25' : 'any'} value={penaltyValue || ''} onChange={e => { const v = parseFloat(e.target.value) || 0; setPenaltyValue(penaltyType === 'days' ? normalizeQuarterInput(v) : v); }} className={cn("h-9 text-sm", isRTL && "text-right")} min={0} />
+                        <Input type="number" step={penaltyType === 'days' ? '0.125' : 'any'} value={penaltyValue || ''} onChange={e => { const v = parseFloat(e.target.value) || 0; setPenaltyValue(penaltyType === 'days' ? normalizeQuarterInput(v) : v); }} className={cn("h-9 text-sm", isRTL && "text-right")} min={0} />
                       </div>
                       {penaltyType !== 'amount' && readOnlyField(ar ? 'قيمة الجزاء' : 'Penalty Value', penaltyAmount)}
                     </div>
