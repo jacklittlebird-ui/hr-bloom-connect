@@ -193,7 +193,7 @@ export const PayrollProcessing = () => {
     const lded = Math.round(dr * ld * 100) / 100;
     const pt = empId === selectedEmployee ? penaltyType : 'amount';
     const pv = empId === selectedEmployee ? penaltyValue : 0;
-    const pa = pt === 'amount' ? pv : pt === 'days' ? Math.round(dr * pv) : Math.round((pv / 100) * bg);
+    const pa = pt === 'amount' ? pv : pt === 'days' ? roundToNearestQuarter(dr * pv) : Math.round((pv / 100) * bg);
     const td = sr.employeeInsurance + lp + aa + mb + lded + pa;
 
     return {
