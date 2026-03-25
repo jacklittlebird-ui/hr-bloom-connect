@@ -96,25 +96,6 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
     toast({ title: ar ? 'تم الحفظ' : 'Saved', description: ar ? `تم حفظ راتب سنة ${selectedYear}` : `Salary for ${selectedYear} saved` });
   };
 
-  const updateBankField = (field: keyof BankInfo, value: string) => {
-    setBankInfo(p => ({ ...p, [field]: value }));
-    const fieldMap: Record<keyof BankInfo, keyof Employee> = {
-      accountNumber: 'bankAccountNumber',
-      bankId: 'bankIdNumber',
-      accountType: 'bankAccountType',
-      bankName: 'bankName',
-    };
-    onUpdate?.({ [fieldMap[field]]: value });
-  };
-
-  const handleAddBank = () => {
-    if (!newBank.labelAr || !newBank.labelEn) return;
-    const value = newBank.labelEn.toLowerCase().replace(/\s+/g, '_');
-    setBanks(prev => [...prev, { value, ...newBank }]);
-    setShowAddBank(false);
-    setNewBank({ labelAr: '', labelEn: '' });
-    toast({ title: ar ? 'تمت الإضافة' : 'Added' });
-  };
 
   const handleDeleteRecord = (year: string) => {
     deleteSalaryRecord(employee.id, year);
