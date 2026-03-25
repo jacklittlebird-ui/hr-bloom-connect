@@ -41,7 +41,7 @@ import { NotificationDropdown } from '@/components/notifications/NotificationDro
 import { toast } from '@/hooks/use-toast';
 import { Employee } from '@/types/employee';
 
-// Tabs hidden from HR role (salary-related)
+// Tabs hidden from HR role (salary-related only)
 const HR_HIDDEN_TABS = ['salary', 'salaryRecord'];
 const ADMIN_ONLY_TABS = ['bonusesEid'];
 const allDetailTabs = [
