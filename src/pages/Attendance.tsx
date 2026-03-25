@@ -226,7 +226,7 @@ const Attendance = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn("grid w-full grid-cols-8 mb-6")} dir="rtl">
+          <TabsList className={cn("grid w-full grid-cols-9 mb-6")} dir="rtl">
             <TabsTrigger value="checkin" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span className="hidden lg:inline">{t('attendance.tabs.checkInOut')}</span>
