@@ -85,6 +85,11 @@ const LoginPage = () => {
     
     if (result.success) {
       toast({ title: t('تم تسجيل الدخول بنجاح', 'Login successful') });
+      // Navigation is handled by AuthRoute detecting isAuthenticated
+      // But as a safety fallback for mobile, force a small delay re-render
+      setTimeout(() => {
+        navigate('/', { replace: true });
+      }, 300);
     } else {
       toast({ title: t('بيانات الدخول غير صحيحة', 'Invalid credentials'), description: result.error, variant: 'destructive' });
     }

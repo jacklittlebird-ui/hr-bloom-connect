@@ -162,9 +162,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       return { success: false, error: error.message };
+    }
+    // Eagerly fetch profile so user state is set before returning
+    if (data.user) {
+      try {
+        const profile = await fetchUserProfile(data.user);
+        setUser(profile);
+        setSession(data.session);
+        if (!profile) {
+          await supabase.auth.signOut();
+          return { success: false, error: 'لم يتم العثور على صلاحيات لهذا الحساب' };
+        }
+      } catch (e) {
+        console.error('Profile fetch failed after login:', e);
+        // Don't block — onAuthStateChange will retry
+      }
     }
     return { success: true };
   }, []);
