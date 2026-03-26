@@ -324,9 +324,10 @@ const Leaves = () => {
   const pendingCount = leaveRequests.filter(r => r.status === 'pending').length +
     permissionRequests.filter(r => r.status === 'pending').length +
     missionRequests.filter(r => r.status === 'pending').length +
-    overtimeRequests.filter(r => r.status === 'pending').length;
+    overtimeRequests.filter(r => r.status === 'pending').length +
+    employeeRequests.filter(r => r.status === 'pending').length;
 
-  const showFilters = ['leaves', 'permissions', 'missions', 'overtime', 'approvals', 'balance', 'violations'].includes(activeTab);
+  const showFilters = ['leaves', 'permissions', 'missions', 'overtime', 'approvals', 'balance', 'violations', 'emp-requests'].includes(activeTab);
 
   return (
     <DashboardLayout>
