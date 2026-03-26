@@ -278,13 +278,14 @@ export const PayrollProcessing = () => {
     };
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const entry = buildPayrollEntry(selectedEmployee);
     if (!entry) {
       toast({ title: ar ? 'خطأ' : 'Error', description: ar ? 'يرجى اختيار موظف لديه بيانات راتب' : 'Select an employee with salary data', variant: 'destructive' });
       return;
     }
     savePayrollEntry(entry);
+    await syncLoansAfterPayroll([selectedEmployee], selectedMonth, selectedYear);
     toast({ title: ar ? 'تم الحفظ' : 'Saved', description: ar ? 'تم حفظ بيانات الراتب الشهري' : 'Monthly payroll saved' });
   };
 
