@@ -586,7 +586,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       getRequests, addRequest,
       getDocuments, addDocument,
       ensureLeaves, ensureLoans, ensureEvaluations,
-      ensureTraining, ensureMissions, ensureViolations, ensureDocuments,
+      ensureTraining, ensureMissions, ensureViolations, ensureRequests, ensureDocuments,
     }}>
       {children}
     </PortalDataContext.Provider>
