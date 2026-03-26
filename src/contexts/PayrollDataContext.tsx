@@ -2,7 +2,7 @@ import React, { createContext, useContext, useCallback, useState, useEffect, use
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
+import { trackQuery, debouncedFetch, invalidateCache, setCache } from '@/lib/queryOptimizer';
 
 export interface ProcessedPayroll {
   employeeId: string;
@@ -169,6 +169,21 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setEmployeeMap(result);
   }, [isEmployee]);
 
+  const fetchEntriesDirect = useCallback(async () => {
+    let query;
+    if (isEmployee && scopedEmployeeId) {
+      query = supabase.from('payroll_entries').select(EMPLOYEE_PAYROLL_COLS).eq('employee_id', scopedEmployeeId).limit(24);
+    } else {
+      query = supabase.from('payroll_entries').select(PAYROLL_COLS);
+    }
+    const { data, error } = await query;
+    trackQuery('payroll', data?.length || 0);
+    const entries = (!error && data) ? data.map(mapRowToEntry) : [];
+    const cacheKey = `payroll_entries_${scopedEmployeeId || 'all'}`;
+    setCache(cacheKey, entries);
+    setRawEntries(entries);
+  }, [isEmployee, scopedEmployeeId]);
+
   const fetchEntries = useCallback(async () => {
     const cacheKey = `payroll_entries_${scopedEmployeeId || 'all'}`;
     
@@ -243,19 +258,17 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const savePayrollEntry = useCallback(async (entry: ProcessedPayroll) => {
     await upsertEntry(entry);
-    invalidateCache('payroll_entries');
-    await fetchEntries();
+    await fetchEntriesDirect();
     addNotification({ titleAr: `تم معالجة مسير الراتب: ${entry.employeeName}`, titleEn: `Payroll processed: ${entry.employeeNameEn}`, type: 'success', module: 'payroll' });
-  }, [addNotification, fetchEntries]);
+  }, [addNotification, fetchEntriesDirect]);
 
   const savePayrollEntries = useCallback(async (entries: ProcessedPayroll[]) => {
     for (const entry of entries) {
       await upsertEntry(entry);
     }
-    invalidateCache('payroll_entries');
-    await fetchEntries();
+    await fetchEntriesDirect();
     addNotification({ titleAr: `تم معالجة مسير الرواتب لـ ${entries.length} موظف`, titleEn: `Payroll processed for ${entries.length} employees`, type: 'success', module: 'payroll' });
-  }, [addNotification, fetchEntries]);
+  }, [addNotification, fetchEntriesDirect]);
 
   const getPayrollEntry = useCallback((employeeId: string, month: string, year: string) => {
     return payrollEntries.find(e => e.employeeId === employeeId && e.month === month && e.year === year);
@@ -280,17 +293,15 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       console.error('Error deleting payroll entry:', error);
       return;
     }
-    invalidateCache('payroll_entries');
-    await fetchEntries();
+    await fetchEntriesDirect();
     addNotification({ titleAr: 'تم حذف كشف الراتب', titleEn: 'Payroll entry deleted', type: 'warning', module: 'payroll' });
-  }, [addNotification, fetchEntries]);
+  }, [addNotification, fetchEntriesDirect]);
 
   const refreshPayroll = useCallback(async () => {
-    invalidateCache('payroll_entries');
     invalidateCache('payroll_empMap');
     await fetchEmployeeMap();
-    await fetchEntries();
-  }, [fetchEmployeeMap, fetchEntries]);
+    await fetchEntriesDirect();
+  }, [fetchEmployeeMap, fetchEntriesDirect]);
 
   return (
     <PayrollDataContext.Provider value={{ payrollEntries, refreshPayroll, savePayrollEntry, savePayrollEntries, deletePayrollEntry, getPayrollEntry, getMonthlyPayroll, getEmployeePayroll }}>
