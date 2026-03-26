@@ -24,7 +24,7 @@ import {
   EmployeeLeaveBalance,
   MISSION_TIME_CONFIG,
 } from '@/types/leaves';
-import { FileText, Plus, CheckCircle, BarChart3, Calendar, ShieldCheck, Briefcase, PlusCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { FileText, Plus, CheckCircle, BarChart3, Calendar, ShieldCheck, Briefcase, PlusCircle, AlertTriangle, RefreshCw, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
