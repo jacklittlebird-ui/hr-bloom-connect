@@ -78,6 +78,7 @@ export interface EmployeeLeaveBalance {
   employeeNameAr: string;
   department: string;
   station: string;
+  hireDate?: string;
   annualTotal: number;
   annualUsed: number;
   annualRemaining: number;
