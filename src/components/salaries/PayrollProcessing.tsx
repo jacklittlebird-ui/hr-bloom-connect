@@ -44,26 +44,70 @@ export const PayrollProcessing = () => {
   const [selectedBulk, setSelectedBulk] = useState<string[]>([]);
 
   // DB-fetched loans & advances
-  const [dbLoans, setDbLoans] = useState<{ employee_id: string; monthly_installment: number }[]>([]);
-  const [dbAdvances, setDbAdvances] = useState<{ employee_id: string; amount: number; deduction_month: string }[]>([]);
+  const [dbLoans, setDbLoans] = useState<{ id: string; employee_id: string; monthly_installment: number; installments_count: number; paid_count: number; remaining: number }[]>([]);
+  const [dbAdvances, setDbAdvances] = useState<{ id: string; employee_id: string; amount: number; deduction_month: string }[]>([]);
   const [dbMobileBills, setDbMobileBills] = useState<{ employee_id: string; amount: number; deduction_month: string }[]>([]);
 
+  const roundToNearestQuarter = (v: number) => Math.round(v * 4) / 4;
+  const roundToNearestEighth = (v: number) => Math.round(v * 8) / 8;
   const period = `${selectedYear}-${selectedMonth}`;
-  const roundToNearestEighth = (value: number) => Math.round(value * 8) / 8;
-  const roundToNearestQuarter = (value: number) => Math.round(value * 4) / 4;
   const normalizeQuarterInput = (value: number) => roundToNearestEighth(value || 0);
 
   // Fetch active loans, approved advances, and mobile bills from DB
   const fetchLoansAndAdvances = useCallback(async () => {
     const [loansRes, advancesRes, billsRes] = await Promise.all([
-      supabase.from('loans').select('employee_id, monthly_installment').eq('status', 'active'),
-      supabase.from('advances').select('employee_id, amount, deduction_month').eq('status', 'approved'),
+      supabase.from('loans').select('id, employee_id, monthly_installment, installments_count, paid_count, remaining').eq('status', 'active'),
+      supabase.from('advances').select('id, employee_id, amount, deduction_month').eq('status', 'approved'),
       supabase.from('mobile_bills').select('employee_id, amount, deduction_month'),
     ]);
     if (loansRes.data) setDbLoans(loansRes.data);
     if (advancesRes.data) setDbAdvances(advancesRes.data);
     if (billsRes.data) setDbMobileBills(billsRes.data);
   }, []);
+
+  // Sync loan records after payroll: update paid_count, remaining, status, and mark installments
+  const syncLoansAfterPayroll = useCallback(async (employeeIds: string[], month: string, year: string) => {
+    const period = `${year}-${month}`;
+    for (const empId of employeeIds) {
+      const empLoans = dbLoans.filter(l => l.employee_id === empId);
+      for (const loan of empLoans) {
+        if (!loan.monthly_installment || loan.monthly_installment <= 0) continue;
+        const newPaid = Math.min((loan.paid_count || 0) + 1, loan.installments_count || 1);
+        const newRemaining = Math.max((loan.remaining ?? loan.monthly_installment * ((loan.installments_count || 1) - (loan.paid_count || 0))) - loan.monthly_installment, 0);
+        const newStatus = newPaid >= (loan.installments_count || 1) ? 'completed' : 'active';
+
+        await supabase.from('loans').update({
+          paid_count: newPaid,
+          remaining: newRemaining,
+          status: newStatus,
+        }).eq('id', loan.id);
+
+        // Mark the next pending installment as paid
+        const { data: pendingInst } = await supabase
+          .from('loan_installments')
+          .select('id')
+          .eq('loan_id', loan.id)
+          .eq('status', 'pending')
+          .order('installment_number', { ascending: true })
+          .limit(1);
+
+        if (pendingInst && pendingInst.length > 0) {
+          await supabase.from('loan_installments').update({
+            status: 'paid',
+            paid_at: new Date().toISOString(),
+          }).eq('id', pendingInst[0].id);
+        }
+      }
+
+      // Mark advances for this month as deducted
+      const empAdvances = dbAdvances.filter(a => a.employee_id === empId && a.deduction_month === period);
+      for (const adv of empAdvances) {
+        await supabase.from('advances').update({ status: 'deducted' }).eq('id', adv.id);
+      }
+    }
+    // Refresh data
+    await fetchLoansAndAdvances();
+  }, [dbLoans, dbAdvances, fetchLoansAndAdvances]);
 
   useEffect(() => {
     fetchLoansAndAdvances();
@@ -234,17 +278,18 @@ export const PayrollProcessing = () => {
     };
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const entry = buildPayrollEntry(selectedEmployee);
     if (!entry) {
       toast({ title: ar ? 'خطأ' : 'Error', description: ar ? 'يرجى اختيار موظف لديه بيانات راتب' : 'Select an employee with salary data', variant: 'destructive' });
       return;
     }
     savePayrollEntry(entry);
+    await syncLoansAfterPayroll([selectedEmployee], selectedMonth, selectedYear);
     toast({ title: ar ? 'تم الحفظ' : 'Saved', description: ar ? 'تم حفظ بيانات الراتب الشهري' : 'Monthly payroll saved' });
   };
 
-  const handleBulkProcess = () => {
+  const handleBulkProcess = async () => {
     const entries: ProcessedPayroll[] = [];
     const targets = selectedBulk.length > 0 ? selectedBulk : filteredEmployees.map(e => e.id);
     targets.forEach(empId => {
@@ -256,6 +301,7 @@ export const PayrollProcessing = () => {
       return;
     }
     savePayrollEntries(entries);
+    await syncLoansAfterPayroll(entries.map(e => e.employeeId), selectedMonth, selectedYear);
     toast({ title: ar ? 'تم التشغيل' : 'Processed', description: ar ? `تم معالجة ${entries.length} موظف` : `Processed ${entries.length} employees` });
     setSelectedBulk([]);
   };

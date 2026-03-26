@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLoanData } from '@/contexts/LoanDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,9 @@ export const PortalLoans = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { language } = useLanguage();
   const ar = language === 'ar';
-  const { loans, advances } = useLoanData();
+  const { loans, advances, refreshData } = useLoanData();
+
+  useEffect(() => { refreshData(); }, []);
 
   const myLoans = useMemo(() => loans.filter(l => l.employeeId === PORTAL_EMPLOYEE_ID), [loans]);
   const myAdvances = useMemo(() => advances.filter(a => a.employeeId === PORTAL_EMPLOYEE_ID), [advances]);
