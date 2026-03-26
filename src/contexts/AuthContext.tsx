@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import { initSessionMonitor } from '@/lib/security';
+import { getRoleRedirectPath, normalizeLoginIdentifier } from '@/lib/auth';
 
 export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager';
 
@@ -26,7 +27,7 @@ interface AuthContextType {
   user: AuthUser | null;
   session: Session | null;
   loading: boolean;
-  login: (credentials: { email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+  login: (credentials: { email: string; password: string }) => Promise<{ success: boolean; error?: string; redirectTo?: string }>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -114,21 +115,60 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
   };
 }
 
+async function fetchUserProfileWithRetry(supabaseUser: User, attempts = 4): Promise<AuthUser | null> {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const profile = await fetchUserProfile(supabaseUser);
+      if (profile) return profile;
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < attempts - 1) {
+      const delayMs = 300 * (attempt + 1);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  if (lastError) {
+    console.error('User profile fetch failed after retries:', lastError);
+  }
+
+  return null;
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const resolveAuthenticatedUser = useCallback(async (supabaseUser: User) => {
+    setLoading(true);
+    const profile = await fetchUserProfileWithRetry(supabaseUser);
+
+    if (!profile) {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setLoading(false);
+      return null;
+    }
+
+    setUser(profile);
+    setLoading(false);
+    return profile;
+  }, []);
+
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       if (newSession?.user) {
-        // Use setTimeout to avoid potential deadlocks with Supabase client
+        setLoading(true);
         setTimeout(async () => {
-          const profile = await fetchUserProfile(newSession.user);
-          setUser(profile);
-          setLoading(false);
+          await resolveAuthenticatedUser(newSession.user);
         }, 0);
       } else {
         setUser(null);
@@ -140,14 +180,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
       setSession(initialSession);
       if (initialSession?.user) {
-        const profile = await fetchUserProfile(initialSession.user);
-        setUser(profile);
+        await resolveAuthenticatedUser(initialSession.user);
+        return;
       }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [resolveAuthenticatedUser]);
 
   // Session timeout monitor - auto logout after 30 min inactivity
   useEffect(() => {
@@ -162,27 +202,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const normalizedEmail = normalizeLoginIdentifier(email);
+    const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
     if (error) {
       return { success: false, error: error.message };
     }
-    // Eagerly fetch profile so user state is set before returning
+
     if (data.user) {
       try {
-        const profile = await fetchUserProfile(data.user);
-        setUser(profile);
         setSession(data.session);
+        const profile = await resolveAuthenticatedUser(data.user);
         if (!profile) {
-          await supabase.auth.signOut();
           return { success: false, error: 'لم يتم العثور على صلاحيات لهذا الحساب' };
         }
+        return { success: true, redirectTo: getRoleRedirectPath(profile.role) };
       } catch (e) {
         console.error('Profile fetch failed after login:', e);
-        // Don't block — onAuthStateChange will retry
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        return { success: false, error: 'تعذر تحميل بيانات الحساب، برجاء المحاولة مرة أخرى' };
       }
     }
     return { success: true };
-  }, []);
+  }, [resolveAuthenticatedUser]);
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
