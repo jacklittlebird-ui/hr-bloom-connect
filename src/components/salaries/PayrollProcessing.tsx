@@ -289,7 +289,7 @@ export const PayrollProcessing = () => {
     toast({ title: ar ? 'تم الحفظ' : 'Saved', description: ar ? 'تم حفظ بيانات الراتب الشهري' : 'Monthly payroll saved' });
   };
 
-  const handleBulkProcess = () => {
+  const handleBulkProcess = async () => {
     const entries: ProcessedPayroll[] = [];
     const targets = selectedBulk.length > 0 ? selectedBulk : filteredEmployees.map(e => e.id);
     targets.forEach(empId => {
@@ -301,6 +301,7 @@ export const PayrollProcessing = () => {
       return;
     }
     savePayrollEntries(entries);
+    await syncLoansAfterPayroll(entries.map(e => e.employeeId), selectedMonth, selectedYear);
     toast({ title: ar ? 'تم التشغيل' : 'Processed', description: ar ? `تم معالجة ${entries.length} موظف` : `Processed ${entries.length} employees` });
     setSelectedBulk([]);
   };
