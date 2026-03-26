@@ -216,6 +216,17 @@ const Leaves = () => {
   const filteredMissions = useMemo(() => filterRequests(missionRequests), [missionRequests, searchQuery, selectedDepartment, selectedStation]);
   const filteredOvertime = useMemo(() => filterRequests(overtimeRequests), [overtimeRequests, searchQuery, selectedDepartment, selectedStation]);
   const filteredBalances = useMemo(() => filterRequests(leaveBalances), [leaveBalances, searchQuery, selectedDepartment, selectedStation]);
+  const filteredEmployeeRequests = useMemo(() => {
+    return employeeRequests.filter(r => {
+      const matchSearch = !searchQuery ||
+        r.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.employeeNameAr.includes(searchQuery) ||
+        r.employeeCode.includes(searchQuery);
+      const matchDept = selectedDepartment === 'all' || empDeptMap.get(r.employeeId) === selectedDepartment;
+      const matchStation = selectedStation === 'all' || empStationMap.get(r.employeeId) === selectedStation;
+      return matchSearch && matchDept && matchStation;
+    });
+  }, [employeeRequests, searchQuery, selectedDepartment, selectedStation]);
 
   // Handlers
   const handleApproveLeave = async (id: string) => { await supabase.from('leave_requests').update({ status: 'approved' }).eq('id', id); fetchData(); };
