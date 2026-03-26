@@ -158,7 +158,7 @@ export const AdvancesList = () => {
     { header: isRTL ? 'شهر الخصم' : 'Deduction Month', key: 'deductionMonth' },
     { header: isRTL ? 'الحالة' : 'Status', key: 'statusLabel' },
   ];
-  const exportData = filteredAdvances.map(a => ({ ...a, stationLabel: getStationLabel(a.employeeId), statusLabel: isRTL ? statusLabels[a.status].ar : statusLabels[a.status].en }));
+  const exportData = filteredAdvances.map(a => ({ ...a, stationLabel: getStationLabel(a.employeeId), statusLabel: isRTL ? (statusLabels[a.status]?.ar || a.status) : (statusLabels[a.status]?.en || a.status) }));
 
   return (
     <div className="space-y-6">
