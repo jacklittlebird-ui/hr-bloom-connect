@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +28,11 @@ const SalaryReports = () => {
   const [station, setStation] = useState('all');
   const [department, setDepartment] = useState('all');
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Always fetch fresh data on mount
+  useEffect(() => {
+    refreshPayroll();
+  }, []);
 
   const monthNamesAr = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   const monthNamesEn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
