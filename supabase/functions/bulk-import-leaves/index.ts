@@ -164,21 +164,21 @@ Deno.serve(async (req) => {
 
   for (let i = 0; i < leaveInserts.length; i += 200) {
     const batch = leaveInserts.slice(i, i + 200);
-    const { error } = await supabase.from('leave_requests').insert(batch);
+    const { error } = await supabase.from('leave_requests').upsert(batch, { onConflict: 'employee_id,leave_type,start_date,end_date', ignoreDuplicates: true });
     if (error) errors.push(`Leave batch ${i}: ${error.message}`);
     else leaveCount += batch.length;
   }
 
   for (let i = 0; i < permissionInserts.length; i += 200) {
     const batch = permissionInserts.slice(i, i + 200);
-    const { error } = await supabase.from('permission_requests').insert(batch);
+    const { error } = await supabase.from('permission_requests').upsert(batch, { onConflict: 'employee_id,date,start_time,end_time', ignoreDuplicates: true });
     if (error) errors.push(`Permission batch ${i}: ${error.message}`);
     else permCount += batch.length;
   }
 
   for (let i = 0; i < overtimeInserts.length; i += 200) {
     const batch = overtimeInserts.slice(i, i + 200);
-    const { error } = await supabase.from('overtime_requests').insert(batch);
+    const { error } = await supabase.from('overtime_requests').upsert(batch, { onConflict: 'employee_id,date,overtime_type', ignoreDuplicates: true });
     if (error) errors.push(`Overtime batch ${i}: ${error.message}`);
     else otCount += batch.length;
   }
