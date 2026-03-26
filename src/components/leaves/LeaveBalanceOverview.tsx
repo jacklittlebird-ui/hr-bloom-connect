@@ -110,6 +110,7 @@ export const LeaveBalanceOverview = ({ balances }: LeaveBalanceOverviewProps) =>
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'كود الموظف' : 'Employee ID'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.balance.employee')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.balance.department')}</TableHead>
                    <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'المكان' : 'Station'}</TableHead>
