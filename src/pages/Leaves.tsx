@@ -397,6 +397,7 @@ const Leaves = () => {
           </TabsContent>
           <TabsContent value="balance"><LeaveBalanceOverview balances={filteredBalances} /></TabsContent>
           <TabsContent value="calendar"><LeaveCalendar requests={filteredLeaves.filter(r => r.status === 'approved')} /></TabsContent>
+          <TabsContent value="emp-requests"><EmployeeRequestsList requests={filteredEmployeeRequests} onRefresh={fetchData} /></TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
