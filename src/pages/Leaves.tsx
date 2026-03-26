@@ -171,7 +171,7 @@ const Leaves = () => {
       const permissionsTotal = lb ? Number(lb.permissions_total) : 12;
       const permissionsUsed = lb ? Number(lb.permissions_used) : 0;
       return {
-        employeeId: e.id, employeeName: e.name_en, employeeNameAr: e.name_ar,
+        employeeId: e.id, employeeCode: e.employee_code, employeeName: e.name_en, employeeNameAr: e.name_ar,
         department: d ? (language === 'ar' ? d.name_ar : d.name_en) : '',
         station: s ? (language === 'ar' ? s.name_ar : s.name_en) : '',
         hireDate: e.hire_date || '',

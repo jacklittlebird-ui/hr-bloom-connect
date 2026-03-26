@@ -124,6 +124,7 @@ export const LeaveBalanceOverview = ({ balances }: LeaveBalanceOverviewProps) =>
               <TableBody>
                 {balances.map((balance) => (
                   <TableRow key={balance.employeeId}>
+                    <TableCell className="font-medium">{balance.employeeCode || '—'}</TableCell>
                     <TableCell className="font-medium">
                       {language === 'ar' ? balance.employeeNameAr : balance.employeeName}
                     </TableCell>

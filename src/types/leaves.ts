@@ -74,6 +74,7 @@ export interface OvertimeRequest {
 
 export interface EmployeeLeaveBalance {
   employeeId: string;
+  employeeCode?: string;
   employeeName: string;
   employeeNameAr: string;
   department: string;
