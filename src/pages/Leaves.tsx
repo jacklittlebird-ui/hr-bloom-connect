@@ -40,6 +40,7 @@ const Leaves = () => {
   const [missionRequests, setMissionRequests] = useState<MissionRequest[]>([]);
   const [overtimeRequests, setOvertimeRequests] = useState<OvertimeRequest[]>([]);
   const [leaveBalances, setLeaveBalances] = useState<EmployeeLeaveBalance[]>([]);
+  const [employeeRequests, setEmployeeRequests] = useState<any[]>([]);
   const [departments, setDepartments] = useState<DeptOption[]>([]);
   const [stations, setStations] = useState<StationOption[]>([]);
 
