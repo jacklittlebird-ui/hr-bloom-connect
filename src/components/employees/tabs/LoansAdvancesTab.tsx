@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useLoanData } from '@/contexts/LoanDataContext';
 import { Employee } from '@/types/employee';
@@ -14,7 +14,9 @@ interface LoansAdvancesTabProps {
 export const LoansAdvancesTab = ({ employee }: LoansAdvancesTabProps) => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
-  const { loans, advances } = useLoanData();
+  const { loans, advances, refreshData } = useLoanData();
+
+  useEffect(() => { refreshData(); }, []);
 
   const empLoans = useMemo(() => loans.filter(l => l.employeeId === employee.id), [loans, employee.id]);
   const empAdvances = useMemo(() => advances.filter(a => a.employeeId === employee.id), [advances, employee.id]);
