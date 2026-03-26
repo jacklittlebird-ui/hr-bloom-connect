@@ -23,12 +23,13 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 /** Get the current 30-min bucket number */
-const getBucket = () => Math.floor(Date.now() / 1000 / 1800);
+const getBucket = () => Math.floor(Date.now() / (30 * 60 * 1000));
 
 /** Seconds remaining until the next bucket */
 const getSecondsToNextBucket = () => {
-  const nowSec = Math.floor(Date.now() / 1000);
-  return (Math.floor(nowSec / 1800) + 1) * 1800 - nowSec;
+  const nowMs = Date.now();
+  const bucketMs = 30 * 60 * 1000;
+  return Math.floor(((Math.floor(nowMs / bucketMs) + 1) * bucketMs - nowMs) / 1000);
 };
 
 const AttendanceKiosk = () => {
@@ -52,13 +53,47 @@ const AttendanceKiosk = () => {
   const watchRef = useRef<number | null>(null);
 
   // ── Keep-alive: prevent session timeout ──
-  // The kiosk runs unattended all day, so we continuously reset the
-  // inactivity timer to prevent auto-logout.
   useEffect(() => {
     const keepAlive = setInterval(() => {
-      resetSessionTimer(() => {}); // reset the 30-min inactivity timer
-    }, 5 * 60 * 1000); // every 5 min
+      resetSessionTimer(() => {});
+    }, 5 * 60 * 1000);
     return () => clearInterval(keepAlive);
+  }, []);
+
+  // ── Freeze detection: reload if page was suspended ──
+  useEffect(() => {
+    let lastActivity = Date.now();
+    const markAlive = () => { lastActivity = Date.now(); };
+
+    // Update activity on any interaction or timer fire
+    const aliveInterval = setInterval(() => { markAlive(); }, 30000);
+
+    const freezeCheck = setInterval(() => {
+      const now = Date.now();
+      // If more than 5 min passed since last tick, page was likely frozen/suspended
+      if (now - lastActivity > 5 * 60 * 1000) {
+        console.log("[Kiosk] Page freeze detected, reloading...");
+        window.location.reload();
+      }
+      lastActivity = now;
+    }, 60000);
+
+    return () => {
+      clearInterval(aliveInterval);
+      clearInterval(freezeCheck);
+    };
+  }, []);
+
+  // ── Daily reload at 4:00 AM for a clean slate ──
+  useEffect(() => {
+    const dailyReload = setInterval(() => {
+      const now = new Date();
+      if (now.getHours() === 4 && now.getMinutes() === 0) {
+        console.log("[Kiosk] Daily 4 AM reload");
+        window.location.reload();
+      }
+    }, 60000);
+    return () => clearInterval(dailyReload);
   }, []);
 
   // ── Keep-alive: Wake Lock API (prevent screen sleep) ──
@@ -238,7 +273,7 @@ const AttendanceKiosk = () => {
     }
   }, [selectedLocation, session, geoStatus, userCoords]);
 
-  // Initial generation + bucket-change detection every 5 seconds
+  // Initial generation + bucket-change detection every 10 seconds
   useEffect(() => {
     if (!selectedLocation || !session?.access_token || geoStatus !== "allowed" || !userCoords) return;
 
@@ -253,7 +288,7 @@ const AttendanceKiosk = () => {
       if (currentBucket !== lastBucketRef.current) {
         generateQRCodes();
       }
-    }, 5000); // check every 5 seconds
+    }, 10000); // check every 10 seconds
 
     return () => clearInterval(checkInterval);
   }, [selectedLocation, session, geoStatus, userCoords, generateQRCodes]);
