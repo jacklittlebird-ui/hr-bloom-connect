@@ -396,7 +396,7 @@ const Leaves = () => {
           <TabsContent value="violations">
             <ViolationsManagement searchQuery={searchQuery} selectedDepartment={selectedDepartment} selectedStation={selectedStation} />
           </TabsContent>
-          <TabsContent value="balance"><LeaveBalanceOverview balances={filteredBalances} /></TabsContent>
+          <TabsContent value="balance"><LeaveBalanceOverview balances={filteredBalances} onRefresh={fetchData} /></TabsContent>
           <TabsContent value="calendar"><LeaveCalendar requests={filteredLeaves.filter(r => r.status === 'approved')} /></TabsContent>
           <TabsContent value="emp-requests"><EmployeeRequestsList requests={filteredEmployeeRequests} onRefresh={fetchData} /></TabsContent>
         </Tabs>
