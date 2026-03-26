@@ -5,6 +5,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
+async function findAuthUserByEmail(supabaseAdmin: ReturnType<typeof createClient>, email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  let page = 1;
+  const perPage = 200;
+
+  while (true) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+
+    const users = data.users ?? [];
+    const existingUser = users.find((user) => user.email?.trim().toLowerCase() === normalizedEmail);
+    if (existingUser) return existingUser;
+    if (users.length < perPage) return null;
+
+    page += 1;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -80,30 +98,27 @@ Deno.serve(async (req) => {
     }
     // else: no admins exist, allow first admin creation without auth
 
-    // Check duplicate email
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const emailExists = existingUsers?.users?.some(u => u.email === email);
-    if (emailExists) {
-      return new Response(JSON.stringify({ error: 'Email already registered' }), {
-        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    const existingAuthUser = await findAuthUserByEmail(supabaseAdmin, email);
+    let userId = existingAuthUser?.id;
+    let createdNewUser = false;
+
+    if (!userId) {
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name },
       });
+
+      if (authError) {
+        return new Response(JSON.stringify({ error: authError.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      userId = authData.user.id;
+      createdNewUser = true;
     }
-
-    // Create auth user
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { full_name },
-    });
-
-    if (authError) {
-      return new Response(JSON.stringify({ error: authError.message }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const userId = authData.user.id;
 
     // Ensure profile exists (trigger may not fire for admin-created users)
     await supabaseAdmin.from('profiles').upsert({
@@ -162,16 +177,18 @@ Deno.serve(async (req) => {
     // Insert role
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .insert({
+      .upsert({
         user_id: userId,
         role,
         station_id: stationId,
         employee_id: employeeId,
-      });
+      }, { onConflict: 'user_id,role' });
 
     if (roleError) {
       // Rollback: delete the auth user if role insert fails
-      await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (createdNewUser) {
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+      }
       return new Response(JSON.stringify({ error: roleError.message }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

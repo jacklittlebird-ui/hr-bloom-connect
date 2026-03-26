@@ -5,6 +5,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
+async function findAuthUserByEmail(supabaseAdmin: ReturnType<typeof createClient>, email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+  let page = 1;
+  const perPage = 200;
+
+  while (true) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+
+    const users = data.users ?? [];
+    const existingUser = users.find((user) => user.email?.trim().toLowerCase() === normalizedEmail);
+    if (existingUser) return existingUser;
+    if (users.length < perPage) return null;
+
+    page += 1;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -84,31 +102,41 @@ Deno.serve(async (req) => {
         // Check if user already exists for this employee
         const { data: existingRole } = await supabaseAdmin
           .from('user_roles')
-          .select('id')
+          .select('id, user_id')
           .eq('employee_id', emp.id)
           .eq('role', 'employee');
 
-        if (existingRole && existingRole.length > 0) {
+        const existingAuthUser = await findAuthUserByEmail(supabaseAdmin, email);
+
+        if (existingRole && existingRole.length > 0 && !existingAuthUser) {
           results.push({ employee_code, status: 'skipped', error: 'Account already exists' });
           continue;
         }
 
-        // Try to create - if email exists, Supabase will return an error
-        
-        // Create auth user
-        const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: { full_name: emp.name_ar || emp.name_en },
-        });
+        let userId = existingAuthUser?.id;
+        let createdNewUser = false;
 
-        if (authError) {
-          results.push({ employee_code, status: 'error', error: authError.message });
+        if (existingRole && existingRole.length > 0 && existingAuthUser && existingRole[0].user_id !== existingAuthUser.id) {
+          results.push({ employee_code, status: 'error', error: 'Employee role is linked to another account' });
           continue;
         }
 
-        const userId = authData.user.id;
+        if (!userId) {
+          const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { full_name: emp.name_ar || emp.name_en },
+          });
+
+          if (authError) {
+            results.push({ employee_code, status: 'error', error: authError.message });
+            continue;
+          }
+
+          userId = authData.user.id;
+          createdNewUser = true;
+        }
 
         // Ensure profile
         await supabaseAdmin.from('profiles').upsert({
@@ -126,19 +154,21 @@ Deno.serve(async (req) => {
         // Insert role
         const { error: roleError } = await supabaseAdmin
           .from('user_roles')
-          .insert({
+          .upsert({
             user_id: userId,
             role: 'employee',
             employee_id: emp.id,
-          });
+          }, { onConflict: 'user_id,role' });
 
         if (roleError) {
-          await supabaseAdmin.auth.admin.deleteUser(userId);
+          if (createdNewUser) {
+            await supabaseAdmin.auth.admin.deleteUser(userId);
+          }
           results.push({ employee_code, status: 'error', error: roleError.message });
           continue;
         }
 
-        results.push({ employee_code, status: 'created' });
+        results.push({ employee_code, status: createdNewUser ? 'created' : 'repaired' });
       } catch (e) {
         results.push({ employee_code, status: 'error', error: e.message });
       }
