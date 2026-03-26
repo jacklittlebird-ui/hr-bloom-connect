@@ -2,7 +2,7 @@ import React, { createContext, useContext, useCallback, useState, useEffect, use
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
+import { trackQuery, debouncedFetch, invalidateCache, setCache } from '@/lib/queryOptimizer';
 
 export interface ProcessedPayroll {
   employeeId: string;
