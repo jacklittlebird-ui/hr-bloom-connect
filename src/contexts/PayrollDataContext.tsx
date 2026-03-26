@@ -235,9 +235,10 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     return entries.map((entry) => {
       const periodKey = `${entry.employeeId}-${entry.year}-${entry.month}`;
-      const loanPayment = loanMap.get(entry.employeeId) ?? entry.loanPayment;
-      const advanceAmount = advanceMap.get(periodKey) ?? entry.advanceAmount;
-      const mobileBill = mobileBillMap.get(periodKey) ?? entry.mobileBill;
+      // Always use live data; if no active loan/advance/bill exists, the amount is 0
+      const loanPayment = loanMap.get(entry.employeeId) ?? 0;
+      const advanceAmount = advanceMap.get(periodKey) ?? 0;
+      const mobileBill = mobileBillMap.get(periodKey) ?? 0;
       const totalDeductions = entry.employeeInsurance + loanPayment + advanceAmount + mobileBill + entry.leaveDeduction + entry.penaltyAmount;
 
       return {
