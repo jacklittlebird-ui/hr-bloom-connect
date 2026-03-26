@@ -181,6 +181,20 @@ const Leaves = () => {
       };
     });
     setLeaveBalances(balances);
+
+    // Employee requests (from portal)
+    const { data: empReqs } = await supabase.from('employee_requests').select('id, employee_id, type_ar, type_en, reason, date, status').order('created_at', { ascending: false });
+    setEmployeeRequests((empReqs || []).map((r: any) => {
+      const info = getEmpInfo(r.employee_id);
+      const e = empMap.get(r.employee_id);
+      return {
+        id: r.id, employeeId: r.employee_id,
+        employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
+        employeeCode: e?.employee_code || '',
+        typeAr: r.type_ar, typeEn: r.type_en,
+        reason: r.reason, date: r.date, status: r.status,
+      };
+    }));
   };
 
   useEffect(() => { fetchData(); }, [language]);
