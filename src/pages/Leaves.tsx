@@ -13,6 +13,7 @@ import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
 import { LeaveApprovals } from '@/components/leaves/LeaveApprovals';
 import { RequestFilters } from '@/components/leaves/RequestFilters';
 import { ViolationsManagement } from '@/components/leaves/ViolationsManagement';
+import { EmployeeRequestsList } from '@/components/leaves/EmployeeRequestsList';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
