@@ -2410,17 +2410,38 @@ export type Database = {
       user_devices: {
         Row: {
           bound_at: string
+          browser: string | null
           device_id: string
+          device_type: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          os: string | null
           user_id: string
         }
         Insert: {
           bound_at?: string
+          browser?: string | null
           device_id: string
+          device_type?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          os?: string | null
           user_id: string
         }
         Update: {
           bound_at?: string
+          browser?: string | null
           device_id?: string
+          device_type?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          os?: string | null
           user_id?: string
         }
         Relationships: []
