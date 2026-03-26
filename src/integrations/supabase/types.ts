@@ -728,6 +728,57 @@ export type Database = {
           },
         ]
       }
+      employee_requests: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          date: string
+          employee_id: string
+          id: string
+          reason: string | null
+          status: string
+          type_ar: string
+          type_en: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          date?: string
+          employee_id: string
+          id?: string
+          reason?: string | null
+          status?: string
+          type_ar: string
+          type_en: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          date?: string
+          employee_id?: string
+          id?: string
+          reason?: string | null
+          status?: string
+          type_ar?: string
+          type_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           address: string | null
