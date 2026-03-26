@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { getOrCreateDeviceId } from '@/lib/device';
+import { getOrCreateDeviceId, getDeviceMeta } from '@/lib/device';
 import { performCheckin } from '@/lib/attendanceQueue';
 import { Navigation, Loader2, CheckCircle, XCircle } from 'lucide-react';
 
