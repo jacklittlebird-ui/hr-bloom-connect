@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
 
   for (let i = 0; i < leaveInserts.length; i += 200) {
     const batch = leaveInserts.slice(i, i + 200);
-    const { error } = await supabase.from('leave_requests').insert(batch);
+    const { error } = await supabase.from('leave_requests').upsert(batch, { onConflict: 'employee_id,leave_type,start_date,end_date', ignoreDuplicates: true });
     if (error) errors.push(`Leave batch ${i}: ${error.message}`);
     else leaveCount += batch.length;
   }
