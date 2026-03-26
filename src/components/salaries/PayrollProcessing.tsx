@@ -45,7 +45,7 @@ export const PayrollProcessing = () => {
 
   // DB-fetched loans & advances
   const [dbLoans, setDbLoans] = useState<{ id: string; employee_id: string; monthly_installment: number; installments_count: number; paid_count: number; remaining: number }[]>([]);
-  const [dbAdvances, setDbAdvances] = useState<{ id: string; employee_id: string; amount: number; deduction_month: string }[]>([]);
+  const [dbAdvances, setDbAdvances] = useState<{ id: string; employee_id: string; amount: number; deduction_month: string; status: string }[]>([]);
   const [dbMobileBills, setDbMobileBills] = useState<{ employee_id: string; amount: number; deduction_month: string }[]>([]);
 
   const roundToNearestQuarter = (v: number) => Math.round(v * 4) / 4;
@@ -57,7 +57,7 @@ export const PayrollProcessing = () => {
   const fetchLoansAndAdvances = useCallback(async () => {
     const [loansRes, advancesRes, billsRes] = await Promise.all([
       supabase.from('loans').select('id, employee_id, monthly_installment, installments_count, paid_count, remaining').eq('status', 'active'),
-      supabase.from('advances').select('id, employee_id, amount, deduction_month').eq('status', 'approved'),
+      supabase.from('advances').select('id, employee_id, amount, deduction_month, status').in('status', ['approved', 'deducted']),
       supabase.from('mobile_bills').select('employee_id, amount, deduction_month'),
     ]);
     if (loansRes.data) setDbLoans(loansRes.data);
@@ -100,7 +100,7 @@ export const PayrollProcessing = () => {
       }
 
       // Mark advances for this month as deducted
-      const empAdvances = dbAdvances.filter(a => a.employee_id === empId && a.deduction_month === period);
+      const empAdvances = dbAdvances.filter(a => a.employee_id === empId && a.deduction_month === period && a.status === 'approved');
       for (const adv of empAdvances) {
         await supabase.from('advances').update({ status: 'deducted' }).eq('id', adv.id);
       }
