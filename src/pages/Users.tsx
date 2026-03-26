@@ -18,9 +18,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { ALL_MODULES, MODULE_LABELS, ModuleKey } from '@/hooks/useModulePermissions';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from '@/components/ui/command';
 import {
   Plus, Search, Shield, Users as UsersIcon, UserCheck, MapPin, User,
-  RefreshCw, Eye, EyeOff, Edit, Trash2, Layers, ShieldCheck, Lock, Settings2, Upload,
+  RefreshCw, Eye, EyeOff, Edit, Trash2, Layers, ShieldCheck, Lock, Settings2, Upload, Check, ChevronsUpDown,
 } from 'lucide-react';
 import { EMPLOYEE_CREDENTIALS } from '@/data/employeeCredentials';
 
@@ -670,19 +672,32 @@ const Users = () => {
               {editForm.role === 'employee' && (
                 <div>
                   <Label>{isAr ? 'الموظف' : 'Employee'}</Label>
-                  <Select value={editForm.employee_code} onValueChange={v => {
-                    const emp = employees.find(e => e.employee_code === v);
-                    setEditForm(f => ({
-                      ...f,
-                      employee_code: v,
-                      full_name: emp ? (isAr ? emp.name_ar : emp.name_en) : f.full_name,
-                    }));
-                  }}>
-                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الموظف' : 'Select employee'} /></SelectTrigger>
-                    <SelectContent>
-                      {employees.map(e => (<SelectItem key={e.employee_code} value={e.employee_code}>{e.employee_code} — {isAr ? e.name_ar : e.name_en}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="w-full justify-between">
+                        {editForm.employee_code
+                          ? (() => { const emp = employees.find(e => e.employee_code === editForm.employee_code); return emp ? `${emp.employee_code} — ${isAr ? emp.name_ar : emp.name_en}` : editForm.employee_code; })()
+                          : (isAr ? 'اختر الموظف' : 'Select employee')}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[350px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder={isAr ? 'ابحث عن موظف...' : 'Search employee...'} />
+                        <CommandList className="max-h-[200px]">
+                          <CommandEmpty>{isAr ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
+                          {employees.map(e => (
+                            <CommandItem key={e.employee_code} value={`${e.employee_code} ${e.name_ar} ${e.name_en}`} onSelect={() => {
+                              setEditForm(f => ({ ...f, employee_code: e.employee_code, full_name: isAr ? e.name_ar : e.name_en }));
+                            }}>
+                              <Check className={cn("mr-2 h-4 w-4", editForm.employee_code === e.employee_code ? "opacity-100" : "opacity-0")} />
+                              {e.employee_code} — {isAr ? e.name_ar : e.name_en}
+                            </CommandItem>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
             </div>
@@ -746,19 +761,32 @@ const Users = () => {
               {form.role === 'employee' && (
                 <div>
                   <Label>{isAr ? 'اختر الموظف' : 'Select Employee'} *</Label>
-                  <Select value={form.employee_code} onValueChange={v => {
-                    const emp = employees.find(e => e.employee_code === v);
-                    setForm(f => ({
-                      ...f,
-                      employee_code: v,
-                      full_name: emp ? (isAr ? emp.name_ar : emp.name_en) : f.full_name,
-                    }));
-                  }}>
-                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الموظف' : 'Select employee'} /></SelectTrigger>
-                    <SelectContent>
-                      {employees.map(e => (<SelectItem key={e.employee_code} value={e.employee_code}>{e.employee_code} — {isAr ? e.name_ar : e.name_en}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="w-full justify-between">
+                        {form.employee_code
+                          ? (() => { const emp = employees.find(e => e.employee_code === form.employee_code); return emp ? `${emp.employee_code} — ${isAr ? emp.name_ar : emp.name_en}` : form.employee_code; })()
+                          : (isAr ? 'اختر الموظف' : 'Select employee')}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[350px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder={isAr ? 'ابحث عن موظف...' : 'Search employee...'} />
+                        <CommandList className="max-h-[200px]">
+                          <CommandEmpty>{isAr ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
+                          {employees.map(e => (
+                            <CommandItem key={e.employee_code} value={`${e.employee_code} ${e.name_ar} ${e.name_en}`} onSelect={() => {
+                              setForm(f => ({ ...f, employee_code: e.employee_code, full_name: isAr ? e.name_ar : e.name_en }));
+                            }}>
+                              <Check className={cn("mr-2 h-4 w-4", form.employee_code === e.employee_code ? "opacity-100" : "opacity-0")} />
+                              {e.employee_code} — {isAr ? e.name_ar : e.name_en}
+                            </CommandItem>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
             </div>
