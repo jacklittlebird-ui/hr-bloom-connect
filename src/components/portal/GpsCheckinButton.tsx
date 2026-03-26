@@ -51,6 +51,7 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         return;
       }
 
+      const deviceMeta = getDeviceMeta();
       const result = await performCheckin({
         eventType,
         accessToken: session.access_token,
@@ -59,6 +60,7 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         gpsLat: pos.coords.latitude,
         gpsLng: pos.coords.longitude,
         gpsAccuracy: pos.coords.accuracy,
+        deviceMeta,
       });
 
       if (!result.ok) {
