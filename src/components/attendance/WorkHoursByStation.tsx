@@ -81,17 +81,42 @@ export const WorkHoursByStation = () => {
       const lastDay = new Date(endYear, endMonth, 0).getDate();
       const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, '0')}`;
 
-      const { data, error } = await supabase
-        .from('attendance_records')
-        .select(`
-          id, employee_id, work_hours, work_minutes,
-          employees!attendance_records_employee_id_fkey(employee_code, name_ar, name_en, station_id, department_id, stations(id, name_ar, name_en))
-        `)
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .not('check_in', 'is', null);
+      // Fetch all records with pagination to avoid 1000 row limit
+      let allData: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
 
-      if (!error && data) {
+      while (hasMore) {
+        const { data: page, error } = await supabase
+          .from('attendance_records')
+          .select(`
+            id, employee_id, work_hours, work_minutes,
+            employees!attendance_records_employee_id_fkey(employee_code, name_ar, name_en, station_id, department_id, stations(id, name_ar, name_en))
+          `)
+          .gte('date', startDate)
+          .lte('date', endDate)
+          .not('check_in', 'is', null)
+          .range(from, from + pageSize - 1);
+
+        if (error) {
+          console.error('Error fetching work hours:', error);
+          hasMore = false;
+          break;
+        }
+
+        if (page && page.length > 0) {
+          allData = allData.concat(page);
+          from += pageSize;
+          if (page.length < pageSize) hasMore = false;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      const data = allData;
+
+      if (data.length > 0) {
         const empMap: Record<string, EmployeeHours> = {};
 
         data.forEach((r: any) => {
