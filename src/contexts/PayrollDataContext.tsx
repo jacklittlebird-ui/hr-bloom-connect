@@ -167,7 +167,7 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const periods = Array.from(new Set(entries.map(entry => `${entry.year}-${entry.month}`)));
 
     const [loanRows, advanceRows, mobileBillRows] = await Promise.all([
-      fetchAllBatches<{ employee_id: string; monthly_installment: number | null }>((from, to) => {
+      fetchAllBatches<{ employee_id: string; monthly_installment: number | null }>(async (from, to) => {
         let query = supabase
           .from('loans')
           .select('employee_id, monthly_installment')
@@ -178,10 +178,10 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
           query = query.eq('employee_id', scopedEmployeeId);
         }
 
-        return query;
+        return await query;
       }),
       periods.length
-        ? fetchAllBatches<{ employee_id: string; amount: number | null; deduction_month: string }>((from, to) => {
+        ? fetchAllBatches<{ employee_id: string; amount: number | null; deduction_month: string }>(async (from, to) => {
             let query = supabase
               .from('advances')
               .select('employee_id, amount, deduction_month')
@@ -193,11 +193,11 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
               query = query.eq('employee_id', scopedEmployeeId);
             }
 
-            return query;
+            return await query;
           })
         : Promise.resolve([]),
       periods.length
-        ? fetchAllBatches<{ employee_id: string; amount: number | null; deduction_month: string }>((from, to) => {
+        ? fetchAllBatches<{ employee_id: string; amount: number | null; deduction_month: string }>(async (from, to) => {
             let query = supabase
               .from('mobile_bills')
               .select('employee_id, amount, deduction_month')
@@ -208,7 +208,7 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
               query = query.eq('employee_id', scopedEmployeeId);
             }
 
-            return query;
+            return await query;
           })
         : Promise.resolve([]),
     ]);
@@ -255,14 +255,14 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     if (isEmployee) return;
 
     const [employees, departments, stations] = await Promise.all([
-      fetchAllBatches<any>((from, to) =>
-        supabase.from('employees').select('id, employee_code, name_ar, name_en, department_id, station_id').order('employee_code').range(from, to)
+      fetchAllBatches<any>(async (from, to) =>
+        await supabase.from('employees').select('id, employee_code, name_ar, name_en, department_id, station_id').order('employee_code').range(from, to)
       ),
-      fetchAllBatches<any>((from, to) =>
-        supabase.from('departments').select('id, name_ar').range(from, to)
+      fetchAllBatches<any>(async (from, to) =>
+        await supabase.from('departments').select('id, name_ar').range(from, to)
       ),
-      fetchAllBatches<any>((from, to) =>
-        supabase.from('stations').select('id, code').range(from, to)
+      fetchAllBatches<any>(async (from, to) =>
+        await supabase.from('stations').select('id, code').range(from, to)
       ),
     ]);
     trackQuery('payroll_empMap', employees.length + departments.length + stations.length);
@@ -295,8 +295,8 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const hydratedEntries = await hydratePayrollEntries(entries);
       setRawEntries(hydratedEntries);
     } else {
-      const data = await fetchAllBatches<any>((from, to) =>
-        supabase.from('payroll_entries').select(PAYROLL_COLS).order('year', { ascending: false }).order('month', { ascending: false }).range(from, to)
+      const data = await fetchAllBatches<any>(async (from, to) =>
+        await supabase.from('payroll_entries').select(PAYROLL_COLS).order('year', { ascending: false }).order('month', { ascending: false }).range(from, to)
       );
       trackQuery('payroll', data.length || 0);
       const entries = data.map(mapRowToEntry);
