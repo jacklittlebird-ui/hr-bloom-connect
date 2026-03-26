@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
 
   for (let i = 0; i < permissionInserts.length; i += 200) {
     const batch = permissionInserts.slice(i, i + 200);
-    const { error } = await supabase.from('permission_requests').insert(batch);
+    const { error } = await supabase.from('permission_requests').upsert(batch, { onConflict: 'employee_id,date,start_time,end_time', ignoreDuplicates: true });
     if (error) errors.push(`Permission batch ${i}: ${error.message}`);
     else permCount += batch.length;
   }
