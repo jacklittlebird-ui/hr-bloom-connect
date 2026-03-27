@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { CheckCircle, XCircle, Search, Calendar, Clock, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Search, Calendar, Clock, RefreshCw, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Employee {
