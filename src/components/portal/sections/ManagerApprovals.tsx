@@ -59,6 +59,7 @@ export const ManagerApprovals = ({ stationEmployees }: ManagerApprovalsProps) =>
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [permissionRequests, setPermissionRequests] = useState<any[]>([]);
   const [overtimeRequests, setOvertimeRequests] = useState<any[]>([]);
+  const [missionRequests, setMissionRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [search, setSearch] = useState('');
