@@ -45,6 +45,12 @@ const overtimeTypeLabels: Record<string, { ar: string; en: string }> = {
   holiday: { ar: 'عمل في إجازة', en: 'Holiday Work' },
 };
 
+const missionTypeLabels: Record<string, { ar: string; en: string }> = {
+  morning: { ar: 'صباحية', en: 'Morning' },
+  evening: { ar: 'مسائية', en: 'Evening' },
+  full_day: { ar: 'يوم كامل', en: 'Full Day' },
+};
+
 export const ManagerApprovals = ({ stationEmployees }: ManagerApprovalsProps) => {
   const { language, isRTL } = useLanguage();
   const t = (ar: string, en: string) => language === 'ar' ? ar : en;
