@@ -200,12 +200,6 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         : Promise.resolve([]),
     ]);
 
-    const loanMap = new Map<string, number>();
-    loanRows.forEach((row) => {
-      if (!employeeIds.has(row.employee_id)) return;
-      loanMap.set(row.employee_id, (loanMap.get(row.employee_id) || 0) + (row.monthly_installment || 0));
-    });
-
     const advanceMap = new Map<string, number>();
     advanceRows.forEach((row) => {
       if (!employeeIds.has(row.employee_id)) return;
