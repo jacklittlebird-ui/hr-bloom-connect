@@ -56,12 +56,14 @@ export const PayrollProcessing = () => {
 
   // Fetch active loans, approved advances, and mobile bills from DB
   const fetchLoansAndAdvances = useCallback(async () => {
-    const [loansRes, advancesRes, billsRes] = await Promise.all([
+    const [loansRes, installmentsRes, advancesRes, billsRes] = await Promise.all([
       supabase.from('loans').select('id, employee_id, monthly_installment, installments_count, paid_count, remaining').eq('status', 'active'),
+      supabase.from('loan_installments').select('loan_id, employee_id, amount, due_date, status').eq('status', 'pending'),
       supabase.from('advances').select('id, employee_id, amount, deduction_month, status').in('status', ['approved', 'deducted']),
       supabase.from('mobile_bills').select('employee_id, amount, deduction_month'),
     ]);
     if (loansRes.data) setDbLoans(loansRes.data);
+    if (installmentsRes.data) setDbInstallments(installmentsRes.data);
     if (advancesRes.data) setDbAdvances(advancesRes.data);
     if (billsRes.data) setDbMobileBills(billsRes.data);
   }, []);
