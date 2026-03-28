@@ -45,6 +45,7 @@ export const PayrollProcessing = () => {
 
   // DB-fetched loans & advances
   const [dbLoans, setDbLoans] = useState<{ id: string; employee_id: string; monthly_installment: number; installments_count: number; paid_count: number; remaining: number }[]>([]);
+  const [dbInstallments, setDbInstallments] = useState<{ loan_id: string; employee_id: string; amount: number; due_date: string; status: string }[]>([]);
   const [dbAdvances, setDbAdvances] = useState<{ id: string; employee_id: string; amount: number; deduction_month: string; status: string }[]>([]);
   const [dbMobileBills, setDbMobileBills] = useState<{ employee_id: string; amount: number; deduction_month: string }[]>([]);
 
@@ -55,12 +56,14 @@ export const PayrollProcessing = () => {
 
   // Fetch active loans, approved advances, and mobile bills from DB
   const fetchLoansAndAdvances = useCallback(async () => {
-    const [loansRes, advancesRes, billsRes] = await Promise.all([
+    const [loansRes, installmentsRes, advancesRes, billsRes] = await Promise.all([
       supabase.from('loans').select('id, employee_id, monthly_installment, installments_count, paid_count, remaining').eq('status', 'active'),
+      supabase.from('loan_installments').select('loan_id, employee_id, amount, due_date, status').eq('status', 'pending'),
       supabase.from('advances').select('id, employee_id, amount, deduction_month, status').in('status', ['approved', 'deducted']),
       supabase.from('mobile_bills').select('employee_id, amount, deduction_month'),
     ]);
     if (loansRes.data) setDbLoans(loansRes.data);
+    if (installmentsRes.data) setDbInstallments(installmentsRes.data);
     if (advancesRes.data) setDbAdvances(advancesRes.data);
     if (billsRes.data) setDbMobileBills(billsRes.data);
   }, []);
@@ -123,8 +126,24 @@ export const PayrollProcessing = () => {
   }, [selectedMonth, selectedYear]);
 
   const getEmployeeMonthlyLoanPayment = useCallback((empId: string) => {
-    return dbLoans.filter(l => l.employee_id === empId).reduce((s, l) => s + (l.monthly_installment || 0), 0);
-  }, [dbLoans]);
+    // Use actual installment amounts from loan_installments for the selected period
+    // Find the next pending installment for each active loan of this employee
+    const empLoans = dbLoans.filter(l => l.employee_id === empId);
+    let total = 0;
+    for (const loan of empLoans) {
+      // Find the first pending installment for this loan (next to be paid)
+      const pendingInstallment = dbInstallments
+        .filter(i => i.loan_id === loan.id)
+        .sort((a, b) => a.due_date.localeCompare(b.due_date))[0];
+      if (pendingInstallment) {
+        total += pendingInstallment.amount;
+      } else {
+        // Fallback to monthly_installment if no pending installments found
+        total += loan.monthly_installment || 0;
+      }
+    }
+    return total;
+  }, [dbLoans, dbInstallments]);
 
   const getEmployeeAdvanceForMonth = useCallback((empId: string, month: string) => {
     return dbAdvances.filter(a => a.employee_id === empId && a.deduction_month === month).reduce((s, a) => s + a.amount, 0);
