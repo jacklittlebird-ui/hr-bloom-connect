@@ -126,8 +126,24 @@ export const PayrollProcessing = () => {
   }, [selectedMonth, selectedYear]);
 
   const getEmployeeMonthlyLoanPayment = useCallback((empId: string) => {
-    return dbLoans.filter(l => l.employee_id === empId).reduce((s, l) => s + (l.monthly_installment || 0), 0);
-  }, [dbLoans]);
+    // Use actual installment amounts from loan_installments for the selected period
+    // Find the next pending installment for each active loan of this employee
+    const empLoans = dbLoans.filter(l => l.employee_id === empId);
+    let total = 0;
+    for (const loan of empLoans) {
+      // Find the first pending installment for this loan (next to be paid)
+      const pendingInstallment = dbInstallments
+        .filter(i => i.loan_id === loan.id)
+        .sort((a, b) => a.due_date.localeCompare(b.due_date))[0];
+      if (pendingInstallment) {
+        total += pendingInstallment.amount;
+      } else {
+        // Fallback to monthly_installment if no pending installments found
+        total += loan.monthly_installment || 0;
+      }
+    }
+    return total;
+  }, [dbLoans, dbInstallments]);
 
   const getEmployeeAdvanceForMonth = useCallback((empId: string, month: string) => {
     return dbAdvances.filter(a => a.employee_id === empId && a.deduction_month === month).reduce((s, a) => s + a.amount, 0);
