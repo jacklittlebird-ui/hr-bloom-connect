@@ -172,10 +172,24 @@ export const PayrollProcessing = () => {
     return Math.round((bonusValue / 100) * baseGross);
   }, [bonusType, bonusValue, baseGross]);
 
+  const existingPayrollEntry = useMemo(
+    () => (selectedEmployee ? getPayrollEntry(selectedEmployee, selectedMonth, selectedYear) : undefined),
+    [selectedEmployee, selectedMonth, selectedYear, getPayrollEntry],
+  );
+
   const employeeInsurance = salaryRecord?.employeeInsurance || 0;
-  const loanPayment = useMemo(() => getEmployeeMonthlyLoanPayment(selectedEmployee), [selectedEmployee, getEmployeeMonthlyLoanPayment]);
-  const advanceAmount = useMemo(() => getEmployeeAdvanceForMonth(selectedEmployee, period), [selectedEmployee, period, getEmployeeAdvanceForMonth]);
-  const mobileBill = useMemo(() => getEmployeeMobileBill(selectedEmployee, period), [selectedEmployee, period, getEmployeeMobileBill]);
+  const loanPayment = useMemo(
+    () => existingPayrollEntry?.loanPayment ?? getEmployeeMonthlyLoanPayment(selectedEmployee),
+    [existingPayrollEntry, selectedEmployee, getEmployeeMonthlyLoanPayment],
+  );
+  const advanceAmount = useMemo(
+    () => existingPayrollEntry?.advanceAmount ?? getEmployeeAdvanceForMonth(selectedEmployee, period),
+    [existingPayrollEntry, selectedEmployee, period, getEmployeeAdvanceForMonth],
+  );
+  const mobileBill = useMemo(
+    () => existingPayrollEntry?.mobileBill ?? getEmployeeMobileBill(selectedEmployee, period),
+    [existingPayrollEntry, selectedEmployee, period, getEmployeeMobileBill],
+  );
 
   // Daily rate based on baseGross (excluding livingAllowance and overtimePay)
   const baseDailyRate = baseGross / 30;
@@ -247,9 +261,10 @@ export const PayrollProcessing = () => {
     const bt = empId === selectedEmployee ? bonusType : 'amount';
     const bv = empId === selectedEmployee ? bonusValue : 0;
     const ba = bt === 'amount' ? bv : Math.round((bv / 100) * bg);
-    const lp = getEmployeeMonthlyLoanPayment(empId);
-    const aa = getEmployeeAdvanceForMonth(empId, period);
-    const mb = getEmployeeMobileBill(empId, period);
+    const existing = getPayrollEntry(empId, selectedMonth, selectedYear);
+    const lp = existing?.loanPayment ?? getEmployeeMonthlyLoanPayment(empId);
+    const aa = existing?.advanceAmount ?? getEmployeeAdvanceForMonth(empId, period);
+    const mb = existing?.mobileBill ?? getEmployeeMobileBill(empId, period);
     const ld = empId === selectedEmployee ? normalizeQuarterInput(leaveDays) : 0;
     const leaveDailyRate = bg / 30;
     const lded = roundToNearestQuarter(leaveDailyRate * ld);
