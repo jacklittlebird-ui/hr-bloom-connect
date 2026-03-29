@@ -363,7 +363,7 @@ Deno.serve(async (req) => {
       })();
     } else {
       recordPromise = (async () => {
-        const { data: openRecord } = await supabaseAdmin
+        const { data: openRecord, error: findErr } = await supabaseAdmin
           .from("attendance_records")
           .select("id")
           .eq("employee_id", employeeId)
@@ -372,17 +372,25 @@ Deno.serve(async (req) => {
           .limit(1)
           .maybeSingle();
 
+        console.log("[gps-checkin] checkout lookup:", { employeeId, openRecord, findErr });
+
         if (!openRecord) {
           throw new Error("لا يوجد سجل حضور مفتوح / No open check-in found");
         }
 
         const isEarly = !isFlexible && now.getHours() < 17;
-        await supabaseAdmin.from("attendance_records")
-          .update({
-            check_out: now.toISOString(),
-            status: isEarly ? "early-leave" : undefined,
-          })
+        const updatePayload: Record<string, any> = { check_out: now.toISOString() };
+        if (isEarly) updatePayload.status = "early-leave";
+
+        const { error: updateErr } = await supabaseAdmin.from("attendance_records")
+          .update(updatePayload)
           .eq("id", openRecord.id);
+
+        if (updateErr) {
+          console.error("[gps-checkin] checkout update FAILED:", updateErr);
+          throw new Error("Failed to save checkout: " + updateErr.message);
+        }
+        console.log("[gps-checkin] checkout saved for record:", openRecord.id);
       })();
     }
 
