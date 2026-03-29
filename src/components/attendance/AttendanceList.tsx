@@ -193,7 +193,7 @@ export const AttendanceList = () => {
       setTotalCount(count ?? 0);
     }
     setLoading(false);
-  }, [selectedMonth, selectedYear, selectedDay, statusFilter, selectedStation, selectedDept, employeeStationMap, employeeDeptMap]);
+  }, [dateFrom, dateTo, statusFilter, selectedStation, selectedDept, employeeStationMap, employeeDeptMap]);
 
   // Re-fetch when filters or page change
   useEffect(() => {
