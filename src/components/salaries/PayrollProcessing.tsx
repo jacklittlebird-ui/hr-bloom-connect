@@ -158,10 +158,19 @@ export const PayrollProcessing = () => {
     return getSalaryRecord(selectedEmployee, selectedYear);
   }, [selectedEmployee, selectedYear, getSalaryRecord]);
 
+  const existingPayrollEntry = useMemo(
+    () => (selectedEmployee ? getPayrollEntry(selectedEmployee, selectedMonth, selectedYear) : undefined),
+    [selectedEmployee, selectedMonth, selectedYear, getPayrollEntry],
+  );
+
+  // When an existing payroll entry exists, use its stored base values to protect against salary record changes
   const baseGross = useMemo(() => {
+    if (existingPayrollEntry) {
+      return existingPayrollEntry.basicSalary + existingPayrollEntry.transportAllowance + existingPayrollEntry.incentives + existingPayrollEntry.stationAllowance + existingPayrollEntry.mobileAllowance;
+    }
     if (!salaryRecord) return 0;
     return calcGross(salaryRecord);
-  }, [salaryRecord]);
+  }, [existingPayrollEntry, salaryRecord]);
 
   // Gross includes base + livingAllowance (manual) + overtimePay
   const gross = baseGross + livingAllowance + overtimePay;
@@ -172,12 +181,8 @@ export const PayrollProcessing = () => {
     return Math.round((bonusValue / 100) * baseGross);
   }, [bonusType, bonusValue, baseGross]);
 
-  const existingPayrollEntry = useMemo(
-    () => (selectedEmployee ? getPayrollEntry(selectedEmployee, selectedMonth, selectedYear) : undefined),
-    [selectedEmployee, selectedMonth, selectedYear, getPayrollEntry],
-  );
-
-  const employeeInsurance = salaryRecord?.employeeInsurance || 0;
+  // Use stored insurance/deduction values from existing entry, fallback to current salary record
+  const employeeInsurance = existingPayrollEntry?.employeeInsurance ?? salaryRecord?.employeeInsurance ?? 0;
   const loanPayment = useMemo(
     () => existingPayrollEntry?.loanPayment ?? getEmployeeMonthlyLoanPayment(selectedEmployee),
     [existingPayrollEntry, selectedEmployee, getEmployeeMonthlyLoanPayment],
@@ -194,7 +199,7 @@ export const PayrollProcessing = () => {
   // Daily rate based on baseGross (excluding livingAllowance and overtimePay)
   const baseDailyRate = baseGross / 30;
   const leaveDeduction = roundToNearestQuarter(baseDailyRate * leaveDays);
-  const basicSalary = salaryRecord?.basicSalary || 0;
+  const basicSalary = existingPayrollEntry?.basicSalary ?? salaryRecord?.basicSalary ?? 0;
   const penaltyAmount = useMemo(() => {
     if (penaltyType === 'amount') return roundToNearestQuarter(penaltyValue);
     if (penaltyType === 'days') return roundToNearestQuarter((basicSalary / 30) * penaltyValue);
@@ -205,9 +210,9 @@ export const PayrollProcessing = () => {
   const grossWithBonus = gross + bonusAmount;
   const netSalary = grossWithBonus - totalDeductions;
 
-  const employerSocialIns = salaryRecord?.employerSocialInsurance || 0;
-  const healthIns = salaryRecord?.healthInsurance || 0;
-  const incomeTax = salaryRecord?.incomeTax || 0;
+  const employerSocialIns = existingPayrollEntry?.employerSocialInsurance ?? salaryRecord?.employerSocialInsurance ?? 0;
+  const healthIns = existingPayrollEntry?.healthInsurance ?? salaryRecord?.healthInsurance ?? 0;
+  const incomeTax = existingPayrollEntry?.incomeTax ?? salaryRecord?.incomeTax ?? 0;
 
   const { employees: allEmployees } = useEmployeeData();
   const activeEmployees = allEmployees.filter(e => e.status === 'active');
@@ -252,27 +257,40 @@ export const PayrollProcessing = () => {
   const buildPayrollEntry = (empId: string): ProcessedPayroll | null => {
     const sr = getSalaryRecord(empId, selectedYear);
     const emp = activeEmployees.find(e => e.id === empId);
-    if (!sr || !emp) return null;
-
-    const bg = calcGross(sr);
-    const la = empId === selectedEmployee ? livingAllowance : sr.livingAllowance;
-    const ot = empId === selectedEmployee ? overtimePay : 0;
-    const g = bg + la + ot;
-    const bt = empId === selectedEmployee ? bonusType : 'amount';
-    const bv = empId === selectedEmployee ? bonusValue : 0;
-    const ba = bt === 'amount' ? bv : Math.round((bv / 100) * bg);
+    if (!emp) return null;
     const existing = getPayrollEntry(empId, selectedMonth, selectedYear);
+    // If no salary record AND no existing entry, can't process
+    if (!sr && !existing) return null;
+
+    // Use existing entry base values if available (protects against mid-year salary changes)
+    const usedBasicSalary = existing?.basicSalary ?? sr!.basicSalary;
+    const usedTransport = existing?.transportAllowance ?? sr!.transportAllowance;
+    const usedIncentives = existing?.incentives ?? sr!.incentives;
+    const usedStationAllowance = existing?.stationAllowance ?? sr!.stationAllowance;
+    const usedMobileAllowance = existing?.mobileAllowance ?? sr!.mobileAllowance;
+    const usedEmployeeInsurance = existing?.employeeInsurance ?? sr!.employeeInsurance;
+    const usedEmployerSocialIns = existing?.employerSocialInsurance ?? sr!.employerSocialInsurance;
+    const usedHealthIns = existing?.healthInsurance ?? sr!.healthInsurance;
+    const usedIncomeTax = existing?.incomeTax ?? sr!.incomeTax;
+
+    const bg = usedBasicSalary + usedTransport + usedIncentives + usedStationAllowance + usedMobileAllowance;
+    const la = empId === selectedEmployee ? livingAllowance : (existing?.livingAllowance ?? sr?.livingAllowance ?? 0);
+    const ot = empId === selectedEmployee ? overtimePay : (existing?.overtimePay ?? 0);
+    const g = bg + la + ot;
+    const bt = empId === selectedEmployee ? bonusType : (existing?.bonusType ?? 'amount');
+    const bv = empId === selectedEmployee ? bonusValue : (existing?.bonusValue ?? 0);
+    const ba = bt === 'amount' ? bv : Math.round((bv / 100) * bg);
     const lp = existing?.loanPayment ?? getEmployeeMonthlyLoanPayment(empId);
     const aa = existing?.advanceAmount ?? getEmployeeAdvanceForMonth(empId, period);
     const mb = existing?.mobileBill ?? getEmployeeMobileBill(empId, period);
-    const ld = empId === selectedEmployee ? normalizeQuarterInput(leaveDays) : 0;
+    const ld = empId === selectedEmployee ? normalizeQuarterInput(leaveDays) : (existing?.leaveDays ?? 0);
     const leaveDailyRate = bg / 30;
     const lded = roundToNearestQuarter(leaveDailyRate * ld);
-    const pt = empId === selectedEmployee ? penaltyType : 'amount';
-    const pv = empId === selectedEmployee ? (pt === 'days' ? normalizeQuarterInput(penaltyValue) : penaltyValue) : 0;
-    const penaltyDailyRate = sr.basicSalary / 30;
-    const pa = pt === 'amount' ? roundToNearestQuarter(pv) : pt === 'days' ? roundToNearestQuarter(penaltyDailyRate * pv) : roundToNearestQuarter((pv / 100) * sr.basicSalary);
-    const td = sr.employeeInsurance + lp + aa + mb + lded + pa;
+    const pt = empId === selectedEmployee ? penaltyType : (existing?.penaltyType ?? 'amount');
+    const pv = empId === selectedEmployee ? (pt === 'days' ? normalizeQuarterInput(penaltyValue) : penaltyValue) : (existing?.penaltyValue ?? 0);
+    const penaltyDailyRate = usedBasicSalary / 30;
+    const pa = pt === 'amount' ? roundToNearestQuarter(pv) : pt === 'days' ? roundToNearestQuarter(penaltyDailyRate * pv) : roundToNearestQuarter((pv / 100) * usedBasicSalary);
+    const td = usedEmployeeInsurance + lp + aa + mb + lded + pa;
 
     return {
       employeeId: empId,
@@ -280,21 +298,21 @@ export const PayrollProcessing = () => {
       employeeName: emp.nameAr,
       employeeNameEn: emp.nameEn,
       department: emp.department,
-      stationLocation: emp.stationLocation || sr.stationLocation,
+      stationLocation: emp.stationLocation || (sr?.stationLocation ?? ''),
       month: selectedMonth,
       year: selectedYear,
-      basicSalary: sr.basicSalary,
-      transportAllowance: sr.transportAllowance,
-      incentives: sr.incentives,
-      stationAllowance: sr.stationAllowance,
-      mobileAllowance: sr.mobileAllowance,
+      basicSalary: usedBasicSalary,
+      transportAllowance: usedTransport,
+      incentives: usedIncentives,
+      stationAllowance: usedStationAllowance,
+      mobileAllowance: usedMobileAllowance,
       livingAllowance: la,
       overtimePay: ot,
       bonusType: bt,
       bonusValue: bv,
       bonusAmount: ba,
       gross: g,
-      employeeInsurance: sr.employeeInsurance,
+      employeeInsurance: usedEmployeeInsurance,
       loanPayment: lp,
       advanceAmount: aa,
       mobileBill: mb,
@@ -305,9 +323,9 @@ export const PayrollProcessing = () => {
       penaltyAmount: pa,
       totalDeductions: td,
       netSalary: g + ba - td,
-      employerSocialInsurance: sr.employerSocialInsurance,
-      healthInsurance: sr.healthInsurance,
-      incomeTax: sr.incomeTax,
+      employerSocialInsurance: usedEmployerSocialIns,
+      healthInsurance: usedHealthIns,
+      incomeTax: usedIncomeTax,
       processedAt: new Date().toISOString().split('T')[0],
     };
   };
