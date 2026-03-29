@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAttendanceData } from '@/contexts/AttendanceDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle, Timer } from 'lucide-react';
@@ -16,27 +16,29 @@ export const PortalAttendance = () => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const { records, getEmployeeMonthlyRecords, getMonthlyStats } = useAttendanceData();
-  const [month, setMonth] = useState(new Date().getMonth());
-  const [year, setYear] = useState(new Date().getFullYear());
 
-  const monthlyRecords = useMemo(() => getEmployeeMonthlyRecords(PORTAL_EMPLOYEE_ID, year, month), [year, month, getEmployeeMonthlyRecords, PORTAL_EMPLOYEE_ID]);
-  const stats = useMemo(() => getMonthlyStats(PORTAL_EMPLOYEE_ID, year, month), [year, month, getMonthlyStats, PORTAL_EMPLOYEE_ID]);
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const [dateFrom, setDateFrom] = useState(firstOfMonth);
+  const [dateTo, setDateTo] = useState(todayStr);
 
-  const months = ar
-    ? ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
-    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Get all records between dateFrom and dateTo
+  const filteredRecords = useMemo(() => {
+    return records.filter(r => r.employeeId === PORTAL_EMPLOYEE_ID && r.date >= dateFrom && r.date <= dateTo);
+  }, [records, PORTAL_EMPLOYEE_ID, dateFrom, dateTo]);
 
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  let working = 0;
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(year, month, d);
-    const dayOfWeek = date.getDay();
-    if (dayOfWeek === 5 || dayOfWeek === 6) continue;
-    const dateStr = date.toISOString().split('T')[0];
-    const rec = monthlyRecords.find(r => r.date === dateStr);
-    if (rec && rec.status === 'on-leave') continue;
-    working++;
-  }
+  const stats = useMemo(() => {
+    let present = 0, late = 0, absent = 0, totalMinutes = 0;
+    filteredRecords.forEach(r => {
+      if (r.status === 'present' || r.status === 'late') present++;
+      if (r.status === 'late') late++;
+      if (r.status === 'absent') absent++;
+      totalMinutes += (r.workHours * 60) + r.workMinutes;
+    });
+    return { present, late, absent, totalHours: Math.floor(totalMinutes / 60), totalMinutes: totalMinutes % 60 };
+  }, [filteredRecords]);
+
   const totalActualMinutes = stats.totalHours * 60 + stats.totalMinutes;
   const rate = totalActualMinutes > 0 ? ((totalActualMinutes / (192 * 60)) * 100).toFixed(1) : '0';
 
