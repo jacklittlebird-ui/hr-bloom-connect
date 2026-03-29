@@ -119,21 +119,8 @@ export const AttendanceList = () => {
   // Fetch records with server-side date filtering and pagination
   const fetchPage = useCallback(async (pageNum: number) => {
     setLoading(true);
-    const y = parseInt(selectedYear);
-    const m = parseInt(selectedMonth);
-    
-    let startDate: string;
-    let endDate: string;
-
-    if (selectedDay !== 'all') {
-      const day = parseInt(selectedDay);
-      startDate = `${y}-${selectedMonth}-${String(day).padStart(2, '0')}`;
-      endDate = startDate;
-    } else {
-      startDate = `${y}-${selectedMonth}-01`;
-      const lastDay = new Date(y, m, 0).getDate();
-      endDate = `${y}-${selectedMonth}-${String(lastDay).padStart(2, '0')}`;
-    }
+    const startDate = dateFrom;
+    const endDate = dateTo;
 
     let query = supabase
       .from('attendance_records')
