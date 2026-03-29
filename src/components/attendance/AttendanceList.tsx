@@ -269,10 +269,9 @@ export const AttendanceList = () => {
     status: `${getStatusText(r.status)} / ${getStatusTextEn(r.status)}`,
   }));
 
-  const monthLabel = months.find(m => m.value === selectedMonth);
   const reportTitle = {
-    ar: `سجل الحضور والانصراف - ${monthLabel?.ar} ${selectedYear}`,
-    en: `Attendance Records - ${monthLabel?.en} ${selectedYear}`,
+    ar: `سجل الحضور والانصراف - ${dateFrom} إلى ${dateTo}`,
+    en: `Attendance Records - ${dateFrom} to ${dateTo}`,
   };
 
   const onPrint = () => handlePrint(ar ? reportTitle.ar : reportTitle.en);
