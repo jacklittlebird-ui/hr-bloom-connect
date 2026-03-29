@@ -959,14 +959,14 @@ const StationManagerPortal = () => {
                       {stationDepartments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={attMonth.toString()} onValueChange={v => setAttMonth(+v)}>
-                    <SelectTrigger className="w-[120px] h-9 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>{attMonths.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <Select value={attYear.toString()} onValueChange={v => setAttYear(+v)}>
-                    <SelectTrigger className="w-[90px] h-9 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>{[2024,2025,2026].map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-muted-foreground whitespace-nowrap">{t('من', 'From')}</label>
+                    <Input type="date" value={attDateFrom} onChange={e => setAttDateFrom(e.target.value)} className="w-[150px] h-9 text-sm" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-muted-foreground whitespace-nowrap">{t('إلى', 'To')}</label>
+                    <Input type="date" value={attDateTo} onChange={e => setAttDateTo(e.target.value)} className="w-[150px] h-9 text-sm" />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
