@@ -283,7 +283,7 @@ export const TrainingPlan = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع السنوات' : 'All Years'}</SelectItem>
-                  {Array.from({ length: 26 }, (_, i) => 2025 + i).map(y => (
+                  {Array.from({ length: 7 }, (_, i) => new Date().getFullYear() - 1 + i).map(y => (
                     <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                   ))}
                 </SelectContent>
