@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const months = [
@@ -72,9 +72,10 @@ export const AttendanceList = () => {
   const { reportRef, handlePrint, exportBilingualPDF, exportBilingualCSV } = useReportExport();
 
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1).padStart(2, '0'));
-  const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
-  const [selectedDay, setSelectedDay] = useState('all');
+  const todayStr = now.toISOString().split('T')[0];
+  const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const [dateFrom, setDateFrom] = useState(firstOfMonth);
+  const [dateTo, setDateTo] = useState(todayStr);
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,14 +92,6 @@ export const AttendanceList = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const years = Array.from({ length: 3 }, (_, i) => String(now.getFullYear() - i));
-
-  const daysInMonth = useMemo(() => {
-    const y = parseInt(selectedYear);
-    const m = parseInt(selectedMonth);
-    const count = new Date(y, m, 0).getDate();
-    return Array.from({ length: count }, (_, i) => String(i + 1).padStart(2, '0'));
-  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     const fetchMeta = async () => {
@@ -126,21 +119,8 @@ export const AttendanceList = () => {
   // Fetch records with server-side date filtering and pagination
   const fetchPage = useCallback(async (pageNum: number) => {
     setLoading(true);
-    const y = parseInt(selectedYear);
-    const m = parseInt(selectedMonth);
-    
-    let startDate: string;
-    let endDate: string;
-
-    if (selectedDay !== 'all') {
-      const day = parseInt(selectedDay);
-      startDate = `${y}-${selectedMonth}-${String(day).padStart(2, '0')}`;
-      endDate = startDate;
-    } else {
-      startDate = `${y}-${selectedMonth}-01`;
-      const lastDay = new Date(y, m, 0).getDate();
-      endDate = `${y}-${selectedMonth}-${String(lastDay).padStart(2, '0')}`;
-    }
+    const startDate = dateFrom;
+    const endDate = dateTo;
 
     let query = supabase
       .from('attendance_records')
@@ -213,7 +193,7 @@ export const AttendanceList = () => {
       setTotalCount(count ?? 0);
     }
     setLoading(false);
-  }, [selectedMonth, selectedYear, selectedDay, statusFilter, selectedStation, selectedDept, employeeStationMap, employeeDeptMap]);
+  }, [dateFrom, dateTo, statusFilter, selectedStation, selectedDept, employeeStationMap, employeeDeptMap]);
 
   // Re-fetch when filters or page change
   useEffect(() => {
@@ -223,7 +203,7 @@ export const AttendanceList = () => {
   // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [selectedMonth, selectedYear, selectedDay, selectedStation, selectedDept, statusFilter]);
+  }, [dateFrom, dateTo, selectedStation, selectedDept, statusFilter]);
 
   // Client-side search filter (name search)
   const filteredRecords = useMemo(() => {
@@ -289,10 +269,9 @@ export const AttendanceList = () => {
     status: `${getStatusText(r.status)} / ${getStatusTextEn(r.status)}`,
   }));
 
-  const monthLabel = months.find(m => m.value === selectedMonth);
   const reportTitle = {
-    ar: `سجل الحضور والانصراف - ${monthLabel?.ar} ${selectedYear}`,
-    en: `Attendance Records - ${monthLabel?.en} ${selectedYear}`,
+    ar: `سجل الحضور والانصراف - ${dateFrom} إلى ${dateTo}`,
+    en: `Attendance Records - ${dateFrom} to ${dateTo}`,
   };
 
   const onPrint = () => handlePrint(ar ? reportTitle.ar : reportTitle.en);
@@ -362,34 +341,14 @@ export const AttendanceList = () => {
             </SelectContent>
           </Select>
 
-          <Select value={selectedMonth} onValueChange={(v) => { setSelectedMonth(v); setSelectedDay('all'); }}>
-            <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {months.map(m => (
-                <SelectItem key={m.value} value={m.value}>{ar ? m.ar : m.en}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedDay} onValueChange={setSelectedDay}>
-            <SelectTrigger className="w-[100px]">
-              <CalendarDays className="w-4 h-4 shrink-0 opacity-50" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{ar ? 'كل الأيام' : 'All Days'}</SelectItem>
-              {daysInMonth.map(d => (
-                <SelectItem key={d} value={d}>{d}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-muted-foreground whitespace-nowrap">{ar ? 'من' : 'From'}</label>
+            <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-[150px]" />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-muted-foreground whitespace-nowrap">{ar ? 'إلى' : 'To'}</label>
+            <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-[150px]" />
+          </div>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>

@@ -4,7 +4,7 @@ import { Employee } from '@/types/employee';
 import { cn, formatDate } from '@/lib/utils';
 import { Clock, LogIn, LogOut, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AttendanceRecordTabProps {
@@ -21,21 +21,6 @@ interface AttendanceLog {
   workMinutes: number;
 }
 
-const months = [
-  { value: '01', ar: 'يناير', en: 'January' },
-  { value: '02', ar: 'فبراير', en: 'February' },
-  { value: '03', ar: 'مارس', en: 'March' },
-  { value: '04', ar: 'أبريل', en: 'April' },
-  { value: '05', ar: 'مايو', en: 'May' },
-  { value: '06', ar: 'يونيو', en: 'June' },
-  { value: '07', ar: 'يوليو', en: 'July' },
-  { value: '08', ar: 'أغسطس', en: 'August' },
-  { value: '09', ar: 'سبتمبر', en: 'September' },
-  { value: '10', ar: 'أكتوبر', en: 'October' },
-  { value: '11', ar: 'نوفمبر', en: 'November' },
-  { value: '12', ar: 'ديسمبر', en: 'December' },
-];
-
 const formatTime = (ts: string | null): string | null => {
   if (!ts) return null;
   try {
@@ -48,19 +33,18 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1).padStart(2, '0'));
-  const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
+  const todayStr = now.toISOString().split('T')[0];
+  const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const [dateFrom, setDateFrom] = useState(firstOfMonth);
+  const [dateTo, setDateTo] = useState(todayStr);
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const years = Array.from({ length: 3 }, (_, i) => String(now.getFullYear() - i));
 
   useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
-      const startDate = `${selectedYear}-${selectedMonth}-01`;
-      const lastDay = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();
-      const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, '0')}`;
+      const startDate = dateFrom;
+      const endDate = dateTo;
 
       const { data, error } = await supabase
         .from('attendance_records')
@@ -88,7 +72,7 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
     };
 
     fetchLogs();
-  }, [employee.id, selectedMonth, selectedYear]);
+  }, [employee.id, dateFrom, dateTo]);
 
   const summary = useMemo(() => {
     const present = logs.filter(l => l.checkIn).length;
@@ -115,21 +99,15 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
       </div>
 
       {/* Filters */}
-      <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {months.map(m => (
-              <SelectItem key={m.value} value={m.value}>{ar ? m.ar : m.en}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      <div className={cn("flex items-center gap-3 flex-wrap", isRTL && "flex-row-reverse")}>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">{ar ? 'من' : 'From'}</label>
+          <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-[160px]" />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">{ar ? 'إلى' : 'To'}</label>
+          <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-[160px]" />
+        </div>
       </div>
 
       {/* Table */}

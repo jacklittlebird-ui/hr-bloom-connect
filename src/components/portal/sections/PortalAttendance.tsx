@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAttendanceData } from '@/contexts/AttendanceDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle, Timer } from 'lucide-react';
@@ -16,27 +16,29 @@ export const PortalAttendance = () => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const { records, getEmployeeMonthlyRecords, getMonthlyStats } = useAttendanceData();
-  const [month, setMonth] = useState(new Date().getMonth());
-  const [year, setYear] = useState(new Date().getFullYear());
 
-  const monthlyRecords = useMemo(() => getEmployeeMonthlyRecords(PORTAL_EMPLOYEE_ID, year, month), [year, month, getEmployeeMonthlyRecords, PORTAL_EMPLOYEE_ID]);
-  const stats = useMemo(() => getMonthlyStats(PORTAL_EMPLOYEE_ID, year, month), [year, month, getMonthlyStats, PORTAL_EMPLOYEE_ID]);
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  const [dateFrom, setDateFrom] = useState(firstOfMonth);
+  const [dateTo, setDateTo] = useState(todayStr);
 
-  const months = ar
-    ? ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
-    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Get all records between dateFrom and dateTo
+  const filteredRecords = useMemo(() => {
+    return records.filter(r => r.employeeId === PORTAL_EMPLOYEE_ID && r.date >= dateFrom && r.date <= dateTo);
+  }, [records, PORTAL_EMPLOYEE_ID, dateFrom, dateTo]);
 
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  let working = 0;
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(year, month, d);
-    const dayOfWeek = date.getDay();
-    if (dayOfWeek === 5 || dayOfWeek === 6) continue;
-    const dateStr = date.toISOString().split('T')[0];
-    const rec = monthlyRecords.find(r => r.date === dateStr);
-    if (rec && rec.status === 'on-leave') continue;
-    working++;
-  }
+  const stats = useMemo(() => {
+    let present = 0, late = 0, absent = 0, totalMinutes = 0;
+    filteredRecords.forEach(r => {
+      if (r.status === 'present' || r.status === 'late') present++;
+      if (r.status === 'late') late++;
+      if (r.status === 'absent') absent++;
+      totalMinutes += (r.workHours * 60) + r.workMinutes;
+    });
+    return { present, late, absent, totalHours: Math.floor(totalMinutes / 60), totalMinutes: totalMinutes % 60 };
+  }, [filteredRecords]);
+
   const totalActualMinutes = stats.totalHours * 60 + stats.totalMinutes;
   const rate = totalActualMinutes > 0 ? ((totalActualMinutes / (192 * 60)) * 100).toFixed(1) : '0';
 
@@ -58,9 +60,8 @@ export const PortalAttendance = () => {
     <div className="space-y-6">
       <h1 className="text-xl md:text-2xl font-bold">{ar ? 'الحضور والانصراف' : 'Attendance'}</h1>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {[
-          { l: { ar: 'أيام العمل', en: 'Working' }, v: working, icon: Calendar, gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
           { l: { ar: 'حضور', en: 'Present' }, v: stats.present, icon: CheckCircle, gradient: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
           { l: { ar: 'تأخير', en: 'Late' }, v: stats.late, icon: AlertTriangle, gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50 dark:bg-amber-950/40' },
           { l: { ar: 'غياب', en: 'Absent' }, v: stats.absent, icon: XCircle, gradient: 'from-red-500 to-rose-500', bg: 'bg-red-50 dark:bg-red-950/40' },
@@ -85,15 +86,15 @@ export const PortalAttendance = () => {
               <Calendar className="w-4 h-4 md:w-5 md:h-5" />
               {ar ? 'سجل الحضور الشهري' : 'Monthly Record'}
             </CardTitle>
-            <div className="flex gap-2">
-              <Select value={month.toString()} onValueChange={v => setMonth(+v)}>
-                <SelectTrigger className="w-[100px] md:w-[120px] h-8 text-xs md:text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>{months.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}</SelectContent>
-              </Select>
-              <Select value={year.toString()} onValueChange={v => setYear(+v)}>
-                <SelectTrigger className="w-[80px] md:w-[90px] h-8 text-xs md:text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>{[2024,2025,2026].map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
-              </Select>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex items-center gap-2">
+                <label className="text-xs md:text-sm text-muted-foreground whitespace-nowrap">{ar ? 'من' : 'From'}</label>
+                <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-[140px] md:w-[160px] h-8 text-xs md:text-sm" />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs md:text-sm text-muted-foreground whitespace-nowrap">{ar ? 'إلى' : 'To'}</label>
+                <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-[140px] md:w-[160px] h-8 text-xs md:text-sm" />
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -114,7 +115,7 @@ export const PortalAttendance = () => {
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {monthlyRecords.map(r => (
+                {filteredRecords.map(r => (
                   <TableRow key={r.id}>
                     <TableCell>{r.date}</TableCell>
                     <TableCell>{format(new Date(r.date), 'EEEE', { locale: ar ? arLocale : enUS })}</TableCell>
@@ -124,7 +125,7 @@ export const PortalAttendance = () => {
                     <TableCell>{statusBadge(r.status)}</TableCell>
                   </TableRow>
                 ))}
-                {monthlyRecords.length === 0 && (
+                {filteredRecords.length === 0 && (
                   <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد سجلات' : 'No records'}</TableCell></TableRow>
                 )}
               </TableBody>
