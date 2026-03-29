@@ -181,34 +181,30 @@ const StationManagerPortal = () => {
   }, [stationEmployees, todayPresentCount]);
 
   // === Attendance tab state ===
-  const [attMonth, setAttMonth] = useState(new Date().getMonth());
-  const [attYear, setAttYear] = useState(new Date().getFullYear());
+  const nowAtt = new Date();
+  const attFirstOfMonth = `${nowAtt.getFullYear()}-${String(nowAtt.getMonth() + 1).padStart(2, '0')}-01`;
+  const attTodayStr = nowAtt.toISOString().split('T')[0];
+  const [attDateFrom, setAttDateFrom] = useState(attFirstOfMonth);
+  const [attDateTo, setAttDateTo] = useState(attTodayStr);
   const [attSearch, setAttSearch] = useState('');
   const [attDeptFilter, setAttDeptFilter] = useState('all');
   const [attRecords, setAttRecords] = useState<any[]>([]);
   const [attLoading, setAttLoading] = useState(false);
 
-  const attMonths = ar
-    ? ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
-    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
   const fetchAttendance = useCallback(async () => {
     if (stationEmployees.length === 0) { setAttRecords([]); return; }
     setAttLoading(true);
-    const startDate = `${attYear}-${String(attMonth + 1).padStart(2, '0')}-01`;
-    const endDay = new Date(attYear, attMonth + 1, 0).getDate();
-    const endDate = `${attYear}-${String(attMonth + 1).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
     const empIds = stationEmployees.map(e => e.id);
     const { data } = await supabase
       .from('attendance_records')
       .select('*')
       .in('employee_id', empIds)
-      .gte('date', startDate)
-      .lte('date', endDate)
+      .gte('date', attDateFrom)
+      .lte('date', attDateTo)
       .order('date', { ascending: false });
     setAttRecords(data || []);
     setAttLoading(false);
-  }, [stationEmployees, attMonth, attYear]);
+  }, [stationEmployees, attDateFrom, attDateTo]);
 
   useEffect(() => { fetchAttendance(); }, [fetchAttendance]);
 
@@ -963,14 +959,14 @@ const StationManagerPortal = () => {
                       {stationDepartments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={attMonth.toString()} onValueChange={v => setAttMonth(+v)}>
-                    <SelectTrigger className="w-[120px] h-9 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>{attMonths.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <Select value={attYear.toString()} onValueChange={v => setAttYear(+v)}>
-                    <SelectTrigger className="w-[90px] h-9 text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>{[2024,2025,2026].map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-muted-foreground whitespace-nowrap">{t('من', 'From')}</label>
+                    <Input type="date" value={attDateFrom} onChange={e => setAttDateFrom(e.target.value)} className="w-[150px] h-9 text-sm" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-muted-foreground whitespace-nowrap">{t('إلى', 'To')}</label>
+                    <Input type="date" value={attDateTo} onChange={e => setAttDateTo(e.target.value)} className="w-[150px] h-9 text-sm" />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
