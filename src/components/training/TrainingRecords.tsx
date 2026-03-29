@@ -30,6 +30,7 @@ interface Employee {
   jobTitleAr: string;
   jobTitleEn: string;
   avatar?: string;
+  nationalId?: string;
 }
 
 interface TrainingRecord {
