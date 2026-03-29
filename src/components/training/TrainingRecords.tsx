@@ -130,6 +130,7 @@ export const TrainingRecords = () => {
     jobTitleAr: (emp as any).jobTitleAr || '',
     jobTitleEn: (emp as any).jobTitleEn || '',
     avatar: emp.avatar || undefined,
+    nationalId: (emp as any).nationalId || '',
   })), [contextEmployees]);
 
   // Fetch training records from DB when employee is selected
