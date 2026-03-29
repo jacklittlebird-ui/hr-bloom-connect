@@ -21,6 +21,7 @@ const TrainingPortal = () => {
   const { logout, user } = useAuth();
   const ar = language === 'ar';
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState('records');
 
   return (
     <div dir="rtl" className="min-h-screen bg-background font-arabic">
@@ -62,7 +63,7 @@ const TrainingPortal = () => {
       <main className="p-4 md:p-6 max-w-[1400px] mx-auto">
         <PortalWelcomeBanner />
         <TrainingStatsCards />
-        <Tabs defaultValue="records" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="flex w-full overflow-x-auto h-auto gap-1 justify-start" dir="rtl">
             <TabsTrigger value="records" className="gap-1.5 text-xs md:text-sm">
               <BookOpen className="w-4 h-4" />
