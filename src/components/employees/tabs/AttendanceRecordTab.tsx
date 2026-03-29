@@ -58,9 +58,8 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
   useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
-      const startDate = `${selectedYear}-${selectedMonth}-01`;
-      const lastDay = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();
-      const endDate = `${selectedYear}-${selectedMonth}-${String(lastDay).padStart(2, '0')}`;
+      const startDate = dateFrom;
+      const endDate = dateTo;
 
       const { data, error } = await supabase
         .from('attendance_records')
