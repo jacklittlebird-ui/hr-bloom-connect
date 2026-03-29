@@ -75,6 +75,8 @@ const jobFunctionLabels: Record<string, { en: string; ar: string }> = {
   'TR': { en: 'Trainer', ar: 'مدرب' },
 };
 
+const STORAGE_KEY = 'training-records-ui-state';
+
 export const TrainingRecords = () => {
   const { t, language, isRTL } = useLanguage();
   const ar = language === 'ar';
@@ -83,7 +85,7 @@ export const TrainingRecords = () => {
   const [searchName, setSearchName] = useState('');
   const [searchDept, setSearchDept] = useState('');
   const [searchStation, setSearchStation] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [isAddRecordOpen, setIsAddRecordOpen] = useState(false);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
@@ -100,7 +102,6 @@ export const TrainingRecords = () => {
     const fetchCourses = async () => {
       const { data } = await supabase.from('training_courses').select('id, name_en, name_ar, provider, validity_years').eq('is_active', true);
       setCourseOptions((data || []).map((c: any) => ({ id: c.id, nameEn: c.name_en, nameAr: c.name_ar, validityYears: c.validity_years || 1 })));
-      // Extract unique providers
       const providers = [...new Set((data || []).map((c: any) => c.provider).filter(Boolean))] as string[];
       setProviderOptions(providers);
     };
@@ -132,6 +133,32 @@ export const TrainingRecords = () => {
     avatar: emp.avatar || undefined,
     nationalId: (emp as any).nationalId || '',
   })), [contextEmployees]);
+
+  const selectedEmployee = useMemo(
+    () => trainingEmployees.find((emp) => emp.id === selectedEmployeeId) ?? null,
+    [trainingEmployees, selectedEmployeeId]
+  );
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      setSearchName(parsed.searchName ?? '');
+      setSearchDept(parsed.searchDept ?? '');
+      setSearchStation(parsed.searchStation ?? '');
+      setSelectedEmployeeId(parsed.selectedEmployeeId ?? null);
+    } catch {
+      // ignore invalid local state
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ searchName, searchDept, searchStation, selectedEmployeeId })
+    );
+  }, [searchName, searchDept, searchStation, selectedEmployeeId]);
 
   // Fetch training records from DB when employee is selected
   useEffect(() => {
