@@ -345,7 +345,7 @@ Deno.serve(async (req) => {
           is_late: isLate,
         });
       } else if (event_type === "check_out") {
-        const { data: openRecord } = await admin
+        const { data: openRecord, error: findErr } = await admin
           .from("attendance_records")
           .select("id, date")
           .eq("employee_id", empId)
@@ -354,15 +354,28 @@ Deno.serve(async (req) => {
           .limit(1)
           .maybeSingle();
 
+        console.log("[submit-scan] checkout lookup:", { empId, openRecord, findErr });
+
         if (openRecord) {
           const isEarly = !isFlexible && localHour < 17;
-          await admin
+          const updatePayload: Record<string, any> = { check_out: nowIso };
+          if (isEarly) updatePayload.status = "early-leave";
+
+          const { error: updateErr } = await admin
             .from("attendance_records")
-            .update({
-              check_out: nowIso,
-              ...(isEarly ? { status: "early-leave" } : {}),
-            })
+            .update(updatePayload)
             .eq("id", openRecord.id);
+
+          if (updateErr) {
+            console.error("[submit-scan] checkout update FAILED:", updateErr);
+            return new Response(JSON.stringify({ error: "Failed to save checkout: " + updateErr.message }), {
+              status: 500,
+              headers: { ...corsHeaders, "content-type": "application/json" },
+            });
+          }
+          console.log("[submit-scan] checkout saved for record:", openRecord.id);
+        } else {
+          console.warn("[submit-scan] No open record found for checkout, empId:", empId);
         }
       }
     }
