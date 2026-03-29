@@ -114,21 +114,15 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
       </div>
 
       {/* Filters */}
-      <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {months.map(m => (
-              <SelectItem key={m.value} value={m.value}>{ar ? m.ar : m.en}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={selectedYear} onValueChange={setSelectedYear}>
-          <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      <div className={cn("flex items-center gap-3 flex-wrap", isRTL && "flex-row-reverse")}>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">{ar ? 'من' : 'From'}</label>
+          <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-[160px]" />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-muted-foreground whitespace-nowrap">{ar ? 'إلى' : 'To'}</label>
+          <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-[160px]" />
+        </div>
       </div>
 
       {/* Table */}
