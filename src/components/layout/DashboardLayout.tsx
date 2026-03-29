@@ -1,9 +1,10 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useRef } from 'react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -15,6 +16,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const mainRef = useRef<HTMLElement>(null);
+  useScrollRestoration(mainRef);
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"} className={cn(
@@ -36,7 +39,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
       )}
-      <main className={cn(
+      <main ref={mainRef} className={cn(
         "flex-1 min-h-0 min-w-0 max-w-full pt-16 overflow-y-auto overflow-x-hidden transition-all duration-300",
         !isMobile && sidebarVisible && (sidebarCollapsed ? "ms-16" : "ms-64")
       )}
