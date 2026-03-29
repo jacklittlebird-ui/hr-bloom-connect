@@ -1,9 +1,10 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useRef } from 'react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 interface DashboardLayoutProps {
   children: ReactNode;
