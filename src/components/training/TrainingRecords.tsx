@@ -465,7 +465,10 @@ export const TrainingRecords = () => {
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">{t('training.records.title')}</h3>
-                  <Button onClick={() => setIsAddRecordOpen(true)}><Plus className="h-4 w-4 mr-2" />{t('training.records.add')}</Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setIsBulkAddOpen(true)}><Users className="h-4 w-4 mr-2" />{ar ? 'إضافة مجمعة' : 'Bulk Add'}</Button>
+                    <Button onClick={() => setIsAddRecordOpen(true)}><Plus className="h-4 w-4 mr-2" />{t('training.records.add')}</Button>
+                  </div>
                 </div>
                 <Table>
                   <TableHeader>
