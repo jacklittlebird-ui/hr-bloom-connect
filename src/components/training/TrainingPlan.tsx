@@ -48,7 +48,7 @@ export const TrainingPlan = () => {
   const [filterDept, setFilterDept] = useState('all');
   const [filterStation, setFilterStation] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
-  const [filterYear, setFilterYear] = useState('all');
+  const [filterYear, setFilterYear] = useState(String(new Date().getFullYear()));
   const [filterCourse, setFilterCourse] = useState('all');
   const [loading, setLoading] = useState(true);
 
