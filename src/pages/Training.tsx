@@ -47,31 +47,31 @@ const Training = () => {
             <TabsTrigger value="id-cards">{ar ? 'بطاقة الشركة' : 'Company Card'}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="records" className="mt-6">
+          <TabsContent value="records" forceMount className="mt-6 data-[state=inactive]:hidden">
             <TrainingRecords />
           </TabsContent>
 
-          <TabsContent value="trainers" className="mt-6">
+          <TabsContent value="trainers" forceMount className="mt-6 data-[state=inactive]:hidden">
             <Trainers />
           </TabsContent>
 
-          <TabsContent value="syllabus" className="mt-6">
+          <TabsContent value="syllabus" forceMount className="mt-6 data-[state=inactive]:hidden">
             <CoursesSyllabus />
           </TabsContent>
 
-          <TabsContent value="courses" className="mt-6">
+          <TabsContent value="courses" forceMount className="mt-6 data-[state=inactive]:hidden">
             <CoursesList />
           </TabsContent>
 
-          <TabsContent value="plan" className="mt-6">
+          <TabsContent value="plan" forceMount className="mt-6 data-[state=inactive]:hidden">
             <TrainingPlan />
           </TabsContent>
 
-          <TabsContent value="reports" className="mt-6">
+          <TabsContent value="reports" forceMount className="mt-6 data-[state=inactive]:hidden">
             <TrainingRecordsReport />
           </TabsContent>
 
-          <TabsContent value="id-cards" className="mt-6">
+          <TabsContent value="id-cards" forceMount className="mt-6 data-[state=inactive]:hidden">
             <EmployeeIdCards />
           </TabsContent>
         </Tabs>

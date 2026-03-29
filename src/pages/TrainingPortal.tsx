@@ -94,13 +94,13 @@ const TrainingPortal = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="records" className="mt-6"><TrainingRecords key={refreshKey} /></TabsContent>
-          <TabsContent value="trainers" className="mt-6"><Trainers key={refreshKey} /></TabsContent>
-          <TabsContent value="syllabus" className="mt-6"><CoursesSyllabus key={refreshKey} /></TabsContent>
-          <TabsContent value="courses" className="mt-6"><CoursesList key={refreshKey} /></TabsContent>
-          <TabsContent value="plan" className="mt-6"><TrainingPlan key={refreshKey} /></TabsContent>
-          <TabsContent value="reports" className="mt-6"><TrainingRecordsReport key={refreshKey} /></TabsContent>
-          <TabsContent value="id-cards" className="mt-6"><EmployeeIdCards key={refreshKey} /></TabsContent>
+          <TabsContent value="records" forceMount className="mt-6 data-[state=inactive]:hidden"><TrainingRecords key={refreshKey} /></TabsContent>
+          <TabsContent value="trainers" forceMount className="mt-6 data-[state=inactive]:hidden"><Trainers key={refreshKey} /></TabsContent>
+          <TabsContent value="syllabus" forceMount className="mt-6 data-[state=inactive]:hidden"><CoursesSyllabus key={refreshKey} /></TabsContent>
+          <TabsContent value="courses" forceMount className="mt-6 data-[state=inactive]:hidden"><CoursesList key={refreshKey} /></TabsContent>
+          <TabsContent value="plan" forceMount className="mt-6 data-[state=inactive]:hidden"><TrainingPlan key={refreshKey} /></TabsContent>
+          <TabsContent value="reports" forceMount className="mt-6 data-[state=inactive]:hidden"><TrainingRecordsReport key={refreshKey} /></TabsContent>
+          <TabsContent value="id-cards" forceMount className="mt-6 data-[state=inactive]:hidden"><EmployeeIdCards key={refreshKey} /></TabsContent>
         </Tabs>
       </main>
     </div>
