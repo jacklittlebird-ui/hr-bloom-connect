@@ -326,6 +326,16 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
               ))}
             </SelectContent>
           </Select>
+          <Select value={stationFilter} onValueChange={setStationFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder={ar ? 'المحطة' : 'Station'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{ar ? 'الكل' : 'All Stations'}</SelectItem>
+              {stations.map(s => (
+                <SelectItem key={s.id} value={s.id}>{ar ? s.name_ar : s.name_en}</SelectItem>
+              ))}
+            </SelectContent>
           <Badge variant="secondary" className="gap-1">
             <CreditCard className="w-3.5 h-3.5" />
             {filtered.length} {ar ? 'موظف' : 'employees'}
