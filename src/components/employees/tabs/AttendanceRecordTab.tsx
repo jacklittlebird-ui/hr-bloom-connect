@@ -87,7 +87,7 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
     };
 
     fetchLogs();
-  }, [employee.id, selectedMonth, selectedYear]);
+  }, [employee.id, dateFrom, dateTo]);
 
   const summary = useMemo(() => {
     const present = logs.filter(l => l.checkIn).length;
