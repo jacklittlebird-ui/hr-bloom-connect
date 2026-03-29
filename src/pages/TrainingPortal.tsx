@@ -17,7 +17,7 @@ import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, 
 import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 
 const TrainingPortal = () => {
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const { logout, user } = useAuth();
   const ar = language === 'ar';
   const [refreshKey, setRefreshKey] = useState(0);
