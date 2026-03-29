@@ -198,8 +198,11 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
     if (deptFilter !== 'all') {
       list = list.filter(e => e.department_id === deptFilter);
     }
+    if (stationFilter !== 'all') {
+      list = list.filter(e => e.station_id === stationFilter);
+    }
     setFiltered(list);
-  }, [search, deptFilter, employees]);
+  }, [search, deptFilter, stationFilter, employees]);
 
   const exportPdf = (emp: EmployeeForId) => {
     const printWindow = window.open('', '_blank');
