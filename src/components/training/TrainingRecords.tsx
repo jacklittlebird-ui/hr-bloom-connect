@@ -87,9 +87,16 @@ export const TrainingRecords = () => {
   const [searchStation, setSearchStation] = useState('');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [isAddRecordOpen, setIsAddRecordOpen] = useState(false);
+  const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
+  const [bulkSelectedEmployeeIds, setBulkSelectedEmployeeIds] = useState<string[]>([]);
+  const [bulkSearchName, setBulkSearchName] = useState('');
+  const [bulkSaving, setBulkSaving] = useState(false);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
   const [newRecord, setNewRecord] = useState({
+    courseId: '', startDate: '', endDate: '', result: 'pending' as 'passed' | 'failed' | 'pending', score: '', provider: '', location: '', hasCert: false, hasCr: false, hasSs: false, hasCb: false, plannedDate: '', cost: '',
+  });
+  const [bulkRecord, setBulkRecord] = useState({
     courseId: '', startDate: '', endDate: '', result: 'pending' as 'passed' | 'failed' | 'pending', score: '', provider: '', location: '', hasCert: false, hasCr: false, hasSs: false, hasCb: false, plannedDate: '', cost: '',
   });
   const [providerOptions, setProviderOptions] = useState<string[]>([]);
