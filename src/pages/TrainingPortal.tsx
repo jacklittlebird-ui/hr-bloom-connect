@@ -43,12 +43,12 @@ const TrainingPortal = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                const { setLanguage } = useLanguageRef.current;
-                setLanguage(langRef.current === 'ar' ? 'en' : 'ar');
-              }}
+              onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
               className="gap-1.5"
             >
+              <Globe className="w-4 h-4" />
+              <span className="text-xs">{ar ? 'EN' : 'عربي'}</span>
+            </Button>
               <Globe className="w-4 h-4" />
               <span className="text-xs">{ar ? 'EN' : 'عربي'}</span>
             </Button>
