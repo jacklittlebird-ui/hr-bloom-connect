@@ -138,7 +138,7 @@ const AttendanceKiosk = () => {
     return () => clearInterval(tokenRefresh);
   }, []);
 
-  // Fetch locations
+  // Fetch locations - only HQ (المركز الرئيسي)
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -146,8 +146,13 @@ const AttendanceKiosk = () => {
         .select("*")
         .eq("is_active", true);
       if (data && data.length > 0) {
-        setLocations(data);
-        setSelectedLocation(data[0].id);
+        // Filter for HQ locations only
+        const hqLocations = data.filter((loc: any) =>
+          loc.name_ar?.includes('المركز الرئيسي') || loc.name_en?.toLowerCase().includes('hq')
+        );
+        const finalLocations = hqLocations.length > 0 ? hqLocations : data;
+        setLocations(finalLocations);
+        setSelectedLocation(finalLocations[0].id);
       }
     })();
   }, []);
