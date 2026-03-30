@@ -1922,6 +1922,42 @@ export type Database = {
         }
         Relationships: []
       }
+      qr_location_stations: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string
+          station_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id: string
+          station_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string
+          station_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_location_stations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "qr_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_location_stations_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qr_locations: {
         Row: {
           created_at: string
