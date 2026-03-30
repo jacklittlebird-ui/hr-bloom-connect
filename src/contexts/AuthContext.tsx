@@ -228,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.user) {
       try {
         setSession(data.session);
-        const profile = await resolveAuthenticatedUser(data.user);
+        const profile = await resolveAuthenticatedUser(data.user, true);
         if (!profile) {
           return { success: false, error: 'لم يتم العثور على صلاحيات لهذا الحساب' };
         }
