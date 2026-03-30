@@ -65,7 +65,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (forceRefresh = false) => {
+    if (forceRefresh) {
+      invalidateCache('notifications');
+    }
     const result = await debouncedFetch('notifications', async () => {
       const { data } = await supabase
         .from('notifications')
