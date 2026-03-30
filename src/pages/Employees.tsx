@@ -386,7 +386,7 @@ const Employees = () => {
     hasPledge: boolLabel(e.hasPledge),
     hasContract: boolLabel(e.hasContract),
     hasReceipt: boolLabel(e.hasReceipt),
-    status: e.status === 'active' ? (ar ? 'نشط' : 'Active') : e.status === 'inactive' ? (ar ? 'غير نشط' : 'Inactive') : (ar ? 'موقوف' : 'Suspended'),
+    status: (() => { const m: Record<string, string> = { active: ar ? 'نشط' : 'Active', inactive: ar ? 'غير نشط' : 'Inactive', suspended: ar ? 'موقوف' : 'Suspended', external_stations: ar ? 'محطات خارجية' : 'External Stations', stopped: ar ? 'موقوف' : 'Stopped', absent: ar ? 'منقطع' : 'Absent', pending_hire: ar ? 'تحت التعيين' : 'Pending Hire' }; return m[e.status] || e.status; })(),
     notes: e.notes || '-',
     attachments: e.attachments || '-',
   }));
