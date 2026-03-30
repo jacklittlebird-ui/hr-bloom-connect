@@ -44,6 +44,8 @@ export const EmployeeFilters = ({
   onSelectedStationsChange,
   selectedDepartments,
   onSelectedDepartmentsChange,
+  selectedStatuses,
+  onSelectedStatusesChange,
 }: EmployeeFiltersProps) => {
   const { t, isRTL, language } = useLanguage();
   const ar = language === 'ar';
