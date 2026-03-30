@@ -132,6 +132,14 @@ const Documents = () => {
             {isAr ? 'تجديدات العقود' : 'Contract Renewals'}
           </Button>
           <Button
+            variant={activeMainTab === 'nationalId' ? 'default' : 'outline'}
+            className="gap-2"
+            onClick={() => setActiveMainTab('nationalId')}
+          >
+            <CreditCard className="w-4 h-4" />
+            {isAr ? 'تجديد الرقم القومي' : 'National ID Renewal'}
+          </Button>
+          <Button
             variant={activeMainTab === 'documents' ? 'default' : 'outline'}
             className="gap-2"
             onClick={() => setActiveMainTab('documents')}
