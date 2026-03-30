@@ -229,6 +229,17 @@ const AttendanceAdmin = () => {
   const handleDeleteLocation = async (loc: any) => {
     if (!window.confirm(ar ? `حذف الموقع "${loc.name_ar}"؟` : `Delete location "${loc.name_en}"?`)) return;
 
+    // Clear foreign key references in attendance_events first
+    const { error: clearEventsError } = await supabase
+      .from("attendance_events")
+      .update({ location_id: null })
+      .eq("location_id", loc.id);
+
+    if (clearEventsError) {
+      toast.error(clearEventsError.message);
+      return;
+    }
+
     const { error: deleteLinksError } = await supabase.from("qr_location_stations").delete().eq("location_id", loc.id);
 
     if (deleteLinksError) {
