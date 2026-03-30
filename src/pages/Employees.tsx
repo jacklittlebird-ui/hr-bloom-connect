@@ -26,6 +26,7 @@ const Employees = () => {
   const [importing, setImporting] = useState(false);
   const [selectedStations, setSelectedStations] = useState<string[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
