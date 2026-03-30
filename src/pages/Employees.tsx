@@ -26,6 +26,7 @@ const Employees = () => {
   const [importing, setImporting] = useState(false);
   const [selectedStations, setSelectedStations] = useState<string[]>([]);
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
@@ -266,12 +267,13 @@ const Employees = () => {
       const matchesFilter = activeFilter === 'all' || (activeFilter === 'inactive' ? inactiveStatuses.includes(emp.status) : emp.status === activeFilter);
       const matchesStation = selectedStations.length === 0 || (emp.stationLocation && selectedStations.includes(emp.stationLocation));
       const matchesDept = selectedDepartments.length === 0 || (emp.departmentId && selectedDepartments.includes(emp.departmentId));
-      return matchesSearch && matchesFilter && matchesStation && matchesDept;
+      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(emp.status);
+      return matchesSearch && matchesFilter && matchesStation && matchesDept && matchesStatus;
     });
-  }, [employees, searchQuery, activeFilter, selectedStations, selectedDepartments]);
+  }, [employees, searchQuery, activeFilter, selectedStations, selectedDepartments, selectedStatuses]);
 
   // Reset to page 1 when filters change
-  useEffect(() => { setCurrentPage(1); }, [searchQuery, activeFilter, selectedStations, selectedDepartments]);
+  useEffect(() => { setCurrentPage(1); }, [searchQuery, activeFilter, selectedStations, selectedDepartments, selectedStatuses]);
 
   const boolLabel = (v?: boolean) => v ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No');
 
@@ -1055,6 +1057,8 @@ const Employees = () => {
           onSelectedStationsChange={setSelectedStations}
           selectedDepartments={selectedDepartments}
           onSelectedDepartmentsChange={setSelectedDepartments}
+          selectedStatuses={selectedStatuses}
+          onSelectedStatusesChange={setSelectedStatuses}
         />
         <div ref={reportRef}>
           <EmployeeTable

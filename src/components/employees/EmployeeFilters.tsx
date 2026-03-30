@@ -1,7 +1,7 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Users, UserCheck, UserX, UserMinus, X, Building2, MapPin } from 'lucide-react';
+import { Search, Users, UserCheck, UserX, UserMinus, X, Building2, MapPin, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,8 @@ interface EmployeeFiltersProps {
   onSelectedStationsChange: (values: string[]) => void;
   selectedDepartments: string[];
   onSelectedDepartmentsChange: (values: string[]) => void;
+  selectedStatuses: string[];
+  onSelectedStatusesChange: (values: string[]) => void;
 }
 
 export const EmployeeFilters = ({
@@ -42,9 +44,20 @@ export const EmployeeFilters = ({
   onSelectedStationsChange,
   selectedDepartments,
   onSelectedDepartmentsChange,
+  selectedStatuses,
+  onSelectedStatusesChange,
 }: EmployeeFiltersProps) => {
   const { t, isRTL, language } = useLanguage();
   const ar = language === 'ar';
+
+  const statusOptions: FilterOption[] = [
+    { value: 'active', labelAr: 'نشط', labelEn: 'Active' },
+    { value: 'inactive', labelAr: 'غير نشط', labelEn: 'Inactive' },
+    { value: 'suspended', labelAr: 'موقوف', labelEn: 'Suspended' },
+    { value: 'external_stations', labelAr: 'محطات خارجية', labelEn: 'External Stations' },
+    { value: 'absent', labelAr: 'منقطع', labelEn: 'Absent' },
+    { value: 'pending_hire', labelAr: 'تحت التعيين', labelEn: 'Pending Hire' },
+  ];
 
   const filters: { key: FilterStatus; label: string; icon: typeof Users; count: number }[] = [
     { key: 'all', label: t('employees.filter.all'), icon: Users, count: counts.all },
@@ -160,13 +173,20 @@ export const EmployeeFilters = ({
           selected={selectedDepartments}
           onChange={onSelectedDepartmentsChange}
         />
+        <MultiSelectFilter
+          icon={Shield}
+          label={ar ? 'الحالة' : 'Status'}
+          options={statusOptions}
+          selected={selectedStatuses}
+          onChange={onSelectedStatusesChange}
+        />
         {/* Active filter chips */}
-        {(selectedStations.length > 0 || selectedDepartments.length > 0) && (
+        {(selectedStations.length > 0 || selectedDepartments.length > 0 || selectedStatuses.length > 0) && (
           <Button
             variant="ghost"
             size="sm"
             className="h-10 gap-1 text-destructive hover:text-destructive"
-            onClick={() => { onSelectedStationsChange([]); onSelectedDepartmentsChange([]); }}
+            onClick={() => { onSelectedStationsChange([]); onSelectedDepartmentsChange([]); onSelectedStatusesChange([]); }}
           >
             <X className="w-3.5 h-3.5" />
             {ar ? 'مسح الفلاتر' : 'Clear filters'}
