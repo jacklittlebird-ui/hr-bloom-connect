@@ -340,6 +340,14 @@ export const LocationManagement = () => {
                   <Users className="w-4 h-4 text-muted-foreground" />
                   <span>{Math.floor(Math.random() * 50) + 20} {t('attendance.locations.employees')}</span>
                 </div>
+                {location.stationIds && location.stationIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    <MapPin className="w-3.5 h-3.5 text-muted-foreground mt-0.5" />
+                    {getStationNames(location.stationIds).map(s => (
+                      <Badge key={s.id} variant="outline" className="text-[10px] px-1.5 py-0">{language === 'ar' ? s.name_ar : s.name_en}</Badge>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
