@@ -99,6 +99,23 @@ export const LocationManagement = () => {
     setEditingLocation(null);
   };
 
+  const toggleStationId = (stationId: string, target: 'new' | 'edit') => {
+    if (target === 'new') {
+      const current = newLocation.stationIds || [];
+      const updated = current.includes(stationId) ? current.filter(id => id !== stationId) : [...current, stationId];
+      setNewLocation({ ...newLocation, stationIds: updated });
+    } else if (editingLocation) {
+      const current = editingLocation.stationIds || [];
+      const updated = current.includes(stationId) ? current.filter(id => id !== stationId) : [...current, stationId];
+      setEditingLocation({ ...editingLocation, stationIds: updated });
+    }
+  };
+
+  const getStationNames = (ids?: string[]) => {
+    if (!ids?.length) return [];
+    return ids.map(id => dbStations.find(s => s.id === id)).filter(Boolean) as typeof dbStations;
+  };
+
   const hqLocations = locations.filter(l => l.type === 'headquarters');
   const airportLocations = locations.filter(l => l.type === 'airport');
 
