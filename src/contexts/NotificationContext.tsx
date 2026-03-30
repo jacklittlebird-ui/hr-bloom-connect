@@ -167,7 +167,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       markAllAsRead,
       clearAll,
       getFilteredNotifications,
-      refreshNotifications: fetchNotifications,
+      refreshNotifications: () => fetchNotifications(true),
     }}>
       {children}
     </NotificationContext.Provider>
