@@ -24,6 +24,7 @@ export const LocationManagement = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
+  const [dbStations, setDbStations] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
   const [newLocation, setNewLocation] = useState<Partial<Location>>({
     name: '',
     nameAr: '',
@@ -31,7 +32,16 @@ export const LocationManagement = () => {
     type: 'headquarters',
     timezone: 'Africa/Cairo',
     isActive: true,
+    stationIds: [],
   });
+
+  useEffect(() => {
+    const fetchStations = async () => {
+      const { data } = await supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).order('name_ar');
+      if (data) setDbStations(data);
+    };
+    fetchStations();
+  }, []);
 
   const getLocationIcon = (type: LocationType) => {
     return type === 'airport' ? <Plane className="w-5 h-5" /> : <Building2 className="w-5 h-5" />;
