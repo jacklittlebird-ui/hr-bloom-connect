@@ -315,19 +315,29 @@ const AttendanceAdmin = () => {
               </CardHeader>
               <CardContent>
                 {(() => {
+                  const locationNameMap = new Map(locations.map((loc: any) => [loc.id, ar ? loc.name_ar : loc.name_en]));
                   const filteredEvents = events.filter((ev) => {
                     if (!searchQuery) return true;
                     const q = searchQuery.toLowerCase();
                     const emp = (ev.employees as any);
+                    const locName = locationNameMap.get(ev.location_id) || "";
                     return (
                       emp?.name_ar?.toLowerCase().includes(q) ||
                       emp?.name_en?.toLowerCase().includes(q) ||
                       emp?.employee_code?.toLowerCase().includes(q) ||
-                      ev.device_id?.toLowerCase().includes(q)
+                      ev.device_id?.toLowerCase().includes(q) ||
+                      locName.toLowerCase().includes(q)
                     );
                   });
-                  const totalPages = Math.ceil(filteredEvents.length / ALERTS_PER_PAGE);
-                  const paged = filteredEvents.slice(eventsPage * ALERTS_PER_PAGE, (eventsPage + 1) * ALERTS_PER_PAGE);
+                  // Sort by location name then by scan_time desc
+                  const sortedEvents = [...filteredEvents].sort((a, b) => {
+                    const locA = locationNameMap.get(a.location_id) || "zzz";
+                    const locB = locationNameMap.get(b.location_id) || "zzz";
+                    if (locA !== locB) return locA.localeCompare(locB, ar ? "ar" : "en");
+                    return new Date(b.scan_time).getTime() - new Date(a.scan_time).getTime();
+                  });
+                  const totalPages = Math.ceil(sortedEvents.length / ALERTS_PER_PAGE);
+                  const paged = sortedEvents.slice(eventsPage * ALERTS_PER_PAGE, (eventsPage + 1) * ALERTS_PER_PAGE);
 
                   return (
                     <>
@@ -336,6 +346,7 @@ const AttendanceAdmin = () => {
                           <TableHeader>
                             <TableRow>
                               <TableHead>{ar ? "الموظف" : "Employee"}</TableHead>
+                              <TableHead>{ar ? "الموقع" : "Location"}</TableHead>
                               <TableHead>{ar ? "النوع" : "Type"}</TableHead>
                               <TableHead>{ar ? "الوقت" : "Time"}</TableHead>
                               <TableHead>{ar ? "الجهاز" : "Device"}</TableHead>
@@ -348,6 +359,16 @@ const AttendanceAdmin = () => {
                                   {ar
                                     ? (ev.employees as any)?.name_ar || ev.user_id?.substring(0, 8)
                                     : (ev.employees as any)?.name_en || ev.user_id?.substring(0, 8)}
+                                </TableCell>
+                                <TableCell>
+                                  {ev.location_id ? (
+                                    <Badge variant="outline" className="gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {locationNameMap.get(ev.location_id) || "-"}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-muted-foreground text-xs">-</span>
+                                  )}
                                 </TableCell>
                                 <TableCell>
                                   <Badge variant={ev.event_type === "check_in" ? "default" : "secondary"}>
