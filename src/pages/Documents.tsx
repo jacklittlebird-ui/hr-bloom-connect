@@ -141,6 +141,14 @@ const Documents = () => {
             {isAr ? 'تجديد الرقم القومي' : 'National ID Renewal'}
           </Button>
           <Button
+            variant={activeMainTab === 'bankData' ? 'default' : 'outline'}
+            className="gap-2"
+            onClick={() => setActiveMainTab('bankData')}
+          >
+            <Landmark className="w-4 h-4" />
+            {isAr ? 'البيانات البنكية' : 'Bank Data'}
+          </Button>
+          <Button
             variant={activeMainTab === 'documents' ? 'default' : 'outline'}
             className="gap-2"
             onClick={() => setActiveMainTab('documents')}
@@ -154,6 +162,8 @@ const Documents = () => {
           <InsuranceRenewals />
         ) : activeMainTab === 'nationalId' ? (
           <NationalIdRenewals />
+        ) : activeMainTab === 'bankData' ? (
+          <MissingBankData />
         ) : (
         <>
 
