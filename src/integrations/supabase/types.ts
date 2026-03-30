@@ -2734,7 +2734,14 @@ export type Database = {
         | "training_manager"
         | "hr"
         | "area_manager"
-      employee_status: "active" | "inactive" | "suspended"
+      employee_status:
+        | "active"
+        | "inactive"
+        | "suspended"
+        | "external_stations"
+        | "stopped"
+        | "absent"
+        | "pending_hire"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2871,7 +2878,15 @@ export const Constants = {
         "hr",
         "area_manager",
       ],
-      employee_status: ["active", "inactive", "suspended"],
+      employee_status: [
+        "active",
+        "inactive",
+        "suspended",
+        "external_stations",
+        "stopped",
+        "absent",
+        "pending_hire",
+      ],
     },
   },
 } as const
