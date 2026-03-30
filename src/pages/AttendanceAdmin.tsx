@@ -387,7 +387,7 @@ const AttendanceAdmin = () => {
                             ))}
                             {filteredEvents.length === 0 && (
                               <TableRow>
-                                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                                   {ar ? "لا توجد سجلات" : "No events yet"}
                                 </TableCell>
                               </TableRow>
