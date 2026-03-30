@@ -619,6 +619,10 @@ const AttendanceAdmin = () => {
                           loc.name_en?.toLowerCase().includes(q) ||
                           stationNames.some((stationName) => stationName?.includes(q))
                         );
+                      }).sort((a, b) => {
+                        const stationA = getLocationStationIds(a.id, a.station_id).map(id => stationLabelMap.get(id) || "").join(", ");
+                        const stationB = getLocationStationIds(b.id, b.station_id).map(id => stationLabelMap.get(id) || "").join(", ");
+                        return stationA.localeCompare(stationB, ar ? "ar" : "en");
                       }).map((loc) => (
                       <TableRow key={loc.id}>
                         <TableCell>{ar ? loc.name_ar : loc.name_en}</TableCell>
