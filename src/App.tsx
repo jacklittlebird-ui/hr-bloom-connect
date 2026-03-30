@@ -142,15 +142,32 @@ const AppContent = () => {
   const location = useLocation();
   const isPublicRoute = location.pathname === '/login' || location.pathname === '/setup';
 
-  if (loading || !isAuthenticated || isPublicRoute) {
-    return <AppRoutes />;
+  // Track if providers were ever mounted to prevent unmounting on background auth events
+  const providersWereMounted = React.useRef(false);
+  const shouldMountProviders = isAuthenticated && !isPublicRoute;
+
+  if (shouldMountProviders) {
+    providersWereMounted.current = true;
   }
 
-  return (
-    <AuthenticatedDataProviders>
-      <AppRoutes />
-    </AuthenticatedDataProviders>
-  );
+  // Keep providers mounted if they were previously mounted and we're just in a loading state
+  // This prevents data loss when switching tabs triggers token refresh
+  const keepProvidersMounted = providersWereMounted.current && loading && !isPublicRoute;
+
+  if (keepProvidersMounted || shouldMountProviders) {
+    return (
+      <AuthenticatedDataProviders>
+        <AppRoutes />
+      </AuthenticatedDataProviders>
+    );
+  }
+
+  // Reset ref when user logs out
+  if (!isAuthenticated && !loading) {
+    providersWereMounted.current = false;
+  }
+
+  return <AppRoutes />;
 };
 
 const App = () => (

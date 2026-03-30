@@ -143,9 +143,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  // Track whether initial auth resolution has completed (prevents provider unmount on token refresh)
+  const initialLoadDone = React.useRef(false);
 
-  const resolveAuthenticatedUser = useCallback(async (supabaseUser: User) => {
-    setLoading(true);
+  const resolveAuthenticatedUser = useCallback(async (supabaseUser: User, isInitialOrLogin = false) => {
+    // Only show loading spinner on initial load or explicit login, NOT on token refresh
+    if (isInitialOrLogin) {
+      setLoading(true);
+    }
     const profile = await fetchUserProfileWithRetry(supabaseUser);
 
     if (!profile) {
@@ -158,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setUser(profile);
     setLoading(false);
+    initialLoadDone.current = true;
     return profile;
   }, []);
 
@@ -166,13 +172,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       if (newSession?.user) {
-        setLoading(true);
-        setTimeout(async () => {
-          await resolveAuthenticatedUser(newSession.user);
-        }, 0);
+        // On token refresh or other background events, silently re-resolve without loading state
+        const isBackgroundEvent = initialLoadDone.current && (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED');
+        if (isBackgroundEvent) {
+          // Silently update profile in background without triggering loading/unmount
+          setTimeout(async () => {
+            await resolveAuthenticatedUser(newSession.user, false);
+          }, 0);
+        } else if (!initialLoadDone.current) {
+          // Initial auth state - show loading
+          setLoading(true);
+          setTimeout(async () => {
+            await resolveAuthenticatedUser(newSession.user, true);
+          }, 0);
+        }
       } else {
         setUser(null);
         setLoading(false);
+        initialLoadDone.current = false;
       }
     });
 
@@ -180,7 +197,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
       setSession(initialSession);
       if (initialSession?.user) {
-        await resolveAuthenticatedUser(initialSession.user);
+        await resolveAuthenticatedUser(initialSession.user, true);
         return;
       }
       setLoading(false);
