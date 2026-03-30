@@ -54,7 +54,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState('documents');
+  const [activeMainTab, setActiveMainTab] = useState('renewals');
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -123,20 +123,20 @@ const Documents = () => {
         {/* Main Tabs */}
         <div className="flex gap-3">
           <Button
-            variant={activeMainTab === 'documents' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('documents')}
-          >
-            <FileText className="w-4 h-4" />
-            {isAr ? 'المستندات' : 'Documents'}
-          </Button>
-          <Button
             variant={activeMainTab === 'renewals' ? 'default' : 'outline'}
             className="gap-2"
             onClick={() => setActiveMainTab('renewals')}
           >
             <ShieldAlert className="w-4 h-4" />
             {isAr ? 'تجديدات العقود' : 'Contract Renewals'}
+          </Button>
+          <Button
+            variant={activeMainTab === 'documents' ? 'default' : 'outline'}
+            className="gap-2"
+            onClick={() => setActiveMainTab('documents')}
+          >
+            <FileText className="w-4 h-4" />
+            {isAr ? 'المستندات' : 'Documents'}
           </Button>
         </div>
 
