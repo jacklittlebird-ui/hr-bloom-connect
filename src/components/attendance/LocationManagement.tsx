@@ -194,7 +194,30 @@ export const LocationManagement = () => {
                   placeholder="Full address"
                 />
               </div>
-              
+
+              {/* Station Multi-Select */}
+              <div className="space-y-2">
+                <Label>{language === 'ar' ? 'المحطات المرتبطة' : 'Linked Stations'}</Label>
+                <ScrollArea className="h-[140px] border rounded-md p-2">
+                  <div className="space-y-1">
+                    {dbStations.map(s => (
+                      <label key={s.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/50 cursor-pointer">
+                        <Checkbox
+                          checked={(newLocation.stationIds || []).includes(s.id)}
+                          onCheckedChange={() => toggleStationId(s.id, 'new')}
+                        />
+                        <span className="text-sm">{language === 'ar' ? s.name_ar : s.name_en}</span>
+                      </label>
+                    ))}
+                  </div>
+                </ScrollArea>
+                {(newLocation.stationIds?.length || 0) > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {getStationNames(newLocation.stationIds).map(s => (
+                      <Badge key={s.id} variant="secondary" className="text-xs">{language === 'ar' ? s.name_ar : s.name_en}</Badge>
+                    ))}
+                  </div>
+                )}
               <div className="space-y-2">
                 <Label>{t('attendance.locations.timezone')}</Label>
                 <Select 
