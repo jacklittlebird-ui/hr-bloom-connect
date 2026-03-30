@@ -40,7 +40,7 @@ export const MissingBankData = () => {
   const missingBankEmployees = useMemo(() => {
     return employees
       .filter(e => e.status === 'active')
-      .filter(e => !e.bankName && !e.bankAccountNumber && !e.bankIdNumber)
+      .filter(e => !e.bankAccountNumber || !e.bankIdNumber)
       .filter(e => {
         if (!search) return true;
         return e.nameAr.includes(search) || e.nameEn.toLowerCase().includes(search.toLowerCase()) || e.employeeId.includes(search);
