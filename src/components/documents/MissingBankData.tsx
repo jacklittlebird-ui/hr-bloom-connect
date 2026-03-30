@@ -90,6 +90,7 @@ export const MissingBankData = () => {
       { headerAr: 'كود الموظف', headerEn: 'Code', key: 'code' },
       { headerAr: 'الاسم', headerEn: 'Name', key: 'nameAr' },
       { headerAr: 'الاسم بالإنجليزية', headerEn: 'Name (EN)', key: 'nameEn' },
+      { headerAr: 'الرقم القومي', headerEn: 'National ID', key: 'nationalId' },
       { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
       { headerAr: 'القسم', headerEn: 'Department', key: 'dept' },
       { headerAr: 'المسمى الوظيفي', headerEn: 'Job Title', key: 'jobTitle' },
@@ -97,6 +98,7 @@ export const MissingBankData = () => {
     ];
     const data = missingBankEmployees.map(e => ({
       code: e.employeeId, nameAr: e.nameAr, nameEn: e.nameEn,
+      nationalId: e.nationalId || '-',
       station: e.stationName || '-', dept: e.department || '-',
       jobTitle: e.jobTitle || '-', status: ar ? 'غير مسجل' : 'Missing',
     }));
@@ -149,6 +151,7 @@ export const MissingBankData = () => {
                 <TableRow>
                   <TableHead>{ar ? 'كود الموظف' : 'Code'}</TableHead>
                   <TableHead>{ar ? 'الاسم' : 'Name'}</TableHead>
+                  <TableHead>{ar ? 'الرقم القومي' : 'National ID'}</TableHead>
                   <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead>{ar ? 'القسم' : 'Department'}</TableHead>
                   <TableHead>{ar ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
@@ -161,6 +164,7 @@ export const MissingBankData = () => {
                   <TableRow key={emp.id}>
                     <TableCell className="font-mono text-sm">{emp.employeeId}</TableCell>
                     <TableCell className="font-medium">{ar ? emp.nameAr : emp.nameEn}</TableCell>
+                    <TableCell className="font-mono text-sm">{emp.nationalId || '—'}</TableCell>
                     <TableCell>{emp.stationName || '—'}</TableCell>
                     <TableCell>{emp.department}</TableCell>
                     <TableCell>{emp.jobTitle}</TableCell>
@@ -171,7 +175,7 @@ export const MissingBankData = () => {
                   </TableRow>
                 ))}
                 {paginatedItems.length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{ar ? 'جميع الموظفين لديهم بيانات بنكية' : 'All employees have bank data'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'جميع الموظفين لديهم بيانات بنكية' : 'All employees have bank data'}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -185,7 +189,14 @@ export const MissingBankData = () => {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}><Landmark className="w-5 h-5 text-primary" />{ar ? 'إضافة بيانات بنكية' : 'Add Bank Data'}</DialogTitle>
-            {editEmployee && <p className="text-sm text-muted-foreground">{ar ? editEmployee.nameAr : editEmployee.nameEn} ({editEmployee.employeeId})</p>}
+            {editEmployee && (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">{ar ? editEmployee.nameAr : editEmployee.nameEn} ({editEmployee.employeeId})</p>
+                {editEmployee.nationalId && (
+                  <p className="text-xs text-muted-foreground font-mono">{ar ? 'الرقم القومي:' : 'National ID:'} {editEmployee.nationalId}</p>
+                )}
+              </div>
+            )}
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5"><Label>{ar ? 'اسم البنك' : 'Bank Name'}</Label>
