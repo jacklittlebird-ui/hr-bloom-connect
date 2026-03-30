@@ -297,6 +297,8 @@ const Documents = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </>
+        )}
       </div>
     </DashboardLayout>
   );
