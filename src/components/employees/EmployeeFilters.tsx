@@ -1,7 +1,7 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Users, UserCheck, UserX, UserMinus, X, Building2, MapPin } from 'lucide-react';
+import { Search, Users, UserCheck, UserX, UserMinus, X, Building2, MapPin, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
