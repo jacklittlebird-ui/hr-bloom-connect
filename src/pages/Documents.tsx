@@ -151,6 +151,8 @@ const Documents = () => {
 
         {activeMainTab === 'renewals' ? (
           <InsuranceRenewals />
+        ) : activeMainTab === 'nationalId' ? (
+          <NationalIdRenewals />
         ) : (
         <>
 
