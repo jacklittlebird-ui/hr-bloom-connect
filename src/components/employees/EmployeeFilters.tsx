@@ -173,13 +173,20 @@ export const EmployeeFilters = ({
           selected={selectedDepartments}
           onChange={onSelectedDepartmentsChange}
         />
+        <MultiSelectFilter
+          icon={Shield}
+          label={ar ? 'الحالة' : 'Status'}
+          options={statusOptions}
+          selected={selectedStatuses}
+          onChange={onSelectedStatusesChange}
+        />
         {/* Active filter chips */}
-        {(selectedStations.length > 0 || selectedDepartments.length > 0) && (
+        {(selectedStations.length > 0 || selectedDepartments.length > 0 || selectedStatuses.length > 0) && (
           <Button
             variant="ghost"
             size="sm"
             className="h-10 gap-1 text-destructive hover:text-destructive"
-            onClick={() => { onSelectedStationsChange([]); onSelectedDepartmentsChange([]); }}
+            onClick={() => { onSelectedStationsChange([]); onSelectedDepartmentsChange([]); onSelectedStatusesChange([]); }}
           >
             <X className="w-3.5 h-3.5" />
             {ar ? 'مسح الفلاتر' : 'Clear filters'}
