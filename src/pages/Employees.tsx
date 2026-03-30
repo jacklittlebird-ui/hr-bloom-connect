@@ -341,7 +341,7 @@ const Employees = () => {
     contractType: contractLabel(e.contractType),
     employmentStatus: (() => {
       const val = e.employmentStatus && e.employmentStatus !== 'active' && e.employmentStatus !== 'inactive' && e.employmentStatus !== 'suspended' ? e.employmentStatus : e.status;
-      const map: Record<string, string> = { active: ar ? 'نشط' : 'Active', inactive: ar ? 'غير نشط' : 'Inactive', suspended: ar ? 'موقوف' : 'Suspended' };
+      const map: Record<string, string> = { active: ar ? 'نشط' : 'Active', inactive: ar ? 'غير نشط' : 'Inactive', suspended: ar ? 'موقوف' : 'Suspended', external_stations: ar ? 'محطات خارجية' : 'External Stations', stopped: ar ? 'موقوف' : 'Stopped', absent: ar ? 'منقطع' : 'Absent', pending_hire: ar ? 'تحت التعيين' : 'Pending Hire' };
       return map[val] || val || '-';
     })(),
     hireDate: e.hireDate || '-',
