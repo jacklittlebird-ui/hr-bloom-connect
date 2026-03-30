@@ -126,9 +126,13 @@ export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) =>
               <SelectValue placeholder={t('employees.select')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">{t('employees.status.active')}</SelectItem>
-              <SelectItem value="inactive">{t('employees.status.inactive')}</SelectItem>
-              <SelectItem value="resigned">{t('employees.status.resigned')}</SelectItem>
+              <SelectItem value="active">{isRTL ? 'نشط' : 'Active'}</SelectItem>
+              <SelectItem value="inactive">{isRTL ? 'غير نشط' : 'Inactive'}</SelectItem>
+              <SelectItem value="suspended">{isRTL ? 'موقوف' : 'Suspended'}</SelectItem>
+              <SelectItem value="external_stations">{isRTL ? 'محطات خارجية' : 'External Stations'}</SelectItem>
+              <SelectItem value="stopped">{isRTL ? 'موقوف' : 'Stopped'}</SelectItem>
+              <SelectItem value="absent">{isRTL ? 'منقطع' : 'Absent'}</SelectItem>
+              <SelectItem value="pending_hire">{isRTL ? 'تحت التعيين' : 'Pending Hire'}</SelectItem>
             </SelectContent>
           </Select>
         </div>
