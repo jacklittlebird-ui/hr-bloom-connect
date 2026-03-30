@@ -271,12 +271,27 @@ Deno.serve(async (req) => {
       });
     }
 
-    // GPS geofence validation
-    const { data: locations } = await supabaseAdmin
+    // GPS geofence validation — check both legacy station_id and junction table
+    const empStationId = emp.station_id;
+
+    // Get location IDs linked to employee's station via junction table
+    const { data: junctionLinks } = await supabaseAdmin
+      .from("qr_location_stations")
+      .select("location_id")
+      .eq("station_id", empStationId);
+
+    const junctionLocationIds = (junctionLinks || []).map((r: any) => r.location_id);
+
+    // Get all active locations
+    const { data: allLocations } = await supabaseAdmin
       .from("qr_locations")
-      .select("id, name_ar, latitude, longitude, radius_m")
-      .eq("station_id", emp.station_id)
+      .select("id, name_ar, latitude, longitude, radius_m, station_id")
       .eq("is_active", true);
+
+    // Filter: locations matching via legacy station_id OR via junction table
+    const locations = (allLocations || []).filter((loc: any) =>
+      loc.station_id === empStationId || junctionLocationIds.includes(loc.id)
+    );
 
     if (!locations || locations.length === 0) {
       return json({ error: "No GPS locations configured for this station" }, 400);
