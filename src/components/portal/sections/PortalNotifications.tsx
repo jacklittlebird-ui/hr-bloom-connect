@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +14,11 @@ const typeColors: Record<string, string> = { success: 'text-green-500', warning:
 export const PortalNotifications = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { language } = useLanguage();
-  const { getFilteredNotifications, markAsRead, markAllAsRead, clearAll } = useNotifications();
+  const { getFilteredNotifications, markAsRead, markAllAsRead, clearAll, refreshNotifications } = useNotifications();
+
+  useEffect(() => {
+    refreshNotifications();
+  }, [refreshNotifications]);
 
   const notifications = getFilteredNotifications('employee', PORTAL_EMPLOYEE_ID);
   const unreadCount = notifications.filter(n => !n.read).length;
