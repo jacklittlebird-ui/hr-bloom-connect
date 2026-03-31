@@ -92,23 +92,33 @@ export const LeaveBalanceTab = ({ employee, onUpdate, onDirectSave, readOnly }: 
 
   // Fetch from DB
   const fetchBalances = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('leave_balances')
-      .select('*')
-      .eq('employee_id', employee.id);
+    const [balRes, otRes] = await Promise.all([
+      supabase.from('leave_balances').select('*').eq('employee_id', employee.id),
+      supabase.from('overtime_requests').select('date').eq('employee_id', employee.id).eq('status', 'approved'),
+    ]);
     
-    if (!error && data) {
-      setSavedBalances(data.map((row: any) => ({
-        year: row.year,
-        annualTotal: Number(row.annual_total ?? 21),
-        annualUsed: Number(row.annual_used ?? 0),
-        sickTotal: Number(row.sick_total ?? 15),
-        sickUsed: Number(row.sick_used ?? 0),
-        casualTotal: Number(row.casual_total ?? 7),
-        casualUsed: Number(row.casual_used ?? 0),
-        permissionsTotal: Number(row.permissions_total ?? 24),
-        permissionsUsed: Number(row.permissions_used ?? 0),
-      })));
+    // Count approved overtime days per year
+    const otByYear = new Map<number, number>();
+    (otRes.data || []).forEach((o: any) => {
+      const year = new Date(o.date).getFullYear();
+      otByYear.set(year, (otByYear.get(year) || 0) + 1);
+    });
+
+    if (!balRes.error && balRes.data) {
+      setSavedBalances(balRes.data.map((row: any) => {
+        const overtimeDays = otByYear.get(row.year) || 0;
+        return {
+          year: row.year,
+          annualTotal: Number(row.annual_total ?? 21) + overtimeDays,
+          annualUsed: Number(row.annual_used ?? 0),
+          sickTotal: Number(row.sick_total ?? 15),
+          sickUsed: Number(row.sick_used ?? 0),
+          casualTotal: Number(row.casual_total ?? 7),
+          casualUsed: Number(row.casual_used ?? 0),
+          permissionsTotal: Number(row.permissions_total ?? 24),
+          permissionsUsed: Number(row.permissions_used ?? 0),
+        };
+      }));
     }
     setLoading(false);
   }, [employee.id]);

@@ -225,11 +225,22 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         trackQuery('portal_leaves', (lbRes.data?.length || 0) + (lrRes.data?.length || 0) + (pRes.data?.length || 0) + (otRes.data?.length || 0));
 
         if (lbRes.data) {
+          // Count approved overtime days per employee to add to annual balance
+          const approvedOtMap = new Map<string, number>();
+          if (otRes.data) {
+            otRes.data.forEach((o: any) => {
+              if (o.status === 'approved') {
+                approvedOtMap.set(o.employee_id, (approvedOtMap.get(o.employee_id) || 0) + 1);
+              }
+            });
+          }
+
           const mapped: Record<string, LeaveBalance[]> = {};
           lbRes.data.forEach((lb: any) => {
             if (!mapped[lb.employee_id]) mapped[lb.employee_id] = [];
+            const overtimeDaysCount = approvedOtMap.get(lb.employee_id) || 0;
             mapped[lb.employee_id].push(
-              { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used },
+              { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total + overtimeDaysCount, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used + overtimeDaysCount },
               { typeAr: 'مرضية', typeEn: 'Sick', total: lb.sick_total, used: lb.sick_used, remaining: lb.sick_total - lb.sick_used },
               { typeAr: 'عارضة', typeEn: 'Casual', total: lb.casual_total, used: lb.casual_used, remaining: lb.casual_total - lb.casual_used },
               { typeAr: 'الأذونات', typeEn: 'Permissions', total: lb.permissions_total, used: lb.permissions_used, remaining: lb.permissions_total - lb.permissions_used },
