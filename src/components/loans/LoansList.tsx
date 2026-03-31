@@ -18,6 +18,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List, RefreshCw } from 'lucide-react';
 import { InstallmentScheduleDialog } from './InstallmentScheduleDialog';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { stationLocations } from '@/data/stationLocations';
 import { stationLocations } from '@/data/stationLocations';
 import { useReportExport } from '@/hooks/useReportExport';
 
