@@ -15,9 +15,10 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List, RefreshCw } from 'lucide-react';
 import { InstallmentScheduleDialog } from './InstallmentScheduleDialog';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { stationLocations } from '@/data/stationLocations';
 import { useReportExport } from '@/hooks/useReportExport';
 
@@ -32,7 +33,7 @@ const getMonthName = (dateStr: string, lang: string) => {
 export const LoansList = () => {
   const { t, isRTL, language } = useLanguage();
   const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
-  const { loans, addLoan, updateLoan, deleteLoan, recordLoanPayment } = useLoanData();
+  const { loans, addLoan, updateLoan, deleteLoan, recordLoanPayment, refreshData } = useLoanData();
   const { employees } = useEmployeeData();
   const activeEmployees = employees.filter(e => e.status === 'active');
 
@@ -48,6 +49,14 @@ export const LoansList = () => {
   const [deletingLoanId, setDeletingLoanId] = useState<string | null>(null);
   const [showInstallmentSchedule, setShowInstallmentSchedule] = useState(false);
   const [viewingLoan, setViewingLoan] = useState<Loan | null>(null);
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
+  const [reschedulingLoan, setReschedulingLoan] = useState<Loan | null>(null);
+  const [rescheduleData, setRescheduleData] = useState({
+    newInstallments: '',
+    calculationMethod: 'auto' as 'auto' | 'manual',
+    newMonthlyPayment: '',
+    newStartDate: '',
+  });
   const [formData, setFormData] = useState({
     employeeId: '', // UUID
     amount: '',
@@ -222,6 +231,99 @@ export const LoansList = () => {
     setDeletingLoanId(null);
   };
 
+  const openRescheduleDialog = (loan: Loan) => {
+    setReschedulingLoan(loan);
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const defaultStart = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
+    setRescheduleData({ newInstallments: '', calculationMethod: 'auto', newMonthlyPayment: '', newStartDate: defaultStart });
+    setShowRescheduleDialog(true);
+  };
+
+  const rescheduleAutoMonthly = useMemo(() => {
+    if (!reschedulingLoan || rescheduleData.calculationMethod !== 'auto') return '';
+    const remaining = reschedulingLoan.remainingAmount;
+    const inst = parseInt(rescheduleData.newInstallments);
+    if (remaining > 0 && inst > 0) return (remaining / inst).toFixed(2);
+    return '';
+  }, [reschedulingLoan, rescheduleData.newInstallments, rescheduleData.calculationMethod]);
+
+  const rescheduleAutoInstallments = useMemo(() => {
+    if (!reschedulingLoan || rescheduleData.calculationMethod !== 'manual') return '';
+    const remaining = reschedulingLoan.remainingAmount;
+    const monthly = parseFloat(rescheduleData.newMonthlyPayment);
+    if (remaining > 0 && monthly > 0) return String(Math.ceil(remaining / monthly));
+    return '';
+  }, [reschedulingLoan, rescheduleData.newMonthlyPayment, rescheduleData.calculationMethod]);
+
+  const handleReschedule = async () => {
+    if (!reschedulingLoan) return;
+    const remainingAmount = reschedulingLoan.remainingAmount;
+    const isManual = rescheduleData.calculationMethod === 'manual';
+    const newMonthly = isManual ? parseFloat(rescheduleData.newMonthlyPayment || '0') : 0;
+    const newInstallments = isManual
+      ? (remainingAmount > 0 && newMonthly > 0 ? Math.ceil(remainingAmount / newMonthly) : 0)
+      : parseInt(rescheduleData.newInstallments);
+
+    if (newInstallments <= 0 || !rescheduleData.newStartDate) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+
+    const calculatedMonthly = isManual ? newMonthly : remainingAmount / newInstallments;
+    const paidCount = reschedulingLoan.paidInstallments;
+    const totalNewInstallments = paidCount + newInstallments;
+
+    try {
+      // Delete only pending installments
+      await supabase.from('loan_installments').delete().eq('loan_id', reschedulingLoan.id).eq('status', 'pending');
+
+      // Create new installments for the remaining amount
+      const newRows = [];
+      for (let i = 0; i < newInstallments; i++) {
+        const [year, month] = rescheduleData.newStartDate.split('-').map(Number);
+        const dueDate = new Date(year, month - 1 + i, 1);
+        const dueDateStr = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-01`;
+        const isLast = i === newInstallments - 1;
+        const amount = isLast
+          ? Math.round((remainingAmount - calculatedMonthly * (newInstallments - 1)) * 100) / 100
+          : Math.round(calculatedMonthly * 100) / 100;
+
+        newRows.push({
+          loan_id: reschedulingLoan.id,
+          employee_id: reschedulingLoan.employeeId,
+          installment_number: paidCount + i + 1,
+          amount: Math.max(amount, 0),
+          due_date: dueDateStr,
+          status: 'pending',
+        });
+      }
+
+      if (newRows.length > 0) {
+        const { error: insertErr } = await supabase.from('loan_installments').insert(newRows);
+        if (insertErr) throw insertErr;
+      }
+
+      // Update loan record
+      const { error: updateErr } = await supabase.from('loans').update({
+        installments_count: totalNewInstallments,
+        monthly_installment: Math.round(calculatedMonthly * 100) / 100,
+        remaining: remainingAmount,
+      }).eq('id', reschedulingLoan.id);
+      if (updateErr) throw updateErr;
+
+      toast({ title: isRTL ? 'تمت إعادة الجدولة' : 'Rescheduled', description: isRTL ? 'تمت إعادة جدولة القرض بنجاح' : 'Loan rescheduled successfully' });
+      setShowRescheduleDialog(false);
+      setReschedulingLoan(null);
+
+      // Refresh loans data
+      await refreshData();
+    } catch (err: any) {
+      console.error('Reschedule error:', err);
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: err?.message || (isRTL ? 'حدث خطأ أثناء إعادة الجدولة' : 'Error rescheduling'), variant: 'destructive' });
+    }
+  };
+
   const getStationLabel = (empId: string) => {
     const station = getEmployeeStation(empId);
     const s = stationLocations.find(st => st.value === station);
@@ -361,6 +463,11 @@ export const LoansList = () => {
                       {loan.status === 'active' && (
                         <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={() => handleRecordPayment(loan.id)}>
                           <CreditCard className="h-3 w-3" />{isRTL ? 'تسجيل دفعة' : 'Pay'}
+                        </Button>
+                      )}
+                      {loan.status === 'active' && loan.remainingAmount > 0 && (
+                        <Button size="sm" variant="outline" className="text-xs gap-1 text-blue-600" onClick={() => openRescheduleDialog(loan)}>
+                          <RefreshCw className="h-3 w-3" />{isRTL ? 'إعادة جدولة' : 'Reschedule'}
                         </Button>
                       )}
                       <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => openEditDialog(loan)}>
@@ -503,6 +610,78 @@ export const LoansList = () => {
           }}
         />
       )}
+
+      {/* Reschedule Dialog */}
+      <Dialog open={showRescheduleDialog} onOpenChange={o => { if (!o) setReschedulingLoan(null); setShowRescheduleDialog(o); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="bg-gradient-to-r from-blue-500 to-cyan-500 -m-6 mb-4 p-6 rounded-t-lg">
+            <DialogTitle className="text-white text-center text-xl">
+              {isRTL ? 'إعادة جدولة القرض' : 'Reschedule Loan'}
+            </DialogTitle>
+          </DialogHeader>
+          {reschedulingLoan && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-muted/50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'الموظف' : 'Employee'}</p>
+                  <p className="font-bold text-sm">{reschedulingLoan.employeeName}</p>
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3 text-center">
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي القرض' : 'Total Loan'}</p>
+                  <p className="font-bold text-sm">{reschedulingLoan.amount.toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-3 text-center border border-green-200">
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'المدفوع' : 'Paid'}</p>
+                  <p className="font-bold text-sm text-green-700">{reschedulingLoan.paidAmount.toLocaleString()} {isRTL ? 'ج.م' : 'EGP'} ({reschedulingLoan.paidInstallments} {isRTL ? 'قسط' : 'inst.'})</p>
+                </div>
+                <div className="bg-orange-50 rounded-lg p-3 text-center border border-orange-200">
+                  <p className="text-xs text-muted-foreground">{isRTL ? 'المتبقي (سيتم إعادة جدولته)' : 'Remaining (to reschedule)'}</p>
+                  <p className="font-bold text-sm text-orange-700">{reschedulingLoan.remainingAmount.toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{isRTL ? 'طريقة الاحتساب' : 'Calculation Method'}</Label>
+                <RadioGroup value={rescheduleData.calculationMethod} onValueChange={(v: 'auto' | 'manual') => setRescheduleData({ ...rescheduleData, calculationMethod: v })} className="flex gap-4">
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="auto" id="reschedule-auto" /><Label htmlFor="reschedule-auto">{isRTL ? 'تلقائي (المبلغ ÷ الأقساط)' : 'Auto (Amount ÷ Installments)'}</Label></div>
+                  <div className="flex items-center space-x-2"><RadioGroupItem value="manual" id="reschedule-manual" /><Label htmlFor="reschedule-manual">{isRTL ? 'يدوي (تحديد القسط الشهري)' : 'Manual (Set Monthly Payment)'}</Label></div>
+                </RadioGroup>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {rescheduleData.calculationMethod === 'auto' ? (
+                  <div className="space-y-2">
+                    <Label>{isRTL ? 'عدد الأقساط الجديدة *' : 'New Installments *'}</Label>
+                    <Input type="number" min="1" value={rescheduleData.newInstallments} onChange={e => setRescheduleData({ ...rescheduleData, newInstallments: e.target.value })} />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>{isRTL ? 'القسط الشهري الجديد * (ج.م)' : 'New Monthly * (EGP)'}</Label>
+                    <Input type="number" min="1" value={rescheduleData.newMonthlyPayment} onChange={e => setRescheduleData({ ...rescheduleData, newMonthlyPayment: e.target.value })} />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>{isRTL ? 'تاريخ بدء الخصم *' : 'Start Date *'}</Label>
+                  <Input type="month" value={rescheduleData.newStartDate} onChange={e => setRescheduleData({ ...rescheduleData, newStartDate: e.target.value })} />
+                </div>
+              </div>
+
+              {rescheduleData.calculationMethod === 'auto' && rescheduleAutoMonthly && (
+                <p className="text-sm text-muted-foreground">{isRTL ? 'القسط الشهري المحسوب: ' : 'Calculated monthly: '}<strong>{parseFloat(rescheduleAutoMonthly).toLocaleString()} {isRTL ? 'ج.م' : 'EGP'}</strong></p>
+              )}
+              {rescheduleData.calculationMethod === 'manual' && rescheduleAutoInstallments && (
+                <p className="text-sm text-muted-foreground">{isRTL ? 'عدد الأقساط المحسوب: ' : 'Calculated installments: '}<strong>{rescheduleAutoInstallments}</strong></p>
+              )}
+            </div>
+          )}
+          <DialogFooter className="gap-2 mt-4">
+            <Button variant="outline" onClick={() => { setShowRescheduleDialog(false); setReschedulingLoan(null); }}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleReschedule} className="bg-blue-600 hover:bg-blue-700">
+              <RefreshCw className="h-4 w-4 mr-1" />{isRTL ? 'إعادة جدولة' : 'Reschedule'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
