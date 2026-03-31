@@ -394,7 +394,7 @@ export const AttendanceList = () => {
                     {ar ? 'جاري التحميل...' : 'Loading...'}
                   </TableCell>
                 </TableRow>
-              ) : filteredRecords.length === 0 ? (
+              ) : records.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     {ar ? 'لا توجد سجلات حضور' : 'No attendance records'}
