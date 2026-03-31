@@ -212,6 +212,35 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     await fetchLoans();
   }, [fetchLoans]);
 
+  const reverseLoanPayment = useCallback(async (loanId: string) => {
+    const { data: installments, error: installmentError } = await supabase
+      .from('loan_installments')
+      .select('id')
+      .eq('loan_id', loanId)
+      .eq('status', 'paid')
+      .order('installment_number', { ascending: false })
+      .limit(1);
+
+    if (installmentError) throw installmentError;
+    if (!installments || installments.length === 0) {
+      await fetchLoans();
+      return;
+    }
+
+    await supabase.from('loan_installments').update({ status: 'pending', paid_at: null }).eq('id', installments[0].id);
+
+    const { data: loanRow, error: loanError } = await supabase.from('loans').select('paid_count').eq('id', loanId).single();
+    if (loanError) throw loanError;
+
+    const newPaid = Math.max((loanRow.paid_count || 0) - 1, 0);
+    await supabase.from('loans').update({
+      paid_count: newPaid,
+      status: 'active',
+    }).eq('id', loanId);
+
+    await fetchLoans();
+  }, [fetchLoans]);
+
   const addAdvance = useCallback(async (advance: Omit<Advance, 'id'>) => {
     const { error } = await supabase.from('advances').insert({
       employee_id: advance.employeeId,
