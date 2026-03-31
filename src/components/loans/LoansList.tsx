@@ -231,7 +231,99 @@ export const LoansList = () => {
     setDeletingLoanId(null);
   };
 
-  const getStationLabel = (empId: string) => {
+  const openRescheduleDialog = (loan: Loan) => {
+    setReschedulingLoan(loan);
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const defaultStart = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`;
+    setRescheduleData({ newInstallments: '', calculationMethod: 'auto', newMonthlyPayment: '', newStartDate: defaultStart });
+    setShowRescheduleDialog(true);
+  };
+
+  const rescheduleAutoMonthly = useMemo(() => {
+    if (!reschedulingLoan || rescheduleData.calculationMethod !== 'auto') return '';
+    const remaining = reschedulingLoan.remainingAmount;
+    const inst = parseInt(rescheduleData.newInstallments);
+    if (remaining > 0 && inst > 0) return (remaining / inst).toFixed(2);
+    return '';
+  }, [reschedulingLoan, rescheduleData.newInstallments, rescheduleData.calculationMethod]);
+
+  const rescheduleAutoInstallments = useMemo(() => {
+    if (!reschedulingLoan || rescheduleData.calculationMethod !== 'manual') return '';
+    const remaining = reschedulingLoan.remainingAmount;
+    const monthly = parseFloat(rescheduleData.newMonthlyPayment);
+    if (remaining > 0 && monthly > 0) return String(Math.ceil(remaining / monthly));
+    return '';
+  }, [reschedulingLoan, rescheduleData.newMonthlyPayment, rescheduleData.calculationMethod]);
+
+  const handleReschedule = async () => {
+    if (!reschedulingLoan) return;
+    const remainingAmount = reschedulingLoan.remainingAmount;
+    const isManual = rescheduleData.calculationMethod === 'manual';
+    const newMonthly = isManual ? parseFloat(rescheduleData.newMonthlyPayment || '0') : 0;
+    const newInstallments = isManual
+      ? (remainingAmount > 0 && newMonthly > 0 ? Math.ceil(remainingAmount / newMonthly) : 0)
+      : parseInt(rescheduleData.newInstallments);
+
+    if (newInstallments <= 0 || !rescheduleData.newStartDate) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+
+    const calculatedMonthly = isManual ? newMonthly : remainingAmount / newInstallments;
+    const paidCount = reschedulingLoan.paidInstallments;
+    const totalNewInstallments = paidCount + newInstallments;
+
+    try {
+      // Delete only pending installments
+      await supabase.from('loan_installments').delete().eq('loan_id', reschedulingLoan.id).eq('status', 'pending');
+
+      // Create new installments for the remaining amount
+      const newRows = [];
+      for (let i = 0; i < newInstallments; i++) {
+        const [year, month] = rescheduleData.newStartDate.split('-').map(Number);
+        const dueDate = new Date(year, month - 1 + i, 1);
+        const dueDateStr = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, '0')}-01`;
+        const isLast = i === newInstallments - 1;
+        const amount = isLast
+          ? Math.round((remainingAmount - calculatedMonthly * (newInstallments - 1)) * 100) / 100
+          : Math.round(calculatedMonthly * 100) / 100;
+
+        newRows.push({
+          loan_id: reschedulingLoan.id,
+          employee_id: reschedulingLoan.employeeId,
+          installment_number: paidCount + i + 1,
+          amount: Math.max(amount, 0),
+          due_date: dueDateStr,
+          status: 'pending',
+        });
+      }
+
+      if (newRows.length > 0) {
+        const { error: insertErr } = await supabase.from('loan_installments').insert(newRows);
+        if (insertErr) throw insertErr;
+      }
+
+      // Update loan record
+      const { error: updateErr } = await supabase.from('loans').update({
+        installments_count: totalNewInstallments,
+        monthly_installment: Math.round(calculatedMonthly * 100) / 100,
+        remaining: remainingAmount,
+      }).eq('id', reschedulingLoan.id);
+      if (updateErr) throw updateErr;
+
+      toast({ title: isRTL ? 'تمت إعادة الجدولة' : 'Rescheduled', description: isRTL ? 'تمت إعادة جدولة القرض بنجاح' : 'Loan rescheduled successfully' });
+      setShowRescheduleDialog(false);
+      setReschedulingLoan(null);
+
+      // Refresh loans data
+      await refreshData();
+    } catch (err: any) {
+      console.error('Reschedule error:', err);
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: err?.message || (isRTL ? 'حدث خطأ أثناء إعادة الجدولة' : 'Error rescheduling'), variant: 'destructive' });
+    }
+  };
+
     const station = getEmployeeStation(empId);
     const s = stationLocations.find(st => st.value === station);
     return s ? (isRTL ? s.labelAr : s.labelEn) : station || '-';
