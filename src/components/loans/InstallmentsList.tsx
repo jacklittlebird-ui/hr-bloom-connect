@@ -75,6 +75,12 @@ export const InstallmentsList = () => {
     fetchInstallments();
   };
 
+  const handleUnpayInstallment = async (installmentId: string) => {
+    await supabase.from('loan_installments').update({ status: 'pending', paid_at: null }).eq('id', installmentId);
+    toast({ title: t('common.success'), description: language === 'ar' ? 'تم التراجع عن تسجيل الدفع' : 'Payment reversed' });
+    fetchInstallments();
+  };
+
   const stats = {
     totalInstallments: installments.length,
     paidInstallments: installments.filter(i => i.status === 'paid').length,
