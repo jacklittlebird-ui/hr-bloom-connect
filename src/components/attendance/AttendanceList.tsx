@@ -259,7 +259,7 @@ export const AttendanceList = () => {
     { headerAr: 'الحالة', headerEn: 'Status', key: 'status' },
   ];
 
-  const getExportData = () => filteredRecords.map(r => ({
+  const getExportData = () => records.map(r => ({
     date: r.date,
     employeeNameAr: r.employeeNameAr,
     employeeName: r.employeeName,
