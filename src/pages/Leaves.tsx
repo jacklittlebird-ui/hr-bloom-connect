@@ -156,13 +156,26 @@ const Leaves = () => {
       .select('*')
       .eq('year', currentYear);
 
+    // Count approved overtime days per employee for the current year
+    const { data: approvedOt } = await supabase
+      .from('overtime_requests')
+      .select('employee_id')
+      .eq('status', 'approved')
+      .gte('date', `${currentYear}-01-01`)
+      .lte('date', `${currentYear}-12-31`);
+    const overtimeMap = new Map<string, number>();
+    (approvedOt || []).forEach(o => {
+      overtimeMap.set(o.employee_id, (overtimeMap.get(o.employee_id) || 0) + 1);
+    });
+
     const balanceMap = new Map((dbBalances || []).map(b => [b.employee_id, b]));
 
     const balances: EmployeeLeaveBalance[] = (employees || []).map(e => {
       const d = e.department_id ? deptMap.get(e.department_id) : null;
       const s = e.station_id ? stMap.get(e.station_id) : null;
       const lb = balanceMap.get(e.id);
-      const annualTotal = lb ? Number(lb.annual_total) : (e.annual_leave_balance || 21);
+      const overtimeDaysCount = overtimeMap.get(e.id) || 0;
+      const annualTotal = (lb ? Number(lb.annual_total) : (e.annual_leave_balance || 21)) + overtimeDaysCount;
       const annualUsed = lb ? Number(lb.annual_used) : 0;
       const sickTotal = lb ? Number(lb.sick_total) : (e.sick_leave_balance || 5);
       const sickUsed = lb ? Number(lb.sick_used) : 0;
