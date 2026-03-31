@@ -443,7 +443,13 @@ export const PayrollProcessing = () => {
                       !bulkMode && selectedEmployee === emp.id ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground"
                     )}
                   >
-                    <span>{ar ? emp.nameAr : emp.nameEn}</span>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <span className="font-medium truncate">{ar ? emp.nameAr : emp.nameEn}</span>
+                      <span className={cn("text-xs truncate", !bulkMode && selectedEmployee === emp.id ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                        {ar ? (emp.jobTitleAr || emp.jobTitle || '') : (emp.jobTitleEn || emp.jobTitle || '')}
+                        {(emp.stationName || emp.stationLocation) ? ` • ${emp.stationName || emp.stationLocation}` : ''}
+                      </span>
+                    </div>
                     {isSaved && <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />}
                   </button>
                 </div>
