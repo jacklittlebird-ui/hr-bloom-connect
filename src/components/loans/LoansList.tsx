@@ -465,6 +465,11 @@ export const LoansList = () => {
                           <CreditCard className="h-3 w-3" />{isRTL ? 'تسجيل دفعة' : 'Pay'}
                         </Button>
                       )}
+                      {loan.status === 'active' && loan.remainingAmount > 0 && (
+                        <Button size="sm" variant="outline" className="text-xs gap-1 text-blue-600" onClick={() => openRescheduleDialog(loan)}>
+                          <RefreshCw className="h-3 w-3" />{isRTL ? 'إعادة جدولة' : 'Reschedule'}
+                        </Button>
+                      )}
                       <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => openEditDialog(loan)}>
                         <Edit className="h-3 w-3" />{isRTL ? 'تعديل' : 'Edit'}
                       </Button>
