@@ -401,7 +401,7 @@ export const AttendanceList = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredRecords.map((record, index) => (
+                records.map((record, index) => (
                   <TableRow key={`${record.id}-${index}`}>
                     <TableCell>{record.date}</TableCell>
                     <TableCell className="font-medium">
