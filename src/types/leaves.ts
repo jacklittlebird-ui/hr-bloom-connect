@@ -83,6 +83,7 @@ export interface EmployeeLeaveBalance {
   annualTotal: number;
   annualUsed: number;
   annualRemaining: number;
+  overtimeDays: number;
   sickTotal: number;
   sickUsed: number;
   sickRemaining: number;
