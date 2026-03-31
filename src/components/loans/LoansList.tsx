@@ -324,6 +324,7 @@ export const LoansList = () => {
     }
   };
 
+  const getStationLabel = (empId: string) => {
     const station = getEmployeeStation(empId);
     const s = stationLocations.find(st => st.value === station);
     return s ? (isRTL ? s.labelAr : s.labelEn) : station || '-';
