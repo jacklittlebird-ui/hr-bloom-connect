@@ -20,7 +20,6 @@ import { InstallmentScheduleDialog } from './InstallmentScheduleDialog';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { stationLocations } from '@/data/stationLocations';
-import { stationLocations } from '@/data/stationLocations';
 import { useReportExport } from '@/hooks/useReportExport';
 
 const getMonthName = (dateStr: string, lang: string) => {
