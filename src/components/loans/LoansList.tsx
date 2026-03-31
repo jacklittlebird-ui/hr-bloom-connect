@@ -33,7 +33,7 @@ const getMonthName = (dateStr: string, lang: string) => {
 export const LoansList = () => {
   const { t, isRTL, language } = useLanguage();
   const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
-  const { loans, addLoan, updateLoan, deleteLoan, recordLoanPayment, refreshData } = useLoanData();
+  const { loans, addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment, refreshData } = useLoanData();
   const { employees } = useEmployeeData();
   const activeEmployees = employees.filter(e => e.status === 'active');
 
