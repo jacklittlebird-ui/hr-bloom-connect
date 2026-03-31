@@ -427,7 +427,7 @@ export const AttendanceList = () => {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {!isSearching && totalPages > 1 && (
           <div className="flex items-center justify-center gap-3 mt-4">
             <Button
               variant="outline"
