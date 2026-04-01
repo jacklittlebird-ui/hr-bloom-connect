@@ -58,6 +58,10 @@ export const LoansList = () => {
     newMonthlyPayment: '',
     newStartDate: '',
   });
+  const [showBulkPayDialog, setShowBulkPayDialog] = useState(false);
+  const [bulkPayMonth, setBulkPayMonth] = useState('');
+  const [bulkPayLoading, setBulkPayLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     employeeId: '', // UUID
     amount: '',
