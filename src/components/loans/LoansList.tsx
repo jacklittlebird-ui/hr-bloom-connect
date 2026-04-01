@@ -421,6 +421,9 @@ export const LoansList = () => {
               <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)}><Printer className="h-4 w-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })}><FileText className="h-4 w-4" /></Button>
               <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'loans' })}><FileSpreadsheet className="h-4 w-4" /></Button>
+              <Button variant="secondary" onClick={() => { setBulkPayMonth(''); setShowBulkPayDialog(true); }}>
+                <CheckCircle className="h-4 w-4 mr-1" />{isRTL ? 'دفعة جماعية' : 'Bulk Payment'}
+              </Button>
               <Button onClick={openAddDialog}><Plus className="h-4 w-4 mr-1" />{isRTL ? 'إضافة قرض' : 'Add Loan'}</Button>
             </div>
           </div>
