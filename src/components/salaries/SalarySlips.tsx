@@ -73,7 +73,7 @@ export const SalarySlips = () => {
     <div class="section">${ar?'المستحقات':'Earnings'}</div>
     <table><tr><th>${ar?'البند':'Item'}</th><th>${ar?'المبلغ':'Amount'}</th></tr>
     ${[{l:ar?'الراتب الأساسي':'Basic',v:slip.basicSalary},{l:ar?'بدل المواصلات':'Transport',v:slip.transportAllowance},{l:ar?'الحوافز':'Incentives',v:slip.incentives},{l:ar?'بدل المعيشة':'Living',v:slip.livingAllowance},{l:ar?'بدل المحطة':'Station',v:slip.stationAllowance},{l:ar?'بدل الجوال':'Mobile',v:slip.mobileAllowance},{l:ar?'أجر إضافي':'Overtime',v:slip.overtimePay},{l:ar?'المكافآت':'Bonus',v:slip.bonusAmount}].filter(x=>x.v>0).map(x=>`<tr><td>${x.l}</td><td>${x.v.toLocaleString()}</td></tr>`).join('')}
-    <tr style="font-weight:700;background:#e8f5e9"><td>${ar?'إجمالي المستحقات':'Total Earnings'}</td><td>${(slip.gross+slip.bonusAmount).toLocaleString()}</td></tr></table>
+    <tr style="font-weight:700;background:#e8f5e9"><td>${ar?'إجمالي المستحقات':'Total Earnings'}</td><td>${slip.gross.toLocaleString()}</td></tr></table>
     <div class="section">${ar?'الخصومات':'Deductions'}</div>
     <table><tr><th>${ar?'البند':'Item'}</th><th>${ar?'المبلغ':'Amount'}</th></tr>
     ${[{l:ar?'التأمينات الاجتماعية':'Social Insurance',v:slip.employeeInsurance},{l:ar?'القروض':'Loans',v:slip.loanPayment},{l:ar?'السلف':'Advances',v:slip.advanceAmount},{l:ar?'الجوال الشخصي':'Mobile Bill',v:slip.mobileBill},{l:ar?'خصم الإجازة':'Leave Ded.',v:slip.leaveDeduction},{l:ar?'الجزاءات':'Penalties',v:slip.penaltyAmount}].filter(x=>x.v>0).map(x=>`<tr><td>${x.l}</td><td>${x.v.toLocaleString()}</td></tr>`).join('')}
