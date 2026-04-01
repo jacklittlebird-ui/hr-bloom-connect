@@ -165,6 +165,23 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     const isFlexible = isFlexibleSchedule(scheduleType);
     const isLate = !isFlexible && now.getHours() >= 9;
 
+    // Close any previously open records before new check-in
+    const { data: openRecords } = await supabase
+      .from('attendance_records')
+      .select('id, check_in')
+      .eq('employee_id', employeeId)
+      .is('check_out', null);
+
+    if (openRecords && openRecords.length > 0) {
+      for (const rec of openRecords) {
+        const checkInTime = new Date(rec.check_in!);
+        const autoCheckout = new Date(checkInTime.getTime() + 5 * 60 * 60 * 1000).toISOString();
+        await supabase.from('attendance_records')
+          .update({ check_out: autoCheckout, notes: 'انصراف تلقائي / Auto-closed on new check-in' })
+          .eq('id', rec.id);
+      }
+    }
+
     await supabase.from('attendance_records').insert({
       employee_id: employeeId,
       date: dateString,
