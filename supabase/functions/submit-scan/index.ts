@@ -336,6 +336,24 @@ Deno.serve(async (req) => {
       const localHour = parseInt(now.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false }));
 
       if (event_type === "check_in") {
+        // Close ANY previously open records before creating new check-in
+        const { data: openRecords } = await admin
+          .from("attendance_records")
+          .select("id, check_in")
+          .eq("employee_id", empId)
+          .is("check_out", null)
+          .not("check_in", "is", null);
+
+        if (openRecords && openRecords.length > 0) {
+          for (const rec of openRecords) {
+            const checkInTime = new Date(rec.check_in);
+            const autoCheckout = new Date(checkInTime.getTime() + 5 * 60 * 60 * 1000).toISOString();
+            await admin.from("attendance_records")
+              .update({ check_out: autoCheckout, notes: "انصراف تلقائي / Auto-closed on new check-in" })
+              .eq("id", rec.id);
+          }
+        }
+
         const isLate = !isFlexible && localHour >= 9;
         await admin.from("attendance_records").insert({
           employee_id: empId,

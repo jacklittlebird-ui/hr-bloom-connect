@@ -351,19 +351,23 @@ Deno.serve(async (req) => {
 
     if (event_type === "check_in") {
       recordPromise = (async () => {
-        const { data: openRecord } = await supabaseAdmin
+        // Close ANY previously open record (regardless of date) before creating new check-in
+        const { data: openRecords } = await supabaseAdmin
           .from("attendance_records")
-          .select("id")
+          .select("id, check_in")
           .eq("employee_id", employeeId)
-          .eq("date", dateStr)
           .is("check_out", null)
-          .limit(1)
-          .maybeSingle();
+          .not("check_in", "is", null);
 
-        if (openRecord) {
-          await supabaseAdmin.from("attendance_records")
-            .update({ check_out: now.toISOString() })
-            .eq("id", openRecord.id);
+        if (openRecords && openRecords.length > 0) {
+          for (const rec of openRecords) {
+            // Auto-close with check_in + 5 hours for cross-day records
+            const checkInTime = new Date(rec.check_in);
+            const autoCheckout = new Date(checkInTime.getTime() + 5 * 60 * 60 * 1000).toISOString();
+            await supabaseAdmin.from("attendance_records")
+              .update({ check_out: autoCheckout, notes: "انصراف تلقائي / Auto-closed on new check-in" })
+              .eq("id", rec.id);
+          }
         }
 
         const isLate = !isFlexible && now.getHours() >= 9;
