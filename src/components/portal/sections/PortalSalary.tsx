@@ -110,7 +110,7 @@ export const PortalSalary = () => {
     <tr><td><strong>${ar?'القسم':'Dept'}</strong>: ${slip.department}</td><td><strong>${ar?'المحطة':'Station'}</strong>: ${st?(ar?st.labelAr:st.labelEn):'-'}</td></tr></table>
     <div class="section">${ar?'المستحقات':'Earnings'}</div>
     <table>${getEarnings(slip).filter(x=>x.v>0).map(x=>`<tr><td>${x.l}</td><td>${x.v.toLocaleString()}</td></tr>`).join('')}
-    <tr style="font-weight:700;background:#e8f5e9"><td>${ar?'إجمالي المستحقات':'Total Earnings'}</td><td>${(slip.gross+slip.bonusAmount).toLocaleString()}</td></tr></table>
+    <tr style="font-weight:700;background:#e8f5e9"><td>${ar?'إجمالي المستحقات':'Total Earnings'}</td><td>${slip.gross.toLocaleString()}</td></tr></table>
     <div class="section">${ar?'الخصومات':'Deductions'}</div>
     <table>${getDeductions(slip).filter(x=>x.v>0).map(x=>`<tr><td>${x.l}</td><td>${x.v.toLocaleString()}</td></tr>`).join('')}
     <tr style="font-weight:700;background:#ffebee"><td>${ar?'إجمالي الخصومات':'Total Deductions'}</td><td>${slip.totalDeductions.toLocaleString()}</td></tr></table>
