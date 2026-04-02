@@ -174,7 +174,8 @@ export const TrainingRecords = () => {
       const { data } = await supabase
         .from('training_records')
         .select('*, training_courses(name_en, name_ar)')
-        .eq('employee_id', selectedEmployee.id);
+        .eq('employee_id', selectedEmployee.id)
+        .order('start_date', { ascending: false });
       setTrainingRecords((data || []).map((r: any) => ({
         id: r.id,
         employeeId: r.employee_id,
@@ -238,7 +239,8 @@ export const TrainingRecords = () => {
     const { data } = await supabase
       .from('training_records')
       .select('*, training_courses(name_en, name_ar)')
-      .eq('employee_id', selectedEmployee.id);
+      .eq('employee_id', selectedEmployee.id)
+      .order('start_date', { ascending: false });
     setTrainingRecords((data || []).map((r: any) => ({
       id: r.id, employeeId: r.employee_id, courseId: r.course_id || '',
       courseName: r.training_courses ? (ar ? r.training_courses.name_ar : r.training_courses.name_en) : '',
@@ -313,7 +315,8 @@ export const TrainingRecords = () => {
     const { data } = await supabase
       .from('training_records')
       .select('*, training_courses(name_en, name_ar)')
-      .eq('employee_id', selectedEmployee.id);
+      .eq('employee_id', selectedEmployee.id)
+      .order('start_date', { ascending: false });
     setTrainingRecords((data || []).map((r: any) => ({
       id: r.id, employeeId: r.employee_id, courseId: r.course_id || '',
       courseName: r.training_courses ? (ar ? r.training_courses.name_ar : r.training_courses.name_en) : '',
@@ -413,8 +416,14 @@ export const TrainingRecords = () => {
           {filteredEmployees.map(emp => (
             <button key={emp.id} onClick={() => setSelectedEmployeeId(emp.id)}
               className={cn("w-full text-start px-3 py-2 rounded-lg transition-colors text-sm",
-                selectedEmployee?.id === emp.id ? "bg-primary text-primary-foreground" : "hover:bg-muted text-primary")}>
-              {language === 'ar' ? emp.nameAr : emp.nameEn}
+                selectedEmployee?.id === emp.id ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground")}>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="font-medium truncate">{language === 'ar' ? emp.nameAr : emp.nameEn}</span>
+                <span className={cn("text-xs truncate", selectedEmployee?.id === emp.id ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                  {ar ? (emp.jobTitleAr || '') : (emp.jobTitleEn || '')}
+                  {emp.station ? ` • ${emp.station}` : ''}
+                </span>
+              </div>
             </button>
           ))}
         </div>
@@ -666,8 +675,13 @@ export const TrainingRecords = () => {
               {bulkFilteredEmployees.map(emp => (
                 <label key={emp.id} className="flex items-center gap-3 px-3 py-2 hover:bg-muted cursor-pointer text-sm">
                   <Checkbox checked={bulkSelectedEmployeeIds.includes(emp.id)} onCheckedChange={(checked) => { setBulkSelectedEmployeeIds(prev => checked ? [...prev, emp.id] : prev.filter(id => id !== emp.id)); }} />
-                  <span className="font-medium">{ar ? emp.nameAr : emp.nameEn}</span>
-                  <span className="text-muted-foreground text-xs">{emp.department} - {emp.station}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium truncate">{ar ? emp.nameAr : emp.nameEn}</span>
+                    <span className="text-muted-foreground text-xs truncate">
+                      {ar ? (emp.jobTitleAr || '') : (emp.jobTitleEn || '')}
+                      {emp.station ? ` • ${emp.station}` : ''}
+                    </span>
+                  </div>
                 </label>
               ))}
             </div>
