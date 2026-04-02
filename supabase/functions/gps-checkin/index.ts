@@ -320,7 +320,14 @@ Deno.serve(async (req) => {
     recordCheckin(userId, event_type);
 
     const now = new Date();
-    const dateStr = now.toISOString().split("T")[0];
+    // Use station timezone (default Africa/Cairo = UTC+2) for local hour/date calculations
+    const stationTz = empRow.stations?.timezone || "Africa/Cairo";
+    const localTimeStr = now.toLocaleString("en-US", { timeZone: stationTz });
+    const localDate = new Date(localTimeStr);
+    const localHour = localDate.getHours();
+    const localMinutes = localDate.getMinutes();
+    // Use local date for attendance record date
+    const dateStr = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, "0")}-${String(localDate.getDate()).padStart(2, "0")}`;
 
     // Attendance rule check
     const { data: assignment } = await supabaseAdmin
