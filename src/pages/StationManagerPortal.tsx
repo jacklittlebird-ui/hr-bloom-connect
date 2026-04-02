@@ -890,7 +890,7 @@ const StationManagerPortal = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="employees" className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
           <TabsList className="inline-grid grid-cols-6" dir="rtl">
             <TabsTrigger value="employees" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>
             <TabsTrigger value="attendance" className="gap-1 md:gap-1.5 text-xs md:text-sm"><CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الحضور', 'Attendance')}</span></TabsTrigger>
