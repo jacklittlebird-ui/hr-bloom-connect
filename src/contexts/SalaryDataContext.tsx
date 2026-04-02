@@ -37,6 +37,7 @@ interface SalaryDataContextType {
   saveSalaryRecord: (record: SalaryRecord) => void;
   deleteSalaryRecord: (employeeId: string, year: string) => void;
   refreshSalaryRecords: () => void;
+  ensureLoaded: () => Promise<void>;
 }
 
 const SalaryDataContext = createContext<SalaryDataContextType | undefined>(undefined);
