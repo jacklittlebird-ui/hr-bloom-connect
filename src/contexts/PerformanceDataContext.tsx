@@ -100,22 +100,19 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
     setReviews(result);
   }, [isEmployee, scopedEmployeeId]);
 
-  const hasMounted = useRef(false);
-  useEffect(() => {
-    if (hasMounted.current) return;
-    hasMounted.current = true;
-    fetchReviews();
-  }, [fetchReviews]);
+  // Lazy loading: only fetch when accessed
+  const hasFetched = useRef(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT') {
+        hasFetched.current = false;
+        setReviews([]);
         invalidateCache('performance_');
-        fetchReviews();
       }
     });
     return () => subscription.unsubscribe();
-  }, [fetchReviews]);
+  }, []);
 
   const addReview = useCallback(async (review: Omit<PerformanceReview, 'id'>) => {
     const { error } = await supabase.from('performance_reviews').insert({
