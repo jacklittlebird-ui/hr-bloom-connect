@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
     // Get station
     const { data: emp } = await supabaseAdmin
       .from("employees")
-      .select("station_id, stations(id, checkin_method)")
+      .select("station_id, stations(id, checkin_method, timezone)")
       .eq("id", employeeId)
       .limit(1)
       .single();
