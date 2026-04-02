@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,11 +9,15 @@ import { QuarterlyReports } from '@/components/performance/QuarterlyReports';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
+import { usePerformanceData } from '@/contexts/PerformanceDataContext';
 
 const Performance = () => {
   const { t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [refreshKey, setRefreshKey] = useState(0);
+  const { ensureLoaded } = usePerformanceData();
+
+  useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
 
   return (
     <DashboardLayout>
