@@ -315,7 +315,8 @@ export const TrainingRecords = () => {
     const { data } = await supabase
       .from('training_records')
       .select('*, training_courses(name_en, name_ar)')
-      .eq('employee_id', selectedEmployee.id);
+      .eq('employee_id', selectedEmployee.id)
+      .order('start_date', { ascending: false });
     setTrainingRecords((data || []).map((r: any) => ({
       id: r.id, employeeId: r.employee_id, courseId: r.course_id || '',
       courseName: r.training_courses ? (ar ? r.training_courses.name_ar : r.training_courses.name_en) : '',
