@@ -121,26 +121,28 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [isEmployee, scopedEmployeeId]);
 
   const refreshData = useCallback(async () => {
+    hasFetched.current = true;
     await Promise.all([fetchLoans(), fetchAdvances()]);
   }, [fetchLoans, fetchAdvances]);
 
-  const hasMounted = useRef(false);
-  useEffect(() => {
-    if (hasMounted.current) return;
-    hasMounted.current = true;
-    fetchLoans();
-    fetchAdvances();
+  // Lazy loading: don't fetch on mount
+  const hasFetched = useRef(false);
+  const ensureLoaded = useCallback(async () => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    await Promise.all([fetchLoans(), fetchAdvances()]);
   }, [fetchLoans, fetchAdvances]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        fetchLoans();
-        fetchAdvances();
+      if (event === 'SIGNED_OUT') {
+        hasFetched.current = false;
+        setLoans([]);
+        setAdvances([]);
       }
     });
     return () => subscription.unsubscribe();
-  }, [fetchLoans, fetchAdvances]);
+  }, []);
 
   const addLoan = useCallback(async (loan: Omit<Loan, 'id' | 'paidInstallments' | 'paidAmount' | 'remainingAmount' | 'monthlyPayment'> & { monthlyPayment?: number }) => {
     const { error } = await supabase.from('loans').insert({
