@@ -12,22 +12,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { usePagination } from '@/hooks/usePagination';
 import { useReportExport } from '@/hooks/useReportExport';
-import { Edit, Bell, AlertTriangle, Search, Printer, Download, Building2, MapPin } from 'lucide-react';
+import { Edit, AlertTriangle, Search, Printer, Download, Building2, MapPin } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-interface ExpiringEmployee {
+interface EligibleEmployee {
   id: string;
   employee_code: string;
   name_ar: string;
   name_en: string;
-  social_insurance_no: string | null;
-  social_insurance_start_date: string | null;
-  social_insurance_end_date: string | null;
+  hire_date: string;
   station_name?: string;
   department_name?: string;
   station_id?: string | null;
   department_id?: string | null;
+  months_employed: number;
 }
 
 interface StationDept {
@@ -36,40 +35,72 @@ interface StationDept {
   name_en: string;
 }
 
-export const InsuranceRenewals = () => {
+export const LeaveBalancesAlert = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
-  const [employees, setEmployees] = useState<ExpiringEmployee[]>([]);
+  const [employees, setEmployees] = useState<EligibleEmployee[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
   const [stations, setStations] = useState<StationDept[]>([]);
   const [departments, setDepartments] = useState<StationDept[]>([]);
-  const [editDialog, setEditDialog] = useState<ExpiringEmployee | null>(null);
-  const [newStartDate, setNewStartDate] = useState('');
-  const [newEndDate, setNewEndDate] = useState('');
+  const [editDialog, setEditDialog] = useState<EligibleEmployee | null>(null);
+  const [annualTotal, setAnnualTotal] = useState('21');
+  const [casualTotal, setCasualTotal] = useState('7');
+  const [sickTotal, setSickTotal] = useState('7');
+  const [permissionsTotal, setPermissionsTotal] = useState('3');
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
 
-  const fetchExpiring = useCallback(async () => {
+  const currentYear = new Date().getFullYear();
+
+  const fetchEligible = useCallback(async () => {
     setLoading(true);
     const today = new Date();
-    const fourMonthsFromNow = new Date(today);
-    fourMonthsFromNow.setMonth(fourMonthsFromNow.getMonth() + 4);
-    const cutoffDate = fourMonthsFromNow.toISOString().split('T')[0];
 
-    const { data, error } = await supabase
+    // Get active employees with hire_date
+    const { data: allEmps, error } = await supabase
       .from('employees')
-      .select('id, employee_code, name_ar, name_en, social_insurance_no, social_insurance_start_date, social_insurance_end_date, station_id, department_id')
-      .not('social_insurance_end_date', 'is', null)
-      .lte('social_insurance_end_date', cutoffDate)
+      .select('id, employee_code, name_ar, name_en, hire_date, station_id, department_id')
       .eq('status', 'active')
-      .order('social_insurance_end_date', { ascending: true });
+      .not('hire_date', 'is', null);
 
     if (error) { setLoading(false); return; }
 
-    const stationIds = [...new Set((data || []).map(e => e.station_id).filter(Boolean))];
-    const deptIds = [...new Set((data || []).map(e => e.department_id).filter(Boolean))];
+    // Filter employees who completed 6+ months
+    const eligible = (allEmps || []).filter(e => {
+      const hire = new Date(e.hire_date!);
+      const diffMs = today.getTime() - hire.getTime();
+      const diffMonths = diffMs / (1000 * 60 * 60 * 24 * 30.44);
+      return diffMonths >= 6;
+    });
+
+    if (eligible.length === 0) {
+      setEmployees([]);
+      setLoading(false);
+      return;
+    }
+
+    const empIds = eligible.map(e => e.id);
+
+    // Get leave_balances for current year for these employees
+    const { data: balances } = await supabase
+      .from('leave_balances')
+      .select('employee_id, annual_total, casual_total, sick_total, permissions_total')
+      .eq('year', currentYear)
+      .in('employee_id', empIds);
+
+    // Find employees with NO balance record or all totals = 0
+    const balanceMap = new Map((balances || []).map(b => [b.employee_id, b]));
+    const needsBalance = eligible.filter(e => {
+      const b = balanceMap.get(e.id);
+      if (!b) return true; // no record at all
+      return (b.annual_total === 0 && b.casual_total === 0 && b.sick_total === 0 && b.permissions_total === 0);
+    });
+
+    // Fetch stations/departments
+    const stationIds = [...new Set(needsBalance.map(e => e.station_id).filter(Boolean))];
+    const deptIds = [...new Set(needsBalance.map(e => e.department_id).filter(Boolean))];
 
     const [stationsRes, deptsRes] = await Promise.all([
       stationIds.length > 0 ? supabase.from('stations').select('id, name_ar, name_en').in('id', stationIds) : { data: [] },
@@ -84,18 +115,23 @@ export const InsuranceRenewals = () => {
     const stationMap = new Map(stationList.map(s => [s.id, ar ? s.name_ar : s.name_en]));
     const deptMap = new Map(deptList.map(d => [d.id, ar ? d.name_ar : d.name_en]));
 
-    setEmployees((data || []).map(e => ({
-      id: e.id, employee_code: e.employee_code, name_ar: e.name_ar, name_en: e.name_en,
-      social_insurance_no: e.social_insurance_no, social_insurance_start_date: e.social_insurance_start_date,
-      social_insurance_end_date: e.social_insurance_end_date,
-      station_id: e.station_id, department_id: e.department_id,
-      station_name: e.station_id ? stationMap.get(e.station_id) || '' : '',
-      department_name: e.department_id ? deptMap.get(e.department_id) || '' : '',
-    })));
-    setLoading(false);
-  }, [ar]);
+    const today2 = new Date();
+    setEmployees(needsBalance.map(e => {
+      const hire = new Date(e.hire_date!);
+      const diffMonths = Math.floor((today2.getTime() - hire.getTime()) / (1000 * 60 * 60 * 24 * 30.44));
+      return {
+        id: e.id, employee_code: e.employee_code, name_ar: e.name_ar, name_en: e.name_en,
+        hire_date: e.hire_date!, station_id: e.station_id, department_id: e.department_id,
+        station_name: e.station_id ? stationMap.get(e.station_id) || '' : '',
+        department_name: e.department_id ? deptMap.get(e.department_id) || '' : '',
+        months_employed: diffMonths,
+      };
+    }).sort((a, b) => a.months_employed - b.months_employed));
 
-  useEffect(() => { fetchExpiring(); }, [fetchExpiring]);
+    setLoading(false);
+  }, [ar, currentYear]);
+
+  useEffect(() => { fetchEligible(); }, [fetchEligible]);
 
   const filtered = employees.filter(e => {
     if (search) {
@@ -109,35 +145,48 @@ export const InsuranceRenewals = () => {
 
   const { paginatedItems, currentPage, totalPages, totalItems, setCurrentPage, startIndex, endIndex } = usePagination(filtered, 30);
 
-  const getDaysRemaining = (endDate: string) => {
-    const diff = Math.ceil((new Date(endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-    return diff;
-  };
-
-  const handleEdit = (emp: ExpiringEmployee) => {
+  const handleEdit = (emp: EligibleEmployee) => {
     setEditDialog(emp);
-    setNewStartDate(emp.social_insurance_start_date || '');
-    setNewEndDate(emp.social_insurance_end_date || '');
+    setAnnualTotal('21');
+    setCasualTotal('7');
+    setSickTotal('7');
+    setPermissionsTotal('3');
   };
 
   const handleSave = async () => {
-    if (!editDialog || !newStartDate || !newEndDate) return;
-    const { error } = await supabase.from('employees').update({ social_insurance_start_date: newStartDate, social_insurance_end_date: newEndDate }).eq('id', editDialog.id);
-    if (error) { toast({ title: ar ? 'خطأ' : 'Error', description: error.message, variant: 'destructive' }); return; }
-    toast({ title: ar ? 'تم التحديث بنجاح' : 'Updated successfully' });
-    setEditDialog(null);
-    await fetchExpiring();
-  };
+    if (!editDialog) return;
+    const annual = parseInt(annualTotal) || 0;
+    const casual = parseInt(casualTotal) || 0;
+    const sick = parseInt(sickTotal) || 0;
+    const permissions = parseInt(permissionsTotal) || 0;
 
-  const handleNotify = async (emp: ExpiringEmployee) => {
-    const { data: empData } = await supabase.from('employees').select('user_id').eq('id', emp.id).single();
-    const { error } = await supabase.from('notifications').insert({
-      title_ar: `تنبيه: تأمينك الاجتماعي يقترب من الانتهاء (${emp.social_insurance_end_date})`,
-      title_en: `Alert: Your social insurance is expiring soon (${emp.social_insurance_end_date})`,
-      type: 'warning', module: 'employee', employee_id: emp.id, user_id: empData?.user_id || null,
-    });
-    if (error) { toast({ title: ar ? 'خطأ' : 'Error', description: error.message, variant: 'destructive' }); return; }
-    toast({ title: ar ? 'تم إرسال الإشعار' : 'Notification sent' });
+    // Check if balance record exists
+    const { data: existing } = await supabase
+      .from('leave_balances')
+      .select('id')
+      .eq('employee_id', editDialog.id)
+      .eq('year', currentYear)
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase.from('leave_balances').update({
+        annual_total: annual, casual_total: casual, sick_total: sick, permissions_total: permissions,
+      }).eq('id', existing.id);
+      if (error) { toast({ title: ar ? 'خطأ' : 'Error', description: error.message, variant: 'destructive' }); return; }
+    } else {
+      const { error } = await supabase.from('leave_balances').insert({
+        employee_id: editDialog.id, year: currentYear,
+        annual_total: annual, annual_used: 0,
+        casual_total: casual, casual_used: 0,
+        sick_total: sick, sick_used: 0,
+        permissions_total: permissions, permissions_used: 0,
+      });
+      if (error) { toast({ title: ar ? 'خطأ' : 'Error', description: error.message, variant: 'destructive' }); return; }
+    }
+
+    toast({ title: ar ? 'تم تسجيل الأرصدة بنجاح' : 'Leave balances saved successfully' });
+    setEditDialog(null);
+    await fetchEligible();
   };
 
   const handleExportExcel = () => {
@@ -147,27 +196,21 @@ export const InsuranceRenewals = () => {
       { headerAr: 'الاسم بالإنجليزية', headerEn: 'Name (EN)', key: 'nameEn' },
       { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
       { headerAr: 'القسم', headerEn: 'Department', key: 'dept' },
-      { headerAr: 'رقم التأمين', headerEn: 'Insurance No.', key: 'insNo' },
-      { headerAr: 'تاريخ البدء', headerEn: 'Start Date', key: 'startDate' },
-      { headerAr: 'تاريخ الانتهاء', headerEn: 'End Date', key: 'endDate' },
-      { headerAr: 'المتبقي (يوم)', headerEn: 'Remaining (days)', key: 'remaining' },
+      { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hireDate' },
+      { headerAr: 'عدد الأشهر', headerEn: 'Months Employed', key: 'months' },
     ];
-    const data = filtered.map(e => {
-      const days = getDaysRemaining(e.social_insurance_end_date!);
-      return {
-        code: e.employee_code, nameAr: e.name_ar, nameEn: e.name_en,
-        station: e.station_name || '-', dept: e.department_name || '-',
-        insNo: e.social_insurance_no || '-', startDate: e.social_insurance_start_date || '-',
-        endDate: e.social_insurance_end_date, remaining: days < 0 ? `منتهي (${Math.abs(days)})` : String(days),
-      };
-    });
-    exportBilingualCSV({ titleAr: 'تجديدات التأمين الاجتماعي', titleEn: 'Social Insurance Renewals', data, columns, fileName: 'Insurance_Renewals',
+    const data = filtered.map(e => ({
+      code: e.employee_code, nameAr: e.name_ar, nameEn: e.name_en,
+      station: e.station_name || '-', dept: e.department_name || '-',
+      hireDate: e.hire_date, months: String(e.months_employed),
+    }));
+    exportBilingualCSV({ titleAr: 'أرصدة الإجازات - موظفين بدون أرصدة', titleEn: 'Leave Balances - Employees Without Balances', data, columns, fileName: 'Leave_Balances_Alert',
       summaryCards: [{ label: ar ? 'إجمالي' : 'Total', value: String(filtered.length) }],
     });
   };
 
   const handlePrintReport = () => {
-    handlePrint(ar ? 'تجديدات التأمين الاجتماعي' : 'Social Insurance Renewals',
+    handlePrint(ar ? 'أرصدة الإجازات - موظفين بدون أرصدة' : 'Leave Balances - Employees Without Balances',
       [{ label: ar ? 'إجمالي' : 'Total', value: String(filtered.length) }]);
   };
 
@@ -217,7 +260,7 @@ export const InsuranceRenewals = () => {
       ) : filtered.length === 0 ? (
         <Card><CardContent className="p-8 text-center text-muted-foreground">
           <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          {ar ? 'لا يوجد موظفين بتأمين اجتماعي قارب على الانتهاء' : 'No employees with expiring social insurance'}
+          {ar ? 'لا يوجد موظفين أتموا 6 أشهر بدون أرصدة إجازات' : 'No employees with 6+ months and no leave balances'}
         </CardContent></Card>
       ) : (
         <Card>
@@ -230,40 +273,29 @@ export const InsuranceRenewals = () => {
                     <TableHead>{ar ? 'اسم الموظف' : 'Employee Name'}</TableHead>
                     <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                     <TableHead>{ar ? 'القسم' : 'Department'}</TableHead>
-                    <TableHead>{ar ? 'رقم التأمين' : 'Insurance No.'}</TableHead>
-                    <TableHead>{ar ? 'تاريخ البدء' : 'Start Date'}</TableHead>
-                    <TableHead>{ar ? 'تاريخ الانتهاء' : 'End Date'}</TableHead>
-                    <TableHead>{ar ? 'المتبقي' : 'Remaining'}</TableHead>
+                    <TableHead>{ar ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
+                    <TableHead>{ar ? 'عدد الأشهر' : 'Months'}</TableHead>
                     <TableHead className="print:hidden">{ar ? 'إجراءات' : 'Actions'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedItems.map(emp => {
-                    const days = getDaysRemaining(emp.social_insurance_end_date!);
-                    const isExpired = days < 0;
-                    return (
-                      <TableRow key={emp.id}>
-                        <TableCell className="font-mono text-xs">{emp.employee_code}</TableCell>
-                        <TableCell className="font-medium">{ar ? emp.name_ar : emp.name_en}</TableCell>
-                        <TableCell>{emp.station_name || '-'}</TableCell>
-                        <TableCell>{emp.department_name || '-'}</TableCell>
-                        <TableCell>{emp.social_insurance_no || '-'}</TableCell>
-                        <TableCell>{emp.social_insurance_start_date || '-'}</TableCell>
-                        <TableCell>{emp.social_insurance_end_date}</TableCell>
-                        <TableCell>
-                          <Badge variant={isExpired ? 'destructive' : days <= 30 ? 'destructive' : 'secondary'}>
-                            {isExpired ? (ar ? `منتهي منذ ${Math.abs(days)} يوم` : `Expired ${Math.abs(days)}d ago`) : (ar ? `${days} يوم` : `${days} days`)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="print:hidden">
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={() => handleEdit(emp)}><Edit className="w-3 h-3" />{ar ? 'تعديل' : 'Edit'}</Button>
-                            <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={() => handleNotify(emp)}><Bell className="w-3 h-3" />{ar ? 'إشعار' : 'Notify'}</Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {paginatedItems.map(emp => (
+                    <TableRow key={emp.id}>
+                      <TableCell className="font-mono text-xs">{emp.employee_code}</TableCell>
+                      <TableCell className="font-medium">{ar ? emp.name_ar : emp.name_en}</TableCell>
+                      <TableCell>{emp.station_name || '-'}</TableCell>
+                      <TableCell>{emp.department_name || '-'}</TableCell>
+                      <TableCell>{emp.hire_date}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{ar ? `${emp.months_employed} شهر` : `${emp.months_employed} months`}</Badge>
+                      </TableCell>
+                      <TableCell className="print:hidden">
+                        <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={() => handleEdit(emp)}>
+                          <Edit className="w-3 h-3" />{ar ? 'تسجيل أرصدة' : 'Set Balances'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
@@ -274,12 +306,15 @@ export const InsuranceRenewals = () => {
 
       <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{ar ? 'تعديل تواريخ التأمين الاجتماعي' : 'Edit Social Insurance Dates'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{ar ? 'تسجيل أرصدة الإجازات' : 'Set Leave Balances'}</DialogTitle></DialogHeader>
           {editDialog && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground font-medium">{ar ? editDialog.name_ar : editDialog.name_en}</p>
-              <div className="space-y-2"><Label>{ar ? 'تاريخ بدء التأمين الاجتماعي' : 'Social Insurance Start Date'}</Label><Input type="date" value={newStartDate} onChange={e => setNewStartDate(e.target.value)} /></div>
-              <div className="space-y-2"><Label>{ar ? 'تاريخ انتهاء التأمين الاجتماعي' : 'Social Insurance End Date'}</Label><Input type="date" value={newEndDate} onChange={e => setNewEndDate(e.target.value)} /></div>
+              <p className="text-xs text-muted-foreground">{ar ? `السنة: ${currentYear}` : `Year: ${currentYear}`}</p>
+              <div className="space-y-2"><Label>{ar ? 'رصيد الإجازات السنوية' : 'Annual Leave Total'}</Label><Input type="number" value={annualTotal} onChange={e => setAnnualTotal(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{ar ? 'رصيد الإجازات العارضة' : 'Casual Leave Total'}</Label><Input type="number" value={casualTotal} onChange={e => setCasualTotal(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{ar ? 'رصيد الإجازات المرضية' : 'Sick Leave Total'}</Label><Input type="number" value={sickTotal} onChange={e => setSickTotal(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{ar ? 'رصيد الأذونات' : 'Permissions Total'}</Label><Input type="number" value={permissionsTotal} onChange={e => setPermissionsTotal(e.target.value)} /></div>
             </div>
           )}
           <DialogFooter>
