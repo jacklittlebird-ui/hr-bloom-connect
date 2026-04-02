@@ -5,6 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 
+// Columns needed for the employee list table (fast load)
+const LIST_COLUMNS = 'id, employee_code, name_ar, name_en, phone, status, avatar, station_id, department_id, job_title_ar, job_title_en, job_level, dept_code, hire_date, first_name, father_name, family_name, email, employment_status, contract_type, resigned, resignation_date, gender';
+
+const LIST_SELECT = `${LIST_COLUMNS}, departments(name_ar, name_en), stations(code, name_ar, name_en)`;
+
 interface EmployeeDataContextType {
   employees: Employee[];
   loading: boolean;
@@ -13,11 +18,12 @@ interface EmployeeDataContextType {
   updateEmployee: (id: string, updates: Partial<Employee>) => Promise<void>;
   addEmployee: (employee: Employee) => void;
   refreshEmployees: () => Promise<void>;
+  ensureFullEmployee: (id: string) => Promise<Employee | undefined>;
 }
 
 const EmployeeDataContext = createContext<EmployeeDataContextType | undefined>(undefined);
 
-// Map DB row → frontend Employee
+// Map DB row → frontend Employee (handles both partial and full rows)
 function mapRow(row: any): Employee {
   return {
     id: row.id,
@@ -239,6 +245,8 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { isAuthenticated, user } = useAuth();
   const isEmployee = user?.role === 'employee';
   const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
+  // Track which employee IDs have been fully loaded
+  const fullLoadedIds = useRef<Set<string>>(new Set());
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
@@ -246,7 +254,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     try {
       const result = await debouncedFetch(cacheKey, async () => {
-        // Employee role: fetch only their own record
+        // Employee role: fetch only their own record (full data)
         if (isEmployee && scopedEmployeeId) {
           const { data, error } = await supabase
             .from('employees')
@@ -255,6 +263,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
             .single();
           trackQuery('employees', data ? 1 : 0);
           if (error) { console.error('Error fetching employee profile:', error); return []; }
+          if (data) fullLoadedIds.current.add(data.id);
           return data ? [mapRow(data)] : [];
         }
 
@@ -291,16 +300,17 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return (data || []).map(mapRow);
         }
 
-        // Admin/HR: fetch all
+        // Admin/HR: fast list load with essential columns only
         const { data, error } = await supabase
           .from('employees')
-          .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+          .select(LIST_SELECT)
           .order('employee_code', { ascending: true });
         trackQuery('employees', data?.length || 0);
         if (error) { console.error('Error fetching employees:', error); return []; }
         return (data || []).map(mapRow);
       }, { ttlMs: 60_000 });
 
+      fullLoadedIds.current = new Set();
       setEmployees(result);
     } catch (err) {
       console.error('fetchEmployees error:', err);
@@ -316,6 +326,24 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setLoading(false);
     }
   }, [isAuthenticated, fetchEmployees]);
+
+  // Fetch full employee data on-demand (for detail pages)
+  const ensureFullEmployee = useCallback(async (id: string): Promise<Employee | undefined> => {
+    if (fullLoadedIds.current.has(id)) {
+      return employees.find(e => e.id === id);
+    }
+    const { data, error } = await supabase
+      .from('employees')
+      .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+      .eq('id', id)
+      .single();
+    if (error || !data) return employees.find(e => e.id === id);
+    
+    const fullEmployee = mapRow(data);
+    fullLoadedIds.current.add(id);
+    setEmployees(prev => prev.map(e => e.id === id ? fullEmployee : e));
+    return fullEmployee;
+  }, [employees]);
 
   const getEmployee = useCallback((id: string) => {
     return employees.find(e => e.id === id);
@@ -358,13 +386,14 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
     if (data) {
+      fullLoadedIds.current.add(data.id);
       setEmployees(prev => [...prev, mapRow(data)]);
     }
     addNotification({ titleAr: `تم إضافة موظف جديد: ${employee.nameAr}`, titleEn: `New employee added: ${employee.nameEn}`, type: 'success', module: 'employee' });
   }, [addNotification]);
 
   return (
-    <EmployeeDataContext.Provider value={{ employees, loading, getEmployee, getEmployeeById, updateEmployee, addEmployee, refreshEmployees: fetchEmployees }}>
+    <EmployeeDataContext.Provider value={{ employees, loading, getEmployee, getEmployeeById, updateEmployee, addEmployee, refreshEmployees: fetchEmployees, ensureFullEmployee }}>
       {children}
     </EmployeeDataContext.Provider>
   );
