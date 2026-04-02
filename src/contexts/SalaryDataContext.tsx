@@ -155,7 +155,7 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [addNotification, fetchRecords]);
 
   return (
-    <SalaryDataContext.Provider value={{ salaryRecords, getSalaryRecord, getLatestSalaryRecord, saveSalaryRecord, deleteSalaryRecord, refreshSalaryRecords }}>
+    <SalaryDataContext.Provider value={{ salaryRecords, getSalaryRecord, getLatestSalaryRecord, saveSalaryRecord, deleteSalaryRecord, refreshSalaryRecords, ensureLoaded }}>
       {children}
     </SalaryDataContext.Provider>
   );
