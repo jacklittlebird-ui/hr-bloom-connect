@@ -162,8 +162,14 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
     await fetchReviews();
   }, [fetchReviews]);
 
+  const ensureLoaded = useCallback(async () => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    await fetchReviews();
+  }, [fetchReviews]);
+
   return (
-    <PerformanceDataContext.Provider value={{ reviews, addReview, updateReview, deleteReview }}>
+    <PerformanceDataContext.Provider value={{ reviews, addReview, updateReview, deleteReview, ensureLoaded }}>
       {children}
     </PerformanceDataContext.Provider>
   );
