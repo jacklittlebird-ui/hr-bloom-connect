@@ -54,9 +54,9 @@ export const InsuranceRenewals = () => {
   const fetchExpiring = useCallback(async () => {
     setLoading(true);
     const today = new Date();
-    const twoMonthsFromNow = new Date(today);
-    twoMonthsFromNow.setMonth(twoMonthsFromNow.getMonth() + 2);
-    const cutoffDate = twoMonthsFromNow.toISOString().split('T')[0];
+    const fourMonthsFromNow = new Date(today);
+    fourMonthsFromNow.setMonth(fourMonthsFromNow.getMonth() + 4);
+    const cutoffDate = fourMonthsFromNow.toISOString().split('T')[0];
 
     const { data, error } = await supabase
       .from('employees')
