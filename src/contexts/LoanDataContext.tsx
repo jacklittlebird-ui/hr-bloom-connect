@@ -51,6 +51,7 @@ interface LoanDataContextType {
   updateAdvance: (id: string, updates: Partial<Advance>) => Promise<void>;
   deleteAdvance: (id: string) => Promise<void>;
   refreshData: () => Promise<void>;
+  ensureLoaded: () => Promise<void>;
 }
 
 const LoanDataContext = createContext<LoanDataContextType | undefined>(undefined);
