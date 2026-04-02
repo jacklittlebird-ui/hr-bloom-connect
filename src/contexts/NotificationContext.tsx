@@ -29,6 +29,7 @@ interface NotificationContextType {
   clearAll: () => void;
   getFilteredNotifications: (portal: PortalFilter, employeeId?: string) => AppNotification[];
   refreshNotifications: () => void;
+  ensureLoaded: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
