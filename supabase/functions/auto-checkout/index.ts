@@ -48,15 +48,17 @@ Deno.serve(async (req) => {
     let errors = 0;
 
     for (const record of openRecords) {
-      // Set check_out to 5 hours after check_in (reasonable work duration for overnight shifts)
+      // Set check_out to 5.5 hours after check_in and record 5.5 hours of work
       const checkInTime = new Date(record.check_in);
-      const autoCheckout = new Date(checkInTime.getTime() + 5 * 60 * 60 * 1000).toISOString();
+      const autoCheckout = new Date(checkInTime.getTime() + 5.5 * 60 * 60 * 1000).toISOString();
 
       const { error: updateErr } = await admin
         .from("attendance_records")
         .update({
           check_out: autoCheckout,
-          notes: "انصراف تلقائي / Auto checkout (5 hours after check-in)",
+          work_hours: 5,
+          work_minutes: 330, // 5.5 hours = 330 minutes
+          notes: "انصراف تلقائي / Auto checkout (5.5 work hours recorded)",
         })
         .eq("id", record.id);
 

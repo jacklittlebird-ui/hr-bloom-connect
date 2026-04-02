@@ -175,9 +175,14 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     if (openRecords && openRecords.length > 0) {
       for (const rec of openRecords) {
         const checkInTime = new Date(rec.check_in!);
-        const autoCheckout = new Date(checkInTime.getTime() + 5 * 60 * 60 * 1000).toISOString();
+        const autoCheckout = new Date(checkInTime.getTime() + 5.5 * 60 * 60 * 1000).toISOString();
         await supabase.from('attendance_records')
-          .update({ check_out: autoCheckout, notes: 'انصراف تلقائي / Auto-closed on new check-in' })
+          .update({ 
+            check_out: autoCheckout, 
+            work_hours: 5,
+            work_minutes: 330,
+            notes: 'انصراف تلقائي / Auto-closed on new check-in (5.5 work hours)' 
+          })
           .eq('id', rec.id);
       }
     }
