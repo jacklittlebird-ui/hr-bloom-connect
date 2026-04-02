@@ -377,7 +377,7 @@ Deno.serve(async (req) => {
           }
         }
 
-        const isLate = !isFlexible && now.getHours() >= 9;
+        const isLate = !isFlexible && localHour >= 9;
         await supabaseAdmin.from("attendance_records").insert({
           employee_id: employeeId,
           date: dateStr,
