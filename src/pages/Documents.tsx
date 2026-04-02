@@ -184,6 +184,8 @@ const Documents = () => {
           <MissingBankData />
         ) : activeMainTab === 'missingJob' ? (
           <MissingJobData />
+        ) : activeMainTab === 'leaveBalances' ? (
+          <LeaveBalancesAlert />
         ) : (
         <>
 
