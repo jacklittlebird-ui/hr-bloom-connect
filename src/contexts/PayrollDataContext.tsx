@@ -417,9 +417,8 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [addNotification, fetchEntries]);
 
   const refreshPayroll = useCallback(async () => {
-    
-    await fetchEmployeeMap();
-    await fetchEntries();
+    hasFetched.current = true;
+    await Promise.all([fetchEmployeeMap(), fetchEntries()]);
   }, [fetchEmployeeMap, fetchEntries]);
 
   return (
