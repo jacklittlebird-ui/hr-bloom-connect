@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
@@ -84,11 +84,19 @@ const EmployeeDetails = () => {
   const location = useLocation();
   const isViewMode = location.pathname.endsWith('/view');
   const { t, isRTL, language } = useLanguage();
-  const { getEmployee, updateEmployee } = useEmployeeData();
+  const { getEmployee, updateEmployee, ensureFullEmployee } = useEmployeeData();
   const { user } = useAuth();
   const isHR = user?.role === 'hr';
   const isAdmin = user?.role === 'admin';
   const [activeTab, setActiveTab] = useState('basic');
+  const [fullLoaded, setFullLoaded] = useState(false);
+
+  // Load full employee data on mount
+  useEffect(() => {
+    if (id) {
+      ensureFullEmployee(id).then(() => setFullLoaded(true));
+    }
+  }, [id, ensureFullEmployee]);
 
   // Filter out salary tabs for HR users
   const detailTabs = useMemo(
