@@ -79,33 +79,45 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       trackQuery('notifications', data?.length || 0);
       return (data || []).map(mapRow);
     }, { ttlMs: 30_000 });
-    
+
     setNotifications(result);
   }, []);
 
-  const hasMounted = useRef(false);
+  const hasFetched = useRef(false);
+
+  const ensureLoaded = useCallback(async () => {
+    if (hasFetched.current) return;
+
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) return;
+
+    hasFetched.current = true;
+    if (!userId) {
+      setUserId(data.user.id);
+    }
+    await fetchNotifications();
+  }, [fetchNotifications, userId]);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUserId(data.user.id);
-        if (!hasMounted.current) {
-          hasMounted.current = true;
-          fetchNotifications();
-        }
       }
     });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setUserId(session.user.id);
+        hasFetched.current = false;
         invalidateCache('notifications');
-        fetchNotifications();
       } else if (event === 'SIGNED_OUT') {
         setUserId(null);
         setNotifications([]);
+        hasFetched.current = false;
       }
     });
     return () => subscription.unsubscribe();
-  }, [fetchNotifications]);
+  }, []);
 
   const getFilteredNotifications = useCallback((portal: PortalFilter, employeeId?: string): AppNotification[] => {
     const modules = PORTAL_MODULES[portal];
