@@ -209,7 +209,14 @@ const StationManagerPortal = () => {
     setAttLoading(false);
   }, [stationEmployees, attDateFrom, attDateTo]);
 
-  useEffect(() => { fetchAttendance(); }, [fetchAttendance]);
+  // Lazy: only fetch attendance when tab is active
+  const attFetched = useRef(false);
+  useEffect(() => {
+    if (activeTab === 'attendance') {
+      attFetched.current = true;
+      fetchAttendance();
+    }
+  }, [activeTab, fetchAttendance]);
 
   const filteredAttRecords = useMemo(() => {
     let list = attRecords;
