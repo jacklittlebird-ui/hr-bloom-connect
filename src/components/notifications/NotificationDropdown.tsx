@@ -18,7 +18,7 @@ interface NotificationDropdownProps {
 
 export const NotificationDropdown = ({ variant = 'header', employeeId, portalFilter = 'admin' }: NotificationDropdownProps) => {
   const { language, isRTL } = useLanguage();
-  const { getFilteredNotifications, markAsRead, markAllAsRead, clearAll } = useNotifications();
+  const { getFilteredNotifications, markAsRead, markAllAsRead, clearAll, ensureLoaded } = useNotifications();
 
   const filteredNotifications = getFilteredNotifications(portalFilter, employeeId);
   const filteredUnreadCount = filteredNotifications.filter(n => !n.read).length;
@@ -37,7 +37,11 @@ export const NotificationDropdown = ({ variant = 'header', employeeId, portalFil
   const isHeader = variant === 'header';
 
   return (
-    <Popover>
+    <Popover onOpenChange={(open) => {
+      if (open) {
+        void ensureLoaded();
+      }
+    }}>
       <PopoverTrigger asChild>
         {isHeader ? (
           <button className="relative p-2 rounded-full hover:bg-primary-foreground/10 transition-colors">

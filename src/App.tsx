@@ -117,7 +117,7 @@ const AppRoutes = () => (
   </Suspense>
 );
 
-const AuthenticatedDataProviders = ({ children }: { children: React.ReactNode }) => (
+const FullAuthenticatedDataProviders = ({ children }: { children: React.ReactNode }) => (
   <NotificationProvider>
     <EmployeeDataProvider>
       <SalaryDataProvider>
@@ -137,12 +137,25 @@ const AuthenticatedDataProviders = ({ children }: { children: React.ReactNode })
   </NotificationProvider>
 );
 
+const EmployeesRouteProviders = ({ children }: { children: React.ReactNode }) => (
+  <NotificationProvider>
+    <EmployeeDataProvider>{children}</EmployeeDataProvider>
+  </NotificationProvider>
+);
+
+const RouteScopedProviders = ({ children, pathname }: { children: React.ReactNode; pathname: string }) => {
+  if (pathname === '/employees') {
+    return <EmployeesRouteProviders>{children}</EmployeesRouteProviders>;
+  }
+
+  return <FullAuthenticatedDataProviders>{children}</FullAuthenticatedDataProviders>;
+};
+
 const AppContent = () => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
   const isPublicRoute = location.pathname === '/login' || location.pathname === '/setup';
 
-  // Track if providers were ever mounted to prevent unmounting on background auth events
   const providersWereMounted = React.useRef(false);
   const shouldMountProviders = isAuthenticated && !isPublicRoute;
 
@@ -150,19 +163,16 @@ const AppContent = () => {
     providersWereMounted.current = true;
   }
 
-  // Keep providers mounted if they were previously mounted and we're just in a loading state
-  // This prevents data loss when switching tabs triggers token refresh
   const keepProvidersMounted = providersWereMounted.current && loading && !isPublicRoute;
 
   if (keepProvidersMounted || shouldMountProviders) {
     return (
-      <AuthenticatedDataProviders>
+      <RouteScopedProviders pathname={location.pathname}>
         <AppRoutes />
-      </AuthenticatedDataProviders>
+      </RouteScopedProviders>
     );
   }
 
-  // Reset ref when user logs out
   if (!isAuthenticated && !loading) {
     providersWereMounted.current = false;
   }
