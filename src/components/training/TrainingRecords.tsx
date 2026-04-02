@@ -413,8 +413,14 @@ export const TrainingRecords = () => {
           {filteredEmployees.map(emp => (
             <button key={emp.id} onClick={() => setSelectedEmployeeId(emp.id)}
               className={cn("w-full text-start px-3 py-2 rounded-lg transition-colors text-sm",
-                selectedEmployee?.id === emp.id ? "bg-primary text-primary-foreground" : "hover:bg-muted text-primary")}>
-              {language === 'ar' ? emp.nameAr : emp.nameEn}
+                selectedEmployee?.id === emp.id ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground")}>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <span className="font-medium truncate">{language === 'ar' ? emp.nameAr : emp.nameEn}</span>
+                <span className={cn("text-xs truncate", selectedEmployee?.id === emp.id ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                  {ar ? (emp.jobTitleAr || '') : (emp.jobTitleEn || '')}
+                  {emp.station ? ` • ${emp.station}` : ''}
+                </span>
+              </div>
             </button>
           ))}
         </div>
