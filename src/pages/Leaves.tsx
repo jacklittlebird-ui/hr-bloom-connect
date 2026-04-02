@@ -113,7 +113,14 @@ const Leaves = () => {
         department: info.department, station: info.station,
         permissionType: p.permission_type as PermissionRequest['permissionType'],
         date: p.date, fromTime: p.start_time, toTime: p.end_time,
-        durationHours: p.hours || 0, reason: p.reason || '',
+        durationHours: p.hours && p.hours > 0 ? p.hours : (() => {
+          if (p.start_time && p.end_time) {
+            const [sH, sM] = p.start_time.split(':').map(Number);
+            const [eH, eM] = p.end_time.split(':').map(Number);
+            return Math.max(0, Math.round(((eH * 60 + eM) - (sH * 60 + sM)) / 60 * 10) / 10);
+          }
+          return 0;
+        })(), reason: p.reason || '',
         status: p.status as PermissionRequest['status'],
         submittedDate: p.created_at.split('T')[0],
       };

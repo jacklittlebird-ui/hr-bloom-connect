@@ -1,24 +1,29 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrainingRecords } from '@/components/training/TrainingRecords';
-import { Trainers } from '@/components/training/Trainers';
-import { CoursesSyllabus } from '@/components/training/CoursesSyllabus';
-import { CoursesList } from '@/components/training/CoursesList';
-import { TrainingPlan } from '@/components/training/TrainingPlan';
-import { TrainingRecordsReport } from '@/components/training/TrainingRecordsReport';
 import { TrainingStatsCards } from '@/components/training/TrainingStatsCards';
-import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { BulkTrainingImport } from '@/components/training/BulkTrainingImport';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const Trainers = lazy(() => import('@/components/training/Trainers').then(m => ({ default: m.Trainers })));
+const CoursesSyllabus = lazy(() => import('@/components/training/CoursesSyllabus').then(m => ({ default: m.CoursesSyllabus })));
+const CoursesList = lazy(() => import('@/components/training/CoursesList').then(m => ({ default: m.CoursesList })));
+const TrainingPlan = lazy(() => import('@/components/training/TrainingPlan').then(m => ({ default: m.TrainingPlan })));
+const TrainingRecordsReport = lazy(() => import('@/components/training/TrainingRecordsReport').then(m => ({ default: m.TrainingRecordsReport })));
+const EmployeeIdCards = lazy(() => import('@/components/training/EmployeeIdCards').then(m => ({ default: m.EmployeeIdCards })));
+
+const TabFallback = () => <div className="space-y-4 mt-6"><Skeleton className="h-10 w-full" /><Skeleton className="h-64 w-full" /></div>;
 
 const Training = () => {
   const { t, language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState('records');
 
   return (
     <DashboardLayout>
@@ -36,7 +41,7 @@ const Training = () => {
         <BulkTrainingImport />
         <TrainingStatsCards key={`stats-${refreshKey}`} />
 
-        <Tabs defaultValue="records" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-7" dir="rtl">
             <TabsTrigger value="records">{t('training.tabs.records')}</TabsTrigger>
             <TabsTrigger value="trainers">{t('training.tabs.trainers')}</TabsTrigger>
@@ -47,33 +52,45 @@ const Training = () => {
             <TabsTrigger value="id-cards">{ar ? 'بطاقة الشركة' : 'Company Card'}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="records" forceMount className="mt-6 data-[state=inactive]:hidden">
+          <TabsContent value="records" className="mt-6">
             <TrainingRecords />
           </TabsContent>
 
-          <TabsContent value="trainers" forceMount className="mt-6 data-[state=inactive]:hidden">
-            <Trainers />
-          </TabsContent>
+          {activeTab === 'trainers' && (
+            <TabsContent value="trainers" className="mt-6">
+              <Suspense fallback={<TabFallback />}><Trainers /></Suspense>
+            </TabsContent>
+          )}
 
-          <TabsContent value="syllabus" forceMount className="mt-6 data-[state=inactive]:hidden">
-            <CoursesSyllabus />
-          </TabsContent>
+          {activeTab === 'syllabus' && (
+            <TabsContent value="syllabus" className="mt-6">
+              <Suspense fallback={<TabFallback />}><CoursesSyllabus /></Suspense>
+            </TabsContent>
+          )}
 
-          <TabsContent value="courses" forceMount className="mt-6 data-[state=inactive]:hidden">
-            <CoursesList />
-          </TabsContent>
+          {activeTab === 'courses' && (
+            <TabsContent value="courses" className="mt-6">
+              <Suspense fallback={<TabFallback />}><CoursesList /></Suspense>
+            </TabsContent>
+          )}
 
-          <TabsContent value="plan" forceMount className="mt-6 data-[state=inactive]:hidden">
-            <TrainingPlan />
-          </TabsContent>
+          {activeTab === 'plan' && (
+            <TabsContent value="plan" className="mt-6">
+              <Suspense fallback={<TabFallback />}><TrainingPlan /></Suspense>
+            </TabsContent>
+          )}
 
-          <TabsContent value="reports" forceMount className="mt-6 data-[state=inactive]:hidden">
-            <TrainingRecordsReport />
-          </TabsContent>
+          {activeTab === 'reports' && (
+            <TabsContent value="reports" className="mt-6">
+              <Suspense fallback={<TabFallback />}><TrainingRecordsReport /></Suspense>
+            </TabsContent>
+          )}
 
-          <TabsContent value="id-cards" forceMount className="mt-6 data-[state=inactive]:hidden">
-            <EmployeeIdCards />
-          </TabsContent>
+          {activeTab === 'id-cards' && (
+            <TabsContent value="id-cards" className="mt-6">
+              <Suspense fallback={<TabFallback />}><EmployeeIdCards /></Suspense>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </DashboardLayout>
