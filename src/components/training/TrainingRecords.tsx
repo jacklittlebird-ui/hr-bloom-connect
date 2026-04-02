@@ -675,8 +675,13 @@ export const TrainingRecords = () => {
               {bulkFilteredEmployees.map(emp => (
                 <label key={emp.id} className="flex items-center gap-3 px-3 py-2 hover:bg-muted cursor-pointer text-sm">
                   <Checkbox checked={bulkSelectedEmployeeIds.includes(emp.id)} onCheckedChange={(checked) => { setBulkSelectedEmployeeIds(prev => checked ? [...prev, emp.id] : prev.filter(id => id !== emp.id)); }} />
-                  <span className="font-medium">{ar ? emp.nameAr : emp.nameEn}</span>
-                  <span className="text-muted-foreground text-xs">{emp.department} - {emp.station}</span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-medium truncate">{ar ? emp.nameAr : emp.nameEn}</span>
+                    <span className="text-muted-foreground text-xs truncate">
+                      {ar ? (emp.jobTitleAr || '') : (emp.jobTitleEn || '')}
+                      {emp.station ? ` • ${emp.station}` : ''}
+                    </span>
+                  </div>
                 </label>
               ))}
             </div>

@@ -112,7 +112,7 @@ export const TrainingRecordsReport = () => {
         supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true),
         supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true),
         supabase.from('training_courses').select('id, name_en, name_ar, provider, course_code').eq('is_active', true),
-        supabase.from('training_records').select('*, training_courses(name_en, name_ar, course_code, provider)'),
+        supabase.from('training_records').select('*, training_courses(name_en, name_ar, course_code, provider)').order('start_date', { ascending: false }),
       ]);
       setDepartments((depts || []).map((d: any) => ({ id: d.id, nameAr: d.name_ar, nameEn: d.name_en })));
       setStations((stns || []).map((s: any) => ({ id: s.id, nameAr: s.name_ar, nameEn: s.name_en })));
