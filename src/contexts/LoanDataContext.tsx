@@ -263,16 +263,19 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [fetchAdvances]);
 
   const getEmployeeActiveLoans = useCallback((employeeId: string) => {
+    if (!hasFetched.current) ensureLoaded();
     return loans.filter(l => l.employeeId === employeeId && l.status === 'active');
-  }, [loans]);
+  }, [loans, ensureLoaded]);
 
   const getEmployeeMonthlyLoanPayment = useCallback((employeeId: string) => {
+    if (!hasFetched.current) ensureLoaded();
     return loans.filter(l => l.employeeId === employeeId && l.status === 'active').reduce((sum, l) => sum + l.monthlyPayment, 0);
-  }, [loans]);
+  }, [loans, ensureLoaded]);
 
   const getEmployeeAdvanceForMonth = useCallback((employeeId: string, month: string) => {
+    if (!hasFetched.current) ensureLoaded();
     return advances.filter(a => a.employeeId === employeeId && a.deductionMonth === month && a.status === 'approved').reduce((sum, a) => sum + a.amount, 0);
-  }, [advances]);
+  }, [advances, ensureLoaded]);
 
   return (
     <LoanDataContext.Provider value={{
