@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSalaryData, calcFullGross, calcNet, SalaryRecord } from '@/contexts/SalaryDataContext';
 import { Employee } from '@/types/employee';
@@ -29,7 +29,9 @@ const calcEmployerContributions = (r: Pick<SalaryRecord, 'employerSocialInsuranc
 export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
-  const { salaryRecords, saveSalaryRecord, deleteSalaryRecord } = useSalaryData();
+  const { salaryRecords, saveSalaryRecord, deleteSalaryRecord, ensureLoaded } = useSalaryData();
+
+  useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
 
 
   const [selectedYear, setSelectedYear] = useState('');
