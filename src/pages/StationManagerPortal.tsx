@@ -71,6 +71,39 @@ const initialCriteria: CriteriaScore[] = [
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
 
+// Lazy-loaded leave calendar for station employees
+const StationLeaveCalendar = ({ stationEmployees, language }: { stationEmployees: any[]; language: string }) => {
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLeaves = async () => {
+      if (stationEmployees.length === 0) { setLeaveRequests([]); setLoading(false); return; }
+      const empIds = stationEmployees.map(e => e.id);
+      const { data } = await supabase.from('leave_requests').select('*').in('employee_id', empIds).order('created_at', { ascending: false });
+      const mapped: LeaveRequest[] = (data || []).map(l => {
+        const emp = stationEmployees.find(e => e.id === l.employee_id);
+        return {
+          id: l.id, employeeId: l.employee_id,
+          employeeName: emp?.nameEn || '', employeeNameAr: emp?.nameAr || '',
+          department: emp?.department || '', station: emp?.stationLocation || '',
+          leaveType: l.leave_type as LeaveRequest['leaveType'],
+          startDate: l.start_date, endDate: l.end_date, days: l.days,
+          reason: l.reason || '', status: l.status as LeaveRequest['status'],
+          submittedDate: l.created_at.split('T')[0],
+          rejectionReason: l.rejection_reason || undefined,
+        };
+      });
+      setLeaveRequests(mapped);
+      setLoading(false);
+    };
+    fetchLeaves();
+  }, [stationEmployees, language]);
+
+  if (loading) return <div className="flex justify-center p-8"><RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  return <LeaveCalendar requests={leaveRequests} />;
+};
+
 const StationManagerPortal = () => {
   const { user, logout } = useAuth();
   const { language, setLanguage, isRTL } = useLanguage();
