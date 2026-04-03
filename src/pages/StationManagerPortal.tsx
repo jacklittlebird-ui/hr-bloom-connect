@@ -1578,6 +1578,13 @@ const StationManagerPortal = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Leave Calendar Tab */}
+          {activeTab === 'leaveCalendar' && (
+            <TabsContent value="leaveCalendar">
+              <StationLeaveCalendar stationEmployees={stationEmployees} language={language} />
+            </TabsContent>
+          )}
         </Tabs>
       </main>
 
