@@ -21,7 +21,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon } from 'lucide-react';
+import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
+import type { LeaveRequest } from '@/types/leaves';
 import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
 import { StationWorkHours } from '@/components/portal/sections/StationWorkHours';
 import { format } from 'date-fns';
