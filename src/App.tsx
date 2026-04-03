@@ -103,6 +103,7 @@ const AppRoutes = () => (
       <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><SiteSettingsPage /></ProtectedRoute>} />
       <Route path="/documents" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Documents /></ProtectedRoute>} />
       <Route path="/uniforms" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Uniforms /></ProtectedRoute>} />
+      <Route path="/vehicles" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Vehicles /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><NotificationsPage /></ProtectedRoute>} />
       <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin']}><AuditLogsPage /></ProtectedRoute>} />
 
