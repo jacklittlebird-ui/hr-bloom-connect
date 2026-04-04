@@ -1,26 +1,34 @@
 /**
  * Attendance Queue & Anti-Fraud Utilities
+ * Optimized for ≤1M requests/month with 1000 users and 3 kiosks.
  */
 import type { DeviceMeta } from '@/lib/device';
 
-// ─── Rate Limiting ──────────────────────────────────────────────────────────
+// ─── Rate Limiting (3 requests per user per minute) ────────────────────────
 
-const RATE_LIMIT_MS = 10_000; // 1 request per 10 seconds
-const lastRequestTime = new Map<string, number>();
+const userRequestLog = new Map<string, number[]>();
+const MAX_REQUESTS_PER_MINUTE = 3;
 
 export function isRateLimited(userId: string): boolean {
-  const last = lastRequestTime.get(userId);
-  if (last && Date.now() - last < RATE_LIMIT_MS) return true;
-  return false;
+  const now = Date.now();
+  const log = userRequestLog.get(userId) || [];
+  // Keep only last minute
+  const recent = log.filter(t => now - t < 60_000);
+  userRequestLog.set(userId, recent);
+  return recent.length >= MAX_REQUESTS_PER_MINUTE;
 }
 
 export function recordRequest(userId: string): void {
-  lastRequestTime.set(userId, Date.now());
+  const now = Date.now();
+  const log = userRequestLog.get(userId) || [];
+  log.push(now);
+  // Prune old entries
+  userRequestLog.set(userId, log.filter(t => now - t < 60_000));
 }
 
 // ─── Deduplication ──────────────────────────────────────────────────────────
 
-const DEDUP_WINDOW_MS = 10_000; // ignore within 10 seconds
+const DEDUP_WINDOW_MS = 15_000; // 15 seconds
 const recentRequests = new Map<string, number>();
 
 export function isDuplicate(key: string): boolean {
@@ -33,51 +41,6 @@ export function recordDedup(key: string): void {
   recentRequests.set(key, Date.now());
 }
 
-// ─── Random Delay ───────────────────────────────────────────────────────────
-
-const MAX_DELAY_MS = 3_000;
-
-export function getRandomDelay(): number {
-  return Math.floor(Math.random() * MAX_DELAY_MS);
-}
-
-export function waitRandomDelay(): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, getRandomDelay()));
-}
-
-// ─── Employee/Station Cache ─────────────────────────────────────────────────
-
-interface CacheEntry<T> {
-  data: T;
-  cachedAt: number;
-}
-
-const EMPLOYEE_CACHE_TTL = 5 * 60_000;  // 5 minutes
-const STATION_CACHE_TTL = 10 * 60_000;  // 10 minutes
-
-const employeeCache = new Map<string, CacheEntry<any>>();
-const stationCache = new Map<string, CacheEntry<any>>();
-
-export function getCachedEmployee<T>(userId: string): T | null {
-  const entry = employeeCache.get(userId);
-  if (!entry || Date.now() - entry.cachedAt > EMPLOYEE_CACHE_TTL) return null;
-  return entry.data as T;
-}
-
-export function setCachedEmployee<T>(userId: string, data: T): void {
-  employeeCache.set(userId, { data, cachedAt: Date.now() });
-}
-
-export function getCachedStation<T>(stationId: string): T | null {
-  const entry = stationCache.get(stationId);
-  if (!entry || Date.now() - entry.cachedAt > STATION_CACHE_TTL) return null;
-  return entry.data as T;
-}
-
-export function setCachedStation<T>(stationId: string, data: T): void {
-  stationCache.set(stationId, { data, cachedAt: Date.now() });
-}
-
 // ─── Queue System ───────────────────────────────────────────────────────────
 
 type QueueItem = {
@@ -85,7 +48,6 @@ type QueueItem = {
   fn: () => Promise<any>;
   resolve: (v: any) => void;
   reject: (e: any) => void;
-  enqueuedAt: number;
 };
 
 const MAX_CONCURRENT = 10;
@@ -108,36 +70,37 @@ function processQueue(): void {
 
 export function enqueue<T>(fn: () => Promise<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    queue.push({
-      id: crypto.randomUUID(),
-      fn,
-      resolve,
-      reject,
-      enqueuedAt: Date.now(),
-    });
+    queue.push({ id: crypto.randomUUID(), fn, resolve, reject });
     processQueue();
   });
 }
 
-// ─── Performance Monitoring ─────────────────────────────────────────────────
+// ─── Request Monitoring ─────────────────────────────────────────────────────
 
-interface AttendanceMonitor {
+interface RequestMonitor {
   totalCheckins: number;
   totalErrors: number;
   totalDuplicates: number;
+  totalRateLimited: number;
   avgResponseMs: number;
   responseTimes: number[];
-  lastMinuteRequests: number[];
+  minuteTimestamps: number[];
+  hourTimestamps: number[];
 }
 
-const monitor: AttendanceMonitor = {
+const monitor: RequestMonitor = {
   totalCheckins: 0,
   totalErrors: 0,
   totalDuplicates: 0,
+  totalRateLimited: 0,
   avgResponseMs: 0,
   responseTimes: [],
-  lastMinuteRequests: [],
+  minuteTimestamps: [],
+  hourTimestamps: [],
 };
+
+const WARN_PER_MINUTE = 300;
+const WARN_PER_HOUR = 7000;
 
 export function trackCheckinStart(): number {
   return performance.now();
@@ -145,41 +108,49 @@ export function trackCheckinStart(): number {
 
 export function trackCheckinEnd(startTime: number, success: boolean): void {
   const elapsed = performance.now() - startTime;
+  const now = Date.now();
+
   monitor.responseTimes.push(elapsed);
-  monitor.lastMinuteRequests.push(Date.now());
+  if (monitor.responseTimes.length > 50) monitor.responseTimes.shift();
 
-  // Keep only last 100 response times
-  if (monitor.responseTimes.length > 100) monitor.responseTimes.shift();
+  monitor.minuteTimestamps.push(now);
+  monitor.hourTimestamps.push(now);
 
-  // Prune requests older than 1 minute
-  const oneMinAgo = Date.now() - 60_000;
-  monitor.lastMinuteRequests = monitor.lastMinuteRequests.filter(t => t > oneMinAgo);
+  // Prune
+  const oneMinAgo = now - 60_000;
+  const oneHourAgo = now - 3_600_000;
+  monitor.minuteTimestamps = monitor.minuteTimestamps.filter(t => t > oneMinAgo);
+  monitor.hourTimestamps = monitor.hourTimestamps.filter(t => t > oneHourAgo);
 
-  if (success) {
-    monitor.totalCheckins++;
-  } else {
-    monitor.totalErrors++;
-  }
+  if (success) monitor.totalCheckins++;
+  else monitor.totalErrors++;
 
   monitor.avgResponseMs =
     monitor.responseTimes.reduce((a, b) => a + b, 0) / monitor.responseTimes.length;
 
-  // Alert if response time > 1 second
+  // Threshold warnings
+  if (monitor.minuteTimestamps.length > WARN_PER_MINUTE) {
+    console.warn(`[AttendanceMonitor] ⚠️ ${monitor.minuteTimestamps.length} requests/min (threshold: ${WARN_PER_MINUTE})`);
+  }
+  if (monitor.hourTimestamps.length > WARN_PER_HOUR) {
+    console.warn(`[AttendanceMonitor] ⚠️ ${monitor.hourTimestamps.length} requests/hour (threshold: ${WARN_PER_HOUR})`);
+  }
   if (elapsed > 1000) {
     console.warn(`[AttendanceMonitor] Slow check-in: ${Math.round(elapsed)}ms`);
-  }
-
-  // Alert if duplicate spike (>5 in last minute)
-  if (monitor.totalDuplicates > 5) {
-    console.warn(`[AttendanceMonitor] Duplicate attempt spike: ${monitor.totalDuplicates}`);
   }
 }
 
 export function trackDuplicate(): void {
   monitor.totalDuplicates++;
+  console.warn(`[AttendanceMonitor] Duplicate blocked (total: ${monitor.totalDuplicates})`);
 }
 
-export function getAttendanceStats(): Readonly<AttendanceMonitor> {
+export function trackRateLimited(): void {
+  monitor.totalRateLimited++;
+  console.warn(`[AttendanceMonitor] Rate-limited (total: ${monitor.totalRateLimited})`);
+}
+
+export function getAttendanceStats(): Readonly<RequestMonitor> {
   return { ...monitor };
 }
 
@@ -218,9 +189,10 @@ export async function performCheckin(params: CheckinParams): Promise<CheckinResu
     return { ok: false, error: 'طلب مكرر - يرجى الانتظار / Duplicate request - please wait' };
   }
 
-  // 2. Rate limit check
+  // 2. Rate limit check (3/min)
   if (isRateLimited(params.userId)) {
-    return { ok: false, error: 'يرجى الانتظار 10 ثوانٍ / Please wait 10 seconds' };
+    trackRateLimited();
+    return { ok: false, error: 'تجاوزت الحد المسموح - انتظر دقيقة / Rate limit exceeded - wait a minute' };
   }
 
   // 3. Record dedup + rate limit
@@ -229,11 +201,8 @@ export async function performCheckin(params: CheckinParams): Promise<CheckinResu
 
   const startTime = trackCheckinStart();
 
+  // 4. Enqueue the request (no random delay — removed to reduce latency)
   try {
-    // 4. Random delay for load distribution
-    await waitRandomDelay();
-
-    // 5. Enqueue the actual request
     const result = await enqueue(async () => {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const res = await fetch(
@@ -259,7 +228,6 @@ export async function performCheckin(params: CheckinParams): Promise<CheckinResu
         const e = await res.json().catch(() => ({}));
         return { ok: false, error: e.error || res.statusText } as CheckinResult;
       }
-
       return await res.json() as CheckinResult;
     });
 
@@ -267,6 +235,39 @@ export async function performCheckin(params: CheckinParams): Promise<CheckinResu
     return result;
   } catch (e: any) {
     trackCheckinEnd(startTime, false);
-    return { ok: false, error: e.message };
+
+    // Single retry after 5 seconds on network failure
+    try {
+      await new Promise(r => setTimeout(r, 5000));
+      const retryResult = await enqueue(async () => {
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+        const res = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/gps-checkin`,
+          {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              authorization: `Bearer ${params.accessToken}`,
+            },
+            body: JSON.stringify({
+              event_type: params.eventType,
+              gps_lat: params.gpsLat,
+              gps_lng: params.gpsLng,
+              gps_accuracy: params.gpsAccuracy,
+              device_id: params.deviceId,
+              device_meta: params.deviceMeta || null,
+            }),
+          }
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          return { ok: false, error: err.error || res.statusText } as CheckinResult;
+        }
+        return await res.json() as CheckinResult;
+      });
+      return retryResult;
+    } catch {
+      return { ok: false, error: e.message };
+    }
   }
 }

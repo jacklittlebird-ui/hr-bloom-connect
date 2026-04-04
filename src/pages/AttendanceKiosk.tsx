@@ -3,13 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QrCode, RefreshCw, MapPin, ShieldAlert, ShieldCheck, Loader2, LogOut } from "lucide-react";
 import QRCode from "qrcode";
 import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
-import { resetSessionTimer } from '@/lib/security';
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
@@ -22,15 +20,18 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/** Get the current 30-min bucket number */
-const getBucket = () => Math.floor(Date.now() / (30 * 60 * 1000));
-
-/** Seconds remaining until the next bucket */
+// ── 45-minute bucket logic ──
+const BUCKET_MS = 45 * 60 * 1000;
+const getBucket = () => Math.floor(Date.now() / BUCKET_MS);
 const getSecondsToNextBucket = () => {
   const nowMs = Date.now();
-  const bucketMs = 30 * 60 * 1000;
-  return Math.floor(((Math.floor(nowMs / bucketMs) + 1) * bucketMs - nowMs) / 1000);
+  return Math.floor(((Math.floor(nowMs / BUCKET_MS) + 1) * BUCKET_MS - nowMs) / 1000);
 };
+
+// ── Cached locations (survives re-renders, cleared on page reload) ──
+let cachedLocations: any[] | null = null;
+let cachedLocationsAt = 0;
+const LOCATION_CACHE_TTL = 30 * 60 * 1000; // 30 min
 
 const AttendanceKiosk = () => {
   const { language } = useLanguage();
@@ -43,8 +44,9 @@ const AttendanceKiosk = () => {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [countdown, setCountdown] = useState(getSecondsToNextBucket());
   const [error, setError] = useState("");
-  const lastBucketRef = useRef<number>(getBucket());
+  const lastRefreshTs = useRef<number>(0);
   const isGeneratingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   // Geolocation state
   const [geoStatus, setGeoStatus] = useState<"checking" | "allowed" | "denied" | "out_of_range" | "no_coords">("checking");
@@ -52,39 +54,38 @@ const AttendanceKiosk = () => {
   const [distance, setDistance] = useState<number | null>(null);
   const watchRef = useRef<number | null>(null);
 
-  // ── Keep-alive: prevent session timeout ──
+  // Cleanup flag
   useEffect(() => {
-    const keepAlive = setInterval(() => {
-      resetSessionTimer(() => {});
-    }, 5 * 60 * 1000);
-    return () => clearInterval(keepAlive);
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
   }, []);
 
-  // ── Freeze detection: reload if page was suspended ──
+  // ── Keep-alive: refresh Supabase token every 10 min (lightweight, no page reload) ──
   useEffect(() => {
-    let lastActivity = Date.now();
-    const markAlive = () => { lastActivity = Date.now(); };
+    const tokenRefresh = setInterval(async () => {
+      try {
+        await supabase.auth.refreshSession();
+        console.log("[Kiosk] Keep-alive: session refreshed");
+      } catch { /* ignore */ }
+    }, 10 * 60 * 1000);
+    return () => clearInterval(tokenRefresh);
+  }, []);
 
-    // Update activity on any interaction or timer fire
-    const aliveInterval = setInterval(() => { markAlive(); }, 30000);
-
+  // ── Freeze detection: reload if page was suspended > 5 min ──
+  useEffect(() => {
+    let lastTick = Date.now();
     const freezeCheck = setInterval(() => {
       const now = Date.now();
-      // If more than 5 min passed since last tick, page was likely frozen/suspended
-      if (now - lastActivity > 5 * 60 * 1000) {
+      if (now - lastTick > 5 * 60 * 1000) {
         console.log("[Kiosk] Page freeze detected, reloading...");
         window.location.reload();
       }
-      lastActivity = now;
-    }, 60000);
-
-    return () => {
-      clearInterval(aliveInterval);
-      clearInterval(freezeCheck);
-    };
+      lastTick = now;
+    }, 30_000);
+    return () => clearInterval(freezeCheck);
   }, []);
 
-  // ── Daily reload at 4:00 AM for a clean slate ──
+  // ── Daily reload at 4:00 AM ──
   useEffect(() => {
     const dailyReload = setInterval(() => {
       const now = new Date();
@@ -92,139 +93,107 @@ const AttendanceKiosk = () => {
         console.log("[Kiosk] Daily 4 AM reload");
         window.location.reload();
       }
-    }, 60000);
+    }, 60_000);
     return () => clearInterval(dailyReload);
   }, []);
 
-  // ── Keep-alive: Wake Lock API (prevent screen sleep) ──
+  // ── Wake Lock (prevent screen sleep) ──
   useEffect(() => {
     let wakeLock: WakeLockSentinel | null = null;
-
     const requestWakeLock = async () => {
       try {
         if ('wakeLock' in navigator) {
           wakeLock = await (navigator as any).wakeLock.request('screen');
           wakeLock?.addEventListener('release', () => {
-            // Re-acquire on release (e.g. tab switch)
             setTimeout(requestWakeLock, 1000);
           });
         }
       } catch { /* ignore */ }
     };
-
     requestWakeLock();
-
-    // Re-acquire wake lock when page becomes visible again
     const onVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        requestWakeLock();
-      }
+      if (document.visibilityState === 'visible') requestWakeLock();
     };
     document.addEventListener('visibilitychange', onVisibility);
-
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
       wakeLock?.release().catch(() => {});
     };
   }, []);
 
-  // ── Keep-alive: refresh Supabase token before it expires ──
-  useEffect(() => {
-    const tokenRefresh = setInterval(async () => {
-      try {
-        await supabase.auth.refreshSession();
-      } catch { /* ignore */ }
-    }, 10 * 60 * 1000); // every 10 min
-    return () => clearInterval(tokenRefresh);
-  }, []);
-
-  // Fetch locations - only HQ (المركز الرئيسي)
+  // ── Fetch locations (cached) ──
   useEffect(() => {
     (async () => {
+      if (cachedLocations && Date.now() - cachedLocationsAt < LOCATION_CACHE_TTL) {
+        setLocations(cachedLocations);
+        setSelectedLocation(cachedLocations[0]?.id || "");
+        return;
+      }
       const { data } = await supabase
         .from("qr_locations")
         .select("*")
         .eq("is_active", true);
       if (data && data.length > 0) {
-        // Filter for HQ locations only
         const hqLocations = data.filter((loc: any) =>
           loc.name_ar?.includes('المركز الرئيسي') || loc.name_en?.toLowerCase().includes('hq')
         );
         const finalLocations = hqLocations.length > 0 ? hqLocations : data;
+        cachedLocations = finalLocations;
+        cachedLocationsAt = Date.now();
         setLocations(finalLocations);
         setSelectedLocation(finalLocations[0].id);
       }
     })();
   }, []);
 
-  // Watch GPS position
+  // ── Watch GPS position ──
   useEffect(() => {
     if (!navigator.geolocation) {
       setGeoStatus("denied");
       setError(ar ? "المتصفح لا يدعم تحديد الموقع" : "Browser does not support geolocation");
       return;
     }
-
     setGeoStatus("checking");
-
     watchRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      },
-      (err) => {
+      (pos) => setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {
         setGeoStatus("denied");
-        setError(
-          ar
-            ? "يجب السماح بالوصول للموقع الجغرافي لاستخدام نقطة الحضور"
-            : "Location access is required to use the attendance kiosk"
-        );
+        setError(ar ? "يجب السماح بالوصول للموقع الجغرافي لاستخدام نقطة الحضور" : "Location access is required to use the attendance kiosk");
       },
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 }
     );
-
     return () => {
       if (watchRef.current !== null) navigator.geolocation.clearWatch(watchRef.current);
     };
   }, [ar]);
 
-  // Validate user position against selected location
+  // ── Validate position against selected location ──
   useEffect(() => {
     if (!userCoords || !selectedLocation) return;
-
     const loc = locations.find((l) => l.id === selectedLocation);
     if (!loc) return;
-
     if (loc.latitude == null || loc.longitude == null) {
       setGeoStatus("no_coords");
-      setError(
-        ar
-          ? "لم يتم تحديد إحداثيات هذا الموقع بعد. يرجى التواصل مع الإدارة."
-          : "This location has no GPS coordinates configured. Please contact admin."
-      );
+      setError(ar ? "لم يتم تحديد إحداثيات هذا الموقع بعد." : "This location has no GPS coordinates configured.");
       return;
     }
-
     const dist = haversineDistance(userCoords.lat, userCoords.lng, loc.latitude, loc.longitude);
     setDistance(Math.round(dist));
     const radius = loc.radius_m || 150;
-
     if (dist <= radius) {
       setGeoStatus("allowed");
       setError("");
     } else {
       setGeoStatus("out_of_range");
-      setError(
-        ar
-          ? `أنت خارج نطاق الموقع المسموح (${Math.round(dist)}م بعيداً، الحد الأقصى ${radius}م)`
-          : `You are outside the allowed location range (${Math.round(dist)}m away, max ${radius}m)`
+      setError(ar
+        ? `أنت خارج نطاق الموقع المسموح (${Math.round(dist)}م بعيداً، الحد الأقصى ${radius}م)`
+        : `You are outside the allowed location range (${Math.round(dist)}m away, max ${radius}m)`
       );
     }
   }, [userCoords, selectedLocation, locations, ar]);
 
-  // ── QR generation: bucket-aware approach ──
-  // Instead of a 30-min setInterval (which drifts), we check every 5 seconds
-  // if the time bucket has changed, and only regenerate when it does.
-  const generateQRCodes = useCallback(async () => {
+  // ── QR generation with single-retry on failure ──
+  const generateQRCodes = useCallback(async (retry = false) => {
     if (isGeneratingRef.current) return;
     if (!selectedLocation || !session?.access_token || geoStatus !== "allowed" || !userCoords) return;
 
@@ -233,84 +202,81 @@ const AttendanceKiosk = () => {
 
     try {
       const url = `https://${projectId}.supabase.co/functions/v1/generate-qr-token`;
-      const results = await Promise.all(
-        Array.from({ length: QR_COUNT }, () =>
-          fetch(url, {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-              location_id: selectedLocation,
-              gps_lat: userCoords.lat,
-              gps_lng: userCoords.lng,
-            }),
-          }).then(r => r.json().then(j => ({ ok: r.ok, json: j })))
-        )
-      );
+      // Single request — all 3 QR codes use the same token (same bucket)
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          location_id: selectedLocation,
+          gps_lat: userCoords.lat,
+          gps_lng: userCoords.lng,
+        }),
+      });
 
-      const srcs: string[] = [];
-      let hasError = false;
-      for (const r of results) {
-        if (!r.ok || !r.json.token) {
-          hasError = true;
-          srcs.push("");
-        } else {
-          const src = await QRCode.toDataURL(r.json.token, {
-            width: 280,
-            margin: 2,
-            color: { dark: "#000000", light: "#ffffff" },
-          });
-          srcs.push(src);
-        }
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || res.statusText);
       }
-      setQrSrcs(srcs);
-      if (!hasError) {
+
+      const json = await res.json();
+      if (!json.token) throw new Error("No token returned");
+
+      // Generate 3 QR images from the same token (visual redundancy for kiosk)
+      const src = await QRCode.toDataURL(json.token, {
+        width: 280, margin: 2,
+        color: { dark: "#000000", light: "#ffffff" },
+      });
+
+      if (mountedRef.current) {
+        setQrSrcs([src, src, src]);
         setError("");
-        lastBucketRef.current = getBucket();
+        lastRefreshTs.current = Date.now();
       }
     } catch (e: any) {
-      console.error("[Kiosk] QR fetch error:", e);
-      setError(e.message);
+      console.error("[Kiosk] QR fetch error:", e.message);
+      if (!retry) {
+        // Single retry after 5 seconds
+        isGeneratingRef.current = false;
+        setTimeout(() => generateQRCodes(true), 5000);
+        return;
+      }
+      if (mountedRef.current) setError(e.message);
     } finally {
       isGeneratingRef.current = false;
     }
   }, [selectedLocation, session, geoStatus, userCoords]);
 
-  // Initial generation + bucket-change detection every 10 seconds
+  // ── Main timer: check every 30s if 45-min bucket changed ──
   useEffect(() => {
     if (!selectedLocation || !session?.access_token || geoStatus !== "allowed" || !userCoords) return;
 
-    // Generate immediately on mount / when deps change
+    // Generate immediately
     generateQRCodes();
 
     const checkInterval = setInterval(() => {
-      const currentBucket = getBucket();
-      // Update countdown
       setCountdown(getSecondsToNextBucket());
-      // If bucket changed, regenerate
-      if (currentBucket !== lastBucketRef.current) {
+      // Only regenerate if 45 min elapsed since last successful refresh
+      const elapsed = Date.now() - lastRefreshTs.current;
+      if (elapsed >= BUCKET_MS) {
         generateQRCodes();
       }
-    }, 10000); // check every 10 seconds
+    }, 30_000); // check every 30s (not 10s)
 
     return () => clearInterval(checkInterval);
   }, [selectedLocation, session, geoStatus, userCoords, generateQRCodes]);
 
-  // Countdown ticker (cosmetic, every second)
+  // ── Countdown ticker (cosmetic, every second) ──
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown(getSecondsToNextBucket());
-    }, 1000);
+    const timer = setInterval(() => setCountdown(getSecondsToNextBucket()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   // Clear QR when not allowed
   useEffect(() => {
-    if (geoStatus !== "allowed") {
-      setQrSrcs(["", "", ""]);
-    }
+    if (geoStatus !== "allowed") setQrSrcs(["", "", ""]);
   }, [geoStatus]);
 
   const currentLocation = locations.find((l) => l.id === selectedLocation);
@@ -376,12 +342,7 @@ const AttendanceKiosk = () => {
           )}
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Location is hardcoded to HQ - no selector needed */}
-
-          {/* Geo status banner */}
           {renderStatusBanner()}
-
-          {/* QR Codes display — 3 side by side */}
           {geoStatus === "allowed" ? (
             <div className="flex flex-col items-center gap-4">
               <div className="flex items-center justify-center gap-4 flex-wrap">
@@ -389,15 +350,8 @@ const AttendanceKiosk = () => {
                   <div key={i} className="relative">
                     {src ? (
                       <>
-                        <img
-                          src={src}
-                          alt={`QR Code ${i + 1}`}
-                          className="w-[220px] h-[220px] sm:w-[250px] sm:h-[250px] rounded-lg shadow-lg"
-                        />
-                        <Badge
-                          variant="secondary"
-                          className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-xs"
-                        >
+                        <img src={src} alt={`QR Code ${i + 1}`} className="w-[220px] h-[220px] sm:w-[250px] sm:h-[250px] rounded-lg shadow-lg" />
+                        <Badge variant="secondary" className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-xs">
                           <RefreshCw className="h-3 w-3" />
                           {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
                         </Badge>
@@ -411,9 +365,7 @@ const AttendanceKiosk = () => {
                 ))}
               </div>
               <p className="text-sm text-muted-foreground text-center">
-                {ar
-                  ? "امسح أي رمز باستخدام تطبيق HR Link على هاتفك"
-                  : "Scan any code using the HR Link app on your phone"}
+                {ar ? "امسح أي رمز باستخدام تطبيق HR Link على هاتفك" : "Scan any code using the HR Link app on your phone"}
               </p>
             </div>
           ) : (
@@ -422,9 +374,7 @@ const AttendanceKiosk = () => {
                 <div className="text-center space-y-2 p-4">
                   <ShieldAlert className="h-12 w-12 text-destructive/50 mx-auto" />
                   <p className="text-muted-foreground text-sm">
-                    {ar
-                      ? "لا يمكن توليد رمز QR من خارج الموقع المحدد"
-                      : "QR code cannot be generated outside the designated location"}
+                    {ar ? "لا يمكن توليد رمز QR من خارج الموقع المحدد" : "QR code cannot be generated outside the designated location"}
                   </p>
                 </div>
               </div>
