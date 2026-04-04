@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const TOKEN_TTL = 1800; // 30 minutes
+    const TOKEN_TTL = 2700; // 45 minutes
     const now = Math.floor(Date.now() / 1000);
     const tsBucket = now - (now % TOKEN_TTL);
     const payload = `${tsBucket}:${location_id}`;
