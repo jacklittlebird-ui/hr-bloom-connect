@@ -22,11 +22,10 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 // ── 45-minute bucket logic ──
 const BUCKET_MS = 45 * 60 * 1000;
-const getBucket = () => Math.floor(Date.now() / BUCKET_MS);
-const getSecondsToNextBucket = () => {
-  const nowMs = Date.now();
-  return Math.floor(((Math.floor(nowMs / BUCKET_MS) + 1) * BUCKET_MS - nowMs) / 1000);
-};
+const REFRESH_CHECK_MS = 30_000;
+const REFRESH_BUFFER_MS = 15_000;
+const getCurrentBucketExpiresAt = () => (Math.floor(Date.now() / BUCKET_MS) + 1) * BUCKET_MS;
+const getSecondsUntil = (expiresAt: number) => Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
 
 // ── Cached locations (survives re-renders, cleared on page reload) ──
 let cachedLocations: any[] | null = null;
@@ -42,23 +41,58 @@ const AttendanceKiosk = () => {
   const [qrSrcs, setQrSrcs] = useState<string[]>(["", "", ""]);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("");
-  const [countdown, setCountdown] = useState(getSecondsToNextBucket());
+  const [countdown, setCountdown] = useState(getSecondsUntil(getCurrentBucketExpiresAt()));
+  const [qrExpiresAt, setQrExpiresAt] = useState(getCurrentBucketExpiresAt());
   const [error, setError] = useState("");
   const lastRefreshTs = useRef<number>(0);
   const isGeneratingRef = useRef(false);
   const mountedRef = useRef(true);
+  const refreshTimeoutRef = useRef<number | null>(null);
+  const retryTimeoutRef = useRef<number | null>(null);
+  const userCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
 
   // Geolocation state
   const [geoStatus, setGeoStatus] = useState<"checking" | "allowed" | "denied" | "out_of_range" | "no_coords">("checking");
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const watchRef = useRef<number | null>(null);
+  const accessToken = session?.access_token ?? "";
+
+  const clearRefreshTimer = useCallback(() => {
+    if (refreshTimeoutRef.current !== null) {
+      window.clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
+    }
+  }, []);
+
+  const clearRetryTimer = useCallback(() => {
+    if (retryTimeoutRef.current !== null) {
+      window.clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+  }, []);
 
   // Cleanup flag
   useEffect(() => {
     mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
+    return () => {
+      mountedRef.current = false;
+      clearRefreshTimer();
+      clearRetryTimer();
+    };
+  }, [clearRefreshTimer, clearRetryTimer]);
+
+  useEffect(() => {
+    userCoordsRef.current = userCoords;
+  }, [userCoords]);
+
+  useEffect(() => {
+    lastRefreshTs.current = 0;
+    setQrExpiresAt(getCurrentBucketExpiresAt());
+    setCountdown(getSecondsUntil(getCurrentBucketExpiresAt()));
+    clearRefreshTimer();
+    clearRetryTimer();
+  }, [selectedLocation, accessToken, clearRefreshTimer, clearRetryTimer]);
 
   // ── Keep-alive: refresh Supabase token every 10 min (lightweight, no page reload) ──
   useEffect(() => {
@@ -194,8 +228,10 @@ const AttendanceKiosk = () => {
 
   // ── QR generation with single-retry on failure ──
   const generateQRCodes = useCallback(async (retry = false) => {
+    const coords = userCoordsRef.current;
+
     if (isGeneratingRef.current) return;
-    if (!selectedLocation || !session?.access_token || geoStatus !== "allowed" || !userCoords) return;
+    if (!selectedLocation || !accessToken || geoStatus !== "allowed" || !coords) return;
 
     isGeneratingRef.current = true;
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
@@ -207,12 +243,12 @@ const AttendanceKiosk = () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          authorization: `Bearer ${session.access_token}`,
+          authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
           location_id: selectedLocation,
-          gps_lat: userCoords.lat,
-          gps_lng: userCoords.lng,
+          gps_lat: coords.lat,
+          gps_lng: coords.lng,
         }),
       });
 
@@ -229,9 +265,12 @@ const AttendanceKiosk = () => {
         width: 280, margin: 2,
         color: { dark: "#000000", light: "#ffffff" },
       });
+      const nextExpiresAt = typeof json.expiresAt === "number" ? json.expiresAt : getCurrentBucketExpiresAt();
 
       if (mountedRef.current) {
         setQrSrcs([src, src, src]);
+        setQrExpiresAt(nextExpiresAt);
+        setCountdown(getSecondsUntil(nextExpiresAt));
         setError("");
         lastRefreshTs.current = Date.now();
       }
@@ -240,44 +279,68 @@ const AttendanceKiosk = () => {
       if (!retry) {
         // Single retry after 5 seconds
         isGeneratingRef.current = false;
-        setTimeout(() => generateQRCodes(true), 5000);
+        clearRetryTimer();
+        retryTimeoutRef.current = window.setTimeout(() => {
+          retryTimeoutRef.current = null;
+          void generateQRCodes(true);
+        }, 5000);
         return;
       }
       if (mountedRef.current) setError(e.message);
     } finally {
       isGeneratingRef.current = false;
     }
-  }, [selectedLocation, session, geoStatus, userCoords]);
+  }, [selectedLocation, accessToken, geoStatus, clearRetryTimer]);
 
-  // ── Main timer: check every 30s if 45-min bucket changed ──
+  // ── Main timer: follow the real token expiry, not page-open time ──
   useEffect(() => {
-    if (!selectedLocation || !session?.access_token || geoStatus !== "allowed" || !userCoords) return;
+    const canGenerate = Boolean(selectedLocation && accessToken && geoStatus === "allowed" && userCoords);
+    if (!canGenerate) {
+      clearRefreshTimer();
+      return;
+    }
 
-    // Generate immediately
-    generateQRCodes();
+    if (!qrSrcs[0] || !lastRefreshTs.current) {
+      void generateQRCodes();
+    }
 
-    const checkInterval = setInterval(() => {
-      setCountdown(getSecondsToNextBucket());
-      // Only regenerate if 45 min elapsed since last successful refresh
-      const elapsed = Date.now() - lastRefreshTs.current;
-      if (elapsed >= BUCKET_MS) {
-        generateQRCodes();
+    const tick = () => {
+      const now = Date.now();
+      const expiredOrNearExpiry = now >= qrExpiresAt - REFRESH_BUFFER_MS;
+      const staleRefresh = lastRefreshTs.current > 0 && now - lastRefreshTs.current >= BUCKET_MS + REFRESH_BUFFER_MS;
+
+      if (expiredOrNearExpiry || staleRefresh) {
+        void generateQRCodes();
+        return;
       }
-    }, 30_000); // check every 30s (not 10s)
 
-    return () => clearInterval(checkInterval);
-  }, [selectedLocation, session, geoStatus, userCoords, generateQRCodes]);
+      const msUntilRefresh = Math.max(qrExpiresAt - now - REFRESH_BUFFER_MS, 1000);
+      refreshTimeoutRef.current = window.setTimeout(tick, Math.min(REFRESH_CHECK_MS, msUntilRefresh));
+    };
+
+    const initialDelay = Math.min(
+      REFRESH_CHECK_MS,
+      Math.max(qrExpiresAt - Date.now() - REFRESH_BUFFER_MS, 1000)
+    );
+    refreshTimeoutRef.current = window.setTimeout(tick, initialDelay);
+
+    return clearRefreshTimer;
+  }, [selectedLocation, accessToken, geoStatus, userCoords, qrExpiresAt, qrSrcs, generateQRCodes, clearRefreshTimer]);
 
   // ── Countdown ticker (cosmetic, every second) ──
   useEffect(() => {
-    const timer = setInterval(() => setCountdown(getSecondsToNextBucket()), 1000);
+    const timer = setInterval(() => setCountdown(getSecondsUntil(qrExpiresAt)), 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [qrExpiresAt]);
 
   // Clear QR when not allowed
   useEffect(() => {
-    if (geoStatus !== "allowed") setQrSrcs(["", "", ""]);
-  }, [geoStatus]);
+    if (geoStatus !== "allowed") {
+      clearRefreshTimer();
+      clearRetryTimer();
+      setQrSrcs(["", "", ""]);
+    }
+  }, [geoStatus, clearRefreshTimer, clearRetryTimer]);
 
   const currentLocation = locations.find((l) => l.id === selectedLocation);
 
