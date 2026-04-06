@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,36 +24,90 @@ const defaultBanks = [
   { value: 'other', labelAr: 'أخرى', labelEn: 'Other' },
 ];
 
+interface BankEmployee {
+  id: string;
+  employeeId: string;
+  nameAr: string;
+  nameEn: string;
+  department: string;
+  jobTitle: string;
+  stationName?: string;
+  nationalId?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIdNumber?: string;
+  bankAccountType?: string;
+}
+
 export const MissingBankData = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
-  const { employees, refreshEmployees } = useEmployeeData();
+  const { employees } = useEmployeeData();
+  const [bankEmployees, setBankEmployees] = useState<BankEmployee[]>([]);
+  const [loadingBank, setLoadingBank] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
-  const [editEmployee, setEditEmployee] = useState<any>(null);
+  const [editEmployee, setEditEmployee] = useState<BankEmployee | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ bankName: '', bankAccountNumber: '', bankIdNumber: '', bankAccountType: '' });
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
 
+  // Fetch bank fields directly from DB since LIST_COLUMNS doesn't include them
+  const fetchBankData = useCallback(async () => {
+    setLoadingBank(true);
+    const allRows: any[] = [];
+    let from = 0;
+    const PAGE = 1000;
+    while (true) {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('id, employee_code, name_ar, name_en, station_id, department_id, job_title_ar, national_id, bank_name, bank_account_number, bank_id_number, bank_account_type, departments(name_ar, name_en), stations(name_ar, name_en)')
+        .eq('status', 'active')
+        .range(from, from + PAGE - 1);
+      if (error) break;
+      if (data) allRows.push(...data);
+      if (!data || data.length < PAGE) break;
+      from += PAGE;
+    }
+
+    const missing = allRows
+      .filter(r => !r.bank_account_number || !r.bank_id_number)
+      .map(r => ({
+        id: r.id,
+        employeeId: r.employee_code,
+        nameAr: r.name_ar,
+        nameEn: r.name_en,
+        department: r.departments?.name_ar || '-',
+        jobTitle: r.job_title_ar || '',
+        stationName: r.stations?.name_ar || undefined,
+        nationalId: r.national_id || undefined,
+        bankName: r.bank_name || undefined,
+        bankAccountNumber: r.bank_account_number || undefined,
+        bankIdNumber: r.bank_id_number || undefined,
+        bankAccountType: r.bank_account_type || undefined,
+      }));
+
+    setBankEmployees(missing);
+    setLoadingBank(false);
+  }, []);
+
+  useEffect(() => { fetchBankData(); }, [fetchBankData]);
+
   const stations = useMemo(() => {
-    const map = new Map<string, { id: string; name: string }>();
-    employees.filter(e => e.status === 'active' && e.stationName).forEach(e => {
-      if (!map.has(e.stationName!)) map.set(e.stationName!, { id: e.stationName!, name: e.stationName! });
-    });
-    return Array.from(map.values());
-  }, [employees]);
+    const map = new Map<string, string>();
+    bankEmployees.filter(e => e.stationName).forEach(e => { if (!map.has(e.stationName!)) map.set(e.stationName!, e.stationName!); });
+    return Array.from(map.keys());
+  }, [bankEmployees]);
 
   const depts = useMemo(() => {
     const map = new Map<string, string>();
-    employees.filter(e => e.status === 'active' && e.department).forEach(e => { if (!map.has(e.department!)) map.set(e.department!, e.department!); });
+    bankEmployees.filter(e => e.department && e.department !== '-').forEach(e => { if (!map.has(e.department)) map.set(e.department, e.department); });
     return Array.from(map.keys());
-  }, [employees]);
+  }, [bankEmployees]);
 
   const missingBankEmployees = useMemo(() => {
-    return employees
-      .filter(e => e.status === 'active')
-      .filter(e => !e.bankAccountNumber || !e.bankIdNumber)
+    return bankEmployees
       .filter(e => {
         if (search) {
           if (!e.nameAr.includes(search) && !e.nameEn.toLowerCase().includes(search.toLowerCase()) && !e.employeeId.includes(search)) return false;
@@ -62,7 +116,7 @@ export const MissingBankData = () => {
         if (selectedDept !== 'all' && e.department !== selectedDept) return false;
         return true;
       });
-  }, [employees, search, selectedStation, selectedDept]);
+  }, [bankEmployees, search, selectedStation, selectedDept]);
 
   const { paginatedItems, currentPage, totalPages, totalItems, setCurrentPage, startIndex, endIndex } = usePagination(missingBankEmployees, 20);
 

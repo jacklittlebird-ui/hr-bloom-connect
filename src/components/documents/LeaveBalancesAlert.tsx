@@ -83,12 +83,19 @@ export const LeaveBalancesAlert = () => {
 
     const empIds = eligible.map(e => e.id);
 
-    // Get leave_balances for current year for these employees
-    const { data: balances } = await supabase
-      .from('leave_balances')
-      .select('employee_id, annual_total, casual_total, sick_total, permissions_total')
-      .eq('year', currentYear)
-      .in('employee_id', empIds);
+    // Get leave_balances for current year for these employees (batch to avoid .in() limit)
+    const allBalances: any[] = [];
+    const BATCH = 200;
+    for (let i = 0; i < empIds.length; i += BATCH) {
+      const batch = empIds.slice(i, i + BATCH);
+      const { data: balances } = await supabase
+        .from('leave_balances')
+        .select('employee_id, annual_total, casual_total, sick_total, permissions_total')
+        .eq('year', currentYear)
+        .in('employee_id', batch);
+      if (balances) allBalances.push(...balances);
+    }
+    const balances = allBalances;
 
     // Find employees with NO balance record or all totals = 0
     const balanceMap = new Map((balances || []).map(b => [b.employee_id, b]));
