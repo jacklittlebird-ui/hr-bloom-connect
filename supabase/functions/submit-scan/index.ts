@@ -336,32 +336,53 @@ Deno.serve(async (req) => {
       const localHour = parseInt(now.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false }));
 
       if (event_type === "check_in") {
-        // Close ANY previously open records before creating new check-in
-        const { data: openRecords } = await admin
+        // Check if there's already an open record for TODAY — skip duplicate
+        const { data: todayOpen } = await admin
           .from("attendance_records")
-          .select("id, check_in")
+          .select("id")
           .eq("employee_id", empId)
+          .eq("date", localDateStr)
           .is("check_out", null)
-          .not("check_in", "is", null);
+          .not("check_in", "is", null)
+          .limit(1)
+          .maybeSingle();
 
-        if (openRecords && openRecords.length > 0) {
-          for (const rec of openRecords) {
-            const checkInTime = new Date(rec.check_in);
-            const autoCheckout = new Date(checkInTime.getTime() + 5 * 60 * 60 * 1000).toISOString();
-            await admin.from("attendance_records")
-              .update({ check_out: autoCheckout, notes: "انصراف تلقائي / Auto-closed on new check-in" })
-              .eq("id", rec.id);
+        if (!todayOpen) {
+          // Close open records from PREVIOUS days only
+          const { data: oldOpenRecords } = await admin
+            .from("attendance_records")
+            .select("id, check_in, date")
+            .eq("employee_id", empId)
+            .is("check_out", null)
+            .not("check_in", "is", null)
+            .neq("date", localDateStr);
+
+          if (oldOpenRecords && oldOpenRecords.length > 0) {
+            for (const rec of oldOpenRecords) {
+              const checkInTime = new Date(rec.check_in);
+              const autoCheckout = new Date(checkInTime.getTime() + 5 * 60 * 60 * 1000).toISOString();
+              await admin.from("attendance_records")
+                .update({
+                  check_out: autoCheckout,
+                  work_hours: 5,
+                  work_minutes: 300,
+                  notes: "انصراف تلقائي / Auto-closed on new check-in",
+                })
+                .eq("id", rec.id);
+            }
           }
-        }
 
-        const isLate = !isFlexible && localHour >= 9;
-        await admin.from("attendance_records").insert({
-          employee_id: empId,
-          date: localDateStr,
-          check_in: nowIso,
-          status: isLate ? "late" : "present",
-          is_late: isLate,
-        });
+          const isLate = !isFlexible && localHour >= 9;
+          await admin.from("attendance_records").insert({
+            employee_id: empId,
+            date: localDateStr,
+            check_in: nowIso,
+            status: isLate ? "late" : "present",
+            is_late: isLate,
+          });
+        } else {
+          console.log("[submit-scan] Already has open record for today, skipping duplicate:", todayOpen.id);
+        }
       } else if (event_type === "check_out") {
         const { data: openRecord, error: findErr } = await admin
           .from("attendance_records")
