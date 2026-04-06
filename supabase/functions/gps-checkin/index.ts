@@ -358,21 +358,42 @@ Deno.serve(async (req) => {
 
     if (event_type === "check_in") {
       recordPromise = (async () => {
-        // Close ANY previously open record (regardless of date) before creating new check-in
-        const { data: openRecords } = await supabaseAdmin
+        // Check if there's already an open record for TODAY — if so, just return (no duplicate)
+        const { data: todayOpen } = await supabaseAdmin
           .from("attendance_records")
-          .select("id, check_in")
+          .select("id")
+          .eq("employee_id", employeeId)
+          .eq("date", dateStr)
+          .is("check_out", null)
+          .not("check_in", "is", null)
+          .limit(1)
+          .maybeSingle();
+
+        if (todayOpen) {
+          console.log("[gps-checkin] Already has open record for today, skipping duplicate:", todayOpen.id);
+          return; // Don't create duplicate — existing open record is fine
+        }
+
+        // Close any open records from PREVIOUS days only
+        const { data: oldOpenRecords } = await supabaseAdmin
+          .from("attendance_records")
+          .select("id, check_in, date")
           .eq("employee_id", employeeId)
           .is("check_out", null)
-          .not("check_in", "is", null);
+          .not("check_in", "is", null)
+          .neq("date", dateStr);
 
-        if (openRecords && openRecords.length > 0) {
-          for (const rec of openRecords) {
-            // Auto-close with check_in + 5 hours for cross-day records
+        if (oldOpenRecords && oldOpenRecords.length > 0) {
+          for (const rec of oldOpenRecords) {
             const checkInTime = new Date(rec.check_in);
             const autoCheckout = new Date(checkInTime.getTime() + 5 * 60 * 60 * 1000).toISOString();
             await supabaseAdmin.from("attendance_records")
-              .update({ check_out: autoCheckout, notes: "انصراف تلقائي / Auto-closed on new check-in" })
+              .update({
+                check_out: autoCheckout,
+                work_hours: 5,
+                work_minutes: 300,
+                notes: "انصراف تلقائي / Auto-closed on new check-in",
+              })
               .eq("id", rec.id);
           }
         }
