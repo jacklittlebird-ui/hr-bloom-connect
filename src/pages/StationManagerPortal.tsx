@@ -603,8 +603,13 @@ const StationManagerPortal = () => {
   const [violFilterEmployee, setViolFilterEmployee] = useState('all');
   const [violFilterType, setViolFilterType] = useState('all');
   const [violFilterStatus, setViolFilterStatus] = useState('all');
+  const [violFilterDept, setViolFilterDept] = useState('all');
   const filteredViolations = useMemo(() => {
     let list = stationViolations;
+    if (violFilterDept !== 'all') {
+      const deptEmpIds = new Set(stationEmployees.filter(e => e.department === violFilterDept).map(e => e.id));
+      list = list.filter(v => deptEmpIds.has(v.employeeId));
+    }
     if (violFilterEmployee !== 'all') list = list.filter(v => v.employeeId === violFilterEmployee);
     if (violFilterType !== 'all') list = list.filter(v => v.type === violFilterType);
     if (violFilterStatus !== 'all') list = list.filter(v => v.status === violFilterStatus);
@@ -616,7 +621,7 @@ const StationManagerPortal = () => {
       });
     }
     return list;
-  }, [stationViolations, violFilterEmployee, violFilterType, violFilterStatus, violSearch, stationEmployees]);
+  }, [stationViolations, violFilterEmployee, violFilterType, violFilterStatus, violFilterDept, violSearch, stationEmployees]);
 
   // Lazy: fetch violations only when tab is active
   useEffect(() => {
@@ -1523,6 +1528,15 @@ const StationManagerPortal = () => {
                     <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input placeholder={t('بحث بالاسم أو الوصف...', 'Search by name or description...')} value={violSearch} onChange={e => setViolSearch(e.target.value)} className="ps-9" />
                   </div>
+                  <Select value={violFilterDept} onValueChange={setViolFilterDept}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={t('جميع الأقسام', 'All Departments')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('جميع الأقسام', 'All Departments')}</SelectItem>
+                      {stationDepartments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <Select value={violFilterEmployee} onValueChange={setViolFilterEmployee}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder={t('جميع الموظفين', 'All Employees')} />
