@@ -22,25 +22,38 @@ export const BasicInfoTab = ({ employee, onUpdate, readOnly }: BasicInfoTabProps
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(employee.avatar);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState({
-    employeeId: employee.employeeId || '',
-    stationLocation: employee.stationLocation || '',
-    nameAr: employee.nameAr || '',
-    nameEn: employee.nameEn || '',
-    firstName: employee.firstName || '',
-    fatherName: employee.fatherName || '',
-    familyName: employee.familyName || '',
-    birthDate: employee.birthDate || '',
-    birthPlace: employee.birthPlace || '',
-    birthGovernorate: employee.birthGovernorate || '',
-    gender: employee.gender || '',
-    religion: employee.religion || '',
-    nationality: employee.nationality || '',
-    maritalStatus: employee.maritalStatus || '',
-    childrenCount: employee.childrenCount || 0,
-    educationAr: employee.educationAr || '',
-    graduationYear: employee.graduationYear || '',
+  const buildFormData = (emp: Employee) => ({
+    employeeId: emp.employeeId || '',
+    stationLocation: emp.stationLocation || '',
+    nameAr: emp.nameAr || '',
+    nameEn: emp.nameEn || '',
+    firstName: emp.firstName || '',
+    fatherName: emp.fatherName || '',
+    familyName: emp.familyName || '',
+    birthDate: emp.birthDate || '',
+    birthPlace: emp.birthPlace || '',
+    birthGovernorate: emp.birthGovernorate || '',
+    gender: emp.gender || '',
+    religion: emp.religion || '',
+    nationality: emp.nationality || '',
+    maritalStatus: emp.maritalStatus || '',
+    childrenCount: emp.childrenCount || 0,
+    educationAr: emp.educationAr || '',
+    graduationYear: emp.graduationYear || '',
   });
+
+  const [formData, setFormData] = useState(buildFormData(employee));
+
+  // Sync form when full employee data loads (e.g. ensureFullEmployee)
+  useEffect(() => {
+    setFormData(buildFormData(employee));
+  }, [
+    employee.employeeId, employee.stationLocation, employee.nameAr, employee.nameEn,
+    employee.firstName, employee.fatherName, employee.familyName,
+    employee.birthDate, employee.birthPlace, employee.birthGovernorate,
+    employee.gender, employee.religion, employee.nationality,
+    employee.maritalStatus, employee.childrenCount, employee.educationAr, employee.graduationYear,
+  ]);
 
   const compressImage = (file: File, maxSizeKB: number): Promise<string> => {
     return new Promise((resolve, reject) => {
