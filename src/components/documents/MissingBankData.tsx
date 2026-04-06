@@ -133,7 +133,7 @@ export const MissingBankData = () => {
       if (error) throw error;
       toast({ title: ar ? 'تم حفظ البيانات البنكية بنجاح' : 'Bank data saved successfully' });
       setEditEmployee(null);
-      refreshEmployees();
+      await fetchBankData();
     } catch (err: any) {
       toast({ title: ar ? 'خطأ في الحفظ' : 'Save error', description: err.message, variant: 'destructive' });
     } finally { setSaving(false); }
