@@ -128,8 +128,17 @@ export const ManagerApprovals = ({ stationEmployees }: ManagerApprovalsProps) =>
     }
   };
 
+  const departments = useMemo(() => {
+    const depts = [...new Set(stationEmployees.map(e => e.department).filter(Boolean))];
+    return depts.sort();
+  }, [stationEmployees]);
+
   const filterByStatus = (list: any[]) => {
     let filtered = statusFilter === 'all' ? list : list.filter(r => r.status === statusFilter);
+    if (deptFilter !== 'all') {
+      const deptEmpIds = new Set(stationEmployees.filter(e => e.department === deptFilter).map(e => e.id));
+      filtered = filtered.filter(r => deptEmpIds.has(r.employee_id));
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       filtered = filtered.filter(r => {
