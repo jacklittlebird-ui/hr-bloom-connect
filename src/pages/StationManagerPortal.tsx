@@ -1528,6 +1528,15 @@ const StationManagerPortal = () => {
                     <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input placeholder={t('بحث بالاسم أو الوصف...', 'Search by name or description...')} value={violSearch} onChange={e => setViolSearch(e.target.value)} className="ps-9" />
                   </div>
+                  <Select value={violFilterDept} onValueChange={setViolFilterDept}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={t('جميع الأقسام', 'All Departments')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('جميع الأقسام', 'All Departments')}</SelectItem>
+                      {stationDepartments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <Select value={violFilterEmployee} onValueChange={setViolFilterEmployee}>
                     <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder={t('جميع الموظفين', 'All Employees')} />
