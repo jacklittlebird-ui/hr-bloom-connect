@@ -177,7 +177,7 @@ export const MissingBankData = () => {
           <SelectTrigger className="w-full sm:w-[200px] h-10"><MapPin className="h-4 w-4 text-muted-foreground shrink-0" /><SelectValue placeholder={ar ? 'كل المحطات' : 'All Stations'} /></SelectTrigger>
           <SelectContent className="w-80 max-h-[300px] overflow-y-auto">
             <SelectItem value="all">{ar ? 'كل المحطات' : 'All Stations'}</SelectItem>
-            {stations.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}
+            {stations.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={selectedDept} onValueChange={setSelectedDept}>
