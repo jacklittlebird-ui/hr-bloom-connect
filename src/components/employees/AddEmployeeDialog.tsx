@@ -80,6 +80,17 @@ export const AddEmployeeDialog = ({ open, onClose }: AddEmployeeDialogProps) => 
 
     setSaving(true);
     try {
+      // Resolve station_id from stationLocation code
+      let stationId: string | null = null;
+      if (data.stationLocation) {
+        const { data: stationRow } = await supabase
+          .from('stations')
+          .select('id')
+          .eq('code', data.stationLocation)
+          .single();
+        stationId = stationRow?.id || null;
+      }
+
       const row: Record<string, any> = {
         employee_code: data.employeeId.trim(),
         name_ar: data.nameAr.trim(),
@@ -89,9 +100,15 @@ export const AddEmployeeDialog = ({ open, onClose }: AddEmployeeDialogProps) => 
         job_title_ar: data.jobTitleAr || data.jobTitle || '',
         job_title_en: data.jobTitleEn || '',
         status: data.status || 'active',
+        station_id: stationId,
+        first_name: data.firstName || null,
+        father_name: data.fatherName || null,
+        family_name: data.familyName || null,
         birth_date: data.birthDate || null,
         birth_place: data.birthPlace || null,
+        birth_governorate: data.birthGovernorate || null,
         gender: data.gender || null,
+        avatar: data.avatar || null,
         religion: data.religion || null,
         nationality: data.nationality || null,
         marital_status: data.maritalStatus || null,
