@@ -90,7 +90,33 @@ export const PortalDashboard = () => {
     refreshPayroll();
   }, [refreshPayroll]);
 
-  const monthlyStats = useMemo(() => getMonthlyStats(PORTAL_EMPLOYEE_ID, new Date().getFullYear(), new Date().getMonth()), [getMonthlyStats]);
+  const [monthlyStats, setMonthlyStats] = useState({ present: 0, late: 0, absent: 0, totalHours: 0, totalMinutes: 0, overtime: 0 });
+  useEffect(() => {
+    if (!PORTAL_EMPLOYEE_ID) return;
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = now.toISOString().split('T')[0];
+    (async () => {
+      const { data } = await supabase
+        .from('attendance_records')
+        .select('status, is_late, work_hours, work_minutes')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .gte('date', startDate)
+        .lte('date', endDate);
+      if (data) {
+        let present = 0, late = 0, absent = 0, totalMins = 0;
+        data.forEach(r => {
+          if (['present', 'late', 'early-leave', 'mission'].includes(r.status)) present++;
+          if (r.is_late) late++;
+          if (r.status === 'absent') absent++;
+          totalMins += (r.work_minutes || 0);
+        });
+        setMonthlyStats({ present, late, absent, totalHours: Math.floor(totalMins / 60), totalMinutes: totalMins % 60, overtime: 0 });
+      }
+    })();
+  }, [PORTAL_EMPLOYEE_ID]);
   const latestPayroll = useMemo(() => {
     const p = getEmployeePayroll(PORTAL_EMPLOYEE_ID);
     return p[0];
