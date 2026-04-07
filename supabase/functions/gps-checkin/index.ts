@@ -30,7 +30,7 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 const recentCheckins = new Map<string, number>();
 const MIN_INTERVAL_MS = 5 * 60_000;
 const DEDUP_WINDOW_MS = 10_000;
-const MAX_DEVICES_PER_DAY = 3;
+
 const MAX_DEVICES_PER_USER = 3;
 const DEVICE_EXPIRY_DAYS = 90;
 const SOFT_MATCH_THRESHOLD = 2; // need 2/3 of (browser, os, deviceType) to match
@@ -220,22 +220,26 @@ Deno.serve(async (req) => {
       return json({ error: "GPS check-in not enabled for this station" }, 403);
     }
 
-    // Device fraud check: max distinct users per device per day
+    // Anti-fraud: each device can only be used by ONE user per day
     const todayStr = new Date().toISOString().split("T")[0];
-    const { count: deviceUserCount } = await supabaseAdmin
+    const { data: otherUsersOnDevice } = await supabaseAdmin
       .from("attendance_events")
-      .select("user_id", { count: "exact", head: true })
+      .select("user_id")
       .eq("device_id", device_id)
       .gte("scan_time", todayStr + "T00:00:00Z")
-      .neq("user_id", userId);
+      .neq("user_id", userId)
+      .limit(1);
 
-    if ((deviceUserCount ?? 0) >= MAX_DEVICES_PER_DAY) {
+    if (otherUsersOnDevice && otherUsersOnDevice.length > 0) {
       await supabaseAdmin.from("device_alerts").insert({
         user_id: userId, device_id,
-        reason: "max_devices_exceeded",
-        meta: { date: todayStr, count: deviceUserCount },
+        reason: "device_shared_fraud",
+        meta: { date: todayStr, other_user: otherUsersOnDevice[0].user_id },
       });
-      return json({ error: "تم تجاوز الحد الأقصى للأجهزة / Device limit exceeded" }, 403);
+      return json({
+        error: "هذا الجهاز مسجل لموظف آخر اليوم. لا يمكن استخدام نفس الجهاز لأكثر من موظف / This device was used by another employee today. Each device can only be used by one employee per day.",
+        device_fraud: true,
+      }, 403);
     }
 
     // ─── Multi-device binding with soft matching ───

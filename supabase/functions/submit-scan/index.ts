@@ -254,6 +254,31 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ─── Anti-fraud: each device can only be used by ONE user per day ───
+    const todayStr = new Date().toISOString().split("T")[0];
+    const { data: otherUsersOnDevice } = await admin
+      .from("attendance_events")
+      .select("user_id")
+      .eq("device_id", device_id)
+      .gte("scan_time", todayStr + "T00:00:00Z")
+      .neq("user_id", user_id)
+      .limit(1);
+
+    if (otherUsersOnDevice && otherUsersOnDevice.length > 0) {
+      await admin.from("device_alerts").insert({
+        user_id, device_id,
+        reason: "device_shared_fraud",
+        meta: { date: todayStr, other_user: otherUsersOnDevice[0].user_id },
+      });
+      return new Response(
+        JSON.stringify({
+          error: "هذا الجهاز مسجل لموظف آخر اليوم. لا يمكن استخدام نفس الجهاز لأكثر من موظف / This device was used by another employee today.",
+          device_fraud: true,
+        }),
+        { status: 403, headers: { ...corsHeaders, "content-type": "application/json" } }
+      );
+    }
+
     // ─── Multi-device binding with soft matching ───
     const deviceResult = await resolveDevice(
       admin,
