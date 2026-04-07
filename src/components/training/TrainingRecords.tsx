@@ -550,24 +550,43 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label>{t('training.courseName')}</Label>
-              <Select value={newRecord.courseId} onValueChange={(v) => {
-                const selectedCourse = courseOptions.find(c => c.id === v);
-                let plannedDate = newRecord.plannedDate;
-                if (newRecord.endDate && selectedCourse) {
-                  const d = new Date(newRecord.endDate);
-                  d.setFullYear(d.getFullYear() + selectedCourse.validityYears);
-                  d.setMonth(d.getMonth() - 1);
-                  plannedDate = d.toISOString().split('T')[0];
-                }
-                setNewRecord({ ...newRecord, courseId: v, plannedDate });
-              }}>
-                <SelectTrigger><SelectValue placeholder={ar ? '-- اختر الدورة --' : '-- Select Course --'} /></SelectTrigger>
-                <SelectContent>
-                  {courseOptions.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{ar ? c.nameAr : c.nameEn}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={coursePopoverOpen} onOpenChange={setCoursePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                    {newRecord.courseId
+                      ? (ar ? courseOptions.find(c => c.id === newRecord.courseId)?.nameAr : courseOptions.find(c => c.id === newRecord.courseId)?.nameEn) || (ar ? '-- اختر الدورة --' : '-- Select Course --')
+                      : (ar ? '-- اختر الدورة --' : '-- Select Course --')}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={ar ? 'ابحث عن دورة...' : 'Search course...'} />
+                    <CommandList>
+                      <CommandEmpty>{ar ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
+                      <CommandGroup>
+                        {courseOptions.map(c => (
+                          <CommandItem key={c.id} value={`${c.nameAr} ${c.nameEn}`} onSelect={() => {
+                            const selectedCourse = c;
+                            let plannedDate = newRecord.plannedDate;
+                            if (newRecord.endDate && selectedCourse) {
+                              const d = new Date(newRecord.endDate);
+                              d.setFullYear(d.getFullYear() + selectedCourse.validityYears);
+                              d.setMonth(d.getMonth() - 1);
+                              plannedDate = d.toISOString().split('T')[0];
+                            }
+                            setNewRecord({ ...newRecord, courseId: c.id, plannedDate });
+                            setCoursePopoverOpen(false);
+                          }}>
+                            <Check className={cn("mr-2 h-4 w-4", newRecord.courseId === c.id ? "opacity-100" : "opacity-0")} />
+                            {ar ? c.nameAr : c.nameEn}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <Label>{ar ? 'الجهة المقدمة' : 'Provider'}</Label>
