@@ -77,7 +77,7 @@ const jobFunctionLabels: Record<string, { en: string; ar: string }> = {
 
 const STORAGE_KEY = 'training-records-ui-state';
 
-export const TrainingRecords = () => {
+export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const { t, language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { toast } = useToast();
