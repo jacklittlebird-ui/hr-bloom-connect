@@ -384,14 +384,12 @@ Deno.serve(async (req) => {
 
           if (oldOpenRecords && oldOpenRecords.length > 0) {
             for (const rec of oldOpenRecords) {
-              const checkInTime = new Date(rec.check_in);
-              const autoCheckout = new Date(checkInTime.getTime() + 5 * 60 * 60 * 1000).toISOString();
               await admin.from("attendance_records")
                 .update({
-                  check_out: autoCheckout,
-                  work_hours: 5,
-                  work_minutes: 300,
-                  notes: "انصراف تلقائي / Auto-closed on new check-in",
+                  check_out: rec.check_in,
+                  work_hours: 0,
+                  work_minutes: 0,
+                  notes: "لم يتم تسجيل انصراف / No checkout recorded - auto-closed",
                 })
                 .eq("id", rec.id);
             }
