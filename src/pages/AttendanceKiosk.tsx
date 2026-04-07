@@ -119,23 +119,6 @@ const AttendanceKiosk = () => {
     return () => clearInterval(freezeCheck);
   }, []);
 
-  // ── Visibility change: immediately regenerate QR when page becomes visible ──
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState !== 'visible') return;
-      console.log("[Kiosk] Page became visible, checking QR freshness...");
-      const now = Date.now();
-      if (now >= qrExpiresAt - REFRESH_BUFFER_MS) {
-        console.log("[Kiosk] QR expired or near-expiry, regenerating...");
-        isGeneratingRef.current = false; // reset lock in case it was stuck
-        void generateQRCodes();
-      } else {
-        setCountdown(getSecondsUntil(qrExpiresAt));
-      }
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [qrExpiresAt, generateQRCodes]);
 
   // ── Daily reload at 4:00 AM ──
   useEffect(() => {
