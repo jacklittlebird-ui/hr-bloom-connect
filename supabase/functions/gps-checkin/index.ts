@@ -297,6 +297,9 @@ Deno.serve(async (req) => {
       return json({ error: "No GPS locations configured for this station" }, 400);
     }
 
+    // Add GPS accuracy as buffer (capped at 150m to prevent abuse)
+    const accuracyBuffer = Math.min(gps_accuracy || 0, 150);
+
     let nearestDist = Infinity;
     let matchedLocation: any = null;
     for (const loc of locations) {
@@ -304,7 +307,8 @@ Deno.serve(async (req) => {
       const dist = haversine(gps_lat, gps_lng, loc.latitude, loc.longitude);
       if (dist < nearestDist) {
         nearestDist = dist;
-        if (dist <= (loc.radius_m || 150)) {
+        const effectiveRadius = (loc.radius_m || 150) + accuracyBuffer;
+        if (dist <= effectiveRadius) {
           matchedLocation = loc;
         }
       }
