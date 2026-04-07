@@ -117,13 +117,6 @@ const LoginPage = () => {
         </div>
 
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 w-full">
-          <div className="mb-10">
-            <picture>
-              <source srcSet="/images/company-logo-vertical.webp" type="image/webp" />
-              <img src="/images/company-logo-vertical.png" alt="Link Aero" width="120" height="120" fetchPriority="high" className="h-28 w-28 rounded-2xl object-contain bg-white/10 backdrop-blur-sm p-2" />
-            </picture>
-          </div>
-
           <h2 className="text-3xl xl:text-4xl font-bold text-white mb-3 leading-tight">
             {t('نظام إدارة الموارد البشرية', 'HR Management System')}
           </h2>
