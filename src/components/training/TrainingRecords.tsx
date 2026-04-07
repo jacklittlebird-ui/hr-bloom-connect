@@ -123,7 +123,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     };
     fetchCourses();
     fetchLocations();
-  }, []);
+  }, [activeTab]);
 
   const trainingEmployees: Employee[] = useMemo(() => contextEmployees.map((emp) => ({
     id: emp.id,
