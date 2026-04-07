@@ -144,13 +144,13 @@ const LoginPage = () => {
       {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center bg-background p-6 sm:p-8">
         <div className="w-full max-w-[420px]">
-          {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-8">
+          {/* Logo */}
+          <div className="text-center mb-8">
             <picture>
               <source srcSet="/images/company-logo-vertical.webp" type="image/webp" />
               <img src="/images/company-logo-vertical.png" alt="Link Aero" width="112" height="112" fetchPriority="high" className="h-28 w-28 rounded-2xl object-contain mx-auto mb-4" />
             </picture>
-            <h1 className="text-xl font-bold text-foreground">{t('نظام إدارة الموارد البشرية', 'HR Management System')}</h1>
+            <h1 className="lg:hidden text-xl font-bold text-foreground">{t('نظام إدارة الموارد البشرية', 'HR Management System')}</h1>
           </div>
 
           {/* Tab switcher */}
