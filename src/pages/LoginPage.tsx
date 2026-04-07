@@ -87,6 +87,12 @@ const LoginPage = () => {
     { icon: Clock, ar: 'تتبع الحضور والانصراف', en: 'Attendance tracking' },
     { icon: BarChart3, ar: 'تقارير وتحليلات شاملة', en: 'Comprehensive reports & analytics' },
     { icon: Plane, ar: 'إدارة متكاملة للموارد البشرية', en: 'Integrated HR management' },
+    { icon: User, ar: 'إدارة التوظيف واستقطاب الكفاءات', en: 'Recruitment & talent acquisition' },
+    { icon: Globe, ar: 'إدارة التدريب وتطوير الموظفين', en: 'Training & employee development' },
+    { icon: Lock, ar: 'تعيين وتتبع الأصول واليونيفورم للموظفين', en: 'Asset & uniform tracking' },
+    { icon: LogIn, ar: 'إدارة سيارات الشركة وحركتها وصيانتها', en: 'Vehicle fleet management' },
+    { icon: Smartphone, ar: 'إدارة الإجازات والأذونات بسهولة', en: 'Leave & permission management' },
+    { icon: CheckCircle, ar: 'إرسال الإشعارات والتنبيهات للموظفين بشكل فوري', en: 'Instant employee notifications' },
   ];
 
   return (
@@ -116,28 +122,26 @@ const LoginPage = () => {
           }} />
         </div>
 
-        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 w-full">
+        <div className="relative z-10 flex flex-col items-center justify-center px-12 xl:px-16 w-full h-full text-center">
           <h2 className="text-3xl xl:text-4xl font-bold text-white mb-3 leading-tight">
             {t('نظام إدارة الموارد البشرية', 'HR Management System')}
           </h2>
           <p className="text-white/70 text-lg mb-10 leading-relaxed max-w-md">
-            {t('منصة متكاملة لإدارة شؤون الموظفين والحضور والرواتب', 'Integrated platform for employee management, attendance & payroll')}
+            {t('منصة متكاملة لإدارة جميع عمليات الموارد البشرية', 'Integrated platform for all HR operations')}
           </p>
 
-          <div className="space-y-4">
+          <div className="space-y-3 w-full max-w-md">
             {features.map((f, i) => (
               <div key={i} className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-colors">
-                  <f.icon className="h-5 w-5 text-white" />
+                <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-colors flex-shrink-0">
+                  <f.icon className="h-4 w-4 text-white" />
                 </div>
-                <span className="text-white/90 text-sm font-medium">{t(f.ar, f.en)}</span>
+                <span className="text-white/90 text-sm font-medium text-right">{t(f.ar, f.en)}</span>
               </div>
             ))}
           </div>
 
-          <div className="mt-auto pt-16">
-            <p className="text-white/40 text-xs">Developed by OneStory Solutions</p>
-          </div>
+          <p className="text-white/40 text-xs mt-10">Developed by OneStory Solutions</p>
         </div>
       </div>
 
