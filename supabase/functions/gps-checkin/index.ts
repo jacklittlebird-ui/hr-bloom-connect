@@ -220,22 +220,26 @@ Deno.serve(async (req) => {
       return json({ error: "GPS check-in not enabled for this station" }, 403);
     }
 
-    // Device fraud check: max distinct users per device per day
+    // Anti-fraud: each device can only be used by ONE user per day
     const todayStr = new Date().toISOString().split("T")[0];
-    const { count: deviceUserCount } = await supabaseAdmin
+    const { data: otherUsersOnDevice } = await supabaseAdmin
       .from("attendance_events")
-      .select("user_id", { count: "exact", head: true })
+      .select("user_id")
       .eq("device_id", device_id)
       .gte("scan_time", todayStr + "T00:00:00Z")
-      .neq("user_id", userId);
+      .neq("user_id", userId)
+      .limit(1);
 
-    if ((deviceUserCount ?? 0) >= MAX_DEVICES_PER_DAY) {
+    if (otherUsersOnDevice && otherUsersOnDevice.length > 0) {
       await supabaseAdmin.from("device_alerts").insert({
         user_id: userId, device_id,
-        reason: "max_devices_exceeded",
-        meta: { date: todayStr, count: deviceUserCount },
+        reason: "device_shared_fraud",
+        meta: { date: todayStr, other_user: otherUsersOnDevice[0].user_id },
       });
-      return json({ error: "تم تجاوز الحد الأقصى للأجهزة / Device limit exceeded" }, 403);
+      return json({
+        error: "هذا الجهاز مسجل لموظف آخر اليوم. لا يمكن استخدام نفس الجهاز لأكثر من موظف / This device was used by another employee today. Each device can only be used by one employee per day.",
+        device_fraud: true,
+      }, 403);
     }
 
     // ─── Multi-device binding with soft matching ───
