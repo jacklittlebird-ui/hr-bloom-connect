@@ -165,7 +165,11 @@ export const PortalAttendance = () => {
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {filteredRecords.map(r => (
+                {loading ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 mx-auto animate-spin text-muted-foreground" /></TableCell></TableRow>
+                ) : filteredRecords.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد سجلات' : 'No records'}</TableCell></TableRow>
+                ) : filteredRecords.map(r => (
                   <TableRow key={r.id}>
                     <TableCell>{r.date}</TableCell>
                     <TableCell>{format(new Date(r.date), 'EEEE', { locale: ar ? arLocale : enUS })}</TableCell>
@@ -175,9 +179,6 @@ export const PortalAttendance = () => {
                     <TableCell>{statusBadge(r.status)}</TableCell>
                   </TableRow>
                 ))}
-                {filteredRecords.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد سجلات' : 'No records'}</TableCell></TableRow>
-                )}
               </TableBody>
             </Table>
           </div>
