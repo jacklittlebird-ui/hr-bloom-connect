@@ -1,32 +1,82 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAttendanceData } from '@/contexts/AttendanceDataContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle, Timer } from 'lucide-react';
+import { Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle, Timer, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
+
+interface PortalAttendanceRecord {
+  id: string;
+  date: string;
+  checkIn: string | null;
+  checkOut: string | null;
+  status: string;
+  workHours: number;
+  workMinutes: number;
+}
+
+const formatTime = (ts: string | null): string | null => {
+  if (!ts) return null;
+  try {
+    const d = new Date(ts);
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  } catch { return null; }
+};
 
 export const PortalAttendance = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { language } = useLanguage();
   const ar = language === 'ar';
-  const { records, getEmployeeMonthlyRecords, getMonthlyStats } = useAttendanceData();
+  const [loading, setLoading] = useState(false);
 
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
   const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const [dateFrom, setDateFrom] = useState(firstOfMonth);
   const [dateTo, setDateTo] = useState(todayStr);
+  const [filteredRecords, setFilteredRecords] = useState<PortalAttendanceRecord[]>([]);
 
-  // Get all records between dateFrom and dateTo
-  const filteredRecords = useMemo(() => {
-    return records.filter(r => r.employeeId === PORTAL_EMPLOYEE_ID && r.date >= dateFrom && r.date <= dateTo);
-  }, [records, PORTAL_EMPLOYEE_ID, dateFrom, dateTo]);
+  useEffect(() => {
+    if (!PORTAL_EMPLOYEE_ID) return;
+    const fetchRecords = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('attendance_records')
+        .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .gte('date', dateFrom)
+        .lte('date', dateTo)
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Portal attendance fetch error:', error);
+        setFilteredRecords([]);
+      } else {
+        setFilteredRecords((data || []).map(r => {
+          const ci = formatTime(r.check_in);
+          const co = formatTime(r.check_out);
+          const totalMins = r.work_minutes || (r.work_hours ? Math.round(r.work_hours * 60) : 0);
+          return {
+            id: r.id,
+            date: r.date,
+            checkIn: ci,
+            checkOut: co,
+            status: r.is_late ? 'late' : (r.status || 'present'),
+            workHours: Math.floor(totalMins / 60),
+            workMinutes: totalMins % 60,
+          };
+        }));
+      }
+      setLoading(false);
+    };
+    fetchRecords();
+  }, [PORTAL_EMPLOYEE_ID, dateFrom, dateTo]);
 
   const stats = useMemo(() => {
     let present = 0, late = 0, absent = 0, totalMinutes = 0;
@@ -115,7 +165,11 @@ export const PortalAttendance = () => {
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
               </TableRow></TableHeader>
               <TableBody>
-                {filteredRecords.map(r => (
+                {loading ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 mx-auto animate-spin text-muted-foreground" /></TableCell></TableRow>
+                ) : filteredRecords.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد سجلات' : 'No records'}</TableCell></TableRow>
+                ) : filteredRecords.map(r => (
                   <TableRow key={r.id}>
                     <TableCell>{r.date}</TableCell>
                     <TableCell>{format(new Date(r.date), 'EEEE', { locale: ar ? arLocale : enUS })}</TableCell>
@@ -125,9 +179,6 @@ export const PortalAttendance = () => {
                     <TableCell>{statusBadge(r.status)}</TableCell>
                   </TableRow>
                 ))}
-                {filteredRecords.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد سجلات' : 'No records'}</TableCell></TableRow>
-                )}
               </TableBody>
             </Table>
           </div>
