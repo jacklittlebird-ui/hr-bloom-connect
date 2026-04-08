@@ -66,6 +66,52 @@ const EmployeeSearchFilter = ({ employees, value, onChange, ar }: { employees: a
   );
 };
 
+const CourseSearchFilter = ({ courseOptions, filterCourses, setFilterCourses, toggleMulti, ar }: { courseOptions: { id: string; nameAr: string; nameEn: string }[]; filterCourses: string[]; setFilterCourses: (v: string[]) => void; toggleMulti: (arr: string[], val: string, setter: (v: string[]) => void) => void; ar: boolean }) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const sorted = useMemo(() => [...courseOptions].sort((a, b) => {
+    const nameA = ar ? a.nameAr : a.nameEn;
+    const nameB = ar ? b.nameAr : b.nameEn;
+    return nameA.localeCompare(nameB, ar ? 'ar' : 'en');
+  }), [courseOptions, ar]);
+  const filtered = sorted.filter(c => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return c.nameAr.toLowerCase().includes(s) || c.nameEn.toLowerCase().includes(s);
+  });
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-between text-xs font-normal h-10">
+          {filterCourses.length === 0 ? (ar ? 'الكل' : 'All') : `${filterCourses.length} ${ar ? 'محدد' : 'selected'}`}
+          <ChevronDown className="h-3 w-3 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-2" align="start">
+        <div className="flex items-center gap-2 mb-2 border-b pb-2">
+          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+          <Input
+            placeholder={ar ? 'بحث في الدورات...' : 'Search courses...'}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="h-8 text-sm border-0 p-0 focus-visible:ring-0"
+          />
+        </div>
+        <div className="max-h-60 overflow-y-auto space-y-0.5">
+          {filtered.map(c => (
+            <label key={c.id} className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-muted rounded cursor-pointer">
+              <Checkbox checked={filterCourses.includes(c.id)} onCheckedChange={() => toggleMulti(filterCourses, c.id, setFilterCourses)} />
+              {ar ? c.nameAr : c.nameEn}
+            </label>
+          ))}
+          {filtered.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">{ar ? 'لا توجد نتائج' : 'No results'}</p>}
+        </div>
+        {filterCourses.length > 0 && <Button variant="ghost" size="sm" className="w-full mt-1 text-xs" onClick={() => setFilterCourses([])}>{ar ? 'مسح' : 'Clear'}</Button>}
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 interface ReportRecord {
   id: string;
   employeeId: string;
