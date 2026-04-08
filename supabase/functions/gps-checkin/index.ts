@@ -405,14 +405,20 @@ Deno.serve(async (req) => {
         }
 
         const isLate = !isFlexible && localHour >= 9;
-        await supabaseAdmin.from("attendance_records").insert({
+        const insertPayload = {
           employee_id: employeeId,
           date: dateStr,
           check_in: now.toISOString(),
           status: isLate ? "late" : "present",
           is_late: isLate,
           notes: `GPS - ${matchedLocation.name_ar}`,
-        });
+        };
+        const { error: insertErr } = await supabaseAdmin.from("attendance_records").insert(insertPayload);
+        if (insertErr) {
+          console.error("[gps-checkin] CHECK_IN INSERT FAILED:", JSON.stringify(insertErr), "payload:", JSON.stringify(insertPayload));
+          throw new Error("Failed to create attendance record: " + insertErr.message);
+        }
+        console.log("[gps-checkin] CHECK_IN record created for", employeeId, "date:", dateStr);
       })();
     } else {
       recordPromise = (async () => {
