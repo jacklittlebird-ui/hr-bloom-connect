@@ -121,8 +121,18 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const getFilteredNotifications = useCallback((portal: PortalFilter, employeeId?: string): AppNotification[] => {
     const modules = PORTAL_MODULES[portal];
-    if (!modules) return notifications;
-    return notifications.filter(n => modules.includes(n.module));
+    let filtered = notifications;
+    if (modules) {
+      filtered = filtered.filter(n => modules.includes(n.module));
+    }
+    // For employee portal, also include notifications targeted to this employee
+    if (portal === 'employee' && employeeId) {
+      filtered = notifications.filter(n =>
+        (modules ? modules.includes(n.module) : true) ||
+        n.employeeId === employeeId
+      );
+    }
+    return filtered;
   }, [notifications]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
