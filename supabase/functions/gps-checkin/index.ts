@@ -413,12 +413,23 @@ Deno.serve(async (req) => {
           is_late: isLate,
           notes: `GPS - ${matchedLocation.name_ar}`,
         };
-        const { error: insertErr } = await supabaseAdmin.from("attendance_records").insert(insertPayload);
-        if (insertErr) {
-          console.error("[gps-checkin] CHECK_IN INSERT FAILED:", JSON.stringify(insertErr), "payload:", JSON.stringify(insertPayload));
-          throw new Error("Failed to create attendance record: " + insertErr.message);
+
+        // Try insert with one retry on failure
+        let insertErr: any = null;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const { error } = await supabaseAdmin.from("attendance_records").insert(insertPayload);
+          if (!error) {
+            insertErr = null;
+            console.log("[gps-checkin] CHECK_IN record created for", employeeId, "date:", dateStr, "attempt:", attempt);
+            break;
+          }
+          insertErr = error;
+          console.error("[gps-checkin] CHECK_IN INSERT attempt", attempt, "FAILED:", JSON.stringify(error));
+          if (attempt === 0) await new Promise(r => setTimeout(r, 500)); // wait 500ms before retry
         }
-        console.log("[gps-checkin] CHECK_IN record created for", employeeId, "date:", dateStr);
+        if (insertErr) {
+          throw new Error("Failed to create attendance record after 2 attempts: " + insertErr.message);
+        }
       })();
     } else {
       recordPromise = (async () => {
