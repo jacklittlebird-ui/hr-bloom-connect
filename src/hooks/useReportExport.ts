@@ -117,8 +117,13 @@ export const useReportExport = () => {
         </style>
       </head>
       <body>
-        <h1>${title}</h1>
-        <p class="print-date">${new Date().toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+          <img src="${logoUrl}" style="height:60px;width:auto;" />
+          <div style="flex:1;text-align:center;">
+            <h1 style="margin:0;font-size:24px;">${title}</h1>
+            <p class="print-date" style="margin:4px 0 0;">${new Date().toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </div>
+        </div>
         ${cardsHtml}
         ${printContent.innerHTML}
       </body>
@@ -181,8 +186,13 @@ export const useReportExport = () => {
 
     const container = createExportContainer(`
       <div style="font-family: 'Baloo Bhaijaan 2', 'Cairo', sans-serif; padding: 30px; direction: ${isRTL ? 'rtl' : 'ltr'}; background: white;">
-        <h1 style="text-align: center; margin-bottom: 8px; font-size: 22px; color: #1f2937;">${title}</h1>
-        <p style="text-align: center; color: #6b7280; margin-bottom: 24px; font-size: 13px;">${new Date().toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+          <img src="${logoUrl}" style="height:60px;width:auto;" crossorigin="anonymous" />
+          <div style="flex:1;text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:#1f2937;">${title}</div>
+            <p style="color:#6b7280;margin:4px 0 0;font-size:13px;">${new Date().toLocaleDateString(isRTL ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </div>
+        </div>
         <table style="width: 100%; border-collapse: collapse;">
           <thead><tr>${columns.map(c => `<th style="background-color:#1e40af;color:white;font-weight:600;font-size:12px;padding:10px 12px;border:1px solid #1e3a8a;text-align:${isRTL ? 'right' : 'left'};">${c.header}</th>`).join('')}</tr></thead>
           <tbody>${tableRows.replace(/<td>/g, `<td style="border:1px solid #d1d5db;padding:10px 12px;font-size:12px;text-align:${isRTL ? 'right' : 'left'};">`)}</tbody>
