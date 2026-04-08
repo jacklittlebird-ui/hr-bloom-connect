@@ -148,11 +148,15 @@ const LoginPage = () => {
       {/* Right form panel */}
       <div className="flex-1 flex items-center justify-center bg-background p-6 sm:p-8">
         <div className="w-full max-w-[420px]">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <img src="/images/one-hr-logo.png" alt="One HR" width="112" height="112" fetchPriority="high" className="h-28 w-28 object-contain mx-auto mb-4" />
-            <h1 className="lg:hidden text-xl font-bold text-foreground">{t('نظام إدارة الموارد البشرية', 'HR Management System')}</h1>
+          {/* Logos */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <picture>
+              <source srcSet="/images/company-logo-vertical.webp" type="image/webp" />
+              <img src="/images/company-logo-vertical.png" alt="Link Aero" width="100" height="100" fetchPriority="high" className="h-24 w-24 rounded-2xl object-contain" />
+            </picture>
+            <img src="/images/one-hr-logo.png" alt="One HR" width="100" height="100" className="h-24 w-24 object-contain" />
           </div>
+          <h1 className="lg:hidden text-xl font-bold text-foreground text-center mb-4">{t('نظام إدارة الموارد البشرية', 'HR Management System')}</h1>
 
           {/* Tab switcher */}
           <div className="flex gap-1 p-1 bg-muted rounded-xl mb-6">
