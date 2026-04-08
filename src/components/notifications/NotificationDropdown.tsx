@@ -104,7 +104,7 @@ export const NotificationDropdown = ({ variant = 'header', employeeId, portalFil
                       {language === 'ar' ? n.titleAr : n.titleEn}
                     </p>
                     {(n.descAr || n.descEn) && (
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap break-words">
                         {language === 'ar' ? n.descAr : n.descEn}
                       </p>
                     )}
