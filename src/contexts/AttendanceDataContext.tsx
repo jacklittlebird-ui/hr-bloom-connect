@@ -154,6 +154,25 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     const dateString = now.toISOString().split('T')[0];
     const checkInTs = now.toISOString();
 
+    // Check if there's ANY record for today (open or closed) — prevent duplicates
+    const { data: todayRecord } = await supabase
+      .from('attendance_records')
+      .select('id, check_out')
+      .eq('employee_id', employeeId)
+      .eq('date', dateString)
+      .limit(1)
+      .maybeSingle();
+
+    if (todayRecord) {
+      addNotification({
+        titleAr: `يوجد سجل حضور بالفعل لـ ${employeeNameAr} اليوم`,
+        titleEn: `${employeeName} already has a record for today`,
+        type: 'warning',
+        module: 'attendance',
+      });
+      return;
+    }
+
     const { data: assignment } = await supabase
       .from('attendance_assignments')
       .select('rule_id, attendance_rules(schedule_type)')
@@ -165,12 +184,13 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     const isFlexible = isFlexibleSchedule(scheduleType);
     const isLate = !isFlexible && now.getHours() >= 9;
 
-    // Close any previously open records before new check-in
+    // Close any previously open records from PREVIOUS days only
     const { data: openRecords } = await supabase
       .from('attendance_records')
-      .select('id, check_in')
+      .select('id, check_in, date')
       .eq('employee_id', employeeId)
-      .is('check_out', null);
+      .is('check_out', null)
+      .neq('date', dateString);
 
     if (openRecords && openRecords.length > 0) {
       for (const rec of openRecords) {
