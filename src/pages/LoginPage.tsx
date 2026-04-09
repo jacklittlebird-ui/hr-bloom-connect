@@ -154,7 +154,7 @@ const LoginPage = () => {
               <source srcSet="/images/company-logo-vertical.webp" type="image/webp" />
               <img src="/images/company-logo-vertical.png" alt="Link Aero" width="100" height="100" fetchPriority="high" className="h-24 w-24 rounded-2xl object-contain" />
             </picture>
-            <img src="/images/one-hr-logo.png" alt="One HR" width="100" height="100" className="h-24 w-24 object-contain" />
+            <img src="/images/one-hr-logo.png" alt="One HR" width="160" height="160" className="h-36 w-36 object-contain" />
           </div>
           <h1 className="lg:hidden text-xl font-bold text-foreground text-center mb-4">{t('نظام إدارة الموارد البشرية', 'HR Management System')}</h1>
 
