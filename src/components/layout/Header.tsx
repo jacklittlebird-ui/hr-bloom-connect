@@ -30,7 +30,9 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
             <Menu className="w-5 h-5" />
           </Button>
         )}
-        <img src="/images/one-hr-logo.png" alt="One HR" className="h-9 w-9 object-contain hidden sm:block" />
+        <div className="hidden sm:flex items-center justify-center h-12 w-12 rounded-lg bg-white p-1">
+          <img src="/images/one-hr-logo.png" alt="One HR" className="h-full w-full object-contain" />
+        </div>
         <h1 className={cn(
           "text-lg md:text-xl font-bold text-primary-foreground truncate",
           isRTL ? "font-arabic" : "font-sans"
