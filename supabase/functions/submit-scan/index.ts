@@ -402,7 +402,7 @@ Deno.serve(async (req) => {
             is_late: isLate,
           });
         } else {
-          console.log("[submit-scan] Already has open record for today, skipping duplicate:", todayOpen.id);
+          console.log("[submit-scan] Already has record for today, skipping duplicate:", todayRecord.id);
         }
       } else if (event_type === "check_out") {
         const { data: openRecord, error: findErr } = await admin
