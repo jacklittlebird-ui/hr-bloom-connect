@@ -1922,6 +1922,68 @@ export type Database = {
         }
         Relationships: []
       }
+      property_taxes: {
+        Row: {
+          address: string | null
+          amount: number
+          area_sqm: number | null
+          created_at: string
+          due_date: string
+          id: string
+          notes: string | null
+          paid_date: string | null
+          property_type: string | null
+          receipt_number: string | null
+          rental_value: number | null
+          station_id: string | null
+          status: string
+          tax_period: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          amount?: number
+          area_sqm?: number | null
+          created_at?: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          paid_date?: string | null
+          property_type?: string | null
+          receipt_number?: string | null
+          rental_value?: number | null
+          station_id?: string | null
+          status?: string
+          tax_period?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          amount?: number
+          area_sqm?: number | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          paid_date?: string | null
+          property_type?: string | null
+          receipt_number?: string | null
+          rental_value?: number | null
+          station_id?: string | null
+          status?: string
+          tax_period?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_taxes_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qr_location_stations: {
         Row: {
           created_at: string
