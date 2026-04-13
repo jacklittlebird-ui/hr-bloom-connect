@@ -46,6 +46,7 @@ const AttendanceAdmin = React.lazy(() => import("./pages/AttendanceAdmin"));
 const NotificationsPage = React.lazy(() => import("./pages/Notifications"));
 const AuditLogsPage = React.lazy(() => import("./pages/AuditLogs"));
 const Vehicles = React.lazy(() => import("./pages/Vehicles"));
+const PropertyTaxes = React.lazy(() => import("./pages/PropertyTaxes"));
 
 const queryClient = new QueryClient();
 
@@ -106,6 +107,7 @@ const AppRoutes = () => (
       <Route path="/vehicles" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Vehicles /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><NotificationsPage /></ProtectedRoute>} />
       <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin']}><AuditLogsPage /></ProtectedRoute>} />
+      <Route path="/property-taxes" element={<ProtectedRoute allowedRoles={['admin']}><PropertyTaxes /></ProtectedRoute>} />
 
       <Route path="/employee-portal" element={<ProtectedRoute allowedRoles={['employee']}><EmployeePortal /></ProtectedRoute>} />
       <Route path="/station-manager" element={<ProtectedRoute allowedRoles={['station_manager', 'area_manager']}><StationManagerPortal /></ProtectedRoute>} />
