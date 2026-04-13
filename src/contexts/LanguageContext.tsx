@@ -39,6 +39,7 @@ const translations: Record<string, Record<Language, string>> = {
   'nav.roles': { en: 'Roles', ar: 'الأدوار' },
   'nav.settings': { en: 'Site Settings', ar: 'إعدادات الموقع' },
   'nav.auditLogs': { en: 'Audit Logs', ar: 'سجل التدقيق' },
+  'nav.propertyTaxes': { en: 'Property Taxes', ar: 'الضرائب العقارية' },
   'nav.employeePortal': { en: 'Employee Portal', ar: 'بوابة الموظف' },
   'dashboard.title': { en: 'Dashboard', ar: 'لوحة التحكم' },
   'dashboard.totalEmployees': { en: 'Total Employees', ar: 'إجمالي الموظفين' },
