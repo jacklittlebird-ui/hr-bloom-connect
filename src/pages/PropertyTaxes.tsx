@@ -1,4 +1,4 @@
-import DashboardLayout from '@/components/layout/DashboardLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PropertyTaxesManager } from '@/components/property-taxes/PropertyTaxesManager';
 
 const PropertyTaxes = () => {
