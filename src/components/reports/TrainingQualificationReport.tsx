@@ -301,6 +301,93 @@ export const TrainingQualificationReport = () => {
     setTimeout(() => { printWindow.print(); printWindow.close(); }, 600);
   }, [groupedData, ar, getFilterTitle, filterTypeLabel]);
 
+  const handleExcelExport = useCallback(() => {
+    const title = getFilterTitle();
+    const logoUrl = `${window.location.origin}/images/company-logo.png`;
+
+    const headerRow = `
+      <tr>
+        <th style="background:#e8e8e8;font-weight:700;font-size:12px;padding:6px 8px;border:1px solid #999;text-align:${ar ? 'right' : 'left'};">${ar ? 'الاسم' : 'Name'}</th>
+        <th style="background:#e8e8e8;font-weight:700;font-size:12px;padding:6px 8px;border:1px solid #999;text-align:center;">${ar ? 'اسم الدورة التدريبية' : 'Training Course Name'}</th>
+        <th style="background:#e8e8e8;font-weight:700;font-size:12px;padding:6px 8px;border:1px solid #999;text-align:center;">${ar ? 'الجهة المقدمة والموقع' : 'Provider & Location'}</th>
+        <th style="background:#e8e8e8;font-weight:700;font-size:12px;padding:6px 8px;border:1px solid #999;text-align:center;">${ar ? 'تاريخ التدريب' : 'Training Date'}</th>
+        <th style="background:#e8e8e8;font-weight:700;font-size:12px;padding:6px 8px;border:1px solid #999;text-align:center;">${ar ? 'شهادة' : 'Cert'}</th>
+      </tr>
+    `;
+
+    let bodyRows = `
+      <tr><td colspan="5" style="background:#4472C4;color:white;text-align:center;padding:6px;font-weight:700;font-size:13px;border:1px solid #3360a8;">${title}</td></tr>
+    `;
+
+    for (const emp of groupedData) {
+      bodyRows += headerRow;
+      bodyRows += `
+        <tr>
+          <td style="background:#2E3B4E;color:white;padding:6px 8px;font-weight:700;font-size:12px;border:1px solid #555;">${emp.employeeName}</td>
+          <td style="background:#2E3B4E;color:white;padding:6px 8px;font-size:11px;border:1px solid #555;">
+            <span style="color:#ccc;">${ar ? 'تاريخ التعيين' : 'Hire Date'}</span> <span style="color:#FF6B6B;font-weight:700;">${emp.hireDate || '-'}</span>
+          </td>
+          <td colspan="2" style="background:#2E3B4E;color:white;padding:6px 8px;font-size:11px;border:1px solid #555;">
+            <span style="color:#ccc;">${ar ? 'الوظيفة' : 'Job Title'}</span> <span style="font-weight:600;">${emp.jobTitle || '-'}</span>
+          </td>
+          <td style="background:#2E3B4E;border:1px solid #555;"></td>
+        </tr>
+      `;
+      const deptRow = DEPT_CODES.map(code =>
+        `<span style="font-family:monospace;font-size:10px;margin:0 4px;">${code} ${emp.deptCode === code ? '☑' : '☐'}</span>`
+      ).join('');
+      bodyRows += `<tr><td colspan="5" style="background:#f5f5f5;padding:4px 8px;border:1px solid #ddd;font-size:10px;">${deptRow}</td></tr>`;
+
+      for (const c of emp.courses) {
+        bodyRows += `
+          <tr>
+            <td style="border:1px solid #ddd;padding:4px 8px;"></td>
+            <td style="border:1px solid #ddd;padding:4px 8px;font-size:12px;color:#2B7CD3;mso-number-format:'\\@';">${c.courseName}</td>
+            <td style="border:1px solid #ddd;padding:4px 8px;font-size:12px;color:#2B7CD3;mso-number-format:'\\@';">${c.provider}</td>
+            <td style="border:1px solid #ddd;padding:4px 8px;font-size:12px;text-align:center;mso-number-format:'\\@';">${c.trainingDate}</td>
+            <td style="border:1px solid #ddd;padding:4px 8px;text-align:center;font-size:14px;">${c.hasCert ? '☑' : '☐'}</td>
+          </tr>
+        `;
+      }
+    }
+
+    const htmlContent = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8">
+        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Report</x:Name><x:WorksheetOptions><x:DisplayRightToLeft/><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+        <style>td, th { font-family: 'Calibri', 'Arial', sans-serif; }</style>
+      </head>
+      <body>
+        <table style="direction:${ar ? 'rtl' : 'ltr'};">
+          <tr>
+            <td rowspan="2"><img src="${logoUrl}" style="height:50px;" /></td>
+            <td colspan="4" style="text-align:center;font-size:18px;font-weight:700;color:#1e40af;padding:8px;direction:rtl;">سجل التدريب والتأهيل - ${title}</td>
+          </tr>
+          <tr><td colspan="4" style="text-align:center;font-size:14px;color:#374151;padding:4px;">Training & Qualification Record - ${title}</td></tr>
+          <tr><td colspan="5" style="text-align:center;color:#6b7280;font-size:11px;padding:6px;">${new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })} — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td></tr>
+          ${bodyRows}
+          <tr><td colspan="5"></td></tr>
+          <tr><td colspan="5" style="text-align:center;color:#9ca3af;font-size:11px;padding:12px;">تم إنشاء التقرير بواسطة نظام إدارة الموارد البشرية — Generated by HR Management System</td></tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(['\uFEFF' + htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const downloadName = `Training_Qualification_Report_${new Date().toISOString().slice(0, 10)}.xls`;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = downloadName;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1000);
+
+    toast({ title: ar ? 'تم التصدير بنجاح' : 'Export completed successfully' });
+  }, [groupedData, ar, getFilterTitle]);
 
 
   return (
