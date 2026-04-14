@@ -1,8 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { getOrCreateDeviceId, getDeviceMeta } from "@/lib/device";
 import { performCheckin } from "@/lib/attendanceQueue";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import QrScanner from "@/components/attendance/QrScanner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +14,12 @@ import { CheckCircle, XCircle, Loader2, LogIn, LogOut, QrCode, Navigation } from
 const AttendanceScan = () => {
   const { user, session } = useAuth();
   const { language } = useLanguage();
+  const isMobile = useIsMobile();
   const ar = language === "ar";
+
+  const mainRef = useRef<HTMLDivElement>(null);
+  usePreventPullToRefresh(mainRef, isMobile);
+  useScrollRestoration(mainRef);
 
   const [status, setStatus] = useState<"idle" | "scanning" | "validating" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -133,105 +141,113 @@ const AttendanceScan = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir={ar ? "rtl" : "ltr"}>
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-2">
-            <QrCode className="h-10 w-10 text-primary" />
-          </div>
-          <CardTitle className="text-xl">
-            {ar ? "تسجيل الحضور" : "Attendance"}
-          </CardTitle>
-          {user && (
-            <p className="text-sm text-muted-foreground">
-              {ar ? user.nameAr : user.name}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Event type toggle */}
-          <div className="flex gap-2 justify-center">
-            <Button
-              variant={eventType === "check_in" ? "default" : "outline"}
-              onClick={() => setEventType("check_in")}
-              className="flex-1"
-            >
-              <LogIn className="h-4 w-4 me-2" />
-              {ar ? "حضور" : "Check In"}
-            </Button>
-            <Button
-              variant={eventType === "check_out" ? "default" : "outline"}
-              onClick={() => setEventType("check_out")}
-              className="flex-1"
-            >
-              <LogOut className="h-4 w-4 me-2" />
-              {ar ? "انصراف" : "Check Out"}
-            </Button>
-          </div>
+    <div className="h-dvh min-h-screen bg-background overflow-hidden" dir={ar ? "rtl" : "ltr"}>
+      <main
+        ref={mainRef}
+        className="h-full overflow-y-auto overflow-x-hidden"
+        style={{
+          overscrollBehavior: 'none',
+          overscrollBehaviorY: 'none',
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch' as any,
+        }}
+      >
+        <div className="min-h-full flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-2">
+                <QrCode className="h-10 w-10 text-primary" />
+              </div>
+              <CardTitle className="text-xl">
+                {ar ? "تسجيل الحضور" : "Attendance"}
+              </CardTitle>
+              {user && (
+                <p className="text-sm text-muted-foreground">
+                  {ar ? user.nameAr : user.name}
+                </p>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2 justify-center">
+                <Button
+                  variant={eventType === "check_in" ? "default" : "outline"}
+                  onClick={() => setEventType("check_in")}
+                  className="flex-1"
+                >
+                  <LogIn className="h-4 w-4 me-2" />
+                  {ar ? "حضور" : "Check In"}
+                </Button>
+                <Button
+                  variant={eventType === "check_out" ? "default" : "outline"}
+                  onClick={() => setEventType("check_out")}
+                  className="flex-1"
+                >
+                  <LogOut className="h-4 w-4 me-2" />
+                  {ar ? "انصراف" : "Check Out"}
+                </Button>
+              </div>
 
-          {/* Mode toggle */}
-          <div className="flex gap-2 justify-center">
-            <Button
-              variant={mode === "qr" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => { setMode("qr"); reset(); }}
-            >
-              <QrCode className="h-4 w-4 me-1" />
-              QR
-            </Button>
-            <Button
-              variant={mode === "gps" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => { setMode("gps"); reset(); }}
-            >
-              <Navigation className="h-4 w-4 me-1" />
-              GPS
-            </Button>
-          </div>
+              <div className="flex gap-2 justify-center">
+                <Button
+                  variant={mode === "qr" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => { setMode("qr"); reset(); }}
+                >
+                  <QrCode className="h-4 w-4 me-1" />
+                  QR
+                </Button>
+                <Button
+                  variant={mode === "gps" ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => { setMode("gps"); reset(); }}
+                >
+                  <Navigation className="h-4 w-4 me-1" />
+                  GPS
+                </Button>
+              </div>
 
-          {/* Scanner area */}
-          {mode === "qr" && scanning && <QrScanner onScan={onScan} />}
+              {mode === "qr" && scanning && <QrScanner onScan={onScan} />}
 
-          {/* Status messages */}
-          {status === "validating" && (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              {ar ? "جاري التحقق..." : "Validating..."}
-            </div>
-          )}
-          {status === "success" && (
-            <div className="flex items-center justify-center gap-2 text-green-600">
-              <CheckCircle className="h-5 w-5 text-primary" />
-              {message}
-            </div>
-          )}
-          {status === "error" && (
-            <div className="flex items-center justify-center gap-2 text-destructive">
-              <XCircle className="h-5 w-5" />
-              {message}
-            </div>
-          )}
+              {status === "validating" && (
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  {ar ? "جاري التحقق..." : "Validating..."}
+                </div>
+              )}
+              {status === "success" && (
+                <div className="flex items-center justify-center gap-2 text-green-600">
+                  <CheckCircle className="h-5 w-5 text-primary" />
+                  {message}
+                </div>
+              )}
+              {status === "error" && (
+                <div className="flex items-center justify-center gap-2 text-destructive">
+                  <XCircle className="h-5 w-5" />
+                  {message}
+                </div>
+              )}
 
-          {/* Action buttons */}
-          {!scanning && status !== "validating" && mode === "qr" && (
-            <Button onClick={startScan} className="w-full" size="lg">
-              <QrCode className="h-5 w-5 me-2" />
-              {ar ? "مسح رمز QR" : "Scan QR Code"}
-            </Button>
-          )}
-          {status !== "validating" && mode === "gps" && (
-            <Button onClick={handleGpsCheckin} className="w-full" size="lg">
-              <Navigation className="h-5 w-5 me-2" />
-              {ar ? "تسجيل بالموقع (GPS)" : "Check In (GPS)"}
-            </Button>
-          )}
-          {(status === "success" || status === "error") && (
-            <Button variant="outline" onClick={reset} className="w-full">
-              {ar ? "محاولة أخرى" : "Try Again"}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+              {!scanning && status !== "validating" && mode === "qr" && (
+                <Button onClick={startScan} className="w-full" size="lg">
+                  <QrCode className="h-5 w-5 me-2" />
+                  {ar ? "مسح رمز QR" : "Scan QR Code"}
+                </Button>
+              )}
+              {status !== "validating" && mode === "gps" && (
+                <Button onClick={handleGpsCheckin} className="w-full" size="lg">
+                  <Navigation className="h-5 w-5 me-2" />
+                  {ar ? "تسجيل بالموقع (GPS)" : "Check In (GPS)"}
+                </Button>
+              )}
+              {(status === "success" || status === "error") && (
+                <Button variant="outline" onClick={reset} className="w-full">
+                  {ar ? "محاولة أخرى" : "Try Again"}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 };

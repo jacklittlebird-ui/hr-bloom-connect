@@ -21,6 +21,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon } from 'lucide-react';
 import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
 import type { LeaveRequest } from '@/types/leaves';
@@ -111,10 +114,12 @@ const StationManagerPortal = () => {
   const { reviews, addReview, updateReview, ensureLoaded: ensurePerformanceLoaded } = usePerformanceData();
   const { addNotification } = useNotifications();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const mainRef = useRef<HTMLElement>(null);
+  usePreventPullToRefresh(mainRef, isMobile);
+  useScrollRestoration(mainRef);
   const t = (ar: string, en: string) => language === 'ar' ? ar : en;
   const ar = language === 'ar';
-
-  // === Controlled Tab for lazy loading ===
   const [activeTab, setActiveTab] = useState('employees');
 
   // Violations from Supabase (lazy-loaded)
@@ -660,9 +665,8 @@ const StationManagerPortal = () => {
   };
 
   return (
-    <div className={cn("min-h-screen bg-background", isRTL ? "font-arabic" : "font-sans")} dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-card border-b border-border shadow-sm">
+    <div className={cn('h-dvh min-h-screen bg-background flex flex-col overflow-hidden', isRTL ? 'font-arabic' : 'font-sans')} dir={isRTL ? 'rtl' : 'ltr'}>
+      <header className="shrink-0 sticky top-0 z-40 bg-card border-b border-border shadow-sm">
         <div className="flex items-center justify-between h-16 px-4 md:px-6">
           <div className="flex items-center gap-2 md:gap-3 min-w-0">
             <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
@@ -689,8 +693,9 @@ const StationManagerPortal = () => {
         </div>
       </header>
 
-      <main className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
-        <PortalWelcomeBanner />
+      <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none', overscrollBehaviorY: 'none', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' as any }}>
+        <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
+          <PortalWelcomeBanner />
 
         {/* Area Manager Station Selector */}
         {isAreaManager && managedStations.length > 0 && (
@@ -1633,6 +1638,7 @@ const StationManagerPortal = () => {
             </TabsContent>
           )}
         </Tabs>
+        </div>
       </main>
 
       {/* Full Evaluation Dialog - matches PerformanceReviewForm */}

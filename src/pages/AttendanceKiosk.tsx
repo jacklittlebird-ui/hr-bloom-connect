@@ -2,6 +2,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,9 +38,11 @@ const LOCATION_CACHE_TTL = 30 * 60 * 1000; // 30 min
 const AttendanceKiosk = () => {
   const { language } = useLanguage();
   const { session, logout } = useAuth();
+  const isMobile = useIsMobile();
   const ar = language === "ar";
-
-  const QR_COUNT = 3;
+  const mainRef = useRef<HTMLDivElement>(null);
+  usePreventPullToRefresh(mainRef, isMobile);
+  useScrollRestoration(mainRef);
   const [qrSrcs, setQrSrcs] = useState<string[]>(["", "", ""]);
   const [locations, setLocations] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState("");
@@ -392,77 +397,90 @@ const AttendanceKiosk = () => {
 
   return (
     <div
-      className="min-h-screen bg-background flex flex-col items-center justify-center p-4 font-arabic gap-4"
+      className="h-dvh min-h-screen bg-background overflow-hidden font-arabic"
       dir={ar ? "rtl" : "ltr"}
     >
-      <div className="w-full max-w-4xl">
-        <PortalWelcomeBanner />
-      </div>
-      <Card className="w-full max-w-4xl">
-        <CardHeader className="text-center relative">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => { logout(); }}
-            className="absolute top-2 ltr:right-2 rtl:left-2 text-muted-foreground hover:text-destructive"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden sm:inline">{ar ? "خروج" : "Logout"}</span>
-          </Button>
-          <div className="flex justify-center mb-2">
-            <QrCode className="h-12 w-12 text-primary" />
+      <main
+        ref={mainRef}
+        className="h-full overflow-y-auto overflow-x-hidden"
+        style={{
+          overscrollBehavior: 'none',
+          overscrollBehaviorY: 'none',
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch' as any,
+        }}
+      >
+        <div className="min-h-full flex flex-col items-center justify-center p-4 font-arabic gap-4">
+          <div className="w-full max-w-4xl">
+            <PortalWelcomeBanner />
           </div>
-          <CardTitle className="text-2xl">
-            {ar ? "نقطة تسجيل الحضور" : "Attendance Kiosk"}
-          </CardTitle>
-          {currentLocation && (
-            <p className="text-muted-foreground flex items-center justify-center gap-1">
-              <MapPin className="h-4 w-4" />
-              {ar ? currentLocation.name_ar : currentLocation.name_en}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {renderStatusBanner()}
-          {geoStatus === "allowed" ? (
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center justify-center gap-4 flex-wrap">
-                {qrSrcs.map((src, i) => (
-                  <div key={i} className="relative">
-                    {src ? (
-                      <>
-                        <img src={src} alt={`QR Code ${i + 1}`} className="w-[220px] h-[220px] sm:w-[250px] sm:h-[250px] rounded-lg shadow-lg" />
-                        <Badge variant="secondary" className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-xs">
-                          <RefreshCw className="h-3 w-3" />
-                          {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
-                        </Badge>
-                      </>
-                    ) : (
-                      <div className="w-[220px] h-[220px] sm:w-[250px] sm:h-[250px] rounded-lg border-2 border-dashed border-muted flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
-                ))}
+          <Card className="w-full max-w-4xl">
+            <CardHeader className="text-center relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { logout(); }}
+                className="absolute top-2 ltr:right-2 rtl:left-2 text-muted-foreground hover:text-destructive"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">{ar ? "خروج" : "Logout"}</span>
+              </Button>
+              <div className="flex justify-center mb-2">
+                <QrCode className="h-12 w-12 text-primary" />
               </div>
-              <p className="text-sm text-muted-foreground text-center">
-                {ar ? "امسح أي رمز باستخدام تطبيق HR Link على هاتفك" : "Scan any code using the HR Link app on your phone"}
-              </p>
-            </div>
-          ) : (
-            <div className="flex justify-center">
-              <div className="w-[300px] h-[300px] rounded-lg border-2 border-dashed border-destructive/30 flex items-center justify-center">
-                <div className="text-center space-y-2 p-4">
-                  <ShieldAlert className="h-12 w-12 text-destructive/50 mx-auto" />
-                  <p className="text-muted-foreground text-sm">
-                    {ar ? "لا يمكن توليد رمز QR من خارج الموقع المحدد" : "QR code cannot be generated outside the designated location"}
+              <CardTitle className="text-2xl">
+                {ar ? "نقطة تسجيل الحضور" : "Attendance Kiosk"}
+              </CardTitle>
+              {currentLocation && (
+                <p className="text-muted-foreground flex items-center justify-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  {ar ? currentLocation.name_ar : currentLocation.name_en}
+                </p>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {renderStatusBanner()}
+              {geoStatus === "allowed" ? (
+                <div className="flex flex-col items-center gap-4">
+                  <div className="flex items-center justify-center gap-4 flex-wrap">
+                    {qrSrcs.map((src, i) => (
+                      <div key={i} className="relative">
+                        {src ? (
+                          <>
+                            <img src={src} alt={`QR Code ${i + 1}`} className="w-[220px] h-[220px] sm:w-[250px] sm:h-[250px] rounded-lg shadow-lg" />
+                            <Badge variant="secondary" className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1 text-xs">
+                              <RefreshCw className="h-3 w-3" />
+                              {Math.floor(countdown / 60)}:{(countdown % 60).toString().padStart(2, '0')}
+                            </Badge>
+                          </>
+                        ) : (
+                          <div className="w-[220px] h-[220px] sm:w-[250px] sm:h-[250px] rounded-lg border-2 border-dashed border-muted flex items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center">
+                    {ar ? "امسح أي رمز باستخدام تطبيق HR Link على هاتفك" : "Scan any code using the HR Link app on your phone"}
                   </p>
                 </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              ) : (
+                <div className="flex justify-center">
+                  <div className="w-[300px] h-[300px] rounded-lg border-2 border-dashed border-destructive/30 flex items-center justify-center">
+                    <div className="text-center space-y-2 p-4">
+                      <ShieldAlert className="h-12 w-12 text-destructive/50 mx-auto" />
+                      <p className="text-muted-foreground text-sm">
+                        {ar ? "لا يمكن توليد رمز QR من خارج الموقع المحدد" : "QR code cannot be generated outside the designated location"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 };
