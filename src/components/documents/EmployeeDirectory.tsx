@@ -103,7 +103,7 @@ export const EmployeeDirectory = () => {
           </Select>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
+          <Button variant="outline" size="sm" onClick={() => handlePrint(ar ? 'دليل الموظفين' : 'Employee Directory')}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
           <Button variant="outline" size="sm" onClick={handleExport}><Download className="w-4 h-4 mr-1" />{ar ? 'تصدير' : 'Export'}</Button>
         </div>
       </div>
@@ -168,7 +168,7 @@ export const EmployeeDirectory = () => {
       </div>
 
       {totalPages > 1 && (
-        <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        <PaginationControls currentPage={currentPage} totalPages={totalPages} totalItems={totalItems} startIndex={startIndex} endIndex={endIndex} onPageChange={setCurrentPage} />
       )}
     </div>
   );
