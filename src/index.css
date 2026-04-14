@@ -132,10 +132,29 @@
     @apply border-border;
   }
 
+  html {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Baloo Bhaijaan 2', sans-serif !important;
     -webkit-text-size-adjust: 100%;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
   }
 
   /* Ensure tables inherit direction for RTL support */
@@ -156,12 +175,6 @@
   select,
   button {
     font-family: inherit;
-  }
-
-
-  /* Prevent pull-to-refresh on mobile */
-  html, body {
-    overscroll-behavior-y: contain;
   }
 }
 

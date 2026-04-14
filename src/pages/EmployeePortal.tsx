@@ -61,8 +61,7 @@ const sectionComponents: Record<PortalSection, React.FC> = {
 const EmployeePortal = () => {
   const { isRTL } = useLanguage();
   const isMobile = useIsMobile();
-  const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-  const enablePullToRefresh = isMobile && !isAndroid;
+  const enablePullToRefresh = false;
   const [activeSection, setActiveSection] = useState<PortalSection>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -183,8 +182,9 @@ const EmployeePortal = () => {
           {...touchHandlers}
           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden min-w-0 relative"
           style={{
-            overscrollBehaviorY: 'contain',
-            touchAction: 'auto',
+            overscrollBehavior: 'none',
+            overscrollBehaviorY: 'none',
+            touchAction: 'pan-y',
             WebkitOverflowScrolling: 'touch' as any,
           }}
         >

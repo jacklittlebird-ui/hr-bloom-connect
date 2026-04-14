@@ -44,8 +44,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
         !isMobile && sidebarVisible && (sidebarCollapsed ? "ms-16" : "ms-64")
       )}
         style={{
-          overscrollBehaviorY: 'contain',
-          touchAction: 'auto',
+          overscrollBehavior: 'none',
+          overscrollBehaviorY: 'none',
+          touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch' as any,
         }}
       >
