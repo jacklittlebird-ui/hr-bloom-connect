@@ -319,11 +319,7 @@ export const TrainingQualificationReport = () => {
           })}>
             <FileText className="h-4 w-4 mr-1" />PDF
           </Button>
-          <Button variant="outline" size="sm" disabled={!isFilterActive} onClick={() => exportBilingualCSV({
-            titleAr: 'سجل التدريب والتأهيل - ' + getFilterTitle(),
-            titleEn: 'Training & Qualification Record - ' + getFilterTitle(),
-            data: getExportData(), columns: exportColumns, fileName: 'Training_Qualification_Report',
-          })}>
+          <Button variant="outline" size="sm" disabled={!isFilterActive} onClick={() => handleExcelExport()}>
             <FileSpreadsheet className="h-4 w-4 mr-1" />Excel
           </Button>
         </div>
