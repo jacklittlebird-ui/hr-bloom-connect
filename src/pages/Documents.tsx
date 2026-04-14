@@ -193,6 +193,8 @@ const Documents = () => {
           <MissingBankData />
         ) : activeMainTab === 'missingJob' ? (
           <MissingJobData />
+        ) : activeMainTab === 'directory' ? (
+          <EmployeeDirectory />
         ) : activeMainTab === 'leaveBalances' ? (
           <LeaveBalancesAlert />
         ) : (
