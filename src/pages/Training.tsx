@@ -102,6 +102,8 @@ const Training = () => {
   );
 };
 
+const MissingCourseRecords = lazy(() => import('@/components/reports/MissingCourseRecords').then(m => ({ default: m.MissingCourseRecords })));
+
 const TrainingReportsTabs = ({ ar, isRTL }: { ar: boolean; isRTL: boolean }) => {
   const [subTab, setSubTab] = useState('stats');
   return (
@@ -116,6 +118,9 @@ const TrainingReportsTabs = ({ ar, isRTL }: { ar: boolean; isRTL: boolean }) => 
         <TabsTrigger value="qualification" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
           {ar ? 'سجل التأهيل' : 'Qualification Record'}
         </TabsTrigger>
+        <TabsTrigger value="missing" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          {ar ? 'دورات بدون اسم' : 'Missing Courses'}
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="stats">
         <Suspense fallback={<TabFallback />}><TrainingReports /></Suspense>
@@ -126,6 +131,11 @@ const TrainingReportsTabs = ({ ar, isRTL }: { ar: boolean; isRTL: boolean }) => 
       <TabsContent value="qualification">
         <Suspense fallback={<TabFallback />}><TrainingQualificationReport /></Suspense>
       </TabsContent>
+      {subTab === 'missing' && (
+        <TabsContent value="missing">
+          <Suspense fallback={<TabFallback />}><MissingCourseRecords /></Suspense>
+        </TabsContent>
+      )}
     </Tabs>
   );
 };
