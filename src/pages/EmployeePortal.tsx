@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { TrainingAcknowledgmentModal } from '@/components/portal/TrainingAcknowledgmentModal';
@@ -28,6 +28,7 @@ import { PortalTerms } from '@/components/portal/sections/PortalTerms';
 import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 import { PortalEidBonuses } from '@/components/portal/sections/PortalEidBonuses';
 import { PortalBonuses } from '@/components/portal/sections/PortalBonuses';
+import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 
 export type PortalSection =
   | 'dashboard' | 'profile' | 'attendance' | 'leaves'
@@ -61,7 +62,6 @@ const sectionComponents: Record<PortalSection, React.FC> = {
 const EmployeePortal = () => {
   const { isRTL } = useLanguage();
   const isMobile = useIsMobile();
-  const enablePullToRefresh = false;
   const [activeSection, setActiveSection] = useState<PortalSection>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -83,62 +83,8 @@ const EmployeePortal = () => {
     } catch {}
   }, []);
 
-  // Pull-to-refresh
   const mainRef = useRef<HTMLDivElement>(null);
-  const touchStartY = useRef(0);
-  const [pullDistance, setPullDistance] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
-  const isPulling = useRef(false);
-
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!enablePullToRefresh) return;
-    const el = mainRef.current;
-    if (!el || refreshing) return;
-    if (el.scrollTop <= 0) {
-      touchStartY.current = e.touches[0].clientY;
-      isPulling.current = true;
-    }
-  }, [enablePullToRefresh, refreshing]);
-
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!enablePullToRefresh) return;
-    if (!isPulling.current || refreshing) return;
-    const el = mainRef.current;
-    if (!el || el.scrollTop > 0) {
-      isPulling.current = false;
-      setPullDistance(0);
-      return;
-    }
-    const dy = e.touches[0].clientY - touchStartY.current;
-    if (dy > 0) {
-      setPullDistance(Math.min(dy * 0.4, 80));
-    }
-  }, [enablePullToRefresh, refreshing]);
-
-  const onTouchEnd = useCallback(() => {
-    if (!enablePullToRefresh) return;
-    if (!isPulling.current) return;
-    isPulling.current = false;
-    if (pullDistance > 60 && !refreshing) {
-      setRefreshing(true);
-      setPullDistance(50);
-      setTimeout(() => {
-        setRefreshKey(k => k + 1);
-        setRefreshing(false);
-        setPullDistance(0);
-      }, 600);
-    } else {
-      setPullDistance(0);
-    }
-  }, [enablePullToRefresh, pullDistance, refreshing]);
-
-  const touchHandlers = enablePullToRefresh
-    ? {
-        onTouchStart,
-        onTouchMove,
-        onTouchEnd,
-      }
-    : {};
+  usePreventPullToRefresh(mainRef, isMobile);
 
   const ActiveComponent = sectionComponents[activeSection];
 
@@ -179,7 +125,6 @@ const EmployeePortal = () => {
         }} onRefresh={() => setRefreshKey(k => k + 1)} />
         <div
           ref={mainRef}
-          {...touchHandlers}
           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden min-w-0 relative"
           style={{
             overscrollBehavior: 'none',
@@ -188,23 +133,6 @@ const EmployeePortal = () => {
             WebkitOverflowScrolling: 'touch' as any,
           }}
         >
-          {/* Pull-to-refresh indicator */}
-          {enablePullToRefresh && (
-            <div
-              className="flex justify-center items-center overflow-hidden transition-all duration-200"
-              style={{ height: pullDistance > 0 || refreshing ? `${pullDistance}px` : '0px' }}
-            >
-              <div className={cn(
-                "w-6 h-6 border-2 border-primary border-t-transparent rounded-full",
-                refreshing ? "animate-spin" : pullDistance > 60 ? "text-primary" : "opacity-50"
-              )}
-              style={{
-                transform: refreshing ? undefined : `rotate(${pullDistance * 3}deg)`,
-                transition: 'transform 0.1s'
-              }}
-              />
-            </div>
-          )}
           <div className="p-3 md:p-6">
             <PortalWelcomeBanner />
             <ActiveComponent key={refreshKey} />
