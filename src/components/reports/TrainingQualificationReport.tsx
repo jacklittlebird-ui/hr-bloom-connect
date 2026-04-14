@@ -58,7 +58,7 @@ export const TrainingQualificationReport = () => {
   const [allRecords, setAllRecords] = useState<any[]>([]);
   const [stations, setStations] = useState<{ id: string; nameAr: string; nameEn: string }[]>([]);
   const [departments, setDepartments] = useState<{ id: string; nameAr: string; nameEn: string }[]>([]);
-  const [courseOptions, setCourseOptions] = useState<{ id: string; nameAr: string; nameEn: string }[]>([]);
+  const [courseOptions, setCourseOptions] = useState<{ id: string; nameAr: string; nameEn: string; provider: string }[]>([]);
 
   const [filterStation, setFilterStation] = useState('all');
   const [filterDepartment, setFilterDepartment] = useState('all');
@@ -77,7 +77,7 @@ export const TrainingQualificationReport = () => {
       ]);
       setStations((stns || []).map((s: any) => ({ id: s.id, nameAr: s.name_ar, nameEn: s.name_en })));
       setDepartments((depts || []).map((d: any) => ({ id: d.id, nameAr: d.name_ar, nameEn: d.name_en })));
-      setCourseOptions((courses || []).map((c: any) => ({ id: c.id, nameAr: c.name_ar, nameEn: c.name_en })));
+      setCourseOptions((courses || []).map((c: any) => ({ id: c.id, nameAr: c.name_ar, nameEn: c.name_en, provider: c.provider || '' })));
       setAllRecords(records || []);
     };
     fetchAll();
@@ -511,7 +511,8 @@ export const TrainingQualificationReport = () => {
                       <button key={c.id}
                         className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", filterCourse === c.id && 'bg-accent')}
                         onClick={() => { setFilterCourse(c.id); setCourseSearch(''); }}>
-                        {ar ? c.nameAr : c.nameEn}
+                        <span>{ar ? c.nameAr : c.nameEn}</span>
+                        {c.provider && <span className="text-xs text-muted-foreground mr-1">({c.provider})</span>}
                       </button>
                     ))}
                   </div>
