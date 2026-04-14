@@ -264,44 +264,6 @@ export const TrainingRecordsReport = () => {
     });
   }, [allRecords, filterStations, filterCourses, filterEmployee, filterDepartments, filterProviders, filterYear, filterFavorite, stations, departments, ar]);
 
-  // Determine if we should use grouped view (station or department filter active)
-  const isGroupedView = filterStations.length > 0 || filterDepartments.length > 0;
-
-  // Build grouped data: group by station/dept → employee (alphabetically) → courses
-  const groupedData = useMemo(() => {
-    if (!isGroupedView) return null;
-
-    const groupKey = filterStations.length > 0 ? 'station' : 'department';
-    const groups = new Map<string, Map<string, ReportRecord[]>>();
-
-    filtered.forEach(r => {
-      const gName = r[groupKey] || (ar ? 'بدون' : 'Unknown');
-      if (!groups.has(gName)) groups.set(gName, new Map());
-      const empMap = groups.get(gName)!;
-      const empKey = `${r.employeeId}||${r.employeeName}||${r.employeeCode}`;
-      if (!empMap.has(empKey)) empMap.set(empKey, []);
-      empMap.get(empKey)!.push(r);
-    });
-
-    // Sort groups, then employees alphabetically within each group
-    const sortedGroups: { groupName: string; employees: { empId: string; empName: string; empCode: string; records: ReportRecord[] }[] }[] = [];
-
-    const sortedGroupNames = [...groups.keys()].sort((a, b) => a.localeCompare(b, ar ? 'ar' : 'en'));
-
-    for (const gName of sortedGroupNames) {
-      const empMap = groups.get(gName)!;
-      const employees = [...empMap.entries()]
-        .map(([key, records]) => {
-          const [empId, empName, empCode] = key.split('||');
-          return { empId, empName, empCode, records };
-        })
-        .sort((a, b) => a.empName.localeCompare(b.empName, ar ? 'ar' : 'en'));
-
-      sortedGroups.push({ groupName: gName, employees });
-    }
-
-    return sortedGroups;
-  }, [filtered, isGroupedView, filterStations, filterDepartments, ar]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
