@@ -580,7 +580,8 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                             setCoursePopoverOpen(false);
                           }}>
                             <Check className={cn("mr-2 h-4 w-4", newRecord.courseId === c.id ? "opacity-100" : "opacity-0")} />
-                            {ar ? c.nameAr : c.nameEn}
+                            <span className="flex-1">{ar ? c.nameAr : c.nameEn}</span>
+                            {c.provider && <span className="text-xs text-muted-foreground mr-2">({c.provider})</span>}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -737,7 +738,8 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                             setBulkCoursePopoverOpen(false);
                           }}>
                             <Check className={cn("mr-2 h-4 w-4", bulkRecord.courseId === c.id ? "opacity-100" : "opacity-0")} />
-                            {ar ? c.nameAr : c.nameEn}
+                            <span className="flex-1">{ar ? c.nameAr : c.nameEn}</span>
+                            {c.provider && <span className="text-xs text-muted-foreground mr-2">({c.provider})</span>}
                           </CommandItem>
                         ))}
                       </CommandGroup>
