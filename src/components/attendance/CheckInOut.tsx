@@ -154,14 +154,16 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
     }
     setManualSaving(true);
     try {
-      const ciTs = manualCheckIn ? `${manualDate}T${manualCheckIn}:00` : null;
-      let finalCoTs = manualCheckOut ? `${manualDate}T${manualCheckOut}:00` : null;
+      // Use Africa/Cairo timezone offset (+02:00) to prevent UTC misinterpretation
+      const tzOffset = '+02:00';
+      const ciTs = manualCheckIn ? `${manualDate}T${manualCheckIn}:00${tzOffset}` : null;
+      let finalCoTs = manualCheckOut ? `${manualDate}T${manualCheckOut}:00${tzOffset}` : null;
 
       // Handle overnight: if checkout is before checkin, add a day
       if (finalCoTs && manualCheckIn && manualCheckOut < manualCheckIn) {
         const nextDay = new Date(manualDate);
         nextDay.setDate(nextDay.getDate() + 1);
-        finalCoTs = `${nextDay.toISOString().split('T')[0]}T${manualCheckOut}:00`;
+        finalCoTs = `${nextDay.toISOString().split('T')[0]}T${manualCheckOut}:00${tzOffset}`;
       }
 
       // Find same-day records and prefer updating an incomplete one instead of inserting a new row
