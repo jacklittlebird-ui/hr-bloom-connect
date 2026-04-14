@@ -576,7 +576,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                               d.setMonth(d.getMonth() - 1);
                               plannedDate = d.toISOString().split('T')[0];
                             }
-                            setNewRecord({ ...newRecord, courseId: c.id, plannedDate });
+                            setNewRecord({ ...newRecord, courseId: c.id, plannedDate, provider: c.provider || newRecord.provider });
                             setCoursePopoverOpen(false);
                           }}>
                             <Check className={cn("mr-2 h-4 w-4", newRecord.courseId === c.id ? "opacity-100" : "opacity-0")} />
@@ -733,7 +733,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                           <CommandItem key={c.id} value={`${c.nameAr} ${c.nameEn}`} onSelect={() => {
                             let pd = bulkRecord.plannedDate;
                             if (bulkRecord.endDate && c) { const d = new Date(bulkRecord.endDate); d.setFullYear(d.getFullYear() + c.validityYears); d.setMonth(d.getMonth() - 1); pd = d.toISOString().split('T')[0]; }
-                            setBulkRecord({ ...bulkRecord, courseId: c.id, plannedDate: pd });
+                            setBulkRecord({ ...bulkRecord, courseId: c.id, plannedDate: pd, provider: c.provider || bulkRecord.provider });
                             setBulkCoursePopoverOpen(false);
                           }}>
                             <Check className={cn("mr-2 h-4 w-4", bulkRecord.courseId === c.id ? "opacity-100" : "opacity-0")} />
