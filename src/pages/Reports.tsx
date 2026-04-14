@@ -11,12 +11,14 @@ import { PerformanceReports } from '@/components/reports/PerformanceReports';
 import { TrainingReports } from '@/components/reports/TrainingReports';
 import { TrainingDebtReport } from '@/components/reports/TrainingDebtReport';
 import { UniformReport } from '@/components/reports/UniformReport';
+import { TrainingQualificationReport } from '@/components/reports/TrainingQualificationReport';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 
 const Reports = () => {
   const { t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState('employees');
+  const [trainingSubTab, setTrainingSubTab] = useState('stats');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const tabs = [
@@ -60,12 +62,45 @@ const Reports = () => {
         <TabsContent value="leaves"><LeaveReports /></TabsContent>
         <TabsContent value="salaries"><SalaryReports /></TabsContent>
         <TabsContent value="performance"><PerformanceReports /></TabsContent>
-        <TabsContent value="training"><TrainingReports /></TabsContent>
+        <TabsContent value="training">
+          <Tabs value={trainingSubTab} onValueChange={setTrainingSubTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+            <TabsList className="mb-4 bg-muted/30">
+              <TabsTrigger value="stats" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {isRTL ? 'إحصائيات التدريب' : 'Training Stats'}
+              </TabsTrigger>
+              <TabsTrigger value="records" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {isRTL ? 'سجلات التدريب' : 'Training Records'}
+              </TabsTrigger>
+              <TabsTrigger value="qualification" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {isRTL ? 'سجل التأهيل' : 'Qualification Record'}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="stats"><TrainingReports /></TabsContent>
+            <TabsContent value="records">
+              <TrainingRecordsReportLazy />
+            </TabsContent>
+            <TabsContent value="qualification"><TrainingQualificationReport /></TabsContent>
+          </Tabs>
+        </TabsContent>
         <TabsContent value="trainingDebt"><TrainingDebtReport /></TabsContent>
         <TabsContent value="uniforms"><UniformReport /></TabsContent>
       </Tabs>
     </DashboardLayout>
   );
 };
+
+// Lazy load the heavy training records report
+import { lazy, Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const TrainingRecordsReportComponent = lazy(() =>
+  import('@/components/training/TrainingRecordsReport').then(m => ({ default: m.TrainingRecordsReport }))
+);
+
+const TrainingRecordsReportLazy = () => (
+  <Suspense fallback={<div className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-64 w-full" /></div>}>
+    <TrainingRecordsReportComponent />
+  </Suspense>
+);
 
 export default Reports;

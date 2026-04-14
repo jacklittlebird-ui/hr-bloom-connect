@@ -264,44 +264,6 @@ export const TrainingRecordsReport = () => {
     });
   }, [allRecords, filterStations, filterCourses, filterEmployee, filterDepartments, filterProviders, filterYear, filterFavorite, stations, departments, ar]);
 
-  // Determine if we should use grouped view (station or department filter active)
-  const isGroupedView = filterStations.length > 0 || filterDepartments.length > 0;
-
-  // Build grouped data: group by station/dept → employee (alphabetically) → courses
-  const groupedData = useMemo(() => {
-    if (!isGroupedView) return null;
-
-    const groupKey = filterStations.length > 0 ? 'station' : 'department';
-    const groups = new Map<string, Map<string, ReportRecord[]>>();
-
-    filtered.forEach(r => {
-      const gName = r[groupKey] || (ar ? 'بدون' : 'Unknown');
-      if (!groups.has(gName)) groups.set(gName, new Map());
-      const empMap = groups.get(gName)!;
-      const empKey = `${r.employeeId}||${r.employeeName}||${r.employeeCode}`;
-      if (!empMap.has(empKey)) empMap.set(empKey, []);
-      empMap.get(empKey)!.push(r);
-    });
-
-    // Sort groups, then employees alphabetically within each group
-    const sortedGroups: { groupName: string; employees: { empId: string; empName: string; empCode: string; records: ReportRecord[] }[] }[] = [];
-
-    const sortedGroupNames = [...groups.keys()].sort((a, b) => a.localeCompare(b, ar ? 'ar' : 'en'));
-
-    for (const gName of sortedGroupNames) {
-      const empMap = groups.get(gName)!;
-      const employees = [...empMap.entries()]
-        .map(([key, records]) => {
-          const [empId, empName, empCode] = key.split('||');
-          return { empId, empName, empCode, records };
-        })
-        .sort((a, b) => a.empName.localeCompare(b.empName, ar ? 'ar' : 'en'));
-
-      sortedGroups.push({ groupName: gName, employees });
-    }
-
-    return sortedGroups;
-  }, [filtered, isGroupedView, filterStations, filterDepartments, ar]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -335,48 +297,12 @@ export const TrainingRecordsReport = () => {
     }));
   }, [filtered, ar]);
 
-  const getGroupedExportData = useCallback(() => {
-    if (!groupedData) return getExportData();
-    const rows: Record<string, any>[] = [];
-    const groupLabel = filterStations.length > 0 ? (ar ? 'المحطة' : 'Station') : (ar ? 'القسم' : 'Department');
-
-    for (const group of groupedData) {
-      // Group header row
-      rows.push({
-        employeeCode: `${groupLabel}: ${group.groupName}`,
-        employeeName: '', department: '', station: '', courseCode: '', courseName: '',
-        provider: '', startDate: '', endDate: '', statusLabel: '', score: '', certLabel: '',
-        __rowType: 'group-header',
-      });
-
-      for (const emp of group.employees) {
-        emp.records.forEach((r, idx) => {
-          rows.push({
-            employeeCode: idx === 0 ? r.employeeCode : '',
-            employeeName: idx === 0 ? r.employeeName : '',
-            department: idx === 0 ? r.department : '',
-            station: idx === 0 ? r.station : '',
-            courseCode: r.courseCode,
-            courseName: r.courseName,
-            provider: r.provider,
-            startDate: r.startDate,
-            endDate: r.endDate,
-            statusLabel: r.status === 'completed' ? (ar ? 'مكتمل' : 'Completed') : r.status === 'failed' ? (ar ? 'راسب' : 'Failed') : (ar ? 'مسجل' : 'Enrolled'),
-            score: r.score != null ? `${r.score}%` : '-',
-            certLabel: r.hasCert ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No'),
-            __rowType: 'detail',
-          });
-        });
-      }
-    }
-    return rows;
-  }, [groupedData, filterStations, ar, getExportData]);
 
   const handleExportPDF = () => {
     exportBilingualPDF({
       titleAr: 'تقرير سجلات التدريب',
       titleEn: 'Training Records Report',
-      data: isGroupedView ? getGroupedExportData() : getExportData(),
+      data: getExportData(),
       columns: exportColumns,
       fileName: 'Training_Records_Report',
     });
@@ -386,80 +312,12 @@ export const TrainingRecordsReport = () => {
     exportBilingualCSV({
       titleAr: 'تقرير سجلات التدريب',
       titleEn: 'Training Records Report',
-      data: isGroupedView ? getGroupedExportData() : getExportData(),
+      data: getExportData(),
       columns: exportColumns,
       fileName: 'Training_Records_Report',
     });
   };
 
-  const renderGroupedTable = () => {
-    if (!groupedData) return null;
-    const groupLabel = filterStations.length > 0 ? (ar ? 'المحطة' : 'Station') : (ar ? 'القسم' : 'Department');
-
-    return (
-      <Card>
-        <CardContent className="p-4 overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>#</TableHead>
-                <TableHead>{ar ? 'كود الموظف' : 'Code'}</TableHead>
-                <TableHead>{ar ? 'اسم الموظف' : 'Employee'}</TableHead>
-                <TableHead>{ar ? 'الدورة' : 'Course'}</TableHead>
-                <TableHead>{ar ? 'الجهة' : 'Provider'}</TableHead>
-                <TableHead>{ar ? 'تاريخ البداية' : 'Start'}</TableHead>
-                <TableHead>{ar ? 'تاريخ النهاية' : 'End'}</TableHead>
-                <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
-                <TableHead>{ar ? 'الدرجة' : 'Score'}</TableHead>
-                <TableHead>{ar ? 'شهادة' : 'Cert'}</TableHead>
-                <TableHead><Star className="h-4 w-4" /></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {groupedData.length === 0 ? (
-                <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">{ar ? 'لا توجد سجلات' : 'No records found'}</TableCell></TableRow>
-              ) : (
-                groupedData.map(group => {
-                  let empIndex = 0;
-                  return (
-                    <>
-                      {/* Group header row */}
-                      <TableRow key={`group-${group.groupName}`} className="bg-primary/10 hover:bg-primary/10">
-                        <TableCell colSpan={11} className="font-bold text-primary text-sm py-3">
-                          {groupLabel}: {group.groupName} ({group.employees.reduce((sum, e) => sum + e.records.length, 0)} {ar ? 'سجل' : 'records'} • {group.employees.length} {ar ? 'موظف' : 'employees'})
-                        </TableCell>
-                      </TableRow>
-                      {group.employees.map(emp => {
-                        return emp.records.map((r, courseIdx) => {
-                          empIndex++;
-                          const isFirst = courseIdx === 0;
-                          return (
-                            <TableRow key={r.id} className={cn(!isFirst && 'border-t-0')}>
-                              <TableCell className="text-muted-foreground">{empIndex}</TableCell>
-                              <TableCell className="font-mono text-xs">{isFirst ? emp.empCode : ''}</TableCell>
-                              <TableCell className={cn("font-medium", !isFirst && "text-transparent select-none")}>{isFirst ? emp.empName : emp.empName}</TableCell>
-                              <TableCell>{r.courseName}</TableCell>
-                              <TableCell>{r.provider}</TableCell>
-                              <TableCell>{r.startDate}</TableCell>
-                              <TableCell>{r.endDate}</TableCell>
-                              <TableCell>{getStatusBadge(r.status)}</TableCell>
-                              <TableCell>{r.score != null ? `${r.score}%` : '-'}</TableCell>
-                              <TableCell>{r.hasCert ? '✓' : '-'}</TableCell>
-                              <TableCell>{r.isFavorite ? <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" /> : '-'}</TableCell>
-                            </TableRow>
-                          );
-                        });
-                      })}
-                    </>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    );
-  };
 
   const renderFlatTable = () => (
     <Card>
@@ -630,7 +488,7 @@ export const TrainingRecordsReport = () => {
 
       {/* Table */}
       <div ref={reportRef}>
-        {isGroupedView ? renderGroupedTable() : renderFlatTable()}
+        {renderFlatTable()}
       </div>
 
       {/* Stats Cards */}
