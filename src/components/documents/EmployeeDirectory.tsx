@@ -47,8 +47,6 @@ export const EmployeeDirectory = () => {
       .sort((a, b) => a.nameAr.localeCompare(b.nameAr, 'ar'));
   }, [employees, search, selectedStation, selectedDept]);
 
-  const { paginatedItems, currentPage, setCurrentPage, totalPages } = usePagination(filtered, 30);
-
   const { paginatedItems, currentPage, setCurrentPage, totalPages, totalItems, startIndex, endIndex } = usePagination(filtered, 30);
 
   const handleExport = () => {
