@@ -234,7 +234,7 @@ export const TrainingRecordsReport = () => {
   };
 
   const filtered = useMemo(() => {
-    return allRecords.filter(r => {
+    const base = allRecords.filter(r => {
       if (filterStations.length > 0) {
         const stNames = filterStations.map(id => {
           const s = stations.find(s => s.id === id);
@@ -262,6 +262,13 @@ export const TrainingRecordsReport = () => {
       }
       return true;
     });
+    // Sort alphabetically by employee name, then by end date (newest first)
+    base.sort((a, b) => {
+      const nameCompare = (a.employeeName || '').localeCompare(b.employeeName || '', ar ? 'ar' : 'en');
+      if (nameCompare !== 0) return nameCompare;
+      return (b.endDate || '').localeCompare(a.endDate || '');
+    });
+    return base;
   }, [allRecords, filterStations, filterCourses, filterEmployee, filterDepartments, filterProviders, filterYear, filterFavorite, stations, departments, ar]);
 
 
