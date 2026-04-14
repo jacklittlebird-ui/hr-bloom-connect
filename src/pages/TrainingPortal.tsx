@@ -112,6 +112,7 @@ const TrainingPortal = () => {
           </TabsContent>
           <TabsContent value="id-cards" forceMount className="mt-6 data-[state=inactive]:hidden"><EmployeeIdCards key={refreshKey} /></TabsContent>
         </Tabs>
+        </div>
       </main>
     </div>
   );
