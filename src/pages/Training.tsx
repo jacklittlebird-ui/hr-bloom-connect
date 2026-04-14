@@ -84,8 +84,11 @@ const Training = () => {
           )}
 
           {activeTab === 'reports' && (
+          {activeTab === 'reports' && (
             <TabsContent value="reports" className="mt-6">
-              <Suspense fallback={<TabFallback />}><TrainingRecordsReport /></Suspense>
+              <Suspense fallback={<TabFallback />}>
+                <TrainingReportsTabs ar={ar} />
+              </Suspense>
             </TabsContent>
           )}
 
