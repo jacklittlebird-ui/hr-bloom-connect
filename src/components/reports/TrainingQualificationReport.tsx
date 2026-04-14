@@ -59,7 +59,6 @@ export const TrainingQualificationReport = () => {
   const [departments, setDepartments] = useState<{ id: string; nameAr: string; nameEn: string }[]>([]);
   const [courseOptions, setCourseOptions] = useState<{ id: string; nameAr: string; nameEn: string }[]>([]);
 
-  const [filterType, setFilterType] = useState<'station' | 'department' | 'course' | 'employee'>('station');
   const [filterStation, setFilterStation] = useState('all');
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterCourse, setFilterCourse] = useState('all');
