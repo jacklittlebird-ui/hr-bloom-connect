@@ -152,7 +152,7 @@ const LoginPage = () => {
           <div className="flex items-center justify-center gap-4 mb-8">
             <picture>
               <source srcSet="/images/company-logo-vertical.webp" type="image/webp" />
-              <img src="/images/company-logo-vertical.png" alt="Link Aero" width="120" height="120" fetchPriority="high" className="h-28 w-28 rounded-2xl object-contain" />
+              <img src="/images/company-logo-vertical.png" alt="Link Aero" width="140" height="140" fetchPriority="high" className="h-32 w-32 rounded-2xl object-contain" />
             </picture>
             <img src="/images/one-hr-logo.png" alt="One HR" width="160" height="160" className="h-36 w-36 object-contain" />
           </div>
