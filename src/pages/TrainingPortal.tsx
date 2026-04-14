@@ -1,7 +1,9 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrainingRecords } from '@/components/training/TrainingRecords';
@@ -14,24 +16,28 @@ import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { GraduationCap, LogOut, BookOpen, Users, FileText, Calendar, BarChart3, Library, RefreshCw, CreditCard, Globe } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 
 const TrainingReports = lazy(() => import('@/components/reports/TrainingReports').then(m => ({ default: m.TrainingReports })));
 const TrainingQualificationReport = lazy(() => import('@/components/reports/TrainingQualificationReport').then(m => ({ default: m.TrainingQualificationReport })));
 const TrainingRecordsReport = lazy(() => import('@/components/training/TrainingRecordsReport').then(m => ({ default: m.TrainingRecordsReport })));
 
 const TabFallback = () => <div className="space-y-4 mt-6"><Skeleton className="h-10 w-full" /><Skeleton className="h-64 w-full" /></div>;
-import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 
 const TrainingPortal = () => {
   const { language, setLanguage } = useLanguage();
   const { logout, user } = useAuth();
+  const isMobile = useIsMobile();
   const ar = language === 'ar';
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState('records');
+  const mainRef = useRef<HTMLElement>(null);
+
+  usePreventPullToRefresh(mainRef, isMobile);
+  useScrollRestoration(mainRef);
 
   return (
-    <div dir="rtl" className="h-dvh flex flex-col bg-background font-arabic overflow-hidden">
-      {/* Header */}
+    <div dir="rtl" className="h-dvh min-h-screen flex flex-col bg-background font-arabic overflow-hidden">
       <header className="shrink-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="flex items-center justify-between px-4 md:px-6 h-16">
           <div className="flex items-center gap-3">
@@ -65,53 +71,61 @@ const TrainingPortal = () => {
         </div>
       </header>
 
-      {/* Content */}
-      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none', touchAction: 'pan-y' }}>
+      <main
+        ref={mainRef}
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
+        style={{
+          overscrollBehavior: 'none',
+          overscrollBehaviorY: 'none',
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch' as any,
+        }}
+      >
         <div className="p-4 md:p-6 max-w-[1400px] mx-auto">
-        <PortalWelcomeBanner />
-        <TrainingStatsCards />
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="flex w-full overflow-x-auto h-auto gap-1 justify-start" dir="rtl">
-            <TabsTrigger value="records" className="gap-1.5 text-xs md:text-sm">
-              <BookOpen className="w-4 h-4" />
-              {ar ? 'السجلات' : 'Records'}
-            </TabsTrigger>
-            <TabsTrigger value="trainers" className="gap-1.5 text-xs md:text-sm">
-              <Users className="w-4 h-4" />
-              {ar ? 'المدربين' : 'Trainers'}
-            </TabsTrigger>
-            <TabsTrigger value="syllabus" className="gap-1.5 text-xs md:text-sm">
-              <FileText className="w-4 h-4" />
-              {ar ? 'المناهج' : 'Syllabus'}
-            </TabsTrigger>
-            <TabsTrigger value="courses" className="gap-1.5 text-xs md:text-sm">
-              <Library className="w-4 h-4" />
-              {ar ? 'الدورات' : 'Courses'}
-            </TabsTrigger>
-            <TabsTrigger value="plan" className="gap-1.5 text-xs md:text-sm">
-              <Calendar className="w-4 h-4" />
-              {ar ? 'الخطة' : 'Plan'}
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="gap-1.5 text-xs md:text-sm">
-              <BarChart3 className="w-4 h-4" />
-              {ar ? 'التقارير' : 'Reports'}
-            </TabsTrigger>
-            <TabsTrigger value="id-cards" className="gap-1.5 text-xs md:text-sm">
-              <CreditCard className="w-4 h-4" />
-              {ar ? 'بطاقة الشركة' : 'Company Card'}
-            </TabsTrigger>
-          </TabsList>
+          <PortalWelcomeBanner />
+          <TrainingStatsCards />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="flex w-full overflow-x-auto h-auto gap-1 justify-start" dir="rtl">
+              <TabsTrigger value="records" className="gap-1.5 text-xs md:text-sm">
+                <BookOpen className="w-4 h-4" />
+                {ar ? 'السجلات' : 'Records'}
+              </TabsTrigger>
+              <TabsTrigger value="trainers" className="gap-1.5 text-xs md:text-sm">
+                <Users className="w-4 h-4" />
+                {ar ? 'المدربين' : 'Trainers'}
+              </TabsTrigger>
+              <TabsTrigger value="syllabus" className="gap-1.5 text-xs md:text-sm">
+                <FileText className="w-4 h-4" />
+                {ar ? 'المناهج' : 'Syllabus'}
+              </TabsTrigger>
+              <TabsTrigger value="courses" className="gap-1.5 text-xs md:text-sm">
+                <Library className="w-4 h-4" />
+                {ar ? 'الدورات' : 'Courses'}
+              </TabsTrigger>
+              <TabsTrigger value="plan" className="gap-1.5 text-xs md:text-sm">
+                <Calendar className="w-4 h-4" />
+                {ar ? 'الخطة' : 'Plan'}
+              </TabsTrigger>
+              <TabsTrigger value="reports" className="gap-1.5 text-xs md:text-sm">
+                <BarChart3 className="w-4 h-4" />
+                {ar ? 'التقارير' : 'Reports'}
+              </TabsTrigger>
+              <TabsTrigger value="id-cards" className="gap-1.5 text-xs md:text-sm">
+                <CreditCard className="w-4 h-4" />
+                {ar ? 'بطاقة الشركة' : 'Company Card'}
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="records" forceMount className="mt-6 data-[state=inactive]:hidden"><TrainingRecords key={refreshKey} /></TabsContent>
-          <TabsContent value="trainers" forceMount className="mt-6 data-[state=inactive]:hidden"><Trainers key={refreshKey} /></TabsContent>
-          <TabsContent value="syllabus" forceMount className="mt-6 data-[state=inactive]:hidden"><CoursesSyllabus key={refreshKey} /></TabsContent>
-          <TabsContent value="courses" forceMount className="mt-6 data-[state=inactive]:hidden"><CoursesList key={refreshKey} /></TabsContent>
-          <TabsContent value="plan" forceMount className="mt-6 data-[state=inactive]:hidden"><TrainingPlan key={refreshKey} /></TabsContent>
-          <TabsContent value="reports" forceMount className="mt-6 data-[state=inactive]:hidden">
-            <PortalReportsTabs ar={ar} />
-          </TabsContent>
-          <TabsContent value="id-cards" forceMount className="mt-6 data-[state=inactive]:hidden"><EmployeeIdCards key={refreshKey} /></TabsContent>
-        </Tabs>
+            <TabsContent value="records" forceMount className="mt-6 data-[state=inactive]:hidden"><TrainingRecords key={refreshKey} /></TabsContent>
+            <TabsContent value="trainers" forceMount className="mt-6 data-[state=inactive]:hidden"><Trainers key={refreshKey} /></TabsContent>
+            <TabsContent value="syllabus" forceMount className="mt-6 data-[state=inactive]:hidden"><CoursesSyllabus key={refreshKey} /></TabsContent>
+            <TabsContent value="courses" forceMount className="mt-6 data-[state=inactive]:hidden"><CoursesList key={refreshKey} /></TabsContent>
+            <TabsContent value="plan" forceMount className="mt-6 data-[state=inactive]:hidden"><TrainingPlan key={refreshKey} /></TabsContent>
+            <TabsContent value="reports" forceMount className="mt-6 data-[state=inactive]:hidden">
+              <PortalReportsTabs ar={ar} />
+            </TabsContent>
+            <TabsContent value="id-cards" forceMount className="mt-6 data-[state=inactive]:hidden"><EmployeeIdCards key={refreshKey} /></TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>

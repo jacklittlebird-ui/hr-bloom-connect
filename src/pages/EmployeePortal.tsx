@@ -29,6 +29,7 @@ import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
 import { PortalEidBonuses } from '@/components/portal/sections/PortalEidBonuses';
 import { PortalBonuses } from '@/components/portal/sections/PortalBonuses';
 import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 export type PortalSection =
   | 'dashboard' | 'profile' | 'attendance' | 'leaves'
@@ -71,7 +72,6 @@ const EmployeePortal = () => {
   const [uniformAckDismissed, setUniformAckDismissed] = useState(false);
   const [systemAckDismissed, setSystemAckDismissed] = useState(false);
 
-  // Apply saved portal color on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem('portal_primary_color');
@@ -85,10 +85,10 @@ const EmployeePortal = () => {
 
   const mainRef = useRef<HTMLDivElement>(null);
   usePreventPullToRefresh(mainRef, isMobile);
+  useScrollRestoration(mainRef);
 
   const ActiveComponent = sectionComponents[activeSection];
 
-  // Prevent screenshot: blur content when app goes to background
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -109,50 +109,50 @@ const EmployeePortal = () => {
       {systemAckDismissed && ackDismissed && !assetAckDismissed && <AssetAcknowledgmentModal onAllAcknowledged={() => setAssetAckDismissed(true)} />}
       {systemAckDismissed && ackDismissed && assetAckDismissed && !uniformAckDismissed && <UniformAcknowledgmentModal onAllAcknowledged={() => setUniformAckDismissed(true)} />}
       <div
-        dir="rtl"
+        dir={isRTL ? 'rtl' : 'ltr'}
         className={cn(
-          "h-dvh min-h-screen bg-background flex flex-row-reverse font-arabic overflow-hidden",
-          hidden && "blur-lg pointer-events-none"
+          'h-dvh min-h-screen bg-background flex flex-row-reverse font-arabic overflow-hidden',
+          hidden && 'blur-lg pointer-events-none'
         )}
       >
-      <div className="flex-1 flex flex-col h-full min-h-0 min-w-0 overflow-x-hidden">
-        <PortalHeader onToggleSidebar={() => {
-          if (isMobile) {
-            setMobileOpen(!mobileOpen);
-          } else {
-            setSidebarCollapsed(!sidebarCollapsed);
-          }
-        }} onRefresh={() => setRefreshKey(k => k + 1)} />
-        <div
-          ref={mainRef}
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden min-w-0 relative"
-          style={{
-            overscrollBehavior: 'none',
-            overscrollBehaviorY: 'none',
-            touchAction: 'pan-y',
-            WebkitOverflowScrolling: 'touch' as any,
-          }}
-        >
-          <div className="p-3 md:p-6">
-            <PortalWelcomeBanner />
-            <ActiveComponent key={refreshKey} />
+        <div className="flex-1 flex flex-col h-full min-h-0 min-w-0 overflow-x-hidden">
+          <PortalHeader onToggleSidebar={() => {
+            if (isMobile) {
+              setMobileOpen(!mobileOpen);
+            } else {
+              setSidebarCollapsed(!sidebarCollapsed);
+            }
+          }} onRefresh={() => setRefreshKey(k => k + 1)} />
+          <div
+            ref={mainRef}
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden min-w-0 relative"
+            style={{
+              overscrollBehavior: 'none',
+              overscrollBehaviorY: 'none',
+              touchAction: 'pan-y',
+              WebkitOverflowScrolling: 'touch' as any,
+            }}
+          >
+            <div className="p-3 md:p-6">
+              <PortalWelcomeBanner />
+              <ActiveComponent key={refreshKey} />
+            </div>
           </div>
         </div>
-      </div>
-      <PortalSidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-        collapsed={isMobile ? false : sidebarCollapsed}
-        onToggleCollapse={() => {
-          if (isMobile) {
-            setMobileOpen(!mobileOpen);
-          } else {
-            setSidebarCollapsed(!sidebarCollapsed);
-          }
-        }}
-        mobileOpen={mobileOpen}
-        onMobileOpenChange={setMobileOpen}
-      />
+        <PortalSidebar
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          collapsed={isMobile ? false : sidebarCollapsed}
+          onToggleCollapse={() => {
+            if (isMobile) {
+              setMobileOpen(!mobileOpen);
+            } else {
+              setSidebarCollapsed(!sidebarCollapsed);
+            }
+          }}
+          mobileOpen={mobileOpen}
+          onMobileOpenChange={setMobileOpen}
+        />
       </div>
     </>
   );
