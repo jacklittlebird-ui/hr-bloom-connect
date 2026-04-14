@@ -10,6 +10,9 @@ import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const TrainingReports = lazy(() => import('@/components/reports/TrainingReports').then(m => ({ default: m.TrainingReports })));
+const TrainingQualificationReport = lazy(() => import('@/components/reports/TrainingQualificationReport').then(m => ({ default: m.TrainingQualificationReport })));
+
 const Trainers = lazy(() => import('@/components/training/Trainers').then(m => ({ default: m.Trainers })));
 const CoursesSyllabus = lazy(() => import('@/components/training/CoursesSyllabus').then(m => ({ default: m.CoursesSyllabus })));
 const CoursesList = lazy(() => import('@/components/training/CoursesList').then(m => ({ default: m.CoursesList })));
@@ -82,7 +85,9 @@ const Training = () => {
 
           {activeTab === 'reports' && (
             <TabsContent value="reports" className="mt-6">
-              <Suspense fallback={<TabFallback />}><TrainingRecordsReport /></Suspense>
+              <Suspense fallback={<TabFallback />}>
+                <TrainingReportsTabs ar={ar} isRTL={isRTL} />
+              </Suspense>
             </TabsContent>
           )}
 
@@ -94,6 +99,34 @@ const Training = () => {
         </Tabs>
       </div>
     </DashboardLayout>
+  );
+};
+
+const TrainingReportsTabs = ({ ar, isRTL }: { ar: boolean; isRTL: boolean }) => {
+  const [subTab, setSubTab] = useState('stats');
+  return (
+    <Tabs value={subTab} onValueChange={setSubTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+      <TabsList className="mb-4 bg-muted/30">
+        <TabsTrigger value="stats" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          {ar ? 'إحصائيات التدريب' : 'Training Stats'}
+        </TabsTrigger>
+        <TabsTrigger value="records" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          {ar ? 'سجلات التدريب' : 'Training Records'}
+        </TabsTrigger>
+        <TabsTrigger value="qualification" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          {ar ? 'سجل التأهيل' : 'Qualification Record'}
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="stats">
+        <Suspense fallback={<TabFallback />}><TrainingReports /></Suspense>
+      </TabsContent>
+      <TabsContent value="records">
+        <Suspense fallback={<TabFallback />}><TrainingRecordsReport /></Suspense>
+      </TabsContent>
+      <TabsContent value="qualification">
+        <Suspense fallback={<TabFallback />}><TrainingQualificationReport /></Suspense>
+      </TabsContent>
+    </Tabs>
   );
 };
 
