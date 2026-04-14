@@ -204,15 +204,114 @@ export const TrainingQualificationReport = () => {
 
   const reportTitle = ar ? 'سجل التدريب والتأهيل' : 'Training & Qualification Record';
 
+  const filterTypeLabel = filterType === 'station' ? (ar ? 'حسب المحطة' : 'By Airport') :
+    filterType === 'department' ? (ar ? 'حسب القسم' : 'By Department') :
+    filterType === 'course' ? (ar ? 'حسب الدورة' : 'By Course') :
+    (ar ? 'حسب الموظف' : 'By Employee');
+
   const isFilterActive = (filterType === 'station' && filterStation !== 'all') ||
     (filterType === 'department' && filterDepartment !== 'all') ||
     (filterType === 'course' && filterCourse !== 'all') ||
     (filterType === 'employee' && filterEmployee !== 'all');
 
-  const filterTypeLabel = filterType === 'station' ? (ar ? 'حسب المحطة' : 'By Airport') :
-    filterType === 'department' ? (ar ? 'حسب القسم' : 'By Department') :
-    filterType === 'course' ? (ar ? 'حسب الدورة' : 'By Course') :
-    (ar ? 'حسب الموظف' : 'By Employee');
+  const handleQualificationPrint = useCallback(() => {
+    const logoUrl = `${window.location.origin}/images/company-logo.png`;
+    const dir = ar ? 'rtl' : 'ltr';
+    const title = getFilterTitle();
+    const fullTitle = ar ? `سجل التدريب والتأهيل - ${title}` : `Training & Qualification Record - ${title}`;
+
+    const headerRow = `
+      <tr>
+        <th style="width:25%;padding:6px 8px;font-size:12px;font-weight:700;border:1px solid #999;background:#e8e8e8;text-align:${ar ? 'right' : 'left'};">${ar ? 'الاسم' : 'Name'}</th>
+        <th style="width:30%;padding:6px 8px;font-size:12px;font-weight:700;border:1px solid #999;background:#e8e8e8;text-align:center;">${ar ? 'اسم الدورة التدريبية' : 'Training Course Name'}</th>
+        <th style="width:25%;padding:6px 8px;font-size:12px;font-weight:700;border:1px solid #999;background:#e8e8e8;text-align:center;">${ar ? 'الجهة المقدمة والموقع' : 'Provider & Location'}</th>
+        <th style="width:12%;padding:6px 8px;font-size:12px;font-weight:700;border:1px solid #999;background:#e8e8e8;text-align:center;">${ar ? 'تاريخ التدريب' : 'Training Date'}</th>
+        <th style="width:8%;padding:6px 8px;font-size:12px;font-weight:700;border:1px solid #999;background:#e8e8e8;text-align:center;">${ar ? 'شهادة' : 'Cert'}</th>
+      </tr>
+    `;
+
+    let bodyRows = `
+      <tr><td colspan="5" style="background:#4472C4;color:white;text-align:center;padding:6px;font-weight:700;font-size:13px;border:1px solid #3360a8;">${title}</td></tr>
+    `;
+
+    for (const emp of groupedData) {
+      // Employee header row
+      bodyRows += `
+        <tr>
+          <td style="background:#2E3B4E;color:white;padding:6px 8px;font-weight:700;font-size:12px;border:1px solid #555;">${emp.employeeName}</td>
+          <td style="background:#2E3B4E;color:white;padding:6px 8px;font-size:11px;border:1px solid #555;">
+            <span style="color:#ccc;">${ar ? 'تاريخ التعيين' : 'Hire Date'}</span> <span style="color:#FF6B6B;font-weight:700;">${emp.hireDate || '-'}</span>
+          </td>
+          <td colspan="2" style="background:#2E3B4E;color:white;padding:6px 8px;font-size:11px;border:1px solid #555;">
+            <span style="color:#ccc;">${ar ? 'الوظيفة' : 'Job Title'}</span> <span style="font-weight:600;">${emp.jobTitle || '-'}</span>
+          </td>
+          <td style="background:#2E3B4E;border:1px solid #555;"></td>
+        </tr>
+      `;
+      // Dept codes row
+      const deptRow = DEPT_CODES.map(code =>
+        `<span style="font-family:monospace;font-size:10px;margin:0 4px;">${code} ${emp.deptCode === code ? '☑' : '☐'}</span>`
+      ).join('');
+      bodyRows += `<tr><td colspan="5" style="background:#f5f5f5;padding:4px 8px;border:1px solid #ddd;font-size:10px;">${deptRow}</td></tr>`;
+
+      // Course rows
+      for (const c of emp.courses) {
+        bodyRows += `
+          <tr>
+            <td style="border:1px solid #ddd;padding:4px 8px;"></td>
+            <td style="border:1px solid #ddd;padding:4px 8px;font-size:12px;color:#2B7CD3;">${c.courseName}</td>
+            <td style="border:1px solid #ddd;padding:4px 8px;font-size:12px;color:#2B7CD3;">${c.provider}</td>
+            <td style="border:1px solid #ddd;padding:4px 8px;font-size:12px;text-align:center;">${c.trainingDate}</td>
+            <td style="border:1px solid #ddd;padding:4px 8px;text-align:center;font-size:14px;">${c.hasCert ? '☑' : '☐'}</td>
+          </tr>
+        `;
+      }
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) { window.print(); return; }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="${dir}">
+      <head>
+        <title>${fullTitle}</title>
+        <style>
+          @page { margin: 15mm 10mm; }
+          body { font-family: 'Baloo Bhaijaan 2', 'Cairo', Arial, sans-serif; margin: 0; padding: 0; direction: ${dir}; }
+          table { width: 100%; border-collapse: collapse; }
+          thead { display: table-header-group; }
+          tbody { display: table-row-group; }
+          tr { page-break-inside: avoid; }
+          .report-header { text-align: center; margin-bottom: 10px; }
+          .report-header img { height: 50px; }
+          .report-header h1 { font-size: 18px; margin: 4px 0; color: #1e40af; }
+          .report-header p { font-size: 11px; color: #666; margin: 0; }
+          .footer-note { text-align: center; font-size: 10px; color: #999; margin-top: 16px; }
+          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        </style>
+        <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
+      </head>
+      <body>
+        <div class="report-header">
+          <img src="${logoUrl}" />
+          <h1>${fullTitle}</h1>
+          <p>${new Date().toLocaleDateString(ar ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        </div>
+        <table>
+          <thead>${headerRow}</thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+        <p class="footer-note">${ar ? 'تم إنشاء التقرير بواسطة نظام إدارة الموارد البشرية' : 'Generated by HR Management System'}</p>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 600);
+  }, [groupedData, ar, getFilterTitle, filterTypeLabel]);
+
+
 
   return (
     <div dir={ar ? 'rtl' : 'ltr'} className="space-y-4">
@@ -220,7 +319,7 @@ export const TrainingQualificationReport = () => {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h3 className="text-lg font-semibold">{reportTitle}</h3>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)} disabled={!isFilterActive}>
+          <Button variant="outline" size="sm" onClick={() => handleQualificationPrint()} disabled={!isFilterActive}>
             <Printer className="h-4 w-4 mr-1" />{ar ? 'طباعة' : 'Print'}
           </Button>
           <Button variant="outline" size="sm" disabled={!isFilterActive} onClick={() => exportBilingualPDF({
