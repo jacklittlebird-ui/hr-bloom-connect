@@ -334,120 +334,107 @@ export const TrainingQualificationReport = () => {
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Station */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'تصفية حسب' : 'Filter By'}</label>
-              <Select value={filterType} onValueChange={(v: any) => {
-                setFilterType(v);
-                setFilterStation('all');
-                setFilterDepartment('all');
-                setFilterCourse('all');
-                setFilterEmployee('all');
-              }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المحطة' : 'Station'}</label>
+              <Select value={filterStation} onValueChange={setFilterStation}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="station">{ar ? 'المحطة' : 'Station'}</SelectItem>
-                  <SelectItem value="department">{ar ? 'القسم' : 'Department'}</SelectItem>
-                  <SelectItem value="course">{ar ? 'الدورة' : 'Course'}</SelectItem>
-                  <SelectItem value="employee">{ar ? 'الموظف' : 'Employee'}</SelectItem>
+                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                  {stations.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{ar ? s.nameAr : s.nameEn}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {filterType === 'station' && (
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">{ar ? 'المحطة' : 'Station'}</label>
-                <Select value={filterStation} onValueChange={setFilterStation}>
-                  <SelectTrigger><SelectValue placeholder={ar ? 'اختر المحطة' : 'Select Station'} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{ar ? 'اختر...' : 'Select...'}</SelectItem>
-                    {stations.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{ar ? s.nameAr : s.nameEn}</SelectItem>
+            {/* Department */}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'القسم' : 'Department'}</label>
+              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
+                  {departments.map(d => (
+                    <SelectItem key={d.id} value={d.id}>{ar ? d.nameAr : d.nameEn}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Employee */}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'الموظف' : 'Employee'}</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between text-xs font-normal h-10">
+                    {filterEmployee === 'all' ? (ar ? 'الكل' : 'All') : (() => {
+                      const emp = contextEmployees.find(e => e.id === filterEmployee);
+                      return emp ? (ar ? emp.nameAr : emp.nameEn) : '';
+                    })()}
+                    <ChevronDown className="h-3 w-3 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-2" align="start">
+                  <div className="flex items-center gap-2 mb-2 border-b pb-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input placeholder={ar ? 'بحث...' : 'Search...'} value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)}
+                      className="h-8 text-sm border-0 p-0 focus-visible:ring-0" />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto space-y-0.5">
+                    <button
+                      className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted", filterEmployee === 'all' && 'bg-accent')}
+                      onClick={() => { setFilterEmployee('all'); setEmployeeSearch(''); }}>
+                      {ar ? 'الكل' : 'All'}
+                    </button>
+                    {filteredEmployees.map(e => (
+                      <button key={e.id}
+                        className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", filterEmployee === e.id && 'bg-accent')}
+                        onClick={() => { setFilterEmployee(e.id); setEmployeeSearch(''); }}>
+                        {e.employeeId} - {ar ? e.nameAr : e.nameEn}
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
 
-            {filterType === 'department' && (
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">{ar ? 'القسم' : 'Department'}</label>
-                <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                  <SelectTrigger><SelectValue placeholder={ar ? 'اختر القسم' : 'Select Department'} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{ar ? 'اختر...' : 'Select...'}</SelectItem>
-                    {departments.map(d => (
-                      <SelectItem key={d.id} value={d.id}>{ar ? d.nameAr : d.nameEn}</SelectItem>
+            {/* Course */}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'الدورة' : 'Course'}</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between text-xs font-normal h-10">
+                    {filterCourse === 'all' ? (ar ? 'الكل' : 'All') : (() => {
+                      const c = courseOptions.find(c => c.id === filterCourse);
+                      return c ? (ar ? c.nameAr : c.nameEn) : '';
+                    })()}
+                    <ChevronDown className="h-3 w-3 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-2" align="start">
+                  <div className="flex items-center gap-2 mb-2 border-b pb-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Input placeholder={ar ? 'بحث...' : 'Search...'} value={courseSearch} onChange={e => setCourseSearch(e.target.value)}
+                      className="h-8 text-sm border-0 p-0 focus-visible:ring-0" />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto space-y-0.5">
+                    <button
+                      className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted", filterCourse === 'all' && 'bg-accent')}
+                      onClick={() => { setFilterCourse('all'); setCourseSearch(''); }}>
+                      {ar ? 'الكل' : 'All'}
+                    </button>
+                    {filteredCourses.map(c => (
+                      <button key={c.id}
+                        className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", filterCourse === c.id && 'bg-accent')}
+                        onClick={() => { setFilterCourse(c.id); setCourseSearch(''); }}>
+                        {ar ? c.nameAr : c.nameEn}
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {filterType === 'course' && (
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">{ar ? 'الدورة' : 'Course'}</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between text-xs font-normal h-10">
-                      {filterCourse === 'all' ? (ar ? 'اختر...' : 'Select...') : (() => {
-                        const c = courseOptions.find(c => c.id === filterCourse);
-                        return c ? (ar ? c.nameAr : c.nameEn) : '';
-                      })()}
-                      <ChevronDown className="h-3 w-3 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 p-2" align="start">
-                    <div className="flex items-center gap-2 mb-2 border-b pb-2">
-                      <Search className="h-4 w-4 text-muted-foreground" />
-                      <Input placeholder={ar ? 'بحث...' : 'Search...'} value={courseSearch} onChange={e => setCourseSearch(e.target.value)}
-                        className="h-8 text-sm border-0 p-0 focus-visible:ring-0" />
-                    </div>
-                    <div className="max-h-60 overflow-y-auto space-y-0.5">
-                      {filteredCourses.map(c => (
-                        <button key={c.id}
-                          className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", filterCourse === c.id && 'bg-accent')}
-                          onClick={() => { setFilterCourse(c.id); setCourseSearch(''); }}>
-                          {ar ? c.nameAr : c.nameEn}
-                        </button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            )}
-
-            {filterType === 'employee' && (
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">{ar ? 'الموظف' : 'Employee'}</label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between text-xs font-normal h-10">
-                      {filterEmployee === 'all' ? (ar ? 'اختر...' : 'Select...') : (() => {
-                        const emp = contextEmployees.find(e => e.id === filterEmployee);
-                        return emp ? (ar ? emp.nameAr : emp.nameEn) : '';
-                      })()}
-                      <ChevronDown className="h-3 w-3 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-72 p-2" align="start">
-                    <div className="flex items-center gap-2 mb-2 border-b pb-2">
-                      <Search className="h-4 w-4 text-muted-foreground" />
-                      <Input placeholder={ar ? 'بحث...' : 'Search...'} value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)}
-                        className="h-8 text-sm border-0 p-0 focus-visible:ring-0" />
-                    </div>
-                    <div className="max-h-60 overflow-y-auto space-y-0.5">
-                      {filteredEmployees.map(e => (
-                        <button key={e.id}
-                          className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", filterEmployee === e.id && 'bg-accent')}
-                          onClick={() => { setFilterEmployee(e.id); setEmployeeSearch(''); }}>
-                          {e.employeeId} - {ar ? e.nameAr : e.nameEn}
-                        </button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </CardContent>
       </Card>
