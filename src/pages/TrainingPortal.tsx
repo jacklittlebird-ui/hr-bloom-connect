@@ -30,9 +30,9 @@ const TrainingPortal = () => {
   const [activeTab, setActiveTab] = useState('records');
 
   return (
-    <div dir="rtl" className="min-h-screen bg-background font-arabic">
+    <div dir="rtl" className="h-dvh flex flex-col bg-background font-arabic overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <header className="shrink-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="flex items-center justify-between px-4 md:px-6 h-16">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -66,7 +66,8 @@ const TrainingPortal = () => {
       </header>
 
       {/* Content */}
-      <main className="p-4 md:p-6 max-w-[1400px] mx-auto">
+      <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none', touchAction: 'pan-y' }}>
+        <div className="p-4 md:p-6 max-w-[1400px] mx-auto">
         <PortalWelcomeBanner />
         <TrainingStatsCards />
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -111,6 +112,7 @@ const TrainingPortal = () => {
           </TabsContent>
           <TabsContent value="id-cards" forceMount className="mt-6 data-[state=inactive]:hidden"><EmployeeIdCards key={refreshKey} /></TabsContent>
         </Tabs>
+        </div>
       </main>
     </div>
   );
