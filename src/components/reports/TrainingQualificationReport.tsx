@@ -110,7 +110,7 @@ export const TrainingQualificationReport = () => {
       }
 
       const courseName = r.training_courses ? (ar ? r.training_courses.name_ar : r.training_courses.name_en) : '';
-      const provider = r.training_courses?.provider || r.provider || '';
+      const provider = r.provider || r.training_courses?.provider || '';
 
       empMap.get(emp.id)!.courses.push({
         id: r.id,
