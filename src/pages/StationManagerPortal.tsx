@@ -1900,8 +1900,6 @@ const StationManagerPortal = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-        </div>
-      </main>
     </div>
   );
 };
