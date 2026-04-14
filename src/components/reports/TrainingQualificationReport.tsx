@@ -72,7 +72,7 @@ export const TrainingQualificationReport = () => {
       const [{ data: stns }, { data: depts }, { data: courses }, records] = await Promise.all([
         supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true),
         supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true),
-        supabase.from('training_courses').select('id, name_en, name_ar, provider').eq('is_active', true),
+        supabase.from('training_courses').select('id, name_en, name_ar, provider'),
         fetchAllTrainingRecords(),
       ]);
       setStations((stns || []).map((s: any) => ({ id: s.id, nameAr: s.name_ar, nameEn: s.name_en })));
