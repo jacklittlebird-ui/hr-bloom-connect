@@ -157,6 +157,12 @@
   button {
     font-family: inherit;
   }
+
+
+  /* Prevent pull-to-refresh on mobile */
+  html, body {
+    overscroll-behavior-y: contain;
+  }
 }
 
 @layer utilities {
