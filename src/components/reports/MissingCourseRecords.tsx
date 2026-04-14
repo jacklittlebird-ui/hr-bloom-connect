@@ -215,7 +215,14 @@ export const MissingCourseRecords = () => {
       </div>
 
       {totalPages > 1 && (
-        <PaginationControls currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+        <PaginationControls
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          startIndex={(page - 1) * pageSize}
+          endIndex={Math.min(page * pageSize, filtered.length)}
+          onPageChange={setPage}
+        />
       )}
 
       <Dialog open={!!editRecord} onOpenChange={open => !open && setEditRecord(null)}>
