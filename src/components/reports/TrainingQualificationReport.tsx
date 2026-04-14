@@ -455,25 +455,6 @@ export const TrainingQualificationReport = () => {
             </h2>
           </div>
 
-          {/* Table Header Row */}
-          <div className="grid grid-cols-[25%_30%_25%_12%_8%] border-b-2 border-gray-400 bg-gray-50">
-            <div className="px-3 py-2 text-sm font-bold text-foreground border-r border-gray-300">
-              {ar ? 'الاسم' : 'Name'}
-            </div>
-            <div className="px-3 py-2 text-sm font-bold text-foreground border-r border-gray-300 text-center">
-              {ar ? 'اسم الدورة التدريبية' : 'Training Course Name'}
-            </div>
-            <div className="px-3 py-2 text-sm font-bold text-foreground border-r border-gray-300 text-center">
-              {ar ? 'الجهة المقدمة والموقع' : 'Provider & Location'}
-            </div>
-            <div className="px-3 py-2 text-sm font-bold text-foreground border-r border-gray-300 text-center">
-              {ar ? 'تاريخ التدريب' : 'Training Date'}
-            </div>
-            <div className="px-3 py-2 text-sm font-bold text-foreground text-center">
-              {ar ? 'شهادة' : 'Certificate'}
-            </div>
-          </div>
-
           {/* Location Header */}
           <div className="bg-[#4472C4] text-white text-center py-1.5 border-b border-gray-300">
             <span className="text-sm font-bold tracking-wide">{getFilterTitle()}</span>
@@ -486,6 +467,24 @@ export const TrainingQualificationReport = () => {
           ) : (
             groupedData.map(emp => (
               <div key={emp.employeeId}>
+                {/* Table Header Row - repeated before each employee */}
+                <div className="grid grid-cols-[25%_30%_25%_12%_8%] border-b-2 border-gray-400 bg-gray-50">
+                  <div className="px-3 py-2 text-sm font-bold text-foreground border-r border-gray-300">
+                    {ar ? 'الاسم' : 'Name'}
+                  </div>
+                  <div className="px-3 py-2 text-sm font-bold text-foreground border-r border-gray-300 text-center">
+                    {ar ? 'اسم الدورة التدريبية' : 'Training Course Name'}
+                  </div>
+                  <div className="px-3 py-2 text-sm font-bold text-foreground border-r border-gray-300 text-center">
+                    {ar ? 'الجهة المقدمة والموقع' : 'Provider & Location'}
+                  </div>
+                  <div className="px-3 py-2 text-sm font-bold text-foreground border-r border-gray-300 text-center">
+                    {ar ? 'تاريخ التدريب' : 'Training Date'}
+                  </div>
+                  <div className="px-3 py-2 text-sm font-bold text-foreground text-center">
+                    {ar ? 'شهادة' : 'Certificate'}
+                  </div>
+                </div>
                 {/* Employee Header - Dark row with name, hire date, job title */}
                 <div className="bg-[#2E3B4E] text-white">
                   <div className="grid grid-cols-[25%_30%_25%_20%] items-center">
