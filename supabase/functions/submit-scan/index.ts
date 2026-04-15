@@ -47,7 +47,7 @@ function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number):
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-// ─── Device binding (shared logic) ─────────────────────────────────────────
+// ─── Device binding ─────────────────────────────────────────────────────────
 
 interface DeviceMeta {
   browser?: string;
@@ -84,7 +84,6 @@ async function resolveDevice(
     (d: any) => !d.expires_at || new Date(d.expires_at) > new Date()
   );
 
-  // Exact match
   const exactMatch = devices.find((d: any) => d.device_id === deviceId);
   if (exactMatch) {
     await supabaseAdmin
@@ -94,7 +93,6 @@ async function resolveDevice(
     return { allowed: true };
   }
 
-  // Soft match
   if (meta && devices.length > 0) {
     for (const dev of devices) {
       const score = softMatchScore(meta, dev);
@@ -114,7 +112,6 @@ async function resolveDevice(
     }
   }
 
-  // Register new device if under limit
   if (devices.length < MAX_DEVICES_PER_USER) {
     await supabaseAdmin.from("user_devices").insert({
       user_id: userId,
@@ -215,7 +212,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const TOKEN_TTL = 2700; // 45 minutes — must match generate-qr-token
+    const TOKEN_TTL = 2700;
     const nowSec = Math.floor(Date.now() / 1000);
     if (Math.abs(nowSec - tsSec) > TOKEN_TTL + 30) {
       return new Response(JSON.stringify({ error: "Token expired" }), {
@@ -254,7 +251,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ─── Anti-fraud: each device can only be used by ONE user per day ───
+    // Anti-fraud: each device can only be used by ONE user per day
     const todayStr = new Date().toISOString().split("T")[0];
     const { data: otherUsersOnDevice } = await admin
       .from("attendance_events")
@@ -272,23 +269,17 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({
-          error: "هذا الجهاز مسجل لموظف آخر اليوم. لا يمكن استخدام نفس الجهاز لأكثر من موظف / This device was used by another employee today.",
+          error: "هذا الجهاز مسجل لموظف آخر اليوم / This device was used by another employee today.",
           device_fraud: true,
         }),
         { status: 403, headers: { ...corsHeaders, "content-type": "application/json" } }
       );
     }
 
-    // ─── Multi-device binding with soft matching ───
+    // Multi-device binding
     const deviceResult = await resolveDevice(
-      admin,
-      user_id,
-      device_id,
-      device_meta ? {
-        browser: device_meta.browser,
-        os: device_meta.os,
-        deviceType: device_meta.deviceType,
-      } : null
+      admin, user_id, device_id,
+      device_meta ? { browser: device_meta.browser, os: device_meta.os, deviceType: device_meta.deviceType } : null
     );
 
     if (!deviceResult.allowed) {
@@ -299,14 +290,13 @@ Deno.serve(async (req) => {
       });
       return new Response(
         JSON.stringify({
-          error: "تم الوصول للحد الأقصى للأجهزة (3). يرجى تحديث الأجهزة / Max devices (3) reached.",
+          error: "تم الوصول للحد الأقصى للأجهزة (3) / Max devices (3) reached.",
           device_limit: true,
         }),
         { status: 403, headers: { ...corsHeaders, "content-type": "application/json" } }
       );
     }
 
-    // Log device action
     if (deviceResult.action) {
       await admin.from("device_alerts").insert({
         user_id, device_id,
@@ -345,14 +335,14 @@ Deno.serve(async (req) => {
         .maybeSingle();
       const tz = (empData?.stations as any)?.timezone || "Africa/Cairo";
 
-      const { data: assignment } = await admin
+      const { data: assignmentData } = await admin
         .from("attendance_assignments")
         .select("rule_id, attendance_rules(schedule_type)")
         .eq("employee_id", empId)
         .eq("is_active", true)
         .maybeSingle();
 
-      const scheduleType = (assignment?.attendance_rules as any)?.schedule_type || "fixed";
+      const scheduleType = (assignmentData?.attendance_rules as any)?.schedule_type || "fixed";
       const isFlexible = ["flexible", "fully-flexible", "fully_flexible"].includes(scheduleType);
 
       const now = new Date();
@@ -361,48 +351,55 @@ Deno.serve(async (req) => {
       const localHour = parseInt(now.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false }));
 
       if (event_type === "check_in") {
-        // Check if there's ANY record for TODAY (open or closed) — prevent duplicates
-        const { data: todayRecord } = await admin
+        // Close open records from PREVIOUS days
+        const { data: oldOpenRecords } = await admin
           .from("attendance_records")
-          .select("id, check_out")
+          .select("id, check_in, date")
+          .eq("employee_id", empId)
+          .is("check_out", null)
+          .not("check_in", "is", null)
+          .neq("date", localDateStr);
+
+        if (oldOpenRecords && oldOpenRecords.length > 0) {
+          for (const rec of oldOpenRecords) {
+            await admin.from("attendance_records")
+              .update({
+                check_out: rec.check_in,
+                work_hours: 0,
+                work_minutes: 0,
+                notes: "لم يتم تسجيل انصراف / No checkout recorded - auto-closed",
+              })
+              .eq("id", rec.id);
+          }
+        }
+
+        // Check if there's an OPEN record for today — block duplicate open check-in
+        const { data: openTodayRecord } = await admin
+          .from("attendance_records")
+          .select("id")
           .eq("employee_id", empId)
           .eq("date", localDateStr)
+          .is("check_out", null)
           .limit(1)
           .maybeSingle();
 
-        if (!todayRecord) {
-          // Close open records from PREVIOUS days only
-          const { data: oldOpenRecords } = await admin
-            .from("attendance_records")
-            .select("id, check_in, date")
-            .eq("employee_id", empId)
-            .is("check_out", null)
-            .not("check_in", "is", null)
-            .neq("date", localDateStr);
-
-          if (oldOpenRecords && oldOpenRecords.length > 0) {
-            for (const rec of oldOpenRecords) {
-              await admin.from("attendance_records")
-                .update({
-                  check_out: rec.check_in,
-                  work_hours: 0,
-                  work_minutes: 0,
-                  notes: "لم يتم تسجيل انصراف / No checkout recorded - auto-closed",
-                })
-                .eq("id", rec.id);
-            }
-          }
-
+        if (!openTodayRecord) {
+          // Allow new check-in (even if closed records exist for today)
           const isLate = !isFlexible && localHour >= 9;
-          await admin.from("attendance_records").insert({
+          const { error: insertErr } = await admin.from("attendance_records").insert({
             employee_id: empId,
             date: localDateStr,
             check_in: nowIso,
             status: isLate ? "late" : "present",
             is_late: isLate,
           });
+          if (insertErr) {
+            console.error("[submit-scan] CHECK_IN INSERT FAILED:", JSON.stringify(insertErr));
+          } else {
+            console.log("[submit-scan] CHECK_IN record created for", empId, "date:", localDateStr);
+          }
         } else {
-          console.log("[submit-scan] Already has record for today, skipping duplicate:", todayRecord.id);
+          console.log("[submit-scan] Already has OPEN record for today, skipping:", openTodayRecord.id);
         }
       } else if (event_type === "check_out") {
         const { data: openRecord, error: findErr } = await admin

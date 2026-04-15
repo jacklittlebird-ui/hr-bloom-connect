@@ -25,15 +25,15 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// ─── In-memory dedup & rate limit (per isolate) ────────────────────────────
+// ─── In-memory dedup (per isolate) ─────────────────────────────────────────
 
 const recentCheckins = new Map<string, number>();
-const MIN_INTERVAL_MS = 5 * 60_000;
-const DEDUP_WINDOW_MS = 10_000;
+const DEDUP_WINDOW_MS = 10_000; // 10 seconds dedup only
+const MIN_INTERVAL_MS = 60_000; // 1 minute between same event type (reduced from 5 min)
 
 const MAX_DEVICES_PER_USER = 3;
 const DEVICE_EXPIRY_DAYS = 90;
-const SOFT_MATCH_THRESHOLD = 2; // need 2/3 of (browser, os, deviceType) to match
+const SOFT_MATCH_THRESHOLD = 2;
 
 function isDeduplicate(userId: string, eventType: string): boolean {
   const key = `${userId}:${eventType}`;
@@ -84,7 +84,6 @@ async function resolveDevice(
 ): Promise<{ allowed: boolean; reason?: string; action?: string }> {
   const now = new Date().toISOString();
 
-  // Get all active, non-expired devices for this user
   const { data: userDevices } = await supabaseAdmin
     .from("user_devices")
     .select("id, device_id, browser, os, device_type, expires_at, is_active")
@@ -95,10 +94,8 @@ async function resolveDevice(
     (d: any) => !d.expires_at || new Date(d.expires_at) > new Date()
   );
 
-  // Exact match — device already registered
   const exactMatch = devices.find((d: any) => d.device_id === deviceId);
   if (exactMatch) {
-    // Update last_used_at
     await supabaseAdmin
       .from("user_devices")
       .update({ last_used_at: now })
@@ -106,12 +103,10 @@ async function resolveDevice(
     return { allowed: true };
   }
 
-  // No exact match — try soft matching if meta provided
   if (meta && devices.length > 0) {
     for (const dev of devices) {
       const score = softMatchScore(meta, dev);
       if (score >= SOFT_MATCH_THRESHOLD) {
-        // Same physical device, different localStorage ID → update device_id
         await supabaseAdmin
           .from("user_devices")
           .update({
@@ -127,7 +122,6 @@ async function resolveDevice(
     }
   }
 
-  // No match — can we register a new device?
   if (devices.length < MAX_DEVICES_PER_USER) {
     await supabaseAdmin.from("user_devices").insert({
       user_id: userId,
@@ -140,7 +134,6 @@ async function resolveDevice(
     return { allowed: true, action: "new_device_registered" };
   }
 
-  // Max devices reached — reject with update prompt
   return {
     allowed: false,
     reason: "device_limit",
@@ -182,15 +175,15 @@ Deno.serve(async (req) => {
       return json({ error: "Missing fields" }, 400);
     }
 
-    // Dedup check
+    // Dedup check (10 seconds)
     if (isDeduplicate(userId, event_type)) {
       totalDuplicates++;
       return json({ ok: true, event_type, deduplicated: true }, 200);
     }
 
-    // Min interval check
+    // Min interval check (1 minute)
     if (isMinIntervalViolated(userId, event_type)) {
-      return json({ error: "يرجى الانتظار 5 دقائق / Please wait 5 minutes between check-ins" }, 429);
+      return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts" }, 429);
     }
 
     // Resolve employee
@@ -237,21 +230,15 @@ Deno.serve(async (req) => {
         meta: { date: todayStr, other_user: otherUsersOnDevice[0].user_id },
       });
       return json({
-        error: "هذا الجهاز مسجل لموظف آخر اليوم. لا يمكن استخدام نفس الجهاز لأكثر من موظف / This device was used by another employee today. Each device can only be used by one employee per day.",
+        error: "هذا الجهاز مسجل لموظف آخر اليوم. لا يمكن استخدام نفس الجهاز لأكثر من موظف / This device was used by another employee today.",
         device_fraud: true,
       }, 403);
     }
 
-    // ─── Multi-device binding with soft matching ───
+    // Multi-device binding
     const deviceResult = await resolveDevice(
-      supabaseAdmin,
-      userId,
-      device_id,
-      device_meta ? {
-        browser: device_meta.browser,
-        os: device_meta.os,
-        deviceType: device_meta.deviceType,
-      } : null
+      supabaseAdmin, userId, device_id,
+      device_meta ? { browser: device_meta.browser, os: device_meta.os, deviceType: device_meta.deviceType } : null
     );
 
     if (!deviceResult.allowed) {
@@ -261,12 +248,11 @@ Deno.serve(async (req) => {
         meta: { action: deviceResult.action },
       });
       return json({
-        error: "تم الوصول للحد الأقصى للأجهزة (3). يرجى تحديث الأجهزة / Max devices (3) reached. Please update your devices.",
+        error: "تم الوصول للحد الأقصى للأجهزة (3). يرجى تحديث الأجهزة / Max devices (3) reached.",
         device_limit: true,
       }, 403);
     }
 
-    // Log device action if noteworthy
     if (deviceResult.action) {
       await supabaseAdmin.from("device_alerts").insert({
         user_id: userId, device_id,
@@ -275,10 +261,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // GPS geofence validation — check both legacy station_id and junction table
+    // GPS geofence validation
     const empStationId = emp.station_id;
 
-    // Get location IDs linked to employee's station via junction table
     const { data: junctionLinks } = await supabaseAdmin
       .from("qr_location_stations")
       .select("location_id")
@@ -286,13 +271,11 @@ Deno.serve(async (req) => {
 
     const junctionLocationIds = (junctionLinks || []).map((r: any) => r.location_id);
 
-    // Get all active locations
     const { data: allLocations } = await supabaseAdmin
       .from("qr_locations")
       .select("id, name_ar, latitude, longitude, radius_m, station_id")
       .eq("is_active", true);
 
-    // Filter: locations matching via legacy station_id OR via junction table
     const locations = (allLocations || []).filter((loc: any) =>
       loc.station_id === empStationId || junctionLocationIds.includes(loc.id)
     );
@@ -301,7 +284,6 @@ Deno.serve(async (req) => {
       return json({ error: "No GPS locations configured for this station" }, 400);
     }
 
-    // Add GPS accuracy as buffer (capped at 150m to prevent abuse)
     const accuracyBuffer = Math.min(gps_accuracy || 0, 150);
 
     let nearestDist = Infinity;
@@ -324,17 +306,14 @@ Deno.serve(async (req) => {
       }, 403);
     }
 
-    // Record the check-in
+    // Record the check-in in dedup map
     recordCheckin(userId, event_type);
 
     const now = new Date();
-    // Use station timezone (default Africa/Cairo = UTC+2) for local hour/date calculations
     const stationTz = (emp.stations as any)?.timezone || "Africa/Cairo";
     const localTimeStr = now.toLocaleString("en-US", { timeZone: stationTz });
     const localDate = new Date(localTimeStr);
     const localHour = localDate.getHours();
-    const localMinutes = localDate.getMinutes();
-    // Use local date for attendance record date
     const dateStr = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, "0")}-${String(localDate.getDate()).padStart(2, "0")}`;
 
     // Attendance rule check
@@ -366,21 +345,7 @@ Deno.serve(async (req) => {
 
     if (event_type === "check_in") {
       recordPromise = (async () => {
-        // Check if there's ANY record for TODAY (open or closed) — prevent duplicates
-        const { data: todayRecord } = await supabaseAdmin
-          .from("attendance_records")
-          .select("id, check_out")
-          .eq("employee_id", employeeId)
-          .eq("date", dateStr)
-          .limit(1)
-          .maybeSingle();
-
-        if (todayRecord) {
-          console.log("[gps-checkin] Already has record for today, skipping duplicate:", todayRecord.id);
-          return; // Don't create duplicate — unique constraint also enforces this
-        }
-
-        // Close any open records from PREVIOUS days only
+        // Close any open records from PREVIOUS days
         const { data: oldOpenRecords } = await supabaseAdmin
           .from("attendance_records")
           .select("id, check_in, date")
@@ -402,6 +367,22 @@ Deno.serve(async (req) => {
           }
         }
 
+        // Check if there's an OPEN record for today (no check_out) — block duplicate check-in
+        const { data: openTodayRecord } = await supabaseAdmin
+          .from("attendance_records")
+          .select("id")
+          .eq("employee_id", employeeId)
+          .eq("date", dateStr)
+          .is("check_out", null)
+          .limit(1)
+          .maybeSingle();
+
+        if (openTodayRecord) {
+          console.log("[gps-checkin] Already has OPEN record for today, skipping:", openTodayRecord.id);
+          return; // Don't create another open record
+        }
+
+        // Allow new check-in even if there are closed records for today
         const isLate = !isFlexible && localHour >= 9;
         const insertPayload = {
           employee_id: employeeId,
@@ -412,31 +393,16 @@ Deno.serve(async (req) => {
           notes: `GPS - ${matchedLocation.name_ar}`,
         };
 
-        // Try insert with one retry on failure (unique constraint will also catch duplicates)
-        let insertErr: any = null;
-        for (let attempt = 0; attempt < 2; attempt++) {
-          const { error } = await supabaseAdmin.from("attendance_records").insert(insertPayload);
-          if (!error) {
-            insertErr = null;
-            console.log("[gps-checkin] CHECK_IN record created for", employeeId, "date:", dateStr, "attempt:", attempt);
-            break;
-          }
-          // If unique constraint violation, it's a race condition duplicate — treat as success
-          if (error.code === "23505") {
-            console.log("[gps-checkin] Duplicate blocked by unique constraint for", employeeId, "date:", dateStr);
-            insertErr = null;
-            break;
-          }
-          insertErr = error;
-          console.error("[gps-checkin] CHECK_IN INSERT attempt", attempt, "FAILED:", JSON.stringify(error));
-          if (attempt === 0) await new Promise(r => setTimeout(r, 500));
+        const { error } = await supabaseAdmin.from("attendance_records").insert(insertPayload);
+        if (error) {
+          console.error("[gps-checkin] CHECK_IN INSERT FAILED:", JSON.stringify(error));
+          throw new Error("Failed to create attendance record: " + error.message);
         }
-        if (insertErr) {
-          throw new Error("Failed to create attendance record after 2 attempts: " + insertErr.message);
-        }
+        console.log("[gps-checkin] CHECK_IN record created for", employeeId, "date:", dateStr);
       })();
     } else {
       recordPromise = (async () => {
+        // Find the most recent open record (any date)
         const { data: openRecord, error: findErr } = await supabaseAdmin
           .from("attendance_records")
           .select("id")

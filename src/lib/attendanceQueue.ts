@@ -28,7 +28,7 @@ export function recordRequest(userId: string): void {
 
 // ─── Deduplication ──────────────────────────────────────────────────────────
 
-const DEDUP_WINDOW_MS = 15_000; // 15 seconds
+const DEDUP_WINDOW_MS = 10_000; // 10 seconds — matches server-side
 const recentRequests = new Map<string, number>();
 
 export function isDuplicate(key: string): boolean {
