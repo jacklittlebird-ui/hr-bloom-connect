@@ -37,7 +37,7 @@ const isFlexibleSchedule = (scheduleType?: string | null) =>
 
 interface AttendanceDataContextType {
   records: AttendanceEntry[];
-  refresh: () => Promise<void>;
+  refresh: (force?: boolean) => Promise<void>;
   checkIn: (employeeId: string, employeeName: string, employeeNameAr: string, department: string) => void;
   checkOut: (recordId: string) => void;
   addMissionAttendance: (employeeId: string, employeeName: string, employeeNameAr: string, department: string, date: string, checkIn: string, checkOut: string, hours: number) => void;
@@ -103,7 +103,7 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
   const isEmployee = user?.role === 'employee';
   const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
-  const fetchRecords = useCallback(async () => {
+  const fetchRecords = useCallback(async (force = false) => {
     const cacheKey = `attendance_${scopedEmployeeId || 'all'}`;
     
     const doFetch = async () => {
@@ -127,7 +127,11 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
       return (data || []).map(r => buildEntry(r));
     };
 
-    const result = await debouncedFetch(cacheKey, doFetch, { ttlMs: 30_000 });
+    if (force) {
+      invalidateCache(cacheKey);
+    }
+
+    const result = await debouncedFetch(cacheKey, doFetch, { ttlMs: force ? 0 : 30_000 });
     setRecords(result);
   }, [isEmployee, scopedEmployeeId]);
 
@@ -143,7 +147,7 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         invalidateCache('attendance_');
-        fetchRecords();
+        fetchRecords(true);
       }
     });
     return () => subscription.unsubscribe();
@@ -220,7 +224,7 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
       module: 'attendance',
     });
     invalidateCache('attendance_');
-    await fetchRecords();
+    await fetchRecords(true);
   }, [addNotification, fetchRecords]);
 
   const checkOutFn = useCallback(async (recordId: string) => {
@@ -258,7 +262,7 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
       });
     }
     invalidateCache('attendance_');
-    await fetchRecords();
+    await fetchRecords(true);
   }, [records, addNotification, fetchRecords]);
 
   const addMissionAttendance = useCallback(async (employeeId: string, employeeName: string, employeeNameAr: string, department: string, date: string, checkInTime: string, checkOutTime: string, hours: number) => {
@@ -276,7 +280,7 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     });
 
     invalidateCache('attendance_');
-    await fetchRecords();
+    await fetchRecords(true);
   }, [fetchRecords]);
 
   const getEmployeeRecords = useCallback((employeeId: string) => {

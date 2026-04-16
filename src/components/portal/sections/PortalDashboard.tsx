@@ -37,7 +37,9 @@ export const PortalDashboard = () => {
     [records, PORTAL_EMPLOYEE_ID]
   );
   const todayRecord = useMemo(
-    () => employeeRecords.find(r => r.date === today),
+    () => [...employeeRecords]
+      .filter(r => r.date === today)
+      .sort((a, b) => `${b.date}T${b.checkIn ?? b.checkOut ?? ''}`.localeCompare(`${a.date}T${a.checkIn ?? a.checkOut ?? ''}`))[0],
     [employeeRecords, today]
   );
   const latestOpenRecord = useMemo(
@@ -180,7 +182,7 @@ export const PortalDashboard = () => {
             ? ar ? 'تم تسجيل الحضور بنجاح ✔' : 'Check-in recorded ✔'
             : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
         );
-        refreshAttendance();
+        refreshAttendance(true);
       }
     } catch (e: any) {
       setQrStatus('error');
@@ -289,13 +291,13 @@ export const PortalDashboard = () => {
                 <GpsCheckinButton
                   eventType="check_in"
                   disabled={hasCheckedIn && !hasCheckedOut}
-                  onSuccess={() => refreshAttendance()}
+                  onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
                 <GpsCheckinButton
                   eventType="check_out"
                   disabled={!hasCheckedIn || hasCheckedOut}
-                  onSuccess={() => refreshAttendance()}
+                  onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
               </div>
