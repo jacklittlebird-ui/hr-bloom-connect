@@ -311,20 +311,20 @@ export const PortalDashboard = () => {
                     }}
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
-                  disabled={hasCheckedIn && !hasCheckedOut}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || (hasCheckedIn && !hasCheckedOut)}
                   >
                     <LogIn className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل حضور (QR)' : 'Check In (QR)'}
                   </Button>
-                  {hasCheckedIn && activeRecord?.checkIn && !showGps && (
+                  {hasCheckedIn && effectiveCheckIn && !showGps && (
                     <p className="text-sm font-medium text-success">
                       {isCrossDayOpenRecord
                         ? ar
-                          ? `✔ يوجد حضور مفتوح من ${activeRecord?.date} الساعة ${activeRecord?.checkIn}`
-                          : `✔ Open check-in from ${activeRecord?.date} at ${activeRecord?.checkIn}`
+                          ? `✔ يوجد حضور مفتوح من ${effectiveDate} الساعة ${effectiveCheckIn}`
+                          : `✔ Open check-in from ${effectiveDate} at ${effectiveCheckIn}`
                         : ar
-                          ? `✔ تم الحضور في ${activeRecord.checkIn}`
-                          : `✔ Checked in at ${activeRecord.checkIn}`}
+                          ? `✔ تم الحضور في ${effectiveCheckIn}`
+                          : `✔ Checked in at ${effectiveCheckIn}`}
                     </p>
                   )}
                 </div>
@@ -340,7 +340,7 @@ export const PortalDashboard = () => {
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
                     variant="outline"
-                    disabled={!hasCheckedIn || hasCheckedOut}
+                    disabled={authLoading || methodLoading || liveAttendanceState.loading || !hasCheckedIn || hasCheckedOut}
                   >
                     <LogOut className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل انصراف (QR)' : 'Check Out (QR)'}
@@ -354,13 +354,13 @@ export const PortalDashboard = () => {
               <div className="space-y-3">
                 <GpsCheckinButton
                   eventType="check_in"
-                  disabled={hasCheckedIn && !hasCheckedOut}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || (hasCheckedIn && !hasCheckedOut)}
                   onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
                 <GpsCheckinButton
                   eventType="check_out"
-                  disabled={!hasCheckedIn || hasCheckedOut}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || !hasCheckedIn || hasCheckedOut}
                   onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
@@ -368,20 +368,20 @@ export const PortalDashboard = () => {
             )}
 
             {/* Status timestamps */}
-            {hasCheckedIn && activeRecord?.checkIn && (
+            {hasCheckedIn && effectiveCheckIn && (
               <p className="text-sm font-medium text-success">
                 {isCrossDayOpenRecord
                   ? ar
-                    ? `✔ يوجد حضور مفتوح من ${activeRecord?.date} الساعة ${activeRecord?.checkIn}`
-                    : `✔ Open check-in from ${activeRecord?.date} at ${activeRecord?.checkIn}`
+                    ? `✔ يوجد حضور مفتوح من ${effectiveDate} الساعة ${effectiveCheckIn}`
+                    : `✔ Open check-in from ${effectiveDate} at ${effectiveCheckIn}`
                   : ar
-                    ? `✔ تم الحضور في ${activeRecord.checkIn}`
-                    : `✔ Checked in at ${activeRecord.checkIn}`}
+                    ? `✔ تم الحضور في ${effectiveCheckIn}`
+                    : `✔ Checked in at ${effectiveCheckIn}`}
               </p>
             )}
-            {hasCheckedOut && activeRecord?.checkOut && (
+            {hasCheckedOut && effectiveCheckOut && (
               <p className="text-sm font-medium text-muted-foreground">
-                {ar ? `✔ تم الانصراف في ${activeRecord.checkOut}` : `✔ Checked out at ${activeRecord.checkOut}`}
+                {ar ? `✔ تم الانصراف في ${effectiveCheckOut}` : `✔ Checked out at ${effectiveCheckOut}`}
               </p>
             )}
 
