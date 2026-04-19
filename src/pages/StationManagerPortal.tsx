@@ -238,14 +238,26 @@ const StationManagerPortal = () => {
     if (stationEmployees.length === 0) { setAttRecords([]); return; }
     setAttLoading(true);
     const empIds = stationEmployees.map(e => e.id);
-    const { data } = await supabase
-      .from('attendance_records')
-      .select('*')
-      .in('employee_id', empIds)
-      .gte('date', attDateFrom)
-      .lte('date', attDateTo)
-      .order('date', { ascending: false });
-    setAttRecords(data || []);
+    const PAGE_SIZE = 1000;
+    const all: any[] = [];
+    let from = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('attendance_records')
+        .select('*')
+        .in('employee_id', empIds)
+        .gte('date', attDateFrom)
+        .lte('date', attDateTo)
+        .order('date', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) { console.error('Attendance fetch error:', error); break; }
+      const page = data || [];
+      all.push(...page);
+      hasMore = page.length === PAGE_SIZE;
+      from += PAGE_SIZE;
+    }
+    setAttRecords(all);
     setAttLoading(false);
   }, [stationEmployees, attDateFrom, attDateTo]);
 
