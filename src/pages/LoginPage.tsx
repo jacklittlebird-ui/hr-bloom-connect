@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share, LogIn, User, Lock, Plane, Shield, Clock, BarChart3 } from 'lucide-react';
+import { Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share, LogIn, User, Lock, Plane, Shield, Clock, BarChart3, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { checkRateLimit, recordLoginAttempt } from '@/lib/security';
 import { normalizeLoginIdentifier } from '@/lib/auth';
