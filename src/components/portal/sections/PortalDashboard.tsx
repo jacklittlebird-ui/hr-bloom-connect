@@ -25,7 +25,7 @@ export const PortalDashboard = () => {
   const employee = getEmployee(PORTAL_EMPLOYEE_ID);
   const { language } = useLanguage();
   const ar = language === 'ar';
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const { getEmployeePayroll, refreshPayroll } = usePayrollData();
   const { records, getMonthlyStats, refresh: refreshAttendance } = useAttendanceData();
   const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
@@ -48,10 +48,21 @@ export const PortalDashboard = () => {
       .sort((a, b) => `${b.date}T${b.checkIn ?? ''}`.localeCompare(`${a.date}T${a.checkIn ?? ''}`))[0],
     [employeeRecords]
   );
+
+  const [liveAttendanceState, setLiveAttendanceState] = useState<{ checkIn: string | null; checkOut: string | null; date: string | null; loading: boolean }>({
+    checkIn: null,
+    checkOut: null,
+    date: null,
+    loading: true,
+  });
+
   const activeRecord = latestOpenRecord ?? todayRecord;
-  const hasCheckedIn = !!activeRecord?.checkIn;
-  const hasCheckedOut = !!activeRecord?.checkOut;
-  const isCrossDayOpenRecord = !!latestOpenRecord && latestOpenRecord.date !== today;
+  const effectiveCheckIn = liveAttendanceState.checkIn ?? activeRecord?.checkIn ?? null;
+  const effectiveCheckOut = liveAttendanceState.checkOut ?? activeRecord?.checkOut ?? null;
+  const effectiveDate = liveAttendanceState.date ?? activeRecord?.date ?? null;
+  const hasCheckedIn = !!effectiveCheckIn;
+  const hasCheckedOut = !!effectiveCheckOut;
+  const isCrossDayOpenRecord = !!effectiveDate && effectiveDate !== today && !!effectiveCheckIn && !effectiveCheckOut;
 
   // Station checkin method
   const [checkinMethod, setCheckinMethod] = useState<string>('qr');
