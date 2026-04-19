@@ -137,7 +137,7 @@ const LoginPage = () => {
                 <div className="w-9 h-9 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/20 transition-colors flex-shrink-0">
                   <f.icon className="h-4 w-4 text-white" />
                 </div>
-                <span className="text-white/90 text-sm font-medium text-right">{t(f.ar, f.en)}</span>
+                <span className={cn("text-white/90 text-sm font-medium", isRTL ? "text-right" : "text-left")}>{t(f.ar, f.en)}</span>
               </div>
             ))}
           </div>
