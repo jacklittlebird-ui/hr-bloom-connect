@@ -196,7 +196,7 @@ const LoginPage = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="space-y-2 text-right">
+                <div className={cn("space-y-2", isRTL ? "text-right" : "text-left")}>
                   <Label className="text-sm font-medium">{t('البريد الإلكتروني أو كود الموظف', 'Email or Employee Code')}</Label>
                   <div className="relative">
                     <Input
@@ -204,14 +204,14 @@ const LoginPage = () => {
                       placeholder={t('أدخل البريد أو الكود', 'Enter email or code')}
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      className="h-12 pe-11 text-right rounded-xl border-border/80 bg-background focus:border-primary transition-colors"
-                      dir="rtl"
+                      className={cn("h-12 pe-11 rounded-xl border-border/80 bg-background focus:border-primary transition-colors", isRTL ? "text-right" : "text-left")}
+                      dir={isRTL ? "rtl" : "ltr"}
                     />
                     <User className="absolute top-1/2 -translate-y-1/2 end-3.5 h-4.5 w-4.5 text-muted-foreground/60 pointer-events-none" />
                   </div>
                 </div>
 
-                <div className="space-y-2 text-right">
+                <div className={cn("space-y-2", isRTL ? "text-right" : "text-left")}>
                   <Label className="text-sm font-medium">{t('كلمة المرور', 'Password')}</Label>
                   <div className="relative">
                     <Input
@@ -219,8 +219,8 @@ const LoginPage = () => {
                       placeholder="••••••••"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      className="h-12 pe-11 ps-12 text-right rounded-xl border-border/80 bg-background focus:border-primary transition-colors"
-                      dir="rtl"
+                      className={cn("h-12 pe-11 ps-12 rounded-xl border-border/80 bg-background focus:border-primary transition-colors", isRTL ? "text-right" : "text-left")}
+                      dir={isRTL ? "rtl" : "ltr"}
                     />
                     <Lock className="absolute top-1/2 -translate-y-1/2 end-3.5 h-4.5 w-4.5 text-muted-foreground/60 pointer-events-none" />
                     <button
