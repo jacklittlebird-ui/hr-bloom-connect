@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share, LogIn, User, Lock, Plane, Shield, Clock, BarChart3 } from 'lucide-react';
+import { Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share, LogIn, User, Lock, Plane, Shield, Clock, BarChart3, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { checkRateLimit, recordLoginAttempt } from '@/lib/security';
 import { normalizeLoginIdentifier } from '@/lib/auth';
@@ -123,8 +123,9 @@ const LoginPage = () => {
         </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center px-12 xl:px-16 w-full h-full text-center">
-          <h2 className="text-3xl xl:text-4xl font-bold text-white mb-3 leading-tight">
-            {t('نظام إدارة الموارد البشرية', 'HR Management System')}
+          <h2 className="text-3xl xl:text-4xl font-bold text-white mb-3 leading-tight flex items-center justify-center gap-3">
+            <Users className="h-8 w-8 xl:h-9 xl:w-9 text-white" />
+            <span>{t('نظام إدارة الموارد البشرية', 'HR Management System')}</span>
           </h2>
           <p className="text-white/70 text-lg mb-10 leading-relaxed max-w-md">
             {t('منصة متكاملة لإدارة جميع عمليات الموارد البشرية', 'Integrated platform for all HR operations')}
