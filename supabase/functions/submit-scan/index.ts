@@ -414,21 +414,6 @@ Deno.serve(async (req) => {
         console.log("[submit-scan] checkout lookup:", { empId, openRecord, findErr });
 
         if (openRecord) {
-          // Enforce minimum 60 minutes between check-in and check-out
-          if (openRecord.check_in) {
-            const checkInTime = new Date(openRecord.check_in).getTime();
-            const elapsedMinutes = (Date.now() - checkInTime) / 60000;
-            if (elapsedMinutes < 60) {
-              const remaining = Math.ceil(60 - elapsedMinutes);
-              return new Response(JSON.stringify({
-                error: `لا يمكن تسجيل الانصراف قبل مرور ساعة من الحضور. المتبقي: ${remaining} دقيقة / Cannot check out before 1 hour from check-in. Remaining: ${remaining} min`,
-              }), {
-                status: 400,
-                headers: { ...corsHeaders, "content-type": "application/json" },
-              });
-            }
-          }
-
           const isEarly = !isFlexible && localHour < 17;
           const updatePayload: Record<string, any> = { check_out: nowIso };
           if (isEarly) updatePayload.status = "early-leave";
