@@ -22,7 +22,6 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
     setMessage('');
 
     try {
-      // Try high accuracy first, fallback to low accuracy on timeout
       const getPosition = (highAccuracy: boolean, timeout: number) =>
         new Promise<GeolocationPosition>((resolve, reject) => {
           if (!navigator.geolocation) return reject(new Error(ar ? 'الموقع غير مدعوم' : 'Geolocation not supported'));
@@ -38,7 +37,6 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         pos = await getPosition(true, 20000);
       } catch (geoErr: any) {
         if (geoErr.code === 3) {
-          // Timeout — retry with low accuracy
           pos = await getPosition(false, 15000);
         } else {
           throw geoErr;
@@ -66,15 +64,16 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
       if (!result.ok) {
         setStatus('error');
         setMessage(result.error || 'Unknown error');
-      } else {
-        setStatus('success');
-        setMessage(
-          eventType === 'check_in'
-            ? ar ? 'تم تسجيل الحضور بنجاح ✔' : 'Check-in recorded ✔'
-            : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
-        );
-        onSuccess?.();
+        return;
       }
+
+      setStatus('success');
+      setMessage(
+        eventType === 'check_in'
+          ? ar ? 'تم تسجيل الحضور بنجاح ✔' : 'Check-in recorded ✔'
+          : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
+      );
+      onSuccess?.();
     } catch (e: any) {
       setStatus('error');
       if (e.code === 1) {

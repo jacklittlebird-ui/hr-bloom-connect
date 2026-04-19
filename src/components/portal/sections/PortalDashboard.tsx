@@ -25,7 +25,7 @@ export const PortalDashboard = () => {
   const employee = getEmployee(PORTAL_EMPLOYEE_ID);
   const { language } = useLanguage();
   const ar = language === 'ar';
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
   const { getEmployeePayroll, refreshPayroll } = usePayrollData();
   const { records, getMonthlyStats, refresh: refreshAttendance } = useAttendanceData();
   const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
@@ -48,10 +48,21 @@ export const PortalDashboard = () => {
       .sort((a, b) => `${b.date}T${b.checkIn ?? ''}`.localeCompare(`${a.date}T${a.checkIn ?? ''}`))[0],
     [employeeRecords]
   );
+
+  const [liveAttendanceState, setLiveAttendanceState] = useState<{ checkIn: string | null; checkOut: string | null; date: string | null; loading: boolean }>({
+    checkIn: null,
+    checkOut: null,
+    date: null,
+    loading: true,
+  });
+
   const activeRecord = latestOpenRecord ?? todayRecord;
-  const hasCheckedIn = !!activeRecord?.checkIn;
-  const hasCheckedOut = !!activeRecord?.checkOut;
-  const isCrossDayOpenRecord = !!latestOpenRecord && latestOpenRecord.date !== today;
+  const effectiveCheckIn = liveAttendanceState.checkIn ?? activeRecord?.checkIn ?? null;
+  const effectiveCheckOut = liveAttendanceState.checkOut ?? activeRecord?.checkOut ?? null;
+  const effectiveDate = liveAttendanceState.date ?? activeRecord?.date ?? null;
+  const hasCheckedIn = !!effectiveCheckIn;
+  const hasCheckedOut = !!effectiveCheckOut;
+  const isCrossDayOpenRecord = !!effectiveDate && effectiveDate !== today && !!effectiveCheckIn && !effectiveCheckOut;
 
   // Station checkin method
   const [checkinMethod, setCheckinMethod] = useState<string>('qr');
@@ -72,6 +83,59 @@ export const PortalDashboard = () => {
     };
     fetchMethod();
   }, [employee?.stationId]);
+
+  useEffect(() => {
+    const fetchLiveAttendanceState = async () => {
+      if (!PORTAL_EMPLOYEE_ID) {
+        setLiveAttendanceState({ checkIn: null, checkOut: null, date: null, loading: false });
+        return;
+      }
+
+      setLiveAttendanceState((prev) => ({ ...prev, loading: true }));
+
+      const { data: openRecord } = await supabase
+        .from('attendance_records')
+        .select('date, check_in, check_out')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .not('check_in', 'is', null)
+        .is('check_out', null)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (openRecord) {
+        const openCheckIn = openRecord.check_in ? new Date(openRecord.check_in) : null;
+        setLiveAttendanceState({
+          date: openRecord.date,
+          checkIn: openCheckIn ? `${openCheckIn.getHours().toString().padStart(2, '0')}:${openCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
+          checkOut: null,
+          loading: false,
+        });
+        return;
+      }
+
+      const { data: latestTodayRecord } = await supabase
+        .from('attendance_records')
+        .select('date, check_in, check_out')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .eq('date', today)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const todayCheckIn = latestTodayRecord?.check_in ? new Date(latestTodayRecord.check_in) : null;
+      const todayCheckOut = latestTodayRecord?.check_out ? new Date(latestTodayRecord.check_out) : null;
+
+      setLiveAttendanceState({
+        date: latestTodayRecord?.date ?? null,
+        checkIn: todayCheckIn ? `${todayCheckIn.getHours().toString().padStart(2, '0')}:${todayCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
+        checkOut: todayCheckOut ? `${todayCheckOut.getHours().toString().padStart(2, '0')}:${todayCheckOut.getMinutes().toString().padStart(2, '0')}` : null,
+        loading: false,
+      });
+    };
+
+    fetchLiveAttendanceState();
+  }, [PORTAL_EMPLOYEE_ID, today, records]);
 
   const showQr = checkinMethod === 'qr' || checkinMethod === 'both';
   const showGps = checkinMethod === 'gps' || checkinMethod === 'both';
@@ -247,20 +311,20 @@ export const PortalDashboard = () => {
                     }}
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
-                  disabled={hasCheckedIn && !hasCheckedOut}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || (hasCheckedIn && !hasCheckedOut)}
                   >
                     <LogIn className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل حضور (QR)' : 'Check In (QR)'}
                   </Button>
-                  {hasCheckedIn && activeRecord?.checkIn && !showGps && (
+                  {hasCheckedIn && effectiveCheckIn && !showGps && (
                     <p className="text-sm font-medium text-success">
                       {isCrossDayOpenRecord
                         ? ar
-                          ? `✔ يوجد حضور مفتوح من ${activeRecord?.date} الساعة ${activeRecord?.checkIn}`
-                          : `✔ Open check-in from ${activeRecord?.date} at ${activeRecord?.checkIn}`
+                          ? `✔ يوجد حضور مفتوح من ${effectiveDate} الساعة ${effectiveCheckIn}`
+                          : `✔ Open check-in from ${effectiveDate} at ${effectiveCheckIn}`
                         : ar
-                          ? `✔ تم الحضور في ${activeRecord.checkIn}`
-                          : `✔ Checked in at ${activeRecord.checkIn}`}
+                          ? `✔ تم الحضور في ${effectiveCheckIn}`
+                          : `✔ Checked in at ${effectiveCheckIn}`}
                     </p>
                   )}
                 </div>
@@ -276,7 +340,7 @@ export const PortalDashboard = () => {
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
                     variant="outline"
-                    disabled={!hasCheckedIn || hasCheckedOut}
+                    disabled={authLoading || methodLoading || liveAttendanceState.loading || !hasCheckedIn || hasCheckedOut}
                   >
                     <LogOut className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل انصراف (QR)' : 'Check Out (QR)'}
@@ -290,13 +354,13 @@ export const PortalDashboard = () => {
               <div className="space-y-3">
                 <GpsCheckinButton
                   eventType="check_in"
-                  disabled={hasCheckedIn && !hasCheckedOut}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || (hasCheckedIn && !hasCheckedOut)}
                   onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
                 <GpsCheckinButton
                   eventType="check_out"
-                  disabled={!hasCheckedIn || hasCheckedOut}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || !hasCheckedIn || hasCheckedOut}
                   onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
@@ -304,20 +368,20 @@ export const PortalDashboard = () => {
             )}
 
             {/* Status timestamps */}
-            {hasCheckedIn && activeRecord?.checkIn && (
+            {hasCheckedIn && effectiveCheckIn && (
               <p className="text-sm font-medium text-success">
                 {isCrossDayOpenRecord
                   ? ar
-                    ? `✔ يوجد حضور مفتوح من ${activeRecord?.date} الساعة ${activeRecord?.checkIn}`
-                    : `✔ Open check-in from ${activeRecord?.date} at ${activeRecord?.checkIn}`
+                    ? `✔ يوجد حضور مفتوح من ${effectiveDate} الساعة ${effectiveCheckIn}`
+                    : `✔ Open check-in from ${effectiveDate} at ${effectiveCheckIn}`
                   : ar
-                    ? `✔ تم الحضور في ${activeRecord.checkIn}`
-                    : `✔ Checked in at ${activeRecord.checkIn}`}
+                    ? `✔ تم الحضور في ${effectiveCheckIn}`
+                    : `✔ Checked in at ${effectiveCheckIn}`}
               </p>
             )}
-            {hasCheckedOut && activeRecord?.checkOut && (
+            {hasCheckedOut && effectiveCheckOut && (
               <p className="text-sm font-medium text-muted-foreground">
-                {ar ? `✔ تم الانصراف في ${activeRecord.checkOut}` : `✔ Checked out at ${activeRecord.checkOut}`}
+                {ar ? `✔ تم الانصراف في ${effectiveCheckOut}` : `✔ Checked out at ${effectiveCheckOut}`}
               </p>
             )}
 
