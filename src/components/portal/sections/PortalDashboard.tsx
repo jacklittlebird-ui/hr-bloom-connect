@@ -84,6 +84,59 @@ export const PortalDashboard = () => {
     fetchMethod();
   }, [employee?.stationId]);
 
+  useEffect(() => {
+    const fetchLiveAttendanceState = async () => {
+      if (!PORTAL_EMPLOYEE_ID) {
+        setLiveAttendanceState({ checkIn: null, checkOut: null, date: null, loading: false });
+        return;
+      }
+
+      setLiveAttendanceState((prev) => ({ ...prev, loading: true }));
+
+      const { data: openRecord } = await supabase
+        .from('attendance_records')
+        .select('date, check_in, check_out')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .not('check_in', 'is', null)
+        .is('check_out', null)
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (openRecord) {
+        const openCheckIn = openRecord.check_in ? new Date(openRecord.check_in) : null;
+        setLiveAttendanceState({
+          date: openRecord.date,
+          checkIn: openCheckIn ? `${openCheckIn.getHours().toString().padStart(2, '0')}:${openCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
+          checkOut: null,
+          loading: false,
+        });
+        return;
+      }
+
+      const { data: latestTodayRecord } = await supabase
+        .from('attendance_records')
+        .select('date, check_in, check_out')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .eq('date', today)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const todayCheckIn = latestTodayRecord?.check_in ? new Date(latestTodayRecord.check_in) : null;
+      const todayCheckOut = latestTodayRecord?.check_out ? new Date(latestTodayRecord.check_out) : null;
+
+      setLiveAttendanceState({
+        date: latestTodayRecord?.date ?? null,
+        checkIn: todayCheckIn ? `${todayCheckIn.getHours().toString().padStart(2, '0')}:${todayCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
+        checkOut: todayCheckOut ? `${todayCheckOut.getHours().toString().padStart(2, '0')}:${todayCheckOut.getMinutes().toString().padStart(2, '0')}` : null,
+        loading: false,
+      });
+    };
+
+    fetchLiveAttendanceState();
+  }, [PORTAL_EMPLOYEE_ID, today, records]);
+
   const showQr = checkinMethod === 'qr' || checkinMethod === 'both';
   const showGps = checkinMethod === 'gps' || checkinMethod === 'both';
 
