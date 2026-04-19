@@ -96,12 +96,12 @@ const LoginPage = () => {
   ];
 
   return (
-    <main className={cn("min-h-screen flex", isRTL ? "font-arabic" : "font-sans")} dir="rtl">
+    <main className={cn("min-h-screen flex", isRTL ? "font-arabic" : "font-sans")} dir={isRTL ? "rtl" : "ltr"}>
       {/* Language toggle */}
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-background"
+        className={cn("fixed top-4 z-50 bg-background/80 backdrop-blur-sm shadow-sm border border-border/50 hover:bg-background", isRTL ? "left-4" : "right-4")}
         onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
         aria-label={t('تغيير اللغة', 'Change language')}
       >
