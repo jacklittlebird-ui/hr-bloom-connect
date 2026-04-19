@@ -405,7 +405,7 @@ Deno.serve(async (req) => {
         // Find the most recent open record (any date)
         const { data: openRecord, error: findErr } = await supabaseAdmin
           .from("attendance_records")
-          .select("id")
+          .select("id, check_in")
           .eq("employee_id", employeeId)
           .is("check_out", null)
           .order("check_in", { ascending: false })
@@ -416,6 +416,16 @@ Deno.serve(async (req) => {
 
         if (!openRecord) {
           throw new Error("لا يوجد سجل حضور مفتوح / No open check-in found");
+        }
+
+        // Enforce minimum 60 minutes between check-in and check-out
+        if (openRecord.check_in) {
+          const checkInTime = new Date(openRecord.check_in).getTime();
+          const elapsedMinutes = (Date.now() - checkInTime) / 60000;
+          if (elapsedMinutes < 60) {
+            const remaining = Math.ceil(60 - elapsedMinutes);
+            throw new Error(`لا يمكن تسجيل الانصراف قبل مرور ساعة من الحضور. المتبقي: ${remaining} دقيقة / Cannot check out before 1 hour from check-in. Remaining: ${remaining} min`);
+          }
         }
 
         const isEarly = !isFlexible && localHour < 17;
