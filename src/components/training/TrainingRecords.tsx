@@ -408,10 +408,9 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
               <SelectTrigger><SelectValue placeholder={t('training.searchByDept')} /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('common.all')}</SelectItem>
-                <SelectItem value="Operations">{t('dept.operations')}</SelectItem>
-                <SelectItem value="HR">{t('dept.hr')}</SelectItem>
-                <SelectItem value="Finance">{t('dept.finance')}</SelectItem>
-                <SelectItem value="IT">{t('dept.it')}</SelectItem>
+                {departmentOptions.map(d => (
+                  <SelectItem key={d.id} value={d.nameAr}>{ar ? d.nameAr : d.nameEn}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={searchStation} onValueChange={setSearchStation}>
