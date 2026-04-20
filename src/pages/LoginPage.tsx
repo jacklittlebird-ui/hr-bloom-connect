@@ -275,7 +275,24 @@ const LoginPage = () => {
               </div>
 
               {isInstalled ? (
-...
+                <div className="text-center py-10 space-y-4">
+                  <div className="w-16 h-16 rounded-2xl bg-[hsl(var(--stat-green-bg))] flex items-center justify-center mx-auto">
+                    <CheckCircle className="h-8 w-8 text-[hsl(var(--stat-green))]" />
+                  </div>
+                  <p className="font-semibold text-lg">{t('التطبيق مثبت بالفعل!', 'App is already installed!')}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t('يمكنك الوصول للتطبيق من الشاشة الرئيسية', 'Access the app from your home screen')}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {deferredPrompt && (
+                    <Button onClick={handleInstall} className="w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-primary/20" size="lg">
+                      <Download className="h-5 w-5 me-2" />
+                      {t('تثبيت التطبيق الآن', 'Install App Now')}
+                    </Button>
+                  )}
+
                   {!deferredPrompt && (
                     <div className="space-y-4 p-5 rounded-xl bg-muted/50 border border-border/50">
                       <h3 className="font-semibold flex items-center gap-2 text-sm">
