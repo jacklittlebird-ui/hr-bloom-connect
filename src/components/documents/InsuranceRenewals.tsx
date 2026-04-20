@@ -24,6 +24,12 @@ interface ExpiringEmployee {
   social_insurance_no: string | null;
   social_insurance_start_date: string | null;
   social_insurance_end_date: string | null;
+  national_id: string | null;
+  education_ar: string | null;
+  address: string | null;
+  city: string | null;
+  job_title_ar: string | null;
+  job_title_en: string | null;
   station_name?: string;
   department_name?: string;
   station_id?: string | null;
@@ -60,7 +66,7 @@ export const InsuranceRenewals = () => {
 
     const { data, error } = await supabase
       .from('employees')
-      .select('id, employee_code, name_ar, name_en, social_insurance_no, social_insurance_start_date, social_insurance_end_date, station_id, department_id')
+      .select('id, employee_code, name_ar, name_en, social_insurance_no, social_insurance_start_date, social_insurance_end_date, national_id, education_ar, address, city, job_title_ar, job_title_en, station_id, department_id')
       .not('social_insurance_end_date', 'is', null)
       .lte('social_insurance_end_date', cutoffDate)
       .eq('status', 'active')
@@ -88,6 +94,9 @@ export const InsuranceRenewals = () => {
       id: e.id, employee_code: e.employee_code, name_ar: e.name_ar, name_en: e.name_en,
       social_insurance_no: e.social_insurance_no, social_insurance_start_date: e.social_insurance_start_date,
       social_insurance_end_date: e.social_insurance_end_date,
+      national_id: e.national_id, education_ar: e.education_ar,
+      address: e.address, city: e.city,
+      job_title_ar: e.job_title_ar, job_title_en: e.job_title_en,
       station_id: e.station_id, department_id: e.department_id,
       station_name: e.station_id ? stationMap.get(e.station_id) || '' : '',
       department_name: e.department_id ? deptMap.get(e.department_id) || '' : '',
@@ -145,6 +154,11 @@ export const InsuranceRenewals = () => {
       { headerAr: 'الكود', headerEn: 'Code', key: 'code' },
       { headerAr: 'اسم الموظف', headerEn: 'Employee Name', key: 'nameAr' },
       { headerAr: 'الاسم بالإنجليزية', headerEn: 'Name (EN)', key: 'nameEn' },
+      { headerAr: 'الرقم القومي', headerEn: 'National ID', key: 'nationalId' },
+      { headerAr: 'المسمى الوظيفي', headerEn: 'Job Title', key: 'jobTitle' },
+      { headerAr: 'المؤهل الدراسي', headerEn: 'Education', key: 'education' },
+      { headerAr: 'العنوان', headerEn: 'Address', key: 'address' },
+      { headerAr: 'المركز / المدينة', headerEn: 'City', key: 'city' },
       { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
       { headerAr: 'القسم', headerEn: 'Department', key: 'dept' },
       { headerAr: 'رقم التأمين', headerEn: 'Insurance No.', key: 'insNo' },
@@ -156,6 +170,11 @@ export const InsuranceRenewals = () => {
       const days = getDaysRemaining(e.social_insurance_end_date!);
       return {
         code: e.employee_code, nameAr: e.name_ar, nameEn: e.name_en,
+        nationalId: e.national_id || '-',
+        jobTitle: (ar ? e.job_title_ar : e.job_title_en) || e.job_title_ar || e.job_title_en || '-',
+        education: e.education_ar || '-',
+        address: e.address || '-',
+        city: e.city || '-',
         station: e.station_name || '-', dept: e.department_name || '-',
         insNo: e.social_insurance_no || '-', startDate: e.social_insurance_start_date || '-',
         endDate: e.social_insurance_end_date, remaining: days < 0 ? `منتهي (${Math.abs(days)})` : String(days),
@@ -228,6 +247,11 @@ export const InsuranceRenewals = () => {
                   <TableRow>
                     <TableHead>{ar ? 'الكود' : 'Code'}</TableHead>
                     <TableHead>{ar ? 'اسم الموظف' : 'Employee Name'}</TableHead>
+                    <TableHead>{ar ? 'الرقم القومي' : 'National ID'}</TableHead>
+                    <TableHead>{ar ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
+                    <TableHead>{ar ? 'المؤهل الدراسي' : 'Education'}</TableHead>
+                    <TableHead>{ar ? 'العنوان' : 'Address'}</TableHead>
+                    <TableHead>{ar ? 'المركز / المدينة' : 'City'}</TableHead>
                     <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                     <TableHead>{ar ? 'القسم' : 'Department'}</TableHead>
                     <TableHead>{ar ? 'رقم التأمين' : 'Insurance No.'}</TableHead>
@@ -245,6 +269,11 @@ export const InsuranceRenewals = () => {
                       <TableRow key={emp.id}>
                         <TableCell className="font-mono text-xs">{emp.employee_code}</TableCell>
                         <TableCell className="font-medium">{ar ? emp.name_ar : emp.name_en}</TableCell>
+                        <TableCell className="font-mono text-xs">{emp.national_id || '-'}</TableCell>
+                        <TableCell>{(ar ? emp.job_title_ar : emp.job_title_en) || emp.job_title_ar || emp.job_title_en || '-'}</TableCell>
+                        <TableCell>{emp.education_ar || '-'}</TableCell>
+                        <TableCell className="max-w-[200px] truncate" title={emp.address || ''}>{emp.address || '-'}</TableCell>
+                        <TableCell>{emp.city || '-'}</TableCell>
                         <TableCell>{emp.station_name || '-'}</TableCell>
                         <TableCell>{emp.department_name || '-'}</TableCell>
                         <TableCell>{emp.social_insurance_no || '-'}</TableCell>
