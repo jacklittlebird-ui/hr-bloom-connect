@@ -16,6 +16,9 @@ const QrScanner = ({ onScan }: QrScannerProps) => {
     const startScanner = async () => {
       try {
         if (!mounted) return;
+        // Small delay to ensure any previous camera stream is fully released
+        await new Promise((r) => setTimeout(r, 150));
+        if (!mounted) return;
         const scanner = new Html5Qrcode("qr-reader", /* verbose */ false);
         scannerRef.current = scanner;
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
@@ -30,12 +33,22 @@ const QrScanner = ({ onScan }: QrScannerProps) => {
             errorCb
           );
         } catch {
-          await scanner.start(
-            { facingMode: "environment" },
-            config,
-            successCb,
-            errorCb
-          );
+          try {
+            await scanner.start(
+              { facingMode: "environment" },
+              config,
+              successCb,
+              errorCb
+            );
+          } catch {
+            // Final fallback: any available camera (front camera on devices without rear)
+            await scanner.start(
+              { facingMode: "user" },
+              config,
+              successCb,
+              errorCb
+            );
+          }
         }
       } catch (e: any) {
         if (mounted) setError(e?.message ?? "Camera error");
@@ -45,11 +58,15 @@ const QrScanner = ({ onScan }: QrScannerProps) => {
 
     return () => {
       mounted = false;
-      if (scannerRef.current) {
-        scannerRef.current
-          .stop()
+      const s = scannerRef.current;
+      scannerRef.current = null;
+      if (s) {
+        // Best-effort stop + clear; ignore errors if scanner never fully started
+        Promise.resolve()
+          .then(() => s.stop())
           .catch(() => {})
-          .finally(() => scannerRef.current?.clear());
+          .then(() => s.clear())
+          .catch(() => {});
       }
     };
   }, []);
