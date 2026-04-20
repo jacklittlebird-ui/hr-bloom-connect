@@ -127,8 +127,13 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
       const locs = [...new Set(allLocs)] as string[];
       setLocationOptions(locs);
     };
+    const fetchDepartments = async () => {
+      const { data } = await supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true).order('name_ar');
+      setDepartmentOptions((data || []).map((d: any) => ({ id: d.id, nameAr: d.name_ar, nameEn: d.name_en })));
+    };
     fetchCourses();
     fetchLocations();
+    fetchDepartments();
   }, [activeTab]);
 
   const trainingEmployees: Employee[] = useMemo(() => contextEmployees.map((emp) => ({
