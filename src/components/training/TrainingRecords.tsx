@@ -104,6 +104,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   });
   const [providerOptions, setProviderOptions] = useState<string[]>([]);
   const [locationOptions, setLocationOptions] = useState<string[]>([]);
+  const [departmentOptions, setDepartmentOptions] = useState<{ id: string; nameAr: string; nameEn: string }[]>([]);
   const [newLocation, setNewLocation] = useState('');
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [coursePopoverOpen, setCoursePopoverOpen] = useState(false);
