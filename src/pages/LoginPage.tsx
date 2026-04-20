@@ -176,7 +176,7 @@ const LoginPage = () => {
             <button
               onClick={() => setActiveTab('install')}
               className={cn(
-                "flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200",
+                "relative flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200",
                 activeTab === 'install'
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -184,6 +184,9 @@ const LoginPage = () => {
             >
               <Smartphone className="h-4 w-4 inline-block me-2 -mt-0.5" />
               {t('تحميل التطبيق', 'Install App')}
+              <span className="absolute -top-2 -end-1 px-1.5 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold shadow-lg shadow-destructive/50 animate-pulse">
+                {t('جديد', 'NEW')}
+              </span>
             </button>
           </div>
 
@@ -290,32 +293,11 @@ const LoginPage = () => {
                     </Button>
                   )}
 
-                  {isIOS && !deferredPrompt && (
+                  {!deferredPrompt && (
                     <div className="space-y-4 p-5 rounded-xl bg-muted/50 border border-border/50">
                       <h3 className="font-semibold flex items-center gap-2 text-sm">
                         <Share className="h-4 w-4" />
-                        {t('خطوات التثبيت على iPhone', 'Install on iPhone')}
-                      </h3>
-                      <ol className={cn("space-y-3 text-sm", isRTL && "text-right")}>
-                        {[
-                          { ar: 'اضغط على زر المشاركة (⬆) في أسفل Safari', en: 'Tap Share (⬆) at the bottom of Safari' },
-                          { ar: 'اختر "إضافة إلى الشاشة الرئيسية"', en: 'Choose "Add to Home Screen"' },
-                          { ar: 'اضغط "إضافة" لتثبيت التطبيق', en: 'Tap "Add" to install' },
-                        ].map((step, i) => (
-                          <li key={i} className="flex items-start gap-3">
-                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">{i + 1}</span>
-                            <span>{t(step.ar, step.en)}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    </div>
-                  )}
-
-                  {!isIOS && !deferredPrompt && (
-                    <div className="space-y-4 p-5 rounded-xl bg-muted/50 border border-border/50">
-                      <h3 className="font-semibold flex items-center gap-2 text-sm">
-                        <Download className="h-4 w-4" />
-                        {t('خطوات التثبيت', 'Installation Steps')}
+                        {t('للـ iPhone — خطوات التثبيت', 'For iPhone — Installation Steps')}
                       </h3>
                       <ol className={cn("space-y-3 text-sm", isRTL && "text-right")}>
                         {[
@@ -328,6 +310,22 @@ const LoginPage = () => {
                           </li>
                         ))}
                       </ol>
+
+                      <div className="pt-3 border-t border-border/50">
+                        <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                          <Smartphone className="h-4 w-4" />
+                          {t('للأندرويد', 'For Android')}
+                        </p>
+                        <a
+                          href="https://play.google.com/store/apps/details?id=com.onestory.onehr&pli=1"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 w-full h-11 rounded-xl bg-foreground text-background font-semibold text-sm hover:opacity-90 transition-opacity"
+                        >
+                          <Download className="h-4 w-4" />
+                          {t('اضغط هنا للتحميل من Google Play', 'Tap here to download from Google Play')}
+                        </a>
+                      </div>
                     </div>
                   )}
 
