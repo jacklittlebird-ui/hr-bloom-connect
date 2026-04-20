@@ -293,7 +293,7 @@ export const PortalDashboard = () => {
             {showQr && qrMode && qrStatus !== 'success' && qrStatus !== 'error' && qrStatus !== 'validating' && (
               <div className="flex justify-center">
                 <div className="w-full max-w-[300px]">
-                  <QrScanner onScan={onQrScan} />
+                  <QrScanner key={qrEventType} onScan={onQrScan} />
                 </div>
               </div>
             )}
