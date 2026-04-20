@@ -104,6 +104,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   });
   const [providerOptions, setProviderOptions] = useState<string[]>([]);
   const [locationOptions, setLocationOptions] = useState<string[]>([]);
+  const [departmentOptions, setDepartmentOptions] = useState<{ id: string; nameAr: string; nameEn: string }[]>([]);
   const [newLocation, setNewLocation] = useState('');
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [coursePopoverOpen, setCoursePopoverOpen] = useState(false);
@@ -126,8 +127,13 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
       const locs = [...new Set(allLocs)] as string[];
       setLocationOptions(locs);
     };
+    const fetchDepartments = async () => {
+      const { data } = await supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true).order('name_ar');
+      setDepartmentOptions((data || []).map((d: any) => ({ id: d.id, nameAr: d.name_ar, nameEn: d.name_en })));
+    };
     fetchCourses();
     fetchLocations();
+    fetchDepartments();
   }, [activeTab]);
 
   const trainingEmployees: Employee[] = useMemo(() => contextEmployees.map((emp) => ({
@@ -402,10 +408,9 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
               <SelectTrigger><SelectValue placeholder={t('training.searchByDept')} /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('common.all')}</SelectItem>
-                <SelectItem value="Operations">{t('dept.operations')}</SelectItem>
-                <SelectItem value="HR">{t('dept.hr')}</SelectItem>
-                <SelectItem value="Finance">{t('dept.finance')}</SelectItem>
-                <SelectItem value="IT">{t('dept.it')}</SelectItem>
+                {departmentOptions.map(d => (
+                  <SelectItem key={d.id} value={d.nameAr}>{ar ? d.nameAr : d.nameEn}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={searchStation} onValueChange={setSearchStation}>
