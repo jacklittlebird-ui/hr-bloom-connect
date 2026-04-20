@@ -184,7 +184,7 @@ const LoginPage = () => {
             >
               <Smartphone className="h-4 w-4 inline-block me-2 -mt-0.5" />
               {t('تحميل التطبيق', 'Install App')}
-              <span className="absolute -top-2 -end-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-white text-[9px] font-bold shadow-lg shadow-red-500/50 animate-pulse">
+              <span className="absolute -top-2 -end-1 px-1.5 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold shadow-lg shadow-destructive/50 animate-pulse">
                 {t('جديد', 'NEW')}
               </span>
             </button>
