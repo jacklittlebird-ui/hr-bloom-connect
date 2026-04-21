@@ -132,7 +132,7 @@ export const UnpaidLeavesDeductions = () => {
   const totalDays = filtered.reduce((sum, r) => sum + (r.days || 0), 0);
   const totalEmployees = new Set(filtered.map(r => r.employee_id)).size;
 
-  const { currentPage, setCurrentPage, totalPages, paginatedItems, pageSize, setPageSize } = usePagination(filtered, 25);
+  const { currentPage, setCurrentPage, totalPages, paginatedItems } = usePagination(filtered, 25);
 
   return (
     <div className={cn("space-y-4", isRTL && "text-right")}>
@@ -235,9 +235,6 @@ export const UnpaidLeavesDeductions = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          totalItems={filtered.length}
         />
       )}
     </div>
