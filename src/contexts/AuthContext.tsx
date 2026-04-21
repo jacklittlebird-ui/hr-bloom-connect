@@ -126,7 +126,11 @@ async function fetchUserProfileWithRetry(supabaseUser: User, attempts = 4): Prom
     try {
       const profile = await fetchUserProfile(supabaseUser);
       if (profile) return profile;
-    } catch (error) {
+    } catch (error: any) {
+      // Don't retry on permanent block errors — propagate immediately
+      if (error?.message === 'EMPLOYEE_INACTIVE') {
+        throw error;
+      }
       lastError = error;
     }
 
@@ -155,7 +159,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isInitialOrLogin) {
       setLoading(true);
     }
-    const profile = await fetchUserProfileWithRetry(supabaseUser);
+    let profile: AuthUser | null = null;
+    try {
+      profile = await fetchUserProfileWithRetry(supabaseUser);
+    } catch (err: any) {
+      // Permanent block (e.g. inactive employee) — sign out and rethrow
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setLoading(false);
+      throw err;
+    }
 
     if (!profile) {
       await supabase.auth.signOut();
