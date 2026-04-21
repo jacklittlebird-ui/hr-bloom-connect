@@ -48,7 +48,7 @@ export const PortalAttendance = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('attendance_records')
-        .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late')
+        .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late, notes')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
         .gte('date', dateFrom)
         .lte('date', dateTo)
@@ -59,15 +59,20 @@ export const PortalAttendance = () => {
         setFilteredRecords([]);
       } else {
         setFilteredRecords((data || []).map(r => {
+          const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
           const ci = formatTime(r.check_in);
-          const co = formatTime(r.check_out);
-          const totalMins = r.work_minutes || (r.work_hours ? Math.round(r.work_hours * 60) : 0);
+          const co = isAutoClosed ? null : formatTime(r.check_out);
+          const totalMins = isAutoClosed ? 0 : (r.work_minutes || (r.work_hours ? Math.round(r.work_hours * 60) : 0));
+          let status: string;
+          if (isAutoClosed) status = 'auto-closed';
+          else if (r.is_late) status = 'late';
+          else status = r.status || 'present';
           return {
             id: r.id,
             date: r.date,
             checkIn: ci,
             checkOut: co,
-            status: r.is_late ? 'late' : (r.status || 'present'),
+            status,
             workHours: Math.floor(totalMins / 60),
             workMinutes: totalMins % 60,
           };
