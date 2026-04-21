@@ -266,12 +266,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     if (data.user) {
+      // Pre-validate profile/role BEFORE letting onAuthStateChange set the user.
+      // We use a direct fetch (no resolutionId churn) so it doesn't race with the listener.
+      let profile: AuthUser | null = null;
       try {
-        const profile = await resolveAuthenticatedUser(data.user, true);
-        if (!profile) {
-          return { success: false, error: 'لم يتم العثور على صلاحيات لهذا الحساب' };
-        }
-        return { success: true, redirectTo: getRoleRedirectPath(profile.role) };
+        profile = await fetchUserProfileWithRetry(data.user);
       } catch (e: any) {
         console.error('Profile fetch failed after login:', e);
         await supabase.auth.signOut();
@@ -281,6 +280,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return { success: false, error: 'تعذر تحميل بيانات الحساب، برجاء المحاولة مرة أخرى' };
       }
+
+      if (!profile) {
+        await supabase.auth.signOut();
+        clearAuthState();
+        return { success: false, error: 'لم يتم العثور على صلاحيات لهذا الحساب' };
+      }
+
+      // Profile is valid — ensure the auth state reflects it (in case the listener was throttled).
+      const resolved = await resolveAuthenticatedUser(data.user, true).catch(() => null);
+      const finalProfile = resolved || profile;
+      return { success: true, redirectTo: getRoleRedirectPath(finalProfile.role) };
     }
 
     return { success: true };
