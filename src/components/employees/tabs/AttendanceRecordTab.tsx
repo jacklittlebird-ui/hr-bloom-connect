@@ -48,7 +48,7 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
 
       const { data, error } = await supabase
         .from('attendance_records')
-        .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late')
+        .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late, notes')
         .eq('employee_id', employee.id)
         .gte('date', startDate)
         .lte('date', endDate)
@@ -58,15 +58,22 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
         console.error('Error fetching attendance:', error);
         setLogs([]);
       } else {
-        setLogs((data || []).map(r => ({
-          id: r.id,
-          date: r.date,
-          checkIn: formatTime(r.check_in),
-          checkOut: formatTime(r.check_out),
-          status: r.is_late ? 'late' : (r.status || 'present'),
-          workHours: r.work_hours ? Math.floor(r.work_hours) : 0,
-          workMinutes: r.work_minutes || 0,
-        })));
+        setLogs((data || []).map(r => {
+          const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
+          let status: string;
+          if (isAutoClosed) status = 'auto-closed';
+          else if (r.is_late) status = 'late';
+          else status = r.status || 'present';
+          return {
+            id: r.id,
+            date: r.date,
+            checkIn: formatTime(r.check_in),
+            checkOut: isAutoClosed ? null : formatTime(r.check_out),
+            status,
+            workHours: r.work_hours ? Math.floor(r.work_hours) : 0,
+            workMinutes: r.work_minutes || 0,
+          };
+        }));
       }
       setLoading(false);
     };
@@ -163,6 +170,10 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
                     ) : log.status === 'mission' ? (
                       <span className="px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300">
                         {ar ? 'مأمورية' : 'Mission'}
+                      </span>
+                    ) : log.status === 'auto-closed' ? (
+                      <span className="px-2 py-1 rounded-md text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-300">
+                        {ar ? 'إغلاق بدون ختم' : 'Closed without checkout'}
                       </span>
                     ) : (
                       <span className="px-2 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-700 border border-green-300">
