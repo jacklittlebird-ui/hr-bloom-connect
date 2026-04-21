@@ -170,12 +170,20 @@ const Documents = () => {
             {isAr ? 'أرصدة الإجازات' : 'Leave Balances'}
           </Button>
           <Button
-            variant={activeMainTab === 'unpaidDeductions' ? 'default' : 'outline'}
+            variant={activeMainTab === 'unpaidLeaves' ? 'default' : 'outline'}
             className="gap-2"
-            onClick={() => setActiveMainTab('unpaidDeductions')}
+            onClick={() => setActiveMainTab('unpaidLeaves')}
+          >
+            <CalendarCheck className="w-4 h-4" />
+            {isAr ? 'الإجازات بدون راتب' : 'Unpaid Leaves'}
+          </Button>
+          <Button
+            variant={activeMainTab === 'penaltyDeductions' ? 'default' : 'outline'}
+            className="gap-2"
+            onClick={() => setActiveMainTab('penaltyDeductions')}
           >
             <MinusCircle className="w-4 h-4" />
-            {isAr ? 'الخصومات والإجازات بدون راتب' : 'Deductions & Unpaid Leaves'}
+            {isAr ? 'الخصومات' : 'Deductions'}
           </Button>
           <Button
             variant={activeMainTab === 'directory' ? 'default' : 'outline'}
@@ -207,8 +215,10 @@ const Documents = () => {
           <EmployeeDirectory />
         ) : activeMainTab === 'leaveBalances' ? (
           <LeaveBalancesAlert />
-        ) : activeMainTab === 'unpaidDeductions' ? (
-          <UnpaidLeavesDeductions />
+        ) : activeMainTab === 'unpaidLeaves' ? (
+          <UnpaidLeavesAlert />
+        ) : activeMainTab === 'penaltyDeductions' ? (
+          <PenaltyDeductionsAlert />
         ) : (
         <>
 
