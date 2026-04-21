@@ -106,6 +106,7 @@ export const PortalAttendance = () => {
       weekend: { cls: 'bg-muted text-muted-foreground', ar: 'عطلة', en: 'Weekend' },
       'on-leave': { cls: 'bg-blue-100 text-blue-600 border-blue-300', ar: 'إجازة', en: 'On Leave' },
       mission: { cls: 'bg-purple-100 text-purple-600 border-purple-300', ar: 'مأمورية', en: 'Mission' },
+      'auto-closed': { cls: 'bg-orange-100 text-orange-700 border-orange-300', ar: 'إغلاق بدون ختم', en: 'Closed without checkout' },
     };
     const m = map[s] || map.absent;
     return <Badge variant="outline" className={m.cls}>{ar ? m.ar : m.en}</Badge>;
