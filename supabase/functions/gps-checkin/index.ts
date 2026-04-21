@@ -449,7 +449,11 @@ Deno.serve(async (req) => {
             error_code: "NO_OPEN_RECORD",
             retryable: false,
           });
-          throw new Error("لا يوجد سجل حضور مفتوح / No open check-in found");
+          return Promise.reject(Object.assign(new Error("لا يوجد سجل حضور مفتوح / No open check-in found"), {
+            statusCode: 409,
+            errorCode: "NO_OPEN_RECORD",
+            retryable: false,
+          }));
         }
 
         // Enforce minimum 60 minutes between check-in and check-out
@@ -464,7 +468,11 @@ Deno.serve(async (req) => {
               remaining_minutes: remaining,
               retryable: false,
             }, openRecord.id);
-            throw new Error(`لا يمكن تسجيل الانصراف قبل مرور ساعة من الحضور. المتبقي: ${remaining} دقيقة / Cannot check out before 1 hour from check-in. Remaining: ${remaining} min`);
+            return Promise.reject(Object.assign(new Error(`لا يمكن تسجيل الانصراف قبل مرور ساعة من الحضور. المتبقي: ${remaining} دقيقة / Cannot check out before 1 hour from check-in. Remaining: ${remaining} min`), {
+              statusCode: 400,
+              errorCode: "MINIMUM_WORK_DURATION",
+              retryable: false,
+            }));
           }
         }
 
@@ -484,7 +492,11 @@ Deno.serve(async (req) => {
             retryable: true,
             message: updateErr.message,
           }, openRecord.id);
-          throw new Error("Failed to save checkout: " + updateErr.message);
+          return Promise.reject(Object.assign(new Error("Failed to save checkout: " + updateErr.message), {
+            statusCode: 500,
+            errorCode: "CHECKOUT_SAVE_FAILED",
+            retryable: true,
+          }));
         }
         await auditCheckout(supabaseAdmin, userId, employeeId, "success", {
           channel: "gps",
@@ -497,7 +509,11 @@ Deno.serve(async (req) => {
     const [, recordResult] = await Promise.allSettled([eventPromise, recordPromise]);
 
     if (recordResult.status === "rejected") {
-      return json({ error: recordResult.reason?.message || "Record error" }, 404);
+      return json({
+        error: recordResult.reason?.message || "Record error",
+        error_code: recordResult.reason?.errorCode,
+        retryable: recordResult.reason?.retryable ?? false,
+      }, recordResult.reason?.statusCode ?? 500);
     }
 
     const elapsed = Math.round(performance.now() - startTime);
