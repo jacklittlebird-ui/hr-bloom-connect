@@ -74,9 +74,13 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     employeeUuid = userRole.employee_id;
     const { data: emp } = await supabase
       .from('employees')
-      .select('employee_code, name_ar, name_en')
+      .select('employee_code, name_ar, name_en, status')
       .eq('id', userRole.employee_id)
       .single();
+    // Block inactive / suspended / stopped employees from accessing the portal
+    if (emp && ['inactive', 'suspended', 'stopped'].includes(emp.status as string)) {
+      throw new Error('EMPLOYEE_INACTIVE');
+    }
     employeeCode = emp?.employee_code;
     nameAr = emp?.name_ar || nameAr;
   }
