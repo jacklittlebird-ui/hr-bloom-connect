@@ -57,6 +57,8 @@ export const EmployeeFilters = ({
     { value: 'external_stations', labelAr: 'محطات خارجية', labelEn: 'External Stations' },
     { value: 'absent', labelAr: 'منقطع', labelEn: 'Absent' },
     { value: 'pending_hire', labelAr: 'تحت التعيين', labelEn: 'Pending Hire' },
+    { value: 'resigned', labelAr: 'مستقيل', labelEn: 'Resigned' },
+    { value: 'under_resignation', labelAr: 'تحت الاستقالة', labelEn: 'Under Resignation' },
   ];
 
   const filters: { key: FilterStatus; label: string; icon: typeof Users; count: number }[] = [

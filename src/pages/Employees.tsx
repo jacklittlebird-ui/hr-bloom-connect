@@ -224,7 +224,7 @@ const Employees = () => {
   // Single-language columns for PDF fallback
   const exportColumns = bilingualExportColumns.map(c => ({ header: ar ? c.headerAr : c.headerEn, key: c.key }));
 
-  const inactiveStatuses = ['inactive', 'external_stations', 'stopped', 'absent', 'pending_hire'];
+  const inactiveStatuses = ['inactive', 'external_stations', 'stopped', 'absent', 'pending_hire', 'resigned', 'under_resignation'];
   const counts = useMemo(() => ({
     all: employees.length,
     active: employees.filter(e => e.status === 'active').length,
@@ -343,7 +343,7 @@ const Employees = () => {
     contractType: contractLabel(e.contractType),
     employmentStatus: (() => {
       const val = e.employmentStatus && e.employmentStatus !== 'active' && e.employmentStatus !== 'inactive' && e.employmentStatus !== 'suspended' ? e.employmentStatus : e.status;
-      const map: Record<string, string> = { active: ar ? 'نشط' : 'Active', inactive: ar ? 'غير نشط' : 'Inactive', suspended: ar ? 'موقوف' : 'Suspended', external_stations: ar ? 'محطات خارجية' : 'External Stations', stopped: ar ? 'موقوف' : 'Stopped', absent: ar ? 'منقطع' : 'Absent', pending_hire: ar ? 'تحت التعيين' : 'Pending Hire' };
+      const map: Record<string, string> = { active: ar ? 'نشط' : 'Active', inactive: ar ? 'غير نشط' : 'Inactive', suspended: ar ? 'موقوف' : 'Suspended', external_stations: ar ? 'محطات خارجية' : 'External Stations', stopped: ar ? 'موقوف' : 'Stopped', absent: ar ? 'منقطع' : 'Absent', pending_hire: ar ? 'تحت التعيين' : 'Pending Hire', resigned: ar ? 'مستقيل' : 'Resigned', under_resignation: ar ? 'تحت الاستقالة' : 'Under Resignation' };
       return map[val] || val || '-';
     })(),
     hireDate: e.hireDate || '-',
@@ -388,7 +388,7 @@ const Employees = () => {
     hasPledge: boolLabel(e.hasPledge),
     hasContract: boolLabel(e.hasContract),
     hasReceipt: boolLabel(e.hasReceipt),
-    status: (() => { const m: Record<string, string> = { active: ar ? 'نشط' : 'Active', inactive: ar ? 'غير نشط' : 'Inactive', suspended: ar ? 'موقوف' : 'Suspended', external_stations: ar ? 'محطات خارجية' : 'External Stations', stopped: ar ? 'موقوف' : 'Stopped', absent: ar ? 'منقطع' : 'Absent', pending_hire: ar ? 'تحت التعيين' : 'Pending Hire' }; return m[e.status] || e.status; })(),
+    status: (() => { const m: Record<string, string> = { active: ar ? 'نشط' : 'Active', inactive: ar ? 'غير نشط' : 'Inactive', suspended: ar ? 'موقوف' : 'Suspended', external_stations: ar ? 'محطات خارجية' : 'External Stations', stopped: ar ? 'موقوف' : 'Stopped', absent: ar ? 'منقطع' : 'Absent', pending_hire: ar ? 'تحت التعيين' : 'Pending Hire', resigned: ar ? 'مستقيل' : 'Resigned', under_resignation: ar ? 'تحت الاستقالة' : 'Under Resignation' }; return m[e.status] || e.status; })(),
     notes: e.notes || '-',
     attachments: e.attachments || '-',
   }));

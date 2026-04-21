@@ -65,6 +65,8 @@ export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize =
       stopped: { label: isRTL ? 'موقوف' : 'Stopped', className: 'text-destructive border-destructive' },
       absent: { label: isRTL ? 'منقطع' : 'Absent', className: 'text-destructive border-destructive' },
       pending_hire: { label: isRTL ? 'تحت التعيين' : 'Pending Hire', className: 'text-warning border-warning' },
+      resigned: { label: isRTL ? 'مستقيل' : 'Resigned', className: 'text-destructive border-destructive' },
+      under_resignation: { label: isRTL ? 'تحت الاستقالة' : 'Under Resignation', className: 'text-warning border-warning' },
     };
     const s = statusMap[status] || { label: status, className: 'text-muted-foreground' };
     if (status === 'active') return <Badge className={s.className}>{s.label}</Badge>;
