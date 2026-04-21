@@ -6,9 +6,10 @@ import { getRoleRedirectPath, normalizeLoginIdentifier } from '@/lib/auth';
 
 export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager';
 
-const ACTIVE_EMPLOYEE_STATUS = 'active';
+// Statuses that are blocked from accessing the employee portal
+const BLOCKED_EMPLOYEE_STATUSES = new Set(['suspended', 'stopped', 'absent', 'resigned']);
 
-const isEmployeeAllowedPortalAccess = (status?: string | null) => status === ACTIVE_EMPLOYEE_STATUS;
+const isEmployeeAllowedPortalAccess = (status?: string | null) => !BLOCKED_EMPLOYEE_STATUSES.has(String(status || '').toLowerCase());
 
 export interface AuthUser {
   id: string;
