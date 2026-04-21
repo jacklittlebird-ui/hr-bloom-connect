@@ -12,6 +12,30 @@ const json = (body: Record<string, unknown>, status = 200) =>
     headers: { ...corsHeaders, "content-type": "application/json" },
   });
 
+async function auditCheckout(
+  supabaseAdmin: any,
+  userId: string,
+  employeeId: string,
+  status: "attempt" | "success" | "failure",
+  details: Record<string, unknown>,
+  recordId?: string,
+) {
+  const { error } = await supabaseAdmin.from("audit_logs").insert({
+    user_id: userId,
+    action_type: `CHECKOUT_${status.toUpperCase()}`,
+    affected_table: "attendance_records",
+    record_id: recordId ?? employeeId,
+    new_data: {
+      employee_id: employeeId,
+      ...details,
+    },
+  });
+
+  if (error) {
+    console.error("[gps-checkin] checkout audit FAILED:", error);
+  }
+}
+
 // ─── Haversine ─────────────────────────────────────────────────────────────
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -402,6 +426,11 @@ Deno.serve(async (req) => {
       })();
     } else {
       recordPromise = (async () => {
+        await auditCheckout(supabaseAdmin, userId, employeeId, "attempt", {
+          channel: "gps",
+          location_id: matchedLocation.id,
+        });
+
         // Find the most recent open record (any date)
         const { data: openRecord, error: findErr } = await supabaseAdmin
           .from("attendance_records")
@@ -415,7 +444,16 @@ Deno.serve(async (req) => {
         console.log("[gps-checkin] checkout lookup:", { employeeId, openRecord, findErr });
 
         if (!openRecord) {
-          throw new Error("لا يوجد سجل حضور مفتوح / No open check-in found");
+          await auditCheckout(supabaseAdmin, userId, employeeId, "failure", {
+            channel: "gps",
+            error_code: "NO_OPEN_RECORD",
+            retryable: false,
+          });
+          return Promise.reject(Object.assign(new Error("لا يوجد سجل حضور مفتوح / No open check-in found"), {
+            statusCode: 409,
+            errorCode: "NO_OPEN_RECORD",
+            retryable: false,
+          }));
         }
 
         // Enforce minimum 60 minutes between check-in and check-out
@@ -424,7 +462,17 @@ Deno.serve(async (req) => {
           const elapsedMinutes = (Date.now() - checkInTime) / 60000;
           if (elapsedMinutes < 60) {
             const remaining = Math.ceil(60 - elapsedMinutes);
-            throw new Error(`لا يمكن تسجيل الانصراف قبل مرور ساعة من الحضور. المتبقي: ${remaining} دقيقة / Cannot check out before 1 hour from check-in. Remaining: ${remaining} min`);
+            await auditCheckout(supabaseAdmin, userId, employeeId, "failure", {
+              channel: "gps",
+              error_code: "MINIMUM_WORK_DURATION",
+              remaining_minutes: remaining,
+              retryable: false,
+            }, openRecord.id);
+            return Promise.reject(Object.assign(new Error(`لا يمكن تسجيل الانصراف قبل مرور ساعة من الحضور. المتبقي: ${remaining} دقيقة / Cannot check out before 1 hour from check-in. Remaining: ${remaining} min`), {
+              statusCode: 400,
+              errorCode: "MINIMUM_WORK_DURATION",
+              retryable: false,
+            }));
           }
         }
 
@@ -438,8 +486,22 @@ Deno.serve(async (req) => {
 
         if (updateErr) {
           console.error("[gps-checkin] checkout update FAILED:", updateErr);
-          throw new Error("Failed to save checkout: " + updateErr.message);
+          await auditCheckout(supabaseAdmin, userId, employeeId, "failure", {
+            channel: "gps",
+            error_code: "CHECKOUT_SAVE_FAILED",
+            retryable: true,
+            message: updateErr.message,
+          }, openRecord.id);
+          return Promise.reject(Object.assign(new Error("Failed to save checkout: " + updateErr.message), {
+            statusCode: 500,
+            errorCode: "CHECKOUT_SAVE_FAILED",
+            retryable: true,
+          }));
         }
+        await auditCheckout(supabaseAdmin, userId, employeeId, "success", {
+          channel: "gps",
+          checked_out_at: updatePayload.check_out,
+        }, openRecord.id);
         console.log("[gps-checkin] checkout saved for record:", openRecord.id);
       })();
     }
@@ -447,7 +509,11 @@ Deno.serve(async (req) => {
     const [, recordResult] = await Promise.allSettled([eventPromise, recordPromise]);
 
     if (recordResult.status === "rejected") {
-      return json({ error: recordResult.reason?.message || "Record error" }, 404);
+      return json({
+        error: recordResult.reason?.message || "Record error",
+        error_code: recordResult.reason?.errorCode,
+        retryable: recordResult.reason?.retryable ?? false,
+      }, recordResult.reason?.statusCode ?? 500);
     }
 
     const elapsed = Math.round(performance.now() - startTime);

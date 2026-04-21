@@ -3,6 +3,7 @@
  * Optimized for ≤1M requests/month with 1000 users and 3 kiosks.
  */
 import type { DeviceMeta } from '@/lib/device';
+import { invokeAttendanceFunction } from '@/lib/attendanceApi';
 
 // ─── Rate Limiting (3 requests per user per minute) ────────────────────────
 
@@ -176,12 +177,16 @@ interface CheckinParams {
 interface CheckinResult {
   ok: boolean;
   error?: string;
+  error_code?: string;
+  retryable?: boolean;
+  attempts?: number;
   event_type?: string;
   location?: string;
 }
 
 export async function performCheckin(params: CheckinParams): Promise<CheckinResult> {
   const dedupKey = `${params.userId}:${params.eventType}`;
+  const shouldRetry = params.eventType === 'check_out';
 
   // 1. Dedup check
   if (isDuplicate(dedupKey)) {
@@ -204,31 +209,19 @@ export async function performCheckin(params: CheckinParams): Promise<CheckinResu
   // 4. Enqueue the request (no random delay — removed to reduce latency)
   try {
     const result = await enqueue(async () => {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/gps-checkin`,
+      return await invokeAttendanceFunction(
+        'gps-checkin',
+        params.accessToken,
         {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            authorization: `Bearer ${params.accessToken}`,
-          },
-          body: JSON.stringify({
-            event_type: params.eventType,
-            gps_lat: params.gpsLat,
-            gps_lng: params.gpsLng,
-            gps_accuracy: params.gpsAccuracy,
-            device_id: params.deviceId,
-            device_meta: params.deviceMeta || null,
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        return { ok: false, error: e.error || res.statusText } as CheckinResult;
-      }
-      return await res.json() as CheckinResult;
+          event_type: params.eventType,
+          gps_lat: params.gpsLat,
+          gps_lng: params.gpsLng,
+          gps_accuracy: params.gpsAccuracy,
+          device_id: params.deviceId,
+          device_meta: params.deviceMeta || null,
+        },
+        { retryOnTransient: shouldRetry },
+      ) as CheckinResult;
     });
 
     trackCheckinEnd(startTime, result.ok !== false);
@@ -236,38 +229,11 @@ export async function performCheckin(params: CheckinParams): Promise<CheckinResu
   } catch (e: any) {
     trackCheckinEnd(startTime, false);
 
-    // Single retry after 5 seconds on network failure
-    try {
-      await new Promise(r => setTimeout(r, 5000));
-      const retryResult = await enqueue(async () => {
-        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-        const res = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/gps-checkin`,
-          {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              authorization: `Bearer ${params.accessToken}`,
-            },
-            body: JSON.stringify({
-              event_type: params.eventType,
-              gps_lat: params.gpsLat,
-              gps_lng: params.gpsLng,
-              gps_accuracy: params.gpsAccuracy,
-              device_id: params.deviceId,
-              device_meta: params.deviceMeta || null,
-            }),
-          }
-        );
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          return { ok: false, error: err.error || res.statusText } as CheckinResult;
-        }
-        return await res.json() as CheckinResult;
-      });
-      return retryResult;
-    } catch {
-      return { ok: false, error: e.message };
-    }
+    return {
+      ok: false,
+      error: e.message,
+      error_code: 'UNEXPECTED_ATTENDANCE_ERROR',
+      retryable: shouldRetry,
+    };
   }
 }

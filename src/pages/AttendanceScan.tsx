@@ -7,8 +7,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import QrScanner from "@/components/attendance/QrScanner";
+import { invokeAttendanceFunction } from "@/lib/attendanceApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { CheckCircle, XCircle, Loader2, LogIn, LogOut, QrCode, Navigation } from "lucide-react";
 
 const AttendanceScan = () => {
@@ -26,6 +28,7 @@ const AttendanceScan = () => {
   const [eventType, setEventType] = useState<"check_in" | "check_out">("check_in");
   const [scanning, setScanning] = useState(false);
   const [mode, setMode] = useState<"qr" | "gps">("qr");
+  const [confirmCheckoutOpen, setConfirmCheckoutOpen] = useState(false);
 
   const onScan = useCallback(async (token: string) => {
     if (status === "validating") return;
@@ -48,26 +51,16 @@ const AttendanceScan = () => {
         return;
       }
 
-      const device_id = getOrCreateDeviceId();
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-
-      const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/submit-scan`,
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ token, event_type: eventType, device_id, gps, device_meta: getDeviceMeta() }),
-        }
+      const payload = await invokeAttendanceFunction(
+        "submit-scan",
+        session.access_token,
+        { token, event_type: eventType, device_id: getOrCreateDeviceId(), gps, device_meta: getDeviceMeta() },
+        { retryOnTransient: eventType === "check_out" },
       );
 
-      const payload = await res.json().catch(() => ({}));
-
-      if (!res.ok || payload?.ok === false) {
+      if (!payload.ok) {
         setStatus("error");
-        setMessage(payload?.error ?? res.statusText);
+        setMessage(payload.error ?? "Unknown error");
       } else {
         setStatus("success");
         setMessage(
@@ -130,6 +123,11 @@ const AttendanceScan = () => {
   }, [status, session, eventType, ar]);
 
   const startScan = () => {
+    if (eventType === "check_out") {
+      setConfirmCheckoutOpen(true);
+      return;
+    }
+
     setScanning(true);
     setStatus("scanning");
     setMessage("");
@@ -169,6 +167,23 @@ const AttendanceScan = () => {
               )}
             </CardHeader>
             <CardContent className="space-y-4">
+              <AlertDialog open={confirmCheckoutOpen} onOpenChange={setConfirmCheckoutOpen}>
+                <AlertDialogContent dir={ar ? "rtl" : "ltr"}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{ar ? "تأكيد تسجيل الانصراف" : "Confirm check-out"}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {ar ? "سيتم حفظ وقت الانصراف الحالي بعد التحقق من الكود. هل تريد المتابعة؟" : "The current check-out time will be saved after QR validation. Continue?"}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{ar ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => { setScanning(true); setStatus("scanning"); setMessage(""); }}>
+                      {ar ? "بدء الانصراف" : "Start check-out"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
               <div className="flex gap-2 justify-center">
                 <Button
                   variant={eventType === "check_in" ? "default" : "outline"}

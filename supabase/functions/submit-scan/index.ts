@@ -10,6 +10,29 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+async function auditCheckout(
+  userId: string,
+  employeeId: string | null,
+  status: "attempt" | "success" | "failure",
+  details: Record<string, unknown>,
+  recordId?: string,
+) {
+  const { error } = await admin.from("audit_logs").insert({
+    user_id: userId,
+    action_type: `CHECKOUT_${status.toUpperCase()}`,
+    affected_table: "attendance_records",
+    record_id: recordId ?? employeeId ?? userId,
+    new_data: {
+      employee_id: employeeId,
+      ...details,
+    },
+  });
+
+  if (error) {
+    console.error("[submit-scan] checkout audit FAILED:", error);
+  }
+}
+
 const MAX_DEVICES_PER_USER = 3;
 const DEVICE_EXPIRY_DAYS = 90;
 const SOFT_MATCH_THRESHOLD = 2;
@@ -418,6 +441,8 @@ Deno.serve(async (req) => {
           console.log("[submit-scan] Already has OPEN record for today, skipping:", openTodayRecord.id);
         }
       } else if (event_type === "check_out") {
+        await auditCheckout(user_id, empId, "attempt", { channel: "qr", location_id });
+
         const { data: openRecord, error: findErr } = await admin
           .from("attendance_records")
           .select("id, date, check_in")
@@ -436,8 +461,15 @@ Deno.serve(async (req) => {
             const elapsedMinutes = (Date.now() - checkInTime) / 60000;
             if (elapsedMinutes < 60) {
               const remaining = Math.ceil(60 - elapsedMinutes);
+              await auditCheckout(user_id, empId, "failure", {
+                channel: "qr",
+                error_code: "MINIMUM_WORK_DURATION",
+                remaining_minutes: remaining,
+              }, openRecord.id);
               return new Response(JSON.stringify({
                 error: `لا يمكن تسجيل الانصراف قبل مرور ساعة من الحضور. المتبقي: ${remaining} دقيقة / Cannot check out before 1 hour from check-in. Remaining: ${remaining} min`,
+                error_code: "MINIMUM_WORK_DURATION",
+                retryable: false,
               }), {
                 status: 400,
                 headers: { ...corsHeaders, "content-type": "application/json" },
@@ -458,16 +490,33 @@ Deno.serve(async (req) => {
 
           if (updateErr || !updatedRecord?.check_out) {
             console.error("[submit-scan] checkout update FAILED:", updateErr);
+            await auditCheckout(user_id, empId, "failure", {
+              channel: "qr",
+              error_code: "CHECKOUT_SAVE_FAILED",
+              retryable: true,
+              message: updateErr?.message ?? "check_out was not persisted",
+            }, openRecord.id);
             return new Response(JSON.stringify({ error: "Failed to save checkout" }), {
               status: 500,
               headers: { ...corsHeaders, "content-type": "application/json" },
             });
           }
+          await auditCheckout(user_id, empId, "success", {
+            channel: "qr",
+            checked_out_at: updatedRecord.check_out,
+          }, openRecord.id);
           console.log("[submit-scan] checkout saved for record:", openRecord.id);
         } else {
           console.warn("[submit-scan] No open record found for checkout, empId:", empId);
+          await auditCheckout(user_id, empId, "failure", {
+            channel: "qr",
+            error_code: "NO_OPEN_RECORD",
+            retryable: false,
+          });
           return new Response(JSON.stringify({
             error: "لا يوجد سجل حضور مفتوح لهذا الموظف لتسجيل الانصراف / No open attendance record found for checkout",
+            error_code: "NO_OPEN_RECORD",
+            retryable: false,
           }), {
             status: 409,
             headers: { ...corsHeaders, "content-type": "application/json" },
