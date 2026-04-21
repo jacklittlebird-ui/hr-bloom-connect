@@ -14,13 +14,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, FileText, Download, Trash2, Edit, FolderOpen, File, Eye, Upload, Filter, ShieldAlert, CreditCard, Landmark, Briefcase, CalendarCheck, Users } from 'lucide-react';
+import { Plus, Search, FileText, Download, Trash2, Edit, FolderOpen, File, Eye, Upload, Filter, ShieldAlert, CreditCard, Landmark, Briefcase, CalendarCheck, Users, MinusCircle } from 'lucide-react';
 import { InsuranceRenewals } from '@/components/documents/InsuranceRenewals';
 import { NationalIdRenewals } from '@/components/documents/NationalIdRenewals';
 import { MissingBankData } from '@/components/documents/MissingBankData';
 import { MissingJobData } from '@/components/documents/MissingJobData';
 import { LeaveBalancesAlert } from '@/components/documents/LeaveBalancesAlert';
 import { EmployeeDirectory } from '@/components/documents/EmployeeDirectory';
+import { UnpaidLeavesDeductions } from '@/components/documents/UnpaidLeavesDeductions';
 
 interface Document {
   id: string;
@@ -168,6 +169,14 @@ const Documents = () => {
             {isAr ? 'أرصدة الإجازات' : 'Leave Balances'}
           </Button>
           <Button
+            variant={activeMainTab === 'unpaidDeductions' ? 'default' : 'outline'}
+            className="gap-2"
+            onClick={() => setActiveMainTab('unpaidDeductions')}
+          >
+            <MinusCircle className="w-4 h-4" />
+            {isAr ? 'الخصومات والإجازات بدون راتب' : 'Deductions & Unpaid Leaves'}
+          </Button>
+          <Button
             variant={activeMainTab === 'directory' ? 'default' : 'outline'}
             className="gap-2"
             onClick={() => setActiveMainTab('directory')}
@@ -197,6 +206,8 @@ const Documents = () => {
           <EmployeeDirectory />
         ) : activeMainTab === 'leaveBalances' ? (
           <LeaveBalancesAlert />
+        ) : activeMainTab === 'unpaidDeductions' ? (
+          <UnpaidLeavesDeductions />
         ) : (
         <>
 
