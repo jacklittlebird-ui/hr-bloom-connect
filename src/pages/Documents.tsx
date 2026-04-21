@@ -21,7 +21,8 @@ import { MissingBankData } from '@/components/documents/MissingBankData';
 import { MissingJobData } from '@/components/documents/MissingJobData';
 import { LeaveBalancesAlert } from '@/components/documents/LeaveBalancesAlert';
 import { EmployeeDirectory } from '@/components/documents/EmployeeDirectory';
-import { UnpaidLeavesDeductions } from '@/components/documents/UnpaidLeavesDeductions';
+import { UnpaidLeavesAlert } from '@/components/documents/UnpaidLeavesAlert';
+import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
 
 interface Document {
   id: string;
