@@ -6,7 +6,7 @@ export interface Employee {
   department: string;
   jobTitle: string;
   phone: string;
-  status: 'active' | 'inactive' | 'suspended' | 'external_stations' | 'stopped' | 'absent' | 'pending_hire';
+  status: 'active' | 'inactive' | 'suspended' | 'external_stations' | 'stopped' | 'absent' | 'pending_hire' | 'resigned' | 'under_resignation';
   avatar?: string;
   stationLocation?: string;
   stationId?: string;

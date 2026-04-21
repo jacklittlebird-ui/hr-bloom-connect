@@ -132,6 +132,8 @@ export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) =>
               <SelectItem value="external_stations">{isRTL ? 'محطات خارجية' : 'External Stations'}</SelectItem>
               <SelectItem value="absent">{isRTL ? 'منقطع' : 'Absent'}</SelectItem>
               <SelectItem value="pending_hire">{isRTL ? 'تحت التعيين' : 'Pending Hire'}</SelectItem>
+              <SelectItem value="resigned">{isRTL ? 'مستقيل' : 'Resigned'}</SelectItem>
+              <SelectItem value="under_resignation">{isRTL ? 'تحت الاستقالة' : 'Under Resignation'}</SelectItem>
             </SelectContent>
           </Select>
         </div>

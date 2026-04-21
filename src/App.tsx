@@ -61,7 +61,7 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode;
 
   if (loading) return <LoadingScreen />;
   if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
-  if (user.role === 'employee' && user.employeeStatus !== 'active') return <Navigate to="/login" replace />;
+  if (user.role === 'employee' && ['suspended', 'stopped', 'absent', 'resigned'].includes(String(user.employeeStatus || '').toLowerCase())) return <Navigate to="/login" replace />;
   if (!allowedRoles.includes(user.role)) return <Navigate to="/login" replace />;
 
   return <>{children}</>;
