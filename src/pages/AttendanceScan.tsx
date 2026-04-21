@@ -63,10 +63,11 @@ const AttendanceScan = () => {
         }
       );
 
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
+      const payload = await res.json().catch(() => ({}));
+
+      if (!res.ok || payload?.ok === false) {
         setStatus("error");
-        setMessage(e.error ?? res.statusText);
+        setMessage(payload?.error ?? res.statusText);
       } else {
         setStatus("success");
         setMessage(

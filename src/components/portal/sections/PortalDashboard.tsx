@@ -235,10 +235,11 @@ export const PortalDashboard = () => {
         }
       );
 
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
+      const payload = await res.json().catch(() => ({}));
+
+      if (!res.ok || payload?.ok === false) {
         setQrStatus('error');
-        setQrMessage(e.error ?? res.statusText);
+        setQrMessage(payload?.error ?? res.statusText);
       } else {
         setQrStatus('success');
         setQrMessage(

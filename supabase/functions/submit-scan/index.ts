@@ -315,7 +315,7 @@ Deno.serve(async (req) => {
     const empId = roleData?.employee_id || null;
 
     // Insert attendance event
-    await admin.from("attendance_events").insert({
+    const { error: attendanceEventError } = await admin.from("attendance_events").insert({
       user_id,
       employee_id: empId,
       event_type,
@@ -326,8 +326,24 @@ Deno.serve(async (req) => {
       gps_lng: gps?.lng ?? null,
     });
 
+    if (attendanceEventError) {
+      console.error("[submit-scan] attendance event insert FAILED:", attendanceEventError);
+      return new Response(JSON.stringify({ error: "Failed to record attendance event" }), {
+        status: 500,
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      });
+    }
+
     // Sync to attendance_records
-    if (empId) {
+    if (!empId) {
+      console.error("[submit-scan] employee link missing for user:", user_id);
+      return new Response(JSON.stringify({ error: "Employee account is not linked correctly" }), {
+        status: 409,
+        headers: { ...corsHeaders, "content-type": "application/json" },
+      });
+    }
+
+    {
       const { data: empData } = await admin
         .from("employees")
         .select("station_id, stations(timezone)")
@@ -433,14 +449,16 @@ Deno.serve(async (req) => {
           const updatePayload: Record<string, any> = { check_out: nowIso };
           if (isEarly) updatePayload.status = "early-leave";
 
-          const { error: updateErr } = await admin
+          const { data: updatedRecord, error: updateErr } = await admin
             .from("attendance_records")
             .update(updatePayload)
-            .eq("id", openRecord.id);
+            .eq("id", openRecord.id)
+            .select("id, check_out")
+            .maybeSingle();
 
-          if (updateErr) {
+          if (updateErr || !updatedRecord?.check_out) {
             console.error("[submit-scan] checkout update FAILED:", updateErr);
-            return new Response(JSON.stringify({ error: "Failed to save checkout: " + updateErr.message }), {
+            return new Response(JSON.stringify({ error: "Failed to save checkout" }), {
               status: 500,
               headers: { ...corsHeaders, "content-type": "application/json" },
             });
@@ -448,6 +466,12 @@ Deno.serve(async (req) => {
           console.log("[submit-scan] checkout saved for record:", openRecord.id);
         } else {
           console.warn("[submit-scan] No open record found for checkout, empId:", empId);
+          return new Response(JSON.stringify({
+            error: "لا يوجد سجل حضور مفتوح لهذا الموظف لتسجيل الانصراف / No open attendance record found for checkout",
+          }), {
+            status: 409,
+            headers: { ...corsHeaders, "content-type": "application/json" },
+          });
         }
       }
     }
