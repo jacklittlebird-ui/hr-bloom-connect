@@ -13,6 +13,7 @@ import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import * as XLSX from 'xlsx';
 
 type FilterStatus = 'all' | 'active' | 'inactive' | 'suspended';
 
@@ -395,7 +396,7 @@ const Employees = () => {
 
   const reportTitle = ar ? 'تقرير الموظفين' : 'Employee Report';
 
-  // Grouped Excel export with section headers per tab
+  // Grouped Excel export (.xlsx) with section headers per tab
   const handleExportAll = () => {
     const data = getExportData();
     if (!data.length) {
@@ -403,97 +404,67 @@ const Employees = () => {
       return;
     }
 
-    const logoUrl = `${window.location.origin}/images/one-hr-logo.png`;
-    const dateStr = `${new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })} — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
-
-    // Flatten all columns from all sections into one row
-    const allColumns = exportSections.flatMap(s => s.columns);
-    // Remove duplicate keys
+    // Flatten all columns from all sections into one row, removing duplicate keys
     const seen = new Set<string>();
-    const uniqueColumns = allColumns.filter(c => { if (seen.has(c.key)) return false; seen.add(c.key); return true; });
-    const totalCols = uniqueColumns.length;
+    const uniqueColumns = exportSections.flatMap(s => s.columns).filter(c => {
+      if (seen.has(c.key)) return false;
+      seen.add(c.key);
+      return true;
+    });
 
-    // Section header row (colored group labels spanning their columns)
-    const sectionHeaderRow = exportSections.map(section => {
+    // Build AOA (array of arrays): [section header row, column header row, ...data rows]
+    const sectionHeaderRow: string[] = [];
+    const merges: XLSX.Range[] = [];
+    let colCursor = 0;
+    exportSections.forEach(section => {
       const colCount = section.columns.length;
-      return `<th colspan="${colCount}" style="background-color:#f59e0b;color:white;font-size:12px;font-weight:700;padding:8px;text-align:center;border:2px solid #d97706;">
-        <span style="direction:rtl;">${section.titleAr}</span> — ${section.titleEn}
-      </th>`;
-    }).join('');
+      sectionHeaderRow.push(`${section.titleAr} — ${section.titleEn}`);
+      for (let i = 1; i < colCount; i++) sectionHeaderRow.push('');
+      if (colCount > 1) {
+        merges.push({ s: { r: 0, c: colCursor }, e: { r: 0, c: colCursor + colCount - 1 } });
+      }
+      colCursor += colCount;
+    });
 
-    // Column header row
-    const headerRow = uniqueColumns.map(c => 
-      `<th style="background-color:#1e40af;color:white;font-weight:600;font-size:11px;padding:6px 8px;border:1px solid #1e3a8a;text-align:center;"><div style="direction:rtl;">${c.headerAr}</div><div style="font-weight:400;font-size:10px;color:#dbeafe;">${c.headerEn}</div></th>`
-    ).join('');
+    const columnHeaderRow = uniqueColumns.map(c => `${c.headerAr} | ${c.headerEn}`);
+    const dataRows = data.map(row => uniqueColumns.map(col => String((row as any)[col.key] ?? '')));
 
-    // Data rows
-    const dataRows = data.map((row, i) =>
-      `<tr style="background-color:${i % 2 === 0 ? '#ffffff' : '#f0f4ff'};">${uniqueColumns.map(col => 
-        `<td style="border:1px solid #d1d5db;padding:8px 10px;font-size:12px;text-align:center;mso-number-format:'\\@';">${String((row as any)[col.key] ?? '')}</td>`
-      ).join('')}</tr>`
-    ).join('');
+    const aoa: (string | number)[][] = [sectionHeaderRow, columnHeaderRow, ...dataRows];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!merges'] = merges;
+    ws['!cols'] = uniqueColumns.map(() => ({ wch: 18 }));
 
-    const tablesHtml = `
-      <tr><td colspan="${totalCols}" style="height:20px;"></td></tr>
-      <tr>${sectionHeaderRow}</tr>
-      <tr>${headerRow}</tr>
-      ${dataRows}
-    `;
+    // Style: section header row + column header row (xlsx-style supported by SheetJS Pro only;
+    // standard SheetJS preserves text/structure which is the main requirement)
+    const range = XLSX.utils.decode_range(ws['!ref'] as string);
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const sectionAddr = XLSX.utils.encode_cell({ r: 0, c: C });
+      const headerAddr = XLSX.utils.encode_cell({ r: 1, c: C });
+      if (ws[sectionAddr]) (ws[sectionAddr] as any).s = {
+        font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 12 },
+        fill: { fgColor: { rgb: 'F59E0B' } },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      };
+      if (ws[headerAddr]) (ws[headerAddr] as any).s = {
+        font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+        fill: { fgColor: { rgb: '1E40AF' } },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      };
+    }
 
-    const htmlContent = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-      <head>
-        <meta charset="utf-8">
-        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Employees</x:Name><x:WorksheetOptions><x:DisplayRightToLeft/><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-        <style>td, th { font-family: 'Calibri', 'Arial', sans-serif; }</style>
-      </head>
-      <body>
-        <table>
-          <tr>
-            <td style="text-align:left;padding:8px;vertical-align:middle;" rowspan="3"><img src="${logoUrl}" style="height:60px;width:auto;" /></td>
-            <td colspan="${totalCols}" style="text-align:center;font-size:22px;font-weight:700;color:#1e40af;padding:12px;direction:rtl;">تقرير بيانات الموظفين الشامل</td>
-          </tr>
-          <tr><td colspan="${totalCols}" style="text-align:center;font-size:18px;font-weight:600;color:#374151;padding:8px;">Comprehensive Employee Data Report</td></tr>
-          <tr><td colspan="${totalCols}" style="text-align:center;color:#6b7280;font-size:13px;padding:8px;">${dateStr}</td></tr>
-          ${tablesHtml}
-          <tr><td colspan="${totalCols}" style="height:20px;"></td></tr>
-          <tr><td colspan="${totalCols}" style="text-align:center;color:#9ca3af;font-size:11px;padding:12px;">تم إنشاء التقرير بواسطة نظام إدارة الموارد البشرية — Generated by HR Management System</td></tr>
-        </table>
-      </body>
-      </html>
-    `;
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Employees');
 
-    const blob = new Blob(['\uFEFF' + htmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Employees_Full_Report_${new Date().toISOString().slice(0, 10)}.xls`;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 1000);
+    // Set workbook to RTL view
+    if (!wb.Workbook) wb.Workbook = {};
+    wb.Workbook.Views = [{ RTL: true }];
 
-    // Also export a CSV (semicolon-separated) for re-import — semicolons work in all Excel regional settings
-    const csvHeaders = uniqueColumns.map(c => `"${c.headerAr} | ${c.headerEn}"`).join(';');
-    const csvRows = data.map(row =>
-      uniqueColumns.map(col => {
-        const val = String((row as any)[col.key] ?? '').replace(/"/g, '""');
-        return `"${val}"`;
-      }).join(';')
-    );
-    const csvContent = '\uFEFF' + [csvHeaders, ...csvRows].join('\n');
-    const csvBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const csvUrl = URL.createObjectURL(csvBlob);
-    const csvLink = document.createElement('a');
-    csvLink.href = csvUrl;
-    csvLink.download = `Employees_Import_${new Date().toISOString().slice(0, 10)}.csv`;
-    csvLink.style.display = 'none';
-    document.body.appendChild(csvLink);
-    csvLink.click();
-    setTimeout(() => { document.body.removeChild(csvLink); URL.revokeObjectURL(csvUrl); }, 1200);
+    const fileName = `Employees_Full_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName, { bookType: 'xlsx', compression: true });
 
-    toast({ title: ar ? 'تم التصدير بنجاح (Excel + CSV)' : 'Export completed (Excel + CSV)' });
+    toast({ title: ar ? 'تم التصدير بنجاح (Excel)' : 'Export completed (Excel)' });
   };
+
 
   // Import from CSV
   const handleImportClick = () => {
