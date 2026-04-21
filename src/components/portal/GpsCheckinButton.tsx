@@ -4,6 +4,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getOrCreateDeviceId, getDeviceMeta } from '@/lib/device';
 import { performCheckin } from '@/lib/attendanceQueue';
 import { Navigation, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Props {
   eventType: 'check_in' | 'check_out';
@@ -16,8 +26,9 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
   const { session, user } = useAuth();
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const handleClick = async () => {
+  const submitAttendance = async () => {
     setStatus('loading');
     setMessage('');
 
@@ -63,7 +74,10 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
 
       if (!result.ok) {
         setStatus('error');
-        setMessage(result.error || 'Unknown error');
+        const retryHint = result.retryable && eventType === 'check_out'
+          ? ar ? ' يمكنك إعادة المحاولة فوراً.' : ' You can retry immediately.'
+          : '';
+        setMessage(`${result.error || 'Unknown error'}${retryHint}`);
         return;
       }
 
@@ -88,8 +102,38 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
     }
   };
 
+  const handleClick = async () => {
+    if (eventType === 'check_out') {
+      setConfirmOpen(true);
+      return;
+    }
+
+    await submitAttendance();
+  };
+
   return (
     <div className="space-y-2 w-full">
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent dir={ar ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {ar ? 'تأكيد تسجيل الانصراف' : 'Confirm check-out'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {ar
+                ? 'سيتم حفظ وقت الانصراف الحالي بعد التحقق من الموقع. هل تريد المتابعة؟'
+                : 'The current check-out time will be saved after location validation. Continue?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void submitAttendance()}>
+              {ar ? 'تأكيد الانصراف' : 'Confirm check-out'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Button
         onClick={handleClick}
         disabled={disabled || status === 'loading'}
