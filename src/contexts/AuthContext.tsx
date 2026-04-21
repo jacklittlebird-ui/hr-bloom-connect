@@ -237,11 +237,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: false, error: 'لم يتم العثور على صلاحيات لهذا الحساب' };
         }
         return { success: true, redirectTo: getRoleRedirectPath(profile.role) };
-      } catch (e) {
+      } catch (e: any) {
         console.error('Profile fetch failed after login:', e);
         await supabase.auth.signOut();
         setUser(null);
         setSession(null);
+        if (e?.message === 'EMPLOYEE_INACTIVE') {
+          return { success: false, error: 'هذا الحساب غير نشط. برجاء التواصل مع الموارد البشرية.' };
+        }
         return { success: false, error: 'تعذر تحميل بيانات الحساب، برجاء المحاولة مرة أخرى' };
       }
     }
