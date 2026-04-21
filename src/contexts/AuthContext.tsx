@@ -74,9 +74,13 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     employeeUuid = userRole.employee_id;
     const { data: emp } = await supabase
       .from('employees')
-      .select('employee_code, name_ar, name_en')
+      .select('employee_code, name_ar, name_en, status')
       .eq('id', userRole.employee_id)
       .single();
+    // Block inactive / suspended / stopped employees from accessing the portal
+    if (emp && ['inactive', 'suspended', 'stopped'].includes(emp.status as string)) {
+      throw new Error('EMPLOYEE_INACTIVE');
+    }
     employeeCode = emp?.employee_code;
     nameAr = emp?.name_ar || nameAr;
   }
@@ -122,7 +126,11 @@ async function fetchUserProfileWithRetry(supabaseUser: User, attempts = 4): Prom
     try {
       const profile = await fetchUserProfile(supabaseUser);
       if (profile) return profile;
-    } catch (error) {
+    } catch (error: any) {
+      // Don't retry on permanent block errors — propagate immediately
+      if (error?.message === 'EMPLOYEE_INACTIVE') {
+        throw error;
+      }
       lastError = error;
     }
 
@@ -151,7 +159,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isInitialOrLogin) {
       setLoading(true);
     }
-    const profile = await fetchUserProfileWithRetry(supabaseUser);
+    let profile: AuthUser | null = null;
+    try {
+      profile = await fetchUserProfileWithRetry(supabaseUser);
+    } catch (err: any) {
+      // Permanent block (e.g. inactive employee) — sign out and rethrow
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setLoading(false);
+      throw err;
+    }
 
     if (!profile) {
       await supabase.auth.signOut();
@@ -233,11 +251,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: false, error: 'لم يتم العثور على صلاحيات لهذا الحساب' };
         }
         return { success: true, redirectTo: getRoleRedirectPath(profile.role) };
-      } catch (e) {
+      } catch (e: any) {
         console.error('Profile fetch failed after login:', e);
         await supabase.auth.signOut();
         setUser(null);
         setSession(null);
+        if (e?.message === 'EMPLOYEE_INACTIVE') {
+          return { success: false, error: 'هذا الحساب غير نشط. برجاء التواصل مع الموارد البشرية.' };
+        }
         return { success: false, error: 'تعذر تحميل بيانات الحساب، برجاء المحاولة مرة أخرى' };
       }
     }
