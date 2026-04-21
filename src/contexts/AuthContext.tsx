@@ -6,6 +6,10 @@ import { getRoleRedirectPath, normalizeLoginIdentifier } from '@/lib/auth';
 
 export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager';
 
+const ACTIVE_EMPLOYEE_STATUS = 'active';
+
+const isEmployeeAllowedPortalAccess = (status?: string | null) => status === ACTIVE_EMPLOYEE_STATUS;
+
 export interface AuthUser {
   id: string;
   name: string;
@@ -14,6 +18,7 @@ export interface AuthUser {
   employeeId?: string;
   /** The actual UUID of the employee record in the employees table */
   employeeUuid?: string;
+  employeeStatus?: string;
   role: UserRole;
   station?: string;
   stationId?: string;
@@ -35,7 +40,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
-  // Get roles
   const { data: roles } = await supabase
     .from('user_roles')
     .select('role, station_id, employee_id')
@@ -46,7 +50,6 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
   const userRole = roles[0];
   const role = userRole.role as UserRole;
 
-  // Get profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name, email')
@@ -55,9 +58,9 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
 
   let stationCode: string | undefined;
   let employeeCode: string | undefined;
+  let employeeStatus: string | undefined;
   let nameAr = profile?.full_name || supabaseUser.email || '';
 
-  // Get station code if station_manager
   if (role === 'station_manager' && userRole.station_id) {
     const { data: station } = await supabase
       .from('stations')
@@ -68,24 +71,33 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     nameAr = station?.name_ar ? `مدير محطة ${station.name_ar}` : nameAr;
   }
 
-  // Get employee info if employee
   let employeeUuid: string | undefined;
-  if (role === 'employee' && userRole.employee_id) {
+  if (role === 'employee') {
+    if (!userRole.employee_id) {
+      throw new Error('EMPLOYEE_INACTIVE');
+    }
+
     employeeUuid = userRole.employee_id;
-    const { data: emp } = await supabase
+    const { data: emp, error: employeeError } = await supabase
       .from('employees')
       .select('employee_code, name_ar, name_en, status')
       .eq('id', userRole.employee_id)
-      .single();
-    // Block inactive / suspended / stopped employees from accessing the portal
-    if (emp && ['inactive', 'suspended', 'stopped'].includes(emp.status as string)) {
+      .maybeSingle();
+
+    if (employeeError) {
+      throw employeeError;
+    }
+
+    employeeStatus = (emp?.status as string | undefined) || undefined;
+
+    if (!isEmployeeAllowedPortalAccess(employeeStatus)) {
       throw new Error('EMPLOYEE_INACTIVE');
     }
+
     employeeCode = emp?.employee_code;
     nameAr = emp?.name_ar || nameAr;
   }
 
-  // Get area_manager stations
   let stationCodes: string[] | undefined;
   let stationUuids: string[] | undefined;
   if (role === 'area_manager') {
@@ -110,6 +122,7 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     email: supabaseUser.email,
     employeeId: employeeCode,
     employeeUuid,
+    employeeStatus,
     role,
     station: stationCode,
     stationId: userRole.station_id || undefined,
@@ -127,7 +140,6 @@ async function fetchUserProfileWithRetry(supabaseUser: User, attempts = 4): Prom
       const profile = await fetchUserProfile(supabaseUser);
       if (profile) return profile;
     } catch (error: any) {
-      // Don't retry on permanent block errors — propagate immediately
       if (error?.message === 'EMPLOYEE_INACTIVE') {
         throw error;
       }
@@ -151,31 +163,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  // Track whether initial auth resolution has completed (prevents provider unmount on token refresh)
   const initialLoadDone = React.useRef(false);
+  const authResolutionId = React.useRef(0);
+
+  const clearAuthState = useCallback(() => {
+    authResolutionId.current += 1;
+    initialLoadDone.current = false;
+    setUser(null);
+    setSession(null);
+    setLoading(false);
+  }, []);
 
   const resolveAuthenticatedUser = useCallback(async (supabaseUser: User, isInitialOrLogin = false) => {
-    // Only show loading spinner on initial load or explicit login, NOT on token refresh
+    const resolutionId = ++authResolutionId.current;
+
     if (isInitialOrLogin) {
       setLoading(true);
     }
+
     let profile: AuthUser | null = null;
+
     try {
       profile = await fetchUserProfileWithRetry(supabaseUser);
     } catch (err: any) {
-      // Permanent block (e.g. inactive employee) — sign out and rethrow
+      if (resolutionId !== authResolutionId.current) {
+        return null;
+      }
       await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      setLoading(false);
+      clearAuthState();
       throw err;
+    }
+
+    if (resolutionId !== authResolutionId.current) {
+      return null;
     }
 
     if (!profile) {
       await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      setLoading(false);
+      clearAuthState();
       return null;
     }
 
@@ -183,69 +208,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
     initialLoadDone.current = true;
     return profile;
-  }, []);
+  }, [clearAuthState]);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+
       if (newSession?.user) {
-        // On token refresh or other background events, silently re-resolve without loading state
         const isBackgroundEvent = initialLoadDone.current && (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED');
+
         if (isBackgroundEvent) {
-          // Silently update profile in background without triggering loading/unmount
-          setTimeout(async () => {
-            await resolveAuthenticatedUser(newSession.user, false);
+          setTimeout(() => {
+            void resolveAuthenticatedUser(newSession.user, false).catch(() => undefined);
           }, 0);
         } else if (!initialLoadDone.current) {
-          // Initial auth state - show loading
           setLoading(true);
-          setTimeout(async () => {
-            await resolveAuthenticatedUser(newSession.user, true);
+          setTimeout(() => {
+            void resolveAuthenticatedUser(newSession.user, true).catch(() => undefined);
           }, 0);
         }
       } else {
-        setUser(null);
-        setLoading(false);
-        initialLoadDone.current = false;
+        clearAuthState();
       }
     });
 
-    // Then get initial session
-    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
+    void supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
+
       if (initialSession?.user) {
-        await resolveAuthenticatedUser(initialSession.user, true);
+        void resolveAuthenticatedUser(initialSession.user, true).catch(() => undefined);
         return;
       }
+
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [resolveAuthenticatedUser]);
+  }, [clearAuthState, resolveAuthenticatedUser]);
 
-  // Session timeout monitor - auto logout after 30 min inactivity
   useEffect(() => {
     if (!user) return;
     const cleanup = initSessionMonitor(async () => {
       console.log('Session expired due to inactivity');
       await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
+      clearAuthState();
     });
     return cleanup;
-  }, [user]);
+  }, [clearAuthState, user]);
 
   const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
     const normalizedEmail = normalizeLoginIdentifier(email);
     const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+
     if (error) {
       return { success: false, error: error.message };
     }
 
     if (data.user) {
       try {
-        setSession(data.session);
         const profile = await resolveAuthenticatedUser(data.user, true);
         if (!profile) {
           return { success: false, error: 'لم يتم العثور على صلاحيات لهذا الحساب' };
@@ -254,22 +274,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (e: any) {
         console.error('Profile fetch failed after login:', e);
         await supabase.auth.signOut();
-        setUser(null);
-        setSession(null);
+        clearAuthState();
         if (e?.message === 'EMPLOYEE_INACTIVE') {
-          return { success: false, error: 'هذا الحساب غير نشط. برجاء التواصل مع الموارد البشرية.' };
+          return { success: false, error: 'هذا الحساب غير نشط أو غير مؤهل للدخول. برجاء التواصل مع الموارد البشرية.' };
         }
         return { success: false, error: 'تعذر تحميل بيانات الحساب، برجاء المحاولة مرة أخرى' };
       }
     }
+
     return { success: true };
-  }, [resolveAuthenticatedUser]);
+  }, [clearAuthState, resolveAuthenticatedUser]);
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-  }, []);
+    clearAuthState();
+  }, [clearAuthState]);
 
   return (
     <AuthContext.Provider value={{ user, session, loading, login, logout, isAuthenticated: !!user }}>
