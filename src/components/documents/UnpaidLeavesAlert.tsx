@@ -22,7 +22,6 @@ interface UnpaidLeaveRow {
   end_date: string;
   days: number;
   reason?: string | null;
-  status: string;
 }
 
 const formatDate = (d: string) => {
@@ -34,7 +33,7 @@ const formatDate = (d: string) => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
-export const UnpaidLeavesDeductions = () => {
+export const UnpaidLeavesAlert = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
 
@@ -42,7 +41,6 @@ export const UnpaidLeavesDeductions = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
-  // Default period: current year
   const todayStr = new Date().toISOString().split('T')[0];
   const yearStartStr = `${new Date().getFullYear()}-01-01`;
   const [fromDate, setFromDate] = useState(yearStartStr);
@@ -98,7 +96,6 @@ export const UnpaidLeavesDeductions = () => {
         end_date: l.end_date,
         days: Number(l.days) || 0,
         reason: l.reason,
-        status: l.status,
       };
     });
 
@@ -115,8 +112,7 @@ export const UnpaidLeavesDeductions = () => {
 
     return rows.filter(r => {
       const startTs = new Date(r.start_date).getTime();
-      const inRange = startTs >= fromTs && startTs <= toTs;
-      if (!inRange) return false;
+      if (!(startTs >= fromTs && startTs <= toTs)) return false;
       if (!q) return true;
       return (
         r.employee_code.toLowerCase().includes(q) ||
@@ -136,7 +132,6 @@ export const UnpaidLeavesDeductions = () => {
 
   return (
     <div className={cn("space-y-4", isRTL && "text-right")}>
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
@@ -167,7 +162,6 @@ export const UnpaidLeavesDeductions = () => {
         </Card>
       </div>
 
-      {/* Filters */}
       <div className={cn("flex flex-wrap items-end gap-3", isRTL && "flex-row-reverse")}>
         <div className="relative flex-1 min-w-[240px] max-w-md">
           <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
@@ -188,7 +182,6 @@ export const UnpaidLeavesDeductions = () => {
         </div>
       </div>
 
-      {/* Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
