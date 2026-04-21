@@ -171,6 +171,10 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
                       <span className="px-2 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-300">
                         {ar ? 'مأمورية' : 'Mission'}
                       </span>
+                    ) : log.status === 'auto-closed' ? (
+                      <span className="px-2 py-1 rounded-md text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-300">
+                        {ar ? 'إغلاق بدون ختم' : 'Closed without checkout'}
+                      </span>
                     ) : (
                       <span className="px-2 py-1 rounded-md text-xs font-semibold bg-green-100 text-green-700 border border-green-300">
                         {ar ? 'في الموعد' : 'On Time'}
