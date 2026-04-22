@@ -2578,6 +2578,7 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          department_id: string | null
           employee_id: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
@@ -2585,6 +2586,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          department_id?: string | null
           employee_id?: string | null
           id?: string
           role: Database["public"]["Enums"]["app_role"]
@@ -2592,6 +2594,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          department_id?: string | null
           employee_id?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
@@ -2611,6 +2614,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_roles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
             referencedColumns: ["id"]
           },
           {
@@ -2928,6 +2938,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string[]
       }
+      get_user_department_id: { Args: { _user_id: string }; Returns: string }
       get_user_employee_id: { Args: { _user_id: string }; Returns: string }
       get_user_station_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
