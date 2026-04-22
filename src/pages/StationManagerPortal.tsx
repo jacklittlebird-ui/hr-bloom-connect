@@ -172,6 +172,7 @@ const StationManagerPortal = () => {
   const [editViolForm, setEditViolForm] = useState({ type: 'absence', description: '', penalty: '', date: '' });
 
   const isAreaManager = user?.role === 'area_manager';
+  const isDepartmentManager = user?.role === 'department_manager';
   const [selectedStation, setSelectedStation] = useState<string>(user?.station || user?.stations?.[0] || '');
 
   // For area_manager: list of managed station labels
@@ -187,15 +188,26 @@ const StationManagerPortal = () => {
 
   const stationName = useMemo(() => {
     const loc = stationLocations.find(s => s.value === activeStation);
-    return language === 'ar' ? loc?.labelAr : loc?.labelEn;
-  }, [activeStation, language]);
+    const baseLabel = language === 'ar' ? loc?.labelAr : loc?.labelEn;
+    if (isDepartmentManager) {
+      const deptLabel = language === 'ar' ? user?.departmentNameAr : user?.departmentName;
+      if (baseLabel && deptLabel) return `${baseLabel} — ${deptLabel}`;
+      return deptLabel || baseLabel;
+    }
+    return baseLabel;
+  }, [activeStation, language, isDepartmentManager, user?.departmentName, user?.departmentNameAr]);
 
   const stationEmployees = useMemo(() => {
     if (isAreaManager && selectedStation === 'all') {
       return employees.filter(e => user?.stations?.includes(e.stationLocation || ''));
     }
-    return employees.filter(e => e.stationLocation === activeStation);
-  }, [employees, activeStation, isAreaManager, selectedStation, user?.stations]);
+    let scoped = employees.filter(e => e.stationLocation === activeStation);
+    if (isDepartmentManager && user?.departmentId) {
+      const deptName = user.departmentNameAr || user.departmentName;
+      scoped = scoped.filter(e => e.department === deptName);
+    }
+    return scoped;
+  }, [employees, activeStation, isAreaManager, selectedStation, user?.stations, isDepartmentManager, user?.departmentId, user?.departmentName, user?.departmentNameAr]);
 
   // === Today's attendance for stat cards ===
   const [todayAttRecords, setTodayAttRecords] = useState<any[]>([]);

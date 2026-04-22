@@ -4,7 +4,7 @@ import type { User, Session } from '@supabase/supabase-js';
 import { initSessionMonitor } from '@/lib/security';
 import { getRoleRedirectPath, normalizeLoginIdentifier } from '@/lib/auth';
 
-export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager';
+export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager' | 'department_manager';
 
 // Statuses that are blocked from accessing the employee portal
 const BLOCKED_EMPLOYEE_STATUSES = new Set(['suspended', 'stopped', 'absent', 'resigned']);
@@ -26,6 +26,10 @@ export interface AuthUser {
   /** For area_manager: list of station codes they manage */
   stations?: string[];
   stationIds?: string[];
+  /** For department_manager: scoped department */
+  departmentId?: string;
+  departmentName?: string;
+  departmentNameAr?: string;
   supabaseUserId: string;
 }
 
@@ -43,7 +47,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
   const { data: roles } = await supabase
     .from('user_roles')
-    .select('role, station_id, employee_id')
+    .select('role, station_id, employee_id, department_id')
     .eq('user_id', supabaseUser.id);
 
   if (!roles || roles.length === 0) return null;
@@ -70,6 +74,31 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
       .single();
     stationCode = station?.code;
     nameAr = station?.name_ar ? `مدير محطة ${station.name_ar}` : nameAr;
+  }
+
+  let departmentId: string | undefined;
+  let departmentName: string | undefined;
+  let departmentNameAr: string | undefined;
+  if (role === 'department_manager') {
+    if (userRole.station_id) {
+      const { data: station } = await supabase
+        .from('stations')
+        .select('code, name_ar')
+        .eq('id', userRole.station_id)
+        .single();
+      stationCode = station?.code;
+    }
+    if (userRole.department_id) {
+      const { data: dept } = await supabase
+        .from('departments')
+        .select('name_ar, name_en')
+        .eq('id', userRole.department_id)
+        .single();
+      departmentId = userRole.department_id;
+      departmentName = dept?.name_en || undefined;
+      departmentNameAr = dept?.name_ar || undefined;
+      nameAr = dept?.name_ar ? `مدير قسم ${dept.name_ar}` : nameAr;
+    }
   }
 
   let employeeUuid: string | undefined;
@@ -129,6 +158,9 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     stationId: userRole.station_id || undefined,
     stations: stationCodes,
     stationIds: stationUuids,
+    departmentId,
+    departmentName,
+    departmentNameAr,
     supabaseUserId: supabaseUser.id,
   };
 }
