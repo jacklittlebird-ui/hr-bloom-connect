@@ -627,17 +627,20 @@ export const TrainingQualificationReport = () => {
                 {/* Dept Codes Row */}
                 <div className="bg-gray-50 border-b border-gray-200 px-3 py-1.5">
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                    {DEPT_CODES.map(code => (
-                      <label key={code} className="flex items-center gap-0.5 text-[11px] text-gray-600">
-                        <span className="font-mono font-semibold">{code}</span>
-                        <input
-                          type="checkbox"
-                          checked={emp.deptCode === code}
-                          readOnly
-                          className="h-3 w-3 accent-blue-600 pointer-events-none"
-                        />
-                      </label>
-                    ))}
+                    {(() => {
+                      const empCodesUi = (emp.deptCode || '').split(',').map(s => s.trim()).filter(Boolean);
+                      return DEPT_CODES.map(code => (
+                        <label key={code} className="flex items-center gap-0.5 text-[11px] text-gray-600">
+                          <span className="font-mono font-semibold">{code}</span>
+                          <input
+                            type="checkbox"
+                            checked={empCodesUi.includes(code)}
+                            readOnly
+                            className="h-3 w-3 accent-blue-600 pointer-events-none"
+                          />
+                        </label>
+                      ));
+                    })()}
                   </div>
                 </div>
 
