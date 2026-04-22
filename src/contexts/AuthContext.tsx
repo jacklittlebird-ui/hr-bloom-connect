@@ -84,6 +84,9 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
   let departmentId: string | undefined;
   let departmentName: string | undefined;
   let departmentNameAr: string | undefined;
+  let departmentIds: string[] | undefined;
+  let departmentNames: string[] | undefined;
+  let departmentNamesAr: string[] | undefined;
   if (role === 'department_manager') {
     if (userRole.station_id) {
       const { data: station } = await supabase
@@ -93,16 +96,38 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
         .single();
       stationCode = station?.code;
     }
-    if (userRole.department_id) {
-      const { data: dept } = await supabase
+
+    // Collect all departments (linking table + legacy primary on user_roles)
+    const allDeptIds = new Set<string>();
+    if (userRole.department_id) allDeptIds.add(userRole.department_id);
+    const { data: linkedDepts } = await supabase
+      .from('department_manager_departments')
+      .select('department_id')
+      .eq('user_id', supabaseUser.id);
+    (linkedDepts || []).forEach((d: any) => d.department_id && allDeptIds.add(d.department_id));
+
+    if (allDeptIds.size > 0) {
+      departmentIds = Array.from(allDeptIds);
+      const { data: depts } = await supabase
         .from('departments')
-        .select('name_ar, name_en')
-        .eq('id', userRole.department_id)
-        .single();
-      departmentId = userRole.department_id;
-      departmentName = dept?.name_en || undefined;
-      departmentNameAr = dept?.name_ar || undefined;
-      nameAr = dept?.name_ar ? `مدير قسم ${dept.name_ar}` : nameAr;
+        .select('id, name_ar, name_en')
+        .in('id', departmentIds);
+      const ordered = departmentIds
+        .map(id => depts?.find(d => d.id === id))
+        .filter(Boolean) as Array<{ id: string; name_ar: string; name_en: string }>;
+      departmentNames = ordered.map(d => d.name_en);
+      departmentNamesAr = ordered.map(d => d.name_ar);
+
+      const primaryId = userRole.department_id || departmentIds[0];
+      const primary = depts?.find(d => d.id === primaryId);
+      if (primary) {
+        departmentId = primary.id;
+        departmentName = primary.name_en;
+        departmentNameAr = primary.name_ar;
+      }
+
+      const labelList = (departmentNamesAr.length > 0 ? departmentNamesAr : departmentNames || []).join(' / ');
+      nameAr = labelList ? `مدير قسم ${labelList}` : nameAr;
     }
   }
 
