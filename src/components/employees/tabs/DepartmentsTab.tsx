@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
 import { Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 
 interface DepartmentsTabProps {
@@ -14,15 +14,24 @@ interface DepartmentsTabProps {
 
 const DEPT_CODES = ['PS', 'LL', 'OO', 'RO', 'LC', 'SC', 'IA', 'AD', 'AC', 'WO', 'TR'];
 
+const parseCodes = (raw: string): string[] =>
+  (raw || '').split(',').map(s => s.trim()).filter(Boolean);
+
 export const DepartmentsTab = ({ employee, onUpdate, readOnly }: DepartmentsTabProps) => {
   const { t, isRTL } = useLanguage();
-  const [selectedCode, setSelectedCode] = useState((employee as any).deptCode || '');
+  const [selectedCodes, setSelectedCodes] = useState<string[]>(
+    parseCodes((employee as any).deptCode || '')
+  );
 
-  const handleChange = (val: string) => {
-    setSelectedCode(val);
-    if (!readOnly) {
-      onUpdate?.({ deptCode: val } as any);
-    }
+  const toggleCode = (code: string, checked: boolean) => {
+    if (readOnly) return;
+    const next = checked
+      ? Array.from(new Set([...selectedCodes, code]))
+      : selectedCodes.filter(c => c !== code);
+    // Preserve declaration order from DEPT_CODES for consistency
+    const ordered = DEPT_CODES.filter(c => next.includes(c));
+    setSelectedCodes(ordered);
+    onUpdate?.({ deptCode: ordered.join(',') } as any);
   };
 
   return (
@@ -32,22 +41,24 @@ export const DepartmentsTab = ({ employee, onUpdate, readOnly }: DepartmentsTabP
           <Building2 className="w-5 h-5 text-primary" />
           <h3 className={cn("text-lg font-semibold", isRTL && "text-right")}>{t('employees.tabs.departments')}</h3>
         </div>
-        <RadioGroup
-          value={selectedCode}
-          onValueChange={handleChange}
+        <div
           className="flex flex-wrap gap-4"
           dir={isRTL ? 'rtl' : 'ltr'}
-          disabled={readOnly}
         >
           {DEPT_CODES.map((code) => (
             <div key={code} className="flex items-center gap-1.5">
-              <RadioGroupItem value={code} id={`dept-${code}`} />
+              <Checkbox
+                id={`dept-${code}`}
+                checked={selectedCodes.includes(code)}
+                onCheckedChange={(v) => toggleCode(code, !!v)}
+                disabled={readOnly}
+              />
               <Label htmlFor={`dept-${code}`} className="cursor-pointer text-sm font-medium">
                 {code}
               </Label>
             </div>
           ))}
-        </RadioGroup>
+        </div>
       </div>
     </div>
   );
