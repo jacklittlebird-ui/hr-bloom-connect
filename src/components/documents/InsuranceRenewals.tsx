@@ -30,6 +30,7 @@ interface ExpiringEmployee {
   city: string | null;
   job_title_ar: string | null;
   job_title_en: string | null;
+  phone: string | null;
   station_name?: string;
   department_name?: string;
   station_id?: string | null;
@@ -66,7 +67,7 @@ export const InsuranceRenewals = () => {
 
     const { data, error } = await supabase
       .from('employees')
-      .select('id, employee_code, name_ar, name_en, social_insurance_no, social_insurance_start_date, social_insurance_end_date, national_id, education_ar, address, city, job_title_ar, job_title_en, station_id, department_id')
+      .select('id, employee_code, name_ar, name_en, social_insurance_no, social_insurance_start_date, social_insurance_end_date, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, station_id, department_id')
       .not('social_insurance_end_date', 'is', null)
       .lte('social_insurance_end_date', cutoffDate)
       .eq('status', 'active')
@@ -97,6 +98,7 @@ export const InsuranceRenewals = () => {
       national_id: e.national_id, education_ar: e.education_ar,
       address: e.address, city: e.city,
       job_title_ar: e.job_title_ar, job_title_en: e.job_title_en,
+      phone: e.phone,
       station_id: e.station_id, department_id: e.department_id,
       station_name: e.station_id ? stationMap.get(e.station_id) || '' : '',
       department_name: e.department_id ? deptMap.get(e.department_id) || '' : '',
@@ -156,6 +158,7 @@ export const InsuranceRenewals = () => {
       { headerAr: 'الاسم بالإنجليزية', headerEn: 'Name (EN)', key: 'nameEn' },
       { headerAr: 'الرقم القومي', headerEn: 'National ID', key: 'nationalId' },
       { headerAr: 'المسمى الوظيفي', headerEn: 'Job Title', key: 'jobTitle' },
+      { headerAr: 'رقم الموبايل', headerEn: 'Mobile', key: 'phone' },
       { headerAr: 'المؤهل الدراسي', headerEn: 'Education', key: 'education' },
       { headerAr: 'العنوان', headerEn: 'Address', key: 'address' },
       { headerAr: 'المركز / المدينة', headerEn: 'City', key: 'city' },
@@ -172,6 +175,7 @@ export const InsuranceRenewals = () => {
         code: e.employee_code, nameAr: e.name_ar, nameEn: e.name_en,
         nationalId: e.national_id || '-',
         jobTitle: (ar ? e.job_title_ar : e.job_title_en) || e.job_title_ar || e.job_title_en || '-',
+        phone: e.phone || '-',
         education: e.education_ar || '-',
         address: e.address || '-',
         city: e.city || '-',
@@ -249,6 +253,7 @@ export const InsuranceRenewals = () => {
                     <TableHead>{ar ? 'اسم الموظف' : 'Employee Name'}</TableHead>
                     <TableHead>{ar ? 'الرقم القومي' : 'National ID'}</TableHead>
                     <TableHead>{ar ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
+                    <TableHead>{ar ? 'رقم الموبايل' : 'Mobile'}</TableHead>
                     <TableHead>{ar ? 'المؤهل الدراسي' : 'Education'}</TableHead>
                     <TableHead>{ar ? 'العنوان' : 'Address'}</TableHead>
                     <TableHead>{ar ? 'المركز / المدينة' : 'City'}</TableHead>
@@ -271,6 +276,7 @@ export const InsuranceRenewals = () => {
                         <TableCell className="font-medium">{ar ? emp.name_ar : emp.name_en}</TableCell>
                         <TableCell className="font-mono text-xs">{emp.national_id || '-'}</TableCell>
                         <TableCell>{(ar ? emp.job_title_ar : emp.job_title_en) || emp.job_title_ar || emp.job_title_en || '-'}</TableCell>
+                        <TableCell className="font-mono text-xs" dir="ltr">{emp.phone || '-'}</TableCell>
                         <TableCell>{emp.education_ar || '-'}</TableCell>
                         <TableCell className="max-w-[200px] truncate" title={emp.address || ''}>{emp.address || '-'}</TableCell>
                         <TableCell>{emp.city || '-'}</TableCell>
