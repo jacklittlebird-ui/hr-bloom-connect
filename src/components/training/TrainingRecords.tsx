@@ -84,7 +84,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const { t, language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { toast } = useToast();
-  const { employees: contextEmployees } = useEmployeeData();
+  const { employees: contextEmployees, updateEmployee } = useEmployeeData();
   const [searchName, setSearchName] = useState('');
   const [searchDept, setSearchDept] = useState('');
   const [searchStation, setSearchStation] = useState('');
