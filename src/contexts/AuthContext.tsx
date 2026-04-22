@@ -191,6 +191,9 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     departmentId,
     departmentName,
     departmentNameAr,
+    departmentIds,
+    departmentNames,
+    departmentNamesAr,
     supabaseUserId: supabaseUser.id,
   };
 }
