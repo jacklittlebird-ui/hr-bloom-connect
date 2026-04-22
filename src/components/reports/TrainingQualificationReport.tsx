@@ -366,6 +366,12 @@ export const TrainingQualificationReport = () => {
           </tr>
         `;
       }
+      // Stamp row after each employee — ensures stamp appears on every printed Excel page
+      bodyRows += `
+        <tr><td colspan="5" style="text-align:${ar ? 'left' : 'right'};padding:8px 20px;">
+          <img src="${stampUrl}" style="height:80px;" alt="Stamp" />
+        </td></tr>
+      `;
     }
 
     const htmlContent = `
