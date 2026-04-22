@@ -26,10 +26,15 @@ export interface AuthUser {
   /** For area_manager: list of station codes they manage */
   stations?: string[];
   stationIds?: string[];
-  /** For department_manager: scoped department */
+  /** For department_manager: scoped department(s). departmentId stays as primary for backward-compat. */
   departmentId?: string;
   departmentName?: string;
   departmentNameAr?: string;
+  /** All department IDs the manager oversees (multi-department support) */
+  departmentIds?: string[];
+  /** Localized list of all department names */
+  departmentNames?: string[];
+  departmentNamesAr?: string[];
   supabaseUserId: string;
 }
 
