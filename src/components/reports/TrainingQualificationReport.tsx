@@ -244,8 +244,9 @@ export const TrainingQualificationReport = () => {
         </tr>
       `;
       // Dept codes row
+      const empCodes = (emp.deptCode || '').split(',').map(s => s.trim()).filter(Boolean);
       const deptRow = DEPT_CODES.map(code =>
-        `<span style="font-family:monospace;font-size:10px;margin:0 4px;">${code} ${emp.deptCode === code ? '☑' : '☐'}</span>`
+        `<span style="font-family:monospace;font-size:10px;margin:0 4px;">${code} ${empCodes.includes(code) ? '☑' : '☐'}</span>`
       ).join('');
       bodyRows += `<tr><td colspan="5" style="background:#f5f5f5;padding:4px 8px;border:1px solid #ddd;font-size:10px;">${deptRow}</td></tr>`;
 
