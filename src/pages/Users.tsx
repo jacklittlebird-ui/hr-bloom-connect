@@ -36,6 +36,8 @@ interface SystemUser {
   station_name?: string;
   department_id?: string;
   department_name?: string;
+  department_ids?: string[];
+  department_names?: string[];
   employee_code?: string;
   created_at: string;
   permission_profile_id?: string;
