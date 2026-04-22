@@ -286,8 +286,8 @@ export const TrainingQualificationReport = () => {
           .stamp-footer {
             position: fixed;
             bottom: 0;
-            left: 10mm;
-            right: 10mm;
+            left: 11mm;
+            right: 11mm;
             display: flex;
             justify-content: center;
             padding: 4px 0;
