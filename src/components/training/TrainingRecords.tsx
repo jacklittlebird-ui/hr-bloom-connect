@@ -145,7 +145,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     linkId: emp.employeeId.replace('Emp', ''),
     hireDate: emp.hireDate || '',
     mobile: emp.phone || '',
-    jobFunctions: (emp as any).deptCode ? [(emp as any).deptCode] : [],
+    jobFunctions: ((emp as any).deptCode || '').split(',').map((s: string) => s.trim()).filter(Boolean),
     jobTitleAr: (emp as any).jobTitleAr || '',
     jobTitleEn: (emp as any).jobTitleEn || '',
     avatar: emp.avatar || undefined,
