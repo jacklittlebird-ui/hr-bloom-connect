@@ -31,9 +31,11 @@ interface SystemUser {
   user_id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'station_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk';
+  role: 'admin' | 'station_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk' | 'department_manager';
   station_code?: string;
   station_name?: string;
+  department_id?: string;
+  department_name?: string;
   employee_code?: string;
   created_at: string;
   permission_profile_id?: string;
@@ -63,6 +65,7 @@ const Users = () => {
   const [search, setSearch] = useState('');
   const [stations, setStations] = useState<{ id: string; code: string; name_ar: string; name_en: string }[]>([]);
   const [employees, setEmployees] = useState<{ id: string; employee_code: string; name_ar: string; name_en: string }[]>([]);
+  const [departments, setDepartments] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
 
   // Create user dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -70,7 +73,7 @@ const Users = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     full_name: '', email: '', password: '', role: '' as string,
-    station_code: '', employee_code: '',
+    station_code: '', employee_code: '', department_id: '',
   });
 
   // Permission assignment dialog
@@ -152,11 +155,12 @@ const Users = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [rolesRes, profilesRes, stationsRes, empsRes] = await Promise.all([
-        supabase.from('user_roles').select('user_id, role, station_id, employee_id'),
+      const [rolesRes, profilesRes, stationsRes, empsRes, deptsRes] = await Promise.all([
+        supabase.from('user_roles').select('user_id, role, station_id, employee_id, department_id'),
         supabase.from('permission_profiles' as any).select('*'),
         supabase.from('stations').select('id, code, name_ar, name_en'),
         supabase.from('employees').select('id, employee_code, name_ar, name_en').order('employee_code'),
+        supabase.from('departments').select('id, name_ar, name_en').order('name_ar'),
       ]);
 
       const roles = rolesRes.data || [];
@@ -171,6 +175,7 @@ const Users = () => {
         const profile = profilesData?.find(p => p.id === r.user_id);
         const station = stationsRes.data?.find(s => s.id === r.station_id);
         const emp = empsRes.data?.find(e => e.id === r.employee_id);
+        const dept = deptsRes.data?.find(d => d.id === (r as any).department_id);
         const userPerm = (userPerms as any[])?.find(up => up.user_id === r.user_id);
         return {
           user_id: r.user_id,
@@ -179,6 +184,8 @@ const Users = () => {
           role: r.role as SystemUser['role'],
           station_code: station?.code,
           station_name: isAr ? station?.name_ar : station?.name_en,
+          department_id: (r as any).department_id || undefined,
+          department_name: dept ? (isAr ? dept.name_ar : dept.name_en) : undefined,
           employee_code: emp?.employee_code,
           created_at: profile?.created_at || '',
           permission_profile_id: userPerm?.profile_id || undefined,
@@ -193,6 +200,7 @@ const Users = () => {
       })));
       if (stationsRes.data) setStations(stationsRes.data);
       if (empsRes.data) setEmployees(empsRes.data);
+      if (deptsRes.data) setDepartments(deptsRes.data);
     } catch (err: any) {
       toast({ title: isAr ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
     }
