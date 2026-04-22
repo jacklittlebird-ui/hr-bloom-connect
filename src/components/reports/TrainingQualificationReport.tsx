@@ -146,14 +146,19 @@ export const TrainingQualificationReport = () => {
   };
 
   const filteredEmployees = useMemo(() => {
-    if (!employeeSearch) return contextEmployees;
-    const s = employeeSearch.toLowerCase();
-    return contextEmployees.filter(e =>
-      (e.nameAr || '').toLowerCase().includes(s) ||
-      (e.nameEn || '').toLowerCase().includes(s) ||
-      (e.employeeId || '').toLowerCase().includes(s)
-    );
-  }, [contextEmployees, employeeSearch]);
+    let list = contextEmployees;
+    if (filterStation !== 'all') list = list.filter(e => e.stationId === filterStation);
+    if (filterDepartment !== 'all') list = list.filter(e => e.departmentId === filterDepartment);
+    if (employeeSearch) {
+      const s = employeeSearch.toLowerCase();
+      list = list.filter(e =>
+        (e.nameAr || '').toLowerCase().includes(s) ||
+        (e.nameEn || '').toLowerCase().includes(s) ||
+        (e.employeeId || '').toLowerCase().includes(s)
+      );
+    }
+    return list;
+  }, [contextEmployees, employeeSearch, filterStation, filterDepartment]);
 
   const filteredCourses = useMemo(() => {
     if (!courseSearch) return courseOptions;
