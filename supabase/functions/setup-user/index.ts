@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { email, password, full_name, role, station_code, employee_code, station_codes } = await req.json();
+    const { email, password, full_name, role, station_code, employee_code, station_codes, department_id } = await req.json();
 
     // Input validation
     if (!email || !password || !full_name || !role) {
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!['admin', 'station_manager', 'employee', 'kiosk', 'training_manager', 'hr', 'area_manager'].includes(role)) {
+    if (!['admin', 'station_manager', 'employee', 'kiosk', 'training_manager', 'hr', 'area_manager', 'department_manager'].includes(role)) {
       return new Response(JSON.stringify({ error: 'Invalid role' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -130,14 +130,19 @@ Deno.serve(async (req) => {
     // Resolve station/employee references
     let stationId: string | null = null;
     let employeeId: string | null = null;
+    let resolvedDepartmentId: string | null = null;
 
-    if (role === 'station_manager' && station_code) {
+    if ((role === 'station_manager' || role === 'department_manager') && station_code) {
       const { data: station } = await supabaseAdmin
         .from('stations')
         .select('id')
         .eq('code', station_code)
         .single();
       stationId = station?.id || null;
+    }
+
+    if (role === 'department_manager' && department_id) {
+      resolvedDepartmentId = department_id;
     }
 
     // Handle area_manager with multiple stations
@@ -182,6 +187,7 @@ Deno.serve(async (req) => {
         role,
         station_id: stationId,
         employee_id: employeeId,
+        department_id: resolvedDepartmentId,
       }, { onConflict: 'user_id,role' });
 
     if (roleError) {
