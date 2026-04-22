@@ -272,10 +272,10 @@ export const TrainingQualificationReport = () => {
       <head>
         <title>${fullTitle}</title>
         <style>
-          @page { size: auto; margin: 10mm; }
+          @page { size: auto; margin: 11mm; }
           html, body { margin: 0; padding: 0; }
           body { font-family: 'Baloo Bhaijaan 2', 'Cairo', Arial, sans-serif; direction: ${dir}; }
-          .print-shell { padding: 0 10mm 24mm; box-sizing: border-box; }
+          .print-shell { padding: 0 11mm 24mm; box-sizing: border-box; }
           table { width: 100%; border-collapse: collapse; }
           tr { page-break-inside: avoid; }
           .report-header { text-align: center; margin-bottom: 10px; }
