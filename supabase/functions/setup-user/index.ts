@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const { email, password, full_name, role, station_code, employee_code, station_codes, department_id } = await req.json();
+    const { email, password, full_name, role, station_code, employee_code, station_codes, department_id, department_ids } = await req.json();
 
     // Input validation
     if (!email || !password || !full_name || !role) {
@@ -198,6 +198,18 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: roleError.message }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // For department_manager: persist multi-department assignments
+    if (role === 'department_manager' && Array.isArray(department_ids) && department_ids.length > 0) {
+      const rows = department_ids
+        .filter((d: unknown) => typeof d === 'string' && d.length > 0)
+        .map((d: string) => ({ user_id: userId, department_id: d }));
+      if (rows.length > 0) {
+        await supabaseAdmin
+          .from('department_manager_departments')
+          .upsert(rows, { onConflict: 'user_id,department_id' });
+      }
     }
 
     return new Response(JSON.stringify({ success: true, user_id: userId }), {

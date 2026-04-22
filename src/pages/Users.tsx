@@ -36,6 +36,8 @@ interface SystemUser {
   station_name?: string;
   department_id?: string;
   department_name?: string;
+  department_ids?: string[];
+  department_names?: string[];
   employee_code?: string;
   created_at: string;
   permission_profile_id?: string;
@@ -74,6 +76,7 @@ const Users = () => {
   const [form, setForm] = useState({
     full_name: '', email: '', password: '', role: '' as string,
     station_code: '', employee_code: '', department_id: '',
+    department_ids: [] as string[],
   });
 
   // Permission assignment dialog
@@ -155,12 +158,13 @@ const Users = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [rolesRes, profilesRes, stationsRes, empsRes, deptsRes] = await Promise.all([
+      const [rolesRes, profilesRes, stationsRes, empsRes, deptsRes, dmDeptsRes] = await Promise.all([
         supabase.from('user_roles').select('user_id, role, station_id, employee_id, department_id'),
         supabase.from('permission_profiles' as any).select('*'),
         supabase.from('stations').select('id, code, name_ar, name_en'),
         supabase.from('employees').select('id, employee_code, name_ar, name_en').order('employee_code'),
         supabase.from('departments').select('id, name_ar, name_en').order('name_ar'),
+        supabase.from('department_manager_departments' as any).select('user_id, department_id'),
       ]);
 
       const roles = rolesRes.data || [];
@@ -171,12 +175,35 @@ const Users = () => {
       // Fetch user_module_permissions
       const { data: userPerms } = await supabase.from('user_module_permissions' as any).select('user_id, profile_id, custom_modules');
 
+      // Build map of all linked departments per dm user
+      const dmDeptMap = new Map<string, string[]>();
+      ((dmDeptsRes.data as any[]) || []).forEach((row: any) => {
+        if (!row?.user_id || !row?.department_id) return;
+        const list = dmDeptMap.get(row.user_id) || [];
+        if (!list.includes(row.department_id)) list.push(row.department_id);
+        dmDeptMap.set(row.user_id, list);
+      });
+
       const mapped: SystemUser[] = roles.map(r => {
         const profile = profilesData?.find(p => p.id === r.user_id);
         const station = stationsRes.data?.find(s => s.id === r.station_id);
         const emp = empsRes.data?.find(e => e.id === r.employee_id);
         const dept = deptsRes.data?.find(d => d.id === (r as any).department_id);
         const userPerm = (userPerms as any[])?.find(up => up.user_id === r.user_id);
+
+        // For department_manager, build full list (linked + legacy)
+        let department_ids: string[] | undefined;
+        let department_names: string[] | undefined;
+        if (r.role === 'department_manager') {
+          const deptIdSet = new Set<string>(dmDeptMap.get(r.user_id) || []);
+          if ((r as any).department_id) deptIdSet.add((r as any).department_id);
+          department_ids = Array.from(deptIdSet);
+          department_names = department_ids
+            .map(id => deptsRes.data?.find(d => d.id === id))
+            .filter(Boolean)
+            .map((d: any) => isAr ? d.name_ar : d.name_en);
+        }
+
         return {
           user_id: r.user_id,
           email: profile?.email || '',
@@ -186,6 +213,8 @@ const Users = () => {
           station_name: isAr ? station?.name_ar : station?.name_en,
           department_id: (r as any).department_id || undefined,
           department_name: dept ? (isAr ? dept.name_ar : dept.name_en) : undefined,
+          department_ids,
+          department_names,
           employee_code: emp?.employee_code,
           created_at: profile?.created_at || '',
           permission_profile_id: userPerm?.profile_id || undefined,
@@ -223,8 +252,8 @@ const Users = () => {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار المحطة' : 'Please select a station', variant: 'destructive' });
       return;
     }
-    if (form.role === 'department_manager' && (!form.station_code || !form.department_id)) {
-      toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار المحطة والقسم' : 'Please select station and department', variant: 'destructive' });
+    if (form.role === 'department_manager' && (!form.station_code || (!form.department_id && form.department_ids.length === 0))) {
+      toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار المحطة وقسم واحد على الأقل' : 'Please select station and at least one department', variant: 'destructive' });
       return;
     }
     if (form.role === 'employee' && !form.employee_code) {
@@ -233,14 +262,29 @@ const Users = () => {
     }
     setCreating(true);
     try {
+      // Determine primary + extra departments for department_manager
+      const dmDeptIds = form.role === 'department_manager'
+        ? Array.from(new Set([...(form.department_id ? [form.department_id] : []), ...form.department_ids])).filter(Boolean)
+        : [];
+      const primaryDeptId = dmDeptIds[0] || form.department_id || undefined;
+
       const { data, error } = await supabase.functions.invoke('setup-user', {
-        body: { email: form.email, password: form.password, full_name: form.full_name, role: form.role, station_code: form.station_code || undefined, employee_code: form.employee_code || undefined, department_id: form.department_id || undefined },
+        body: {
+          email: form.email,
+          password: form.password,
+          full_name: form.full_name,
+          role: form.role,
+          station_code: form.station_code || undefined,
+          employee_code: form.employee_code || undefined,
+          department_id: primaryDeptId,
+          department_ids: dmDeptIds.length > 0 ? dmDeptIds : undefined,
+        },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: isAr ? 'تم بنجاح' : 'Success', description: isAr ? 'تم إنشاء المستخدم بنجاح' : 'User created successfully' });
       setDialogOpen(false);
-      setForm({ full_name: '', email: '', password: '', role: '', station_code: '', employee_code: '', department_id: '' });
+      setForm({ full_name: '', email: '', password: '', role: '', station_code: '', employee_code: '', department_id: '', department_ids: [] });
       fetchAll();
     } catch (err: any) {
       toast({ title: isAr ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
@@ -554,7 +598,12 @@ const Users = () => {
                           {user.role === 'department_manager' && (
                             <div className="flex flex-wrap gap-1">
                               {user.station_name && <Badge variant="outline" className="gap-1"><MapPin className="w-3 h-3" />{user.station_name}</Badge>}
-                              {user.department_name && <Badge variant="outline">{user.department_name}</Badge>}
+                              {(user.department_names && user.department_names.length > 0
+                                ? user.department_names
+                                : user.department_name ? [user.department_name] : []
+                              ).map((n, i) => (
+                                <Badge key={i} variant="outline">{n}</Badge>
+                              ))}
                             </div>
                           )}
                           {user.role === 'employee' && user.employee_code && (
@@ -755,7 +804,7 @@ const Users = () => {
               </div>
               <div>
                 <Label>{isAr ? 'الدور' : 'Role'} *</Label>
-                <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v, station_code: '', employee_code: '', department_id: '' }))}>
+                <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v, station_code: '', employee_code: '', department_id: '', department_ids: [] }))}>
                   <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الدور' : 'Select role'} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير النظام' : 'Admin'}</span></SelectItem>
@@ -780,13 +829,33 @@ const Users = () => {
               )}
               {form.role === 'department_manager' && (
                 <div>
-                  <Label>{isAr ? 'القسم' : 'Department'} *</Label>
-                  <Select value={form.department_id} onValueChange={v => setForm(f => ({ ...f, department_id: v }))}>
-                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر القسم' : 'Select department'} /></SelectTrigger>
-                    <SelectContent>
-                      {departments.map(d => (<SelectItem key={d.id} value={d.id}>{isAr ? d.name_ar : d.name_en}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
+                  <Label>{isAr ? 'الأقسام (يمكن اختيار أكثر من قسم)' : 'Departments (multi-select)'} *</Label>
+                  <div className="border rounded-md max-h-56 overflow-y-auto p-2 space-y-1">
+                    {departments.map(d => {
+                      const checked = form.department_ids.includes(d.id);
+                      return (
+                        <label key={d.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) => {
+                              setForm(f => {
+                                const next = v
+                                  ? Array.from(new Set([...f.department_ids, d.id]))
+                                  : f.department_ids.filter(x => x !== d.id);
+                                return { ...f, department_ids: next, department_id: next[0] || '' };
+                              });
+                            }}
+                          />
+                          <span className="text-sm">{isAr ? d.name_ar : d.name_en}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {form.department_ids.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isAr ? `تم اختيار ${form.department_ids.length} قسم` : `${form.department_ids.length} selected`}
+                    </p>
+                  )}
                 </div>
               )}
               {form.role === 'employee' && (

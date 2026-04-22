@@ -560,6 +560,35 @@ export type Database = {
           },
         ]
       }
+      department_manager_departments: {
+        Row: {
+          created_at: string
+          department_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "department_manager_departments_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           created_at: string
@@ -2938,6 +2967,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string[]
       }
+      get_dm_department_ids: { Args: { _user_id: string }; Returns: string[] }
       get_user_department_id: { Args: { _user_id: string }; Returns: string }
       get_user_employee_id: { Args: { _user_id: string }; Returns: string }
       get_user_station_id: { Args: { _user_id: string }; Returns: string }

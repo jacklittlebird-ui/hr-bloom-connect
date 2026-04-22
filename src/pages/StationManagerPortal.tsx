@@ -190,24 +190,35 @@ const StationManagerPortal = () => {
     const loc = stationLocations.find(s => s.value === activeStation);
     const baseLabel = language === 'ar' ? loc?.labelAr : loc?.labelEn;
     if (isDepartmentManager) {
-      const deptLabel = language === 'ar' ? user?.departmentNameAr : user?.departmentName;
+      const deptList = (language === 'ar' ? user?.departmentNamesAr : user?.departmentNames) || [];
+      const deptLabel = deptList.length > 0
+        ? deptList.join(' / ')
+        : (language === 'ar' ? user?.departmentNameAr : user?.departmentName);
       if (baseLabel && deptLabel) return `${baseLabel} — ${deptLabel}`;
       return deptLabel || baseLabel;
     }
     return baseLabel;
-  }, [activeStation, language, isDepartmentManager, user?.departmentName, user?.departmentNameAr]);
+  }, [activeStation, language, isDepartmentManager, user?.departmentName, user?.departmentNameAr, user?.departmentNames, user?.departmentNamesAr]);
 
   const stationEmployees = useMemo(() => {
     if (isAreaManager && selectedStation === 'all') {
       return employees.filter(e => user?.stations?.includes(e.stationLocation || ''));
     }
     let scoped = employees.filter(e => e.stationLocation === activeStation);
-    if (isDepartmentManager && user?.departmentId) {
-      const deptName = user.departmentNameAr || user.departmentName;
-      scoped = scoped.filter(e => e.department === deptName);
+    if (isDepartmentManager) {
+      const deptNamesAr = (user?.departmentNamesAr && user.departmentNamesAr.length > 0)
+        ? user.departmentNamesAr
+        : (user?.departmentNameAr ? [user.departmentNameAr] : []);
+      const deptNamesEn = (user?.departmentNames && user.departmentNames.length > 0)
+        ? user.departmentNames
+        : (user?.departmentName ? [user.departmentName] : []);
+      const allowedNames = new Set<string>([...deptNamesAr, ...deptNamesEn].filter(Boolean) as string[]);
+      if (allowedNames.size > 0) {
+        scoped = scoped.filter(e => e.department && allowedNames.has(e.department));
+      }
     }
     return scoped;
-  }, [employees, activeStation, isAreaManager, selectedStation, user?.stations, isDepartmentManager, user?.departmentId, user?.departmentName, user?.departmentNameAr]);
+  }, [employees, activeStation, isAreaManager, selectedStation, user?.stations, isDepartmentManager, user?.departmentId, user?.departmentName, user?.departmentNameAr, user?.departmentIds, user?.departmentNames, user?.departmentNamesAr]);
 
   // === Today's attendance for stat cards ===
   const [todayAttRecords, setTodayAttRecords] = useState<any[]>([]);

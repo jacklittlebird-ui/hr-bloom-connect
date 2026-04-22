@@ -251,6 +251,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     scopedEmployeeId || 'all',
     user?.stationId || 'no-station',
     user?.departmentId || 'no-department',
+    (user?.departmentIds || []).slice().sort().join('-') || 'no-depts',
   ].join('_')}`;
   // Track which employee IDs have been fully loaded
   const fullLoadedIds = useRef<Set<string>>(new Set());
