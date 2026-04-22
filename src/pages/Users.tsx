@@ -223,6 +223,10 @@ const Users = () => {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار المحطة' : 'Please select a station', variant: 'destructive' });
       return;
     }
+    if (form.role === 'department_manager' && (!form.station_code || !form.department_id)) {
+      toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار المحطة والقسم' : 'Please select station and department', variant: 'destructive' });
+      return;
+    }
     if (form.role === 'employee' && !form.employee_code) {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار الموظف' : 'Please select an employee', variant: 'destructive' });
       return;
@@ -230,13 +234,13 @@ const Users = () => {
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke('setup-user', {
-        body: { email: form.email, password: form.password, full_name: form.full_name, role: form.role, station_code: form.station_code || undefined, employee_code: form.employee_code || undefined },
+        body: { email: form.email, password: form.password, full_name: form.full_name, role: form.role, station_code: form.station_code || undefined, employee_code: form.employee_code || undefined, department_id: form.department_id || undefined },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: isAr ? 'تم بنجاح' : 'Success', description: isAr ? 'تم إنشاء المستخدم بنجاح' : 'User created successfully' });
       setDialogOpen(false);
-      setForm({ full_name: '', email: '', password: '', role: '', station_code: '', employee_code: '' });
+      setForm({ full_name: '', email: '', password: '', role: '', station_code: '', employee_code: '', department_id: '' });
       fetchAll();
     } catch (err: any) {
       toast({ title: isAr ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
@@ -419,6 +423,7 @@ const Users = () => {
       case 'admin': return <Badge className="bg-primary/10 text-primary border-primary/30">{isAr ? 'مدير النظام' : 'Admin'}</Badge>;
       case 'hr': return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">{isAr ? 'موارد بشرية' : 'HR'}</Badge>;
       case 'station_manager': return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30">{isAr ? 'مدير محطة' : 'Station Manager'}</Badge>;
+      case 'department_manager': return <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30">{isAr ? 'مدير قسم' : 'Department Manager'}</Badge>;
       case 'employee': return <Badge className="bg-sky-500/10 text-sky-600 border-sky-500/30">{isAr ? 'موظف' : 'Employee'}</Badge>;
       case 'training_manager': return <Badge className="bg-violet-500/10 text-violet-600 border-violet-500/30">{isAr ? 'مدير التدريب' : 'Training Manager'}</Badge>;
       default: return <Badge variant="outline">{role}</Badge>;
@@ -545,6 +550,12 @@ const Users = () => {
                         <TableCell>
                           {user.role === 'station_manager' && user.station_name && (
                             <Badge variant="outline" className="gap-1"><MapPin className="w-3 h-3" />{user.station_name}</Badge>
+                          )}
+                          {user.role === 'department_manager' && (
+                            <div className="flex flex-wrap gap-1">
+                              {user.station_name && <Badge variant="outline" className="gap-1"><MapPin className="w-3 h-3" />{user.station_name}</Badge>}
+                              {user.department_name && <Badge variant="outline">{user.department_name}</Badge>}
+                            </div>
                           )}
                           {user.role === 'employee' && user.employee_code && (
                             <Badge variant="outline">{user.employee_code}</Badge>
@@ -744,24 +755,36 @@ const Users = () => {
               </div>
               <div>
                 <Label>{isAr ? 'الدور' : 'Role'} *</Label>
-                <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v, station_code: '', employee_code: '' }))}>
+                <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v, station_code: '', employee_code: '', department_id: '' }))}>
                   <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الدور' : 'Select role'} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير النظام' : 'Admin'}</span></SelectItem>
                     <SelectItem value="hr"><span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> {isAr ? 'موارد بشرية' : 'HR'}</span></SelectItem>
                     <SelectItem value="station_manager"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {isAr ? 'مدير محطة' : 'Station Manager'}</span></SelectItem>
+                    <SelectItem value="department_manager"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {isAr ? 'مدير قسم' : 'Department Manager'}</span></SelectItem>
                     <SelectItem value="employee"><span className="flex items-center gap-2"><User className="w-4 h-4" /> {isAr ? 'موظف' : 'Employee'}</span></SelectItem>
                     <SelectItem value="training_manager"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير التدريب' : 'Training Manager'}</span></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              {form.role === 'station_manager' && (
+              {(form.role === 'station_manager' || form.role === 'department_manager') && (
                 <div>
                   <Label>{isAr ? 'المحطة' : 'Station'} *</Label>
                   <Select value={form.station_code} onValueChange={v => setForm(f => ({ ...f, station_code: v }))}>
                     <SelectTrigger><SelectValue placeholder={isAr ? 'اختر المحطة' : 'Select station'} /></SelectTrigger>
                     <SelectContent>
                       {stations.map(s => (<SelectItem key={s.code} value={s.code}>{isAr ? s.name_ar : s.name_en}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {form.role === 'department_manager' && (
+                <div>
+                  <Label>{isAr ? 'القسم' : 'Department'} *</Label>
+                  <Select value={form.department_id} onValueChange={v => setForm(f => ({ ...f, department_id: v }))}>
+                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر القسم' : 'Select department'} /></SelectTrigger>
+                    <SelectContent>
+                      {departments.map(d => (<SelectItem key={d.id} value={d.id}>{isAr ? d.name_ar : d.name_en}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
