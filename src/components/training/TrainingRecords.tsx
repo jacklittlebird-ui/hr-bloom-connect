@@ -84,7 +84,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const { t, language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { toast } = useToast();
-  const { employees: contextEmployees } = useEmployeeData();
+  const { employees: contextEmployees, updateEmployee } = useEmployeeData();
   const [searchName, setSearchName] = useState('');
   const [searchDept, setSearchDept] = useState('');
   const [searchStation, setSearchStation] = useState('');
@@ -145,7 +145,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     linkId: emp.employeeId.replace('Emp', ''),
     hireDate: emp.hireDate || '',
     mobile: emp.phone || '',
-    jobFunctions: (emp as any).deptCode ? [(emp as any).deptCode] : [],
+    jobFunctions: ((emp as any).deptCode || '').split(',').map((s: string) => s.trim()).filter(Boolean),
     jobTitleAr: (emp as any).jobTitleAr || '',
     jobTitleEn: (emp as any).jobTitleEn || '',
     avatar: emp.avatar || undefined,
@@ -464,10 +464,33 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-2">{t('training.jobFunction')}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {Object.keys(jobFunctionLabels).map(key => (
-                          <label key={key} className="flex items-center gap-1 text-xs"><Checkbox checked={selectedEmployee.jobFunctions.includes(key)} disabled /><span>{key}</span></label>
-                        ))}
+                      <div className="flex flex-wrap gap-3">
+                        {Object.keys(jobFunctionLabels).map(key => {
+                          const checked = selectedEmployee.jobFunctions.includes(key);
+                          return (
+                            <label key={key} className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={async (v) => {
+                                  const isChecked = !!v;
+                                  const current = selectedEmployee.jobFunctions;
+                                  const next = isChecked
+                                    ? Array.from(new Set([...current, key]))
+                                    : current.filter(c => c !== key);
+                                  // Preserve declaration order from jobFunctionLabels
+                                  const ordered = Object.keys(jobFunctionLabels).filter(c => next.includes(c));
+                                  try {
+                                    await updateEmployee(selectedEmployee.id, { deptCode: ordered.join(',') } as any);
+                                    toast({ title: ar ? 'تم الحفظ' : 'Saved' });
+                                  } catch (err: any) {
+                                    toast({ title: ar ? 'خطأ' : 'Error', description: err?.message || (ar ? 'تعذر الحفظ' : 'Failed to save'), variant: 'destructive' });
+                                  }
+                                }}
+                              />
+                              <span className="font-medium">{key}</span>
+                            </label>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
