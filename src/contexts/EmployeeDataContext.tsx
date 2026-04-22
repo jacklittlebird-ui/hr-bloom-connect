@@ -245,12 +245,19 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { isAuthenticated, user } = useAuth();
   const isEmployee = user?.role === 'employee';
   const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
+  const employeeCacheKey = `employees_${[
+    user?.supabaseUserId || 'anon',
+    user?.role || 'unknown',
+    scopedEmployeeId || 'all',
+    user?.stationId || 'no-station',
+    user?.departmentId || 'no-department',
+  ].join('_')}`;
   // Track which employee IDs have been fully loaded
   const fullLoadedIds = useRef<Set<string>>(new Set());
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
-    const cacheKey = `employees_${scopedEmployeeId || user?.role || 'all'}`;
+    const cacheKey = employeeCacheKey;
 
     try {
       const result = await debouncedFetch(cacheKey, async () => {
@@ -316,7 +323,11 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.error('fetchEmployees error:', err);
     }
     setLoading(false);
-  }, [user?.role, isEmployee, scopedEmployeeId]);
+  }, [employeeCacheKey, user?.role, isEmployee, scopedEmployeeId]);
+
+  useEffect(() => {
+    invalidateCache('employees_');
+  }, [employeeCacheKey]);
 
   useEffect(() => {
     if (isAuthenticated) {
