@@ -72,7 +72,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   if (loading) return <LoadingScreen />;
   if (isAuthenticated) {
     if (user?.role === 'employee') return <Navigate to="/employee-portal" replace />;
-    if (user?.role === 'station_manager' || user?.role === 'area_manager') return <Navigate to="/station-manager" replace />;
+    if (user?.role === 'station_manager' || user?.role === 'area_manager' || user?.role === 'department_manager') return <Navigate to="/station-manager" replace />;
     if (user?.role === 'kiosk') return <Navigate to="/attendance/kiosk" replace />;
     if (user?.role === 'training_manager') return <Navigate to="/training-portal" replace />;
     return <Navigate to="/" replace />;
@@ -113,10 +113,10 @@ const AppRoutes = () => (
       <Route path="/property-taxes" element={<ProtectedRoute allowedRoles={['admin']}><PropertyTaxes /></ProtectedRoute>} />
 
       <Route path="/employee-portal" element={<ProtectedRoute allowedRoles={['employee']}><EmployeePortal /></ProtectedRoute>} />
-      <Route path="/station-manager" element={<ProtectedRoute allowedRoles={['station_manager', 'area_manager']}><StationManagerPortal /></ProtectedRoute>} />
+      <Route path="/station-manager" element={<ProtectedRoute allowedRoles={['station_manager', 'area_manager', 'department_manager']}><StationManagerPortal /></ProtectedRoute>} />
       <Route path="/training-portal" element={<ProtectedRoute allowedRoles={['training_manager']}><TrainingPortal /></ProtectedRoute>} />
-      <Route path="/attendance/scan" element={<ProtectedRoute allowedRoles={['employee', 'station_manager', 'area_manager', 'admin', 'hr']}><AttendanceScan /></ProtectedRoute>} />
-      <Route path="/attendance/kiosk" element={<ProtectedRoute allowedRoles={['admin', 'station_manager', 'area_manager', 'kiosk']}><AttendanceKiosk /></ProtectedRoute>} />
+      <Route path="/attendance/scan" element={<ProtectedRoute allowedRoles={['employee', 'station_manager', 'area_manager', 'department_manager', 'admin', 'hr']}><AttendanceScan /></ProtectedRoute>} />
+      <Route path="/attendance/kiosk" element={<ProtectedRoute allowedRoles={['admin', 'station_manager', 'area_manager', 'department_manager', 'kiosk']}><AttendanceKiosk /></ProtectedRoute>} />
       <Route path="/attendance/admin" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><AttendanceAdmin /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
