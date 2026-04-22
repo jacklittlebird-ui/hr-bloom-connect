@@ -598,7 +598,12 @@ const Users = () => {
                           {user.role === 'department_manager' && (
                             <div className="flex flex-wrap gap-1">
                               {user.station_name && <Badge variant="outline" className="gap-1"><MapPin className="w-3 h-3" />{user.station_name}</Badge>}
-                              {user.department_name && <Badge variant="outline">{user.department_name}</Badge>}
+                              {(user.department_names && user.department_names.length > 0
+                                ? user.department_names
+                                : user.department_name ? [user.department_name] : []
+                              ).map((n, i) => (
+                                <Badge key={i} variant="outline">{n}</Badge>
+                              ))}
                             </div>
                           )}
                           {user.role === 'employee' && user.employee_code && (
@@ -799,7 +804,7 @@ const Users = () => {
               </div>
               <div>
                 <Label>{isAr ? 'الدور' : 'Role'} *</Label>
-                <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v, station_code: '', employee_code: '', department_id: '' }))}>
+                <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v, station_code: '', employee_code: '', department_id: '', department_ids: [] }))}>
                   <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الدور' : 'Select role'} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير النظام' : 'Admin'}</span></SelectItem>
@@ -824,13 +829,33 @@ const Users = () => {
               )}
               {form.role === 'department_manager' && (
                 <div>
-                  <Label>{isAr ? 'القسم' : 'Department'} *</Label>
-                  <Select value={form.department_id} onValueChange={v => setForm(f => ({ ...f, department_id: v }))}>
-                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر القسم' : 'Select department'} /></SelectTrigger>
-                    <SelectContent>
-                      {departments.map(d => (<SelectItem key={d.id} value={d.id}>{isAr ? d.name_ar : d.name_en}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
+                  <Label>{isAr ? 'الأقسام (يمكن اختيار أكثر من قسم)' : 'Departments (multi-select)'} *</Label>
+                  <div className="border rounded-md max-h-56 overflow-y-auto p-2 space-y-1">
+                    {departments.map(d => {
+                      const checked = form.department_ids.includes(d.id);
+                      return (
+                        <label key={d.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) => {
+                              setForm(f => {
+                                const next = v
+                                  ? Array.from(new Set([...f.department_ids, d.id]))
+                                  : f.department_ids.filter(x => x !== d.id);
+                                return { ...f, department_ids: next, department_id: next[0] || '' };
+                              });
+                            }}
+                          />
+                          <span className="text-sm">{isAr ? d.name_ar : d.name_en}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {form.department_ids.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isAr ? `تم اختيار ${form.department_ids.length} قسم` : `${form.department_ids.length} selected`}
+                    </p>
+                  )}
                 </div>
               )}
               {form.role === 'employee' && (
