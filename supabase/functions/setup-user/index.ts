@@ -146,21 +146,27 @@ Deno.serve(async (req) => {
       resolvedDepartmentId = department_id;
     }
 
-    // Handle area_manager with multiple stations
-    if (role === 'area_manager' && station_codes && Array.isArray(station_codes)) {
-      const stationInserts = [];
+    // Handle area_manager / station_hr with multiple stations
+    if ((role === 'area_manager' || role === 'station_hr') && station_codes && Array.isArray(station_codes)) {
+      const resolvedStationIds: string[] = [];
       for (const code of station_codes) {
         const { data: station } = await supabaseAdmin
           .from('stations')
           .select('id')
           .eq('code', code)
           .single();
-        if (station?.id) {
-          stationInserts.push({ user_id: userId, station_id: station.id });
-        }
+        if (station?.id) resolvedStationIds.push(station.id);
       }
-      if (stationInserts.length > 0) {
-        await supabaseAdmin.from('area_manager_stations').insert(stationInserts);
+
+      // For station_hr: use the first station as the primary on user_roles for backward compat
+      if (role === 'station_hr' && !stationId && resolvedStationIds.length > 0) {
+        stationId = resolvedStationIds[0];
+      }
+
+      if (resolvedStationIds.length > 0) {
+        const targetTable = role === 'area_manager' ? 'area_manager_stations' : 'station_hr_stations';
+        const rows = resolvedStationIds.map(sid => ({ user_id: userId, station_id: sid }));
+        await supabaseAdmin.from(targetTable).upsert(rows, { onConflict: 'user_id,station_id' });
       }
     }
 
