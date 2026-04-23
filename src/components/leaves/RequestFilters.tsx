@@ -44,7 +44,7 @@ export const RequestFilters = ({
       <div className="relative flex-1">
         <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
         <Input
-          placeholder={language === 'ar' ? 'بحث بالاسم...' : 'Search by name...'}
+          placeholder={language === 'ar' ? 'بحث بالاسم أو كود الموظف...' : 'Search by name or employee ID...'}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className={cn("h-10", isRTL ? "pr-10" : "pl-10")}

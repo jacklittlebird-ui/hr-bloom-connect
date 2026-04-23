@@ -19,6 +19,7 @@ import { toast } from '@/hooks/use-toast';
 interface ViolationRecord {
   id: string;
   employeeId: string;
+  employeeCode: string;
   employeeName: string;
   employeeNameAr: string;
   department: string;
@@ -73,6 +74,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
       return {
         id: v.id,
         employeeId: v.employee_id,
+        employeeCode: emp?.employee_code || '',
         employeeName: emp?.name_en || '',
         employeeNameAr: emp?.name_ar || '',
         department: dept ? (ar ? dept.name_ar : dept.name_en) : '',
@@ -90,9 +92,11 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
   useEffect(() => { fetchViolations(); }, [fetchViolations]);
 
   const filtered = violations.filter(v => {
-    const matchSearch = !searchQuery ||
-      v.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      v.employeeNameAr.includes(searchQuery);
+    const q = searchQuery.trim().toLowerCase();
+    const matchSearch = !q ||
+      v.employeeName.toLowerCase().includes(q) ||
+      v.employeeNameAr.includes(searchQuery.trim()) ||
+      (v.employeeCode || '').toLowerCase().includes(q);
     const matchStatus = filterStatus === 'all' || v.status === filterStatus;
     return matchSearch && matchStatus;
   });
@@ -200,6 +204,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className={cn(isRTL && "text-right")}>{ar ? 'كود الموظف' : 'Employee ID'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الموظف' : 'Employee'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'القسم' : 'Department'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
@@ -214,15 +219,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                      <Ban className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                      {ar ? 'لا توجد مخالفات' : 'No violations'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                       <Ban className="w-8 h-8 mx-auto mb-2 opacity-30" />
                       {ar ? 'لا توجد مخالفات' : 'No violations'}
                     </TableCell>
@@ -232,6 +229,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
                     const typeLabel = violationTypes[v.type];
                     return (
                       <TableRow key={v.id}>
+                        <TableCell className="font-mono text-xs">{v.employeeCode || '—'}</TableCell>
                         <TableCell className="font-medium">{ar ? v.employeeNameAr : v.employeeName}</TableCell>
                         <TableCell>{v.department}</TableCell>
                         <TableCell>{v.station}</TableCell>
@@ -260,7 +258,6 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
                       </TableRow>
                     );
                   })
-                )
                 )}
               </TableBody>
             </Table>

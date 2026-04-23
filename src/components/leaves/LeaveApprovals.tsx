@@ -13,6 +13,7 @@ import { toast } from '@/hooks/use-toast';
 type UnifiedRequest = {
   id: string;
   type: 'leave' | 'permission' | 'mission' | 'overtime';
+  employeeCode?: string;
   employeeName: string;
   employeeNameAr: string;
   department: string;
@@ -61,6 +62,7 @@ export const LeaveApprovals = ({
     ...leaveRequests.map((r): UnifiedRequest => ({
       id: r.id,
       type: 'leave',
+      employeeCode: r.employeeCode,
       employeeName: r.employeeName,
       employeeNameAr: r.employeeNameAr,
       department: r.department,
@@ -72,6 +74,7 @@ export const LeaveApprovals = ({
     ...permissionRequests.map((r): UnifiedRequest => ({
       id: r.id,
       type: 'permission',
+      employeeCode: r.employeeCode,
       employeeName: r.employeeName,
       employeeNameAr: r.employeeNameAr,
       department: r.department,
@@ -90,6 +93,7 @@ export const LeaveApprovals = ({
       return {
         id: r.id,
         type: 'mission',
+        employeeCode: r.employeeCode,
         employeeName: r.employeeName,
         employeeNameAr: r.employeeNameAr,
         department: r.department,
@@ -102,6 +106,7 @@ export const LeaveApprovals = ({
     ...overtimeRequests.map((r): UnifiedRequest => ({
       id: r.id,
       type: 'overtime',
+      employeeCode: r.employeeCode,
       employeeName: r.employeeName,
       employeeNameAr: r.employeeNameAr,
       department: r.department,
@@ -238,6 +243,11 @@ export const LeaveApprovals = ({
                           <span className="font-semibold">
                             {language === 'ar' ? request.employeeNameAr : request.employeeName}
                           </span>
+                          {request.employeeCode && (
+                            <Badge variant="outline" className="text-xs font-mono">
+                              {request.employeeCode}
+                            </Badge>
+                          )}
                           {getTypeBadge(request.type)}
                           <Badge variant="outline" className="text-xs">
                             {request.department}
