@@ -17,7 +17,7 @@ export const normalizeLoginIdentifier = (value: string) => {
 
 export const getRoleRedirectPath = (role?: string) => {
   if (role === 'employee') return '/employee-portal';
-  if (role === 'station_manager' || role === 'area_manager' || role === 'department_manager') return '/station-manager';
+  if (role === 'station_manager' || role === 'area_manager' || role === 'department_manager' || role === 'station_hr') return '/station-manager';
   if (role === 'kiosk') return '/attendance/kiosk';
   if (role === 'training_manager') return '/training-portal';
   return '/';

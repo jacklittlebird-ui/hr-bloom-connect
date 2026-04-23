@@ -4,7 +4,7 @@ import type { User, Session } from '@supabase/supabase-js';
 import { initSessionMonitor } from '@/lib/security';
 import { getRoleRedirectPath, normalizeLoginIdentifier } from '@/lib/auth';
 
-export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager' | 'department_manager';
+export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager' | 'department_manager' | 'station_hr';
 
 // Statuses that are blocked from accessing the employee portal
 const BLOCKED_EMPLOYEE_STATUSES = new Set(['suspended', 'stopped', 'absent', 'resigned']);
@@ -71,14 +71,18 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
   let employeeStatus: string | undefined;
   let nameAr = profile?.full_name || supabaseUser.email || '';
 
-  if (role === 'station_manager' && userRole.station_id) {
+  if ((role === 'station_manager' || role === 'station_hr') && userRole.station_id) {
     const { data: station } = await supabase
       .from('stations')
       .select('code, name_ar')
       .eq('id', userRole.station_id)
       .single();
     stationCode = station?.code;
-    nameAr = station?.name_ar ? `مدير محطة ${station.name_ar}` : nameAr;
+    if (role === 'station_hr') {
+      nameAr = station?.name_ar ? `موارد بشرية ${station.name_ar}` : nameAr;
+    } else {
+      nameAr = station?.name_ar ? `مدير محطة ${station.name_ar}` : nameAr;
+    }
   }
 
   let departmentId: string | undefined;

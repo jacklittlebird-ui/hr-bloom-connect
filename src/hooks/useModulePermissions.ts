@@ -131,7 +131,7 @@ export function useModulePermissions() {
         }
       } else {
         // No permissions record - give role-based defaults
-        if (userRole === 'station_manager' || userRole === 'department_manager') {
+        if (userRole === 'station_manager' || userRole === 'department_manager' || userRole === 'station_hr') {
           setAllowedModules(['dashboard', 'employees', 'attendance', 'leaves', 'reports']);
         } else {
           setAllowedModules(['dashboard', 'employee-portal']);
