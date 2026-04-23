@@ -33,6 +33,19 @@ async function auditCheckout(
   }
 }
 
+async function getCheckoutVerificationState(employeeId: string) {
+  const { data: latestRecord } = await admin
+    .from("attendance_records")
+    .select("id, date, check_in, check_out")
+    .eq("employee_id", employeeId)
+    .order("check_in", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const verified = !!latestRecord && !!latestRecord.check_in && !!latestRecord.check_out;
+  return { latestRecord, verified };
+}
+
 const MAX_DEVICES_PER_USER = 3;
 const DEVICE_EXPIRY_DAYS = 90;
 const SOFT_MATCH_THRESHOLD = 2;
@@ -354,7 +367,21 @@ Deno.serve(async (req) => {
         console.error("[submit-scan] lock acquire failed:", lockErr);
       }
       if (lockAcquired === false) {
-        return new Response(JSON.stringify({ ok: true, event_type, deduplicated: true, reason: "concurrent_lock" }), {
+        if (event_type === "check_out") {
+          const verification = await getCheckoutVerificationState(empId);
+          return new Response(JSON.stringify({
+            ok: verification.verified,
+            event_type,
+            deduplicated: true,
+            verified: verification.verified,
+            reason: "concurrent_lock",
+            error: verification.verified ? undefined : "Check-out is still being processed",
+          }), {
+            status: verification.verified ? 200 : 409,
+            headers: { ...corsHeaders, "content-type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }), {
           status: 200,
           headers: { ...corsHeaders, "content-type": "application/json" },
         });

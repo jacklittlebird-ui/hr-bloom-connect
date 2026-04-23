@@ -61,12 +61,17 @@ const AttendanceScan = () => {
       if (!payload.ok) {
         setStatus("error");
         setMessage(payload.error ?? "Unknown error");
+      } else if (eventType === "check_out" && payload.deduplicated && !payload.verified) {
+        setStatus("error");
+        setMessage(ar ? "لم يتم تأكيد حفظ الانصراف بعد، حدّث الصفحة ثم أعد المحاولة." : "Check-out was not verified yet. Refresh and try again.");
       } else {
         setStatus("success");
         setMessage(
           eventType === "check_in"
             ? ar ? "تم تسجيل الحضور بنجاح ✔" : "Check-in recorded ✔"
-            : ar ? "تم تسجيل الانصراف بنجاح ✔" : "Check-out recorded ✔"
+            : payload.deduplicated
+              ? ar ? "تم تأكيد الانصراف من الطلب السابق ✔" : "Previous check-out confirmed ✔"
+              : ar ? "تم تسجيل الانصراف بنجاح ✔" : "Check-out recorded ✔"
         );
       }
     } catch (e: any) {
@@ -104,12 +109,17 @@ const AttendanceScan = () => {
       if (!result.ok) {
         setStatus("error");
         setMessage(result.error || "Unknown error");
+      } else if (eventType === "check_out" && result.deduplicated && !result.verified) {
+        setStatus("error");
+        setMessage(ar ? "لم يتم تأكيد حفظ الانصراف بعد، حدّث الصفحة ثم أعد المحاولة." : "Check-out was not verified yet. Refresh and try again.");
       } else {
         setStatus("success");
         setMessage(
           eventType === "check_in"
             ? ar ? "تم تسجيل الحضور بنجاح ✔" : "Check-in recorded ✔"
-            : ar ? "تم تسجيل الانصراف بنجاح ✔" : "Check-out recorded ✔"
+            : result.deduplicated
+              ? ar ? "تم تأكيد الانصراف من الطلب السابق ✔" : "Previous check-out confirmed ✔"
+              : ar ? "تم تسجيل الانصراف بنجاح ✔" : "Check-out recorded ✔"
         );
       }
     } catch (e: any) {

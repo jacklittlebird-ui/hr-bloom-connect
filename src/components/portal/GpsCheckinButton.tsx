@@ -81,11 +81,19 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         return;
       }
 
+      if (eventType === 'check_out' && result.deduplicated && !result.verified) {
+        setStatus('error');
+        setMessage(ar ? 'لم يتم تأكيد حفظ الانصراف بعد، يرجى التحديث ثم إعادة المحاولة.' : 'Check-out was not verified yet. Refresh and try again.');
+        return;
+      }
+
       setStatus('success');
       setMessage(
         eventType === 'check_in'
           ? ar ? 'تم تسجيل الحضور بنجاح ✔' : 'Check-in recorded ✔'
-          : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
+          : result.deduplicated
+            ? ar ? 'تم تأكيد الانصراف من الطلب السابق ✔' : 'Previous check-out confirmed ✔'
+            : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
       );
       onSuccess?.();
     } catch (e: any) {

@@ -233,12 +233,17 @@ export const PortalDashboard = () => {
       if (!payload.ok) {
         setQrStatus('error');
         setQrMessage(payload.error ?? 'Unknown error');
+      } else if (qrEventType === 'check_out' && payload.deduplicated && !payload.verified) {
+        setQrStatus('error');
+        setQrMessage(ar ? 'لم يتم تأكيد حفظ الانصراف بعد، حدّث الصفحة ثم أعد المحاولة.' : 'Check-out was not verified yet. Refresh and try again.');
       } else {
         setQrStatus('success');
         setQrMessage(
           qrEventType === 'check_in'
             ? ar ? 'تم تسجيل الحضور بنجاح ✔' : 'Check-in recorded ✔'
-            : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
+            : payload.deduplicated
+              ? ar ? 'تم تأكيد الانصراف من الطلب السابق ✔' : 'Previous check-out confirmed ✔'
+              : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
         );
         refreshAttendance(true);
       }

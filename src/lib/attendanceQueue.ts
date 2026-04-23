@@ -182,6 +182,9 @@ interface CheckinResult {
   attempts?: number;
   event_type?: string;
   location?: string;
+  deduplicated?: boolean;
+  verified?: boolean;
+  reason?: string;
 }
 
 export async function performCheckin(params: CheckinParams): Promise<CheckinResult> {
