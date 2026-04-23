@@ -71,9 +71,6 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
   let employeeStatus: string | undefined;
   let nameAr = profile?.full_name || supabaseUser.email || '';
 
-  let stationCodes: string[] | undefined;
-  let stationIds: string[] | undefined;
-
   if ((role === 'station_manager' || role === 'station_hr') && userRole.station_id) {
     const { data: station } = await supabase
       .from('stations')
