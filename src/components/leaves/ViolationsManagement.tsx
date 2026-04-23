@@ -258,7 +258,6 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
                       </TableRow>
                     );
                   })
-                )
                 )}
               </TableBody>
             </Table>
