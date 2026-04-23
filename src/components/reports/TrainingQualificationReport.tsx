@@ -281,7 +281,7 @@ export const TrainingQualificationReport = () => {
       <head>
         <title>${fullTitle}</title>
         <style>
-          @page { size: auto; margin: 10mm; }
+          @page { size: auto; margin: 15mm 12mm 15mm 12mm; }
           html, body { margin: 0; padding: 0; }
           body { font-family: 'Baloo Bhaijaan 2', 'Cairo', Arial, sans-serif; direction: ${dir}; }
           table.page-table { width: 100%; border-collapse: collapse; }
@@ -304,7 +304,7 @@ export const TrainingQualificationReport = () => {
           .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
           @media print {
             html, body { margin: 0 !important; }
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 8mm 6mm !important; }
           }
         </style>
         <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -314,12 +314,12 @@ export const TrainingQualificationReport = () => {
           <thead>
             <tr><td>
               <div class="page-header">
-                <div class="ph-logo"><img src="${logoUrl}" /></div>
+                <div class="ph-stamp"><img src="${stampUrl}" /></div>
                 <div class="ph-title">
                   <h1>${fullTitle}</h1>
                   <p>${new Date().toLocaleDateString(ar ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
-                <div class="ph-stamp"><img src="${stampUrl}" /></div>
+                <div class="ph-logo"><img src="${logoUrl}" /></div>
               </div>
             </td></tr>
           </thead>
