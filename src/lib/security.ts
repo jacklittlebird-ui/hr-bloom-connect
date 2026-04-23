@@ -104,6 +104,16 @@ const roleFieldAccess: Record<string, FieldAccessConfig> = {
     bank_id_number: 'hidden',
     social_insurance_no: 'hidden',
   },
+  station_hr: {
+    bank_account_number: 'hidden',
+    national_id: 'hidden',
+    basic_salary: 'hidden',
+    phone: 'masked',
+    email: 'full',
+    bank_name: 'hidden',
+    bank_id_number: 'hidden',
+    social_insurance_no: 'hidden',
+  },
   training_manager: {
     bank_account_number: 'hidden',
     national_id: 'hidden',

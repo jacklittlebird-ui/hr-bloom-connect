@@ -971,13 +971,17 @@ const StationManagerPortal = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
-          <TabsList className="inline-grid grid-cols-7" dir="rtl">
+          <TabsList className={cn("inline-grid", user?.role === 'station_hr' ? 'grid-cols-5' : 'grid-cols-7')} dir="rtl">
             <TabsTrigger value="employees" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>
             <TabsTrigger value="attendance" className="gap-1 md:gap-1.5 text-xs md:text-sm"><CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الحضور', 'Attendance')}</span></TabsTrigger>
             <TabsTrigger value="leaveCalendar" className="gap-1 md:gap-1.5 text-xs md:text-sm"><CalendarIcon className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('تقويم الإجازات', 'Leave Calendar')}</span></TabsTrigger>
             <TabsTrigger value="workHours" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Clock className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('ساعات العمل', 'Work Hours')}</span></TabsTrigger>
-            <TabsTrigger value="approvals" className="gap-1 md:gap-1.5 text-xs md:text-sm"><ClipboardCheck className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموافقات', 'Approvals')}</span></TabsTrigger>
-            <TabsTrigger value="evaluations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Star className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقييمات', 'Evaluations')}</span></TabsTrigger>
+            {user?.role !== 'station_hr' && (
+              <TabsTrigger value="approvals" className="gap-1 md:gap-1.5 text-xs md:text-sm"><ClipboardCheck className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموافقات', 'Approvals')}</span></TabsTrigger>
+            )}
+            {user?.role !== 'station_hr' && (
+              <TabsTrigger value="evaluations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Star className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقييمات', 'Evaluations')}</span></TabsTrigger>
+            )}
             <TabsTrigger value="violations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('المخالفات', 'Violations')}</span></TabsTrigger>
           </TabsList>
 

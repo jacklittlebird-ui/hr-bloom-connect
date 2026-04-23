@@ -31,7 +31,7 @@ interface SystemUser {
   user_id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'station_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk' | 'department_manager';
+  role: 'admin' | 'station_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk' | 'department_manager' | 'station_hr';
   station_code?: string;
   station_name?: string;
   department_id?: string;
@@ -248,7 +248,7 @@ const Users = () => {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters', variant: 'destructive' });
       return;
     }
-    if (form.role === 'station_manager' && !form.station_code) {
+    if ((form.role === 'station_manager' || form.role === 'station_hr') && !form.station_code) {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار المحطة' : 'Please select a station', variant: 'destructive' });
       return;
     }
@@ -466,6 +466,7 @@ const Users = () => {
     switch (role) {
       case 'admin': return <Badge className="bg-primary/10 text-primary border-primary/30">{isAr ? 'مدير النظام' : 'Admin'}</Badge>;
       case 'hr': return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">{isAr ? 'موارد بشرية' : 'HR'}</Badge>;
+      case 'station_hr': return <Badge className="bg-teal-500/10 text-teal-600 border-teal-500/30">{isAr ? 'موارد بشرية محطات' : 'Station HR'}</Badge>;
       case 'station_manager': return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30">{isAr ? 'مدير محطة' : 'Station Manager'}</Badge>;
       case 'department_manager': return <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30">{isAr ? 'مدير قسم' : 'Department Manager'}</Badge>;
       case 'employee': return <Badge className="bg-sky-500/10 text-sky-600 border-sky-500/30">{isAr ? 'موظف' : 'Employee'}</Badge>;
@@ -478,6 +479,7 @@ const Users = () => {
     switch (role) {
       case 'admin': return <Shield className="w-4 h-4 text-primary" />;
       case 'station_manager': return <MapPin className="w-4 h-4 text-amber-600" />;
+      case 'station_hr': return <ShieldCheck className="w-4 h-4 text-teal-600" />;
       default: return <User className="w-4 h-4 text-sky-600" />;
     }
   };
@@ -592,7 +594,7 @@ const Users = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          {user.role === 'station_manager' && user.station_name && (
+                          {(user.role === 'station_manager' || user.role === 'station_hr') && user.station_name && (
                             <Badge variant="outline" className="gap-1"><MapPin className="w-3 h-3" />{user.station_name}</Badge>
                           )}
                           {user.role === 'department_manager' && (
@@ -719,12 +721,12 @@ const Users = () => {
               <div>
                 <Label>{isAr ? 'الدور' : 'Role'}</Label>
                 <Input
-                  value={editForm.role === 'admin' ? (isAr ? 'مدير النظام' : 'Admin') : editForm.role === 'station_manager' ? (isAr ? 'مدير محطة' : 'Station Manager') : editForm.role === 'training_manager' ? (isAr ? 'مدير التدريب' : 'Training Manager') : (isAr ? 'موظف' : 'Employee')}
+                  value={editForm.role === 'admin' ? (isAr ? 'مدير النظام' : 'Admin') : editForm.role === 'station_manager' ? (isAr ? 'مدير محطة' : 'Station Manager') : editForm.role === 'station_hr' ? (isAr ? 'موارد بشرية محطات' : 'Station HR') : editForm.role === 'training_manager' ? (isAr ? 'مدير التدريب' : 'Training Manager') : (isAr ? 'موظف' : 'Employee')}
                   disabled
                   className="bg-muted"
                 />
               </div>
-              {editForm.role === 'station_manager' && (
+              {(editForm.role === 'station_manager' || editForm.role === 'station_hr') && (
                 <div>
                   <Label>{isAr ? 'المحطة' : 'Station'}</Label>
                   <Input
@@ -809,6 +811,7 @@ const Users = () => {
                   <SelectContent>
                     <SelectItem value="admin"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير النظام' : 'Admin'}</span></SelectItem>
                     <SelectItem value="hr"><span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> {isAr ? 'موارد بشرية' : 'HR'}</span></SelectItem>
+                    <SelectItem value="station_hr"><span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4" /> {isAr ? 'موارد بشرية محطات' : 'Station HR'}</span></SelectItem>
                     <SelectItem value="station_manager"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {isAr ? 'مدير محطة' : 'Station Manager'}</span></SelectItem>
                     <SelectItem value="department_manager"><span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {isAr ? 'مدير قسم' : 'Department Manager'}</span></SelectItem>
                     <SelectItem value="employee"><span className="flex items-center gap-2"><User className="w-4 h-4" /> {isAr ? 'موظف' : 'Employee'}</span></SelectItem>
@@ -816,7 +819,7 @@ const Users = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {(form.role === 'station_manager' || form.role === 'department_manager') && (
+              {(form.role === 'station_manager' || form.role === 'department_manager' || form.role === 'station_hr') && (
                 <div>
                   <Label>{isAr ? 'المحطة' : 'Station'} *</Label>
                   <Select value={form.station_code} onValueChange={v => setForm(f => ({ ...f, station_code: v }))}>

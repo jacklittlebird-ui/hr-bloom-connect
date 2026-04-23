@@ -275,8 +275,8 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return data ? [mapRow(data)] : [];
         }
 
-        // Station / department / area managers get limited view
-        if (user?.role === 'station_manager' || user?.role === 'department_manager' || user?.role === 'area_manager') {
+        // Station / department / area managers + station HR get limited view
+        if (user?.role === 'station_manager' || user?.role === 'department_manager' || user?.role === 'area_manager' || user?.role === 'station_hr') {
           const { data, error } = await supabase
             .from('employee_limited_view' as any)
             .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
