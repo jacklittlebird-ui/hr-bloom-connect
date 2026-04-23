@@ -305,34 +305,41 @@ const StationManagerPortal = () => {
       list = list.filter(r => deptEmpIds.has(r.employee_id));
     }
     if (attSearch.trim()) {
-      // Normalize Arabic text: strip diacritics/tatweel, unify alef/yeh/teh marbuta/hamza variants
-      const normalizeAr = (s: string) => (s || '')
+      const normalizeSearchText = (s: string) => (s || '')
         .toLowerCase()
-        .replace(/[\u064B-\u065F\u0670\u0640]/g, '') // diacritics + tatweel
-        .replace(/[إأآا ٱ]/g, 'ا')
+        .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 1632))
+        .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+        .replace(/[إأآاٱ]/g, 'ا')
         .replace(/ى/g, 'ي')
         .replace(/ؤ/g, 'و')
         .replace(/ئ/g, 'ي')
         .replace(/ء/g, '')
         .replace(/ة/g, 'ه')
-        .replace(/گ/g, 'ك')
-        .replace(/ک/g, 'ك')
+        .replace(/[گک]/g, 'ك')
         .replace(/پ/g, 'ب')
         .replace(/چ/g, 'ج')
         .replace(/\s+/g, ' ')
         .trim();
-      const q = normalizeAr(attSearch);
-      const tokens = q.split(/\s+/).filter(Boolean);
+
+      const query = normalizeSearchText(attSearch);
+      const tokens = query.split(/\s+/).filter(Boolean);
+
       list = list.filter(r => {
         const emp = stationEmployees.find(e => e.id === r.employee_id);
         if (!emp) return false;
-        const code = (emp.employeeId || '').toLowerCase();
-        // Exact match on employee code (prevents emp1660 from matching emp16601, emp16602...)
-        if (code === q) return true;
-        const nameAr = normalizeAr(emp.nameAr);
-        const nameEn = normalizeAr(emp.nameEn);
-        // Every token (word) the user typed must appear somewhere in the AR or EN name
-        return tokens.every(t => nameAr.includes(t) || nameEn.includes(t));
+
+        const code = normalizeSearchText(emp.employeeId || '');
+        if (code === query || code.startsWith(query)) return true;
+
+        const nameAr = normalizeSearchText(emp.nameAr || '');
+        const nameEn = normalizeSearchText(emp.nameEn || '');
+
+        return (
+          nameAr.includes(query) ||
+          nameEn.includes(query) ||
+          tokens.every(t => nameAr.includes(t)) ||
+          tokens.every(t => nameEn.includes(t))
+        );
       });
     }
     return list;
