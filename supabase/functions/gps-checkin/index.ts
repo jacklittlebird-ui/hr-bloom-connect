@@ -222,6 +222,26 @@ Deno.serve(async (req) => {
     if (!role?.employee_id) return json({ error: "Employee not found" }, 404);
     const employeeId = role.employee_id;
 
+    // ─── Idempotency lock (DB-level, 30s) ───────────────────────────────
+    // Atomically reserves (employee_id, device_id, event_type) so two
+    // concurrent requests (double-click, network retry) cannot both proceed.
+    const { data: lockAcquired, error: lockErr } = await supabaseAdmin.rpc(
+      "try_acquire_attendance_lock",
+      {
+        p_employee_id: employeeId,
+        p_device_id: device_id,
+        p_event_type: event_type,
+        p_ttl_seconds: 30,
+      },
+    );
+    if (lockErr) {
+      console.error("[gps-checkin] lock acquire failed:", lockErr);
+    }
+    if (lockAcquired === false) {
+      totalDuplicates++;
+      return json({ ok: true, event_type, deduplicated: true, reason: "concurrent_lock" }, 200);
+    }
+
     // Get station
     const { data: emp } = await supabaseAdmin
       .from("employees")
