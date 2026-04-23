@@ -218,7 +218,7 @@ export const TrainingQualificationReport = () => {
     const title = getFilterTitle();
     const fullTitle = ar ? `سجل التدريب والتأهيل - ${title}` : `Training & Qualification Record - ${title}`;
     const footerText = ar
-      ? 'وكالة لينك إيرو للتجارة - إدارة التدريب'
+      ? 'لينك إيرو تريدنج إجنسي - إدارة التدريب'
       : 'Link Aero Trading Agency - Training Department';
 
     const headerRow = `
@@ -291,6 +291,7 @@ export const TrainingQualificationReport = () => {
           .page-header {
             display: flex; align-items: center; justify-content: space-between;
             padding: 4px 0 6px 0; border-bottom: 2px solid #1e40af; gap: 12px;
+            direction: ltr;
           }
           .page-header .ph-logo img { height: 48px; object-fit: contain; }
           .page-header .ph-stamp img { height: 56px; object-fit: contain; }
@@ -314,12 +315,12 @@ export const TrainingQualificationReport = () => {
           <thead>
             <tr><td>
               <div class="page-header">
-                <div class="ph-stamp"><img src="${stampUrl}" /></div>
-                <div class="ph-title">
+                <div class="ph-logo"><img src="${logoUrl}" /></div>
+                <div class="ph-title" style="direction:${dir};">
                   <h1>${fullTitle}</h1>
                   <p>${new Date().toLocaleDateString(ar ? 'ar-SA' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
-                <div class="ph-logo"><img src="${logoUrl}" /></div>
+                <div class="ph-stamp"><img src="${stampUrl}" /></div>
               </div>
             </td></tr>
           </thead>
