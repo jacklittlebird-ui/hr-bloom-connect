@@ -173,18 +173,21 @@ const StationManagerPortal = () => {
 
   const isAreaManager = user?.role === 'area_manager';
   const isDepartmentManager = user?.role === 'department_manager';
+  const isStationHR = user?.role === 'station_hr';
+  // Treat station_hr with multiple stations like area_manager (multi-station selector)
+  const isMultiStation = isAreaManager || (isStationHR && (user?.stations?.length || 0) > 1);
   const [selectedStation, setSelectedStation] = useState<string>(user?.station || user?.stations?.[0] || '');
 
-  // For area_manager: list of managed station labels
+  // For area_manager / multi-station station_hr: list of managed station labels
   const managedStations = useMemo(() => {
-    if (!isAreaManager || !user?.stations) return [];
+    if (!isMultiStation || !user?.stations) return [];
     return user.stations.map(code => {
       const loc = stationLocations.find(s => s.value === code);
       return { code, labelAr: loc?.labelAr || code, labelEn: loc?.labelEn || code };
     });
-  }, [isAreaManager, user?.stations, language]);
+  }, [isMultiStation, user?.stations, language]);
 
-  const activeStation = isAreaManager ? selectedStation : user?.station;
+  const activeStation = isMultiStation ? selectedStation : user?.station;
 
   const stationName = useMemo(() => {
     const loc = stationLocations.find(s => s.value === activeStation);
@@ -201,7 +204,7 @@ const StationManagerPortal = () => {
   }, [activeStation, language, isDepartmentManager, user?.departmentName, user?.departmentNameAr, user?.departmentNames, user?.departmentNamesAr]);
 
   const stationEmployees = useMemo(() => {
-    if (isAreaManager && selectedStation === 'all') {
+    if (isMultiStation && selectedStation === 'all') {
       return employees.filter(e => user?.stations?.includes(e.stationLocation || ''));
     }
     let scoped = employees.filter(e => e.stationLocation === activeStation);
