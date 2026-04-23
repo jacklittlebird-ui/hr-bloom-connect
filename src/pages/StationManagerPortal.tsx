@@ -1157,9 +1157,9 @@ const StationManagerPortal = () => {
                           const displayStatus = r.is_late && r.status === 'present' ? statusMap.late : st;
                           return (
                             <TableRow key={r.id}>
-                              <TableCell>
+                              <TableCell className="min-w-[220px]">
                                 <div>
-                                  <p className="font-medium text-sm">{ar ? emp?.nameAr : emp?.nameEn}</p>
+                                  <p className="font-medium text-sm whitespace-normal break-words" title={ar ? emp?.nameAr : emp?.nameEn}>{ar ? emp?.nameAr : emp?.nameEn}</p>
                                   <p className="text-xs text-muted-foreground">{emp?.employeeId}</p>
                                 </div>
                               </TableCell>
