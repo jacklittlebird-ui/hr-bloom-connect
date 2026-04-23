@@ -449,7 +449,11 @@ Deno.serve(async (req) => {
             is_late: isLate,
           });
           if (insertErr) {
-            console.error("[submit-scan] CHECK_IN INSERT FAILED:", JSON.stringify(insertErr));
+            if ((insertErr as any).code === "23505") {
+              console.log("[submit-scan] CHECK_IN race detected (unique index), treating as duplicate");
+            } else {
+              console.error("[submit-scan] CHECK_IN INSERT FAILED:", JSON.stringify(insertErr));
+            }
           } else {
             console.log("[submit-scan] CHECK_IN record created for", empId, "date:", localDateStr);
           }
