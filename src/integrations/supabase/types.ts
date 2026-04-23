@@ -326,6 +326,30 @@ export type Database = {
           },
         ]
       }
+      attendance_idempotency: {
+        Row: {
+          acquired_at: string
+          device_id: string
+          employee_id: string
+          event_type: string
+          expires_at: string
+        }
+        Insert: {
+          acquired_at?: string
+          device_id: string
+          employee_id: string
+          event_type: string
+          expires_at?: string
+        }
+        Update: {
+          acquired_at?: string
+          device_id?: string
+          employee_id?: string
+          event_type?: string
+          expires_at?: string
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           check_in: string | null
@@ -3025,6 +3049,15 @@ export type Database = {
           p_type?: string
         }
         Returns: undefined
+      }
+      try_acquire_attendance_lock: {
+        Args: {
+          p_device_id: string
+          p_employee_id: string
+          p_event_type: string
+          p_ttl_seconds?: number
+        }
+        Returns: boolean
       }
       upsert_mobile_bill: {
         Args: {

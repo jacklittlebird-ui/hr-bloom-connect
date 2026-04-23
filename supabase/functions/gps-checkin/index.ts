@@ -222,6 +222,26 @@ Deno.serve(async (req) => {
     if (!role?.employee_id) return json({ error: "Employee not found" }, 404);
     const employeeId = role.employee_id;
 
+    // ─── Idempotency lock (DB-level, 30s) ───────────────────────────────
+    // Atomically reserves (employee_id, device_id, event_type) so two
+    // concurrent requests (double-click, network retry) cannot both proceed.
+    const { data: lockAcquired, error: lockErr } = await supabaseAdmin.rpc(
+      "try_acquire_attendance_lock",
+      {
+        p_employee_id: employeeId,
+        p_device_id: device_id,
+        p_event_type: event_type,
+        p_ttl_seconds: 30,
+      },
+    );
+    if (lockErr) {
+      console.error("[gps-checkin] lock acquire failed:", lockErr);
+    }
+    if (lockAcquired === false) {
+      totalDuplicates++;
+      return json({ ok: true, event_type, deduplicated: true, reason: "concurrent_lock" }, 200);
+    }
+
     // Get station
     const { data: emp } = await supabaseAdmin
       .from("employees")
@@ -408,6 +428,11 @@ Deno.serve(async (req) => {
 
         const { error } = await supabaseAdmin.from("attendance_records").insert(insertPayload);
         if (error) {
+          // Unique-index violation = a concurrent request already inserted the open record
+          if ((error as any).code === "23505") {
+            console.log("[gps-checkin] CHECK_IN race detected (unique index), treating as duplicate");
+            return; // Idempotent
+          }
           console.error("[gps-checkin] CHECK_IN INSERT FAILED:", JSON.stringify(error));
           throw new Error("Failed to create attendance record: " + error.message);
         }
