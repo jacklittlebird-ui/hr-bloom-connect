@@ -204,10 +204,12 @@ const StationManagerPortal = () => {
   }, [activeStation, language, isDepartmentManager, user?.departmentName, user?.departmentNameAr, user?.departmentNames, user?.departmentNamesAr]);
 
   const stationEmployees = useMemo(() => {
+    // Exclude inactive employees from all Station Manager portal tabs
+    const visible = employees.filter(e => e.status !== 'inactive');
     if (isMultiStation && selectedStation === 'all') {
-      return employees.filter(e => user?.stations?.includes(e.stationLocation || ''));
+      return visible.filter(e => user?.stations?.includes(e.stationLocation || ''));
     }
-    let scoped = employees.filter(e => e.stationLocation === activeStation);
+    let scoped = visible.filter(e => e.stationLocation === activeStation);
     if (isDepartmentManager) {
       const deptNamesAr = (user?.departmentNamesAr && user.departmentNamesAr.length > 0)
         ? user.departmentNamesAr
