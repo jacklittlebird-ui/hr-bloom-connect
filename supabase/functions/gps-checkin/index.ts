@@ -81,6 +81,19 @@ function recordCheckin(userId: string, eventType: string): void {
   }
 }
 
+async function getCheckoutVerificationState(supabaseAdmin: any, employeeId: string) {
+  const { data: latestRecord } = await supabaseAdmin
+    .from("attendance_records")
+    .select("id, date, check_in, check_out")
+    .eq("employee_id", employeeId)
+    .order("check_in", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const verified = !!latestRecord && !!latestRecord.check_in && !!latestRecord.check_out;
+  return { latestRecord, verified };
+}
+
 // ─── Device binding helper ─────────────────────────────────────────────────
 
 interface DeviceMeta {

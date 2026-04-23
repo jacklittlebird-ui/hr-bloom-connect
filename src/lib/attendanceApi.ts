@@ -6,6 +6,9 @@ export interface AttendanceFunctionResult {
   event_type?: string;
   location?: string;
   attempts?: number;
+  deduplicated?: boolean;
+  verified?: boolean;
+  reason?: string;
 }
 
 interface InvokeAttendanceFunctionOptions {
