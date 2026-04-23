@@ -280,7 +280,7 @@ export const TrainingQualificationReport = () => {
           @page { size: auto; margin: 10mm; }
           html, body { margin: 0; padding: 0; }
           body { font-family: 'Baloo Bhaijaan 2', 'Cairo', Arial, sans-serif; direction: ${dir}; }
-          .print-shell { padding: 0; box-sizing: border-box; }
+          .print-shell { padding: 10mm; box-sizing: border-box; }
           table { width: 100%; border-collapse: collapse; }
           tr { page-break-inside: avoid; }
           .report-header { text-align: center; margin-bottom: 10px; }
@@ -289,8 +289,9 @@ export const TrainingQualificationReport = () => {
           .report-header p { font-size: 11px; color: #666; margin: 0; }
           .footer-note { text-align: center; font-size: 10px; color: #999; margin-top: 6px; margin-bottom: 6px; }
           @media print {
-            html, body { margin: 0 !important; padding: 0 !important; }
+            html, body { margin: 0 !important; }
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .print-shell { padding: 10mm !important; }
           }
         </style>
         <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
