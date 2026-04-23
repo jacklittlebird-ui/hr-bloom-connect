@@ -243,6 +243,11 @@ export const LeaveApprovals = ({
                           <span className="font-semibold">
                             {language === 'ar' ? request.employeeNameAr : request.employeeName}
                           </span>
+                          {request.employeeCode && (
+                            <Badge variant="outline" className="text-xs font-mono">
+                              {request.employeeCode}
+                            </Badge>
+                          )}
                           {getTypeBadge(request.type)}
                           <Badge variant="outline" className="text-xs">
                             {request.department}
