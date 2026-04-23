@@ -306,9 +306,17 @@ const StationManagerPortal = () => {
     }
     if (attSearch.trim()) {
       const q = attSearch.trim().toLowerCase();
+      const tokens = q.split(/\s+/).filter(Boolean);
       list = list.filter(r => {
         const emp = stationEmployees.find(e => e.id === r.employee_id);
-        return emp && (emp.nameAr.toLowerCase().includes(q) || emp.nameEn.toLowerCase().includes(q) || emp.employeeId.toLowerCase().includes(q));
+        if (!emp) return false;
+        const code = (emp.employeeId || '').toLowerCase();
+        // Exact match on employee code (prevents emp1660 from matching emp16601, emp16602...)
+        if (code === q) return true;
+        // All tokens must be present in either Arabic or English name
+        const nameAr = (emp.nameAr || '').toLowerCase();
+        const nameEn = (emp.nameEn || '').toLowerCase();
+        return tokens.every(t => nameAr.includes(t) || nameEn.includes(t));
       });
     }
     return list;
