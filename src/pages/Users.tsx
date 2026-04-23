@@ -635,8 +635,18 @@ const Users = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          {(user.role === 'station_manager' || user.role === 'station_hr') && user.station_name && (
+                          {user.role === 'station_manager' && user.station_name && (
                             <Badge variant="outline" className="gap-1"><MapPin className="w-3 h-3" />{user.station_name}</Badge>
+                          )}
+                          {user.role === 'station_hr' && (
+                            <div className="flex flex-wrap gap-1">
+                              {(user.station_names && user.station_names.length > 0
+                                ? user.station_names
+                                : user.station_name ? [user.station_name] : []
+                              ).map((n, i) => (
+                                <Badge key={i} variant="outline" className="gap-1"><MapPin className="w-3 h-3" />{n}</Badge>
+                              ))}
+                            </div>
                           )}
                           {user.role === 'department_manager' && (
                             <div className="flex flex-wrap gap-1">
