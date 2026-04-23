@@ -115,8 +115,8 @@ const AppRoutes = () => (
       <Route path="/employee-portal" element={<ProtectedRoute allowedRoles={['employee']}><EmployeePortal /></ProtectedRoute>} />
       <Route path="/station-manager" element={<ProtectedRoute allowedRoles={['station_manager', 'area_manager', 'department_manager', 'station_hr']}><StationManagerPortal /></ProtectedRoute>} />
       <Route path="/training-portal" element={<ProtectedRoute allowedRoles={['training_manager']}><TrainingPortal /></ProtectedRoute>} />
-      <Route path="/attendance/scan" element={<ProtectedRoute allowedRoles={['employee', 'station_manager', 'area_manager', 'department_manager', 'admin', 'hr']}><AttendanceScan /></ProtectedRoute>} />
-      <Route path="/attendance/kiosk" element={<ProtectedRoute allowedRoles={['admin', 'station_manager', 'area_manager', 'department_manager', 'kiosk']}><AttendanceKiosk /></ProtectedRoute>} />
+      <Route path="/attendance/scan" element={<ProtectedRoute allowedRoles={['employee', 'station_manager', 'area_manager', 'department_manager', 'station_hr', 'admin', 'hr']}><AttendanceScan /></ProtectedRoute>} />
+      <Route path="/attendance/kiosk" element={<ProtectedRoute allowedRoles={['admin', 'station_manager', 'area_manager', 'department_manager', 'station_hr', 'kiosk']}><AttendanceKiosk /></ProtectedRoute>} />
       <Route path="/attendance/admin" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><AttendanceAdmin /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
