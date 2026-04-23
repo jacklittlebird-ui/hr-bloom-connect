@@ -428,6 +428,11 @@ Deno.serve(async (req) => {
 
         const { error } = await supabaseAdmin.from("attendance_records").insert(insertPayload);
         if (error) {
+          // Unique-index violation = a concurrent request already inserted the open record
+          if ((error as any).code === "23505") {
+            console.log("[gps-checkin] CHECK_IN race detected (unique index), treating as duplicate");
+            return; // Idempotent
+          }
           console.error("[gps-checkin] CHECK_IN INSERT FAILED:", JSON.stringify(error));
           throw new Error("Failed to create attendance record: " + error.message);
         }
