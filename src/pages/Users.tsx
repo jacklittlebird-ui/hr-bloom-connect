@@ -847,7 +847,7 @@ const Users = () => {
               </div>
               <div>
                 <Label>{isAr ? 'الدور' : 'Role'} *</Label>
-                <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v, station_code: '', employee_code: '', department_id: '', department_ids: [] }))}>
+                <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v, station_code: '', employee_code: '', department_id: '', department_ids: [], station_codes: [] }))}>
                   <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الدور' : 'Select role'} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin"><span className="flex items-center gap-2"><Shield className="w-4 h-4" /> {isAr ? 'مدير النظام' : 'Admin'}</span></SelectItem>
@@ -860,7 +860,7 @@ const Users = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {(form.role === 'station_manager' || form.role === 'department_manager' || form.role === 'station_hr') && (
+              {(form.role === 'station_manager' || form.role === 'department_manager') && (
                 <div>
                   <Label>{isAr ? 'المحطة' : 'Station'} *</Label>
                   <Select value={form.station_code} onValueChange={v => setForm(f => ({ ...f, station_code: v }))}>
@@ -869,6 +869,37 @@ const Users = () => {
                       {stations.map(s => (<SelectItem key={s.code} value={s.code}>{isAr ? s.name_ar : s.name_en}</SelectItem>))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
+              {form.role === 'station_hr' && (
+                <div>
+                  <Label>{isAr ? 'المحطات (يمكن اختيار أكثر من محطة)' : 'Stations (multi-select)'} *</Label>
+                  <div className="border rounded-md max-h-56 overflow-y-auto p-2 space-y-1">
+                    {stations.map(s => {
+                      const checked = form.station_codes.includes(s.code);
+                      return (
+                        <label key={s.code} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) => {
+                              setForm(f => {
+                                const next = v
+                                  ? Array.from(new Set([...f.station_codes, s.code]))
+                                  : f.station_codes.filter(x => x !== s.code);
+                                return { ...f, station_codes: next, station_code: next[0] || '' };
+                              });
+                            }}
+                          />
+                          <span className="text-sm">{isAr ? s.name_ar : s.name_en}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {form.station_codes.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isAr ? `تم اختيار ${form.station_codes.length} محطة` : `${form.station_codes.length} selected`}
+                    </p>
+                  )}
                 </div>
               )}
               {form.role === 'department_manager' && (
