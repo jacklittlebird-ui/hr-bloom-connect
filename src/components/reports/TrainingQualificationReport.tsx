@@ -277,7 +277,7 @@ export const TrainingQualificationReport = () => {
       <head>
         <title>${fullTitle}</title>
         <style>
-          @page { size: auto; margin: 11mm; }
+          @page { size: auto; margin: 10mm; }
           html, body { margin: 0; padding: 0; }
           body { font-family: 'Baloo Bhaijaan 2', 'Cairo', Arial, sans-serif; direction: ${dir}; }
           .print-shell { padding: 0; box-sizing: border-box; }
