@@ -143,9 +143,9 @@ const LoginPage = () => {
             ))}
           </div>
 
-          <div className="flex items-center justify-center gap-2 mt-10">
+          <div className="flex items-center justify-center gap-3 mt-10">
             <span className="text-white/40 text-xs">Developed by</span>
-            <img src={oneStoryLogo} alt="OneStory Solutions" className="h-8 w-auto object-contain" />
+            <img src={oneStoryLogo} alt="OneStory Solutions" className="h-16 w-auto object-contain" />
           </div>
         </div>
       </div>
@@ -351,9 +351,9 @@ const LoginPage = () => {
           )}
 
           {/* Footer - mobile only */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mt-8">
+          <div className="lg:hidden flex items-center justify-center gap-3 mt-8">
             <span className="text-xs text-muted-foreground">Developed by</span>
-            <img src={oneStoryLogo} alt="OneStory Solutions" className="h-7 w-auto object-contain" />
+            <img src={oneStoryLogo} alt="OneStory Solutions" className="h-14 w-auto object-contain" />
           </div>
         </div>
       </div>
