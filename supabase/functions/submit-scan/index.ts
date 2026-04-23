@@ -390,40 +390,32 @@ Deno.serve(async (req) => {
       const localHour = parseInt(now.toLocaleString("en-US", { timeZone: tz, hour: "numeric", hour12: false }));
 
       if (event_type === "check_in") {
-        // Close open records from PREVIOUS days
-        const { data: oldOpenRecords } = await admin
+        // CRITICAL: Block new check_in if ANY open record exists (today or prior days).
+        // The employee MUST check out first. Stale records are auto-closed by the
+        // dedicated `auto-checkout` cron job — never by check_in itself.
+        const { data: anyOpenRecord } = await admin
           .from("attendance_records")
-          .select("id, check_in, date")
+          .select("id, date, check_in")
           .eq("employee_id", empId)
           .is("check_out", null)
           .not("check_in", "is", null)
-          .neq("date", localDateStr);
-
-        if (oldOpenRecords && oldOpenRecords.length > 0) {
-          for (const rec of oldOpenRecords) {
-            await admin.from("attendance_records")
-              .update({
-                check_out: rec.check_in,
-                work_hours: 0,
-                work_minutes: 0,
-                notes: "لم يتم تسجيل انصراف / No checkout recorded - auto-closed",
-              })
-              .eq("id", rec.id);
-          }
-        }
-
-        // Check if there's an OPEN record for today — block duplicate open check-in
-        const { data: openTodayRecord } = await admin
-          .from("attendance_records")
-          .select("id")
-          .eq("employee_id", empId)
-          .eq("date", localDateStr)
-          .is("check_out", null)
+          .order("check_in", { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (!openTodayRecord) {
-          // Allow new check-in (even if closed records exist for today)
+        if (anyOpenRecord) {
+          if (anyOpenRecord.date === localDateStr) {
+            console.log("[submit-scan] Already has OPEN record for today, skipping:", anyOpenRecord.id);
+          } else {
+            console.warn("[submit-scan] Refusing check_in: open record from previous day", anyOpenRecord.id);
+            return new Response(JSON.stringify({
+              error: "يوجد سجل حضور مفتوح من يوم سابق. يرجى تسجيل الانصراف أولاً / You have an open check-in from a previous day. Please check out first.",
+              error_code: "OPEN_RECORD_EXISTS",
+              retryable: false,
+            }), { status: 409, headers: { ...corsHeaders, "content-type": "application/json" } });
+          }
+        } else {
+          // No open record — create a new one
           const isLate = !isFlexible && localHour >= 9;
           const { error: insertErr } = await admin.from("attendance_records").insert({
             employee_id: empId,
@@ -437,8 +429,6 @@ Deno.serve(async (req) => {
           } else {
             console.log("[submit-scan] CHECK_IN record created for", empId, "date:", localDateStr);
           }
-        } else {
-          console.log("[submit-scan] Already has OPEN record for today, skipping:", openTodayRecord.id);
         }
       } else if (event_type === "check_out") {
         await auditCheckout(user_id, empId, "attempt", { channel: "qr", location_id });

@@ -369,41 +369,30 @@ Deno.serve(async (req) => {
 
     if (event_type === "check_in") {
       recordPromise = (async () => {
-        // Close any open records from PREVIOUS days
-        const { data: oldOpenRecords } = await supabaseAdmin
+        // CRITICAL: Block new check_in if ANY open record exists (from today OR previous days).
+        // The employee MUST check out first. Stale records (>18h) are auto-closed by the
+        // dedicated `auto-checkout` cron job — never by check_in itself, to avoid the
+        // bug where check_out gets set equal to check_in (zero hours).
+        const { data: anyOpenRecord } = await supabaseAdmin
           .from("attendance_records")
-          .select("id, check_in, date")
+          .select("id, date, check_in")
           .eq("employee_id", employeeId)
           .is("check_out", null)
           .not("check_in", "is", null)
-          .neq("date", dateStr);
-
-        if (oldOpenRecords && oldOpenRecords.length > 0) {
-          for (const rec of oldOpenRecords) {
-            await supabaseAdmin.from("attendance_records")
-              .update({
-                check_out: rec.check_in,
-                work_hours: 0,
-                work_minutes: 0,
-                notes: "لم يتم تسجيل انصراف / No checkout recorded - auto-closed",
-              })
-              .eq("id", rec.id);
-          }
-        }
-
-        // Check if there's an OPEN record for today (no check_out) — block duplicate check-in
-        const { data: openTodayRecord } = await supabaseAdmin
-          .from("attendance_records")
-          .select("id")
-          .eq("employee_id", employeeId)
-          .eq("date", dateStr)
-          .is("check_out", null)
+          .order("check_in", { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (openTodayRecord) {
-          console.log("[gps-checkin] Already has OPEN record for today, skipping:", openTodayRecord.id);
-          return; // Don't create another open record
+        if (anyOpenRecord) {
+          if (anyOpenRecord.date === dateStr) {
+            console.log("[gps-checkin] Already has OPEN record for today, skipping:", anyOpenRecord.id);
+            return; // Idempotent: same-day duplicate check-in is a no-op
+          }
+          // Open record from a previous day — refuse and ask the employee to check out first
+          throw Object.assign(
+            new Error("يوجد سجل حضور مفتوح من يوم سابق. يرجى تسجيل الانصراف أولاً / You have an open check-in from a previous day. Please check out first."),
+            { statusCode: 409, errorCode: "OPEN_RECORD_EXISTS", retryable: false },
+          );
         }
 
         // Allow new check-in even if there are closed records for today
