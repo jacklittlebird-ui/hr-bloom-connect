@@ -98,12 +98,12 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     (shrLinks || []).forEach((row: any) => row.station_id && allStationIds.add(row.station_id));
 
     if (allStationIds.size > 0) {
-      stationIds = Array.from(allStationIds);
+      stationUuids = Array.from(allStationIds);
       const { data: shrStations } = await supabase
         .from('stations')
         .select('id, code, name_ar')
-        .in('id', stationIds);
-      const ordered = stationIds
+        .in('id', stationUuids);
+      const ordered = stationUuids
         .map(id => shrStations?.find(s => s.id === id))
         .filter(Boolean) as Array<{ id: string; code: string; name_ar: string }>;
       stationCodes = ordered.map(s => s.code);
@@ -193,8 +193,6 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     nameAr = emp?.name_ar || nameAr;
   }
 
-  let stationCodes: string[] | undefined;
-  let stationUuids: string[] | undefined;
   if (role === 'area_manager') {
     const { data: amStations } = await supabase
       .from('area_manager_stations')
