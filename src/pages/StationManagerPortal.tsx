@@ -305,7 +305,18 @@ const StationManagerPortal = () => {
       list = list.filter(r => deptEmpIds.has(r.employee_id));
     }
     if (attSearch.trim()) {
-      const q = attSearch.trim().toLowerCase();
+      // Normalize Arabic text: unify alef/yeh/teh marbuta variants and strip diacritics
+      const normalizeAr = (s: string) => s
+        .toLowerCase()
+        .replace(/[\u064B-\u065F\u0670]/g, '')
+        .replace(/[إأآا]/g, 'ا')
+        .replace(/ى/g, 'ي')
+        .replace(/ؤ/g, 'و')
+        .replace(/ئ/g, 'ي')
+        .replace(/ة/g, 'ه')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const q = normalizeAr(attSearch);
       const tokens = q.split(/\s+/).filter(Boolean);
       list = list.filter(r => {
         const emp = stationEmployees.find(e => e.id === r.employee_id);
@@ -313,8 +324,8 @@ const StationManagerPortal = () => {
         const code = (emp.employeeId || '').toLowerCase();
         // Exact match on employee code (prevents emp1660 from matching emp16601, emp16602...)
         if (code === q) return true;
-        // All tokens must be present in either Arabic or English name
-        const nameAr = (emp.nameAr || '').toLowerCase();
+        // All tokens must be present in either Arabic (normalized) or English name
+        const nameAr = normalizeAr(emp.nameAr || '');
         const nameEn = (emp.nameEn || '').toLowerCase();
         return tokens.every(t => nameAr.includes(t) || nameEn.includes(t));
       });
