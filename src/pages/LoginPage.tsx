@@ -10,6 +10,7 @@ import { Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share, LogIn, Us
 import { toast } from '@/hooks/use-toast';
 import { checkRateLimit, recordLoginAttempt } from '@/lib/security';
 import { normalizeLoginIdentifier } from '@/lib/auth';
+import oneStoryLogo from '@/assets/onestory-logo.png';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -142,7 +143,10 @@ const LoginPage = () => {
             ))}
           </div>
 
-          <p className="text-white/40 text-xs mt-10">Developed by OneStory Solutions</p>
+          <div className="flex items-center justify-center gap-2 mt-10">
+            <span className="text-white/40 text-xs">Developed by</span>
+            <img src={oneStoryLogo} alt="OneStory Solutions" className="h-8 w-auto object-contain" />
+          </div>
         </div>
       </div>
 
@@ -347,9 +351,10 @@ const LoginPage = () => {
           )}
 
           {/* Footer - mobile only */}
-          <p className="lg:hidden text-center text-xs text-muted-foreground mt-8">
-            Developed by OneStory Solutions
-          </p>
+          <div className="lg:hidden flex items-center justify-center gap-2 mt-8">
+            <span className="text-xs text-muted-foreground">Developed by</span>
+            <img src={oneStoryLogo} alt="OneStory Solutions" className="h-7 w-auto object-contain" />
+          </div>
         </div>
       </div>
     </main>
