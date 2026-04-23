@@ -1537,6 +1537,39 @@ export type Database = {
           },
         ]
       }
+      official_holidays: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          holiday_date: string
+          id: string
+          name_ar: string
+          name_en: string
+          notes: string | null
+          station_ids: string[]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          holiday_date: string
+          id?: string
+          name_ar: string
+          name_en: string
+          notes?: string | null
+          station_ids?: string[]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          holiday_date?: string
+          id?: string
+          name_ar?: string
+          name_en?: string
+          notes?: string | null
+          station_ids?: string[]
+        }
+        Relationships: []
+      }
       overtime_requests: {
         Row: {
           created_at: string
