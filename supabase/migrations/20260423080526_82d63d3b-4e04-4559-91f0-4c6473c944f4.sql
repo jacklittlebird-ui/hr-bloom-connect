@@ -1,0 +1,1 @@
+ALTER TABLE public.employees ADD COLUMN IF NOT EXISTS has_special_needs boolean NOT NULL DEFAULT false;
