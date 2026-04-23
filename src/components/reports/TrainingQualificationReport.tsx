@@ -213,9 +213,13 @@ export const TrainingQualificationReport = () => {
 
   const handleQualificationPrint = useCallback(() => {
     const logoUrl = `${window.location.origin}/images/company-logo.png`;
+    const stampUrl = `${window.location.origin}/images/stamp-hdq.png`;
     const dir = ar ? 'rtl' : 'ltr';
     const title = getFilterTitle();
     const fullTitle = ar ? `سجل التدريب والتأهيل - ${title}` : `Training & Qualification Record - ${title}`;
+    const footerText = ar
+      ? 'وكالة لينك إيرو للتجارة - إدارة التدريب'
+      : 'Link Aero Trading Agency - Training Department';
 
     const headerRow = `
       <tr>
