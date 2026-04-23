@@ -278,28 +278,28 @@ export const TrainingQualificationReport = () => {
       <head>
         <title>${fullTitle}</title>
         <style>
-          @page { size: auto; margin: 11mm; }
+          @page { size: auto; margin: 11mm 11mm 32mm 11mm; }
           html, body { margin: 0; padding: 0; }
           body { font-family: 'Baloo Bhaijaan 2', 'Cairo', Arial, sans-serif; direction: ${dir}; }
-          .print-shell { padding: 0 11mm 24mm; box-sizing: border-box; }
+          .print-shell { padding: 0; box-sizing: border-box; }
           table { width: 100%; border-collapse: collapse; }
           tr { page-break-inside: avoid; }
           .report-header { text-align: center; margin-bottom: 10px; }
           .report-header img { height: 50px; }
           .report-header h1 { font-size: 18px; margin: 4px 0; color: #1e40af; }
           .report-header p { font-size: 11px; color: #666; margin: 0; }
-          .footer-note { text-align: center; font-size: 10px; color: #999; margin-top: 6px; }
+          .footer-note { text-align: center; font-size: 10px; color: #999; margin-top: 6px; margin-bottom: 6px; }
           .stamp-footer {
             position: fixed;
-            bottom: 0;
-            left: 11mm;
-            right: 11mm;
+            bottom: 4mm;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: center;
-            padding: 4px 0;
-            background: white;
+            padding: 0;
+            background: transparent;
           }
-          .stamp-footer img { max-height: 60px; max-width: 160px; object-fit: contain; }
+          .stamp-footer img { max-height: 70px; max-width: 180px; object-fit: contain; }
           @media print {
             html, body { margin: 0 !important; padding: 0 !important; }
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
