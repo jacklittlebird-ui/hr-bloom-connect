@@ -173,7 +173,7 @@ export const LateArrivals = () => {
       </div>
 
       {/* Filters */}
-      <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+      <div className={cn("flex items-center gap-3 flex-wrap", isRTL && "flex-row-reverse")}>
         <Select value={selectedMonth} onValueChange={v => { setSelectedMonth(v); setCurrentPage(1); }}>
           <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -186,6 +186,15 @@ export const LateArrivals = () => {
             {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
           </SelectContent>
         </Select>
+        <div className="relative min-w-[240px] flex-1 max-w-md">
+          <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
+          <Input
+            placeholder={ar ? 'بحث بالاسم أو كود الموظف...' : 'Search by name or employee ID...'}
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            className={cn(isRTL ? "pr-10" : "pl-10")}
+          />
+        </div>
       </div>
 
       {/* Today's Late */}
@@ -206,7 +215,12 @@ export const LateArrivals = () => {
                       <User className="w-5 h-5 text-warning" />
                     </div>
                     <div>
-                      <p className="font-medium">{ar ? record.employee_name_ar : record.employee_name_en}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium">{ar ? record.employee_name_ar : record.employee_name_en}</p>
+                        {record.employee_code && (
+                          <Badge variant="outline" className="font-mono text-xs">{record.employee_code}</Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">{ar ? record.station_name_ar : record.station_name_en}</p>
                     </div>
                   </div>
@@ -240,6 +254,7 @@ export const LateArrivals = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className={cn(isRTL && "text-right")}>{ar ? 'كود الموظف' : 'Employee ID'}</TableHead>
                       <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الموظف' : 'Employee'}</TableHead>
                       <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
                       <TableHead className={cn(isRTL && "text-right")}>{ar ? 'عدد التأخيرات' : 'Late Count'}</TableHead>
@@ -251,6 +266,7 @@ export const LateArrivals = () => {
                       const severity = emp.count >= 5 ? 'high' : emp.count >= 3 ? 'medium' : 'low';
                       return (
                         <TableRow key={emp.id}>
+                          <TableCell className="font-mono text-xs">{emp.code || '—'}</TableCell>
                           <TableCell className="font-medium">{ar ? emp.nameAr : emp.nameEn}</TableCell>
                           <TableCell>{ar ? emp.stationAr : emp.stationEn}</TableCell>
                           <TableCell>
