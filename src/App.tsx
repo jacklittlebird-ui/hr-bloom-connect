@@ -72,7 +72,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   if (loading) return <LoadingScreen />;
   if (isAuthenticated) {
     if (user?.role === 'employee') return <Navigate to="/employee-portal" replace />;
-    if (user?.role === 'station_manager' || user?.role === 'area_manager' || user?.role === 'department_manager') return <Navigate to="/station-manager" replace />;
+    if (user?.role === 'station_manager' || user?.role === 'area_manager' || user?.role === 'department_manager' || user?.role === 'station_hr') return <Navigate to="/station-manager" replace />;
     if (user?.role === 'kiosk') return <Navigate to="/attendance/kiosk" replace />;
     if (user?.role === 'training_manager') return <Navigate to="/training-portal" replace />;
     return <Navigate to="/" replace />;
