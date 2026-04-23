@@ -48,13 +48,17 @@ Deno.serve(async (req) => {
     let errors = 0;
 
     for (const record of openRecords) {
+      // Set check_out to check_in + 8 hours (a reasonable default workday)
+      // instead of equal to check_in (which would zero out work hours).
+      // The trigger `calculate_work_hours` will compute work_hours/work_minutes from these values.
+      const checkInDate = new Date(record.check_in as string);
+      const assumedCheckOut = new Date(checkInDate.getTime() + 8 * 60 * 60 * 1000).toISOString();
+
       const { error: updateErr } = await admin
         .from("attendance_records")
         .update({
-          check_out: record.check_in,
-          work_hours: 0,
-          work_minutes: 0,
-          notes: "لم يتم تسجيل انصراف / No checkout recorded - auto-closed",
+          check_out: assumedCheckOut,
+          notes: "تم الإغلاق التلقائي (افتراض 8 ساعات) / Auto-closed (assumed 8h shift)",
         })
         .eq("id", record.id);
 
