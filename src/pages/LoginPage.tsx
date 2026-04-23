@@ -355,7 +355,9 @@ const LoginPage = () => {
           {/* Footer - mobile only */}
           <div className="lg:hidden flex items-center justify-center gap-3 mt-8">
             <span className="text-xs text-muted-foreground">Developed by</span>
-            <img src={oneStoryLogo} alt="OneStory Solutions" className="h-14 w-auto object-contain" />
+            <div className="bg-white rounded-xl p-1.5 shadow-sm flex items-center justify-center">
+              <img src={oneStoryLogo} alt="OneStory Solutions" className="h-14 w-auto object-contain" />
+            </div>
           </div>
         </div>
       </div>
