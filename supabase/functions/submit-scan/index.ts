@@ -337,6 +337,30 @@ Deno.serve(async (req) => {
 
     const empId = roleData?.employee_id || null;
 
+    // ─── Idempotency lock (DB-level, 30s) ───────────────────────────────
+    // Atomically reserves (employee_id, device_id, event_type) so concurrent
+    // double-clicks / network retries cannot both proceed.
+    if (empId) {
+      const { data: lockAcquired, error: lockErr } = await admin.rpc(
+        "try_acquire_attendance_lock",
+        {
+          p_employee_id: empId,
+          p_device_id: device_id,
+          p_event_type: event_type,
+          p_ttl_seconds: 30,
+        },
+      );
+      if (lockErr) {
+        console.error("[submit-scan] lock acquire failed:", lockErr);
+      }
+      if (lockAcquired === false) {
+        return new Response(JSON.stringify({ ok: true, event_type, deduplicated: true, reason: "concurrent_lock" }), {
+          status: 200,
+          headers: { ...corsHeaders, "content-type": "application/json" },
+        });
+      }
+    }
+
     // Insert attendance event
     const { error: attendanceEventError } = await admin.from("attendance_events").insert({
       user_id,
