@@ -80,6 +80,7 @@ const Leaves = () => {
       const d = e?.department_id ? deptMap.get(e.department_id) : null;
       const s = e?.station_id ? stMap.get(e.station_id) : null;
       return {
+        employeeCode: e?.employee_code || '',
         employeeName: e?.name_en || '',
         employeeNameAr: e?.name_ar || '',
         department: d ? (language === 'ar' ? d.name_ar : d.name_en) : '',
@@ -92,7 +93,7 @@ const Leaves = () => {
     setLeaveRequests((leaves || []).map(l => {
       const info = getEmpInfo(l.employee_id);
       return {
-        id: l.id, employeeId: l.employee_id,
+        id: l.id, employeeId: l.employee_id, employeeCode: info.employeeCode,
         employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
         department: info.department, station: info.station,
         leaveType: l.leave_type as LeaveRequest['leaveType'],
@@ -108,7 +109,7 @@ const Leaves = () => {
     setPermissionRequests((perms || []).map(p => {
       const info = getEmpInfo(p.employee_id);
       return {
-        id: p.id, employeeId: p.employee_id,
+        id: p.id, employeeId: p.employee_id, employeeCode: info.employeeCode,
         employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
         department: info.department, station: info.station,
         permissionType: p.permission_type as PermissionRequest['permissionType'],
@@ -131,7 +132,7 @@ const Leaves = () => {
     setMissionRequests((missions || []).map(m => {
       const info = getEmpInfo(m.employee_id);
       return {
-        id: m.id, employeeId: m.employee_id,
+        id: m.id, employeeId: m.employee_id, employeeCode: info.employeeCode,
         employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
         department: info.department, station: info.station,
         missionType: m.mission_type as MissionRequest['missionType'],
@@ -146,7 +147,7 @@ const Leaves = () => {
     setOvertimeRequests((ot || []).map(o => {
       const info = getEmpInfo(o.employee_id);
       return {
-        id: o.id, employeeId: o.employee_id,
+        id: o.id, employeeId: o.employee_id, employeeCode: info.employeeCode,
         employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
         department: info.department, station: info.station,
         date: o.date, hours: o.hours,
@@ -222,11 +223,13 @@ const Leaves = () => {
   useEffect(() => { fetchData(); }, [language]);
 
   // Generic filter function
-  const filterRequests = <T extends { employeeId: string; employeeName: string; employeeNameAr: string }>(requests: T[]): T[] => {
+  const filterRequests = <T extends { employeeId: string; employeeCode?: string; employeeName: string; employeeNameAr: string }>(requests: T[]): T[] => {
     return requests.filter(r => {
-      const matchSearch = !searchQuery ||
-        r.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.employeeNameAr.includes(searchQuery);
+      const q = searchQuery.trim().toLowerCase();
+      const matchSearch = !q ||
+        r.employeeName.toLowerCase().includes(q) ||
+        r.employeeNameAr.includes(searchQuery.trim()) ||
+        (r.employeeCode || '').toLowerCase().includes(q);
       const matchDept = selectedDepartment === 'all' || empDeptMap.get(r.employeeId) === selectedDepartment;
       const matchStation = selectedStation === 'all' || empStationMap.get(r.employeeId) === selectedStation;
       return matchSearch && matchDept && matchStation;
