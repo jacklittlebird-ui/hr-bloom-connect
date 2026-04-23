@@ -1,6 +1,7 @@
 export interface LeaveRequest {
   id: string;
   employeeId: string;
+  employeeCode?: string;
   employeeName: string;
   employeeNameAr: string;
   department: string;
@@ -20,6 +21,7 @@ export interface LeaveRequest {
 export interface PermissionRequest {
   id: string;
   employeeId: string;
+  employeeCode?: string;
   employeeName: string;
   employeeNameAr: string;
   department: string;
@@ -45,6 +47,7 @@ export const MISSION_TIME_CONFIG: Record<MissionType, { checkIn: string; checkOu
 export interface MissionRequest {
   id: string;
   employeeId: string;
+  employeeCode?: string;
   employeeName: string;
   employeeNameAr: string;
   department: string;
@@ -60,6 +63,7 @@ export interface MissionRequest {
 export interface OvertimeRequest {
   id: string;
   employeeId: string;
+  employeeCode?: string;
   employeeName: string;
   employeeNameAr: string;
   department: string;
