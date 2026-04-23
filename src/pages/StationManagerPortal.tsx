@@ -735,8 +735,8 @@ const StationManagerPortal = () => {
         <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-4 md:space-y-6">
           <PortalWelcomeBanner />
 
-        {/* Area Manager Station Selector */}
-        {isAreaManager && managedStations.length > 0 && (
+        {/* Multi-Station Selector (Area Manager / Station HR with multiple stations) */}
+        {isMultiStation && managedStations.length > 0 && (
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="p-3 md:p-4 flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">

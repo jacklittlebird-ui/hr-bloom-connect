@@ -93,7 +93,7 @@ const Users = () => {
   // Edit user dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '', role: '' as string, station_code: '', employee_code: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', email: '', role: '' as string, station_code: '', employee_code: '', station_codes: [] as string[] });
   const [saving, setSaving] = useState(false);
 
   // Profile management dialog
@@ -442,6 +442,9 @@ const Users = () => {
       role: user.role,
       station_code: user.station_code || '',
       employee_code: user.employee_code || '',
+      station_codes: user.station_codes && user.station_codes.length > 0
+        ? user.station_codes
+        : (user.station_code ? [user.station_code] : []),
     });
     setEditDialogOpen(true);
   };
@@ -452,6 +455,38 @@ const Users = () => {
     try {
       const { error } = await supabase.from('profiles').update({ full_name: editForm.full_name }).eq('id', editingUser.user_id);
       if (error) throw error;
+
+      // Station HR: persist multi-station list
+      if (editForm.role === 'station_hr') {
+        if (editForm.station_codes.length === 0) {
+          throw new Error(isAr ? 'يجب اختيار محطة واحدة على الأقل' : 'Select at least one station');
+        }
+        const selectedStations = stations.filter(s => editForm.station_codes.includes(s.code));
+        const stationIds = selectedStations.map(s => s.id);
+        const primaryId = stationIds[0];
+
+        // Update primary station on user_roles
+        const { error: roleErr } = await supabase
+          .from('user_roles')
+          .update({ station_id: primaryId })
+          .eq('user_id', editingUser.user_id)
+          .eq('role', 'station_hr');
+        if (roleErr) throw roleErr;
+
+        // Replace links: delete all then re-insert
+        const { error: delErr } = await supabase
+          .from('station_hr_stations' as any)
+          .delete()
+          .eq('user_id', editingUser.user_id);
+        if (delErr) throw delErr;
+
+        if (stationIds.length > 0) {
+          const rows = stationIds.map(sid => ({ user_id: editingUser.user_id, station_id: sid }));
+          const { error: insErr } = await supabase.from('station_hr_stations' as any).insert(rows);
+          if (insErr) throw insErr;
+        }
+      }
+
       toast({ title: isAr ? 'تم التحديث' : 'Updated', description: isAr ? 'تم تحديث بيانات المستخدم' : 'User data updated' });
       setEditDialogOpen(false);
       fetchAll();
@@ -777,7 +812,7 @@ const Users = () => {
                   className="bg-muted"
                 />
               </div>
-              {(editForm.role === 'station_manager' || editForm.role === 'station_hr') && (
+              {editForm.role === 'station_manager' && (
                 <div>
                   <Label>{isAr ? 'المحطة' : 'Station'}</Label>
                   <Input
@@ -788,6 +823,35 @@ const Users = () => {
                     disabled
                     className="bg-muted"
                   />
+                </div>
+              )}
+              {editForm.role === 'station_hr' && (
+                <div>
+                  <Label>{isAr ? 'المحطات' : 'Stations'} *</Label>
+                  <div className="border rounded-md p-2 space-y-1 max-h-48 overflow-y-auto">
+                    {stations.map(s => {
+                      const checked = editForm.station_codes.includes(s.code);
+                      return (
+                        <label key={s.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded px-2 py-1">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={(v) => {
+                              setEditForm(f => ({
+                                ...f,
+                                station_codes: v
+                                  ? [...f.station_codes, s.code]
+                                  : f.station_codes.filter(c => c !== s.code),
+                              }));
+                            }}
+                          />
+                          <span className="text-sm">{isAr ? s.name_ar : s.name_en}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {isAr ? `تم اختيار ${editForm.station_codes.length} محطة` : `${editForm.station_codes.length} station(s) selected`}
+                  </p>
                 </div>
               )}
               {editForm.role === 'employee' && (
