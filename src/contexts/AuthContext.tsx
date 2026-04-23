@@ -70,6 +70,8 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
   let employeeCode: string | undefined;
   let employeeStatus: string | undefined;
   let nameAr = profile?.full_name || supabaseUser.email || '';
+  let stationCodes: string[] | undefined;
+  let stationUuids: string[] | undefined;
 
   if ((role === 'station_manager' || role === 'station_hr') && userRole.station_id) {
     const { data: station } = await supabase
@@ -82,6 +84,35 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
       nameAr = station?.name_ar ? `موارد بشرية ${station.name_ar}` : nameAr;
     } else {
       nameAr = station?.name_ar ? `مدير محطة ${station.name_ar}` : nameAr;
+    }
+  }
+
+  // Station HR: collect all assigned stations (multi-station support)
+  if (role === 'station_hr') {
+    const { data: shrLinks } = await supabase
+      .from('station_hr_stations' as any)
+      .select('station_id')
+      .eq('user_id', supabaseUser.id);
+    const allStationIds = new Set<string>();
+    if (userRole.station_id) allStationIds.add(userRole.station_id);
+    (shrLinks || []).forEach((row: any) => row.station_id && allStationIds.add(row.station_id));
+
+    if (allStationIds.size > 0) {
+      stationUuids = Array.from(allStationIds);
+      const { data: shrStations } = await supabase
+        .from('stations')
+        .select('id, code, name_ar')
+        .in('id', stationUuids);
+      const ordered = stationUuids
+        .map(id => shrStations?.find(s => s.id === id))
+        .filter(Boolean) as Array<{ id: string; code: string; name_ar: string }>;
+      stationCodes = ordered.map(s => s.code);
+      // Ensure primary stationCode is the first one if it wasn't set
+      if (!stationCode && stationCodes.length > 0) stationCode = stationCodes[0];
+      // Update display name when multiple stations
+      if (stationCodes.length > 1) {
+        nameAr = `موارد بشرية (${ordered.map(s => s.name_ar).join(' / ')})`;
+      }
     }
   }
 
@@ -162,8 +193,6 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     nameAr = emp?.name_ar || nameAr;
   }
 
-  let stationCodes: string[] | undefined;
-  let stationUuids: string[] | undefined;
   if (role === 'area_manager') {
     const { data: amStations } = await supabase
       .from('area_manager_stations')

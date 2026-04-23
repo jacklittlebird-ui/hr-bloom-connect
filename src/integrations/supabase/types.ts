@@ -2162,6 +2162,35 @@ export type Database = {
           },
         ]
       }
+      station_hr_stations: {
+        Row: {
+          created_at: string
+          id: string
+          station_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          station_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          station_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "station_hr_stations_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stations: {
         Row: {
           checkin_method: string
@@ -2968,6 +2997,10 @@ export type Database = {
         Returns: string[]
       }
       get_dm_department_ids: { Args: { _user_id: string }; Returns: string[] }
+      get_station_hr_station_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
       get_user_department_id: { Args: { _user_id: string }; Returns: string }
       get_user_employee_id: { Args: { _user_id: string }; Returns: string }
       get_user_station_id: { Args: { _user_id: string }; Returns: string }
