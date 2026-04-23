@@ -215,7 +215,18 @@ Deno.serve(async (req) => {
     // Dedup check (10 seconds)
     if (isDeduplicate(userId, event_type)) {
       totalDuplicates++;
-      return json({ ok: true, event_type, deduplicated: true }, 200);
+      if (event_type === "check_out") {
+        const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
+        return json({
+          ok: verification.verified,
+          event_type,
+          deduplicated: true,
+          verified: verification.verified,
+          reason: verification.verified ? "already_processed" : "not_verified_yet",
+          error: verification.verified ? undefined : "Check-out was not verified yet",
+        }, verification.verified ? 200 : 409);
+      }
+      return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
     }
 
     // Min interval check (1 minute)
@@ -252,7 +263,18 @@ Deno.serve(async (req) => {
     }
     if (lockAcquired === false) {
       totalDuplicates++;
-      return json({ ok: true, event_type, deduplicated: true, reason: "concurrent_lock" }, 200);
+      if (event_type === "check_out") {
+        const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
+        return json({
+          ok: verification.verified,
+          event_type,
+          deduplicated: true,
+          verified: verification.verified,
+          reason: "concurrent_lock",
+          error: verification.verified ? undefined : "Check-out is still being processed",
+        }, verification.verified ? 200 : 409);
+      }
+      return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }, 200);
     }
 
     // Get station
@@ -507,19 +529,21 @@ Deno.serve(async (req) => {
         const updatePayload: Record<string, any> = { check_out: now.toISOString() };
         if (isEarly) updatePayload.status = "early-leave";
 
-        const { error: updateErr } = await supabaseAdmin.from("attendance_records")
+        const { data: updatedRecord, error: updateErr } = await supabaseAdmin.from("attendance_records")
           .update(updatePayload)
-          .eq("id", openRecord.id);
+          .eq("id", openRecord.id)
+          .select("id, check_out")
+          .maybeSingle();
 
-        if (updateErr) {
+        if (updateErr || !updatedRecord?.check_out) {
           console.error("[gps-checkin] checkout update FAILED:", updateErr);
           await auditCheckout(supabaseAdmin, userId, employeeId, "failure", {
             channel: "gps",
             error_code: "CHECKOUT_SAVE_FAILED",
             retryable: true,
-            message: updateErr.message,
+            message: updateErr?.message ?? "check_out was not persisted",
           }, openRecord.id);
-          return Promise.reject(Object.assign(new Error("Failed to save checkout: " + updateErr.message), {
+          return Promise.reject(Object.assign(new Error("Failed to save checkout: " + (updateErr?.message ?? "check_out was not persisted")), {
             statusCode: 500,
             errorCode: "CHECKOUT_SAVE_FAILED",
             retryable: true,
@@ -527,7 +551,7 @@ Deno.serve(async (req) => {
         }
         await auditCheckout(supabaseAdmin, userId, employeeId, "success", {
           channel: "gps",
-          checked_out_at: updatePayload.check_out,
+          checked_out_at: updatedRecord.check_out,
         }, openRecord.id);
         console.log("[gps-checkin] checkout saved for record:", openRecord.id);
       })();
