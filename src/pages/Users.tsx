@@ -34,6 +34,9 @@ interface SystemUser {
   role: 'admin' | 'station_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk' | 'department_manager' | 'station_hr';
   station_code?: string;
   station_name?: string;
+  /** For station_hr (multi-station) */
+  station_codes?: string[];
+  station_names?: string[];
   department_id?: string;
   department_name?: string;
   department_ids?: string[];
@@ -77,6 +80,7 @@ const Users = () => {
     full_name: '', email: '', password: '', role: '' as string,
     station_code: '', employee_code: '', department_id: '',
     department_ids: [] as string[],
+    station_codes: [] as string[],
   });
 
   // Permission assignment dialog
@@ -158,13 +162,14 @@ const Users = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [rolesRes, profilesRes, stationsRes, empsRes, deptsRes, dmDeptsRes] = await Promise.all([
+      const [rolesRes, profilesRes, stationsRes, empsRes, deptsRes, dmDeptsRes, shrStationsRes] = await Promise.all([
         supabase.from('user_roles').select('user_id, role, station_id, employee_id, department_id'),
         supabase.from('permission_profiles' as any).select('*'),
         supabase.from('stations').select('id, code, name_ar, name_en'),
         supabase.from('employees').select('id, employee_code, name_ar, name_en').order('employee_code'),
         supabase.from('departments').select('id, name_ar, name_en').order('name_ar'),
         supabase.from('department_manager_departments' as any).select('user_id, department_id'),
+        supabase.from('station_hr_stations' as any).select('user_id, station_id'),
       ]);
 
       const roles = rolesRes.data || [];
@@ -182,6 +187,15 @@ const Users = () => {
         const list = dmDeptMap.get(row.user_id) || [];
         if (!list.includes(row.department_id)) list.push(row.department_id);
         dmDeptMap.set(row.user_id, list);
+      });
+
+      // Build map of all linked stations per station_hr user
+      const shrStationMap = new Map<string, string[]>();
+      ((shrStationsRes.data as any[]) || []).forEach((row: any) => {
+        if (!row?.user_id || !row?.station_id) return;
+        const list = shrStationMap.get(row.user_id) || [];
+        if (!list.includes(row.station_id)) list.push(row.station_id);
+        shrStationMap.set(row.user_id, list);
       });
 
       const mapped: SystemUser[] = roles.map(r => {
@@ -204,6 +218,20 @@ const Users = () => {
             .map((d: any) => isAr ? d.name_ar : d.name_en);
         }
 
+        // For station_hr, build full list (linked + legacy primary)
+        let station_codes: string[] | undefined;
+        let station_names: string[] | undefined;
+        if (r.role === 'station_hr') {
+          const stationIdSet = new Set<string>(shrStationMap.get(r.user_id) || []);
+          if (r.station_id) stationIdSet.add(r.station_id);
+          const ids = Array.from(stationIdSet);
+          const matched = ids
+            .map(id => stationsRes.data?.find(s => s.id === id))
+            .filter(Boolean) as any[];
+          station_codes = matched.map(s => s.code);
+          station_names = matched.map(s => isAr ? s.name_ar : s.name_en);
+        }
+
         return {
           user_id: r.user_id,
           email: profile?.email || '',
@@ -211,6 +239,8 @@ const Users = () => {
           role: r.role as SystemUser['role'],
           station_code: station?.code,
           station_name: isAr ? station?.name_ar : station?.name_en,
+          station_codes,
+          station_names,
           department_id: (r as any).department_id || undefined,
           department_name: dept ? (isAr ? dept.name_ar : dept.name_en) : undefined,
           department_ids,
