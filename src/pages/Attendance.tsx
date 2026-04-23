@@ -12,7 +12,8 @@ import { StationCheckinSettings } from '@/components/attendance/StationCheckinSe
 import { EmployeeAssignment } from '@/components/attendance/EmployeeAssignment';
 import { useAttendanceData } from '@/contexts/AttendanceDataContext';
 import { WorkHoursByStation } from '@/components/attendance/WorkHoursByStation';
-import { Clock, List, AlertTriangle, BarChart3, Calendar, Settings2, Users, RefreshCw, Navigation, Timer } from 'lucide-react';
+import { OfficialHolidays } from '@/components/attendance/OfficialHolidays';
+import { Clock, List, AlertTriangle, BarChart3, Calendar, Settings2, Users, RefreshCw, Navigation, Timer, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -226,7 +227,7 @@ const Attendance = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn("grid w-full grid-cols-9 mb-6")} dir="rtl">
+          <TabsList className={cn("grid w-full grid-cols-10 mb-6")} dir="rtl">
             <TabsTrigger value="checkin" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span className="hidden lg:inline">{t('attendance.tabs.checkInOut')}</span>
@@ -267,6 +268,10 @@ const Attendance = () => {
             <TabsTrigger value="hours-by-station" className="flex items-center gap-2">
               <Timer className="w-4 h-4" />
               <span className="hidden lg:inline">{language === 'ar' ? 'ساعات العمل الشهرية' : 'Monthly Hours'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="holidays" className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              <span className="hidden lg:inline">{language === 'ar' ? 'الإجازات الرسمية' : 'Official Holidays'}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -309,6 +314,10 @@ const Attendance = () => {
 
           <TabsContent value="hours-by-station">
             <WorkHoursByStation />
+          </TabsContent>
+
+          <TabsContent value="holidays">
+            <OfficialHolidays />
           </TabsContent>
         </Tabs>
       </div>
