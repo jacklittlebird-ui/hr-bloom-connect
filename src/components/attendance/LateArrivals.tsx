@@ -3,9 +3,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, Clock, User, TrendingUp } from 'lucide-react';
+import { AlertTriangle, Clock, User, TrendingUp, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
@@ -28,6 +29,7 @@ const months = [
 interface LateRecord {
   id: string;
   employee_id: string;
+  employee_code: string;
   employee_name_ar: string;
   employee_name_en: string;
   station_name_ar: string;
@@ -43,6 +45,7 @@ export const LateArrivals = () => {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1).padStart(2, '0'));
   const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
+  const [searchTerm, setSearchTerm] = useState('');
   const [records, setRecords] = useState<LateRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const years = Array.from({ length: 3 }, (_, i) => String(now.getFullYear() - i));
@@ -60,7 +63,7 @@ export const LateArrivals = () => {
         .from('attendance_records')
         .select(`
           id, employee_id, date, check_in, work_hours,
-          employees!attendance_records_employee_id_fkey(name_ar, name_en, stations(name_ar, name_en))
+          employees!attendance_records_employee_id_fkey(employee_code, name_ar, name_en, stations(name_ar, name_en))
         `)
         .eq('is_late', true)
         .gte('date', startDate)
@@ -71,6 +74,7 @@ export const LateArrivals = () => {
         const mapped: LateRecord[] = data.map((r: any) => ({
           id: r.id,
           employee_id: r.employee_id,
+          employee_code: r.employees?.employee_code || '',
           employee_name_ar: r.employees?.name_ar || '',
           employee_name_en: r.employees?.name_en || '',
           station_name_ar: r.employees?.stations?.name_ar || '',
@@ -88,17 +92,27 @@ export const LateArrivals = () => {
 
   // Group by employee
   const groupedByEmployee = useMemo(() => {
-    const map: Record<string, { nameAr: string; nameEn: string; stationAr: string; stationEn: string; count: number; totalMinutesLate: number }> = {};
+    const map: Record<string, { code: string; nameAr: string; nameEn: string; stationAr: string; stationEn: string; count: number; totalMinutesLate: number }> = {};
     records.forEach(r => {
       if (!map[r.employee_id]) {
-        map[r.employee_id] = { nameAr: r.employee_name_ar, nameEn: r.employee_name_en, stationAr: r.station_name_ar, stationEn: r.station_name_en, count: 0, totalMinutesLate: 0 };
+        map[r.employee_id] = { code: r.employee_code, nameAr: r.employee_name_ar, nameEn: r.employee_name_en, stationAr: r.station_name_ar, stationEn: r.station_name_en, count: 0, totalMinutesLate: 0 };
       }
       map[r.employee_id].count++;
     });
-    return Object.entries(map)
-      .map(([id, v]) => ({ id, ...v }))
-      .sort((a, b) => b.count - a.count);
-  }, [records]);
+    let result = Object.entries(map).map(([id, v]) => ({ id, ...v }));
+
+    // Filter by search term (name or employee code)
+    const q = searchTerm.trim().toLowerCase();
+    if (q) {
+      result = result.filter(e =>
+        e.nameAr.toLowerCase().includes(q) ||
+        e.nameEn.toLowerCase().includes(q) ||
+        (e.code || '').toLowerCase().includes(q)
+      );
+    }
+
+    return result.sort((a, b) => b.count - a.count);
+  }, [records, searchTerm]);
 
   const today = now.toISOString().split('T')[0];
   const todayLate = records.filter(r => r.date === today);
