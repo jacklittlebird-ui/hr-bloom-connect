@@ -212,6 +212,18 @@ Deno.serve(async (req) => {
       return json({ error: "Missing fields" }, 400);
     }
 
+    // Resolve employee
+    const { data: role } = await supabaseAdmin
+      .from("user_roles")
+      .select("employee_id")
+      .eq("user_id", userId)
+      .eq("role", "employee")
+      .limit(1)
+      .single();
+
+    if (!role?.employee_id) return json({ error: "Employee not found" }, 404);
+    const employeeId = role.employee_id;
+
     // Dedup check (10 seconds)
     if (isDeduplicate(userId, event_type)) {
       totalDuplicates++;
@@ -233,18 +245,6 @@ Deno.serve(async (req) => {
     if (isMinIntervalViolated(userId, event_type)) {
       return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts" }, 429);
     }
-
-    // Resolve employee
-    const { data: role } = await supabaseAdmin
-      .from("user_roles")
-      .select("employee_id")
-      .eq("user_id", userId)
-      .eq("role", "employee")
-      .limit(1)
-      .single();
-
-    if (!role?.employee_id) return json({ error: "Employee not found" }, 404);
-    const employeeId = role.employee_id;
 
     // ─── Idempotency lock (DB-level, 30s) ───────────────────────────────
     // Atomically reserves (employee_id, device_id, event_type) so two
