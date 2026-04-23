@@ -10,6 +10,7 @@ import { Eye, EyeOff, Globe, Download, Smartphone, CheckCircle, Share, LogIn, Us
 import { toast } from '@/hooks/use-toast';
 import { checkRateLimit, recordLoginAttempt } from '@/lib/security';
 import { normalizeLoginIdentifier } from '@/lib/auth';
+import oneStoryLogo from '@/assets/onestory-logo.png';
 
 const LoginPage = () => {
   const { login } = useAuth();
