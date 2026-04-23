@@ -56,6 +56,7 @@ export interface Employee {
   hasSocialInsurance?: boolean;
   contractType?: string;
   resigned?: boolean;
+  hasSpecialNeeds?: boolean;
   hasCairoAirportTempPermit?: boolean;
   cairoAirportAnnualPermitNo?: string;
   hasCairoAirportAnnualPermit?: boolean;

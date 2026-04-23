@@ -860,6 +860,7 @@ export type Database = {
           has_qualification_cert: boolean | null
           has_receipt: boolean | null
           has_social_insurance: boolean | null
+          has_special_needs: boolean
           health_insurance_card_no: string | null
           hire_date: string | null
           home_phone: string | null
@@ -948,6 +949,7 @@ export type Database = {
           has_qualification_cert?: boolean | null
           has_receipt?: boolean | null
           has_social_insurance?: boolean | null
+          has_special_needs?: boolean
           health_insurance_card_no?: string | null
           hire_date?: string | null
           home_phone?: string | null
@@ -1036,6 +1038,7 @@ export type Database = {
           has_qualification_cert?: boolean | null
           has_receipt?: boolean | null
           has_social_insurance?: boolean | null
+          has_special_needs?: boolean
           health_insurance_card_no?: string | null
           hire_date?: string | null
           home_phone?: string | null
