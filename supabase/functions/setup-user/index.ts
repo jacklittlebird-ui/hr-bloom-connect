@@ -23,6 +23,7 @@ async function findAuthUserByEmail(supabaseAdmin: ReturnType<typeof createClient
   }
 }
 
+// v2 - station_hr role enabled
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
