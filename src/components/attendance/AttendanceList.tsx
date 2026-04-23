@@ -43,6 +43,7 @@ interface Department { id: string; name_ar: string; name_en: string; }
 interface AttendanceRecord {
   id: string;
   employeeId: string;
+  employeeCode: string;
   employeeName: string;
   employeeNameAr: string;
   department: string;
@@ -85,6 +86,7 @@ export const AttendanceList = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [employeeStationMap, setEmployeeStationMap] = useState<Record<string, string>>({});
   const [employeeDeptMap, setEmployeeDeptMap] = useState<Record<string, string>>({});
+  const [employeeCodeMap, setEmployeeCodeMap] = useState<Record<string, string>>({});
 
   // Pagination state
   const [page, setPage] = useState(0);
@@ -105,12 +107,15 @@ export const AttendanceList = () => {
       if (eRes.data) {
         const sMap: Record<string, string> = {};
         const dMap: Record<string, string> = {};
+        const cMap: Record<string, string> = {};
         eRes.data.forEach(e => {
           if (e.station_id) sMap[e.id] = e.station_id;
           if (e.department_id) dMap[e.id] = e.department_id;
+          if (e.employee_code) cMap[e.id] = e.employee_code;
         });
         setEmployeeStationMap(sMap);
         setEmployeeDeptMap(dMap);
+        setEmployeeCodeMap(cMap);
       }
     };
     fetchMeta();
@@ -125,7 +130,7 @@ export const AttendanceList = () => {
 
     let query = supabase
       .from('attendance_records')
-      .select('*, employees!inner(name_en, name_ar, department_id, station_id, departments(name_ar))', { count: 'exact' })
+      .select('*, employees!inner(employee_code, name_en, name_ar, department_id, station_id, departments(name_ar))', { count: 'exact' })
       .gte('date', startDate)
       .lte('date', endDate)
       .order('check_in', { ascending: false, nullsFirst: false });
@@ -151,9 +156,9 @@ export const AttendanceList = () => {
       }
     }
 
-    // Server-side name search
+    // Server-side search by name or employee code
     if (isSearching) {
-      query = query.or(`name_en.ilike.%${searchTerm}%,name_ar.ilike.%${searchTerm}%`, { referencedTable: 'employees' });
+      query = query.or(`name_en.ilike.%${searchTerm}%,name_ar.ilike.%${searchTerm}%,employee_code.ilike.%${searchTerm}%`, { referencedTable: 'employees' });
     }
 
     // When searching, fetch all results; otherwise paginate
@@ -185,6 +190,7 @@ export const AttendanceList = () => {
         return {
           id: r.id,
           employeeId: r.employee_id,
+          employeeCode: (r.employees as any)?.employee_code || '',
           employeeName: (r.employees as any)?.name_en || '',
           employeeNameAr: (r.employees as any)?.name_ar || '',
           department: (r.employees as any)?.departments?.name_ar || '',
@@ -250,6 +256,7 @@ export const AttendanceList = () => {
 
   const exportColumns = [
     { headerAr: 'التاريخ', headerEn: 'Date', key: 'date' },
+    { headerAr: 'كود الموظف', headerEn: 'Employee ID', key: 'employeeCode' },
     { headerAr: 'الموظف (عربي)', headerEn: 'Employee (AR)', key: 'employeeNameAr' },
     { headerAr: 'الموظف (إنجليزي)', headerEn: 'Employee (EN)', key: 'employeeName' },
     { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
@@ -261,6 +268,7 @@ export const AttendanceList = () => {
 
   const getExportData = () => records.map(r => ({
     date: r.date,
+    employeeCode: r.employeeCode || employeeCodeMap[r.employeeId] || '-',
     employeeNameAr: r.employeeNameAr,
     employeeName: r.employeeName,
     department: getDeptName(r.employeeId),
@@ -309,7 +317,7 @@ export const AttendanceList = () => {
           <div className="relative min-w-[200px] flex-1">
             <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
             <Input
-              placeholder={ar ? 'بحث بالاسم...' : 'Search by name...'}
+              placeholder={ar ? 'بحث بالاسم أو كود الموظف...' : 'Search by name or employee ID...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={cn(isRTL ? "pr-10" : "pl-10")}
@@ -378,6 +386,7 @@ export const AttendanceList = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'التاريخ' : 'Date'}</TableHead>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'كود الموظف' : 'Employee ID'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الموظف' : 'Employee'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'القسم' : 'Department'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحضور' : 'Check In'}</TableHead>
@@ -390,13 +399,13 @@ export const AttendanceList = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     {ar ? 'جاري التحميل...' : 'Loading...'}
                   </TableCell>
                 </TableRow>
               ) : records.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     {ar ? 'لا توجد سجلات حضور' : 'No attendance records'}
                   </TableCell>
                 </TableRow>
@@ -404,6 +413,7 @@ export const AttendanceList = () => {
                 records.map((record, index) => (
                   <TableRow key={`${record.id}-${index}`}>
                     <TableCell>{record.date}</TableCell>
+                    <TableCell className="font-mono text-xs">{record.employeeCode || employeeCodeMap[record.employeeId] || '—'}</TableCell>
                     <TableCell className="font-medium">
                       {ar ? record.employeeNameAr : record.employeeName}
                     </TableCell>
