@@ -3010,6 +3010,7 @@ export type Database = {
         | "hr"
         | "area_manager"
         | "department_manager"
+        | "station_hr"
       employee_status:
         | "active"
         | "inactive"
@@ -3156,6 +3157,7 @@ export const Constants = {
         "hr",
         "area_manager",
         "department_manager",
+        "station_hr",
       ],
       employee_status: [
         "active",
