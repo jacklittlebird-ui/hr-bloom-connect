@@ -278,8 +278,12 @@ const Users = () => {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters', variant: 'destructive' });
       return;
     }
-    if ((form.role === 'station_manager' || form.role === 'station_hr') && !form.station_code) {
+    if (form.role === 'station_manager' && !form.station_code) {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار المحطة' : 'Please select a station', variant: 'destructive' });
+      return;
+    }
+    if (form.role === 'station_hr' && form.station_codes.length === 0) {
+      toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار محطة واحدة على الأقل' : 'Please select at least one station', variant: 'destructive' });
       return;
     }
     if (form.role === 'department_manager' && (!form.station_code || (!form.department_id && form.department_ids.length === 0))) {
@@ -298,13 +302,20 @@ const Users = () => {
         : [];
       const primaryDeptId = dmDeptIds[0] || form.department_id || undefined;
 
+      // Station HR: send all selected stations + the first as primary
+      const shrStationCodes = form.role === 'station_hr' ? form.station_codes : undefined;
+      const primaryStationCode = form.role === 'station_hr'
+        ? (form.station_codes[0] || form.station_code)
+        : form.station_code;
+
       const { data, error } = await supabase.functions.invoke('setup-user', {
         body: {
           email: form.email,
           password: form.password,
           full_name: form.full_name,
           role: form.role,
-          station_code: form.station_code || undefined,
+          station_code: primaryStationCode || undefined,
+          station_codes: shrStationCodes && shrStationCodes.length > 0 ? shrStationCodes : undefined,
           employee_code: form.employee_code || undefined,
           department_id: primaryDeptId,
           department_ids: dmDeptIds.length > 0 ? dmDeptIds : undefined,
@@ -314,7 +325,7 @@ const Users = () => {
       if (data?.error) throw new Error(data.error);
       toast({ title: isAr ? 'تم بنجاح' : 'Success', description: isAr ? 'تم إنشاء المستخدم بنجاح' : 'User created successfully' });
       setDialogOpen(false);
-      setForm({ full_name: '', email: '', password: '', role: '', station_code: '', employee_code: '', department_id: '', department_ids: [] });
+      setForm({ full_name: '', email: '', password: '', role: '', station_code: '', employee_code: '', department_id: '', department_ids: [], station_codes: [] });
       fetchAll();
     } catch (err: any) {
       toast({ title: isAr ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
