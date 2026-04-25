@@ -8,7 +8,8 @@ import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimize
 // Columns needed for the employee list table (fast load)
 const LIST_COLUMNS = 'id, employee_code, name_ar, name_en, phone, status, avatar, station_id, department_id, job_title_ar, job_title_en, job_level, dept_code, hire_date, first_name, father_name, family_name, email, employment_status, contract_type, resigned, resignation_date, gender, national_id, bank_account_number, bank_id_number, bank_account_type, bank_name';
 
-const LIST_SELECT = `${LIST_COLUMNS}, departments(name_ar, name_en), stations(code, name_ar, name_en)`;
+// Lighter select WITHOUT nested joins — joins are resolved client-side via maps for speed
+const LIST_SELECT = LIST_COLUMNS;
 
 interface EmployeeDataContextType {
   employees: Employee[];
