@@ -195,7 +195,11 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
                     {log.workMinutes > 0 ? `${Math.floor(log.workMinutes / 60)}:${String(log.workMinutes % 60).padStart(2, '0')}` : '-'}
                   </TableCell>
                   <TableCell>
-                    {log.status === 'late' ? (
+                    {log.status === 'official-holiday' ? (
+                      <span className="px-2 py-1 rounded-md text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-300">
+                        {ar ? `إجازة رسمية: ${log.holidayNameAr || ''}` : `Official Holiday: ${log.holidayNameEn || ''}`}
+                      </span>
+                    ) : log.status === 'late' ? (
                       <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-300">
                         {ar ? 'متأخر' : 'Late'}
                       </span>
