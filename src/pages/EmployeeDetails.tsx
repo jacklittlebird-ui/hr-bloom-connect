@@ -123,10 +123,28 @@ const EmployeeDetails = () => {
   const employee = getEmployee(id || '');
 
   if (!employee) {
+    // Show loader while the full employee record is still loading.
+    // Only show "not found" after the load attempt has completed.
+    if (!fullLoaded) {
+      return (
+        <DashboardLayout>
+          <div className="flex items-center justify-center h-64">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-muted-foreground text-sm">
+                {language === 'ar' ? 'جاري تحميل بيانات الموظف...' : 'Loading employee data...'}
+              </p>
+            </div>
+          </div>
+        </DashboardLayout>
+      );
+    }
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground text-lg">الموظف غير موجود</p>
+          <p className="text-muted-foreground text-lg">
+            {language === 'ar' ? 'الموظف غير موجود' : 'Employee not found'}
+          </p>
         </div>
       </DashboardLayout>
     );
