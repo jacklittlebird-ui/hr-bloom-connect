@@ -19,7 +19,7 @@ type FilterStatus = 'all' | 'active' | 'inactive' | 'suspended';
 
 const Employees = () => {
   const { t, isRTL } = useLanguage();
-  const { employees, refreshEmployees } = useEmployeeData();
+  const { employees, refreshEmployees, loading } = useEmployeeData();
   const { reportRef, handlePrint, exportBilingualCSV, exportToPDF } = useReportExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('all');
@@ -1032,13 +1032,30 @@ const Employees = () => {
           onSelectedStatusesChange={setSelectedStatuses}
         />
         <div ref={reportRef}>
-          <EmployeeTable
-            employees={filteredEmployees}
-            onDelete={handleDeleteEmployee}
-            currentPage={currentPage}
-            pageSize={PAGE_SIZE}
-            onPageChange={setCurrentPage}
-          />
+          {loading && employees.length === 0 ? (
+            <div className="border rounded-lg overflow-hidden bg-card">
+              <div className="bg-primary h-12" />
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className={cn("flex items-center gap-4 px-4 py-3 border-b", isRTL && "flex-row-reverse")}>
+                  <div className="w-10 h-10 rounded-full bg-muted animate-pulse" />
+                  <div className="h-4 w-20 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-40 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-28 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-24 bg-muted animate-pulse rounded ml-auto" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmployeeTable
+              employees={filteredEmployees}
+              onDelete={handleDeleteEmployee}
+              currentPage={currentPage}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          )}
         </div>
       </div>
       <AddEmployeeDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />
