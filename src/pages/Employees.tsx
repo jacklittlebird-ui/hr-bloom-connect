@@ -19,7 +19,7 @@ type FilterStatus = 'all' | 'active' | 'inactive' | 'suspended';
 
 const Employees = () => {
   const { t, isRTL } = useLanguage();
-  const { employees, refreshEmployees } = useEmployeeData();
+  const { employees, refreshEmployees, loading } = useEmployeeData();
   const { reportRef, handlePrint, exportBilingualCSV, exportToPDF } = useReportExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('all');
