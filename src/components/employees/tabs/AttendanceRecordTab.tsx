@@ -19,6 +19,8 @@ interface AttendanceLog {
   status: string;
   workHours: number;
   workMinutes: number;
+  holidayNameAr?: string;
+  holidayNameEn?: string;
 }
 
 const formatTime = (ts: string | null): string | null => {
@@ -46,35 +48,65 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
       const startDate = dateFrom;
       const endDate = dateTo;
 
-      const { data, error } = await supabase
-        .from('attendance_records')
-        .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late, notes')
-        .eq('employee_id', employee.id)
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .order('check_in', { ascending: false });
+      const [attRes, holRes] = await Promise.all([
+        supabase
+          .from('attendance_records')
+          .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late, notes')
+          .eq('employee_id', employee.id)
+          .gte('date', startDate)
+          .lte('date', endDate)
+          .order('check_in', { ascending: false }),
+        supabase
+          .from('official_holidays')
+          .select('id, name_ar, name_en, holiday_date, station_ids')
+          .gte('holiday_date', startDate)
+          .lte('holiday_date', endDate),
+      ]);
 
-      if (error) {
-        console.error('Error fetching attendance:', error);
+      if (attRes.error) {
+        console.error('Error fetching attendance:', attRes.error);
         setLogs([]);
-      } else {
-        setLogs((data || []).map(r => {
-          const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
-          let status: string;
-          if (isAutoClosed) status = 'auto-closed';
-          else if (r.is_late) status = 'late';
-          else status = r.status || 'present';
-          return {
-            id: r.id,
-            date: r.date,
-            checkIn: formatTime(r.check_in),
-            checkOut: isAutoClosed ? null : formatTime(r.check_out),
-            status,
-            workHours: r.work_hours ? Math.floor(r.work_hours) : 0,
-            workMinutes: r.work_minutes || 0,
-          };
-        }));
+        setLoading(false);
+        return;
       }
+
+      const attLogs: AttendanceLog[] = (attRes.data || []).map(r => {
+        const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
+        let status: string;
+        if (isAutoClosed) status = 'auto-closed';
+        else if (r.is_late) status = 'late';
+        else status = r.status || 'present';
+        return {
+          id: r.id,
+          date: r.date,
+          checkIn: formatTime(r.check_in),
+          checkOut: isAutoClosed ? null : formatTime(r.check_out),
+          status,
+          workHours: r.work_hours ? Math.floor(r.work_hours) : 0,
+          workMinutes: r.work_minutes || 0,
+        };
+      });
+
+      // Add official holidays for days where employee has no attendance record
+      const stationId = (employee as any).stationId;
+      const datesWithRecords = new Set(attLogs.map(l => l.date));
+      const holidayLogs: AttendanceLog[] = (holRes.data || [])
+        .filter((h: any) => !stationId || (h.station_ids || []).includes(stationId))
+        .filter((h: any) => !datesWithRecords.has(h.holiday_date))
+        .map((h: any) => ({
+          id: `holiday-${h.id}`,
+          date: h.holiday_date,
+          checkIn: null,
+          checkOut: null,
+          status: 'official-holiday',
+          workHours: 0,
+          workMinutes: 0,
+          holidayNameAr: h.name_ar,
+          holidayNameEn: h.name_en,
+        }));
+
+      const combined = [...attLogs, ...holidayLogs].sort((a, b) => b.date.localeCompare(a.date));
+      setLogs(combined);
       setLoading(false);
     };
 
@@ -163,7 +195,11 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
                     {log.workMinutes > 0 ? `${Math.floor(log.workMinutes / 60)}:${String(log.workMinutes % 60).padStart(2, '0')}` : '-'}
                   </TableCell>
                   <TableCell>
-                    {log.status === 'late' ? (
+                    {log.status === 'official-holiday' ? (
+                      <span className="px-2 py-1 rounded-md text-xs font-semibold bg-purple-100 text-purple-700 border border-purple-300">
+                        {ar ? `إجازة رسمية: ${log.holidayNameAr || ''}` : `Official Holiday: ${log.holidayNameEn || ''}`}
+                      </span>
+                    ) : log.status === 'late' ? (
                       <span className="px-2 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-300">
                         {ar ? 'متأخر' : 'Late'}
                       </span>
