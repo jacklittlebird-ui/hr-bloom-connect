@@ -311,14 +311,21 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return (data || []).map(mapRow);
         }
 
-        // Admin/HR: fast list load with essential columns only
-        const { data, error } = await supabase
-          .from('employees')
-          .select(LIST_SELECT)
-          .order('employee_code', { ascending: true });
-        trackQuery('employees', data?.length || 0);
-        if (error) { console.error('Error fetching employees:', error); return []; }
-        return (data || []).map(mapRow);
+        // Admin/HR: fast list load with essential columns + parallel join (faster than nested PostgREST joins on large tables)
+        const [empRes, deptsRes, stationsRes] = await Promise.all([
+          supabase.from('employees').select(LIST_SELECT).order('employee_code', { ascending: true }),
+          supabase.from('departments').select('id, name_ar, name_en'),
+          supabase.from('stations').select('id, code, name_ar, name_en'),
+        ]);
+        trackQuery('employees', empRes.data?.length || 0);
+        if (empRes.error) { console.error('Error fetching employees:', empRes.error); return []; }
+        const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
+        const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
+        return (empRes.data || []).map((row: any) => mapRow({
+          ...row,
+          departments: deptMap.get(row.department_id) || null,
+          stations: stationMap.get(row.station_id) || null,
+        }));
       }, { ttlMs: 60_000 });
 
       fullLoadedIds.current = new Set();
