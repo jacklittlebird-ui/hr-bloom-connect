@@ -3,6 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import { initSessionMonitor } from '@/lib/security';
 import { getRoleRedirectPath, normalizeLoginIdentifier } from '@/lib/auth';
+import { detectAndCorrectClockSkew } from '@/lib/clockSkew';
+
+// Errors that typically indicate the device clock is out of sync with the server.
+const isClockSkewAuthError = (msg?: string | null): boolean => {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return (
+    m.includes('issued in the future') ||
+    m.includes('jwt expired') ||
+    m.includes('token has expired') ||
+    m.includes('invalid jwt') ||
+    m.includes('iat') ||
+    m.includes('exp') ||
+    m.includes('clock')
+  );
+};
 
 export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager' | 'department_manager' | 'station_hr';
 
