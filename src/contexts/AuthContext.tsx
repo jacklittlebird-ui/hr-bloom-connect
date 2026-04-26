@@ -357,15 +357,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = useCallback(async ({ email, password }: { email: string; password: string }) => {
     const normalizedEmail = normalizeLoginIdentifier(email);
+
+    // Mark initial load as done BEFORE signInWithPassword so the onAuthStateChange
+    // listener treats the upcoming SIGNED_IN event as a background event and does
+    // NOT race with our manual profile fetch below (which would otherwise cause
+    // resolutionId churn and end up calling signOut on a perfectly valid login).
+    initialLoadDone.current = true;
+
     const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
 
     if (error) {
+      initialLoadDone.current = false;
       return { success: false, error: error.message };
     }
 
     if (data.user) {
-      // Pre-validate profile/role BEFORE letting onAuthStateChange set the user.
-      // We use a direct fetch (no resolutionId churn) so it doesn't race with the listener.
+      // Bump resolution id so any in-flight listener resolution is invalidated
+      // and only this manual flow controls the final auth state.
+      const myResolution = ++authResolutionId.current;
+
       let profile: AuthUser | null = null;
       try {
         profile = await fetchUserProfileWithRetry(data.user);
@@ -379,20 +389,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { success: false, error: 'تعذر تحميل بيانات الحساب، برجاء المحاولة مرة أخرى' };
       }
 
+      // If another resolution started while we were fetching, abort silently.
+      if (myResolution !== authResolutionId.current) {
+        if (!profile) return { success: false, error: 'تعذر تحميل بيانات الحساب، برجاء المحاولة مرة أخرى' };
+        // Still apply our profile since we have a valid one.
+        authResolutionId.current = myResolution;
+      }
+
       if (!profile) {
         await supabase.auth.signOut();
         clearAuthState();
         return { success: false, error: 'لم يتم العثور على صلاحيات لهذا الحساب' };
       }
 
-      // Profile is valid — ensure the auth state reflects it (in case the listener was throttled).
-      const resolved = await resolveAuthenticatedUser(data.user, true).catch(() => null);
-      const finalProfile = resolved || profile;
-      return { success: true, redirectTo: getRoleRedirectPath(finalProfile.role) };
+      // Apply the auth state directly — no second resolveAuthenticatedUser call,
+      // which previously caused a race that nulled out the user right after login.
+      setSession(data.session);
+      setUser(profile);
+      setLoading(false);
+      initialLoadDone.current = true;
+
+      return { success: true, redirectTo: getRoleRedirectPath(profile.role) };
     }
 
     return { success: true };
-  }, [clearAuthState, resolveAuthenticatedUser]);
+  }, [clearAuthState]);
 
   const logout = useCallback(async () => {
     await supabase.auth.signOut();
