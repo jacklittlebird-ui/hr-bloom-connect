@@ -77,8 +77,7 @@ const jobFunctionLabels: Record<string, { en: string; ar: string }> = {
   'AC': { en: 'Accountant', ar: 'محاسب' },
   'WO': { en: 'Worker', ar: 'عامل' },
   'TR': { en: 'Trainer', ar: 'مدرب' },
-  'MEET': { en: 'Meet & Assist', ar: 'استقبال ومساعدة' },
-  'ASSEST': { en: 'Assist Services', ar: 'خدمات المساعدة' },
+  'MA': { en: 'Meet & Assist', ar: 'استقبال وضيافة' },
 };
 
 const STORAGE_KEY = 'training-records-ui-state';
