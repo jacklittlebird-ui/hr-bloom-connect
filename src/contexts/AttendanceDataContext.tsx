@@ -106,24 +106,32 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
 
   const fetchRecords = useCallback(async (force = false) => {
     const cacheKey = `attendance_${scopedEmployeeId || 'all'}`;
-    
+
     const doFetch = async () => {
       if (isEmployee && scopedEmployeeId) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('attendance_records')
           .select(EMPLOYEE_COLS)
           .eq('employee_id', scopedEmployeeId)
           .order('date', { ascending: false })
           .limit(50);
+        if (error) {
+          // Throw so debouncedFetch can fall back to the previous cache
+          // instead of overwriting it with an empty list.
+          throw error;
+        }
         trackQuery('attendance', data?.length || 0);
         return (data || []).map(r => buildEntry(r));
       }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('attendance_records')
         .select(ADMIN_COLS)
         .order('date', { ascending: false })
         .limit(200);
+      if (error) {
+        throw error;
+      }
       trackQuery('attendance', data?.length || 0);
       return (data || []).map(r => buildEntry(r));
     };
@@ -132,8 +140,19 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
       invalidateCache(cacheKey);
     }
 
-    const result = await debouncedFetch(cacheKey, doFetch, { ttlMs: force ? 0 : 30_000 });
-    setRecords(result);
+    try {
+      const result = await debouncedFetch(cacheKey, doFetch, {
+        ttlMs: force ? 0 : 30_000,
+        // Empty result on a forced refresh after a successful check-in is
+        // suspicious — keep the previous list rather than blanking the UI.
+        treatEmptyAsError: true,
+      });
+      setRecords(result);
+    } catch (err) {
+      // Last-resort guard: do NOT clear records on failure. Log and keep
+      // whatever the UI already has.
+      console.warn('[AttendanceDataContext] fetchRecords failed, keeping previous records:', err);
+    }
   }, [isEmployee, scopedEmployeeId]);
 
   const hasMounted = useRef(false);
@@ -152,6 +171,47 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
       }
     });
     return () => subscription.unsubscribe();
+  }, [fetchRecords]);
+
+  // Realtime sync: any insert/update/delete on the employee's own attendance
+  // records (e.g. from a kiosk, another tab, the auto-checkout cron) is
+  // reflected here within ~1 second. This makes "ghost" empty states
+  // self-healing and keeps the portal in sync with the database without
+  // needing a manual refresh.
+  useEffect(() => {
+    if (!isEmployee || !scopedEmployeeId) return;
+    const channel = supabase
+      .channel(`attendance-emp-${scopedEmployeeId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance_records',
+          filter: `employee_id=eq.${scopedEmployeeId}`,
+        },
+        () => {
+          invalidateCache(`attendance_${scopedEmployeeId}`);
+          fetchRecords(true);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isEmployee, scopedEmployeeId, fetchRecords]);
+
+  // When the tab becomes visible again, force-refresh attendance so the
+  // employee never sees a stale "needs check-in" prompt after the screen
+  // wakes from sleep / the app returns from background.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        fetchRecords(true);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, [fetchRecords]);
 
   const checkInFn = useCallback(async (employeeId: string, employeeName: string, employeeNameAr: string, department: string) => {
