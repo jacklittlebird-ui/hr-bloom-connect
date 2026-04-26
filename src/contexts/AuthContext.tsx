@@ -380,7 +380,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // resolutionId churn and end up calling signOut on a perfectly valid login).
     initialLoadDone.current = true;
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+    let { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+
+    // If the failure looks like a clock-skew problem (device clock is wrong),
+    // synchronously re-detect the offset against the server and retry once.
+    // This makes login resilient for users whose phones / PCs have wrong dates.
+    if (error && isClockSkewAuthError(error.message)) {
+      console.warn('[auth] Login failed with possible clock-skew error — recalibrating clock and retrying:', error.message);
+      await detectAndCorrectClockSkew();
+      const retry = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       initialLoadDone.current = false;
