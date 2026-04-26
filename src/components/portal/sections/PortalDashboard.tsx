@@ -55,11 +55,12 @@ export const PortalDashboard = () => {
     [employeeRecords]
   );
 
-  const [liveAttendanceState, setLiveAttendanceState] = useState<{ checkIn: string | null; checkOut: string | null; date: string | null; loading: boolean }>({
+  const [liveAttendanceState, setLiveAttendanceState] = useState<{ checkIn: string | null; checkOut: string | null; date: string | null; loading: boolean; error: boolean }>({
     checkIn: null,
     checkOut: null,
     date: null,
     loading: true,
+    error: false,
   });
 
   const activeRecord = latestOpenRecord ?? todayRecord;
