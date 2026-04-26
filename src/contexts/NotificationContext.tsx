@@ -88,20 +88,22 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const ensureLoaded = useCallback(async () => {
     if (hasFetched.current) return;
 
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) return;
+    // Use getSession (local, no network) instead of getUser (network call)
+    // to avoid hammering /auth/v1/user and triggering 429 rate limits.
+    const { data } = await supabase.auth.getSession();
+    if (!data.session?.user) return;
 
     hasFetched.current = true;
     if (!userId) {
-      setUserId(data.user.id);
+      setUserId(data.session.user.id);
     }
     await fetchNotifications();
   }, [fetchNotifications, userId]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUserId(data.user.id);
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) {
+        setUserId(data.session.user.id);
       }
     });
 
