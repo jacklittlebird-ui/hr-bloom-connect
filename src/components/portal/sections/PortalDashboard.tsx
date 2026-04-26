@@ -63,6 +63,11 @@ export const PortalDashboard = () => {
   });
 
   const activeRecord = latestOpenRecord ?? todayRecord;
+  // Merge logic: prefer whichever source actually has a check-in. This guards
+  // against the case where a transient query failure leaves liveAttendanceState
+  // empty even though the context records show the employee already checked in
+  // — and vice versa, when the live query has fresher data than the context
+  // cache. We never silently downgrade "checked in" → "not checked in".
   const effectiveCheckIn = liveAttendanceState.checkIn ?? activeRecord?.checkIn ?? null;
   const effectiveCheckOut = liveAttendanceState.checkOut ?? activeRecord?.checkOut ?? null;
   const effectiveDate = liveAttendanceState.date ?? activeRecord?.date ?? null;
