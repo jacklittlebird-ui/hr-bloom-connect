@@ -34,7 +34,16 @@ export const PortalProfile = () => {
   const employee = getEmployee(portalEmployeeId);
 
   if (!employee) {
-    return <div className="p-10 text-center text-muted-foreground">{ar ? 'لم يتم العثور على بيانات الموظف' : 'Employee data not found'}</div>;
+    return (
+      <div className="p-10 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground text-sm">
+            {ar ? 'جاري تحميل بيانات الموظف...' : 'Loading employee data...'}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const statusLabel = employee.status === 'active' ? (ar ? 'نشط' : 'Active') : employee.status === 'inactive' ? (ar ? 'غير نشط' : 'Inactive') : (ar ? 'موقوف' : 'Suspended');
