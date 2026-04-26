@@ -12,7 +12,7 @@ interface DepartmentsTabProps {
   readOnly?: boolean;
 }
 
-const DEPT_CODES = ['PS', 'LL', 'OO', 'RO', 'LC', 'SC', 'IA', 'AD', 'AC', 'WO', 'TR'];
+const DEPT_CODES = ['PS', 'LL', 'OO', 'RO', 'LC', 'SC', 'IA', 'AD', 'AC', 'WO', 'TR', 'MEET', 'ASSEST'];
 
 const parseCodes = (raw: string): string[] =>
   (raw || '').split(',').map(s => s.trim()).filter(Boolean);
