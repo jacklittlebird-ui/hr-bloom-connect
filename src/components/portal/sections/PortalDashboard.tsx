@@ -99,7 +99,7 @@ export const PortalDashboard = () => {
   useEffect(() => {
     const fetchLiveAttendanceState = async () => {
       if (!PORTAL_EMPLOYEE_ID) {
-        setLiveAttendanceState({ checkIn: null, checkOut: null, date: null, loading: false });
+        setLiveAttendanceState({ checkIn: null, checkOut: null, date: null, loading: false, error: false });
         return;
       }
 
@@ -117,11 +117,11 @@ export const PortalDashboard = () => {
 
       // CRITICAL: If the live query fails (RLS not ready, network blip), do NOT
       // reset live state to null — that would falsely tell the employee they have
-      // not checked in and prompt a duplicate check-in. Just keep the previous
-      // state and let the activeRecord (from context) take over via the ?? merge.
+      // not checked in and prompt a duplicate check-in. Mark as error so the UI
+      // can keep the buttons disabled until we confirm the real state.
       if (openErr) {
         console.warn('[PortalDashboard] open-record query failed, keeping previous live state:', openErr);
-        setLiveAttendanceState((prev) => ({ ...prev, loading: false }));
+        setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: true }));
         return;
       }
 
@@ -133,6 +133,7 @@ export const PortalDashboard = () => {
           checkIn: openCheckIn ? `${openCheckIn.getHours().toString().padStart(2, '0')}:${openCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
           checkOut: openCheckOut ? `${openCheckOut.getHours().toString().padStart(2, '0')}:${openCheckOut.getMinutes().toString().padStart(2, '0')}` : null,
           loading: false,
+          error: false,
         });
         return;
       }
@@ -148,7 +149,7 @@ export const PortalDashboard = () => {
 
       if (todayErr) {
         console.warn('[PortalDashboard] today-record query failed, keeping previous live state:', todayErr);
-        setLiveAttendanceState((prev) => ({ ...prev, loading: false }));
+        setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: true }));
         return;
       }
 
@@ -163,6 +164,7 @@ export const PortalDashboard = () => {
         checkIn: todayCheckIn ? `${todayCheckIn.getHours().toString().padStart(2, '0')}:${todayCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
         checkOut: todayCheckOut ? `${todayCheckOut.getHours().toString().padStart(2, '0')}:${todayCheckOut.getMinutes().toString().padStart(2, '0')}` : null,
         loading: false,
+        error: false,
       });
     };
 
