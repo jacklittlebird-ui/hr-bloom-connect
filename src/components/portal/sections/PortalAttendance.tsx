@@ -19,6 +19,8 @@ interface PortalAttendanceRecord {
   status: string;
   workHours: number;
   workMinutes: number;
+  holidayNameAr?: string;
+  holidayNameEn?: string;
 }
 
 const formatTime = (ts: string | null): string | null => {
