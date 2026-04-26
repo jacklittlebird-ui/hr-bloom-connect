@@ -79,13 +79,25 @@ export const PortalAttendance = () => {
         return;
       }
 
+      if (holRes.error) {
+        console.error('Portal official holidays fetch error:', holRes.error);
+      }
+
+      const matchingHolidays = (holRes.data || []).filter((h: any) => {
+        const holidayStations = h.station_ids || [];
+        return !stationId || holidayStations.length === 0 || holidayStations.includes(stationId);
+      });
+      const holidayByDate = new Map(matchingHolidays.map((h: any) => [h.holiday_date, h]));
+
       const attLogs: PortalAttendanceRecord[] = (attRes.data || []).map(r => {
+        const holiday = holidayByDate.get(r.date) as any;
         const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
         const ci = formatTime(r.check_in);
         const co = isAutoClosed ? null : formatTime(r.check_out);
         const totalMins = isAutoClosed ? 0 : (r.work_minutes || (r.work_hours ? Math.round(r.work_hours * 60) : 0));
         let status: string;
-        if (isAutoClosed) status = 'auto-closed';
+        if (holiday) status = 'official-holiday';
+        else if (isAutoClosed) status = 'auto-closed';
         else if (r.is_late) status = 'late';
         else status = r.status || 'present';
         return {
@@ -96,13 +108,14 @@ export const PortalAttendance = () => {
           status,
           workHours: Math.floor(totalMins / 60),
           workMinutes: totalMins % 60,
+          holidayNameAr: holiday?.name_ar,
+          holidayNameEn: holiday?.name_en,
         };
       });
 
-      // Add official holidays for days where employee has no attendance record
+      // Add official holidays for days where employee has no attendance record, while attendance rows on holidays are labeled above.
       const datesWithRecords = new Set(attLogs.map(l => l.date));
-      const holidayLogs: PortalAttendanceRecord[] = (holRes.data || [])
-        .filter((h: any) => !stationId || !h.station_ids || h.station_ids.length === 0 || h.station_ids.includes(stationId))
+      const holidayLogs: PortalAttendanceRecord[] = matchingHolidays
         .filter((h: any) => !datesWithRecords.has(h.holiday_date))
         .map((h: any) => ({
           id: `holiday-${h.id}`,
