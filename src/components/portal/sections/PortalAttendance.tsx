@@ -137,7 +137,15 @@ export const PortalAttendance = () => {
   const totalActualMinutes = stats.totalHours * 60 + stats.totalMinutes;
   const rate = totalActualMinutes > 0 ? ((totalActualMinutes / (192 * 60)) * 100).toFixed(1) : '0';
 
-  const statusBadge = (s: string) => {
+  const statusBadge = (r: PortalAttendanceRecord) => {
+    const s = r.status;
+    if (s === 'official-holiday') {
+      return (
+        <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
+          {ar ? `إجازة رسمية: ${r.holidayNameAr || ''}` : `Official Holiday: ${r.holidayNameEn || ''}`}
+        </Badge>
+      );
+    }
     const map: Record<string, { cls: string; ar: string; en: string }> = {
       present: { cls: 'bg-success/10 text-success border-success', ar: 'حاضر', en: 'Present' },
       absent: { cls: 'bg-destructive/10 text-destructive border-destructive', ar: 'غائب', en: 'Absent' },
