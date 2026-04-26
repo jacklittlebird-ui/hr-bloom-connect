@@ -33,6 +33,7 @@ interface Employee {
   jobTitleEn: string;
   avatar?: string;
   nationalId?: string;
+  status?: string;
 }
 
 interface TrainingRecord {
@@ -76,6 +77,8 @@ const jobFunctionLabels: Record<string, { en: string; ar: string }> = {
   'AC': { en: 'Accountant', ar: 'محاسب' },
   'WO': { en: 'Worker', ar: 'عامل' },
   'TR': { en: 'Trainer', ar: 'مدرب' },
+  'MEET': { en: 'Meet & Assist', ar: 'استقبال ومساعدة' },
+  'ASSEST': { en: 'Assist Services', ar: 'خدمات المساعدة' },
 };
 
 const STORAGE_KEY = 'training-records-ui-state';
@@ -150,6 +153,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     jobTitleEn: (emp as any).jobTitleEn || '',
     avatar: emp.avatar || undefined,
     nationalId: (emp as any).nationalId || '',
+    status: emp.status || 'active',
   })), [contextEmployees]);
 
   const selectedEmployee = useMemo(
