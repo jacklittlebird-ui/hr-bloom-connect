@@ -46,38 +46,76 @@ export const PortalAttendance = () => {
     if (!PORTAL_EMPLOYEE_ID) return;
     const fetchRecords = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('attendance_records')
-        .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late, notes')
-        .eq('employee_id', PORTAL_EMPLOYEE_ID)
-        .gte('date', dateFrom)
-        .lte('date', dateTo)
-        .order('date', { ascending: false });
 
-      if (error) {
-        console.error('Portal attendance fetch error:', error);
+      // Get employee's station_id to filter holidays correctly
+      const { data: empRow } = await supabase
+        .from('employees')
+        .select('station_id')
+        .eq('id', PORTAL_EMPLOYEE_ID)
+        .maybeSingle();
+      const stationId = empRow?.station_id;
+
+      const [attRes, holRes] = await Promise.all([
+        supabase
+          .from('attendance_records')
+          .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late, notes')
+          .eq('employee_id', PORTAL_EMPLOYEE_ID)
+          .gte('date', dateFrom)
+          .lte('date', dateTo)
+          .order('date', { ascending: false }),
+        supabase
+          .from('official_holidays')
+          .select('id, name_ar, name_en, holiday_date, station_ids')
+          .gte('holiday_date', dateFrom)
+          .lte('holiday_date', dateTo),
+      ]);
+
+      if (attRes.error) {
+        console.error('Portal attendance fetch error:', attRes.error);
         setFilteredRecords([]);
-      } else {
-        setFilteredRecords((data || []).map(r => {
-          const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
-          const ci = formatTime(r.check_in);
-          const co = isAutoClosed ? null : formatTime(r.check_out);
-          const totalMins = isAutoClosed ? 0 : (r.work_minutes || (r.work_hours ? Math.round(r.work_hours * 60) : 0));
-          let status: string;
-          if (isAutoClosed) status = 'auto-closed';
-          else if (r.is_late) status = 'late';
-          else status = r.status || 'present';
-          return {
-            id: r.id,
-            date: r.date,
-            checkIn: ci,
-            checkOut: co,
-            status,
-            workHours: Math.floor(totalMins / 60),
-            workMinutes: totalMins % 60,
-          };
-        }));
+        setLoading(false);
+        return;
       }
+
+      const attLogs: PortalAttendanceRecord[] = (attRes.data || []).map(r => {
+        const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
+        const ci = formatTime(r.check_in);
+        const co = isAutoClosed ? null : formatTime(r.check_out);
+        const totalMins = isAutoClosed ? 0 : (r.work_minutes || (r.work_hours ? Math.round(r.work_hours * 60) : 0));
+        let status: string;
+        if (isAutoClosed) status = 'auto-closed';
+        else if (r.is_late) status = 'late';
+        else status = r.status || 'present';
+        return {
+          id: r.id,
+          date: r.date,
+          checkIn: ci,
+          checkOut: co,
+          status,
+          workHours: Math.floor(totalMins / 60),
+          workMinutes: totalMins % 60,
+        };
+      });
+
+      // Add official holidays for days where employee has no attendance record
+      const datesWithRecords = new Set(attLogs.map(l => l.date));
+      const holidayLogs: PortalAttendanceRecord[] = (holRes.data || [])
+        .filter((h: any) => !stationId || !h.station_ids || h.station_ids.length === 0 || h.station_ids.includes(stationId))
+        .filter((h: any) => !datesWithRecords.has(h.holiday_date))
+        .map((h: any) => ({
+          id: `holiday-${h.id}`,
+          date: h.holiday_date,
+          checkIn: null,
+          checkOut: null,
+          status: 'official-holiday',
+          workHours: 0,
+          workMinutes: 0,
+          holidayNameAr: h.name_ar,
+          holidayNameEn: h.name_en,
+        } as any));
+
+      const combined = [...attLogs, ...holidayLogs].sort((a, b) => b.date.localeCompare(a.date));
+      setFilteredRecords(combined);
       setLoading(false);
     };
     fetchRecords();
