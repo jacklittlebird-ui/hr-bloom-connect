@@ -34,7 +34,10 @@ export const PortalDashboard = () => {
   const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
   useEffect(() => { ensureLeaves(); }, [ensureLeaves]);
 
-  const today = format(new Date(), 'yyyy-MM-dd');
+  // Today, computed in Cairo timezone — never the device-local timezone, so
+  // an employee whose phone is set to a different region still sees the
+  // correct "today" for the workplace.
+  const today = getCairoDateString();
   const employeeRecords = useMemo(
     () => records.filter(r => r.employeeId === PORTAL_EMPLOYEE_ID),
     [records, PORTAL_EMPLOYEE_ID]
