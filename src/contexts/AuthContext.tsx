@@ -326,24 +326,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [clearAuthState]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      // CRITICAL: When the same employee opens the app in multiple tabs / devices,
+      // Supabase's refresh-token rotation can revoke a token that another tab is
+      // still using. That bubbles up here as a SIGNED_OUT (or a null-session
+      // TOKEN_REFRESHED) event, even though the user is still logged in in
+      // another tab. Before clearing auth, double-check whether a valid session
+      // actually exists in storage — if it does, ignore this transient event.
+      if (!newSession?.user) {
+        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+          try {
+            const { data: { session: storedSession } } = await supabase.auth.getSession();
+            if (storedSession?.user) {
+              // Another tab refreshed the token successfully — adopt that session
+              // instead of logging out.
+              setSession(storedSession);
+              return;
+            }
+          } catch {
+            // fall through and clear state
+          }
+        }
+        setSession(null);
+        clearAuthState();
+        return;
+      }
+
       setSession(newSession);
 
-      if (newSession?.user) {
-        const isBackgroundEvent = initialLoadDone.current && (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED');
+      const isBackgroundEvent = initialLoadDone.current && (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED');
 
-        if (isBackgroundEvent) {
-          setTimeout(() => {
-            void resolveAuthenticatedUser(newSession.user, false).catch(() => undefined);
-          }, 0);
-        } else if (!initialLoadDone.current) {
-          setLoading(true);
-          setTimeout(() => {
-            void resolveAuthenticatedUser(newSession.user, true).catch(() => undefined);
-          }, 0);
-        }
-      } else {
-        clearAuthState();
+      if (isBackgroundEvent) {
+        setTimeout(() => {
+          void resolveAuthenticatedUser(newSession.user, false).catch(() => undefined);
+        }, 0);
+      } else if (!initialLoadDone.current) {
+        setLoading(true);
+        setTimeout(() => {
+          void resolveAuthenticatedUser(newSession.user, true).catch(() => undefined);
+        }, 0);
       }
     });
 
