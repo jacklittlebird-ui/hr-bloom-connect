@@ -19,6 +19,7 @@ import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AttendanceRecord } from '@/pages/Attendance';
 import { toast } from '@/hooks/use-toast';
+import { getCairoOffsetString } from '@/lib/cairoDate';
 
 interface CheckInOutProps {
   records: AttendanceRecord[];
