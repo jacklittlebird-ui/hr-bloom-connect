@@ -500,19 +500,19 @@ Deno.serve(async (req) => {
         console.log("[submit-scan] checkout lookup:", { empId, openRecord, findErr });
 
         if (openRecord) {
-          // Enforce minimum 60 minutes between check-in and check-out
+          // Enforce minimum 60 SECONDS between check-in and check-out
           if (openRecord.check_in) {
             const checkInTime = new Date(openRecord.check_in).getTime();
-            const elapsedMinutes = (Date.now() - checkInTime) / 60000;
-            if (elapsedMinutes < 60) {
-              const remaining = Math.ceil(60 - elapsedMinutes);
+            const elapsedSeconds = (Date.now() - checkInTime) / 1000;
+            if (elapsedSeconds < 60) {
+              const remaining = Math.ceil(60 - elapsedSeconds);
               await auditCheckout(user_id, empId, "failure", {
                 channel: "qr",
                 error_code: "MINIMUM_WORK_DURATION",
-                remaining_minutes: remaining,
+                remaining_seconds: remaining,
               }, openRecord.id);
               return new Response(JSON.stringify({
-                error: `لا يمكن تسجيل الانصراف قبل مرور ساعة من الحضور. المتبقي: ${remaining} دقيقة / Cannot check out before 1 hour from check-in. Remaining: ${remaining} min`,
+                error: `لا يمكن تسجيل الانصراف قبل مرور دقيقة من الحضور. المتبقي: ${remaining} ثانية / Cannot check out within 60 seconds of check-in. Remaining: ${remaining}s`,
                 error_code: "MINIMUM_WORK_DURATION",
                 retryable: false,
               }), {
