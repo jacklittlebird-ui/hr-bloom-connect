@@ -178,6 +178,7 @@ export const EmployeeDirectory = () => {
                   <TableHead className="text-primary-foreground">{ar ? 'القسم' : 'Department'}</TableHead>
                   <TableHead className="text-primary-foreground">{ar ? 'الوظيفة' : 'Job Title'}</TableHead>
                   <TableHead className="text-primary-foreground">{ar ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
+                  <TableHead className="text-primary-foreground">{ar ? 'تاريخ بداية التأمين' : 'Insurance Start'}</TableHead>
                   <TableHead className="text-primary-foreground">{ar ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead className="text-primary-foreground print:hidden">{ar ? 'إجراءات' : 'Actions'}</TableHead>
                 </TableRow>
