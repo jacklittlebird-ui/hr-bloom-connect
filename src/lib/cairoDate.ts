@@ -1,16 +1,36 @@
 /**
  * Cairo timezone date utilities.
  *
- * The system runs all attendance logic in Africa/Cairo (UTC+2, no DST).
- * Using `new Date().toISOString().split('T')[0]` gives the UTC date, which is
- * wrong for users in Cairo between 22:00 and 23:59 local time (that's already
- * the next UTC day) — and during early-morning hours after midnight UTC.
+ * The system runs all attendance logic in Africa/Cairo. Egypt observes
+ * Daylight Saving Time (DST), so the UTC offset alternates between
+ * +02:00 (winter / EET) and +03:00 (summer / EEST). All helpers below rely
+ * on the IANA `Africa/Cairo` zone via `Intl`, which automatically applies
+ * the correct DST rules — never hardcode a fixed offset.
  *
  * These helpers always return the date as it is in Cairo, regardless of where
  * the device clock or browser timezone is set.
  */
 
 const CAIRO_TZ = 'Africa/Cairo';
+
+/**
+ * Returns the current Cairo UTC offset as a signed string like `+02:00` or `+03:00`.
+ * Automatically reflects DST transitions (summer/winter time) without code changes.
+ */
+export function getCairoOffsetString(date: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: CAIRO_TZ,
+    timeZoneName: 'longOffset',
+  }).formatToParts(date);
+  const tz = parts.find((p) => p.type === 'timeZoneName')?.value ?? 'GMT+02:00';
+  // Format is like "GMT+02:00" or "GMT+3" — normalize to "+HH:MM"
+  const match = tz.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
+  if (!match) return '+02:00';
+  const sign = match[1];
+  const hours = match[2].padStart(2, '0');
+  const minutes = (match[3] ?? '00').padStart(2, '0');
+  return `${sign}${hours}:${minutes}`;
+}
 
 /**
  * Returns today's date in Cairo as `YYYY-MM-DD`.

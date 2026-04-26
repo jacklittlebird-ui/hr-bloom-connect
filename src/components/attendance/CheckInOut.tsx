@@ -19,6 +19,7 @@ import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AttendanceRecord } from '@/pages/Attendance';
 import { toast } from '@/hooks/use-toast';
+import { getCairoOffsetString } from '@/lib/cairoDate';
 
 interface CheckInOutProps {
   records: AttendanceRecord[];
@@ -154,8 +155,8 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
     }
     setManualSaving(true);
     try {
-      // Use Africa/Cairo timezone offset (+02:00) to prevent UTC misinterpretation
-      const tzOffset = '+02:00';
+      // Use Africa/Cairo offset dynamically (handles DST: +02:00 winter, +03:00 summer)
+      const tzOffset = getCairoOffsetString(new Date(`${manualDate}T${manualCheckIn || manualCheckOut || '00:00'}:00Z`));
       const ciTs = manualCheckIn ? `${manualDate}T${manualCheckIn}:00${tzOffset}` : null;
       let finalCoTs = manualCheckOut ? `${manualDate}T${manualCheckOut}:00${tzOffset}` : null;
 
@@ -163,7 +164,9 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
       if (finalCoTs && manualCheckIn && manualCheckOut < manualCheckIn) {
         const nextDay = new Date(manualDate);
         nextDay.setDate(nextDay.getDate() + 1);
-        finalCoTs = `${nextDay.toISOString().split('T')[0]}T${manualCheckOut}:00${tzOffset}`;
+        const nextDayStr = nextDay.toISOString().split('T')[0];
+        const nextOffset = getCairoOffsetString(new Date(`${nextDayStr}T${manualCheckOut}:00Z`));
+        finalCoTs = `${nextDayStr}T${manualCheckOut}:00${nextOffset}`;
       }
 
       // Find same-day records and prefer updating an incomplete one instead of inserting a new row
