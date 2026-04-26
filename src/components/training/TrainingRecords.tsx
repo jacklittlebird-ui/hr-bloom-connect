@@ -455,7 +455,25 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                   </Avatar>
                   <div className="flex-1 space-y-4">
                     <div>
-                      <h2 className="text-2xl font-bold">{ar ? selectedEmployee.nameAr : selectedEmployee.nameEn}</h2>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <h2 className="text-2xl font-bold">{ar ? selectedEmployee.nameAr : selectedEmployee.nameEn}</h2>
+                        {(() => {
+                          const st = selectedEmployee.status || 'active';
+                          const statusMap: Record<string, { ar: string; en: string; cls: string }> = {
+                            active: { ar: 'نشط', en: 'Active', cls: 'bg-success/10 text-success border-success' },
+                            inactive: { ar: 'غير نشط', en: 'Inactive', cls: 'bg-muted text-muted-foreground border-border' },
+                            suspended: { ar: 'موقوف', en: 'Suspended', cls: 'bg-destructive/10 text-destructive border-destructive' },
+                            stopped: { ar: 'منقطع', en: 'Stopped', cls: 'bg-destructive/10 text-destructive border-destructive' },
+                            absent: { ar: 'غائب', en: 'Absent', cls: 'bg-warning/10 text-warning border-warning' },
+                            resigned: { ar: 'مستقيل', en: 'Resigned', cls: 'bg-destructive/10 text-destructive border-destructive' },
+                            under_resignation: { ar: 'تحت الاستقالة', en: 'Under Resignation', cls: 'bg-warning/10 text-warning border-warning' },
+                            external_stations: { ar: 'محطات خارجية', en: 'External', cls: 'bg-primary/10 text-primary border-primary' },
+                            pending_hire: { ar: 'قيد التعيين', en: 'Pending Hire', cls: 'bg-primary/10 text-primary border-primary' },
+                          };
+                          const s = statusMap[st] || statusMap.active;
+                          return <Badge variant="outline" className={s.cls}>{ar ? s.ar : s.en}</Badge>;
+                        })()}
+                      </div>
                       <p className="text-muted-foreground">{selectedEmployee.department}</p>
                     </div>
                     <div className="grid grid-cols-3 gap-4 text-sm">
