@@ -431,6 +431,14 @@ export const PortalDashboard = () => {
               </p>
             )}
 
+            {liveAttendanceState.error && (
+              <p className="text-sm font-medium text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
+                {ar
+                  ? '⚠ تعذر التحقق من سجل الحضور. يرجى تحديث الصفحة قبل تسجيل أي عملية لتجنب التكرار.'
+                  : '⚠ Could not verify attendance state. Please refresh the page before recording any action to avoid duplicates.'}
+              </p>
+            )}
+
             {/* Status messages */}
             {qrStatus === 'validating' && (
               <div className="flex items-center justify-center gap-2 text-muted-foreground py-4">
