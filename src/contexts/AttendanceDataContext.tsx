@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
+import { getCairoDateString, getCairoHour } from '@/lib/cairoDate';
 
 export interface AttendanceEntry {
   id: string;
