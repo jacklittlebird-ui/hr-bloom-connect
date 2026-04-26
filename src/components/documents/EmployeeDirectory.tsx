@@ -192,6 +192,7 @@ export const EmployeeDirectory = () => {
                     <TableCell>{emp.department || <span className="text-muted-foreground">-</span>}</TableCell>
                     <TableCell>{ar ? (emp.jobTitleAr || '-') : (emp.jobTitleEn || '-')}</TableCell>
                     <TableCell>{emp.hireDate ? emp.hireDate.split('-').reverse().join('/') : <span className="text-muted-foreground">-</span>}</TableCell>
+                    <TableCell>{emp.socialInsuranceStartDate ? emp.socialInsuranceStartDate.split('-').reverse().join('/') : <span className="text-muted-foreground">-</span>}</TableCell>
                     <TableCell>{emp.stationName || <span className="text-muted-foreground">-</span>}</TableCell>
                     <TableCell className="print:hidden">
                       <Button
@@ -208,7 +209,7 @@ export const EmployeeDirectory = () => {
                 ))}
                 {paginatedItems.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       {ar ? 'لا توجد نتائج' : 'No results'}
                     </TableCell>
                   </TableRow>
