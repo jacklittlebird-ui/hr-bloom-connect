@@ -230,7 +230,7 @@ export const PortalAttendance = () => {
                     <TableCell className="font-mono">{r.checkIn || '--:--'}</TableCell>
                     <TableCell className="font-mono">{r.checkOut || '--:--'}</TableCell>
                     <TableCell>{r.workHours > 0 || r.workMinutes > 0 ? `${String(r.workHours).padStart(2, '0')}:${String(r.workMinutes).padStart(2, '0')}` : '-'}</TableCell>
-                    <TableCell>{statusBadge(r.status)}</TableCell>
+                    <TableCell>{statusBadge(r)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
