@@ -55,11 +55,12 @@ export const PortalDashboard = () => {
     [employeeRecords]
   );
 
-  const [liveAttendanceState, setLiveAttendanceState] = useState<{ checkIn: string | null; checkOut: string | null; date: string | null; loading: boolean }>({
+  const [liveAttendanceState, setLiveAttendanceState] = useState<{ checkIn: string | null; checkOut: string | null; date: string | null; loading: boolean; error: boolean }>({
     checkIn: null,
     checkOut: null,
     date: null,
     loading: true,
+    error: false,
   });
 
   const activeRecord = latestOpenRecord ?? todayRecord;
@@ -98,7 +99,7 @@ export const PortalDashboard = () => {
   useEffect(() => {
     const fetchLiveAttendanceState = async () => {
       if (!PORTAL_EMPLOYEE_ID) {
-        setLiveAttendanceState({ checkIn: null, checkOut: null, date: null, loading: false });
+        setLiveAttendanceState({ checkIn: null, checkOut: null, date: null, loading: false, error: false });
         return;
       }
 
@@ -116,11 +117,11 @@ export const PortalDashboard = () => {
 
       // CRITICAL: If the live query fails (RLS not ready, network blip), do NOT
       // reset live state to null — that would falsely tell the employee they have
-      // not checked in and prompt a duplicate check-in. Just keep the previous
-      // state and let the activeRecord (from context) take over via the ?? merge.
+      // not checked in and prompt a duplicate check-in. Mark as error so the UI
+      // can keep the buttons disabled until we confirm the real state.
       if (openErr) {
         console.warn('[PortalDashboard] open-record query failed, keeping previous live state:', openErr);
-        setLiveAttendanceState((prev) => ({ ...prev, loading: false }));
+        setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: true }));
         return;
       }
 
@@ -132,6 +133,7 @@ export const PortalDashboard = () => {
           checkIn: openCheckIn ? `${openCheckIn.getHours().toString().padStart(2, '0')}:${openCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
           checkOut: openCheckOut ? `${openCheckOut.getHours().toString().padStart(2, '0')}:${openCheckOut.getMinutes().toString().padStart(2, '0')}` : null,
           loading: false,
+          error: false,
         });
         return;
       }
@@ -147,7 +149,7 @@ export const PortalDashboard = () => {
 
       if (todayErr) {
         console.warn('[PortalDashboard] today-record query failed, keeping previous live state:', todayErr);
-        setLiveAttendanceState((prev) => ({ ...prev, loading: false }));
+        setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: true }));
         return;
       }
 
@@ -162,6 +164,7 @@ export const PortalDashboard = () => {
         checkIn: todayCheckIn ? `${todayCheckIn.getHours().toString().padStart(2, '0')}:${todayCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
         checkOut: todayCheckOut ? `${todayCheckOut.getHours().toString().padStart(2, '0')}:${todayCheckOut.getMinutes().toString().padStart(2, '0')}` : null,
         loading: false,
+        error: false,
       });
     };
 
@@ -356,7 +359,7 @@ export const PortalDashboard = () => {
                     }}
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || (hasCheckedIn && !hasCheckedOut)}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || (hasCheckedIn && !hasCheckedOut)}
                   >
                     <LogIn className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل حضور (QR)' : 'Check In (QR)'}
@@ -383,7 +386,7 @@ export const PortalDashboard = () => {
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
                     variant="outline"
-                    disabled={authLoading || methodLoading || liveAttendanceState.loading || !hasCheckedIn || hasCheckedOut}
+                    disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || !hasCheckedIn || hasCheckedOut}
                   >
                     <LogOut className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل انصراف (QR)' : 'Check Out (QR)'}
@@ -397,13 +400,13 @@ export const PortalDashboard = () => {
               <div className="space-y-3">
                 <GpsCheckinButton
                   eventType="check_in"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || (hasCheckedIn && !hasCheckedOut)}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || (hasCheckedIn && !hasCheckedOut)}
                   onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
                 <GpsCheckinButton
                   eventType="check_out"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || !hasCheckedIn || hasCheckedOut}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || !hasCheckedIn || hasCheckedOut}
                   onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
@@ -425,6 +428,14 @@ export const PortalDashboard = () => {
             {hasCheckedOut && effectiveCheckOut && (
               <p className="text-sm font-medium text-muted-foreground">
                 {ar ? `✔ تم الانصراف في ${effectiveCheckOut}` : `✔ Checked out at ${effectiveCheckOut}`}
+              </p>
+            )}
+
+            {liveAttendanceState.error && (
+              <p className="text-sm font-medium text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
+                {ar
+                  ? '⚠ تعذر التحقق من سجل الحضور. يرجى تحديث الصفحة قبل تسجيل أي عملية لتجنب التكرار.'
+                  : '⚠ Could not verify attendance state. Please refresh the page before recording any action to avoid duplicates.'}
               </p>
             )}
 

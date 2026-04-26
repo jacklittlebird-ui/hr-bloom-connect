@@ -5,6 +5,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/**
+ * Auto-checkout policy (revised):
+ *
+ * We DO NOT auto-close attendance records anymore for the following reasons:
+ *  1. Closing with `check_in + 8h` invented work hours that never happened.
+ *  2. Closing with `check_out = check_in` zeroed out legitimate work.
+ *  3. Either way, the open record disappeared, and on the next day the
+ *     employee was prompted to check in again — losing the previous day's
+ *     entry from their portal view.
+ *
+ * Instead, this function only flags VERY OLD open records (>48h since
+ * check-in) so admins can review and close them manually. Same-day or
+ * recent records are NEVER touched.
+ *
+ * The flag is non-destructive:
+ *  - check_out STAYS NULL (so the employee still sees their open record)
+ *  - notes get appended with `[NEEDS_REVIEW]` so admins can filter them
+ */
+const STALE_THRESHOLD_HOURS = 48;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -15,13 +35,11 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Find all open attendance records (check_in exists, check_out is null)
-    // where check_in is more than 18 hours ago
-    const cutoff = new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString();
+    const cutoff = new Date(Date.now() - STALE_THRESHOLD_HOURS * 60 * 60 * 1000).toISOString();
 
     const { data: openRecords, error: fetchErr } = await admin
       .from("attendance_records")
-      .select("id, employee_id, check_in, date")
+      .select("id, employee_id, check_in, date, notes")
       .is("check_out", null)
       .not("check_in", "is", null)
       .lt("check_in", cutoff)
@@ -37,42 +55,40 @@ Deno.serve(async (req) => {
 
     if (!openRecords || openRecords.length === 0) {
       console.log("[auto-checkout] No stale records found");
-      return new Response(JSON.stringify({ ok: true, closed: 0 }), {
+      return new Response(JSON.stringify({ ok: true, flagged: 0, closed: 0 }), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       });
     }
 
-    console.log(`[auto-checkout] Found ${openRecords.length} stale records to close`);
+    console.log(`[auto-checkout] Found ${openRecords.length} stale records to FLAG (no auto-close)`);
 
-    let closed = 0;
+    let flagged = 0;
     let errors = 0;
 
     for (const record of openRecords) {
-      // Set check_out to check_in + 8 hours (a reasonable default workday)
-      // instead of equal to check_in (which would zero out work hours).
-      // The trigger `calculate_work_hours` will compute work_hours/work_minutes from these values.
-      const checkInDate = new Date(record.check_in as string);
-      const assumedCheckOut = new Date(checkInDate.getTime() + 8 * 60 * 60 * 1000).toISOString();
+      // Skip records that are already flagged
+      if (typeof record.notes === "string" && record.notes.includes("[NEEDS_REVIEW]")) {
+        continue;
+      }
+
+      const newNotes = `${record.notes ?? ""} [NEEDS_REVIEW] لم يسجل الموظف انصرافاً منذ أكثر من ${STALE_THRESHOLD_HOURS} ساعة - يحتاج مراجعة من الإدارة / Employee did not check out for over ${STALE_THRESHOLD_HOURS}h - admin review needed`.trim();
 
       const { error: updateErr } = await admin
         .from("attendance_records")
-        .update({
-          check_out: assumedCheckOut,
-          notes: "تم الإغلاق التلقائي (افتراض 8 ساعات) / Auto-closed (assumed 8h shift)",
-        })
+        .update({ notes: newNotes })
         .eq("id", record.id);
 
       if (updateErr) {
-        console.error(`[auto-checkout] Failed to close record ${record.id}:`, updateErr);
+        console.error(`[auto-checkout] Failed to flag record ${record.id}:`, updateErr);
         errors++;
       } else {
-        closed++;
-        console.log(`[auto-checkout] Closed record ${record.id} for employee ${record.employee_id}`);
+        flagged++;
+        console.log(`[auto-checkout] Flagged record ${record.id} for employee ${record.employee_id}`);
       }
     }
 
     return new Response(
-      JSON.stringify({ ok: true, closed, errors, total: openRecords.length }),
+      JSON.stringify({ ok: true, flagged, errors, total: openRecords.length, closed: 0 }),
       { headers: { ...corsHeaders, "content-type": "application/json" } }
     );
   } catch (e: any) {
@@ -83,3 +99,4 @@ Deno.serve(async (req) => {
     });
   }
 });
+
