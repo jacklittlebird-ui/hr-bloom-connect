@@ -95,7 +95,7 @@ export const PortalDashboard = () => {
 
       setLiveAttendanceState((prev) => ({ ...prev, loading: true }));
 
-      const { data: openRecord } = await supabase
+      const { data: openRecord, error: openErr } = await supabase
         .from('attendance_records')
         .select('date, check_in, check_out')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
@@ -105,18 +105,29 @@ export const PortalDashboard = () => {
         .limit(1)
         .maybeSingle();
 
+      // CRITICAL: If the live query fails (RLS not ready, network blip), do NOT
+      // reset live state to null — that would falsely tell the employee they have
+      // not checked in and prompt a duplicate check-in. Just keep the previous
+      // state and let the activeRecord (from context) take over via the ?? merge.
+      if (openErr) {
+        console.warn('[PortalDashboard] open-record query failed, keeping previous live state:', openErr);
+        setLiveAttendanceState((prev) => ({ ...prev, loading: false }));
+        return;
+      }
+
       if (openRecord) {
         const openCheckIn = openRecord.check_in ? new Date(openRecord.check_in) : null;
+        const openCheckOut = openRecord.check_out ? new Date(openRecord.check_out) : null;
         setLiveAttendanceState({
           date: openRecord.date,
           checkIn: openCheckIn ? `${openCheckIn.getHours().toString().padStart(2, '0')}:${openCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
-          checkOut: null,
+          checkOut: openCheckOut ? `${openCheckOut.getHours().toString().padStart(2, '0')}:${openCheckOut.getMinutes().toString().padStart(2, '0')}` : null,
           loading: false,
         });
         return;
       }
 
-      const { data: latestTodayRecord } = await supabase
+      const { data: latestTodayRecord, error: todayErr } = await supabase
         .from('attendance_records')
         .select('date, check_in, check_out')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
@@ -125,6 +136,15 @@ export const PortalDashboard = () => {
         .limit(1)
         .maybeSingle();
 
+      if (todayErr) {
+        console.warn('[PortalDashboard] today-record query failed, keeping previous live state:', todayErr);
+        setLiveAttendanceState((prev) => ({ ...prev, loading: false }));
+        return;
+      }
+
+      // If we get here and there is genuinely no record today AND no open record from
+      // a previous day, only then clear the live state. This is the legitimate
+      // "needs to check in" case for a fresh day.
       const todayCheckIn = latestTodayRecord?.check_in ? new Date(latestTodayRecord.check_in) : null;
       const todayCheckOut = latestTodayRecord?.check_out ? new Date(latestTodayRecord.check_out) : null;
 
