@@ -71,10 +71,14 @@ function applyOffset(offsetMs: number) {
   } as unknown as DateConstructor;
 
   // Preserve prototype chain & static methods
-  PatchedDate.prototype = OriginalDate.prototype;
-  PatchedDate.parse = OriginalDate.parse.bind(OriginalDate);
-  PatchedDate.UTC = OriginalDate.UTC.bind(OriginalDate);
-  PatchedDate.now = (OriginalDate as unknown as { now: () => number }).now;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (PatchedDate as any).prototype = OriginalDate.prototype;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (PatchedDate as any).parse = OriginalDate.parse.bind(OriginalDate);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (PatchedDate as any).UTC = OriginalDate.UTC.bind(OriginalDate);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (PatchedDate as any).now = (OriginalDate as unknown as { now: () => number }).now;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).Date = PatchedDate;
