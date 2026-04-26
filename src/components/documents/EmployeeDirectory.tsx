@@ -102,6 +102,7 @@ export const EmployeeDirectory = () => {
       department: e.department || '-',
       jobTitle: ar ? (e.jobTitleAr || '-') : (e.jobTitleEn || '-'),
       hireDate: e.hireDate ? e.hireDate.split('-').reverse().join('/') : '-',
+      insuranceStart: e.socialInsuranceStartDate ? e.socialInsuranceStartDate.split('-').reverse().join('/') : '-',
       station: e.stationName || '-',
     }));
     exportBilingualCSV({
@@ -115,6 +116,7 @@ export const EmployeeDirectory = () => {
         { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
         { headerAr: 'الوظيفة', headerEn: 'Job Title', key: 'jobTitle' },
         { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hireDate' },
+        { headerAr: 'تاريخ بداية التأمين', headerEn: 'Insurance Start', key: 'insuranceStart' },
         { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
       ],
       fileName: 'employee-directory',
