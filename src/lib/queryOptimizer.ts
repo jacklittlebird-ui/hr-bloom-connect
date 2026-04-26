@@ -46,13 +46,23 @@ const inFlight = new Map<string, Promise<any>>();
 
 /**
  * Wraps an async fetch so that concurrent calls with the same key
- * share a single in-flight promise, and repeated calls within `debounceMs`
+ * share a single in-flight promise, and repeated calls within the TTL
  * return the cached result.
+ *
+ * IMPORTANT: Errors are NEVER cached. If the fetcher throws, the previous
+ * cached value (if any) is returned to keep the UI from regressing to an
+ * empty state during transient failures (network blip, RLS race during auth
+ * restore). The error is re-thrown only when there is no fallback cache.
+ *
+ * Set `treatEmptyAsError: true` for endpoints where an empty array is
+ * suspicious (e.g. an attendance list that should always have at least the
+ * current day's records). When set and the fetcher returns an empty array
+ * while a non-empty cached value exists, the cached value is preferred.
  */
 export async function debouncedFetch<T>(
   key: string,
   fetcher: () => Promise<T>,
-  opts?: { ttlMs?: number; debounceMs?: number }
+  opts?: { ttlMs?: number; debounceMs?: number; treatEmptyAsError?: boolean }
 ): Promise<T> {
   const ttl = opts?.ttlMs ?? DEFAULT_TTL_MS;
 
@@ -64,11 +74,28 @@ export async function debouncedFetch<T>(
   if (inFlight.has(key)) return inFlight.get(key) as Promise<T>;
 
   const promise = fetcher().then(data => {
+    // Suspicious-empty guard: if a previous fetch returned a non-empty list
+    // and this one returned an empty one within a short window, prefer the
+    // previous result and let the next fetch refresh it. This protects
+    // against transient RLS / network failures that swallow data.
+    if (opts?.treatEmptyAsError && Array.isArray(data) && data.length === 0) {
+      const previous = cache.get(key);
+      if (previous && Array.isArray(previous.data) && previous.data.length > 0) {
+        inFlight.delete(key);
+        return previous.data as T;
+      }
+    }
     setCache(key, data);
     inFlight.delete(key);
     return data;
   }).catch(err => {
     inFlight.delete(key);
+    // Fallback to last known cache (even if stale) instead of failing hard.
+    const previous = cache.get(key);
+    if (previous) {
+      console.warn(`[queryOptimizer] fetch failed for "${key}", returning stale cache:`, err);
+      return previous.data as T;
+    }
     throw err;
   });
 
