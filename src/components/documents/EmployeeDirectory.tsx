@@ -102,6 +102,7 @@ export const EmployeeDirectory = () => {
       department: e.department || '-',
       jobTitle: ar ? (e.jobTitleAr || '-') : (e.jobTitleEn || '-'),
       hireDate: e.hireDate ? e.hireDate.split('-').reverse().join('/') : '-',
+      insuranceStart: e.socialInsuranceStartDate ? e.socialInsuranceStartDate.split('-').reverse().join('/') : '-',
       station: e.stationName || '-',
     }));
     exportBilingualCSV({
@@ -115,6 +116,7 @@ export const EmployeeDirectory = () => {
         { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
         { headerAr: 'الوظيفة', headerEn: 'Job Title', key: 'jobTitle' },
         { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hireDate' },
+        { headerAr: 'تاريخ بداية التأمين', headerEn: 'Insurance Start', key: 'insuranceStart' },
         { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
       ],
       fileName: 'employee-directory',
@@ -176,6 +178,7 @@ export const EmployeeDirectory = () => {
                   <TableHead className="text-primary-foreground">{ar ? 'القسم' : 'Department'}</TableHead>
                   <TableHead className="text-primary-foreground">{ar ? 'الوظيفة' : 'Job Title'}</TableHead>
                   <TableHead className="text-primary-foreground">{ar ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
+                  <TableHead className="text-primary-foreground">{ar ? 'تاريخ بداية التأمين' : 'Insurance Start'}</TableHead>
                   <TableHead className="text-primary-foreground">{ar ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead className="text-primary-foreground print:hidden">{ar ? 'إجراءات' : 'Actions'}</TableHead>
                 </TableRow>
@@ -189,6 +192,7 @@ export const EmployeeDirectory = () => {
                     <TableCell>{emp.department || <span className="text-muted-foreground">-</span>}</TableCell>
                     <TableCell>{ar ? (emp.jobTitleAr || '-') : (emp.jobTitleEn || '-')}</TableCell>
                     <TableCell>{emp.hireDate ? emp.hireDate.split('-').reverse().join('/') : <span className="text-muted-foreground">-</span>}</TableCell>
+                    <TableCell>{emp.socialInsuranceStartDate ? emp.socialInsuranceStartDate.split('-').reverse().join('/') : <span className="text-muted-foreground">-</span>}</TableCell>
                     <TableCell>{emp.stationName || <span className="text-muted-foreground">-</span>}</TableCell>
                     <TableCell className="print:hidden">
                       <Button
@@ -205,7 +209,7 @@ export const EmployeeDirectory = () => {
                 ))}
                 {paginatedItems.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       {ar ? 'لا توجد نتائج' : 'No results'}
                     </TableCell>
                   </TableRow>
