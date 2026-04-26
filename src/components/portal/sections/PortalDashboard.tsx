@@ -359,7 +359,7 @@ export const PortalDashboard = () => {
                     }}
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || (hasCheckedIn && !hasCheckedOut)}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || (hasCheckedIn && !hasCheckedOut)}
                   >
                     <LogIn className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل حضور (QR)' : 'Check In (QR)'}
@@ -386,7 +386,7 @@ export const PortalDashboard = () => {
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
                     variant="outline"
-                    disabled={authLoading || methodLoading || liveAttendanceState.loading || !hasCheckedIn || hasCheckedOut}
+                    disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || !hasCheckedIn || hasCheckedOut}
                   >
                     <LogOut className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل انصراف (QR)' : 'Check Out (QR)'}
@@ -400,13 +400,13 @@ export const PortalDashboard = () => {
               <div className="space-y-3">
                 <GpsCheckinButton
                   eventType="check_in"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || (hasCheckedIn && !hasCheckedOut)}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || (hasCheckedIn && !hasCheckedOut)}
                   onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
                 <GpsCheckinButton
                   eventType="check_out"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || !hasCheckedIn || hasCheckedOut}
+                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || !hasCheckedIn || hasCheckedOut}
                   onSuccess={() => refreshAttendance(true)}
                   ar={ar}
                 />
