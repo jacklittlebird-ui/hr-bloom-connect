@@ -3,6 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import { initSessionMonitor } from '@/lib/security';
 import { getRoleRedirectPath, normalizeLoginIdentifier } from '@/lib/auth';
+import { detectAndCorrectClockSkew } from '@/lib/clockSkew';
+
+// Errors that typically indicate the device clock is out of sync with the server.
+const isClockSkewAuthError = (msg?: string | null): boolean => {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return (
+    m.includes('issued in the future') ||
+    m.includes('jwt expired') ||
+    m.includes('token has expired') ||
+    m.includes('invalid jwt') ||
+    m.includes('iat') ||
+    m.includes('exp') ||
+    m.includes('clock')
+  );
+};
 
 export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager' | 'department_manager' | 'station_hr';
 
@@ -364,7 +380,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // resolutionId churn and end up calling signOut on a perfectly valid login).
     initialLoadDone.current = true;
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+    let { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+
+    // If the failure looks like a clock-skew problem (device clock is wrong),
+    // synchronously re-detect the offset against the server and retry once.
+    // This makes login resilient for users whose phones / PCs have wrong dates.
+    if (error && isClockSkewAuthError(error.message)) {
+      console.warn('[auth] Login failed with possible clock-skew error — recalibrating clock and retrying:', error.message);
+      await detectAndCorrectClockSkew();
+      const retry = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       initialLoadDone.current = false;
