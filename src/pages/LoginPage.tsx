@@ -143,7 +143,7 @@ const LoginPage = () => {
             ))}
           </div>
 
-          <div className="flex items-center justify-center gap-3 mt-10">
+          <div className={cn("flex items-center justify-center gap-3 mt-10", isRTL && "flex-row-reverse")}>
             <span className="text-white/40 text-xs">Developed by</span>
             <img src={oneStoryLogo} alt="OneStory Solutions" className="h-16 w-auto object-contain" />
           </div>
