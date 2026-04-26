@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
+import { getCairoDateString, getCairoHour } from '@/lib/cairoDate';
 
 export interface AttendanceEntry {
   id: string;
@@ -105,24 +106,32 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
 
   const fetchRecords = useCallback(async (force = false) => {
     const cacheKey = `attendance_${scopedEmployeeId || 'all'}`;
-    
+
     const doFetch = async () => {
       if (isEmployee && scopedEmployeeId) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('attendance_records')
           .select(EMPLOYEE_COLS)
           .eq('employee_id', scopedEmployeeId)
           .order('date', { ascending: false })
           .limit(50);
+        if (error) {
+          // Throw so debouncedFetch can fall back to the previous cache
+          // instead of overwriting it with an empty list.
+          throw error;
+        }
         trackQuery('attendance', data?.length || 0);
         return (data || []).map(r => buildEntry(r));
       }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('attendance_records')
         .select(ADMIN_COLS)
         .order('date', { ascending: false })
         .limit(200);
+      if (error) {
+        throw error;
+      }
       trackQuery('attendance', data?.length || 0);
       return (data || []).map(r => buildEntry(r));
     };
@@ -131,8 +140,19 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
       invalidateCache(cacheKey);
     }
 
-    const result = await debouncedFetch(cacheKey, doFetch, { ttlMs: force ? 0 : 30_000 });
-    setRecords(result);
+    try {
+      const result = await debouncedFetch(cacheKey, doFetch, {
+        ttlMs: force ? 0 : 30_000,
+        // Empty result on a forced refresh after a successful check-in is
+        // suspicious — keep the previous list rather than blanking the UI.
+        treatEmptyAsError: true,
+      });
+      setRecords(result);
+    } catch (err) {
+      // Last-resort guard: do NOT clear records on failure. Log and keep
+      // whatever the UI already has.
+      console.warn('[AttendanceDataContext] fetchRecords failed, keeping previous records:', err);
+    }
   }, [isEmployee, scopedEmployeeId]);
 
   const hasMounted = useRef(false);
@@ -153,19 +173,74 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     return () => subscription.unsubscribe();
   }, [fetchRecords]);
 
+  // Realtime sync: any insert/update/delete on the employee's own attendance
+  // records (e.g. from a kiosk, another tab, the auto-checkout cron) is
+  // reflected here within ~1 second. This makes "ghost" empty states
+  // self-healing and keeps the portal in sync with the database without
+  // needing a manual refresh.
+  useEffect(() => {
+    if (!isEmployee || !scopedEmployeeId) return;
+    const channel = supabase
+      .channel(`attendance-emp-${scopedEmployeeId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'attendance_records',
+          filter: `employee_id=eq.${scopedEmployeeId}`,
+        },
+        () => {
+          invalidateCache(`attendance_${scopedEmployeeId}`);
+          fetchRecords(true);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isEmployee, scopedEmployeeId, fetchRecords]);
+
+  // When the tab becomes visible again, force-refresh attendance so the
+  // employee never sees a stale "needs check-in" prompt after the screen
+  // wakes from sleep / the app returns from background.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        fetchRecords(true);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [fetchRecords]);
+
   const checkInFn = useCallback(async (employeeId: string, employeeName: string, employeeNameAr: string, department: string) => {
     const now = new Date();
-    const dateString = now.toISOString().split('T')[0];
+    // CRITICAL: use Cairo-local date, NOT UTC. Otherwise after 22:00 Cairo
+    // (which is already the next UTC day) the date here drifts to "tomorrow"
+    // and we incorrectly close the actual today's open record as "from a
+    // previous day".
+    const dateString = getCairoDateString(now);
     const checkInTs = now.toISOString();
 
     // Check if there's ANY record for today (open or closed) — prevent duplicates
-    const { data: todayRecord } = await supabase
+    const { data: todayRecord, error: todayErr } = await supabase
       .from('attendance_records')
       .select('id, check_out')
       .eq('employee_id', employeeId)
       .eq('date', dateString)
       .limit(1)
       .maybeSingle();
+
+    if (todayErr) {
+      addNotification({
+        titleAr: `تعذر التحقق من سجل اليوم لـ ${employeeNameAr}`,
+        titleEn: `Could not verify today's record for ${employeeName}`,
+        type: 'error',
+        module: 'attendance',
+      });
+      return;
+    }
 
     if (todayRecord) {
       addNotification({
@@ -186,9 +261,10 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
 
     const scheduleType = (assignment?.attendance_rules as any)?.schedule_type || 'fixed';
     const isFlexible = isFlexibleSchedule(scheduleType);
-    const isLate = !isFlexible && now.getHours() >= 9;
+    // Use Cairo hour, not the device hour, so "late" is judged consistently.
+    const isLate = !isFlexible && getCairoHour(now) >= 9;
 
-    // Close any previously open records from PREVIOUS days only
+    // Close any previously open records from PREVIOUS Cairo days only.
     const { data: openRecords } = await supabase
       .from('attendance_records')
       .select('id, check_in, date')
@@ -199,23 +275,33 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     if (openRecords && openRecords.length > 0) {
       for (const rec of openRecords) {
         await supabase.from('attendance_records')
-          .update({ 
-            check_out: rec.check_in, 
+          .update({
+            check_out: rec.check_in,
             work_hours: 0,
             work_minutes: 0,
-            notes: 'لم يتم تسجيل انصراف / No checkout recorded - auto-closed' 
+            notes: 'لم يتم تسجيل انصراف / No checkout recorded - auto-closed'
           })
           .eq('id', rec.id);
       }
     }
 
-    await supabase.from('attendance_records').insert({
+    const { error: insertErr } = await supabase.from('attendance_records').insert({
       employee_id: employeeId,
       date: dateString,
       check_in: checkInTs,
       status: isLate ? 'late' : 'present',
       is_late: isLate,
     });
+
+    if (insertErr) {
+      addNotification({
+        titleAr: `فشل تسجيل الحضور لـ ${employeeNameAr}`,
+        titleEn: `Failed to check in ${employeeName}`,
+        type: 'error',
+        module: 'attendance',
+      });
+      return;
+    }
 
     addNotification({
       titleAr: `تسجيل حضور: ${employeeNameAr}`,
@@ -246,7 +332,8 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
       isFlexible = isFlexibleSchedule(scheduleType);
     }
 
-    const isEarlyLeave = !isFlexible && now.getHours() < 17;
+    // Use Cairo hour to determine "early leave".
+    const isEarlyLeave = !isFlexible && getCairoHour(now) < 17;
 
     await supabase.from('attendance_records').update({
       check_out: checkOutTs,

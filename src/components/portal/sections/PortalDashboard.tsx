@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
+import { getCairoDateString } from '@/lib/cairoDate';
 import { getOrCreateDeviceId, getDeviceMeta } from '@/lib/device';
 import QrScanner from '@/components/attendance/QrScanner';
 import { GpsCheckinButton } from '@/components/portal/GpsCheckinButton';
@@ -33,7 +34,10 @@ export const PortalDashboard = () => {
   const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
   useEffect(() => { ensureLeaves(); }, [ensureLeaves]);
 
-  const today = format(new Date(), 'yyyy-MM-dd');
+  // Today, computed in Cairo timezone — never the device-local timezone, so
+  // an employee whose phone is set to a different region still sees the
+  // correct "today" for the workplace.
+  const today = getCairoDateString();
   const employeeRecords = useMemo(
     () => records.filter(r => r.employeeId === PORTAL_EMPLOYEE_ID),
     [records, PORTAL_EMPLOYEE_ID]
@@ -59,6 +63,11 @@ export const PortalDashboard = () => {
   });
 
   const activeRecord = latestOpenRecord ?? todayRecord;
+  // Merge logic: prefer whichever source actually has a check-in. This guards
+  // against the case where a transient query failure leaves liveAttendanceState
+  // empty even though the context records show the employee already checked in
+  // — and vice versa, when the live query has fresher data than the context
+  // cache. We never silently downgrade "checked in" → "not checked in".
   const effectiveCheckIn = liveAttendanceState.checkIn ?? activeRecord?.checkIn ?? null;
   const effectiveCheckOut = liveAttendanceState.checkOut ?? activeRecord?.checkOut ?? null;
   const effectiveDate = liveAttendanceState.date ?? activeRecord?.date ?? null;
