@@ -1706,6 +1706,16 @@ const StationManagerPortal = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
+                              {v.status === 'pending' && canApproveViolations && (
+                                <>
+                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-success" onClick={() => handleApproveViolation(v.id)} title={t('موافقة', 'Approve')}>
+                                    <CheckCircle className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRejectViolation(v.id)} title={t('رفض', 'Reject')}>
+                                    <XCircle className="h-3.5 w-3.5" />
+                                  </Button>
+                                </>
+                              )}
                               <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEditViol(v)}>
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
