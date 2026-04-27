@@ -1669,7 +1669,7 @@ const StationManagerPortal = () => {
                     {filteredViolations.length === 0 ? (
                       <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">{t('لا توجد مخالفات', 'No violations found')}</TableCell></TableRow>
                     ) : filteredViolations.map(v => {
-                      const emp = stationEmployees.find(e => e.employeeId === v.employeeId);
+                      const emp = stationEmployees.find(e => e.id === v.employeeId);
                       const typeLabel = violationTypes.find(vt => vt.value === v.type);
                       return (
                         <TableRow key={v.id}>
