@@ -451,6 +451,23 @@ const StationManagerPortal = () => {
     toast({ title: t('تم الحذف', 'Deleted') });
   };
 
+  // Roles allowed to approve/reject violations: admin, hr, station_manager, area_manager
+  const canApproveViolations = user?.role === 'admin' || user?.role === 'hr' || user?.role === 'station_manager' || user?.role === 'area_manager';
+
+  const handleApproveViolation = async (id: string) => {
+    const { error } = await supabase.from('violations').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', id);
+    if (error) { toast({ title: t('تعذر اعتماد المخالفة', 'Could not approve'), variant: 'destructive' }); return; }
+    toast({ title: t('تمت الموافقة على المخالفة', 'Violation approved') });
+    await fetchViolations();
+  };
+
+  const handleRejectViolation = async (id: string) => {
+    const { error } = await supabase.from('violations').update({ status: 'rejected' }).eq('id', id);
+    if (error) { toast({ title: t('تعذر رفض المخالفة', 'Could not reject'), variant: 'destructive' }); return; }
+    toast({ title: t('تم رفض المخالفة', 'Violation rejected') });
+    await fetchViolations();
+  };
+
   // Open edit evaluation dialog
   const openEditEval = (review: any) => {
     setEditEvalId(review.id);
