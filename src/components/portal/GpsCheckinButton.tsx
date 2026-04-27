@@ -34,25 +34,17 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
     setMessage('');
 
     try {
-      const getPosition = (highAccuracy: boolean, timeout: number) =>
-        new Promise<GeolocationPosition>((resolve, reject) => {
-          if (!navigator.geolocation) return reject(new Error(ar ? 'الموقع غير مدعوم' : 'Geolocation not supported'));
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: highAccuracy,
-            timeout,
-            maximumAge: 30000,
-          });
-        });
-
       let pos: GeolocationPosition;
       try {
-        pos = await getPosition(true, 20000);
-      } catch (geoErr: any) {
-        if (geoErr.code === 3) {
-          pos = await getPosition(false, 15000);
-        } else {
-          throw geoErr;
-        }
+        pos = await getFreshPosition({
+          maxAgeMs: 10_000,
+          maxAccuracyMeters: 150,
+          timeoutMs: 20_000,
+        });
+      } catch (geoErr) {
+        setStatus('error');
+        setMessage(freshGeoErrorMessage(geoErr, ar));
+        return;
       }
 
       if (!session?.access_token || !session.user?.id) {
