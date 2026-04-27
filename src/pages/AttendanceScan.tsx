@@ -37,24 +37,23 @@ const AttendanceScan = () => {
     setScanning(false);
 
     try {
+      // QR mode: GPS is OPTIONAL. The QR code itself proves on-site presence
+      // (it can only be obtained by physically scanning the kiosk screen at the
+      // workplace). We attempt a fresh reading to attach as soft evidence, but
+      // a missing/denied/weak/stale reading must NOT block the scan — that
+      // would unfairly punish indoor employees with weak GPS signals.
       let gps: { lat?: number; lng?: number; accuracy?: number } = {};
       try {
         const fresh = await getFreshPosition({
-          maxAgeMs: 10_000,
-          maxAccuracyMeters: 150,
-          timeoutMs: 12_000,
+          maxAgeMs: 300_000,
+          maxAccuracyMeters: 300,
+          timeoutMs: 8_000,
         });
         gps = { lat: fresh.coords.latitude, lng: fresh.coords.longitude, accuracy: fresh.coords.accuracy };
       } catch (geoErr) {
-        // For QR mode location is required to validate distance to the QR location.
-        // A stale/cached/low-accuracy reading is the exact attack vector we are
-        // blocking, so refuse the scan rather than passing weak data to the server.
-        if (geoErr instanceof FreshGeolocationError) {
-          setStatus("error");
-          setMessage(freshGeoErrorMessage(geoErr, ar));
-          return;
-        }
-        throw geoErr;
+        // Silently continue without GPS — server logs a soft `geofence_miss`
+        // alert if needed and still records the attendance event.
+        console.warn("[AttendanceScan] QR scan continuing without GPS:", geoErr);
       }
 
       if (!session?.access_token) {
