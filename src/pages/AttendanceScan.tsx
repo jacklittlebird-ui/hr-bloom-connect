@@ -97,10 +97,18 @@ const AttendanceScan = () => {
     setStatus("validating");
 
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-        if (!navigator.geolocation) return reject(new Error(ar ? "الموقع غير مدعوم" : "Geolocation not supported"));
-        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 });
-      });
+      let pos: GeolocationPosition;
+      try {
+        pos = await getFreshPosition({
+          maxAgeMs: 10_000,
+          maxAccuracyMeters: 150,
+          timeoutMs: 15_000,
+        });
+      } catch (geoErr) {
+        setStatus("error");
+        setMessage(freshGeoErrorMessage(geoErr, ar));
+        return;
+      }
 
       if (!session?.access_token || !session.user?.id) {
         setStatus("error");
@@ -136,11 +144,7 @@ const AttendanceScan = () => {
       }
     } catch (e: any) {
       setStatus("error");
-      if (e.code === 1) {
-        setMessage(ar ? "يرجى السماح بالوصول للموقع" : "Please allow location access");
-      } else {
-        setMessage(e.message);
-      }
+      setMessage(e?.message ?? String(e));
     }
   }, [status, session, eventType, ar]);
 
