@@ -26,7 +26,25 @@ export const PortalHeader = ({ onToggleSidebar, onRefresh }: PortalHeaderProps) 
     ? (employee?.nameAr || user?.nameAr || '')
     : (employee?.nameEn || user?.name || '');
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (e) {
+      console.error('Logout error:', e);
+    } finally {
+      try {
+        // Best-effort cleanup of any cached auth tokens
+        Object.keys(localStorage).forEach((k) => {
+          if (k.startsWith('sb-') || k.includes('supabase.auth')) {
+            localStorage.removeItem(k);
+          }
+        });
+      } catch {}
+      navigate('/login', { replace: true });
+      // Hard reload to guarantee state reset on mobile browsers
+      setTimeout(() => { window.location.href = '/login'; }, 50);
+    }
+  };
 
   return (
     <header dir="rtl" className="h-14 md:h-16 bg-card border-b border-border flex items-center justify-between px-3 md:px-4 sticky top-0 z-10">
