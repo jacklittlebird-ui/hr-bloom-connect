@@ -37,14 +37,25 @@ const AttendanceScan = () => {
     setScanning(false);
 
     try {
-      const gps = await new Promise<{ lat?: number; lng?: number; accuracy?: number }>((resolve) => {
-        if (!navigator.geolocation) return resolve({});
-        navigator.geolocation.getCurrentPosition(
-          (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }),
-          () => resolve({}),
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-      });
+      let gps: { lat?: number; lng?: number; accuracy?: number } = {};
+      try {
+        const fresh = await getFreshPosition({
+          maxAgeMs: 10_000,
+          maxAccuracyMeters: 150,
+          timeoutMs: 12_000,
+        });
+        gps = { lat: fresh.coords.latitude, lng: fresh.coords.longitude, accuracy: fresh.coords.accuracy };
+      } catch (geoErr) {
+        // For QR mode location is required to validate distance to the QR location.
+        // A stale/cached/low-accuracy reading is the exact attack vector we are
+        // blocking, so refuse the scan rather than passing weak data to the server.
+        if (geoErr instanceof FreshGeolocationError) {
+          setStatus("error");
+          setMessage(freshGeoErrorMessage(geoErr, ar));
+          return;
+        }
+        throw geoErr;
+      }
 
       if (!session?.access_token) {
         setStatus("error");
