@@ -398,8 +398,11 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     loaded.current.add('violations');
 
     await debouncedFetch(`portal_violations_${scopedEmployeeId || 'all'}`, async () => {
+      // Employees only see violations that have been approved (status = 'approved')
       const q = supabase.from('violations').select('id, employee_id, date, type, penalty, status').order('created_at', { ascending: false }).limit(20);
-      if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
+      if (scopedEmployeeId) {
+        q.eq('employee_id', scopedEmployeeId).eq('status', 'approved');
+      }
       try {
         const { data } = await q;
         trackQuery('portal_violations', data?.length || 0);

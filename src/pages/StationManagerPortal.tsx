@@ -24,7 +24,7 @@ import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon } from 'lucide-react';
 import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
 import type { LeaveRequest } from '@/types/leaves';
 import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
@@ -449,6 +449,23 @@ const StationManagerPortal = () => {
     await supabase.from('violations').delete().eq('id', id);
     await fetchViolations();
     toast({ title: t('تم الحذف', 'Deleted') });
+  };
+
+  // Roles allowed to approve/reject violations: admin, hr, station_manager, area_manager
+  const canApproveViolations = user?.role === 'admin' || user?.role === 'hr' || user?.role === 'station_manager' || user?.role === 'area_manager';
+
+  const handleApproveViolation = async (id: string) => {
+    const { error } = await supabase.from('violations').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', id);
+    if (error) { toast({ title: t('تعذر اعتماد المخالفة', 'Could not approve'), variant: 'destructive' }); return; }
+    toast({ title: t('تمت الموافقة على المخالفة', 'Violation approved') });
+    await fetchViolations();
+  };
+
+  const handleRejectViolation = async (id: string) => {
+    const { error } = await supabase.from('violations').update({ status: 'rejected' }).eq('id', id);
+    if (error) { toast({ title: t('تعذر رفض المخالفة', 'Could not reject'), variant: 'destructive' }); return; }
+    toast({ title: t('تم رفض المخالفة', 'Violation rejected') });
+    await fetchViolations();
   };
 
   // Open edit evaluation dialog
@@ -1669,7 +1686,7 @@ const StationManagerPortal = () => {
                     {filteredViolations.length === 0 ? (
                       <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">{t('لا توجد مخالفات', 'No violations found')}</TableCell></TableRow>
                     ) : filteredViolations.map(v => {
-                      const emp = stationEmployees.find(e => e.employeeId === v.employeeId);
+                      const emp = stationEmployees.find(e => e.id === v.employeeId);
                       const typeLabel = violationTypes.find(vt => vt.value === v.type);
                       return (
                         <TableRow key={v.id}>
@@ -1689,6 +1706,16 @@ const StationManagerPortal = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
+                              {v.status === 'pending' && canApproveViolations && (
+                                <>
+                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-success" onClick={() => handleApproveViolation(v.id)} title={t('موافقة', 'Approve')}>
+                                    <CheckCircle className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => handleRejectViolation(v.id)} title={t('رفض', 'Reject')}>
+                                    <XCircle className="h-3.5 w-3.5" />
+                                  </Button>
+                                </>
+                              )}
                               <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEditViol(v)}>
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
