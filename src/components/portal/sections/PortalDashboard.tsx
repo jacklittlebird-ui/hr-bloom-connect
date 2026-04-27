@@ -20,6 +20,7 @@ import { getOrCreateDeviceId, getDeviceMeta } from '@/lib/device';
 import QrScanner from '@/components/attendance/QrScanner';
 import { GpsCheckinButton } from '@/components/portal/GpsCheckinButton';
 import { invokeAttendanceFunction } from '@/lib/attendanceApi';
+import { getFreshPosition, freshGeoErrorMessage, FreshGeolocationError } from '@/lib/freshGeolocation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 export const PortalDashboard = () => {
