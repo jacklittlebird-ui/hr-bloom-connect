@@ -26,7 +26,7 @@ interface StoredReading {
 }
 
 export interface FreshPositionOptions {
-  /** Max age in ms of the position timestamp relative to call time. Default 10s. */
+  /** Max age in ms of the position timestamp relative to call time. Default 2min. */
   maxAgeMs?: number;
   /** Max accepted GPS accuracy in meters. Default 150m. */
   maxAccuracyMeters?: number;
@@ -34,7 +34,7 @@ export interface FreshPositionOptions {
   timeoutMs?: number;
   /** Allow falling back to low-accuracy mode if high-accuracy times out. Default true. */
   allowLowAccuracyFallback?: boolean;
-  /** Minimum gap (ms) between identical readings before flagging as frozen. Default 5s. */
+  /** Minimum gap (ms) between identical readings before flagging as frozen. Default 2min. */
   frozenMinGapMs?: number;
 }
 
@@ -112,11 +112,11 @@ const sameToSevenDecimals = (a: number, b: number) =>
  */
 export async function getFreshPosition(opts: FreshPositionOptions = {}): Promise<GeolocationPosition> {
   const {
-    maxAgeMs = 10_000,
+    maxAgeMs = 120_000,
     maxAccuracyMeters = 150,
     timeoutMs = 15_000,
     allowLowAccuracyFallback = true,
-    frozenMinGapMs = 5_000,
+    frozenMinGapMs = 120_000,
   } = opts;
 
   let pos: GeolocationPosition;
