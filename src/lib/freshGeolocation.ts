@@ -26,9 +26,9 @@ interface StoredReading {
 }
 
 export interface FreshPositionOptions {
-  /** Max age in ms of the position timestamp relative to call time. Default 2min. */
+  /** Max age in ms of the position timestamp relative to call time. Default 5min. */
   maxAgeMs?: number;
-  /** Max accepted GPS accuracy in meters. Default 150m. */
+  /** Max accepted GPS accuracy in meters. Default 300m (lenient for indoors). */
   maxAccuracyMeters?: number;
   /** Timeout for getCurrentPosition in ms. Default 15s. */
   timeoutMs?: number;
@@ -36,6 +36,13 @@ export interface FreshPositionOptions {
   allowLowAccuracyFallback?: boolean;
   /** Minimum gap (ms) between identical readings before flagging as frozen. Default 2min. */
   frozenMinGapMs?: number;
+}
+
+/** Result of a fresh-geolocation request. */
+export interface FreshPositionResult {
+  position: GeolocationPosition;
+  /** Soft warnings that did NOT block the reading (for audit/logging only). */
+  warnings: Array<'frozen_coordinates' | 'low_accuracy' | 'stale_cached'>;
 }
 
 export class FreshGeolocationError extends Error {
