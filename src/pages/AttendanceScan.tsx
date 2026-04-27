@@ -8,6 +8,7 @@ import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import QrScanner from "@/components/attendance/QrScanner";
 import { invokeAttendanceFunction } from "@/lib/attendanceApi";
+import { getFreshPosition, freshGeoErrorMessage, FreshGeolocationError } from "@/lib/freshGeolocation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -36,14 +37,25 @@ const AttendanceScan = () => {
     setScanning(false);
 
     try {
-      const gps = await new Promise<{ lat?: number; lng?: number; accuracy?: number }>((resolve) => {
-        if (!navigator.geolocation) return resolve({});
-        navigator.geolocation.getCurrentPosition(
-          (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }),
-          () => resolve({}),
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-      });
+      let gps: { lat?: number; lng?: number; accuracy?: number } = {};
+      try {
+        const fresh = await getFreshPosition({
+          maxAgeMs: 10_000,
+          maxAccuracyMeters: 150,
+          timeoutMs: 12_000,
+        });
+        gps = { lat: fresh.coords.latitude, lng: fresh.coords.longitude, accuracy: fresh.coords.accuracy };
+      } catch (geoErr) {
+        // For QR mode location is required to validate distance to the QR location.
+        // A stale/cached/low-accuracy reading is the exact attack vector we are
+        // blocking, so refuse the scan rather than passing weak data to the server.
+        if (geoErr instanceof FreshGeolocationError) {
+          setStatus("error");
+          setMessage(freshGeoErrorMessage(geoErr, ar));
+          return;
+        }
+        throw geoErr;
+      }
 
       if (!session?.access_token) {
         setStatus("error");
@@ -85,10 +97,18 @@ const AttendanceScan = () => {
     setStatus("validating");
 
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-        if (!navigator.geolocation) return reject(new Error(ar ? "الموقع غير مدعوم" : "Geolocation not supported"));
-        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 });
-      });
+      let pos: GeolocationPosition;
+      try {
+        pos = await getFreshPosition({
+          maxAgeMs: 10_000,
+          maxAccuracyMeters: 150,
+          timeoutMs: 15_000,
+        });
+      } catch (geoErr) {
+        setStatus("error");
+        setMessage(freshGeoErrorMessage(geoErr, ar));
+        return;
+      }
 
       if (!session?.access_token || !session.user?.id) {
         setStatus("error");
@@ -124,11 +144,7 @@ const AttendanceScan = () => {
       }
     } catch (e: any) {
       setStatus("error");
-      if (e.code === 1) {
-        setMessage(ar ? "يرجى السماح بالوصول للموقع" : "Please allow location access");
-      } else {
-        setMessage(e.message);
-      }
+      setMessage(e?.message ?? String(e));
     }
   }, [status, session, eventType, ar]);
 
