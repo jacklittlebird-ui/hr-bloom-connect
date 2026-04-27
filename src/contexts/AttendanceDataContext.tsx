@@ -264,25 +264,33 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     // Use Cairo hour, not the device hour, so "late" is judged consistently.
     const isLate = !isFlexible && getCairoHour(now) >= 9;
 
-    // Close any previously open records from PREVIOUS Cairo days only.
-    const { data: openRecords } = await supabase
+    // Never auto-close previous open records from the client.
+    // Only the dedicated 18-hour auto-checkout job may close stale records.
+    const { data: openRecords, error: openRecordsErr } = await supabase
       .from('attendance_records')
       .select('id, check_in, date')
       .eq('employee_id', employeeId)
       .is('check_out', null)
       .neq('date', dateString);
 
+    if (openRecordsErr) {
+      addNotification({
+        titleAr: `تعذر التحقق من السجلات المفتوحة لـ ${employeeNameAr}`,
+        titleEn: `Could not verify open records for ${employeeName}`,
+        type: 'error',
+        module: 'attendance',
+      });
+      return;
+    }
+
     if (openRecords && openRecords.length > 0) {
-      for (const rec of openRecords) {
-        await supabase.from('attendance_records')
-          .update({
-            check_out: rec.check_in,
-            work_hours: 0,
-            work_minutes: 0,
-            notes: 'لم يتم تسجيل انصراف / No checkout recorded - auto-closed'
-          })
-          .eq('id', rec.id);
-      }
+      addNotification({
+        titleAr: `يوجد سجل حضور مفتوح سابق لـ ${employeeNameAr}، يجب تسجيل الانصراف أولاً`,
+        titleEn: `${employeeName} has a previous open attendance record and must check out first`,
+        type: 'warning',
+        module: 'attendance',
+      });
+      return;
     }
 
     const { error: insertErr } = await supabase.from('attendance_records').insert({
