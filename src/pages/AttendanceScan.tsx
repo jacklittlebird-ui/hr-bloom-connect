@@ -80,7 +80,7 @@ const AttendanceScan = () => {
     }
   }, [status, session, eventType, ar]);
 
-  const handleGpsCheckin = useCallback(async () => {
+  const submitGpsAttendance = useCallback(async () => {
     if (status === "validating") return;
     setStatus("validating");
 
@@ -131,6 +131,15 @@ const AttendanceScan = () => {
       }
     }
   }, [status, session, eventType, ar]);
+
+  const handleGpsCheckin = useCallback(async () => {
+    if (eventType === "check_out") {
+      setConfirmCheckoutOpen(true);
+      return;
+    }
+
+    await submitGpsAttendance();
+  }, [eventType, submitGpsAttendance]);
 
   const startScan = () => {
     if (eventType === "check_out") {
@@ -187,8 +196,16 @@ const AttendanceScan = () => {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>{ar ? "إلغاء" : "Cancel"}</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => { setScanning(true); setStatus("scanning"); setMessage(""); }}>
-                      {ar ? "بدء الانصراف" : "Start check-out"}
+                    <AlertDialogAction onClick={() => {
+                      if (mode === "gps") {
+                        void submitGpsAttendance();
+                      } else {
+                        setScanning(true);
+                        setStatus("scanning");
+                        setMessage("");
+                      }
+                    }}>
+                      {ar ? "تأكيد الانصراف" : "Confirm check-out"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -262,7 +279,9 @@ const AttendanceScan = () => {
               {status !== "validating" && mode === "gps" && (
                 <Button onClick={handleGpsCheckin} className="w-full" size="lg">
                   <Navigation className="h-5 w-5 me-2" />
-                  {ar ? "تسجيل بالموقع (GPS)" : "Check In (GPS)"}
+                  {eventType === "check_out"
+                    ? ar ? "تسجيل انصراف بالموقع (GPS)" : "Check Out (GPS)"
+                    : ar ? "تسجيل حضور بالموقع (GPS)" : "Check In (GPS)"}
                 </Button>
               )}
               {(status === "success" || status === "error") && (
