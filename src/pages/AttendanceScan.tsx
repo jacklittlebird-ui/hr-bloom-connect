@@ -8,6 +8,7 @@ import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import QrScanner from "@/components/attendance/QrScanner";
 import { invokeAttendanceFunction } from "@/lib/attendanceApi";
+import { getFreshPosition, freshGeoErrorMessage, FreshGeolocationError } from "@/lib/freshGeolocation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
