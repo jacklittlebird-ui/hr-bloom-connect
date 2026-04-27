@@ -27,23 +27,38 @@ export const PortalHeader = ({ onToggleSidebar, onRefresh }: PortalHeaderProps) 
     : (employee?.nameEn || user?.name || '');
 
   const handleLogout = async () => {
+    // 1) Clear local auth state IMMEDIATELY so the UI cannot stay logged in,
+    //    even if the network call to Supabase hangs on mobile.
     try {
-      await logout();
+      Object.keys(localStorage).forEach((k) => {
+        if (k.startsWith('sb-') || k.includes('supabase.auth')) {
+          localStorage.removeItem(k);
+        }
+      });
+      Object.keys(sessionStorage).forEach((k) => {
+        if (k.startsWith('sb-') || k.includes('supabase.auth')) {
+          sessionStorage.removeItem(k);
+        }
+      });
+    } catch {}
+
+    // 2) Fire the server-side signOut WITHOUT awaiting — on mobile networks
+    //    this request frequently stalls, which previously prevented the
+    //    redirect from running at all.
+    try {
+      void logout();
     } catch (e) {
       console.error('Logout error:', e);
-    } finally {
-      try {
-        // Best-effort cleanup of any cached auth tokens
-        Object.keys(localStorage).forEach((k) => {
-          if (k.startsWith('sb-') || k.includes('supabase.auth')) {
-            localStorage.removeItem(k);
-          }
-        });
-      } catch {}
-      navigate('/login', { replace: true });
-      // Hard reload to guarantee state reset on mobile browsers
-      setTimeout(() => { window.location.href = '/login'; }, 50);
     }
+
+    // 3) Force a hard navigation to /login. Using window.location guarantees
+    //    a full reload so React state, contexts and any in-flight requests
+    //    are torn down on every mobile browser (including the Lovable
+    //    in-app webview that ignored navigate() calls before).
+    try {
+      navigate('/login', { replace: true });
+    } catch {}
+    window.location.replace('/login');
   };
 
   return (
