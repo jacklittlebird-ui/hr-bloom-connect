@@ -241,21 +241,19 @@ export const PortalDashboard = () => {
     setQrStatus('validating');
 
     try {
+      // QR mode: GPS is OPTIONAL. The QR code itself proves on-site presence
+      // (it can only be obtained by scanning the kiosk screen at the workplace),
+      // so a missing/weak/stale GPS reading must NOT block the scan.
       let gps: { lat?: number; lng?: number; accuracy?: number } = {};
       try {
         const fresh = await getFreshPosition({
-          maxAgeMs: 10_000,
-          maxAccuracyMeters: 150,
-          timeoutMs: 12_000,
+          maxAgeMs: 300_000,
+          maxAccuracyMeters: 300,
+          timeoutMs: 8_000,
         });
         gps = { lat: fresh.coords.latitude, lng: fresh.coords.longitude, accuracy: fresh.coords.accuracy };
       } catch (geoErr) {
-        if (geoErr instanceof FreshGeolocationError) {
-          setQrStatus('error');
-          setQrMessage(freshGeoErrorMessage(geoErr, ar));
-          return;
-        }
-        throw geoErr;
+        console.warn('[PortalDashboard] QR scan continuing without GPS:', geoErr);
       }
 
       if (!session?.access_token) {
