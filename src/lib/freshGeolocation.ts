@@ -115,62 +115,92 @@ const sameToSevenDecimals = (a: number, b: number) =>
   Math.round(a * 1e7) === Math.round(b * 1e7);
 
 /**
- * Fetch a *fresh* GPS reading or throw FreshGeolocationError.
+ * Fetch a GPS reading with **lenient** anti-cache safeguards.
+ *
+ * Policy (designed to NEVER block legitimate employees):
+ *  - We always force `maximumAge: 0` so the OS prefers a live fix.
+ *  - If the reading is suspicious (very stale, very inaccurate, or identical
+ *    to the previous one), we silently retry once with a fresh request.
+ *  - If the second reading is still suspicious we **accept it anyway** and
+ *    return a warning flag so the caller can log it for the admin without
+ *    blocking the employee.
+ *  - The only HARD failures are: permission denied, geolocation unsupported,
+ *    or the OS returning no position at all.
  */
 export async function getFreshPosition(opts: FreshPositionOptions = {}): Promise<GeolocationPosition> {
+  const result = await getFreshPositionWithMeta(opts);
+  return result.position;
+}
+
+export async function getFreshPositionWithMeta(
+  opts: FreshPositionOptions = {},
+): Promise<FreshPositionResult> {
   const {
-    maxAgeMs = 120_000,
-    maxAccuracyMeters = 150,
+    maxAgeMs = 300_000, // 5 minutes
+    maxAccuracyMeters = 300, // lenient (indoor / weak signal friendly)
     timeoutMs = 15_000,
     allowLowAccuracyFallback = true,
     frozenMinGapMs = 120_000,
   } = opts;
 
-  let pos: GeolocationPosition;
-  try {
-    pos = await readPosition(true, timeoutMs);
-  } catch (err) {
-    if (err instanceof FreshGeolocationError && err.code === 'timeout' && allowLowAccuracyFallback) {
-      pos = await readPosition(false, Math.min(timeoutMs, 12_000));
-    } else {
+  const readOnce = async (): Promise<GeolocationPosition> => {
+    try {
+      return await readPosition(true, timeoutMs);
+    } catch (err) {
+      if (err instanceof FreshGeolocationError && err.code === 'timeout' && allowLowAccuracyFallback) {
+        return await readPosition(false, Math.min(timeoutMs, 12_000));
+      }
       throw err;
     }
-  }
+  };
 
-  const now = Date.now();
-  const ageMs = now - pos.timestamp;
-  if (ageMs > maxAgeMs) {
-    throw new FreshGeolocationError(
-      'stale_cached',
-      `Location reading is too old (${Math.round(ageMs / 1000)}s). Please enable GPS and try again.`,
-    );
-  }
-
-  const accuracy = pos.coords.accuracy;
-  if (typeof accuracy === 'number' && accuracy > maxAccuracyMeters) {
-    throw new FreshGeolocationError(
-      'low_accuracy',
-      `GPS accuracy is too low (${Math.round(accuracy)}m). Move outdoors and try again.`,
-    );
-  }
-
-  // Frozen-coordinate detection: same lat/lng to 7 decimals as a previous
-  // reading taken more than `frozenMinGapMs` ago is almost certainly cached.
-  const prev = readStored();
-  if (prev && now - prev.ts >= frozenMinGapMs) {
-    if (
+  const evaluate = (pos: GeolocationPosition) => {
+    const now = Date.now();
+    const ageMs = now - pos.timestamp;
+    const accuracy = pos.coords.accuracy;
+    const prev = readStored();
+    const isFrozen = !!(
+      prev &&
+      now - prev.ts >= frozenMinGapMs &&
       sameToSevenDecimals(prev.lat, pos.coords.latitude) &&
       sameToSevenDecimals(prev.lng, pos.coords.longitude)
-    ) {
-      throw new FreshGeolocationError(
-        'frozen_coordinates',
-        'GPS appears to be returning a cached location. Move slightly, enable GPS, and retry.',
-      );
+    );
+    const isStale = ageMs > maxAgeMs;
+    const isInaccurate = typeof accuracy === 'number' && accuracy > maxAccuracyMeters;
+    return { isFrozen, isStale, isInaccurate, now };
+  };
+
+  // First attempt
+  let pos = await readOnce();
+  let evalRes = evaluate(pos);
+
+  // If suspicious, silently retry ONCE after a brief delay so the OS can refresh
+  if (evalRes.isFrozen || evalRes.isStale || evalRes.isInaccurate) {
+    await new Promise((r) => setTimeout(r, 800));
+    try {
+      const retry = await readOnce();
+      const retryEval = evaluate(retry);
+      // Prefer the retry only if it improved at least one dimension
+      if (
+        (!retryEval.isFrozen && evalRes.isFrozen) ||
+        (!retryEval.isStale && evalRes.isStale) ||
+        (!retryEval.isInaccurate && evalRes.isInaccurate)
+      ) {
+        pos = retry;
+        evalRes = retryEval;
+      }
+    } catch {
+      /* keep the first reading */
     }
   }
 
+  const warnings: FreshPositionResult['warnings'] = [];
+  if (evalRes.isFrozen) warnings.push('frozen_coordinates');
+  if (evalRes.isStale) warnings.push('stale_cached');
+  if (evalRes.isInaccurate) warnings.push('low_accuracy');
+
   writeStored(pos.coords.latitude, pos.coords.longitude);
-  return pos;
+  return { position: pos, warnings };
 }
 
 /** Localised, user-facing error message for a FreshGeolocationError. */
