@@ -363,7 +363,7 @@ export const PortalDashboard = () => {
                     }}
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || (hasCheckedIn && !hasCheckedOut)}
+                  disabled={authLoading || methodLoading || (hasCheckedIn && !hasCheckedOut)}
                   >
                     <LogIn className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل حضور (QR)' : 'Check In (QR)'}
