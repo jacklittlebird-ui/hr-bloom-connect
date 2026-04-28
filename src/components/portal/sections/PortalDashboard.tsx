@@ -160,9 +160,12 @@ export const PortalDashboard = () => {
 
   const showQr = checkinMethod === 'qr' || checkinMethod === 'both';
   const showGps = checkinMethod === 'gps' || checkinMethod === 'both';
-  // GPS checkout must remain actionable even if the client cache is stale;
-  // the backend is the source of truth and will reject only when no open
-  // attendance record actually exists.
+  // GPS checkout must remain actionable as long as the employee has an actual
+  // open record on the server. We intentionally IGNORE liveAttendanceState.error
+  // and liveAttendanceState.loading here — the backend (gps-checkin function) is
+  // the absolute source of truth and will reject the request itself if no open
+  // record actually exists. Disabling the button on a transient state-fetch
+  // failure would unfairly trap employees who are physically checked-in.
   const gpsCheckoutDisabled = authLoading || methodLoading || hasCheckedOut;
 
   // QR Scanner state
