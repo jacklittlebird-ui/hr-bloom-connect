@@ -395,13 +395,13 @@ export const PortalDashboard = () => {
                 <GpsCheckinButton
                   eventType="check_in"
                   disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || (hasCheckedIn && !hasCheckedOut)}
-                  onSuccess={() => refreshAttendance(true)}
+                  onSuccess={() => { refreshAttendance(true); refreshLiveAttendanceState(); }}
                   ar={ar}
                 />
                 <GpsCheckinButton
                   eventType="check_out"
                   disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || !hasCheckedIn || hasCheckedOut}
-                  onSuccess={() => refreshAttendance(true)}
+                  onSuccess={() => { refreshAttendance(true); refreshLiveAttendanceState(); }}
                   ar={ar}
                 />
               </div>
