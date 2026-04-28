@@ -23,6 +23,20 @@ import { invokeAttendanceFunction } from '@/lib/attendanceApi';
 import { getFreshPosition, freshGeoErrorMessage, FreshGeolocationError } from '@/lib/freshGeolocation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
+type AttendanceStateRecord = {
+  id?: string;
+  date: string | null;
+  check_in: string | null;
+  check_out: string | null;
+};
+
+const formatDbTime = (value?: string | null) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+};
+
 export const PortalDashboard = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { getEmployee } = useEmployeeData();
@@ -99,78 +113,46 @@ export const PortalDashboard = () => {
 
   useEffect(() => {
     const fetchLiveAttendanceState = async () => {
-      if (!PORTAL_EMPLOYEE_ID) {
+      if (authLoading) return;
+
+      if (!PORTAL_EMPLOYEE_ID || !session?.access_token) {
         setLiveAttendanceState({ checkIn: null, checkOut: null, date: null, loading: false, error: false });
         return;
       }
 
       setLiveAttendanceState((prev) => ({ ...prev, loading: true }));
 
-      const { data: openRecord, error: openErr } = await supabase
-        .from('attendance_records')
-        .select('date, check_in, check_out')
-        .eq('employee_id', PORTAL_EMPLOYEE_ID)
-        .not('check_in', 'is', null)
-        .is('check_out', null)
-        .order('date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const payload = await invokeAttendanceFunction('attendance-state', session.access_token, {});
 
-      // CRITICAL: If the live query fails (RLS not ready, network blip), do NOT
-      // reset live state to null — that would falsely tell the employee they have
-      // not checked in and prompt a duplicate check-in. Mark as error so the UI
-      // can keep the buttons disabled until we confirm the real state.
-      if (openErr) {
-        console.warn('[PortalDashboard] open-record query failed, keeping previous live state:', openErr);
+      if (!payload.ok) {
+        console.warn('[PortalDashboard] attendance-state failed, keeping previous live state:', payload.error);
         setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: true }));
         return;
       }
 
-      if (openRecord) {
-        const openCheckIn = openRecord.check_in ? new Date(openRecord.check_in) : null;
-        const openCheckOut = openRecord.check_out ? new Date(openRecord.check_out) : null;
-        setLiveAttendanceState({
-          date: openRecord.date,
-          checkIn: openCheckIn ? `${openCheckIn.getHours().toString().padStart(2, '0')}:${openCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
-          checkOut: openCheckOut ? `${openCheckOut.getHours().toString().padStart(2, '0')}:${openCheckOut.getMinutes().toString().padStart(2, '0')}` : null,
-          loading: false,
-          error: false,
-        });
-        return;
+      const statePayload = payload as typeof payload & {
+        checkin_method?: string;
+        today?: string;
+        open_record?: AttendanceStateRecord | null;
+        today_record?: AttendanceStateRecord | null;
+      };
+      if (statePayload.checkin_method) {
+        setCheckinMethod(statePayload.checkin_method);
+        setMethodLoading(false);
       }
-
-      const { data: latestTodayRecord, error: todayErr } = await supabase
-        .from('attendance_records')
-        .select('date, check_in, check_out')
-        .eq('employee_id', PORTAL_EMPLOYEE_ID)
-        .eq('date', today)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (todayErr) {
-        console.warn('[PortalDashboard] today-record query failed, keeping previous live state:', todayErr);
-        setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: true }));
-        return;
-      }
-
-      // If we get here and there is genuinely no record today AND no open record from
-      // a previous day, only then clear the live state. This is the legitimate
-      // "needs to check in" case for a fresh day.
-      const todayCheckIn = latestTodayRecord?.check_in ? new Date(latestTodayRecord.check_in) : null;
-      const todayCheckOut = latestTodayRecord?.check_out ? new Date(latestTodayRecord.check_out) : null;
+      const currentRecord = statePayload.open_record ?? statePayload.today_record ?? null;
 
       setLiveAttendanceState({
-        date: latestTodayRecord?.date ?? null,
-        checkIn: todayCheckIn ? `${todayCheckIn.getHours().toString().padStart(2, '0')}:${todayCheckIn.getMinutes().toString().padStart(2, '0')}` : null,
-        checkOut: todayCheckOut ? `${todayCheckOut.getHours().toString().padStart(2, '0')}:${todayCheckOut.getMinutes().toString().padStart(2, '0')}` : null,
+        date: currentRecord?.date ?? null,
+        checkIn: formatDbTime(currentRecord?.check_in),
+        checkOut: formatDbTime(currentRecord?.check_out),
         loading: false,
         error: false,
       });
     };
 
     fetchLiveAttendanceState();
-  }, [PORTAL_EMPLOYEE_ID, today, records]);
+  }, [PORTAL_EMPLOYEE_ID, session?.access_token, authLoading, records]);
 
   const showQr = checkinMethod === 'qr' || checkinMethod === 'both';
   const showGps = checkinMethod === 'gps' || checkinMethod === 'both';
