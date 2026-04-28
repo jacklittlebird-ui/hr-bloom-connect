@@ -129,8 +129,11 @@ export const PortalDashboard = () => {
       const payload = await invokeAttendanceFunction('attendance-state', session.access_token, {});
 
       if (!payload.ok) {
+        // Do NOT block the UI on transient failures of attendance-state.
+        // The backend (gps-checkin / submit-scan) is the source of truth and
+        // will reject duplicates itself. Keep previous state and clear loading.
         console.warn('[PortalDashboard] attendance-state failed, keeping previous live state:', payload.error);
-        setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: true }));
+        setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: false }));
         return;
       }
 
