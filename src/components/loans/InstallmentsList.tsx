@@ -30,10 +30,27 @@ export const InstallmentsList = () => {
   const { t, isRTL, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [monthFilter, setMonthFilter] = useState<string>('all');
   const [installments, setInstallments] = useState<Installment[]>([]);
 
   const fetchInstallments = async () => {
-    const { data } = await supabase.from('loan_installments').select('*, loans(amount, installments_count)').order('due_date', { ascending: true });
+    // Fetch all installments across the 1000-row default limit using ranged pagination
+    const pageSize = 1000;
+    let allRows: any[] = [];
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from('loan_installments')
+        .select('*, loans(amount, installments_count)')
+        .order('due_date', { ascending: true })
+        .range(from, from + pageSize - 1);
+      if (error) break;
+      const rows = data || [];
+      allRows = allRows.concat(rows);
+      if (rows.length < pageSize) break;
+      from += pageSize;
+    }
+    const data = allRows;
     const { data: employees } = await supabase.from('employees').select('id, employee_code, name_ar, name_en, department_id').order('employee_code');
     const { data: departments } = await supabase.from('departments').select('id, name_ar, name_en');
     const empMap = new Map(employees?.map(e => [e.id, e]) || []);
@@ -65,10 +82,13 @@ export const InstallmentsList = () => {
     overdue: { en: 'Overdue', ar: 'متأخر', variant: 'destructive' },
   };
 
+  const monthOptions = Array.from(new Set(installments.map(i => i.dueDate.slice(0, 7)))).sort();
+
   const filteredInstallments = installments.filter(i => {
     const matchesSearch = i.employeeName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || i.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesMonth = monthFilter === 'all' || i.dueDate.slice(0, 7) === monthFilter;
+    return matchesSearch && matchesStatus && matchesMonth;
   });
 
   const handlePayInstallment = async (installmentId: string) => {
@@ -117,6 +137,22 @@ export const InstallmentsList = () => {
                 <SelectContent>
                   <SelectItem value="all">{t('common.all')}</SelectItem>
                   {Object.entries(statusLabels).map(([key, label]) => (<SelectItem key={key} value={key}>{isRTL ? label.ar : label.en}</SelectItem>))}
+                </SelectContent>
+              </Select>
+              <Select value={monthFilter} onValueChange={setMonthFilter}>
+                <SelectTrigger className="w-full md:w-44">
+                  <SelectValue placeholder={language === 'ar' ? 'كل الشهور' : 'All Months'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{language === 'ar' ? 'كل الشهور' : 'All Months'}</SelectItem>
+                  {monthOptions.map((m) => {
+                    const [y, mo] = m.split('-');
+                    const label = new Date(Number(y), Number(mo) - 1, 1).toLocaleDateString(
+                      language === 'ar' ? 'ar-EG' : 'en-US',
+                      { month: 'long', year: 'numeric' }
+                    );
+                    return <SelectItem key={m} value={m}>{label}</SelectItem>;
+                  })}
                 </SelectContent>
               </Select>
             </div>
