@@ -128,10 +128,10 @@ const AttendanceScan = () => {
       if (!result.ok) {
         setStatus("error");
         setMessage(result.error || "Unknown error");
-      } else if (eventType === "check_out" && result.deduplicated && !result.verified) {
-        setStatus("error");
-        setMessage(ar ? "لم يتم تأكيد حفظ الانصراف بعد، حدّث الصفحة ثم أعد المحاولة." : "Check-out was not verified yet. Refresh and try again.");
       } else {
+        // Backend is the source of truth — accept ok responses without
+        // forcing the user to refresh, even when deduplicated && !verified.
+
         setStatus("success");
         setMessage(
           eventType === "check_in"
