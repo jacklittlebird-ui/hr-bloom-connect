@@ -12,5 +12,8 @@ verify_jwt = false
 [functions.gps-checkin]
 verify_jwt = false
 
+[functions.attendance-state]
+verify_jwt = false
+
 [functions.send-notification]
 verify_jwt = false

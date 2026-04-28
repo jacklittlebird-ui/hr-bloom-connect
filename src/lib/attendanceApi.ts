@@ -9,6 +9,7 @@ export interface AttendanceFunctionResult {
   deduplicated?: boolean;
   verified?: boolean;
   reason?: string;
+  [key: string]: unknown;
 }
 
 interface InvokeAttendanceFunctionOptions {
