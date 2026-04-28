@@ -77,6 +77,10 @@ export const PortalDashboard = () => {
     loading: true,
     error: false,
   });
+  const [attendanceStateVersion, setAttendanceStateVersion] = useState(0);
+  const refreshLiveAttendanceState = useCallback(() => {
+    setAttendanceStateVersion((version) => version + 1);
+  }, []);
 
   const activeRecord = latestOpenRecord ?? todayRecord;
   // Merge logic: prefer whichever source actually has a check-in. This guards
@@ -152,7 +156,7 @@ export const PortalDashboard = () => {
     };
 
     fetchLiveAttendanceState();
-  }, [PORTAL_EMPLOYEE_ID, session?.access_token, authLoading, records]);
+  }, [PORTAL_EMPLOYEE_ID, session?.access_token, authLoading, records, attendanceStateVersion]);
 
   const showQr = checkinMethod === 'qr' || checkinMethod === 'both';
   const showGps = checkinMethod === 'gps' || checkinMethod === 'both';
@@ -267,12 +271,13 @@ export const PortalDashboard = () => {
               : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
         );
         refreshAttendance(true);
+        refreshLiveAttendanceState();
       }
     } catch (e: any) {
       setQrStatus('error');
       setQrMessage(e.message);
     }
-  }, [qrStatus, session, qrEventType, ar]);
+  }, [qrStatus, session, qrEventType, ar, refreshAttendance, refreshLiveAttendanceState]);
 
   const formatTimeClock = (date: Date) => {
     return date.toLocaleTimeString(ar ? 'ar-EG' : 'en-GB', {
