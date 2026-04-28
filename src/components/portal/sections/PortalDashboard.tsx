@@ -160,6 +160,10 @@ export const PortalDashboard = () => {
 
   const showQr = checkinMethod === 'qr' || checkinMethod === 'both';
   const showGps = checkinMethod === 'gps' || checkinMethod === 'both';
+  // GPS checkout must remain actionable even if the client cache is stale;
+  // the backend is the source of truth and will reject only when no open
+  // attendance record actually exists.
+  const gpsCheckoutDisabled = authLoading || methodLoading || hasCheckedOut;
 
   // QR Scanner state
   const [qrMode, setQrMode] = useState(false);
@@ -400,7 +404,7 @@ export const PortalDashboard = () => {
                 />
                 <GpsCheckinButton
                   eventType="check_out"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || !hasCheckedIn || hasCheckedOut}
+                  disabled={gpsCheckoutDisabled}
                   onSuccess={() => { refreshAttendance(true); refreshLiveAttendanceState(); }}
                   ar={ar}
                 />
