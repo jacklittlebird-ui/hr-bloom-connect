@@ -74,12 +74,13 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         return;
       }
 
-      if (eventType === 'check_out' && result.deduplicated && !result.verified) {
-        setStatus('error');
-        setMessage(ar ? 'لم يتم تأكيد حفظ الانصراف بعد، يرجى التحديث ثم إعادة المحاولة.' : 'Check-out was not verified yet. Refresh and try again.');
-        return;
-      }
-
+      // NOTE: We intentionally DO NOT block the user with a "verify/refresh"
+      // error when the backend returns deduplicated && !verified for check_out.
+      // The backend (gps-checkin) is the source of truth and has already
+      // accepted the request — showing a confusing "refresh the page" message
+      // creates the false impression that nothing was saved and pushes the
+      // user to retry, which is exactly what we want to avoid. Treat any ok
+      // response as success.
       setStatus('success');
       setMessage(
         eventType === 'check_in'
