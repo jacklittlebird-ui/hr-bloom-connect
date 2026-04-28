@@ -139,6 +139,22 @@ export const InstallmentsList = () => {
                   {Object.entries(statusLabels).map(([key, label]) => (<SelectItem key={key} value={key}>{isRTL ? label.ar : label.en}</SelectItem>))}
                 </SelectContent>
               </Select>
+              <Select value={monthFilter} onValueChange={setMonthFilter}>
+                <SelectTrigger className="w-full md:w-44">
+                  <SelectValue placeholder={language === 'ar' ? 'كل الشهور' : 'All Months'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{language === 'ar' ? 'كل الشهور' : 'All Months'}</SelectItem>
+                  {monthOptions.map((m) => {
+                    const [y, mo] = m.split('-');
+                    const label = new Date(Number(y), Number(mo) - 1, 1).toLocaleDateString(
+                      language === 'ar' ? 'ar-EG' : 'en-US',
+                      { month: 'long', year: 'numeric' }
+                    );
+                    return <SelectItem key={m} value={m}>{label}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
