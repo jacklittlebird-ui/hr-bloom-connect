@@ -82,10 +82,13 @@ export const InstallmentsList = () => {
     overdue: { en: 'Overdue', ar: 'متأخر', variant: 'destructive' },
   };
 
+  const monthOptions = Array.from(new Set(installments.map(i => i.dueDate.slice(0, 7)))).sort();
+
   const filteredInstallments = installments.filter(i => {
     const matchesSearch = i.employeeName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || i.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesMonth = monthFilter === 'all' || i.dueDate.slice(0, 7) === monthFilter;
+    return matchesSearch && matchesStatus && matchesMonth;
   });
 
   const handlePayInstallment = async (installmentId: string) => {
