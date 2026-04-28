@@ -390,7 +390,7 @@ export const PortalDashboard = () => {
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
                     variant="outline"
-                    disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || !hasCheckedIn || hasCheckedOut}
+                    disabled={authLoading || methodLoading || !hasCheckedIn || hasCheckedOut}
                   >
                     <LogOut className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل انصراف (QR)' : 'Check Out (QR)'}
