@@ -401,7 +401,7 @@ export const PortalDashboard = () => {
               <div className="space-y-3">
                 <GpsCheckinButton
                   eventType="check_in"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || (hasCheckedIn && !hasCheckedOut)}
+                  disabled={authLoading || methodLoading || (hasCheckedIn && !hasCheckedOut)}
                   onSuccess={() => { refreshAttendance(true); refreshLiveAttendanceState(); }}
                   ar={ar}
                 />
