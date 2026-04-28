@@ -129,8 +129,11 @@ export const PortalDashboard = () => {
       const payload = await invokeAttendanceFunction('attendance-state', session.access_token, {});
 
       if (!payload.ok) {
+        // Do NOT block the UI on transient failures of attendance-state.
+        // The backend (gps-checkin / submit-scan) is the source of truth and
+        // will reject duplicates itself. Keep previous state and clear loading.
         console.warn('[PortalDashboard] attendance-state failed, keeping previous live state:', payload.error);
-        setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: true }));
+        setLiveAttendanceState((prev) => ({ ...prev, loading: false, error: false }));
         return;
       }
 
@@ -360,7 +363,7 @@ export const PortalDashboard = () => {
                     }}
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
-                  disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || (hasCheckedIn && !hasCheckedOut)}
+                  disabled={authLoading || methodLoading || (hasCheckedIn && !hasCheckedOut)}
                   >
                     <LogIn className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل حضور (QR)' : 'Check In (QR)'}
@@ -387,7 +390,7 @@ export const PortalDashboard = () => {
                     className="w-full max-w-[320px] mx-auto"
                     size="lg"
                     variant="outline"
-                    disabled={authLoading || methodLoading || liveAttendanceState.loading || liveAttendanceState.error || !hasCheckedIn || hasCheckedOut}
+                    disabled={authLoading || methodLoading || !hasCheckedIn || hasCheckedOut}
                   >
                     <LogOut className="h-5 w-5 me-2" />
                     {ar ? 'تسجيل انصراف (QR)' : 'Check Out (QR)'}
@@ -432,13 +435,9 @@ export const PortalDashboard = () => {
               </p>
             )}
 
-            {liveAttendanceState.error && (
-              <p className="text-sm font-medium text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-2">
-                {ar
-                  ? '⚠ تعذر التحقق من سجل الحضور. يرجى تحديث الصفحة قبل تسجيل أي عملية لتجنب التكرار.'
-                  : '⚠ Could not verify attendance state. Please refresh the page before recording any action to avoid duplicates.'}
-              </p>
-            )}
+            {/* Removed the "تعذر التحقق من سجل الحضور" banner — the backend
+                rejects true duplicates, and a transient lookup failure must
+                NOT block legitimate check-ins/outs. */}
 
             {/* Status messages */}
             {qrStatus === 'validating' && (
