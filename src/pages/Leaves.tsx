@@ -167,13 +167,15 @@ const Leaves = () => {
     // Count approved overtime days per employee for the current year
     const { data: approvedOt } = await supabase
       .from('overtime_requests')
-      .select('employee_id')
+      .select('employee_id, overtime_type')
       .eq('status', 'approved')
       .gte('date', `${currentYear}-01-01`)
       .lte('date', `${currentYear}-12-31`);
     const overtimeMap = new Map<string, number>();
-    (approvedOt || []).forEach(o => {
-      overtimeMap.set(o.employee_id, (overtimeMap.get(o.employee_id) || 0) + 1);
+    (approvedOt || []).forEach((o: any) => {
+      // Eid first day counts as 2 days, others as 1
+      const days = o.overtime_type === 'eid_first_day' ? 2 : 1;
+      overtimeMap.set(o.employee_id, (overtimeMap.get(o.employee_id) || 0) + days);
     });
 
     const balanceMap = new Map((dbBalances || []).map(b => [b.employee_id, b]));
