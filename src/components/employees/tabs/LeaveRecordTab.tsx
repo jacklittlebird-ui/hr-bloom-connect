@@ -42,6 +42,7 @@ interface PermissionRecord {
 interface OvertimeRecord {
   id: string;
   date: string;
+  overtimeType?: string;
   reason: string;
   status: RecordStatus;
 }
@@ -101,6 +102,12 @@ const permissionTypeLabels: Record<string, { en: string; ar: string }> = {
   medical: { en: 'Medical', ar: 'طبي' },
 };
 
+const EID_FIRST_DAY_TYPES = new Set(['eid_first_day', 'eid_first_day_adha_fitr']);
+
+const getAddedDays = (overtimeType?: string | null) => (
+  EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
+);
+
 // NOTE: leave_balances is now opening-balance only (manual yearly input).
 // Used / added days are computed live from leave_requests, permission_requests,
 // and overtime_requests — never written back to leave_balances.
@@ -154,7 +161,11 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
 
     if (overtimeRes.data) {
       setEmployeeOvertime(overtimeRes.data.map(r => ({
-        id: r.id, date: r.date, reason: r.reason || '', status: r.status as RecordStatus,
+        id: r.id,
+        date: r.date,
+        overtimeType: r.overtime_type || 'regular',
+        reason: r.reason || '',
+        status: r.status as RecordStatus,
       })));
     }
 
@@ -196,7 +207,7 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   const overtimeAddedLive = useMemo(() =>
     employeeOvertime
       .filter(r => r.status === 'approved' && new Date(r.date).getFullYear() === currentYear)
-      .reduce((s, r: any) => s + ((r.overtimeType || r.overtime_type) === 'eid_first_day' ? 2 : 1), 0),
+      .reduce((s, r) => s + getAddedDays(r.overtimeType), 0),
     [employeeOvertime, currentYear]
   );
 
@@ -228,14 +239,16 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   }, [employeePermissions, dbBalance, permissionsUsedLive]);
 
   const overtimeSummary = useMemo(() => {
-    const approved = employeeOvertime.filter(r => r.status === 'approved');
+    const currentYearOvertime = employeeOvertime.filter(r => new Date(r.date).getFullYear() === currentYear);
+    const approved = currentYearOvertime.filter(r => r.status === 'approved');
+    const approvedDays = approved.reduce((sum, r) => sum + getAddedDays(r.overtimeType), 0);
     return {
-      totalDays: approved.length,
-      approvedCount: approved.length,
-      pendingCount: employeeOvertime.filter(r => r.status === 'pending').length,
-      rejectedCount: employeeOvertime.filter(r => r.status === 'rejected').length,
+      totalDays: approvedDays,
+      approvedCount: approvedDays,
+      pendingCount: currentYearOvertime.filter(r => r.status === 'pending').reduce((sum, r) => sum + getAddedDays(r.overtimeType), 0),
+      rejectedCount: currentYearOvertime.filter(r => r.status === 'rejected').reduce((sum, r) => sum + getAddedDays(r.overtimeType), 0),
     };
-  }, [employeeOvertime]);
+  }, [employeeOvertime, currentYear]);
 
   const subTabs = [
     { id: 'leaves' as SubTab, icon: CalendarDays, label: t('leaveRecord.leaves'), count: employeeLeaves.length },

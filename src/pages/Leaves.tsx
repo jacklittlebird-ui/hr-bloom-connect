@@ -30,6 +30,30 @@ import { Button } from '@/components/ui/button';
 
 interface DeptOption { id: string; name_ar: string; name_en: string; }
 interface StationOption { id: string; name_ar: string; name_en: string; }
+interface ApprovedLeaveRow { employee_id: string; leave_type: string; days: number | null; start_date: string; }
+interface ApprovedPermissionRow { employee_id: string; date: string; hours: number | null; start_time: string | null; end_time: string | null; }
+interface ApprovedOvertimeRow { employee_id: string; date: string; overtime_type: string | null; }
+interface EmployeeRequestRow { id: string; employee_id: string; type_ar: string; type_en: string; reason: string | null; date: string; status: string; }
+interface EmployeeRequestState { id: string; employeeId: string; employeeName: string; employeeNameAr: string; employeeCode: string; typeAr: string; typeEn: string; reason: string | null; date: string; status: string; }
+
+const EID_FIRST_DAY_TYPES = new Set(['eid_first_day', 'eid_first_day_adha_fitr']);
+
+const getAddedDays = (overtimeType?: string | null) => (
+  EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
+);
+
+const fetchAllRows = async <T,>(buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>) => {
+  const pageSize = 1000;
+  const rows: T[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await buildQuery(from, from + pageSize - 1);
+    if (error) break;
+    const page = data || [];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+  }
+  return rows;
+};
 
 const Leaves = () => {
   const { t, isRTL, language } = useLanguage();
@@ -40,7 +64,7 @@ const Leaves = () => {
   const [missionRequests, setMissionRequests] = useState<MissionRequest[]>([]);
   const [overtimeRequests, setOvertimeRequests] = useState<OvertimeRequest[]>([]);
   const [leaveBalances, setLeaveBalances] = useState<EmployeeLeaveBalance[]>([]);
-  const [employeeRequests, setEmployeeRequests] = useState<any[]>([]);
+  const [employeeRequests, setEmployeeRequests] = useState<EmployeeRequestState[]>([]);
   const [departments, setDepartments] = useState<DeptOption[]>([]);
   const [stations, setStations] = useState<StationOption[]>([]);
 
@@ -164,17 +188,17 @@ const Leaves = () => {
       .select('*')
       .eq('year', currentYear);
 
+    const [approvedYearLeaves, approvedYearPerms, approvedOt] = await Promise.all([
+      fetchAllRows<ApprovedLeaveRow>((from, to) => supabase.from('leave_requests').select('employee_id, leave_type, days, start_date').eq('status', 'approved').gte('start_date', `${currentYear}-01-01`).lte('start_date', `${currentYear}-12-31`).range(from, to)),
+      fetchAllRows<ApprovedPermissionRow>((from, to) => supabase.from('permission_requests').select('employee_id, date, hours, start_time, end_time').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
+      fetchAllRows<ApprovedOvertimeRow>((from, to) => supabase.from('overtime_requests').select('employee_id, date, overtime_type').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
+    ]);
+
     // Count approved overtime days per employee for the current year
-    const { data: approvedOt } = await supabase
-      .from('overtime_requests')
-      .select('employee_id, overtime_type')
-      .eq('status', 'approved')
-      .gte('date', `${currentYear}-01-01`)
-      .lte('date', `${currentYear}-12-31`);
     const overtimeMap = new Map<string, number>();
-    (approvedOt || []).forEach((o: any) => {
+    (approvedOt || []).forEach((o) => {
       // Eid first day counts as 2 days, others as 1
-      const days = o.overtime_type === 'eid_first_day' ? 2 : 1;
+      const days = getAddedDays(o.overtime_type);
       overtimeMap.set(o.employee_id, (overtimeMap.get(o.employee_id) || 0) + days);
     });
 
@@ -182,9 +206,7 @@ const Leaves = () => {
 
     // Live used per employee per leave type (approved leave_requests this year)
     const usedByEmp = new Map<string, { annual: number; sick: number; casual: number }>();
-    (leaves || []).forEach((l: any) => {
-      if (l.status !== 'approved') return;
-      if (new Date(l.start_date).getFullYear() !== currentYear) return;
+    (approvedYearLeaves || []).forEach((l) => {
       const cur = usedByEmp.get(l.employee_id) || { annual: 0, sick: 0, casual: 0 };
       if (l.leave_type === 'annual') cur.annual += Number(l.days || 0);
       else if (l.leave_type === 'sick') cur.sick += Number(l.days || 0);
@@ -193,9 +215,7 @@ const Leaves = () => {
     });
     // Live used permissions hours (approved permission_requests this year)
     const permsUsedByEmp = new Map<string, number>();
-    (perms || []).forEach((p: any) => {
-      if (p.status !== 'approved') return;
-      if (new Date(p.date).getFullYear() !== currentYear) return;
+    (approvedYearPerms || []).forEach((p) => {
       let hours = Number(p.hours || 0);
       if (!hours && p.start_time && p.end_time) {
         const [sH, sM] = p.start_time.split(':').map(Number);
@@ -235,7 +255,7 @@ const Leaves = () => {
 
     // Employee requests (from portal)
     const { data: empReqs } = await supabase.from('employee_requests').select('id, employee_id, type_ar, type_en, reason, date, status').order('created_at', { ascending: false });
-    setEmployeeRequests((empReqs || []).map((r: any) => {
+    setEmployeeRequests(((empReqs || []) as EmployeeRequestRow[]).map((r) => {
       const info = getEmpInfo(r.employee_id);
       const e = empMap.get(r.employee_id);
       return {
