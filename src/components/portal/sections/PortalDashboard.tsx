@@ -295,9 +295,11 @@ export const PortalDashboard = () => {
     });
   };
 
-  const annualCasualRemaining = leaveBalances
-    .filter(b => b.typeEn === 'Annual' || b.typeEn === 'Casual')
-    .reduce((sum, b) => sum + b.remaining, 0);
+  // Available Leave = Annual Total (incl. overtime) - Annual Used - Casual Used
+  const annualBal = leaveBalances.find(b => b.typeEn === 'Annual');
+  const casualBal = leaveBalances.find(b => b.typeEn === 'Casual');
+  const annualCasualRemaining =
+    (annualBal?.total ?? 0) - (annualBal?.used ?? 0) - (casualBal?.used ?? 0);
 
   const stats = [
     { icon: Clock, labelAr: 'أيام الحضور هذا الشهر', labelEn: 'Attendance Days', value: String(monthlyStats.present), gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
