@@ -269,6 +269,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             holiday: { ar: 'إجازة رسمية', en: 'Holiday' },
             weekend: { ar: 'عطلة أسبوعية', en: 'Weekend' },
             regular: { ar: 'أخرى', en: 'Other' },
+            eid_first_day: { ar: 'أول يوم العيد (الأضحى/الفطر)', en: 'Eid First Day (Adha/Fitr)' },
           };
           setOvertimeDays(otRes.data.map((o: any) => ({
             id: o.id, employeeId: o.employee_id,
