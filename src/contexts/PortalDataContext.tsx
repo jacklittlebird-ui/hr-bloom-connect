@@ -8,6 +8,7 @@ export interface LeaveBalance {
   typeAr: string;
   typeEn: string;
   total: number;
+  baseTotal?: number;
   used: number;
   remaining: number;
 }
@@ -241,7 +242,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             if (!mapped[lb.employee_id]) mapped[lb.employee_id] = [];
             const overtimeDaysCount = approvedOtMap.get(lb.employee_id) || 0;
             mapped[lb.employee_id].push(
-              { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total + overtimeDaysCount, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used + overtimeDaysCount },
+              { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total + overtimeDaysCount, baseTotal: lb.annual_total, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used + overtimeDaysCount },
               { typeAr: 'مرضية', typeEn: 'Sick', total: lb.sick_total, used: lb.sick_used, remaining: lb.sick_total - lb.sick_used },
               { typeAr: 'عارضة', typeEn: 'Casual', total: lb.casual_total, used: lb.casual_used, remaining: lb.casual_total - lb.casual_used },
               { typeAr: 'الأذونات', typeEn: 'Permissions', total: lb.permissions_total, used: lb.permissions_used, remaining: lb.permissions_total - lb.permissions_used },
