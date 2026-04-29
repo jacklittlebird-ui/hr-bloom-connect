@@ -297,8 +297,12 @@ export const PortalDashboard = () => {
   // Available Leave = Annual yearly balance - Annual Used - Casual Used
   const annualBal = leaveBalances.find(b => b.typeEn === 'Annual');
   const casualBal = leaveBalances.find(b => b.typeEn === 'Casual');
+  // Formula: annualTotal + casualTotal - annualUsed - casualUsed + overtimeDays(added)
+  // annualBal.total already = annual_total + overtimeDays (from context), baseTotal = pure annual_total
+  const annualBase = annualBal?.baseTotal ?? annualBal?.total ?? 0;
+  const overtimeAdded = (annualBal?.total ?? annualBase) - annualBase;
   const annualCasualRemaining =
-    (annualBal?.baseTotal ?? annualBal?.total ?? 0) - (annualBal?.used ?? 0) - (casualBal?.used ?? 0);
+    annualBase + (casualBal?.total ?? 0) - (annualBal?.used ?? 0) - (casualBal?.used ?? 0) + overtimeAdded;
 
   const stats = [
     { icon: Clock, labelAr: 'أيام الحضور هذا الشهر', labelEn: 'Attendance Days', value: String(monthlyStats.present), gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
