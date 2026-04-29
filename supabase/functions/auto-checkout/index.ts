@@ -70,8 +70,12 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const autoCheckoutIso = new Date(checkInMs + AUTO_CLOSE_AFTER_HOURS * 60 * 60 * 1000).toISOString();
-      const noteSuffix = `[AUTO_CLOSED] Automatically closed after ${AUTO_CLOSE_AFTER_HOURS} hours because employee did not check out`;
+      // Policy: when auto-closing after 18h of no checkout, work hours
+      // recorded for the day must be exactly 5 hours (not 18). So set
+      // check_out = check_in + 5 hours so calculated work_hours/work_minutes = 5h.
+      const AUTO_CLOSED_WORK_HOURS = 5;
+      const autoCheckoutIso = new Date(checkInMs + AUTO_CLOSED_WORK_HOURS * 60 * 60 * 1000).toISOString();
+      const noteSuffix = `[AUTO_CLOSED] Automatically closed after ${AUTO_CLOSE_AFTER_HOURS} hours because employee did not check out. Work hours recorded as ${AUTO_CLOSED_WORK_HOURS}h.`;
       const newNotes = record.notes && !record.notes.includes("[AUTO_CLOSED]")
         ? `${record.notes} ${noteSuffix}`
         : (record.notes ?? noteSuffix);
@@ -81,6 +85,8 @@ Deno.serve(async (req) => {
         .update({
           check_out: autoCheckoutIso,
           status: "auto-closed",
+          work_hours: AUTO_CLOSED_WORK_HOURS,
+          work_minutes: AUTO_CLOSED_WORK_HOURS * 60,
           notes: newNotes,
         })
         .eq("id", record.id)
