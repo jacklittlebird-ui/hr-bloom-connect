@@ -44,7 +44,8 @@ export const MobileBills = () => {
   const { employees } = useEmployeeData();
   const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [deductionMonth, setDeductionMonth] = useState('');
+  const currentMonthValue = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  const [deductionMonth, setDeductionMonth] = useState(currentMonthValue);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [monthFilter, setMonthFilter] = useState('all');
