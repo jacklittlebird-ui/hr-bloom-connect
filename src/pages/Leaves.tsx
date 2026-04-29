@@ -196,7 +196,7 @@ const Leaves = () => {
 
     // Count approved overtime days per employee for the current year
     const overtimeMap = new Map<string, number>();
-    (approvedOt || []).forEach((o: any) => {
+    (approvedOt || []).forEach((o) => {
       // Eid first day counts as 2 days, others as 1
       const days = getAddedDays(o.overtime_type);
       overtimeMap.set(o.employee_id, (overtimeMap.get(o.employee_id) || 0) + days);
@@ -206,7 +206,7 @@ const Leaves = () => {
 
     // Live used per employee per leave type (approved leave_requests this year)
     const usedByEmp = new Map<string, { annual: number; sick: number; casual: number }>();
-    (approvedYearLeaves || []).forEach((l: any) => {
+    (approvedYearLeaves || []).forEach((l) => {
       const cur = usedByEmp.get(l.employee_id) || { annual: 0, sick: 0, casual: 0 };
       if (l.leave_type === 'annual') cur.annual += Number(l.days || 0);
       else if (l.leave_type === 'sick') cur.sick += Number(l.days || 0);
@@ -215,7 +215,7 @@ const Leaves = () => {
     });
     // Live used permissions hours (approved permission_requests this year)
     const permsUsedByEmp = new Map<string, number>();
-    (approvedYearPerms || []).forEach((p: any) => {
+    (approvedYearPerms || []).forEach((p) => {
       let hours = Number(p.hours || 0);
       if (!hours && p.start_time && p.end_time) {
         const [sH, sM] = p.start_time.split(':').map(Number);
@@ -255,7 +255,7 @@ const Leaves = () => {
 
     // Employee requests (from portal)
     const { data: empReqs } = await supabase.from('employee_requests').select('id, employee_id, type_ar, type_en, reason, date, status').order('created_at', { ascending: false });
-    setEmployeeRequests((empReqs || []).map((r: any) => {
+    setEmployeeRequests(((empReqs || []) as EmployeeRequestRow[]).map((r) => {
       const info = getEmpInfo(r.employee_id);
       const e = empMap.get(r.employee_id);
       return {
