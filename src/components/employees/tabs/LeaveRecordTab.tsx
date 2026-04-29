@@ -223,16 +223,25 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
 
   const leaveSummary = useMemo(() => {
     const annualTotal = dbBalance?.annualTotal ?? (employee.annualLeaveBalance || 21);
+    const casualTotal = dbBalance?.casualTotal ?? 0;
     const annualUsed = dbBalance?.annualUsed ?? 0;
     const casualUsed = dbBalance?.casualUsed ?? 0;
+    const currentYear = new Date().getFullYear();
+    // Extra/added days = approved overtime entries for current year
+    const overtimeDays = employeeOvertime.filter(r => {
+      if (r.status !== 'approved') return false;
+      const y = new Date(r.date).getFullYear();
+      return y === currentYear;
+    }).length;
     const totalUsed = annualUsed + casualUsed;
+    const remaining = annualTotal + casualTotal - annualUsed - casualUsed + overtimeDays;
     return {
-      total: annualTotal, used: totalUsed, remaining: annualTotal - totalUsed,
+      total: annualTotal + casualTotal, used: totalUsed, remaining,
       approvedCount: employeeLeaves.filter(r => r.status === 'approved').length,
       pendingCount: employeeLeaves.filter(r => r.status === 'pending').length,
       rejectedCount: employeeLeaves.filter(r => r.status === 'rejected').length,
     };
-  }, [employeeLeaves, dbBalance, employee.annualLeaveBalance]);
+  }, [employeeLeaves, employeeOvertime, dbBalance, employee.annualLeaveBalance]);
 
   const permissionSummary = useMemo(() => {
     const permTotal = dbBalance?.permissionsTotal ?? 12;
