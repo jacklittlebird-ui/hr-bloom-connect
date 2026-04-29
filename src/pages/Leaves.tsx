@@ -151,7 +151,7 @@ const Leaves = () => {
         employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
         department: info.department, station: info.station,
         date: o.date, hours: o.hours,
-        overtimeType: 'regular' as OvertimeRequest['overtimeType'],
+        overtimeType: (o.overtime_type || 'regular') as OvertimeRequest['overtimeType'],
         reason: o.reason || '', status: o.status as OvertimeRequest['status'],
         submittedDate: o.created_at.split('T')[0],
       };
