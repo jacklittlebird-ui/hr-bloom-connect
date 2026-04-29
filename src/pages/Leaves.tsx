@@ -37,6 +37,19 @@ const getAddedDays = (overtimeType?: string | null) => (
   EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
 );
 
+const fetchAllRows = async <T,>(buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>) => {
+  const pageSize = 1000;
+  const rows: T[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await buildQuery(from, from + pageSize - 1);
+    if (error) break;
+    const page = data || [];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+  }
+  return rows;
+};
+
 const Leaves = () => {
   const { t, isRTL, language } = useLanguage();
   const { addMissionAttendance } = useAttendanceData();
@@ -170,10 +183,13 @@ const Leaves = () => {
       .select('*')
       .eq('year', currentYear);
 
+    const [approvedYearLeaves, approvedYearPerms, approvedOt] = await Promise.all([
+      fetchAllRows<any>((from, to) => supabase.from('leave_requests').select('employee_id, leave_type, days, start_date').eq('status', 'approved').gte('start_date', `${currentYear}-01-01`).lte('start_date', `${currentYear}-12-31`).range(from, to)),
+      fetchAllRows<any>((from, to) => supabase.from('permission_requests').select('employee_id, date, hours, start_time, end_time').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
+      fetchAllRows<any>((from, to) => supabase.from('overtime_requests').select('employee_id, date, overtime_type').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
+    ]);
+
     // Count approved overtime days per employee for the current year
-    const approvedOt = (ot || []).filter((o: any) =>
-      o.status === 'approved' && new Date(o.date).getFullYear() === currentYear
-    );
     const overtimeMap = new Map<string, number>();
     (approvedOt || []).forEach((o: any) => {
       // Eid first day counts as 2 days, others as 1
@@ -185,9 +201,7 @@ const Leaves = () => {
 
     // Live used per employee per leave type (approved leave_requests this year)
     const usedByEmp = new Map<string, { annual: number; sick: number; casual: number }>();
-    (leaves || []).forEach((l: any) => {
-      if (l.status !== 'approved') return;
-      if (new Date(l.start_date).getFullYear() !== currentYear) return;
+    (approvedYearLeaves || []).forEach((l: any) => {
       const cur = usedByEmp.get(l.employee_id) || { annual: 0, sick: 0, casual: 0 };
       if (l.leave_type === 'annual') cur.annual += Number(l.days || 0);
       else if (l.leave_type === 'sick') cur.sick += Number(l.days || 0);
@@ -196,9 +210,7 @@ const Leaves = () => {
     });
     // Live used permissions hours (approved permission_requests this year)
     const permsUsedByEmp = new Map<string, number>();
-    (perms || []).forEach((p: any) => {
-      if (p.status !== 'approved') return;
-      if (new Date(p.date).getFullYear() !== currentYear) return;
+    (approvedYearPerms || []).forEach((p: any) => {
       let hours = Number(p.hours || 0);
       if (!hours && p.start_time && p.end_time) {
         const [sH, sM] = p.start_time.split(':').map(Number);
