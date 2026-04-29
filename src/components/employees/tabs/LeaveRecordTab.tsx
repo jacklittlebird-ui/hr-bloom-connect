@@ -102,6 +102,12 @@ const permissionTypeLabels: Record<string, { en: string; ar: string }> = {
   medical: { en: 'Medical', ar: 'طبي' },
 };
 
+const EID_FIRST_DAY_TYPES = new Set(['eid_first_day', 'eid_first_day_adha_fitr']);
+
+const getAddedDays = (overtimeType?: string | null) => (
+  EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
+);
+
 // NOTE: leave_balances is now opening-balance only (manual yearly input).
 // Used / added days are computed live from leave_requests, permission_requests,
 // and overtime_requests — never written back to leave_balances.
@@ -201,7 +207,7 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   const overtimeAddedLive = useMemo(() =>
     employeeOvertime
       .filter(r => r.status === 'approved' && new Date(r.date).getFullYear() === currentYear)
-      .reduce((s, r) => s + (r.overtimeType === 'eid_first_day' ? 2 : 1), 0),
+      .reduce((s, r) => s + getAddedDays(r.overtimeType), 0),
     [employeeOvertime, currentYear]
   );
 
@@ -234,7 +240,7 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
 
   const overtimeSummary = useMemo(() => {
     const approved = employeeOvertime.filter(r => r.status === 'approved');
-    const totalDays = approved.reduce((sum, r) => sum + (r.overtimeType === 'eid_first_day' ? 2 : 1), 0);
+    const totalDays = approved.reduce((sum, r) => sum + getAddedDays(r.overtimeType), 0);
     return {
       totalDays,
       approvedCount: approved.length,
