@@ -1,0 +1,52 @@
+name: Force Sync from hr-bloom-connect
+
+
+
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+
+
+
+permissions:
+  contents: write
+
+
+
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+
+
+
+    steps:
+      - name: Checkout target repo (one-HR-2204)
+
+
+        uses: actions/checkout@v4
+
+
+
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Force sync from source repo
+        run: |
+          git remote remove lovable || true
+          git remote add lovable https://github.com/jacklittlebird-ui/hr-bloom-connect.git
+          git fetch lovable
+          git reset --hard lovable/main
+
+      - name: Push force update to main
+        run: |
+          git push origin main --force
+
+
