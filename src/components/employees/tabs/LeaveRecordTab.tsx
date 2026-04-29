@@ -196,7 +196,7 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   const overtimeAddedLive = useMemo(() =>
     employeeOvertime
       .filter(r => r.status === 'approved' && new Date(r.date).getFullYear() === currentYear)
-      .length,
+      .reduce((s, r: any) => s + ((r.overtimeType || r.overtime_type) === 'eid_first_day' ? 2 : 1), 0),
     [employeeOvertime, currentYear]
   );
 
