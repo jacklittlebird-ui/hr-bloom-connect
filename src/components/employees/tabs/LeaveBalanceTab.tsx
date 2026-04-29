@@ -127,13 +127,12 @@ export const LeaveBalanceTab = ({ employee, onUpdate, onDirectSave, readOnly }: 
 
     if (!balRes.error && balRes.data) {
       setSavedBalances(balRes.data.map((row: any) => {
-        const overtimeDays = otByYear.get(row.year) || 0;
         const u = usedByYear.get(row.year) || { annual: 0, sick: 0, casual: 0 };
         const permsUsed = permsByYear.get(row.year) || 0;
         return {
           year: row.year,
-          // Show opening + added overtime days for annual
-          annualTotal: Number(row.annual_total ?? 21) + overtimeDays,
+          // Pure opening balance — never auto-incremented by overtime here.
+          annualTotal: Number(row.annual_total ?? 21),
           annualUsed: u.annual,
           sickTotal: Number(row.sick_total ?? 15),
           sickUsed: u.sick,
