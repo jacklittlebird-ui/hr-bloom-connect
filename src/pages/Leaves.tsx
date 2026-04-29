@@ -344,7 +344,7 @@ const Leaves = () => {
   const handleNewOvertime = async (data: Omit<OvertimeRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
     if (!uuid) return;
-    await supabase.from('overtime_requests').insert({ employee_id: uuid, date: data.date, hours: data.hours, reason: data.reason });
+    await supabase.from('overtime_requests').insert({ employee_id: uuid, date: data.date, hours: data.hours, reason: data.reason, overtime_type: data.overtimeType || 'regular' });
     fetchData(); setActiveTab('overtime');
   };
 
