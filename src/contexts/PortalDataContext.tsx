@@ -230,7 +230,8 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           if (otRes.data) {
             otRes.data.forEach((o: any) => {
               if (o.status === 'approved') {
-                approvedOtMap.set(o.employee_id, (approvedOtMap.get(o.employee_id) || 0) + 1);
+                const days = o.overtime_type === 'eid_first_day' ? 2 : 1;
+                approvedOtMap.set(o.employee_id, (approvedOtMap.get(o.employee_id) || 0) + days);
               }
             });
           }
