@@ -31,6 +31,12 @@ import { Button } from '@/components/ui/button';
 interface DeptOption { id: string; name_ar: string; name_en: string; }
 interface StationOption { id: string; name_ar: string; name_en: string; }
 
+const EID_FIRST_DAY_TYPES = new Set(['eid_first_day', 'eid_first_day_adha_fitr']);
+
+const getAddedDays = (overtimeType?: string | null) => (
+  EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
+);
+
 const Leaves = () => {
   const { t, isRTL, language } = useLanguage();
   const { addMissionAttendance } = useAttendanceData();
@@ -165,16 +171,13 @@ const Leaves = () => {
       .eq('year', currentYear);
 
     // Count approved overtime days per employee for the current year
-    const { data: approvedOt } = await supabase
-      .from('overtime_requests')
-      .select('employee_id, overtime_type')
-      .eq('status', 'approved')
-      .gte('date', `${currentYear}-01-01`)
-      .lte('date', `${currentYear}-12-31`);
+    const approvedOt = (ot || []).filter((o: any) =>
+      o.status === 'approved' && new Date(o.date).getFullYear() === currentYear
+    );
     const overtimeMap = new Map<string, number>();
     (approvedOt || []).forEach((o: any) => {
       // Eid first day counts as 2 days, others as 1
-      const days = o.overtime_type === 'eid_first_day' ? 2 : 1;
+      const days = getAddedDays(o.overtime_type);
       overtimeMap.set(o.employee_id, (overtimeMap.get(o.employee_id) || 0) + days);
     });
 
