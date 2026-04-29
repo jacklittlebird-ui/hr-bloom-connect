@@ -46,7 +46,7 @@ export const PortalDashboard = () => {
   const { session, loading: authLoading } = useAuth();
   const { getEmployeePayroll, refreshPayroll } = usePayrollData();
   const { records, getMonthlyStats, refresh: refreshAttendance } = useAttendanceData();
-  const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
+  const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, getOvertimeDays, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
   useEffect(() => { ensureLeaves(); }, [ensureLeaves]);
 
   // Today, computed in Cairo timezone — never the device-local timezone, so
