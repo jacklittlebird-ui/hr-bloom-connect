@@ -312,13 +312,13 @@ export const PortalDashboard = () => {
   );
   const annualUsedLive = useMemo(
     () => portalLeaveRequests
-      .filter(r => r.status === 'approved' && r.type === 'annual' && new Date(r.startDate).getFullYear() === currentYearForBalance)
+      .filter(r => r.status === 'approved' && r.typeEn === 'Annual' && new Date(r.from).getFullYear() === currentYearForBalance)
       .reduce((s, r) => s + Number(r.days || 0), 0),
     [portalLeaveRequests, currentYearForBalance]
   );
   const casualUsedLive = useMemo(
     () => portalLeaveRequests
-      .filter(r => r.status === 'approved' && r.type === 'casual' && new Date(r.startDate).getFullYear() === currentYearForBalance)
+      .filter(r => r.status === 'approved' && r.typeEn === 'Casual' && new Date(r.from).getFullYear() === currentYearForBalance)
       .reduce((s, r) => s + Number(r.days || 0), 0),
     [portalLeaveRequests, currentYearForBalance]
   );
