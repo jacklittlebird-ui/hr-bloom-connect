@@ -30,6 +30,11 @@ import { Button } from '@/components/ui/button';
 
 interface DeptOption { id: string; name_ar: string; name_en: string; }
 interface StationOption { id: string; name_ar: string; name_en: string; }
+interface ApprovedLeaveRow { employee_id: string; leave_type: string; days: number | null; start_date: string; }
+interface ApprovedPermissionRow { employee_id: string; date: string; hours: number | null; start_time: string | null; end_time: string | null; }
+interface ApprovedOvertimeRow { employee_id: string; date: string; overtime_type: string | null; }
+interface EmployeeRequestRow { id: string; employee_id: string; type_ar: string; type_en: string; reason: string | null; date: string; status: string; }
+interface EmployeeRequestState { id: string; employeeId: string; employeeName: string; employeeNameAr: string; employeeCode: string; typeAr: string; typeEn: string; reason: string | null; date: string; status: string; }
 
 const EID_FIRST_DAY_TYPES = new Set(['eid_first_day', 'eid_first_day_adha_fitr']);
 
@@ -59,7 +64,7 @@ const Leaves = () => {
   const [missionRequests, setMissionRequests] = useState<MissionRequest[]>([]);
   const [overtimeRequests, setOvertimeRequests] = useState<OvertimeRequest[]>([]);
   const [leaveBalances, setLeaveBalances] = useState<EmployeeLeaveBalance[]>([]);
-  const [employeeRequests, setEmployeeRequests] = useState<any[]>([]);
+  const [employeeRequests, setEmployeeRequests] = useState<EmployeeRequestState[]>([]);
   const [departments, setDepartments] = useState<DeptOption[]>([]);
   const [stations, setStations] = useState<StationOption[]>([]);
 
@@ -184,9 +189,9 @@ const Leaves = () => {
       .eq('year', currentYear);
 
     const [approvedYearLeaves, approvedYearPerms, approvedOt] = await Promise.all([
-      fetchAllRows<any>((from, to) => supabase.from('leave_requests').select('employee_id, leave_type, days, start_date').eq('status', 'approved').gte('start_date', `${currentYear}-01-01`).lte('start_date', `${currentYear}-12-31`).range(from, to)),
-      fetchAllRows<any>((from, to) => supabase.from('permission_requests').select('employee_id, date, hours, start_time, end_time').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
-      fetchAllRows<any>((from, to) => supabase.from('overtime_requests').select('employee_id, date, overtime_type').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
+      fetchAllRows<ApprovedLeaveRow>((from, to) => supabase.from('leave_requests').select('employee_id, leave_type, days, start_date').eq('status', 'approved').gte('start_date', `${currentYear}-01-01`).lte('start_date', `${currentYear}-12-31`).range(from, to)),
+      fetchAllRows<ApprovedPermissionRow>((from, to) => supabase.from('permission_requests').select('employee_id, date, hours, start_time, end_time').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
+      fetchAllRows<ApprovedOvertimeRow>((from, to) => supabase.from('overtime_requests').select('employee_id, date, overtime_type').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
     ]);
 
     // Count approved overtime days per employee for the current year
