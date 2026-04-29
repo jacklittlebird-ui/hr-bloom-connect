@@ -42,6 +42,7 @@ interface PermissionRecord {
 interface OvertimeRecord {
   id: string;
   date: string;
+  overtimeType?: string;
   reason: string;
   status: RecordStatus;
 }
@@ -154,7 +155,11 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
 
     if (overtimeRes.data) {
       setEmployeeOvertime(overtimeRes.data.map(r => ({
-        id: r.id, date: r.date, reason: r.reason || '', status: r.status as RecordStatus,
+        id: r.id,
+        date: r.date,
+        overtimeType: r.overtime_type || 'regular',
+        reason: r.reason || '',
+        status: r.status as RecordStatus,
       })));
     }
 
@@ -196,7 +201,7 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   const overtimeAddedLive = useMemo(() =>
     employeeOvertime
       .filter(r => r.status === 'approved' && new Date(r.date).getFullYear() === currentYear)
-      .reduce((s, r: any) => s + ((r.overtimeType || r.overtime_type) === 'eid_first_day' ? 2 : 1), 0),
+      .reduce((s, r) => s + (r.overtimeType === 'eid_first_day' ? 2 : 1), 0),
     [employeeOvertime, currentYear]
   );
 
@@ -229,8 +234,9 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
 
   const overtimeSummary = useMemo(() => {
     const approved = employeeOvertime.filter(r => r.status === 'approved');
+    const totalDays = approved.reduce((sum, r) => sum + (r.overtimeType === 'eid_first_day' ? 2 : 1), 0);
     return {
-      totalDays: approved.length,
+      totalDays,
       approvedCount: approved.length,
       pendingCount: employeeOvertime.filter(r => r.status === 'pending').length,
       rejectedCount: employeeOvertime.filter(r => r.status === 'rejected').length,
