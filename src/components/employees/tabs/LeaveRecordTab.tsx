@@ -253,7 +253,7 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   const subTabs = [
     { id: 'leaves' as SubTab, icon: CalendarDays, label: t('leaveRecord.leaves'), count: employeeLeaves.length },
     { id: 'permissions' as SubTab, icon: Clock, label: t('leaveRecord.permissions'), count: employeePermissions.length },
-    { id: 'extraDays' as SubTab, icon: PlusCircle, label: t('leaveRecord.extraDays'), count: employeeOvertime.length },
+    { id: 'extraDays' as SubTab, icon: PlusCircle, label: t('leaveRecord.extraDays'), count: overtimeSummary.totalDays },
   ];
 
   if (loading) {
