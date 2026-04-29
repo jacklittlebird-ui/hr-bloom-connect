@@ -224,8 +224,10 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   const leaveSummary = useMemo(() => {
     const annualTotal = dbBalance?.annualTotal ?? (employee.annualLeaveBalance || 21);
     const annualUsed = dbBalance?.annualUsed ?? 0;
+    const casualUsed = dbBalance?.casualUsed ?? 0;
+    const totalUsed = annualUsed + casualUsed;
     return {
-      total: annualTotal, used: annualUsed, remaining: annualTotal - annualUsed,
+      total: annualTotal, used: totalUsed, remaining: annualTotal - totalUsed,
       approvedCount: employeeLeaves.filter(r => r.status === 'approved').length,
       pendingCount: employeeLeaves.filter(r => r.status === 'pending').length,
       rejectedCount: employeeLeaves.filter(r => r.status === 'rejected').length,
