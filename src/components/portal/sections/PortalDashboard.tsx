@@ -46,7 +46,7 @@ export const PortalDashboard = () => {
   const { session, loading: authLoading } = useAuth();
   const { getEmployeePayroll, refreshPayroll } = usePayrollData();
   const { records, getMonthlyStats, refresh: refreshAttendance } = useAttendanceData();
-  const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
+  const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, getOvertimeDays, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
   useEffect(() => { ensureLeaves(); }, [ensureLeaves]);
 
   // Today, computed in Cairo timezone — never the device-local timezone, so
@@ -294,15 +294,42 @@ export const PortalDashboard = () => {
     });
   };
 
-  // Available Leave = Annual yearly balance - Annual Used - Casual Used
+  // Available Leave Balance — computed live from actual records, NOT from
+  // leave_balances.*_used (which is now opening-balance only).
+  // Formula: AnnualOpening + CasualOpening - AnnualUsed - CasualUsed + AddedDays
   const annualBal = leaveBalances.find(b => b.typeEn === 'Annual');
   const casualBal = leaveBalances.find(b => b.typeEn === 'Casual');
-  // Formula: annualTotal + casualTotal - annualUsed - casualUsed + overtimeDays(added)
-  // annualBal.total already = annual_total + overtimeDays (from context), baseTotal = pure annual_total
-  const annualBase = annualBal?.baseTotal ?? annualBal?.total ?? 0;
-  const overtimeAdded = (annualBal?.total ?? annualBase) - annualBase;
+  const annualOpening = annualBal?.baseTotal ?? annualBal?.total ?? 0;
+  const casualOpening = casualBal?.total ?? 0;
+  const currentYearForBalance = new Date().getFullYear();
+  const portalLeaveRequests = useMemo(
+    () => getLeaveRequests(PORTAL_EMPLOYEE_ID),
+    [getLeaveRequests, PORTAL_EMPLOYEE_ID]
+  );
+  const portalOvertime = useMemo(
+    () => getOvertimeDays(PORTAL_EMPLOYEE_ID),
+    [getOvertimeDays, PORTAL_EMPLOYEE_ID]
+  );
+  const annualUsedLive = useMemo(
+    () => portalLeaveRequests
+      .filter(r => r.status === 'approved' && r.typeEn === 'Annual' && new Date(r.from).getFullYear() === currentYearForBalance)
+      .reduce((s, r) => s + Number(r.days || 0), 0),
+    [portalLeaveRequests, currentYearForBalance]
+  );
+  const casualUsedLive = useMemo(
+    () => portalLeaveRequests
+      .filter(r => r.status === 'approved' && r.typeEn === 'Casual' && new Date(r.from).getFullYear() === currentYearForBalance)
+      .reduce((s, r) => s + Number(r.days || 0), 0),
+    [portalLeaveRequests, currentYearForBalance]
+  );
+  const overtimeAddedLive = useMemo(
+    () => portalOvertime
+      .filter(o => o.status === 'approved' && new Date(o.date).getFullYear() === currentYearForBalance)
+      .reduce((s, o) => s + (o.overtimeType === 'eid_first_day' ? 2 : 1), 0),
+    [portalOvertime, currentYearForBalance]
+  );
   const annualCasualRemaining =
-    annualBase + (casualBal?.total ?? 0) - (annualBal?.used ?? 0) - (casualBal?.used ?? 0) + overtimeAdded;
+    annualOpening + casualOpening - annualUsedLive - casualUsedLive + overtimeAddedLive;
 
   const stats = [
     { icon: Clock, labelAr: 'أيام الحضور هذا الشهر', labelEn: 'Attendance Days', value: String(monthlyStats.present), gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },

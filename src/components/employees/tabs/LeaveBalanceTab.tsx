@@ -90,14 +90,18 @@ export const LeaveBalanceTab = ({ employee, onUpdate, onDirectSave, readOnly }: 
   const [savedBalances, setSavedBalances] = useState<YearlyBalance[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch from DB
+  // Fetch from DB. leave_balances is opening-balance ONLY (manual yearly input).
+  // Used / added are computed live from leave_requests, permission_requests,
+  // and overtime_requests — NEVER read from leave_balances.*_used.
   const fetchBalances = useCallback(async () => {
-    const [balRes, otRes] = await Promise.all([
+    const [balRes, otRes, lrRes, prRes] = await Promise.all([
       supabase.from('leave_balances').select('*').eq('employee_id', employee.id),
-      supabase.from('overtime_requests').select('date, overtime_type').eq('employee_id', employee.id).eq('status', 'approved'),
+      supabase.from('overtime_requests').select('date, overtime_type, status').eq('employee_id', employee.id).eq('status', 'approved'),
+      supabase.from('leave_requests').select('start_date, leave_type, days, status').eq('employee_id', employee.id).eq('status', 'approved'),
+      supabase.from('permission_requests').select('date, hours, status').eq('employee_id', employee.id).eq('status', 'approved'),
     ]);
-    
-    // Count approved overtime days per year (Eid first day = 2 days, others = 1)
+
+    // Approved overtime days per year (Eid first day = 2 days, others = 1)
     const otByYear = new Map<number, number>();
     (otRes.data || []).forEach((o: any) => {
       const year = new Date(o.date).getFullYear();
@@ -105,19 +109,37 @@ export const LeaveBalanceTab = ({ employee, onUpdate, onDirectSave, readOnly }: 
       otByYear.set(year, (otByYear.get(year) || 0) + days);
     });
 
+    // Live used per year per leave type
+    const usedByYear = new Map<number, { annual: number; sick: number; casual: number }>();
+    (lrRes.data || []).forEach((l: any) => {
+      const year = new Date(l.start_date).getFullYear();
+      const cur = usedByYear.get(year) || { annual: 0, sick: 0, casual: 0 };
+      if (l.leave_type === 'annual') cur.annual += Number(l.days || 0);
+      else if (l.leave_type === 'sick') cur.sick += Number(l.days || 0);
+      else if (l.leave_type === 'casual') cur.casual += Number(l.days || 0);
+      usedByYear.set(year, cur);
+    });
+    const permsByYear = new Map<number, number>();
+    (prRes.data || []).forEach((p: any) => {
+      const year = new Date(p.date).getFullYear();
+      permsByYear.set(year, (permsByYear.get(year) || 0) + Number(p.hours || 0));
+    });
+
     if (!balRes.error && balRes.data) {
       setSavedBalances(balRes.data.map((row: any) => {
-        const overtimeDays = otByYear.get(row.year) || 0;
+        const u = usedByYear.get(row.year) || { annual: 0, sick: 0, casual: 0 };
+        const permsUsed = permsByYear.get(row.year) || 0;
         return {
           year: row.year,
-          annualTotal: Number(row.annual_total ?? 21) + overtimeDays,
-          annualUsed: Number(row.annual_used ?? 0),
+          // Pure opening balance — never auto-incremented by overtime here.
+          annualTotal: Number(row.annual_total ?? 21),
+          annualUsed: u.annual,
           sickTotal: Number(row.sick_total ?? 15),
-          sickUsed: Number(row.sick_used ?? 0),
+          sickUsed: u.sick,
           casualTotal: Number(row.casual_total ?? 7),
-          casualUsed: Number(row.casual_used ?? 0),
+          casualUsed: u.casual,
           permissionsTotal: Number(row.permissions_total ?? 24),
-          permissionsUsed: Number(row.permissions_used ?? 0),
+          permissionsUsed: permsUsed,
         };
       }));
     }

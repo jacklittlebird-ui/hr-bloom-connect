@@ -101,58 +101,12 @@ const permissionTypeLabels: Record<string, { en: string; ar: string }> = {
   medical: { en: 'Medical', ar: 'طبي' },
 };
 
-// Helper to recalculate leave balances after any edit
-const recalcLeaveBalances = async (employeeId: string) => {
-  const currentYear = new Date().getFullYear();
-  
-  // Fetch all approved leaves for this year
-  const { data: leaves } = await supabase
-    .from('leave_requests')
-    .select('leave_type, days')
-    .eq('employee_id', employeeId)
-    .eq('status', 'approved')
-    .gte('start_date', `${currentYear}-01-01`)
-    .lte('start_date', `${currentYear}-12-31`);
-
-  // Fetch approved permissions for this year
-  const { data: perms } = await supabase
-    .from('permission_requests')
-    .select('hours')
-    .eq('employee_id', employeeId)
-    .eq('status', 'approved')
-    .gte('date', `${currentYear}-01-01`)
-    .lte('date', `${currentYear}-12-31`);
-
-  const annualUsed = (leaves || []).filter(l => l.leave_type === 'annual').reduce((s, l) => s + Number(l.days), 0);
-  const sickUsed = (leaves || []).filter(l => l.leave_type === 'sick').reduce((s, l) => s + Number(l.days), 0);
-  const casualUsed = (leaves || []).filter(l => l.leave_type === 'casual').reduce((s, l) => s + Number(l.days), 0);
-  const permissionsUsed = (perms || []).reduce((s, p) => s + Number(p.hours || 0), 0);
-
-  // Check if balance row exists
-  const { data: existing } = await supabase
-    .from('leave_balances')
-    .select('id')
-    .eq('employee_id', employeeId)
-    .eq('year', currentYear)
-    .maybeSingle();
-
-  if (existing) {
-    await supabase.from('leave_balances').update({
-      annual_used: annualUsed,
-      sick_used: sickUsed,
-      casual_used: casualUsed,
-      permissions_used: permissionsUsed,
-    }).eq('id', existing.id);
-  } else {
-    await supabase.from('leave_balances').insert({
-      employee_id: employeeId,
-      year: currentYear,
-      annual_used: annualUsed,
-      sick_used: sickUsed,
-      casual_used: casualUsed,
-      permissions_used: permissionsUsed,
-    });
-  }
+// NOTE: leave_balances is now opening-balance only (manual yearly input).
+// Used / added days are computed live from leave_requests, permission_requests,
+// and overtime_requests — never written back to leave_balances.
+const recalcLeaveBalances = async (_employeeId: string) => {
+  // No-op: kept for backward compatibility with call sites.
+  return;
 };
 
 export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
@@ -163,11 +117,12 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   const [employeePermissions, setEmployeePermissions] = useState<PermissionRecord[]>([]);
   const [employeeOvertime, setEmployeeOvertime] = useState<OvertimeRecord[]>([]);
 
+  // Opening balance only (manual yearly input). Used values are IGNORED here.
   const [dbBalance, setDbBalance] = useState<{
-    annualTotal: number; annualUsed: number;
-    sickTotal: number; sickUsed: number;
-    casualTotal: number; casualUsed: number;
-    permissionsTotal: number; permissionsUsed: number;
+    annualTotal: number;
+    sickTotal: number;
+    casualTotal: number;
+    permissionsTotal: number;
   } | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -206,13 +161,9 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
     if (balanceRes.data) {
       setDbBalance({
         annualTotal: Number(balanceRes.data.annual_total ?? 21),
-        annualUsed: Number(balanceRes.data.annual_used ?? 0),
         sickTotal: Number(balanceRes.data.sick_total ?? 5),
-        sickUsed: Number(balanceRes.data.sick_used ?? 0),
         casualTotal: Number(balanceRes.data.casual_total ?? 2),
-        casualUsed: Number(balanceRes.data.casual_used ?? 0),
         permissionsTotal: Number(balanceRes.data.permissions_total ?? 12),
-        permissionsUsed: Number(balanceRes.data.permissions_used ?? 0),
       });
     }
 
@@ -221,38 +172,60 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const currentYear = new Date().getFullYear();
+
+  // Live computations from actual records (leave_transactions equivalent).
+  const annualUsedLive = useMemo(() =>
+    employeeLeaves
+      .filter(r => r.status === 'approved' && r.leaveType === 'annual' && new Date(r.startDate).getFullYear() === currentYear)
+      .reduce((s, r) => s + Number(r.days || 0), 0),
+    [employeeLeaves, currentYear]
+  );
+  const casualUsedLive = useMemo(() =>
+    employeeLeaves
+      .filter(r => r.status === 'approved' && r.leaveType === 'casual' && new Date(r.startDate).getFullYear() === currentYear)
+      .reduce((s, r) => s + Number(r.days || 0), 0),
+    [employeeLeaves, currentYear]
+  );
+  const permissionsUsedLive = useMemo(() =>
+    employeePermissions
+      .filter(r => r.status === 'approved' && new Date(r.date).getFullYear() === currentYear)
+      .reduce((s, r) => s + Number(r.durationHours || 0), 0),
+    [employeePermissions, currentYear]
+  );
+  const overtimeAddedLive = useMemo(() =>
+    employeeOvertime
+      .filter(r => r.status === 'approved' && new Date(r.date).getFullYear() === currentYear)
+      .length,
+    [employeeOvertime, currentYear]
+  );
+
   const leaveSummary = useMemo(() => {
     const annualTotal = dbBalance?.annualTotal ?? (employee.annualLeaveBalance || 21);
     const casualTotal = dbBalance?.casualTotal ?? 0;
-    const annualUsed = dbBalance?.annualUsed ?? 0;
-    const casualUsed = dbBalance?.casualUsed ?? 0;
-    const currentYear = new Date().getFullYear();
-    // Extra/added days = approved overtime entries for current year
-    const overtimeDays = employeeOvertime.filter(r => {
-      if (r.status !== 'approved') return false;
-      const y = new Date(r.date).getFullYear();
-      return y === currentYear;
-    }).length;
-    const totalUsed = annualUsed + casualUsed;
-    const remaining = annualTotal + casualTotal - annualUsed - casualUsed + overtimeDays;
+    // Available = AnnualOpening + CasualOpening - AnnualUsed - CasualUsed + AddedDays
+    const remaining = annualTotal + casualTotal - annualUsedLive - casualUsedLive + overtimeAddedLive;
     return {
-      total: annualTotal + casualTotal, used: totalUsed, remaining,
+      total: annualTotal + casualTotal,
+      used: annualUsedLive + casualUsedLive,
+      remaining,
       approvedCount: employeeLeaves.filter(r => r.status === 'approved').length,
       pendingCount: employeeLeaves.filter(r => r.status === 'pending').length,
       rejectedCount: employeeLeaves.filter(r => r.status === 'rejected').length,
     };
-  }, [employeeLeaves, employeeOvertime, dbBalance, employee.annualLeaveBalance]);
+  }, [employeeLeaves, dbBalance, employee.annualLeaveBalance, annualUsedLive, casualUsedLive, overtimeAddedLive]);
 
   const permissionSummary = useMemo(() => {
     const permTotal = dbBalance?.permissionsTotal ?? 12;
-    const permUsed = dbBalance?.permissionsUsed ?? 0;
     return {
-      total: permTotal, used: permUsed, remaining: permTotal - permUsed,
+      total: permTotal,
+      used: permissionsUsedLive,
+      remaining: permTotal - permissionsUsedLive,
       approvedCount: employeePermissions.filter(r => r.status === 'approved').length,
       pendingCount: employeePermissions.filter(r => r.status === 'pending').length,
       rejectedCount: employeePermissions.filter(r => r.status === 'rejected').length,
     };
-  }, [employeePermissions, dbBalance]);
+  }, [employeePermissions, dbBalance, permissionsUsedLive]);
 
   const overtimeSummary = useMemo(() => {
     const approved = employeeOvertime.filter(r => r.status === 'approved');
