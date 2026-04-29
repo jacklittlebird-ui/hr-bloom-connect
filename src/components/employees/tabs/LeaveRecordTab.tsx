@@ -241,12 +241,12 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   const overtimeSummary = useMemo(() => {
     const currentYearOvertime = employeeOvertime.filter(r => new Date(r.date).getFullYear() === currentYear);
     const approved = currentYearOvertime.filter(r => r.status === 'approved');
-    const totalDays = approved.reduce((sum, r) => sum + getAddedDays(r.overtimeType), 0);
+    const approvedDays = approved.reduce((sum, r) => sum + getAddedDays(r.overtimeType), 0);
     return {
-      totalDays,
-      approvedCount: approved.length,
-      pendingCount: currentYearOvertime.filter(r => r.status === 'pending').length,
-      rejectedCount: currentYearOvertime.filter(r => r.status === 'rejected').length,
+      totalDays: approvedDays,
+      approvedCount: approvedDays,
+      pendingCount: currentYearOvertime.filter(r => r.status === 'pending').reduce((sum, r) => sum + getAddedDays(r.overtimeType), 0),
+      rejectedCount: currentYearOvertime.filter(r => r.status === 'rejected').reduce((sum, r) => sum + getAddedDays(r.overtimeType), 0),
     };
   }, [employeeOvertime, currentYear]);
 
