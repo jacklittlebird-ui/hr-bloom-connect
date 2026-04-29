@@ -339,6 +339,7 @@ const OvertimeForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
               <SelectItem value="regular">{t('leaves.overtimeTypes.regular')}</SelectItem>
               <SelectItem value="holiday">{t('leaves.overtimeTypes.holiday')}</SelectItem>
               <SelectItem value="weekend">{t('leaves.overtimeTypes.weekend')}</SelectItem>
+              <SelectItem value="eid_first_day">{t('leaves.overtimeTypes.eid_first_day')}</SelectItem>
             </SelectContent>
           </Select>
         </div>

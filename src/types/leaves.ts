@@ -70,7 +70,7 @@ export interface OvertimeRequest {
   station: string;
   date: string;
   hours: number;
-  overtimeType: 'regular' | 'holiday' | 'weekend';
+  overtimeType: 'regular' | 'holiday' | 'weekend' | 'eid_first_day';
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedDate: string;

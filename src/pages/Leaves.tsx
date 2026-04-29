@@ -151,7 +151,7 @@ const Leaves = () => {
         employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
         department: info.department, station: info.station,
         date: o.date, hours: o.hours,
-        overtimeType: 'regular' as OvertimeRequest['overtimeType'],
+        overtimeType: (o.overtime_type || 'regular') as OvertimeRequest['overtimeType'],
         reason: o.reason || '', status: o.status as OvertimeRequest['status'],
         submittedDate: o.created_at.split('T')[0],
       };
@@ -167,13 +167,15 @@ const Leaves = () => {
     // Count approved overtime days per employee for the current year
     const { data: approvedOt } = await supabase
       .from('overtime_requests')
-      .select('employee_id')
+      .select('employee_id, overtime_type')
       .eq('status', 'approved')
       .gte('date', `${currentYear}-01-01`)
       .lte('date', `${currentYear}-12-31`);
     const overtimeMap = new Map<string, number>();
-    (approvedOt || []).forEach(o => {
-      overtimeMap.set(o.employee_id, (overtimeMap.get(o.employee_id) || 0) + 1);
+    (approvedOt || []).forEach((o: any) => {
+      // Eid first day counts as 2 days, others as 1
+      const days = o.overtime_type === 'eid_first_day' ? 2 : 1;
+      overtimeMap.set(o.employee_id, (overtimeMap.get(o.employee_id) || 0) + days);
     });
 
     const balanceMap = new Map((dbBalances || []).map(b => [b.employee_id, b]));
@@ -342,7 +344,7 @@ const Leaves = () => {
   const handleNewOvertime = async (data: Omit<OvertimeRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
     if (!uuid) return;
-    await supabase.from('overtime_requests').insert({ employee_id: uuid, date: data.date, hours: data.hours, reason: data.reason });
+    await supabase.from('overtime_requests').insert({ employee_id: uuid, date: data.date, hours: data.hours, reason: data.reason, overtime_type: data.overtimeType || 'regular' });
     fetchData(); setActiveTab('overtime');
   };
 

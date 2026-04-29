@@ -94,14 +94,15 @@ export const LeaveBalanceTab = ({ employee, onUpdate, onDirectSave, readOnly }: 
   const fetchBalances = useCallback(async () => {
     const [balRes, otRes] = await Promise.all([
       supabase.from('leave_balances').select('*').eq('employee_id', employee.id),
-      supabase.from('overtime_requests').select('date').eq('employee_id', employee.id).eq('status', 'approved'),
+      supabase.from('overtime_requests').select('date, overtime_type').eq('employee_id', employee.id).eq('status', 'approved'),
     ]);
     
-    // Count approved overtime days per year
+    // Count approved overtime days per year (Eid first day = 2 days, others = 1)
     const otByYear = new Map<number, number>();
     (otRes.data || []).forEach((o: any) => {
       const year = new Date(o.date).getFullYear();
-      otByYear.set(year, (otByYear.get(year) || 0) + 1);
+      const days = o.overtime_type === 'eid_first_day' ? 2 : 1;
+      otByYear.set(year, (otByYear.get(year) || 0) + days);
     });
 
     if (!balRes.error && balRes.data) {

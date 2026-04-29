@@ -360,6 +360,7 @@ const translations: Record<string, Record<Language, string>> = {
   'leaves.overtimeTypes.regular': { en: 'Regular', ar: 'عادي' },
   'leaves.overtimeTypes.holiday': { en: 'Holiday', ar: 'إجازة رسمية' },
   'leaves.overtimeTypes.weekend': { en: 'Weekend', ar: 'عطلة أسبوعية' },
+  'leaves.overtimeTypes.eid_first_day': { en: 'Eid First Day (Adha/Fitr)', ar: 'أول يوم العيد (الأضحى/الفطر)' },
   'leaves.overtime.listTitle': { en: 'Overtime Requests', ar: 'طلبات الإضافات' },
   'leaves.overtime.type': { en: 'Overtime Type', ar: 'نوع الإضافة' },
   'leaves.overtime.selectType': { en: 'Select overtime type', ar: 'اختر نوع الإضافة' },
