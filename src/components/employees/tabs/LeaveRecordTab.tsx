@@ -101,58 +101,12 @@ const permissionTypeLabels: Record<string, { en: string; ar: string }> = {
   medical: { en: 'Medical', ar: 'طبي' },
 };
 
-// Helper to recalculate leave balances after any edit
-const recalcLeaveBalances = async (employeeId: string) => {
-  const currentYear = new Date().getFullYear();
-  
-  // Fetch all approved leaves for this year
-  const { data: leaves } = await supabase
-    .from('leave_requests')
-    .select('leave_type, days')
-    .eq('employee_id', employeeId)
-    .eq('status', 'approved')
-    .gte('start_date', `${currentYear}-01-01`)
-    .lte('start_date', `${currentYear}-12-31`);
-
-  // Fetch approved permissions for this year
-  const { data: perms } = await supabase
-    .from('permission_requests')
-    .select('hours')
-    .eq('employee_id', employeeId)
-    .eq('status', 'approved')
-    .gte('date', `${currentYear}-01-01`)
-    .lte('date', `${currentYear}-12-31`);
-
-  const annualUsed = (leaves || []).filter(l => l.leave_type === 'annual').reduce((s, l) => s + Number(l.days), 0);
-  const sickUsed = (leaves || []).filter(l => l.leave_type === 'sick').reduce((s, l) => s + Number(l.days), 0);
-  const casualUsed = (leaves || []).filter(l => l.leave_type === 'casual').reduce((s, l) => s + Number(l.days), 0);
-  const permissionsUsed = (perms || []).reduce((s, p) => s + Number(p.hours || 0), 0);
-
-  // Check if balance row exists
-  const { data: existing } = await supabase
-    .from('leave_balances')
-    .select('id')
-    .eq('employee_id', employeeId)
-    .eq('year', currentYear)
-    .maybeSingle();
-
-  if (existing) {
-    await supabase.from('leave_balances').update({
-      annual_used: annualUsed,
-      sick_used: sickUsed,
-      casual_used: casualUsed,
-      permissions_used: permissionsUsed,
-    }).eq('id', existing.id);
-  } else {
-    await supabase.from('leave_balances').insert({
-      employee_id: employeeId,
-      year: currentYear,
-      annual_used: annualUsed,
-      sick_used: sickUsed,
-      casual_used: casualUsed,
-      permissions_used: permissionsUsed,
-    });
-  }
+// NOTE: leave_balances is now opening-balance only (manual yearly input).
+// Used / added days are computed live from leave_requests, permission_requests,
+// and overtime_requests — never written back to leave_balances.
+const recalcLeaveBalances = async (_employeeId: string) => {
+  // No-op: kept for backward compatibility with call sites.
+  return;
 };
 
 export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
