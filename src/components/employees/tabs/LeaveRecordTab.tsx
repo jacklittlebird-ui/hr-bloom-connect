@@ -239,15 +239,16 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   }, [employeePermissions, dbBalance, permissionsUsedLive]);
 
   const overtimeSummary = useMemo(() => {
-    const approved = employeeOvertime.filter(r => r.status === 'approved');
+    const currentYearOvertime = employeeOvertime.filter(r => new Date(r.date).getFullYear() === currentYear);
+    const approved = currentYearOvertime.filter(r => r.status === 'approved');
     const totalDays = approved.reduce((sum, r) => sum + getAddedDays(r.overtimeType), 0);
     return {
       totalDays,
       approvedCount: approved.length,
-      pendingCount: employeeOvertime.filter(r => r.status === 'pending').length,
-      rejectedCount: employeeOvertime.filter(r => r.status === 'rejected').length,
+      pendingCount: currentYearOvertime.filter(r => r.status === 'pending').length,
+      rejectedCount: currentYearOvertime.filter(r => r.status === 'rejected').length,
     };
-  }, [employeeOvertime]);
+  }, [employeeOvertime, currentYear]);
 
   const subTabs = [
     { id: 'leaves' as SubTab, icon: CalendarDays, label: t('leaveRecord.leaves'), count: employeeLeaves.length },
