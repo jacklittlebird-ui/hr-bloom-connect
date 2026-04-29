@@ -226,26 +226,51 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         trackQuery('portal_leaves', (lbRes.data?.length || 0) + (lrRes.data?.length || 0) + (pRes.data?.length || 0) + (otRes.data?.length || 0));
 
         if (lbRes.data) {
-          // Count approved overtime days per employee to add to annual balance
+          // Live aggregations — leave_balances stores opening balance only.
+          // Eid first day overtime counts as 2 days, others as 1.
           const approvedOtMap = new Map<string, number>();
           if (otRes.data) {
             otRes.data.forEach((o: any) => {
-              if (o.status === 'approved') {
+              if (o.status === 'approved' && new Date(o.date).getFullYear() === currentYear) {
                 const days = o.overtime_type === 'eid_first_day' ? 2 : 1;
                 approvedOtMap.set(o.employee_id, (approvedOtMap.get(o.employee_id) || 0) + days);
               }
             });
           }
 
+          // Live used per employee per leave type (from approved leave_requests this year)
+          const usedMap = new Map<string, { annual: number; sick: number; casual: number }>();
+          (lrRes.data || []).forEach((r: any) => {
+            if (r.status !== 'approved') return;
+            if (new Date(r.start_date).getFullYear() !== currentYear) return;
+            const cur = usedMap.get(r.employee_id) || { annual: 0, sick: 0, casual: 0 };
+            if (r.leave_type === 'annual') cur.annual += Number(r.days || 0);
+            else if (r.leave_type === 'sick') cur.sick += Number(r.days || 0);
+            else if (r.leave_type === 'casual') cur.casual += Number(r.days || 0);
+            usedMap.set(r.employee_id, cur);
+          });
+          // Live used permissions hours (from approved permission_requests this year)
+          const permsUsedMap = new Map<string, number>();
+          (pRes.data || []).forEach((p: any) => {
+            if (p.status !== 'approved') return;
+            if (new Date(p.date).getFullYear() !== currentYear) return;
+            const start = p.start_time ? new Date(`1970-01-01T${p.start_time}`).getTime() : 0;
+            const end = p.end_time ? new Date(`1970-01-01T${p.end_time}`).getTime() : 0;
+            const hours = end > start ? (end - start) / 3_600_000 : 0;
+            permsUsedMap.set(p.employee_id, (permsUsedMap.get(p.employee_id) || 0) + hours);
+          });
+
           const mapped: Record<string, LeaveBalance[]> = {};
           lbRes.data.forEach((lb: any) => {
             if (!mapped[lb.employee_id]) mapped[lb.employee_id] = [];
             const overtimeDaysCount = approvedOtMap.get(lb.employee_id) || 0;
+            const u = usedMap.get(lb.employee_id) || { annual: 0, sick: 0, casual: 0 };
+            const permsUsed = permsUsedMap.get(lb.employee_id) || 0;
             mapped[lb.employee_id].push(
-              { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total + overtimeDaysCount, baseTotal: lb.annual_total, used: lb.annual_used, remaining: lb.annual_total - lb.annual_used + overtimeDaysCount },
-              { typeAr: 'مرضية', typeEn: 'Sick', total: lb.sick_total, used: lb.sick_used, remaining: lb.sick_total - lb.sick_used },
-              { typeAr: 'عارضة', typeEn: 'Casual', total: lb.casual_total, used: lb.casual_used, remaining: lb.casual_total - lb.casual_used },
-              { typeAr: 'الأذونات', typeEn: 'Permissions', total: lb.permissions_total, used: lb.permissions_used, remaining: lb.permissions_total - lb.permissions_used },
+              { typeAr: 'سنوية', typeEn: 'Annual', total: lb.annual_total, baseTotal: lb.annual_total, used: u.annual, remaining: lb.annual_total - u.annual + overtimeDaysCount },
+              { typeAr: 'مرضية', typeEn: 'Sick', total: lb.sick_total, used: u.sick, remaining: lb.sick_total - u.sick },
+              { typeAr: 'عارضة', typeEn: 'Casual', total: lb.casual_total, used: u.casual, remaining: lb.casual_total - u.casual },
+              { typeAr: 'الأذونات', typeEn: 'Permissions', total: lb.permissions_total, used: permsUsed, remaining: lb.permissions_total - permsUsed },
             );
           });
           setLeaveBalances(mapped);

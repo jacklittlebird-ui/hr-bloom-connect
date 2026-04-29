@@ -180,28 +180,54 @@ const Leaves = () => {
 
     const balanceMap = new Map((dbBalances || []).map(b => [b.employee_id, b]));
 
+    // Live used per employee per leave type (approved leave_requests this year)
+    const usedByEmp = new Map<string, { annual: number; sick: number; casual: number }>();
+    (leaves || []).forEach((l: any) => {
+      if (l.status !== 'approved') return;
+      if (new Date(l.start_date).getFullYear() !== currentYear) return;
+      const cur = usedByEmp.get(l.employee_id) || { annual: 0, sick: 0, casual: 0 };
+      if (l.leave_type === 'annual') cur.annual += Number(l.days || 0);
+      else if (l.leave_type === 'sick') cur.sick += Number(l.days || 0);
+      else if (l.leave_type === 'casual') cur.casual += Number(l.days || 0);
+      usedByEmp.set(l.employee_id, cur);
+    });
+    // Live used permissions hours (approved permission_requests this year)
+    const permsUsedByEmp = new Map<string, number>();
+    (perms || []).forEach((p: any) => {
+      if (p.status !== 'approved') return;
+      if (new Date(p.date).getFullYear() !== currentYear) return;
+      let hours = Number(p.hours || 0);
+      if (!hours && p.start_time && p.end_time) {
+        const [sH, sM] = p.start_time.split(':').map(Number);
+        const [eH, eM] = p.end_time.split(':').map(Number);
+        hours = Math.max(0, ((eH * 60 + eM) - (sH * 60 + sM)) / 60);
+      }
+      permsUsedByEmp.set(p.employee_id, (permsUsedByEmp.get(p.employee_id) || 0) + hours);
+    });
+
     const balances: EmployeeLeaveBalance[] = (employees || []).map(e => {
       const d = e.department_id ? deptMap.get(e.department_id) : null;
       const s = e.station_id ? stMap.get(e.station_id) : null;
       const lb = balanceMap.get(e.id);
       const overtimeDaysCount = overtimeMap.get(e.id) || 0;
-      const annualTotal = (lb ? Number(lb.annual_total) : (e.annual_leave_balance || 21)) + overtimeDaysCount;
-      const annualUsed = lb ? Number(lb.annual_used) : 0;
+      // Opening balances — never auto-incremented
+      const annualTotal = lb ? Number(lb.annual_total) : (e.annual_leave_balance || 21);
       const sickTotal = lb ? Number(lb.sick_total) : (e.sick_leave_balance || 5);
-      const sickUsed = lb ? Number(lb.sick_used) : 0;
       const casualTotal = lb ? Number(lb.casual_total) : 7;
-      const casualUsed = lb ? Number(lb.casual_used) : 0;
       const permissionsTotal = lb ? Number(lb.permissions_total) : 12;
-      const permissionsUsed = lb ? Number(lb.permissions_used) : 0;
+      // Live used from records
+      const u = usedByEmp.get(e.id) || { annual: 0, sick: 0, casual: 0 };
+      const permissionsUsed = permsUsedByEmp.get(e.id) || 0;
       return {
         employeeId: e.id, employeeCode: e.employee_code, employeeName: e.name_en, employeeNameAr: e.name_ar,
         department: d ? (language === 'ar' ? d.name_ar : d.name_en) : '',
         station: s ? (language === 'ar' ? s.name_ar : s.name_en) : '',
         hireDate: e.hire_date || '',
-        annualTotal, annualUsed, annualRemaining: annualTotal - annualUsed,
+        // Annual remaining = opening - used + overtime added days
+        annualTotal, annualUsed: u.annual, annualRemaining: annualTotal - u.annual + overtimeDaysCount,
         overtimeDays: overtimeDaysCount,
-        sickTotal, sickUsed, sickRemaining: sickTotal - sickUsed,
-        casualTotal, casualUsed, casualRemaining: casualTotal - casualUsed,
+        sickTotal, sickUsed: u.sick, sickRemaining: sickTotal - u.sick,
+        casualTotal, casualUsed: u.casual, casualRemaining: casualTotal - u.casual,
         permissionsTotal, permissionsUsed, permissionsRemaining: permissionsTotal - permissionsUsed,
       };
     });
