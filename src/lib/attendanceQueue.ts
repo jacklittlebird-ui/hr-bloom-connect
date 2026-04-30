@@ -185,6 +185,7 @@ interface CheckinResult {
   deduplicated?: boolean;
   verified?: boolean;
   reason?: string;
+  recorded_at?: string;
 }
 
 export async function performCheckin(params: CheckinParams): Promise<CheckinResult> {
