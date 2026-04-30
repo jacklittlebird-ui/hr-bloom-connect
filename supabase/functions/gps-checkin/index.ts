@@ -452,6 +452,7 @@ Deno.serve(async (req) => {
         reason: "device_limit_reached",
         meta: { action: deviceResult.action },
       });
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
         error: "تم الوصول للحد الأقصى للأجهزة (3). يرجى تحديث الأجهزة / Max devices (3) reached.",
         device_limit: true,
