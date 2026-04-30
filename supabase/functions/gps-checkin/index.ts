@@ -552,6 +552,7 @@ Deno.serve(async (req) => {
 
     // Attendance record upsert
     let recordPromise: Promise<any>;
+    let recordedAtSaved: string | null = null;
 
     if (event_type === "check_in") {
       recordPromise = (async () => {
