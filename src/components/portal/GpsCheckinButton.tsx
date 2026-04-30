@@ -67,6 +67,17 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
 
       if (!result.ok) {
         setStatus('error');
+        // Special-case NO_OPEN_RECORD: the user pressed "check out" without
+        // ever checking in (or after already checking out). Replace the
+        // generic error with a clear, actionable instruction in Arabic.
+        if (eventType === 'check_out' && result.error_code === 'NO_OPEN_RECORD') {
+          setMessage(
+            ar
+              ? '⚠️ لا يوجد تسجيل حضور مفتوح. يرجى الضغط على زر "تسجيل حضور (GPS)" أولاً قبل تسجيل الانصراف.'
+              : '⚠️ No open check-in found. Please press "Check In (GPS)" first before checking out.'
+          );
+          return;
+        }
         const retryHint = result.retryable && eventType === 'check_out'
           ? ar ? ' يمكنك إعادة المحاولة فوراً.' : ' You can retry immediately.'
           : '';
