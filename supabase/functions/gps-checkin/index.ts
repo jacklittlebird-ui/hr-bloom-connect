@@ -688,7 +688,7 @@ Deno.serve(async (req) => {
           checked_out_at: updatedRecord.check_out,
         }, openRecord.id);
         console.log("[gps-checkin] checkout saved for record:", openRecord.id);
-        (recordPromise as any)._recordedAt = updatedRecord.check_out;
+        recordedAtSaved = updatedRecord.check_out;
       })();
     }
 
