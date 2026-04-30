@@ -508,6 +508,7 @@ Deno.serve(async (req) => {
     }
 
     if (!matchedLocation) {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
         error: `خارج النطاق المسموح - المسافة ${Math.round(nearestDist)} متر / Out of range - distance ${Math.round(nearestDist)}m`,
       }, 403);
