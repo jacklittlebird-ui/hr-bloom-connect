@@ -286,13 +286,48 @@ Deno.serve(async (req) => {
           }, 409);
         }
       } else {
-        return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
+        // CHECK-IN dedup: verify a real open record actually exists for today
+        // before claiming success. Otherwise a previous failed attempt that
+        // recorded dedup (shouldn't normally happen, but defensively) would
+        // make the UI show success while no row exists.
+        const todayLocal = new Date().toISOString().split("T")[0];
+        const { data: todayOpen } = await supabaseAdmin
+          .from("attendance_records")
+          .select("id")
+          .eq("employee_id", employeeId)
+          .eq("date", todayLocal)
+          .not("check_in", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (todayOpen) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
+        }
+        // No real row — clear dedup and continue processing this request.
+        clearDedup(userId, event_type);
       }
     }
 
     // Min interval check (1 minute)
     if (isMinIntervalViolated(userId, event_type)) {
-      return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts" }, 429);
+      // Same defensive verification for check-in
+      if (event_type === "check_in") {
+        const todayLocal = new Date().toISOString().split("T")[0];
+        const { data: todayOpen } = await supabaseAdmin
+          .from("attendance_records")
+          .select("id")
+          .eq("employee_id", employeeId)
+          .eq("date", todayLocal)
+          .not("check_in", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (todayOpen) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+        }
+        // No real row from a prior success — allow retry
+        clearDedup(userId, event_type);
+      } else {
+        return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts" }, 429);
+      }
     }
 
     // ─── Idempotency lock (DB-level, 30s) ───────────────────────────────
