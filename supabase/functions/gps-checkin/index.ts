@@ -406,10 +406,14 @@ Deno.serve(async (req) => {
       .limit(1)
       .single();
 
-    if (!emp?.station_id) return json({ error: "No station assigned" }, 400);
+    if (!emp?.station_id) {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+      return json({ error: "No station assigned" }, 400);
+    }
 
     const station = emp.stations as any;
     if (station && station.checkin_method !== "gps" && station.checkin_method !== "both") {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({ error: "GPS check-in not enabled for this station" }, 403);
     }
 
