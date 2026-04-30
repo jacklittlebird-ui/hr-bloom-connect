@@ -453,8 +453,10 @@ Deno.serve(async (req) => {
       }, 403);
     }
 
-    // Record the check-in in dedup map
-    recordCheckin(userId, event_type);
+    // NOTE: dedup/min-interval is now recorded ONLY on success (after the
+    // record write below) so that failed attempts (NO_OPEN_RECORD,
+    // MINIMUM_WORK_DURATION, geofence error already returned above, etc.)
+    // do NOT lock the user out of immediate retries.
 
     const now = new Date();
     const stationTz = (emp.stations as any)?.timezone || "Africa/Cairo";
