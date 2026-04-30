@@ -433,6 +433,7 @@ Deno.serve(async (req) => {
         reason: "device_shared_fraud",
         meta: { date: todayStr, other_user: otherUsersOnDevice[0].user_id },
       });
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
         error: "هذا الجهاز مسجل لموظف آخر اليوم. لا يمكن استخدام نفس الجهاز لأكثر من موظف / This device was used by another employee today.",
         device_fraud: true,
