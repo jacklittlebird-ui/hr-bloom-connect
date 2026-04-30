@@ -631,12 +631,19 @@ Deno.serve(async (req) => {
     const [, recordResult] = await Promise.allSettled([eventPromise, recordPromise]);
 
     if (recordResult.status === "rejected") {
+      // Release the 30s DB lock so the user can retry immediately instead of
+      // being blocked by a stale "still being processed" response.
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
         error: recordResult.reason?.message || "Record error",
         error_code: recordResult.reason?.errorCode,
         retryable: recordResult.reason?.retryable ?? false,
       }, recordResult.reason?.statusCode ?? 500);
     }
+
+    // SUCCESS — now record dedup + min-interval (so a legitimate fast retry
+    // is treated as a duplicate and acknowledged as already_processed).
+    recordCheckin(userId, event_type);
 
     const elapsed = Math.round(performance.now() - startTime);
     return json({
