@@ -376,7 +376,25 @@ Deno.serve(async (req) => {
           retryable: true,
         }, 409);
       }
-      return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }, 200);
+      // CHECK-IN concurrent lock: verify a real row exists for today.
+      // Without this, a previous failed check-in (that left the 30s lock
+      // dangling because we returned early before releasing it) would cause
+      // this retry to falsely report success while no record exists.
+      const todayLocal2 = new Date().toISOString().split("T")[0];
+      const { data: todayOpen2 } = await supabaseAdmin
+        .from("attendance_records")
+        .select("id")
+        .eq("employee_id", employeeId)
+        .eq("date", todayLocal2)
+        .not("check_in", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (todayOpen2) {
+        return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }, 200);
+      }
+      // Stale lock from a failed prior attempt — release it and continue
+      // processing this request normally instead of returning a fake success.
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
     }
 
 
