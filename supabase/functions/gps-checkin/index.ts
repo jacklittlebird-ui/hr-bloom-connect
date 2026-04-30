@@ -686,6 +686,7 @@ Deno.serve(async (req) => {
           checked_out_at: updatedRecord.check_out,
         }, openRecord.id);
         console.log("[gps-checkin] checkout saved for record:", openRecord.id);
+        (recordPromise as any)._recordedAt = updatedRecord.check_out;
       })();
     }
 
@@ -706,11 +707,16 @@ Deno.serve(async (req) => {
     // is treated as a duplicate and acknowledged as already_processed).
     recordCheckin(userId, event_type);
 
+    // Determine the actual saved timestamp to return to the client so the UI
+    // can display the exact check-in / check-out time recorded in the DB.
+    const recordedAt = (recordPromise as any)._recordedAt || now.toISOString();
+
     const elapsed = Math.round(performance.now() - startTime);
     return json({
       ok: true,
       event_type,
       location: matchedLocation.name_ar,
+      recorded_at: recordedAt,
       response_ms: elapsed,
     }, 200);
   } catch (e: any) {
