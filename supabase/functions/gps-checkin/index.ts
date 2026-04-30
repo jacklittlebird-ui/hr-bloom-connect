@@ -90,8 +90,43 @@ async function getCheckoutVerificationState(supabaseAdmin: any, employeeId: stri
     .limit(1)
     .maybeSingle();
 
+  // Also check whether there is currently an OPEN record (check_out IS NULL).
+  // If there is an open record, the previous request is genuinely still in
+  // flight (or it crashed before persisting) — the client should keep waiting.
+  // If there is NO open record at all, the previous attempt failed for a
+  // reason that did not produce a half-written row (e.g. NO_OPEN_RECORD,
+  // MINIMUM_WORK_DURATION) and the client must be allowed to retry NOW.
+  const { data: openRow } = await supabaseAdmin
+    .from("attendance_records")
+    .select("id")
+    .eq("employee_id", employeeId)
+    .is("check_out", null)
+    .not("check_in", "is", null)
+    .limit(1)
+    .maybeSingle();
+
   const verified = !!latestRecord && !!latestRecord.check_in && !!latestRecord.check_out;
-  return { latestRecord, verified };
+  const hasOpenRecord = !!openRow;
+  return { latestRecord, verified, hasOpenRecord };
+}
+
+async function releaseAttendanceLock(
+  supabaseAdmin: any,
+  employeeId: string,
+  deviceId: string,
+  eventType: string,
+) {
+  const { error } = await supabaseAdmin
+    .from("attendance_idempotency")
+    .delete()
+    .eq("employee_id", employeeId)
+    .eq("device_id", deviceId)
+    .eq("event_type", eventType);
+  if (error) console.error("[gps-checkin] lock release failed:", error);
+}
+
+function clearDedup(userId: string, eventType: string): void {
+  recentCheckins.delete(`${userId}:${eventType}`);
 }
 
 // ─── Device binding helper ─────────────────────────────────────────────────
@@ -229,16 +264,30 @@ Deno.serve(async (req) => {
       totalDuplicates++;
       if (event_type === "check_out") {
         const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
-        return json({
-          ok: verification.verified,
-          event_type,
-          deduplicated: true,
-          verified: verification.verified,
-          reason: verification.verified ? "already_processed" : "not_verified_yet",
-          error: verification.verified ? undefined : "Check-out was not verified yet",
-        }, verification.verified ? 200 : 409);
+        if (verification.verified) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+        }
+        // Previous attempt did NOT produce a half-written row → the user
+        // can safely retry right now. Clear dedup so this very request
+        // proceeds normally instead of being blocked with a confusing
+        // "still being processed" message.
+        if (!verification.hasOpenRecord) {
+          clearDedup(userId, event_type);
+          // Fall through and continue processing this request.
+        } else {
+          return json({
+            ok: false,
+            event_type,
+            deduplicated: true,
+            verified: false,
+            reason: "in_flight",
+            error: "جاري معالجة طلب الانصراف السابق، يرجى الانتظار 10 ثوانٍ ثم المحاولة مرة أخرى / Previous check-out is still being processed. Please wait 10 seconds and try again.",
+            retryable: true,
+          }, 409);
+        }
+      } else {
+        return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
       }
-      return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
     }
 
     // Min interval check (1 minute)
@@ -265,17 +314,36 @@ Deno.serve(async (req) => {
       totalDuplicates++;
       if (event_type === "check_out") {
         const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
+        if (verification.verified) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+        }
+        // Previous attempt failed without leaving the record open.
+        // Free the stale lock immediately so the user can retry now.
+        if (!verification.hasOpenRecord) {
+          await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+          return json({
+            ok: false,
+            event_type,
+            deduplicated: true,
+            verified: false,
+            reason: "previous_failed",
+            error: "لم يكتمل طلب الانصراف السابق، يرجى المحاولة مرة أخرى الآن / Previous check-out did not complete. Please tap Check-out again.",
+            retryable: true,
+          }, 409);
+        }
         return json({
-          ok: verification.verified,
+          ok: false,
           event_type,
           deduplicated: true,
-          verified: verification.verified,
+          verified: false,
           reason: "concurrent_lock",
-          error: verification.verified ? undefined : "Check-out is still being processed",
-        }, verification.verified ? 200 : 409);
+          error: "جاري معالجة طلب الانصراف، يرجى الانتظار 30 ثانية / Check-out is still being processed. Please wait 30 seconds before retrying.",
+          retryable: true,
+        }, 409);
       }
       return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }, 200);
     }
+
 
     // Get station
     const { data: emp } = await supabaseAdmin
@@ -385,8 +453,10 @@ Deno.serve(async (req) => {
       }, 403);
     }
 
-    // Record the check-in in dedup map
-    recordCheckin(userId, event_type);
+    // NOTE: dedup/min-interval is now recorded ONLY on success (after the
+    // record write below) so that failed attempts (NO_OPEN_RECORD,
+    // MINIMUM_WORK_DURATION, geofence error already returned above, etc.)
+    // do NOT lock the user out of immediate retries.
 
     const now = new Date();
     const stationTz = (emp.stations as any)?.timezone || "Africa/Cairo";
@@ -561,12 +631,19 @@ Deno.serve(async (req) => {
     const [, recordResult] = await Promise.allSettled([eventPromise, recordPromise]);
 
     if (recordResult.status === "rejected") {
+      // Release the 30s DB lock so the user can retry immediately instead of
+      // being blocked by a stale "still being processed" response.
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
         error: recordResult.reason?.message || "Record error",
         error_code: recordResult.reason?.errorCode,
         retryable: recordResult.reason?.retryable ?? false,
       }, recordResult.reason?.statusCode ?? 500);
     }
+
+    // SUCCESS — now record dedup + min-interval (so a legitimate fast retry
+    // is treated as a duplicate and acknowledged as already_processed).
+    recordCheckin(userId, event_type);
 
     const elapsed = Math.round(performance.now() - startTime);
     return json({
