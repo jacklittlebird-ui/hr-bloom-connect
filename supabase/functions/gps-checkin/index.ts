@@ -286,13 +286,48 @@ Deno.serve(async (req) => {
           }, 409);
         }
       } else {
-        return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
+        // CHECK-IN dedup: verify a real open record actually exists for today
+        // before claiming success. Otherwise a previous failed attempt that
+        // recorded dedup (shouldn't normally happen, but defensively) would
+        // make the UI show success while no row exists.
+        const todayLocal = new Date().toISOString().split("T")[0];
+        const { data: todayOpen } = await supabaseAdmin
+          .from("attendance_records")
+          .select("id")
+          .eq("employee_id", employeeId)
+          .eq("date", todayLocal)
+          .not("check_in", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (todayOpen) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
+        }
+        // No real row — clear dedup and continue processing this request.
+        clearDedup(userId, event_type);
       }
     }
 
     // Min interval check (1 minute)
     if (isMinIntervalViolated(userId, event_type)) {
-      return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts" }, 429);
+      // Same defensive verification for check-in
+      if (event_type === "check_in") {
+        const todayLocal = new Date().toISOString().split("T")[0];
+        const { data: todayOpen } = await supabaseAdmin
+          .from("attendance_records")
+          .select("id")
+          .eq("employee_id", employeeId)
+          .eq("date", todayLocal)
+          .not("check_in", "is", null)
+          .limit(1)
+          .maybeSingle();
+        if (todayOpen) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+        }
+        // No real row from a prior success — allow retry
+        clearDedup(userId, event_type);
+      } else {
+        return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts" }, 429);
+      }
     }
 
     // ─── Idempotency lock (DB-level, 30s) ───────────────────────────────
@@ -341,7 +376,25 @@ Deno.serve(async (req) => {
           retryable: true,
         }, 409);
       }
-      return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }, 200);
+      // CHECK-IN concurrent lock: verify a real row exists for today.
+      // Without this, a previous failed check-in (that left the 30s lock
+      // dangling because we returned early before releasing it) would cause
+      // this retry to falsely report success while no record exists.
+      const todayLocal2 = new Date().toISOString().split("T")[0];
+      const { data: todayOpen2 } = await supabaseAdmin
+        .from("attendance_records")
+        .select("id")
+        .eq("employee_id", employeeId)
+        .eq("date", todayLocal2)
+        .not("check_in", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (todayOpen2) {
+        return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }, 200);
+      }
+      // Stale lock from a failed prior attempt — release it and continue
+      // processing this request normally instead of returning a fake success.
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
     }
 
 
@@ -353,10 +406,14 @@ Deno.serve(async (req) => {
       .limit(1)
       .single();
 
-    if (!emp?.station_id) return json({ error: "No station assigned" }, 400);
+    if (!emp?.station_id) {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+      return json({ error: "No station assigned" }, 400);
+    }
 
     const station = emp.stations as any;
     if (station && station.checkin_method !== "gps" && station.checkin_method !== "both") {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({ error: "GPS check-in not enabled for this station" }, 403);
     }
 
@@ -376,6 +433,7 @@ Deno.serve(async (req) => {
         reason: "device_shared_fraud",
         meta: { date: todayStr, other_user: otherUsersOnDevice[0].user_id },
       });
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
         error: "هذا الجهاز مسجل لموظف آخر اليوم. لا يمكن استخدام نفس الجهاز لأكثر من موظف / This device was used by another employee today.",
         device_fraud: true,
@@ -394,6 +452,7 @@ Deno.serve(async (req) => {
         reason: "device_limit_reached",
         meta: { action: deviceResult.action },
       });
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
         error: "تم الوصول للحد الأقصى للأجهزة (3). يرجى تحديث الأجهزة / Max devices (3) reached.",
         device_limit: true,
@@ -428,6 +487,7 @@ Deno.serve(async (req) => {
     );
 
     if (!locations || locations.length === 0) {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({ error: "No GPS locations configured for this station" }, 400);
     }
 
@@ -448,6 +508,7 @@ Deno.serve(async (req) => {
     }
 
     if (!matchedLocation) {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
         error: `خارج النطاق المسموح - المسافة ${Math.round(nearestDist)} متر / Out of range - distance ${Math.round(nearestDist)}m`,
       }, 403);
