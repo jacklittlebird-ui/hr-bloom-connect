@@ -92,13 +92,23 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
       // creates the false impression that nothing was saved and pushes the
       // user to retry, which is exactly what we want to avoid. Treat any ok
       // response as success.
+      // Format the actual recorded time (HH:MM, 24h, Cairo) returned by the
+      // backend so the user sees the exact timestamp saved in the database.
+      const recordedDate = result.recorded_at ? new Date(result.recorded_at) : new Date();
+      const timeStr = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Africa/Cairo',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(recordedDate);
+
       setStatus('success');
       setMessage(
         eventType === 'check_in'
-          ? ar ? 'تم تسجيل الحضور بنجاح ✔' : 'Check-in recorded ✔'
+          ? ar ? `تم تسجيل الحضور بنجاح ✔ — الوقت: ${timeStr}` : `Check-in recorded ✔ — Time: ${timeStr}`
           : result.deduplicated
-            ? ar ? 'تم تأكيد الانصراف من الطلب السابق ✔' : 'Previous check-out confirmed ✔'
-            : ar ? 'تم تسجيل الانصراف بنجاح ✔' : 'Check-out recorded ✔'
+            ? ar ? `تم تأكيد الانصراف من الطلب السابق ✔ — الوقت: ${timeStr}` : `Previous check-out confirmed ✔ — Time: ${timeStr}`
+            : ar ? `تم تسجيل الانصراف بنجاح ✔ — الوقت: ${timeStr}` : `Check-out recorded ✔ — Time: ${timeStr}`
       );
       onSuccess?.();
     } catch (e: any) {
