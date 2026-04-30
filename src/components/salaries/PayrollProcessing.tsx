@@ -603,7 +603,21 @@ export const PayrollProcessing = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <Label className={cn("text-xs", isRTL && "text-right block")}>{ar ? 'عدد الأيام' : 'Days'}</Label>
-                        <Input type="number" step="0.125" value={leaveDays || ''} onChange={e => setLeaveDays(normalizeQuarterInput(parseFloat(e.target.value)))} className={cn("h-9 text-sm", isRTL && "text-right")} min={0} />
+                        <Input
+                          type="number"
+                          step="0.125"
+                          value={leaveDays || ''}
+                          onChange={e => {
+                            const v = parseFloat(e.target.value);
+                            setLeaveDays(isNaN(v) ? 0 : v);
+                          }}
+                          onBlur={e => {
+                            const v = parseFloat(e.target.value);
+                            setLeaveDays(isNaN(v) ? 0 : normalizeQuarterInput(v));
+                          }}
+                          className={cn("h-9 text-sm", isRTL && "text-right")}
+                          min={0}
+                        />
                       </div>
                       {readOnlyField(ar ? 'قيمة الخصم (تلقائي)' : 'Deduction (Auto)', leaveDeduction)}
                     </div>
