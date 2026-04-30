@@ -487,6 +487,7 @@ Deno.serve(async (req) => {
     );
 
     if (!locations || locations.length === 0) {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({ error: "No GPS locations configured for this station" }, 400);
     }
 
