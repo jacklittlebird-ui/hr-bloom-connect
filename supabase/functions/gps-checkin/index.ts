@@ -604,6 +604,7 @@ Deno.serve(async (req) => {
           throw new Error("Failed to create attendance record: " + error.message);
         }
         console.log("[gps-checkin] CHECK_IN record created for", employeeId, "date:", dateStr);
+        recordedAtSaved = insertPayload.check_in;
       })();
     } else {
       recordPromise = (async () => {
