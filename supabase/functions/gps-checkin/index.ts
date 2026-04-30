@@ -711,7 +711,7 @@ Deno.serve(async (req) => {
 
     // Determine the actual saved timestamp to return to the client so the UI
     // can display the exact check-in / check-out time recorded in the DB.
-    const recordedAt = (recordPromise as any)._recordedAt || now.toISOString();
+    const recordedAt = recordedAtSaved || now.toISOString();
 
     const elapsed = Math.round(performance.now() - startTime);
     return json({
