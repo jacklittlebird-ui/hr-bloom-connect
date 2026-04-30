@@ -76,13 +76,20 @@ const AttendanceScan = () => {
         setStatus("error");
         setMessage(ar ? "لم يتم تأكيد حفظ الانصراف بعد، حدّث الصفحة ثم أعد المحاولة." : "Check-out was not verified yet. Refresh and try again.");
       } else {
+        const recordedDate = (payload as any).recorded_at ? new Date((payload as any).recorded_at) : new Date();
+        const timeStr = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Africa/Cairo',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }).format(recordedDate);
         setStatus("success");
         setMessage(
           eventType === "check_in"
-            ? ar ? "تم تسجيل الحضور بنجاح ✔" : "Check-in recorded ✔"
+            ? ar ? `تم تسجيل الحضور بنجاح ✔ — الوقت: ${timeStr}` : `Check-in recorded ✔ — Time: ${timeStr}`
             : payload.deduplicated
-              ? ar ? "تم تأكيد الانصراف من الطلب السابق ✔" : "Previous check-out confirmed ✔"
-              : ar ? "تم تسجيل الانصراف بنجاح ✔" : "Check-out recorded ✔"
+              ? ar ? `تم تأكيد الانصراف من الطلب السابق ✔ — الوقت: ${timeStr}` : `Previous check-out confirmed ✔ — Time: ${timeStr}`
+              : ar ? `تم تسجيل الانصراف بنجاح ✔ — الوقت: ${timeStr}` : `Check-out recorded ✔ — Time: ${timeStr}`
         );
       }
     } catch (e: any) {
