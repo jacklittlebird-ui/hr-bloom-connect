@@ -264,16 +264,30 @@ Deno.serve(async (req) => {
       totalDuplicates++;
       if (event_type === "check_out") {
         const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
-        return json({
-          ok: verification.verified,
-          event_type,
-          deduplicated: true,
-          verified: verification.verified,
-          reason: verification.verified ? "already_processed" : "not_verified_yet",
-          error: verification.verified ? undefined : "Check-out was not verified yet",
-        }, verification.verified ? 200 : 409);
+        if (verification.verified) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+        }
+        // Previous attempt did NOT produce a half-written row → the user
+        // can safely retry right now. Clear dedup so this very request
+        // proceeds normally instead of being blocked with a confusing
+        // "still being processed" message.
+        if (!verification.hasOpenRecord) {
+          clearDedup(userId, event_type);
+          // Fall through and continue processing this request.
+        } else {
+          return json({
+            ok: false,
+            event_type,
+            deduplicated: true,
+            verified: false,
+            reason: "in_flight",
+            error: "جاري معالجة طلب الانصراف السابق، يرجى الانتظار 10 ثوانٍ ثم المحاولة مرة أخرى / Previous check-out is still being processed. Please wait 10 seconds and try again.",
+            retryable: true,
+          }, 409);
+        }
+      } else {
+        return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
       }
-      return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
     }
 
     // Min interval check (1 minute)
@@ -300,17 +314,36 @@ Deno.serve(async (req) => {
       totalDuplicates++;
       if (event_type === "check_out") {
         const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
+        if (verification.verified) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+        }
+        // Previous attempt failed without leaving the record open.
+        // Free the stale lock immediately so the user can retry now.
+        if (!verification.hasOpenRecord) {
+          await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+          return json({
+            ok: false,
+            event_type,
+            deduplicated: true,
+            verified: false,
+            reason: "previous_failed",
+            error: "لم يكتمل طلب الانصراف السابق، يرجى المحاولة مرة أخرى الآن / Previous check-out did not complete. Please tap Check-out again.",
+            retryable: true,
+          }, 409);
+        }
         return json({
-          ok: verification.verified,
+          ok: false,
           event_type,
           deduplicated: true,
-          verified: verification.verified,
+          verified: false,
           reason: "concurrent_lock",
-          error: verification.verified ? undefined : "Check-out is still being processed",
-        }, verification.verified ? 200 : 409);
+          error: "جاري معالجة طلب الانصراف، يرجى الانتظار 30 ثانية / Check-out is still being processed. Please wait 30 seconds before retrying.",
+          retryable: true,
+        }, 409);
       }
       return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }, 200);
     }
+
 
     // Get station
     const { data: emp } = await supabaseAdmin
