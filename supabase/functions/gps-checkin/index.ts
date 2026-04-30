@@ -90,8 +90,43 @@ async function getCheckoutVerificationState(supabaseAdmin: any, employeeId: stri
     .limit(1)
     .maybeSingle();
 
+  // Also check whether there is currently an OPEN record (check_out IS NULL).
+  // If there is an open record, the previous request is genuinely still in
+  // flight (or it crashed before persisting) — the client should keep waiting.
+  // If there is NO open record at all, the previous attempt failed for a
+  // reason that did not produce a half-written row (e.g. NO_OPEN_RECORD,
+  // MINIMUM_WORK_DURATION) and the client must be allowed to retry NOW.
+  const { data: openRow } = await supabaseAdmin
+    .from("attendance_records")
+    .select("id")
+    .eq("employee_id", employeeId)
+    .is("check_out", null)
+    .not("check_in", "is", null)
+    .limit(1)
+    .maybeSingle();
+
   const verified = !!latestRecord && !!latestRecord.check_in && !!latestRecord.check_out;
-  return { latestRecord, verified };
+  const hasOpenRecord = !!openRow;
+  return { latestRecord, verified, hasOpenRecord };
+}
+
+async function releaseAttendanceLock(
+  supabaseAdmin: any,
+  employeeId: string,
+  deviceId: string,
+  eventType: string,
+) {
+  const { error } = await supabaseAdmin
+    .from("attendance_idempotency")
+    .delete()
+    .eq("employee_id", employeeId)
+    .eq("device_id", deviceId)
+    .eq("event_type", eventType);
+  if (error) console.error("[gps-checkin] lock release failed:", error);
+}
+
+function clearDedup(userId: string, eventType: string): void {
+  recentCheckins.delete(`${userId}:${eventType}`);
 }
 
 // ─── Device binding helper ─────────────────────────────────────────────────
