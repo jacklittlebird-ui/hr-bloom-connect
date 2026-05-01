@@ -446,6 +446,12 @@ export const StationAttendanceReport = () => {
                   </Badge>
                 )}
               </div>
+              <div className={cn('flex items-center gap-2 px-2 py-1 rounded-md border bg-background', isRTL && 'flex-row-reverse')}>
+                <Switch id="pin-summary" checked={pinSummary} onCheckedChange={setPinSummary} />
+                <Label htmlFor="pin-summary" className="text-xs cursor-pointer whitespace-nowrap">
+                  {ar ? 'تثبيت ملخص الموظف أعلى الجدول' : 'Pin employee summary on top'}
+                </Label>
+              </div>
             </div>
             <div className={cn('flex gap-2', isRTL && 'flex-row-reverse')}>
               <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)}>
