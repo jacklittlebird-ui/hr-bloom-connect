@@ -644,17 +644,11 @@ export const useReportExport = () => {
     return await buildBilingualPdfHtml(opts);
   }, [buildBilingualPdfHtml, t]);
 
-  const exportBilingualPDF = useCallback(async (opts: BilingualExportOptions) => {
-    if (!opts.data.length) {
-      toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
-      return;
-    }
-
-    const innerHtml = await buildBilingualPdfHtml(opts);
+  const performExportBilingualPDF = useCallback(async (opts: BilingualExportOptions, prebuiltHtml?: string) => {
+    const innerHtml = prebuiltHtml ?? await buildBilingualPdfHtml(opts);
     const container = createExportContainer(innerHtml);
     const isLandscape = opts.columns.length > 6;
     const downloadName = `${sanitizeFileName(opts.fileName || `${opts.titleEn}_${opts.titleAr}`)}_${new Date().toISOString().slice(0, 10)}.pdf`;
-
     try {
       await downloadElementAsPDF(container, downloadName, isLandscape);
       toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
@@ -665,6 +659,23 @@ export const useReportExport = () => {
       document.body.removeChild(container);
     }
   }, [buildBilingualPdfHtml, t]);
+
+  const exportBilingualPDF = useCallback(async (opts: BilingualExportOptions) => {
+    if (!opts.data.length) {
+      toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
+      return;
+    }
+    const html = await buildBilingualPdfHtml(opts);
+    if (previewCtx) {
+      previewCtx.showPreview({
+        html,
+        title: `${opts.titleAr} — ${opts.titleEn}`,
+        onConfirm: () => performExportBilingualPDF(opts, html),
+      });
+      return;
+    }
+    await performExportBilingualPDF(opts, html);
+  }, [buildBilingualPdfHtml, performExportBilingualPDF, previewCtx, t]);
 
   return { reportRef, handlePrint, exportToCSV, exportToPDF, previewPDF, exportToWord, previewWordExport, downloadWordHtml, exportBilingualCSV, exportBilingualPDF, previewBilingualPDF };
 };
