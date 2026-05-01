@@ -594,20 +594,25 @@ export const useReportExport = () => {
 
     const cardsHtml = buildSummaryCardsHtml(summaryCards || []);
 
+    const logoData = await loadImageAsDataUrl(logoUrl);
+    const logoTag = logoData
+      ? `<img src="${logoData}" style="height:60px;width:auto;" />`
+      : '';
+
     const container = createExportContainer(`
-      <div style="font-family: 'Baloo Bhaijaan 2', 'Cairo', sans-serif; padding: 30px; direction: ${dir}; background: white;">
+      <div style="font-family: 'Baloo Bhaijaan 2', 'Cairo', Arial, sans-serif; padding: 30px; direction: ${dir}; background: #ffffff; color: #111827;">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
-          <img src="${logoUrl}" style="height:60px;width:auto;" crossorigin="anonymous" />
+          ${logoTag}
           <div style="flex:1;text-align:center;">
             <div style="font-size:22px;font-weight:700;color:#1e40af;direction:rtl;">${escapeHtml(titleAr)}</div>
             <div style="font-size:18px;font-weight:600;color:#374151;direction:ltr;">${escapeHtml(titleEn)}</div>
           </div>
         </div>
-        <p style="text-align:center;color:#6b7280;margin-bottom:24px;font-size:13px;">${new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })} — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <p style="text-align:center;color:#6b7280;margin-bottom:24px;font-size:13px;">${new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })} — ${new Date().toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         ${cardsHtml}
         <table style="width:100%;border-collapse:collapse;">
           <thead>
-            <tr>${columns.map(c => `<th style="background-color:#1e40af;color:white;font-weight:600;font-size:11px;padding:6px 8px;border:1px solid #1e3a8a;text-align:center;"><div style="direction:rtl;">${escapeHtml(c.headerAr)}</div><div style="font-weight:400;font-size:10px;color:#dbeafe;">${escapeHtml(c.headerEn)}</div></th>`).join('')}</tr>
+            <tr>${columns.map(c => `<th style="background-color:#1e40af;color:#ffffff;font-weight:600;font-size:11px;padding:6px 8px;border:1px solid #1e3a8a;text-align:center;"><div style="direction:rtl;">${escapeHtml(c.headerAr)}</div><div style="font-weight:400;font-size:10px;color:#dbeafe;">${escapeHtml(c.headerEn)}</div></th>`).join('')}</tr>
           </thead>
           <tbody>${tableRows}</tbody>
         </table>
