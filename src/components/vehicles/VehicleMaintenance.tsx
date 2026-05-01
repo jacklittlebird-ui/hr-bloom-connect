@@ -167,6 +167,32 @@ export const VehicleMaintenance = () => {
     return st ? (isAr ? st.name_ar : st.name_en) : '-';
   };
 
+  const exportCsv = () => {
+    const rows = [[
+      isAr ? 'الكود' : 'Code', isAr ? 'السيارة' : 'Vehicle', isAr ? 'اللوحة' : 'Plate',
+      isAr ? 'المحطة' : 'Station', isAr ? 'النوع' : 'Type', isAr ? 'التاريخ' : 'Date',
+      isAr ? 'التكلفة' : 'Cost', isAr ? 'العداد' : 'Odometer',
+      isAr ? 'مقدم الخدمة' : 'Provider', isAr ? 'الصيانة القادمة' : 'Next Date',
+      isAr ? 'الوصف' : 'Description',
+    ]];
+    filtered.forEach((r) => {
+      const v = vehicleMap[r.vehicle_id];
+      rows.push([
+        v?.vehicle_code || '', v ? `${v.brand} ${v.model}` : '', v?.plate_number || '',
+        stationName(v?.station_id), typeLabel(r.maintenance_type),
+        r.maintenance_date, String(r.cost || 0),
+        r.odometer_reading != null ? String(r.odometer_reading) : '',
+        r.provider || '', r.next_maintenance_date || '', r.description || '',
+      ]);
+    });
+    const csv = '\uFEFF' + rows.map((row) => row.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `vehicle_maintenance_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       {/* Stats */}
