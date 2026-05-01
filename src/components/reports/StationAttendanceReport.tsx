@@ -402,12 +402,42 @@ export const StationAttendanceReport = () => {
               >
                 <SelectTrigger className="w-44"><SelectValue placeholder={ar ? 'حالة الأيام' : 'Day Status'} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{ar ? 'كل الحالات' : 'All Statuses'}</SelectItem>
-                  <SelectItem value="present">{ar ? 'حاضر فقط' : 'Present only'}</SelectItem>
-                  <SelectItem value="late">{ar ? 'متأخر فقط' : 'Late only'}</SelectItem>
-                  <SelectItem value="absent">{ar ? 'غائب فقط' : 'Absent only'}</SelectItem>
+                  <SelectItem value="all">{ar ? `كل الحالات (${totals.presentDays + totals.lateDays + totals.absentDays})` : `All Statuses (${totals.presentDays + totals.lateDays + totals.absentDays})`}</SelectItem>
+                  <SelectItem value="present">{ar ? `حاضر فقط (${totals.presentDays})` : `Present only (${totals.presentDays})`}</SelectItem>
+                  <SelectItem value="late">{ar ? `متأخر فقط (${totals.lateDays})` : `Late only (${totals.lateDays})`}</SelectItem>
+                  <SelectItem value="absent">{ar ? `غائب فقط (${totals.absentDays})` : `Absent only (${totals.absentDays})`}</SelectItem>
                 </SelectContent>
               </Select>
+              {/* Status counters next to the filter */}
+              <div className={cn('flex items-center gap-1.5 flex-wrap', isRTL && 'flex-row-reverse')}>
+                <Badge
+                  className={cn('cursor-pointer text-xs', globalStatusFilter === 'present' ? 'bg-green-700 hover:bg-green-700' : 'bg-green-600 hover:bg-green-600')}
+                  onClick={() => { setGlobalStatusFilter('present'); setDayFilter(new Map()); }}
+                >
+                  {ar ? 'حاضر' : 'Present'}: <span className="ms-1 tabular-nums">{totals.presentDays}</span>
+                </Badge>
+                <Badge
+                  className={cn('cursor-pointer text-xs', globalStatusFilter === 'late' ? 'bg-amber-600 hover:bg-amber-600' : 'bg-amber-500 hover:bg-amber-500')}
+                  onClick={() => { setGlobalStatusFilter('late'); setDayFilter(new Map()); }}
+                >
+                  {ar ? 'متأخر' : 'Late'}: <span className="ms-1 tabular-nums">{totals.lateDays}</span>
+                </Badge>
+                <Badge
+                  className={cn('cursor-pointer text-xs', globalStatusFilter === 'absent' ? 'bg-red-700 hover:bg-red-700' : 'bg-red-600 hover:bg-red-600')}
+                  onClick={() => { setGlobalStatusFilter('absent'); setDayFilter(new Map()); }}
+                >
+                  {ar ? 'غائب' : 'Absent'}: <span className="ms-1 tabular-nums">{totals.absentDays}</span>
+                </Badge>
+                {globalStatusFilter !== 'all' && (
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer text-xs"
+                    onClick={() => { setGlobalStatusFilter('all'); setDayFilter(new Map()); }}
+                  >
+                    {ar ? 'إعادة تعيين' : 'Reset'}
+                  </Badge>
+                )}
+              </div>
             </div>
             <div className={cn('flex gap-2', isRTL && 'flex-row-reverse')}>
               <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)}>
