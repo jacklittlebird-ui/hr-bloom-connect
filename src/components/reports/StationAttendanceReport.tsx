@@ -101,6 +101,17 @@ export const StationAttendanceReport = () => {
   useEffect(() => { localStorage.setItem('attendanceReport.weekStart', String(weekStart)); }, [weekStart]);
   const [loading, setLoading] = useState(false);
   const [expandedEmp, setExpandedEmp] = useState<Set<string>>(new Set());
+  type DayFilter = 'all' | 'present' | 'late' | 'absent';
+  const [dayFilter, setDayFilter] = useState<Map<string, DayFilter>>(new Map());
+
+  const getDayFilter = (id: string): DayFilter => dayFilter.get(id) || 'all';
+  const setEmpDayFilter = (id: string, f: DayFilter) => {
+    setDayFilter(prev => {
+      const next = new Map(prev);
+      next.set(id, f);
+      return next;
+    });
+  };
 
   const toggleEmp = (id: string) => {
     setExpandedEmp(prev => {
