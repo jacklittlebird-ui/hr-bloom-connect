@@ -499,17 +499,11 @@ export const useReportExport = () => {
     return await buildPdfHtml(opts);
   }, [buildPdfHtml, t]);
 
-  const exportToPDF = useCallback(async (opts: ReportExportOptions) => {
-    if (!opts.data.length) {
-      toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
-      return;
-    }
-
-    const innerHtml = await buildPdfHtml(opts);
+  const performExportPDF = useCallback(async (opts: ReportExportOptions, prebuiltHtml?: string) => {
+    const innerHtml = prebuiltHtml ?? await buildPdfHtml(opts);
     const container = createExportContainer(innerHtml);
     const isLandscape = opts.columns.length > 6;
     const downloadName = `${sanitizeFileName(opts.fileName || opts.title)}_${new Date().toISOString().slice(0, 10)}.pdf`;
-
     try {
       await downloadElementAsPDF(container, downloadName, isLandscape);
       toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
@@ -520,6 +514,24 @@ export const useReportExport = () => {
       document.body.removeChild(container);
     }
   }, [buildPdfHtml, t]);
+
+  const exportToPDF = useCallback(async (opts: ReportExportOptions) => {
+    if (!opts.data.length) {
+      toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
+      return;
+    }
+    const html = await buildPdfHtml(opts);
+    if (previewCtx) {
+      previewCtx.showPreview({
+        html,
+        title: opts.title,
+        onConfirm: () => performExportPDF(opts, html),
+      });
+      return;
+    }
+    await performExportPDF(opts, html);
+  }, [buildPdfHtml, performExportPDF, previewCtx, t]);
+
 
   // Bilingual Excel: styled HTML table matching PDF format
   const exportBilingualCSV = useCallback(({ titleAr, titleEn, data, columns, fileName, summaryCards }: BilingualExportOptions) => {
