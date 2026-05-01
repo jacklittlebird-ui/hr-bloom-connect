@@ -383,7 +383,7 @@ export const TrainingRecordsReport = () => {
             <Printer className="h-4 w-4 mr-1" />{ar ? 'طباعة' : 'Print'}
           </Button>
           <Button variant="outline" size="sm" onClick={handleExportPDF}>
-            <FileText className="h-4 w-4 mr-1" />PDF
+            <FileText className="h-4 w-4 mr-1" />{ar ? 'معاينة PDF' : 'Preview PDF'}
           </Button>
           <Button variant="outline" size="sm" onClick={handleExportExcel}>
             <FileSpreadsheet className="h-4 w-4 mr-1" />Excel
