@@ -19,9 +19,11 @@ interface ExportOptions {
   columns: PdfColumn[];
   rows: Record<string, unknown>[];
   fileName: string;
-  signatureLabels?: string[]; // names under signature lines
+  signatureLabels?: string[];
   orientation?: 'portrait' | 'landscape';
 }
+
+const PAGE_BG_WIDTH_PX = 1100; // off-screen render width
 
 const escapeHtml = (v: unknown) =>
   String(v ?? '')
@@ -48,32 +50,11 @@ async function loadLogo(): Promise<string> {
   }
 }
 
-function buildHtml(opts: ExportOptions, logoDataUrl: string): string {
+/* ──────────────────────────── HTML builders ──────────────────────────── */
+
+function buildHeaderHtml(opts: ExportOptions, logoDataUrl: string): string {
   const dateStr = new Date().toLocaleDateString('ar-EG');
   const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-  const headerCells = opts.columns
-    .map(
-      (c) =>
-        `<th style="background:#1e3a8a;color:#fff;padding:6px 8px;border:1px solid #94a3b8;font-size:11px;text-align:center;font-weight:700;${c.width ? `width:${c.width};` : ''}">${escapeHtml(c.header)}</th>`,
-    )
-    .join('');
-
-  const bodyRows =
-    opts.rows.length === 0
-      ? `<tr><td colspan="${opts.columns.length}" style="padding:24px;text-align:center;color:#64748b;font-size:12px;border:1px solid #cbd5e1;">لا توجد بيانات للعرض</td></tr>`
-      : opts.rows
-          .map((row, i) => {
-            const bg = i % 2 === 0 ? '#ffffff' : '#f1f5f9';
-            const cells = opts.columns
-              .map(
-                (c) =>
-                  `<td style="padding:5px 7px;border:1px solid #cbd5e1;font-size:10.5px;text-align:right;vertical-align:middle;">${escapeHtml(row[c.key])}</td>`,
-              )
-              .join('');
-            return `<tr style="background:${bg};">${cells}</tr>`;
-          })
-          .join('');
 
   const metaHtml = (opts.meta || [])
     .map(
@@ -82,24 +63,12 @@ function buildHtml(opts: ExportOptions, logoDataUrl: string): string {
     )
     .join('');
 
-  const signers = opts.signatureLabels && opts.signatureLabels.length > 0 ? opts.signatureLabels : ['مدير الأسطول', 'الإدارة المالية', 'المدير العام'];
-  const signatureHtml = signers
-    .map(
-      (label) => `
-      <div style="flex:1;text-align:center;padding:0 10px;">
-        <div style="border-top:1.5px solid #1f2937;margin-top:48px;padding-top:6px;font-size:11px;color:#1f2937;font-weight:600;">${escapeHtml(label)}</div>
-        <div style="font-size:9px;color:#64748b;margin-top:2px;">التوقيع والختم</div>
-      </div>`,
-    )
-    .join('');
-
   const logoImg = logoDataUrl
     ? `<img src="${logoDataUrl}" alt="logo" style="height:60px;width:auto;" />`
     : `<div style="height:60px;width:60px;border-radius:50%;background:#1e3a8a;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">HR</div>`;
 
   return `
-  <div dir="rtl" style="font-family:'Baloo Bhaijaan 2','Cairo','Tahoma',sans-serif;background:#fff;color:#0f172a;padding:18px 22px;width:1100px;box-sizing:border-box;">
-    <!-- Header -->
+  <div dir="rtl" style="font-family:'Baloo Bhaijaan 2','Cairo','Tahoma',sans-serif;background:#fff;color:#0f172a;padding:18px 22px 0;width:${PAGE_BG_WIDTH_PX}px;box-sizing:border-box;">
     <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px double #1e3a8a;padding-bottom:10px;margin-bottom:14px;">
       <div style="display:flex;align-items:center;gap:14px;">
         ${logoImg}
@@ -113,40 +82,72 @@ function buildHtml(opts: ExportOptions, logoDataUrl: string): string {
         <div>الوقت: <b style="color:#1e3a8a;">${timeStr}</b></div>
       </div>
     </div>
-
-    <!-- Title -->
     <div style="text-align:center;margin-bottom:12px;">
       <h1 style="font-size:20px;color:#1e3a8a;margin:0;font-weight:700;">${escapeHtml(opts.titleAr)}</h1>
       ${opts.subtitleAr ? `<div style="font-size:12px;color:#64748b;margin-top:4px;">${escapeHtml(opts.subtitleAr)}</div>` : ''}
     </div>
-
-    <!-- Meta bar -->
     ${metaHtml ? `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;margin-bottom:12px;">${metaHtml}<span style="float:left;font-size:11px;color:#64748b;">عدد السجلات: <b style="color:#1e3a8a;">${opts.rows.length}</b></span></div>` : ''}
+  </div>`;
+}
 
-    <!-- Table -->
-    <table style="width:100%;border-collapse:collapse;table-layout:auto;">
+function buildTableHtml(columns: PdfColumn[], rowsHtml: string, withRoundedTop: boolean): string {
+  const headerCells = columns
+    .map(
+      (c) =>
+        `<th style="background:#1e3a8a;color:#fff;padding:6px 8px;border:1px solid #94a3b8;font-size:11px;text-align:center;font-weight:700;${c.width ? `width:${c.width};` : ''}">${escapeHtml(c.header)}</th>`,
+    )
+    .join('');
+
+  return `
+  <div dir="rtl" style="font-family:'Baloo Bhaijaan 2','Cairo','Tahoma',sans-serif;background:#fff;color:#0f172a;padding:0 22px;width:${PAGE_BG_WIDTH_PX}px;box-sizing:border-box;">
+    <table style="width:100%;border-collapse:collapse;table-layout:auto;${withRoundedTop ? '' : ''}">
       <thead><tr>${headerCells}</tr></thead>
-      <tbody>${bodyRows}</tbody>
+      <tbody>${rowsHtml}</tbody>
     </table>
+  </div>`;
+}
 
-    <!-- Signatures -->
-    <div style="display:flex;justify-content:space-between;margin-top:60px;page-break-inside:avoid;">
+function buildRowHtml(row: Record<string, unknown>, columns: PdfColumn[], i: number): string {
+  const bg = i % 2 === 0 ? '#ffffff' : '#f1f5f9';
+  const cells = columns
+    .map(
+      (c) =>
+        `<td style="padding:5px 7px;border:1px solid #cbd5e1;font-size:10.5px;text-align:right;vertical-align:middle;">${escapeHtml(row[c.key])}</td>`,
+    )
+    .join('');
+  return `<tr style="background:${bg};">${cells}</tr>`;
+}
+
+function buildSignatureHtml(opts: ExportOptions): string {
+  const signers =
+    opts.signatureLabels && opts.signatureLabels.length > 0
+      ? opts.signatureLabels
+      : ['مدير الأسطول', 'الإدارة المالية', 'المدير العام'];
+  const signatureHtml = signers
+    .map(
+      (label) => `
+      <div style="flex:1;text-align:center;padding:0 10px;">
+        <div style="border-top:1.5px solid #1f2937;margin-top:48px;padding-top:6px;font-size:11px;color:#1f2937;font-weight:600;">${escapeHtml(label)}</div>
+        <div style="font-size:9px;color:#64748b;margin-top:2px;">التوقيع والختم</div>
+      </div>`,
+    )
+    .join('');
+
+  return `
+  <div dir="rtl" style="font-family:'Baloo Bhaijaan 2','Cairo','Tahoma',sans-serif;background:#fff;color:#0f172a;padding:0 22px 18px;width:${PAGE_BG_WIDTH_PX}px;box-sizing:border-box;">
+    <div style="display:flex;justify-content:space-between;margin-top:30px;">
       ${signatureHtml}
     </div>
-
-    <!-- Footer -->
-    <div style="margin-top:30px;border-top:1px solid #e2e8f0;padding-top:6px;font-size:9px;color:#94a3b8;text-align:center;">
+    <div style="margin-top:24px;border-top:1px solid #e2e8f0;padding-top:6px;font-size:9px;color:#94a3b8;text-align:center;">
       مستند سري - للاستخدام الداخلي فقط · تم الإنشاء بواسطة نظام الموارد البشرية
     </div>
   </div>`;
 }
 
-export async function exportVehiclePdf(opts: ExportOptions): Promise<void> {
-  const logoDataUrl = await loadLogo();
-  const html = buildHtml(opts, logoDataUrl);
+/* ──────────────────────────── Render helpers ──────────────────────────── */
 
+async function htmlToCanvas(html: string): Promise<HTMLCanvasElement> {
   const wrapper = document.createElement('div');
-  wrapper.setAttribute('data-vehicle-pdf', 'true');
   wrapper.style.position = 'fixed';
   wrapper.style.top = '0';
   wrapper.style.left = '-10000px';
@@ -155,17 +156,14 @@ export async function exportVehiclePdf(opts: ExportOptions): Promise<void> {
   wrapper.style.colorScheme = 'light';
   wrapper.innerHTML = html;
   document.body.appendChild(wrapper);
-
   try {
     if ('fonts' in document) {
       try { await (document as any).fonts.ready; } catch { /* ignore */ }
     }
-    await new Promise((r) => setTimeout(r, 60));
-
+    await new Promise((r) => setTimeout(r, 30));
     const target = wrapper.firstElementChild as HTMLElement;
-    const width = Math.max(target.scrollWidth, 1100);
+    const width = Math.max(target.scrollWidth, PAGE_BG_WIDTH_PX);
     const height = Math.max(target.scrollHeight, 1);
-
     const canvas = await html2canvas(target, {
       scale: 2,
       useCORS: true,
@@ -177,45 +175,203 @@ export async function exportVehiclePdf(opts: ExportOptions): Promise<void> {
       windowWidth: width,
       windowHeight: height,
     });
-
-    const orientation = opts.orientation || 'landscape';
-    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation, compress: true });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 8;
-    const footerH = 8;
-    const imgWidth = pageWidth - margin * 2;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    const pageBodyH = pageHeight - margin * 2 - footerH;
-    const imgData = canvas.toDataURL('image/jpeg', 0.94);
-
-    if (imgHeight <= pageBodyH) {
-      pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
-    } else {
-      let pageIndex = 0;
-      let heightLeft = imgHeight;
-      while (heightLeft > 0) {
-        if (pageIndex > 0) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', margin, margin - pageIndex * pageBodyH, imgWidth, imgHeight);
-        heightLeft -= pageBodyH;
-        pageIndex += 1;
-      }
-    }
-
-    // Footer page numbers
-    const total = pdf.getNumberOfPages();
-    for (let p = 1; p <= total; p++) {
-      pdf.setPage(p);
-      pdf.setDrawColor(203, 213, 225);
-      pdf.setLineWidth(0.2);
-      pdf.line(margin, pageHeight - footerH + 1, pageWidth - margin, pageHeight - footerH + 1);
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(`${p} / ${total}`, pageWidth / 2, pageHeight - 3, { align: 'center' });
-    }
-
-    pdf.save(opts.fileName);
+    return canvas;
   } finally {
     document.body.removeChild(wrapper);
+  }
+}
+
+/**
+ * Measure each row height (in PDF mm) by rendering all rows once with header,
+ * then probing the DOM. Returns mm-heights for header + each row.
+ */
+async function measureRowHeights(
+  columns: PdfColumn[],
+  rows: Record<string, unknown>[],
+  pdfWidthMm: number,
+): Promise<{ headerMm: number; rowsMm: number[] }> {
+  const allRowsHtml = rows.map((r, i) => buildRowHtml(r, columns, i)).join('');
+  const html = buildTableHtml(columns, allRowsHtml, true);
+
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.top = '0';
+  wrapper.style.left = '-10000px';
+  wrapper.style.background = '#ffffff';
+  wrapper.style.zIndex = '-1';
+  wrapper.innerHTML = html;
+  document.body.appendChild(wrapper);
+  try {
+    if ('fonts' in document) {
+      try { await (document as any).fonts.ready; } catch { /* ignore */ }
+    }
+    await new Promise((r) => setTimeout(r, 20));
+
+    const table = wrapper.querySelector('table') as HTMLTableElement;
+    const containerWidthPx = table.getBoundingClientRect().width || PAGE_BG_WIDTH_PX;
+    const pxToMm = pdfWidthMm / containerWidthPx;
+
+    const headerEl = table.querySelector('thead tr') as HTMLElement;
+    const headerMm = headerEl.getBoundingClientRect().height * pxToMm;
+
+    const trs = Array.from(table.querySelectorAll('tbody tr')) as HTMLElement[];
+    const rowsMm = trs.map((tr) => tr.getBoundingClientRect().height * pxToMm);
+
+    return { headerMm, rowsMm };
+  } finally {
+    document.body.removeChild(wrapper);
+  }
+}
+
+/**
+ * Add a canvas image onto the current PDF page at (x, y) using table-aware width.
+ */
+function placeCanvas(pdf: jsPDF, canvas: HTMLCanvasElement, x: number, y: number, widthMm: number): number {
+  const heightMm = (canvas.height * widthMm) / canvas.width;
+  pdf.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', x, y, widthMm, heightMm);
+  return heightMm;
+}
+
+/* ──────────────────────────── Main export ──────────────────────────── */
+
+export async function exportVehiclePdf(opts: ExportOptions): Promise<void> {
+  const logoDataUrl = await loadLogo();
+  const orientation = opts.orientation || 'landscape';
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation, compress: true });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 8;
+  const footerH = 8;
+  const contentW = pageW - margin * 2;
+  const usableH = pageH - margin * 2 - footerH;
+
+  // 1) Render header (top of first page)
+  const headerCanvas = await htmlToCanvas(buildHeaderHtml(opts, logoDataUrl));
+  const headerHmm = (headerCanvas.height * contentW) / headerCanvas.width;
+
+  // 2) Render signatures (bottom of last page)
+  const signatureCanvas = await htmlToCanvas(buildSignatureHtml(opts));
+  const signatureHmm = (signatureCanvas.height * contentW) / signatureCanvas.width;
+
+  // 3) Edge-case: empty table — single page with header + "no data" + signatures
+  if (opts.rows.length === 0) {
+    let y = margin;
+    y += placeCanvas(pdf, headerCanvas, margin, y, contentW);
+    const emptyCanvas = await htmlToCanvas(
+      buildTableHtml(opts.columns, `<tr><td colspan="${opts.columns.length}" style="padding:24px;text-align:center;color:#64748b;font-size:12px;border:1px solid #cbd5e1;">لا توجد بيانات للعرض</td></tr>`, true),
+    );
+    y += placeCanvas(pdf, emptyCanvas, margin, y, contentW);
+    placeCanvas(pdf, signatureCanvas, margin, y + 2, contentW);
+    drawFooter(pdf, pageW, pageH, footerH, margin);
+    pdf.save(opts.fileName);
+    return;
+  }
+
+  // 4) Measure row heights
+  const { headerMm: tableHeaderMm, rowsMm } = await measureRowHeights(opts.columns, opts.rows, contentW);
+
+  // 5) Pack rows into pages
+  // Page 1 reserves: header banner. Last page reserves: signatures.
+  // Each page reserves: table header (repeated).
+  const pages: number[][] = []; // array of row indices per page
+  let current: number[] = [];
+  let used = 0;
+  const SAFETY = 1.5; // mm safety per row to compensate measurement rounding
+
+  const reserveTop = (pageIndex: number) => (pageIndex === 0 ? headerHmm + 2 : 0) + tableHeaderMm;
+
+  for (let i = 0; i < rowsMm.length; i++) {
+    const isLastRow = i === rowsMm.length - 1;
+    const pageIndex = pages.length; // index of the page we're filling
+    const top = reserveTop(pageIndex);
+    const remaining = usableH - top - used;
+    const rowH = rowsMm[i] + SAFETY;
+    // If this row is the last one in the dataset, it must also fit the signatures
+    const needed = rowH + (isLastRow ? signatureHmm + 4 : 0);
+
+    if (rowH > usableH - top) {
+      // Pathological tall row — place it alone on its own page
+      if (current.length > 0) { pages.push(current); current = []; used = 0; }
+      pages.push([i]);
+      continue;
+    }
+
+    if (needed <= remaining) {
+      current.push(i);
+      used += rowH;
+    } else {
+      // Push current page and try this row on a fresh page
+      if (current.length > 0) { pages.push(current); current = []; used = 0; }
+      const freshTop = reserveTop(pages.length);
+      const freshRemaining = usableH - freshTop;
+      if (needed <= freshRemaining) {
+        current.push(i);
+        used = rowH;
+      } else {
+        // Even alone the row + signature don't fit → put row alone, signature spills
+        current.push(i);
+        used = rowH;
+      }
+    }
+  }
+  if (current.length > 0) pages.push(current);
+
+  // Determine if signature fits on last page; else add an extra page
+  const lastPageIdx = pages.length - 1;
+  const lastPageRowsHeight = pages[lastPageIdx].reduce((s, idx) => s + rowsMm[idx] + SAFETY, 0);
+  const lastPageTop = reserveTop(lastPageIdx);
+  const lastPageRemaining = usableH - lastPageTop - lastPageRowsHeight;
+  const signatureOnSeparatePage = signatureHmm + 4 > lastPageRemaining;
+
+  // 6) Render each page: header (page 1), table (header + chunk rows), signatures (last page)
+  for (let p = 0; p < pages.length; p++) {
+    if (p > 0) pdf.addPage();
+    let y = margin;
+
+    if (p === 0) {
+      y += placeCanvas(pdf, headerCanvas, margin, y, contentW);
+      y += 2;
+    }
+
+    // Render this page's table chunk (header + its rows)
+    const chunkRowsHtml = pages[p].map((idx) => buildRowHtml(opts.rows[idx], opts.columns, idx)).join('');
+    const tableCanvas = await htmlToCanvas(buildTableHtml(opts.columns, chunkRowsHtml, true));
+    const tableHmm = placeCanvas(pdf, tableCanvas, margin, y, contentW);
+    y += tableHmm;
+
+    if (p === lastPageIdx && !signatureOnSeparatePage) {
+      placeCanvas(pdf, signatureCanvas, margin, y + 2, contentW);
+    }
+  }
+
+  if (signatureOnSeparatePage) {
+    pdf.addPage();
+    placeCanvas(pdf, signatureCanvas, margin, margin, contentW);
+  }
+
+  drawFooter(pdf, pageW, pageH, footerH, margin);
+  pdf.save(opts.fileName);
+}
+
+function drawFooter(pdf: jsPDF, pageW: number, pageH: number, footerH: number, margin: number) {
+  const total = pdf.getNumberOfPages();
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mi = String(now.getMinutes()).padStart(2, '0');
+  const dateStr = `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+
+  for (let p = 1; p <= total; p++) {
+    pdf.setPage(p);
+    pdf.setDrawColor(203, 213, 225);
+    pdf.setLineWidth(0.2);
+    pdf.line(margin, pageH - footerH + 1, pageW - margin, pageH - footerH + 1);
+    pdf.setFontSize(8);
+    pdf.setTextColor(100, 116, 139);
+    // RTL footer: page on the left, date on the right
+    pdf.text(`Page ${p} / ${total}`, margin, pageH - 3);
+    pdf.text(dateStr, pageW - margin, pageH - 3, { align: 'right' });
   }
 }
