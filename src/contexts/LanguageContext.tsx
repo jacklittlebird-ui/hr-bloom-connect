@@ -1512,13 +1512,37 @@ const translations: Record<string, Record<Language, string>> = {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('ar');
+const LANGUAGE_STORAGE_KEY = 'app.language';
 
+export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [language, setLanguageState] = useState<Language>(() => {
+    if (typeof window === 'undefined') return 'ar';
+    try {
+      const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      return saved === 'en' || saved === 'ar' ? (saved as Language) : 'ar';
+    } catch {
+      return 'ar';
+    }
+  });
+
+  // Persist + apply dir/lang on the document, and stay in sync across tabs/windows.
   useEffect(() => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
+    try { window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language); } catch { /* ignore quota */ }
   }, [language]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === LANGUAGE_STORAGE_KEY && (e.newValue === 'ar' || e.newValue === 'en')) {
+        setLanguageState(e.newValue);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  const setLanguage = (lang: Language) => setLanguageState(lang);
 
   const t = (key: string): string => {
     return translations[key]?.[language] || key;
