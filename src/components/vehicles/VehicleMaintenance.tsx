@@ -9,10 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar, Download } from 'lucide-react';
+import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar, Download, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
+import { exportVehiclePdf } from '@/lib/vehiclePdfExport';
 
 interface MaintenanceRecord {
   id: string;
@@ -193,6 +194,67 @@ export const VehicleMaintenance = () => {
     a.click(); URL.revokeObjectURL(url);
   };
 
+  const exportPdf = async () => {
+    if (filtered.length === 0) {
+      toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export');
+      return;
+    }
+    try {
+      const stationLabel = stationFilter
+        ? (isAr ? stationMap[stationFilter]?.name_ar : stationMap[stationFilter]?.name_en) || '-'
+        : 'كل المحطات';
+      const typeLbl = typeFilter === 'all'
+        ? 'كل الأنواع'
+        : (TYPES.find((t) => t.value === typeFilter)?.ar || typeFilter);
+      await exportVehiclePdf({
+        titleAr: 'تقرير صيانة السيارات',
+        subtitleAr: 'كشف تفصيلي بأعمال الصيانة وفقاً للفلاتر النشطة',
+        meta: [
+          { label: 'المحطة', value: String(stationLabel) },
+          { label: 'نوع الصيانة', value: typeLbl },
+          { label: 'من تاريخ', value: fromDate || '—' },
+          { label: 'إلى تاريخ', value: toDate || '—' },
+          { label: 'إجمالي التكلفة', value: `${totalCost.toLocaleString()} ج.م` },
+        ],
+        columns: [
+          { header: 'م', key: 'idx' },
+          { header: 'الكود', key: 'code' },
+          { header: 'السيارة', key: 'vehicle' },
+          { header: 'اللوحة', key: 'plate' },
+          { header: 'المحطة', key: 'station' },
+          { header: 'نوع الصيانة', key: 'type' },
+          { header: 'التاريخ', key: 'date' },
+          { header: 'العداد', key: 'odo' },
+          { header: 'مقدم الخدمة', key: 'provider' },
+          { header: 'التكلفة (ج.م)', key: 'cost' },
+          { header: 'الصيانة القادمة', key: 'next' },
+        ],
+        rows: filtered.map((r, i) => {
+          const v = vehicleMap[r.vehicle_id];
+          return {
+            idx: i + 1,
+            code: v?.vehicle_code || '—',
+            vehicle: v ? `${v.brand} ${v.model}` : '—',
+            plate: v?.plate_number || '—',
+            station: stationName(v?.station_id),
+            type: typeLabel(r.maintenance_type),
+            date: r.maintenance_date,
+            odo: r.odometer_reading != null ? r.odometer_reading.toLocaleString() : '—',
+            provider: r.provider || '—',
+            cost: (r.cost || 0).toLocaleString(),
+            next: r.next_maintenance_date || '—',
+          };
+        }),
+        fileName: `vehicle_maintenance_${new Date().toISOString().slice(0, 10)}.pdf`,
+        signatureLabels: ['مسؤول الصيانة', 'مدير الأسطول', 'الإدارة المالية'],
+        orientation: 'landscape',
+      });
+      toast.success(isAr ? 'تم تصدير PDF بنجاح' : 'PDF exported successfully');
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'فشل التصدير' : 'Export failed'));
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Stats */}
@@ -297,7 +359,10 @@ export const VehicleMaintenance = () => {
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={exportCsv}>
-              <Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}
+              <Download className="w-4 h-4 me-1" />{isAr ? 'CSV' : 'CSV'}
+            </Button>
+            <Button size="sm" onClick={exportPdf} className="bg-primary text-primary-foreground">
+              <FileDown className="w-4 h-4 me-1" />{isAr ? 'تصدير PDF' : 'PDF'}
             </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
