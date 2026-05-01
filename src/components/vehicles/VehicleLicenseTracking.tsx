@@ -212,6 +212,9 @@ export const VehicleLicenseTracking = () => {
                 <SelectItem value="transport">{isAr ? 'النقل البري' : 'Transport License'}</SelectItem>
               </SelectContent>
             </Select>
+            <Button size="sm" variant="outline" onClick={exportCsv}>
+              <Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
