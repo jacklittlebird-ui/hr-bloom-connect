@@ -162,9 +162,10 @@ async function downloadElementAsPDF(container: HTMLElement, downloadName: string
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 8;
+  const footerHeight = 10; // reserved space for page number + date
   const imgWidth = pageWidth - margin * 2;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  const pageBodyHeight = pageHeight - margin * 2;
+  const pageBodyHeight = pageHeight - margin * 2 - footerHeight;
   const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
   if (imgHeight <= pageBodyHeight) {
@@ -177,6 +178,41 @@ async function downloadElementAsPDF(container: HTMLElement, downloadName: string
       pdf.addImage(imgData, 'JPEG', margin, margin - pageIndex * pageBodyHeight, imgWidth, imgHeight);
       heightLeft -= pageBodyHeight;
       pageIndex += 1;
+    }
+  }
+
+  // Draw footer (page number + generation date) on every page
+  const isArabic = (target.getAttribute('dir') || document.documentElement.getAttribute('dir') || '').toLowerCase() === 'rtl';
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mi = String(now.getMinutes()).padStart(2, '0');
+  const dateStr = `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+  const dateLabel = isArabic ? `تاريخ التوليد: ${dateStr}` : `Generated: ${dateStr}`;
+
+  const totalPages = pdf.getNumberOfPages();
+  const footerY = pageHeight - 4;
+  const lineY = pageHeight - footerHeight + 2;
+
+  for (let p = 1; p <= totalPages; p++) {
+    pdf.setPage(p);
+    pdf.setDrawColor(203, 213, 225);
+    pdf.setLineWidth(0.2);
+    pdf.line(margin, lineY, pageWidth - margin, lineY);
+
+    pdf.setFontSize(8);
+    pdf.setTextColor(100, 116, 139);
+    const pageLabel = isArabic ? `صفحة ${p} من ${totalPages}` : `Page ${p} of ${totalPages}`;
+
+    if (isArabic) {
+      // RTL: page number on the left, date on the right
+      pdf.text(pageLabel, margin, footerY);
+      pdf.text(dateLabel, pageWidth - margin, footerY, { align: 'right' });
+    } else {
+      pdf.text(dateLabel, margin, footerY);
+      pdf.text(pageLabel, pageWidth - margin, footerY, { align: 'right' });
     }
   }
 
