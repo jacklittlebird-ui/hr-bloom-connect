@@ -60,6 +60,7 @@ export const VehicleRegistry = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [alertFilter, setAlertFilter] = useState<'all' | 'expired' | 'soon'>('all');
 
   const fetchAll = async () => {
     setLoading(true);
@@ -177,6 +178,9 @@ export const VehicleRegistry = () => {
     }, 100);
   };
 
+  const expiredIds = useMemo(() => new Set(alerts.filter((a) => a.type === 'expired').map((a) => a.vehicle.id)), [alerts]);
+  const soonIds = useMemo(() => new Set(alerts.filter((a) => a.type === 'soon').map((a) => a.vehicle.id)), [alerts]);
+
   const filtered = useMemo(() => vehicles.filter((v) => {
     if (focusedId) return v.id === focusedId;
     const txt = search.trim().toLowerCase();
@@ -184,8 +188,12 @@ export const VehicleRegistry = () => {
       .some((f) => f?.toLowerCase().includes(txt));
     const stMatch = !stationFilter || v.station_id === stationFilter;
     const stsMatch = statusFilter === 'all' || v.status === statusFilter;
-    return txtMatch && stMatch && stsMatch;
-  }), [vehicles, search, stationFilter, statusFilter, focusedId]);
+    const alertMatch =
+      alertFilter === 'all' ? true :
+      alertFilter === 'expired' ? expiredIds.has(v.id) :
+      alertFilter === 'soon' ? (soonIds.has(v.id) && !expiredIds.has(v.id)) : true;
+    return txtMatch && stMatch && stsMatch && alertMatch;
+  }), [vehicles, search, stationFilter, statusFilter, focusedId, alertFilter, expiredIds, soonIds]);
 
   const exportCsv = () => {
     const rows = [[
@@ -271,6 +279,14 @@ export const VehicleRegistry = () => {
               <SelectItem value="active">{isAr ? 'نشط' : 'Active'}</SelectItem>
               <SelectItem value="maintenance">{isAr ? 'صيانة' : 'Maintenance'}</SelectItem>
               <SelectItem value="inactive">{isAr ? 'غير نشط' : 'Inactive'}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={alertFilter} onValueChange={(v) => setAlertFilter(v as any)}>
+            <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{isAr ? 'كل التنبيهات' : 'All alerts'}</SelectItem>
+              <SelectItem value="expired">{isAr ? `منتهية (${expiredCount})` : `Expired (${expiredCount})`}</SelectItem>
+              <SelectItem value="soon">{isAr ? `خلال 30 يوم (${soonCount})` : `Within 30d (${soonCount})`}</SelectItem>
             </SelectContent>
           </Select>
           <Button size="sm" variant="outline" onClick={exportCsv}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
