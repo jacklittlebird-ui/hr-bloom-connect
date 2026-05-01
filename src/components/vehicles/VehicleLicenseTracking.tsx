@@ -94,6 +94,32 @@ export const VehicleLicenseTracking = () => {
   const soonCount = scope.filter((v) => { const d = getDaysRemaining(v.license_end_date); return d !== null && d >= 0 && d <= 30; }).length;
   const validCount = scope.filter((v) => { const d = getDaysRemaining(v.license_end_date); return d !== null && d > 30; }).length;
 
+  const exportCsv = () => {
+    const rows = [[
+      isAr ? 'الكود' : 'Code', isAr ? 'الماركة' : 'Brand', isAr ? 'الموديل' : 'Model',
+      isAr ? 'اللوحة' : 'Plate', isAr ? 'المحطة' : 'Station',
+      isAr ? 'بداية الترخيص' : 'License Start', isAr ? 'نهاية الترخيص' : 'License End',
+      isAr ? 'بداية الستائر' : 'Curtains Start', isAr ? 'نهاية الستائر' : 'Curtains End',
+      isAr ? 'بداية النقل' : 'Transport Start', isAr ? 'نهاية النقل' : 'Transport End',
+    ]];
+    filtered.forEach((v) => {
+      const st = v.station_id ? stationMap[v.station_id] : null;
+      rows.push([
+        v.vehicle_code, v.brand, v.model, v.plate_number,
+        st ? (isAr ? st.name_ar : st.name_en) : '',
+        v.license_start_date || '', v.license_end_date || '',
+        v.curtains_license_start || '', v.curtains_license_end || '',
+        v.transport_license_start || '', v.transport_license_end || '',
+      ]);
+    });
+    const csv = '\uFEFF' + rows.map((r) => r.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `license_tracking_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
   const LicenseCell = ({ start, end, label }: { start: string | null; end: string | null; label: string }) => {
     const days = getDaysRemaining(end);
     const info = getStatusInfo(days, isAr);
