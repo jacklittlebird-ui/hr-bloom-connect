@@ -55,17 +55,22 @@ export const VehicleLicenseTracking = () => {
   const [statusBucket, setStatusBucket] = useState<'all' | 'expired' | 'soon' | 'valid'>('all');
 
   useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
+    const fetchAll = async (showLoader = true) => {
+      if (showLoader) setLoading(true);
       const [{ data: v }, { data: s }] = await Promise.all([
         supabase.from('vehicles').select('id, vehicle_code, brand, model, plate_number, station_id, license_start_date, license_end_date, curtains_license_start, curtains_license_end, transport_license_start, transport_license_end, status').order('vehicle_code'),
         supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar'),
       ]);
       if (v) setVehicles(v as unknown as Vehicle[]);
       if (s) setStations(s as StationOption[]);
-      setLoading(false);
+      if (showLoader) setLoading(false);
     };
-    fetchAll();
+    fetchAll(true);
+    const REFRESH_MS = 3 * 60 * 60 * 1000;
+    const interval = setInterval(() => fetchAll(false), REFRESH_MS);
+    const onVis = () => { if (document.visibilityState === 'visible') fetchAll(false); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVis); };
   }, []);
 
   const stationMap = useMemo(() => Object.fromEntries(stations.map((s) => [s.id, s])), [stations]);
