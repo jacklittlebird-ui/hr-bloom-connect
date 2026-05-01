@@ -7,6 +7,7 @@ import { VehicleRegistry } from '@/components/vehicles/VehicleRegistry';
 import { VehicleLicenseTracking } from '@/components/vehicles/VehicleLicenseTracking';
 import { VehicleMaintenance } from '@/components/vehicles/VehicleMaintenance';
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
+import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
 
 const Vehicles = () => {
   const { language, isRTL } = useLanguage();
