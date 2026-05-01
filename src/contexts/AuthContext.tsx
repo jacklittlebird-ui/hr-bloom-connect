@@ -373,6 +373,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (initialSession?.user) {
         void resolveAuthenticatedUser(initialSession.user, true).catch(() => undefined);
+        // Load per-user theme prefs in background (no UI blocking)
+        void import('@/lib/userThemePrefs')
+          .then(m => m.loadAndApplyUserThemePrefs())
+          .catch(() => undefined);
         return;
       }
 
