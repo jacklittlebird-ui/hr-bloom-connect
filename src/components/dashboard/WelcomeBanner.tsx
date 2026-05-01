@@ -19,10 +19,21 @@ export const WelcomeBanner = () => {
   const ar = language === 'ar';
 
   const [now, setNow] = useState(new Date());
+  const [bgId, setBgId] = useState<string>(() => readWelcomeBg());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => setBgId(readWelcomeBg());
+    window.addEventListener('hr-welcome-bg-changed', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('hr-welcome-bg-changed', refresh);
+      window.removeEventListener('storage', refresh);
+    };
   }, []);
 
   const hour = now.getHours();
