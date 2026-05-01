@@ -177,8 +177,10 @@ const SiteSettings = () => {
       density: config.density,
       font: config.font,
       headerStyle: config.headerStyle,
+      welcomeBg: config.welcomeBg,
     });
     try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
+    try { window.dispatchEvent(new Event('hr-welcome-bg-changed')); } catch {}
     setHasChanges(false);
     toast({
       title: isAr ? 'تم الحفظ' : 'Saved',
