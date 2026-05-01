@@ -586,9 +586,14 @@ export const DailyAttendanceReport = () => {
                   <span className="font-medium">{ar ? 'وقت الانصراف' : 'Check-out'}</span>
                 </span>
                 <span className="mx-1 text-muted-foreground">|</span>
-                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                  <span className="inline-block w-3 h-3 rounded-sm bg-amber-50 border" aria-hidden />
-                  {ar ? 'الجمعة' : 'Friday'}
+                <span className="inline-flex items-center gap-1 text-amber-700">
+                  <span className="inline-block w-3 h-3 rounded-sm bg-amber-100 border-2 border-amber-500" aria-hidden />
+                  <span aria-hidden>🕌</span>
+                  <span className="font-medium">{ar ? 'الجمعة (عطلة)' : 'Friday (Off)'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 text-amber-600">
+                  <span className="inline-block w-3 h-3 rounded-sm bg-amber-50 border-2 border-amber-300" aria-hidden />
+                  <span className="font-medium">{ar ? 'السبت' : 'Saturday'}</span>
                 </span>
                 <span className="inline-flex items-center gap-1 text-muted-foreground">
                   <span className="text-muted-foreground/60">—</span>
