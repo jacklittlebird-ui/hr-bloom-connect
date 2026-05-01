@@ -62,19 +62,22 @@ function sanitizeFileName(value: string): string {
 }
 
 function createExportContainer(html: string): HTMLDivElement {
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.top = '0';
-  container.style.left = '0';
-  container.style.overflow = 'visible';
-  container.style.width = '1200px';
-  container.style.maxWidth = 'none';
-  container.style.background = '#ffffff';
-  container.style.zIndex = '2147483647';
-  container.style.pointerEvents = 'none';
-  container.innerHTML = html;
-  document.body.appendChild(container);
-  return container;
+  // Off-screen wrapper so it never visually flashes and isn't affected by app layout
+  const wrapper = document.createElement('div');
+  wrapper.setAttribute('data-export-root', 'true');
+  wrapper.style.position = 'fixed';
+  wrapper.style.top = '0';
+  wrapper.style.left = '-10000px';
+  wrapper.style.width = '1200px';
+  wrapper.style.background = '#ffffff';
+  wrapper.style.zIndex = '-1';
+  wrapper.style.pointerEvents = 'none';
+  // Force safe color space so html2canvas (which can't parse oklch/lab) doesn't bail out
+  wrapper.style.colorScheme = 'light';
+  wrapper.style.color = '#111827';
+  wrapper.innerHTML = html;
+  document.body.appendChild(wrapper);
+  return wrapper;
 }
 
 function waitForImages(container: HTMLElement): Promise<void> {
@@ -82,51 +85,98 @@ function waitForImages(container: HTMLElement): Promise<void> {
   if (images.length === 0) return Promise.resolve();
 
   return Promise.all(images.map((img) => {
-    if (img.complete) return Promise.resolve();
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
     return new Promise<void>((resolve) => {
-      img.onload = () => resolve();
-      img.onerror = () => resolve();
+      const done = () => resolve();
+      img.onload = done;
+      img.onerror = () => {
+        // Hide broken image so html2canvas doesn't choke
+        img.style.display = 'none';
+        resolve();
+      };
+      // Safety timeout — never block PDF on a slow logo
+      setTimeout(done, 4000);
     });
   })).then(() => undefined);
 }
 
+async function loadImageAsDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, { cache: 'force-cache' });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result || ''));
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 async function downloadElementAsPDF(container: HTMLElement, downloadName: string, isLandscape: boolean): Promise<void> {
   await waitForImages(container);
-  if ('fonts' in document) await document.fonts.ready;
+  if ('fonts' in document) {
+    try { await (document as any).fonts.ready; } catch { /* ignore */ }
+  }
 
-  const canvas = await html2canvas(container, {
+  // Give the browser a tick to paint
+  await new Promise((r) => setTimeout(r, 50));
+
+  const target = (container.firstElementChild as HTMLElement) || container;
+  const width = Math.max(target.scrollWidth, target.offsetWidth, 1200);
+  const height = Math.max(target.scrollHeight, target.offsetHeight, 1);
+
+  const canvas = await html2canvas(target, {
     scale: 2,
     useCORS: true,
+    allowTaint: true,
     backgroundColor: '#ffffff',
     logging: false,
-    width: container.scrollWidth,
-    height: container.scrollHeight,
-    windowWidth: container.scrollWidth,
-    windowHeight: container.scrollHeight,
+    width,
+    height,
+    windowWidth: width,
+    windowHeight: height,
     scrollX: 0,
     scrollY: 0,
+    imageTimeout: 5000,
+    onclone: (clonedDoc) => {
+      // Strip any modern color functions (oklch/lab/color()) that html2canvas can't parse
+      const root = clonedDoc.querySelector('[data-export-root]') as HTMLElement | null;
+      if (root) {
+        root.style.position = 'static';
+        root.style.left = '0';
+        root.style.top = '0';
+      }
+    },
   });
 
   if (!canvas.width || !canvas.height) {
     throw new Error('PDF canvas is empty');
   }
 
-  const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: isLandscape ? 'landscape' : 'portrait' });
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: isLandscape ? 'landscape' : 'portrait', compress: true });
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 8;
   const imgWidth = pageWidth - margin * 2;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
   const pageBodyHeight = pageHeight - margin * 2;
-  const imgData = canvas.toDataURL('image/jpeg', 0.98);
+  const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-  let pageIndex = 0;
-  let heightLeft = imgHeight;
-  while (heightLeft > 0) {
-    if (pageIndex > 0) pdf.addPage();
-    pdf.addImage(imgData, 'JPEG', margin, margin - pageIndex * pageBodyHeight, imgWidth, imgHeight);
-    heightLeft -= pageBodyHeight;
-    pageIndex += 1;
+  if (imgHeight <= pageBodyHeight) {
+    pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+  } else {
+    let pageIndex = 0;
+    let heightLeft = imgHeight;
+    while (heightLeft > 0) {
+      if (pageIndex > 0) pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', margin, margin - pageIndex * pageBodyHeight, imgWidth, imgHeight);
+      heightLeft -= pageBodyHeight;
+      pageIndex += 1;
+    }
   }
 
   pdf.save(downloadName);
