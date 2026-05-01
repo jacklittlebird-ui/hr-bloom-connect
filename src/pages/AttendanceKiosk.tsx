@@ -425,8 +425,8 @@ const AttendanceKiosk = () => {
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">{ar ? "خروج" : "Logout"}</span>
               </Button>
-              <div className="flex justify-center items-center gap-4 mb-3">
-                <picture>
+              <div className="flex items-center justify-between gap-4 mb-2">
+                <picture className="shrink-0">
                   <source srcSet="/images/company-logo-vertical.webp" type="image/webp" />
                   <img
                     src="/images/company-logo-vertical.png"
@@ -436,25 +436,26 @@ const AttendanceKiosk = () => {
                     className="h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-xl"
                   />
                 </picture>
-                <div className="h-12 w-px bg-border" />
+
+                <div className="flex flex-col items-center gap-2 flex-1 min-w-0">
+                  <QrCode className="h-10 w-10 text-primary" />
+                  <CardTitle className="text-2xl">
+                    {ar ? "نقطة تسجيل الحضور" : "Attendance Kiosk"}
+                  </CardTitle>
+                  {currentLocation && (
+                    <p className="text-muted-foreground flex items-center justify-center gap-1 text-sm">
+                      <MapPin className="h-4 w-4" />
+                      {ar ? currentLocation.name_ar : currentLocation.name_en}
+                    </p>
+                  )}
+                </div>
+
                 <img
                   src="/images/one-hr-logo.png"
                   alt="One HR"
-                  className="h-12 sm:h-14 w-auto object-contain"
+                  className="h-12 sm:h-14 w-auto object-contain shrink-0"
                 />
               </div>
-              <div className="flex justify-center mb-2">
-                <QrCode className="h-10 w-10 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">
-                {ar ? "نقطة تسجيل الحضور" : "Attendance Kiosk"}
-              </CardTitle>
-              {currentLocation && (
-                <p className="text-muted-foreground flex items-center justify-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {ar ? currentLocation.name_ar : currentLocation.name_en}
-                </p>
-              )}
             </CardHeader>
             <CardContent className="space-y-6">
               {renderStatusBanner()}
