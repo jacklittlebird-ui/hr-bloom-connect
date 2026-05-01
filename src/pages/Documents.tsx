@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, FileText, Download, Trash2, Edit, FolderOpen, File, Eye, Upload, Filter, ShieldAlert, CreditCard, Landmark, Briefcase, CalendarCheck, Users, MinusCircle } from 'lucide-react';
+import { Plus, Search, FileText, Download, Trash2, Edit, FolderOpen, File, Eye, Upload, Filter, ShieldAlert, CreditCard, Landmark, Briefcase, CalendarCheck, Users, MinusCircle, AlertTriangle, AlertCircle, CheckCircle2, Bell, RefreshCw, Clock } from 'lucide-react';
 import { InsuranceRenewals } from '@/components/documents/InsuranceRenewals';
 import { NationalIdRenewals } from '@/components/documents/NationalIdRenewals';
 import { MissingBankData } from '@/components/documents/MissingBankData';
@@ -23,6 +23,7 @@ import { LeaveBalancesAlert } from '@/components/documents/LeaveBalancesAlert';
 import { EmployeeDirectory } from '@/components/documents/EmployeeDirectory';
 import { UnpaidLeavesAlert } from '@/components/documents/UnpaidLeavesAlert';
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
+import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 
 interface Document {
   id: string;
