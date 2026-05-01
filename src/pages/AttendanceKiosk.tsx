@@ -425,8 +425,26 @@ const AttendanceKiosk = () => {
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">{ar ? "خروج" : "Logout"}</span>
               </Button>
+              <div className="flex justify-center items-center gap-4 mb-3">
+                <picture>
+                  <source srcSet="/images/company-logo-vertical.webp" type="image/webp" />
+                  <img
+                    src="/images/company-logo-vertical.png"
+                    alt="Link Aero"
+                    width="80"
+                    height="80"
+                    className="h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-xl"
+                  />
+                </picture>
+                <div className="h-12 w-px bg-border" />
+                <img
+                  src="/images/one-hr-logo.png"
+                  alt="One HR"
+                  className="h-12 sm:h-14 w-auto object-contain"
+                />
+              </div>
               <div className="flex justify-center mb-2">
-                <QrCode className="h-12 w-12 text-primary" />
+                <QrCode className="h-10 w-10 text-primary" />
               </div>
               <CardTitle className="text-2xl">
                 {ar ? "نقطة تسجيل الحضور" : "Attendance Kiosk"}
