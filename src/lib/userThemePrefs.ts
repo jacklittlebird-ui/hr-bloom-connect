@@ -82,6 +82,7 @@ export async function saveUserThemePrefs(prefs: UserThemePrefs): Promise<boolean
         density: prefs.density ?? null,
         font: prefs.font ?? null,
         header_style: prefs.headerStyle ?? null,
+        welcome_bg: prefs.welcomeBg ?? null,
       } as any, { onConflict: 'user_id' });
     return !error;
   } catch {
