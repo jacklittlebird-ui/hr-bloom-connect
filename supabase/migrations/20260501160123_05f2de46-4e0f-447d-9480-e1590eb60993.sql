@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS read_vehicles ON public.vehicles;
