@@ -413,25 +413,100 @@ export const StationAttendanceReport = () => {
                         <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 4' : 'Week 4'}</TableHead>
                         <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 5' : 'Week 5'}</TableHead>
                         <TableHead className="text-center bg-emerald-50 font-bold">{ar ? 'إجمالي شهري' : 'Monthly Total'}</TableHead>
+                        <TableHead className="text-center w-32">{ar ? 'تفاصيل الأيام' : 'Daily Details'}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {group.rows.map((r, idx) => {
                         const dept = r.employee.department_id ? deptMap.get(r.employee.department_id) : null;
+                        const isOpen = expandedEmp.has(r.employee.id);
                         return (
-                          <TableRow key={r.employee.id} className="hover:bg-muted/30">
-                            <TableCell className="text-center text-muted-foreground">{idx + 1}</TableCell>
-                            <TableCell className="font-mono text-xs">{r.employee.employee_code}</TableCell>
-                            <TableCell className="font-medium whitespace-pre-wrap break-words">{ar ? r.employee.name_ar : r.employee.name_en}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">{dept ? (ar ? dept.name_ar : dept.name_en) : '—'}</TableCell>
-                            <TableCell className="text-center text-green-700 font-semibold">{r.presentDays}</TableCell>
-                            <TableCell className="text-center text-amber-600">{r.lateDays}</TableCell>
-                            <TableCell className="text-center text-red-600">{r.absentDays}</TableCell>
-                            {r.weeks.map((h, i) => (
-                              <TableCell key={i} className="text-center tabular-nums">{fmtHours(h)}</TableCell>
-                            ))}
-                            <TableCell className="text-center tabular-nums font-bold bg-emerald-50/50">{fmtHours(r.totalHours)}</TableCell>
-                          </TableRow>
+                          <>
+                            <TableRow key={r.employee.id} className={cn('hover:bg-muted/30', isOpen && 'bg-primary/5')}>
+                              <TableCell className="text-center text-muted-foreground">{idx + 1}</TableCell>
+                              <TableCell className="font-mono text-xs">{r.employee.employee_code}</TableCell>
+                              <TableCell className="font-medium whitespace-pre-wrap break-words">{ar ? r.employee.name_ar : r.employee.name_en}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">{dept ? (ar ? dept.name_ar : dept.name_en) : '—'}</TableCell>
+                              <TableCell className="text-center text-green-700 font-semibold">{r.presentDays}</TableCell>
+                              <TableCell className="text-center text-amber-600">{r.lateDays}</TableCell>
+                              <TableCell className="text-center text-red-600">{r.absentDays}</TableCell>
+                              {r.weeks.map((h, i) => (
+                                <TableCell key={i} className="text-center tabular-nums">{fmtHours(h)}</TableCell>
+                              ))}
+                              <TableCell className="text-center tabular-nums font-bold bg-emerald-50/50">{fmtHours(r.totalHours)}</TableCell>
+                              <TableCell className="text-center">
+                                <Button
+                                  variant={isOpen ? 'default' : 'outline'}
+                                  size="sm"
+                                  className="h-8 gap-1"
+                                  onClick={() => toggleEmp(r.employee.id)}
+                                  aria-expanded={isOpen}
+                                  aria-label={ar ? 'عرض التفاصيل اليومية' : 'Show daily details'}
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span className="text-xs">{isOpen ? (ar ? 'إخفاء' : 'Hide') : (ar ? 'عرض' : 'View')}</span>
+                                  {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                            {isOpen && (
+                              <TableRow key={`${r.employee.id}-details`} className="bg-muted/20 hover:bg-muted/20">
+                                <TableCell colSpan={15} className="p-4">
+                                  <div className={cn('flex items-center justify-between mb-3 flex-wrap gap-2', isRTL && 'flex-row-reverse')}>
+                                    <div className="font-semibold text-sm">
+                                      {ar ? '📋 التفاصيل اليومية' : '📋 Daily Details'} — {r.employee.employee_code} — {ar ? r.employee.name_ar : r.employee.name_en}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {ar ? 'إجمالي السجلات' : 'Records'}: {r.records.length}
+                                    </div>
+                                  </div>
+                                  {r.records.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground text-center py-4">{ar ? 'لا توجد سجلات لهذا الموظف خلال هذا الشهر' : 'No records for this employee in this month'}</p>
+                                  ) : (
+                                    <div className="overflow-x-auto bg-background rounded-lg border">
+                                      <table className="w-full text-xs border-collapse">
+                                        <thead>
+                                          <tr className="bg-muted/40">
+                                            <th className="border p-2 text-center">{ar ? 'التاريخ' : 'Date'}</th>
+                                            <th className="border p-2 text-center">{ar ? 'الأسبوع' : 'Week'}</th>
+                                            <th className="border p-2 text-center">{ar ? 'الحضور' : 'Check-in'}</th>
+                                            <th className="border p-2 text-center">{ar ? 'الانصراف' : 'Check-out'}</th>
+                                            <th className="border p-2 text-center">{ar ? 'الساعات' : 'Hours'}</th>
+                                            <th className="border p-2 text-center">{ar ? 'الحالة' : 'Status'}</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {r.records.map((rec, i) => {
+                                            const hours = Number(rec.work_hours || (rec.work_minutes ? rec.work_minutes / 60 : 0)) || 0;
+                                            const dateObj = new Date(rec.date + 'T00:00:00');
+                                            const dayLabel = dateObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                                            return (
+                                              <tr key={i} className={rec.status === 'absent' ? 'bg-red-50' : ''}>
+                                                <td className="border p-2 text-center">{dayLabel}</td>
+                                                <td className="border p-2 text-center">W{getWeekOfMonth(rec.date)}</td>
+                                                <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_in)}</td>
+                                                <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_out)}</td>
+                                                <td className="border p-2 text-center tabular-nums">{fmtHours(hours)}</td>
+                                                <td className="border p-2 text-center">
+                                                  {rec.status === 'present' && (
+                                                    <Badge variant={rec.is_late ? 'outline' : 'secondary'} className={rec.is_late ? 'text-amber-700 border-amber-400' : ''}>
+                                                      {rec.is_late ? (ar ? 'متأخر' : 'Late') : (ar ? 'حاضر' : 'Present')}
+                                                    </Badge>
+                                                  )}
+                                                  {rec.status === 'absent' && <Badge variant="destructive">{ar ? 'غائب' : 'Absent'}</Badge>}
+                                                  {rec.status !== 'present' && rec.status !== 'absent' && <Badge variant="outline">{rec.status}</Badge>}
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </>
                         );
                       })}
                       <TableRow className="bg-primary/10 font-bold">
@@ -443,74 +518,11 @@ export const StationAttendanceReport = () => {
                           <TableCell key={i} className="text-center tabular-nums">{fmtHours(h)}</TableCell>
                         ))}
                         <TableCell className="text-center tabular-nums">{fmtHours(sub.total)}</TableCell>
+                        <TableCell />
                       </TableRow>
                     </TableBody>
                   </Table>
                 </div>
-
-                {/* Daily detail collapsibles per employee */}
-                <details className="border-t">
-                  <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium hover:bg-muted/40">
-                    {ar ? '📋 عرض التفاصيل اليومية للموظفين (الحضور / الانصراف)' : '📋 Show daily details (Check-in / Check-out)'}
-                  </summary>
-                  <div className="p-4 space-y-4 bg-muted/20">
-                    {group.rows.map(r => (
-                      <div key={r.employee.id} className="bg-background rounded-lg border p-3">
-                        <div className={cn('flex items-center justify-between mb-2 flex-wrap gap-2', isRTL && 'flex-row-reverse')}>
-                          <div className="font-semibold text-sm">
-                            {r.employee.employee_code} — {ar ? r.employee.name_ar : r.employee.name_en}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {ar ? 'إجمالي السجلات' : 'Records'}: {r.records.length}
-                          </div>
-                        </div>
-                        {r.records.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">{ar ? 'لا توجد سجلات' : 'No records'}</p>
-                        ) : (
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-xs border-collapse">
-                              <thead>
-                                <tr className="bg-muted/40">
-                                  <th className="border p-1.5 text-center">{ar ? 'التاريخ' : 'Date'}</th>
-                                  <th className="border p-1.5 text-center">{ar ? 'الأسبوع' : 'Week'}</th>
-                                  <th className="border p-1.5 text-center">{ar ? 'الحضور' : 'Check-in'}</th>
-                                  <th className="border p-1.5 text-center">{ar ? 'الانصراف' : 'Check-out'}</th>
-                                  <th className="border p-1.5 text-center">{ar ? 'الساعات' : 'Hours'}</th>
-                                  <th className="border p-1.5 text-center">{ar ? 'الحالة' : 'Status'}</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {r.records.map((rec, i) => {
-                                  const hours = Number(rec.work_hours || (rec.work_minutes ? rec.work_minutes / 60 : 0)) || 0;
-                                  const dateObj = new Date(rec.date + 'T00:00:00');
-                                  const dayLabel = dateObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short', day: '2-digit', month: '2-digit' });
-                                  return (
-                                    <tr key={i} className={rec.status === 'absent' ? 'bg-red-50' : ''}>
-                                      <td className="border p-1.5 text-center">{dayLabel}</td>
-                                      <td className="border p-1.5 text-center">W{getWeekOfMonth(rec.date)}</td>
-                                      <td className="border p-1.5 text-center font-mono">{formatTimeCairo(rec.check_in)}</td>
-                                      <td className="border p-1.5 text-center font-mono">{formatTimeCairo(rec.check_out)}</td>
-                                      <td className="border p-1.5 text-center tabular-nums">{fmtHours(hours)}</td>
-                                      <td className="border p-1.5 text-center">
-                                        {rec.status === 'present' && (
-                                          <Badge variant={rec.is_late ? 'outline' : 'secondary'} className={rec.is_late ? 'text-amber-700 border-amber-400' : ''}>
-                                            {rec.is_late ? (ar ? 'متأخر' : 'Late') : (ar ? 'حاضر' : 'Present')}
-                                          </Badge>
-                                        )}
-                                        {rec.status === 'absent' && <Badge variant="destructive">{ar ? 'غائب' : 'Absent'}</Badge>}
-                                        {rec.status !== 'present' && rec.status !== 'absent' && <Badge variant="outline">{rec.status}</Badge>}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </details>
               </CardContent>
             </Card>
           );
