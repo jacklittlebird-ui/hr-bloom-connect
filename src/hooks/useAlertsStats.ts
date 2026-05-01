@@ -68,7 +68,7 @@ export function useAlertsStats() {
           .select('id, leave_type, status, days')
           .eq('leave_type', 'unpaid'),
         supabase
-          .from('penalties_deductions')
+          .from('violations')
           .select('id, status, penalty, date'),
         supabase
           .from('leave_balances')
