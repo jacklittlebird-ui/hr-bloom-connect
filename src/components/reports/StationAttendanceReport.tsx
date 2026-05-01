@@ -104,6 +104,12 @@ export const StationAttendanceReport = () => {
   type DayFilter = 'all' | 'present' | 'late' | 'absent';
   const [globalStatusFilter, setGlobalStatusFilter] = useState<DayFilter>('all');
   const [dayFilter, setDayFilter] = useState<Map<string, DayFilter>>(new Map());
+  // Pin the per-employee summary row to the top while scrolling daily details
+  const [pinSummary, setPinSummary] = useState<boolean>(() => {
+    const saved = localStorage.getItem('attendanceReport.pinSummary');
+    return saved === null ? true : saved === '1';
+  });
+  useEffect(() => { localStorage.setItem('attendanceReport.pinSummary', pinSummary ? '1' : '0'); }, [pinSummary]);
 
   // Per-employee filter falls back to the global filter when not explicitly overridden
   const getDayFilter = (id: string): DayFilter => dayFilter.get(id) ?? globalStatusFilter;
