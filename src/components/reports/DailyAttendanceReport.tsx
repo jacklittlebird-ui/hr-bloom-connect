@@ -686,7 +686,7 @@ export const DailyAttendanceReport = () => {
                       <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'الساعات' : 'Hrs'}</th>
                       {dateRange.map(d => {
                         const dow = new Date(d + 'T00:00:00').getDay();
-                        const sub = dow === 5 ? 'bg-amber-100/70' : dow === 6 ? 'bg-amber-50/70' : '';
+                        const sub = isHeaderWeekend(dow) ? 'bg-amber-100/70' : '';
                         return (
                         <Fragment key={d}>
                           <th className={cn('border p-1 text-center text-[10px] font-normal text-muted-foreground', sub)}>{ar ? 'حضور' : 'In'}</th>
