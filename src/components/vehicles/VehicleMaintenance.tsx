@@ -387,6 +387,9 @@ export const VehicleMaintenance = () => {
             <Button size="sm" onClick={exportPdf} className="bg-primary text-primary-foreground">
               <FileDown className="w-4 h-4 me-1" />{isAr ? 'تصدير PDF' : 'PDF'}
             </Button>
+            <Button size="sm" onClick={exportWord} className="bg-blue-700 hover:bg-blue-800 text-white">
+              <FileType2 className="w-4 h-4 me-1" />{isAr ? 'تصدير Word' : 'Word'}
+            </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 me-1" />{isAr ? 'إضافة صيانة' : 'Add Maintenance'}</Button>
