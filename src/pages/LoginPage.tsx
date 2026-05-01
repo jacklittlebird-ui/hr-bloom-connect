@@ -159,7 +159,18 @@ const LoginPage = () => {
               <source srcSet="/images/company-logo-vertical.webp" type="image/webp" />
               <img src="/images/company-logo-vertical.png" alt="Link Aero" width="140" height="140" fetchPriority="high" className="h-32 w-32 rounded-2xl object-contain" />
             </picture>
-            <img src="/images/one-hr-logo.png" alt="One HR" width="160" height="160" className="h-36 w-36 object-contain" />
+            <picture>
+              <source srcSet="/images/one-hr-logo.webp" type="image/webp" />
+              <img
+                src="/images/one-hr-logo.png"
+                alt="One HR"
+                width="160"
+                height="160"
+                fetchPriority="high"
+                decoding="async"
+                className="h-36 w-36 object-contain"
+              />
+            </picture>
           </div>
           <h1 className="lg:hidden text-xl font-bold text-foreground text-center mb-4">{t('نظام إدارة الموارد البشرية', 'HR Management System')}</h1>
 

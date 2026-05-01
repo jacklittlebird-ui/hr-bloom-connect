@@ -450,11 +450,17 @@ const AttendanceKiosk = () => {
                   )}
                 </div>
 
-                <img
-                  src="/images/one-hr-logo.png"
-                  alt="One HR"
-                  className="h-12 sm:h-14 w-auto object-contain shrink-0"
-                />
+                <picture>
+                  <source srcSet="/images/one-hr-logo-sm.webp" type="image/webp" />
+                  <img
+                    src="/images/one-hr-logo.png"
+                    alt="One HR"
+                    width="56"
+                    height="56"
+                    decoding="async"
+                    className="h-12 sm:h-14 w-auto object-contain shrink-0"
+                  />
+                </picture>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
