@@ -15,6 +15,7 @@ import {
   Header,
   Footer,
   PageNumber,
+  PageBreak,
 } from 'docx';
 
 export interface WordColumn {
@@ -31,6 +32,13 @@ export interface WordExportOptions {
   fileName?: string;
   signatureLabels?: string[];
   orientation?: 'portrait' | 'landscape';
+  /**
+   * If set (>0), the body rows will be split across multiple pages with this
+   * many rows per page. The header row is repeated on every chunk and a page
+   * break is inserted between chunks. The signatures block always appears on
+   * the very last page.
+   */
+  rowsPerPage?: number;
 }
 
 const BRAND_BLUE = '1E40AF';
