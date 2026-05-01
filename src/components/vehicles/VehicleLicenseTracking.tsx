@@ -6,11 +6,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, CheckCircle, Clock, Search, FileText, Building2, Download, FileDown } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Search, FileText, Building2, Download, FileDown, FileType2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
 import { exportVehiclePdf } from '@/lib/vehiclePdfExport';
+import { exportVehicleWord } from '@/lib/vehicleWordExport';
 import { toast } from 'sonner';
 
 interface Vehicle {
