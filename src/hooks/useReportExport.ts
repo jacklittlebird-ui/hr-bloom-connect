@@ -525,7 +525,7 @@ export const useReportExport = () => {
   }, [t]);
 
   // Bilingual PDF: dual headers + dual title
-  const exportBilingualPDF = useCallback(({ titleAr, titleEn, data, columns, fileName, summaryCards }: BilingualExportOptions) => {
+  const exportBilingualPDF = useCallback(async ({ titleAr, titleEn, data, columns, fileName, summaryCards }: BilingualExportOptions) => {
     if (!data.length) {
       toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
       return;
@@ -534,7 +534,7 @@ export const useReportExport = () => {
     const dir = isRTL ? 'rtl' : 'ltr';
 
     const tableRows = data.map(row =>
-      `<tr>${columns.map(col => `<td style="border:1px solid #d1d5db;padding:8px 10px;font-size:12px;text-align:center;">${String(row[col.key] ?? '')}</td>`).join('')}</tr>`
+      `<tr>${columns.map(col => `<td style="border:1px solid #d1d5db;padding:8px 10px;font-size:12px;text-align:center;">${escapeHtml(row[col.key])}</td>`).join('')}</tr>`
     ).join('');
 
     const cardsHtml = buildSummaryCardsHtml(summaryCards || []);
@@ -544,15 +544,15 @@ export const useReportExport = () => {
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
           <img src="${logoUrl}" style="height:60px;width:auto;" crossorigin="anonymous" />
           <div style="flex:1;text-align:center;">
-            <div style="font-size:22px;font-weight:700;color:#1e40af;direction:rtl;">${titleAr}</div>
-            <div style="font-size:18px;font-weight:600;color:#374151;direction:ltr;">${titleEn}</div>
+            <div style="font-size:22px;font-weight:700;color:#1e40af;direction:rtl;">${escapeHtml(titleAr)}</div>
+            <div style="font-size:18px;font-weight:600;color:#374151;direction:ltr;">${escapeHtml(titleEn)}</div>
           </div>
         </div>
         <p style="text-align:center;color:#6b7280;margin-bottom:24px;font-size:13px;">${new Date().toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' })} — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         ${cardsHtml}
         <table style="width:100%;border-collapse:collapse;">
           <thead>
-            <tr>${columns.map(c => `<th style="background-color:#1e40af;color:white;font-weight:600;font-size:11px;padding:6px 8px;border:1px solid #1e3a8a;text-align:center;"><div style="direction:rtl;">${c.headerAr}</div><div style="font-weight:400;font-size:10px;color:#dbeafe;">${c.headerEn}</div></th>`).join('')}</tr>
+            <tr>${columns.map(c => `<th style="background-color:#1e40af;color:white;font-weight:600;font-size:11px;padding:6px 8px;border:1px solid #1e3a8a;text-align:center;"><div style="direction:rtl;">${escapeHtml(c.headerAr)}</div><div style="font-weight:400;font-size:10px;color:#dbeafe;">${escapeHtml(c.headerEn)}</div></th>`).join('')}</tr>
           </thead>
           <tbody>${tableRows}</tbody>
         </table>
@@ -561,24 +561,18 @@ export const useReportExport = () => {
     `);
 
     const isLandscape = columns.length > 6;
-    const downloadName = `${fileName || `${titleEn}_${titleAr}`}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const downloadName = `${sanitizeFileName(fileName || `${titleEn}_${titleAr}`)}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
-    waitForImages(container).then(() => {
-      html2pdf().set({
-        margin: 10,
-        filename: downloadName,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: isLandscape ? 'landscape' : 'portrait' },
-      }).from(container).save().then(() => {
-        document.body.removeChild(container);
-      }).catch(() => {
-        document.body.removeChild(container);
-      });
-    });
-
-    toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
-  }, [isRTL, t]);
+    try {
+      await downloadElementAsPDF(container, downloadName, isLandscape);
+      toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
+    } catch (error) {
+      console.error('Bilingual PDF export failed:', error);
+      toast({ title: t('reports.exportError') || 'Failed to export PDF', variant: 'destructive' });
+    } finally {
+      document.body.removeChild(container);
+    }
+  }, [isRTL, logoUrl, t]);
 
   return { reportRef, handlePrint, exportToCSV, exportToPDF, exportToWord, previewWordExport, downloadWordHtml, exportBilingualCSV, exportBilingualPDF };
 };
