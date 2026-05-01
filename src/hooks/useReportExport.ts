@@ -90,6 +90,48 @@ function waitForImages(container: HTMLElement): Promise<void> {
   })).then(() => undefined);
 }
 
+async function downloadElementAsPDF(container: HTMLElement, downloadName: string, isLandscape: boolean): Promise<void> {
+  await waitForImages(container);
+  if ('fonts' in document) await document.fonts.ready;
+
+  const canvas = await html2canvas(container, {
+    scale: 2,
+    useCORS: true,
+    backgroundColor: '#ffffff',
+    logging: false,
+    width: container.scrollWidth,
+    height: container.scrollHeight,
+    windowWidth: container.scrollWidth,
+    windowHeight: container.scrollHeight,
+    scrollX: 0,
+    scrollY: 0,
+  });
+
+  if (!canvas.width || !canvas.height) {
+    throw new Error('PDF canvas is empty');
+  }
+
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: isLandscape ? 'landscape' : 'portrait' });
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 8;
+  const imgWidth = pageWidth - margin * 2;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  const pageBodyHeight = pageHeight - margin * 2;
+  const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+  let pageIndex = 0;
+  let heightLeft = imgHeight;
+  while (heightLeft > 0) {
+    if (pageIndex > 0) pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', margin, margin - pageIndex * pageBodyHeight, imgWidth, imgHeight);
+    heightLeft -= pageBodyHeight;
+    pageIndex += 1;
+  }
+
+  pdf.save(downloadName);
+}
+
 
 export const useReportExport = () => {
   const { t, isRTL } = useLanguage();
