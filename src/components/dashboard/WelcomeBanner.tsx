@@ -71,7 +71,7 @@ export const WelcomeBanner = () => {
     >
       {/* Background image */}
       <img
-        src={welcomeBannerBg}
+        src={getWelcomeBgSrc(bgId)}
         alt=""
         loading="lazy"
         width={1536}
