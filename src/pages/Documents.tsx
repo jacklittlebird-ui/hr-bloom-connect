@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, FileText, Download, Trash2, Edit, FolderOpen, File, Eye, Upload, Filter, ShieldAlert, CreditCard, Landmark, Briefcase, CalendarCheck, Users, MinusCircle } from 'lucide-react';
+import { Plus, Search, FileText, Download, Trash2, Edit, FolderOpen, File, Eye, Upload, Filter, ShieldAlert, CreditCard, Landmark, Briefcase, CalendarCheck, Users, MinusCircle, AlertTriangle, AlertCircle, CheckCircle2, Bell, RefreshCw, Clock } from 'lucide-react';
 import { InsuranceRenewals } from '@/components/documents/InsuranceRenewals';
 import { NationalIdRenewals } from '@/components/documents/NationalIdRenewals';
 import { MissingBankData } from '@/components/documents/MissingBankData';
@@ -23,6 +23,7 @@ import { LeaveBalancesAlert } from '@/components/documents/LeaveBalancesAlert';
 import { EmployeeDirectory } from '@/components/documents/EmployeeDirectory';
 import { UnpaidLeavesAlert } from '@/components/documents/UnpaidLeavesAlert';
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
+import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 
 interface Document {
   id: string;
@@ -61,7 +62,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents'>('renewals');
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -71,6 +72,8 @@ const Documents = () => {
   const [viewDoc, setViewDoc] = useState<Document | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', category: '', type: 'PDF', description: '', tags: '', expiryDate: '' });
+
+  const { stats: alertStats, summary, loading: statsLoading, lastUpdated, refresh: refreshStats } = useAlertsStats();
 
   const isAr = language === 'ar';
 
@@ -112,96 +115,196 @@ const Documents = () => {
 
   const stats = { total: docs.length, active: docs.filter(d => d.status === 'active').length, expired: docs.filter(d => d.status === 'expired').length, archived: docs.filter(d => d.status === 'archived').length };
 
+  // Tab definitions grouped logically with bilingual labels & icons
+  const tabGroups: Array<{
+    title: { ar: string; en: string };
+    items: Array<{ key: typeof activeMainTab; ar: string; en: string; icon: any; statKey?: AlertKey }>;
+  }> = [
+    {
+      title: { ar: 'التجديدات', en: 'Renewals' },
+      items: [
+        { key: 'renewals', ar: 'تجديد التأمين', en: 'Insurance', icon: ShieldAlert, statKey: 'renewals' },
+        { key: 'nationalId', ar: 'الرقم القومي', en: 'National ID', icon: CreditCard, statKey: 'nationalId' },
+      ],
+    },
+    {
+      title: { ar: 'بيانات ناقصة', en: 'Missing Data' },
+      items: [
+        { key: 'bankData', ar: 'البيانات البنكية', en: 'Bank Data', icon: Landmark, statKey: 'bankData' },
+        { key: 'missingJob', ar: 'بيانات التعيين', en: 'Job Data', icon: Briefcase, statKey: 'missingJob' },
+      ],
+    },
+    {
+      title: { ar: 'الإجازات والمالية', en: 'Leaves & Finance' },
+      items: [
+        { key: 'leaveBalances', ar: 'أرصدة الإجازات', en: 'Leave Balances', icon: CalendarCheck, statKey: 'leaveBalances' },
+        { key: 'unpaidLeaves', ar: 'إجازات بدون راتب', en: 'Unpaid Leaves', icon: CalendarCheck, statKey: 'unpaidLeaves' },
+        { key: 'penaltyDeductions', ar: 'الخصومات', en: 'Deductions', icon: MinusCircle, statKey: 'penaltyDeductions' },
+      ],
+    },
+    {
+      title: { ar: 'الإدارة', en: 'Management' },
+      items: [
+        { key: 'directory', ar: 'دليل الموظفين', en: 'Directory', icon: Users },
+        { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
+      ],
+    },
+  ];
+
+  const formatTimeAgo = (d: Date | null) => {
+    if (!d) return '';
+    const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (sec < 60) return isAr ? 'الآن' : 'just now';
+    const min = Math.floor(sec / 60);
+    if (min < 60) return isAr ? `منذ ${min} د` : `${min}m ago`;
+    const h = Math.floor(min / 60);
+    return isAr ? `منذ ${h} س` : `${h}h ago`;
+  };
+
   return (
     <DashboardLayout>
       <div className={cn("space-y-6", isRTL && "text-right")}>
-        <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+        {/* Header */}
+        <div className={cn("flex items-start justify-between gap-4 flex-wrap", isRTL && "flex-row-reverse")}>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{isAr ? 'التنبيهات والمستندات' : 'Alerts & Documents'}</h1>
-            <p className="text-muted-foreground">{isAr ? 'إدارة المستندات والتنبيهات والتجديدات' : 'Manage documents, alerts and renewals'}</p>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Bell className="w-6 h-6 text-primary" />
+              {isAr ? 'التنبيهات والمستندات' : 'Alerts & Documents'}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {isAr ? 'مركز موحد لمتابعة التجديدات والبيانات الناقصة وإدارة المستندات' : 'Unified center for renewals, missing data and document management'}
+            </p>
           </div>
-          {activeMainTab === 'documents' && (
-            <Button onClick={openAdd} className={cn("gap-2", isRTL && "flex-row-reverse")}>
-              <Upload className="w-4 h-4" /> {isAr ? 'رفع مستند' : 'Upload Document'}
+          <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+            {lastUpdated && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {formatTimeAgo(lastUpdated)}
+              </span>
+            )}
+            <Button variant="outline" size="sm" onClick={refreshStats} disabled={statsLoading} className="gap-2">
+              <RefreshCw className={cn("w-4 h-4", statsLoading && "animate-spin")} />
+              {isAr ? 'تحديث' : 'Refresh'}
             </Button>
-          )}
+            {activeMainTab === 'documents' && (
+              <Button onClick={openAdd} className={cn("gap-2", isRTL && "flex-row-reverse")}>
+                <Upload className="w-4 h-4" /> {isAr ? 'رفع مستند' : 'Upload Document'}
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Main Tabs */}
-        <div className="flex gap-3">
-          <Button
-            variant={activeMainTab === 'renewals' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('renewals')}
-          >
-            <ShieldAlert className="w-4 h-4" />
-            {isAr ? 'تجديدات العقود' : 'Contract Renewals'}
-          </Button>
-          <Button
-            variant={activeMainTab === 'nationalId' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('nationalId')}
-          >
-            <CreditCard className="w-4 h-4" />
-            {isAr ? 'تجديد الرقم القومي' : 'National ID Renewal'}
-          </Button>
-          <Button
-            variant={activeMainTab === 'bankData' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('bankData')}
-          >
-            <Landmark className="w-4 h-4" />
-            {isAr ? 'البيانات البنكية' : 'Bank Data'}
-          </Button>
-          <Button
-            variant={activeMainTab === 'missingJob' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('missingJob')}
-          >
-            <Briefcase className="w-4 h-4" />
-            {isAr ? 'بيانات التعيين' : 'Job Data'}
-          </Button>
-          <Button
-            variant={activeMainTab === 'leaveBalances' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('leaveBalances')}
-          >
-            <CalendarCheck className="w-4 h-4" />
-            {isAr ? 'أرصدة الإجازات' : 'Leave Balances'}
-          </Button>
-          <Button
-            variant={activeMainTab === 'unpaidLeaves' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('unpaidLeaves')}
-          >
-            <CalendarCheck className="w-4 h-4" />
-            {isAr ? 'الإجازات بدون راتب' : 'Unpaid Leaves'}
-          </Button>
-          <Button
-            variant={activeMainTab === 'penaltyDeductions' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('penaltyDeductions')}
-          >
-            <MinusCircle className="w-4 h-4" />
-            {isAr ? 'الخصومات' : 'Deductions'}
-          </Button>
-          <Button
-            variant={activeMainTab === 'directory' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('directory')}
-          >
-            <Users className="w-4 h-4" />
-            {isAr ? 'دليل الموظفين' : 'Employee Directory'}
-          </Button>
-          <Button
-            variant={activeMainTab === 'documents' ? 'default' : 'outline'}
-            className="gap-2"
-            onClick={() => setActiveMainTab('documents')}
-          >
-            <FileText className="w-4 h-4" />
-            {isAr ? 'المستندات' : 'Documents'}
-          </Button>
+        {/* Unified KPI dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardContent className="p-4">
+              <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">{isAr ? 'إجمالي التنبيهات النشطة' : 'Active Alerts'}</p>
+                  <p className="text-3xl font-bold text-foreground mt-1">{statsLoading ? '—' : summary.total.toLocaleString()}</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-primary/10">
+                  <Bell className="w-5 h-5 text-primary" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-destructive/20 bg-gradient-to-br from-destructive/5 to-transparent">
+            <CardContent className="p-4">
+              <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">{isAr ? 'منتهية' : 'Expired'}</p>
+                  <p className="text-3xl font-bold text-destructive mt-1">{statsLoading ? '—' : summary.expired.toLocaleString()}</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-destructive/10">
+                  <AlertCircle className="w-5 h-5 text-destructive" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent">
+            <CardContent className="p-4">
+              <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">{isAr ? 'عاجلة (≤ 60 يوم)' : 'Urgent (≤60d)'}</p>
+                  <p className="text-3xl font-bold text-amber-600 mt-1">{statsLoading ? '—' : summary.urgent.toLocaleString()}</p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-amber-500/10">
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent">
+            <CardContent className="p-4">
+              <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">{isAr ? 'الفئات النشطة' : 'Active Categories'}</p>
+                  <p className="text-3xl font-bold text-emerald-600 mt-1">
+                    {statsLoading ? '—' : (Object.values(alertStats).filter(s => s.total > 0).length)}
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-xl bg-emerald-500/10">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Grouped tab bar */}
+        <Card className="overflow-hidden">
+          <CardContent className="p-3 md:p-4">
+            <div className="space-y-3">
+              {tabGroups.map((group) => (
+                <div key={group.title.en} className="space-y-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
+                    {isAr ? group.title.ar : group.title.en}
+                  </p>
+                  <div className={cn("flex flex-wrap gap-2", isRTL && "flex-row-reverse")}>
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = activeMainTab === item.key;
+                      const stat = item.statKey ? alertStats[item.statKey] : null;
+                      const count = stat?.total ?? 0;
+                      const hasExpired = (stat?.expired ?? 0) > 0;
+                      return (
+                        <button
+                          key={item.key}
+                          onClick={() => setActiveMainTab(item.key)}
+                          className={cn(
+                            "group relative flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
+                            "hover:border-primary/40 hover:bg-primary/5",
+                            isActive
+                              ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                              : "border-border bg-card text-foreground"
+                          )}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" />
+                          <span className="whitespace-nowrap">{isAr ? item.ar : item.en}</span>
+                          {item.statKey && count > 0 && (
+                            <Badge
+                              variant={hasExpired && !isActive ? 'destructive' : isActive ? 'secondary' : 'outline'}
+                              className={cn(
+                                "ms-1 h-5 min-w-[20px] justify-center px-1.5 text-[10px] font-bold",
+                                isActive && !hasExpired && "bg-primary-foreground/20 text-primary-foreground border-transparent"
+                              )}
+                            >
+                              {count}
+                            </Badge>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {activeMainTab === 'renewals' ? (
           <InsuranceRenewals />
