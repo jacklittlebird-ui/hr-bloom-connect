@@ -2753,6 +2753,42 @@ export type Database = {
           },
         ]
       }
+      user_theme_preferences: {
+        Row: {
+          created_at: string
+          density: string | null
+          font: string | null
+          primary_color: string | null
+          radius: string | null
+          theme: string | null
+          theme_preset: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          density?: string | null
+          font?: string | null
+          primary_color?: string | null
+          radius?: string | null
+          theme?: string | null
+          theme_preset?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          density?: string | null
+          font?: string | null
+          primary_color?: string | null
+          radius?: string | null
+          theme?: string | null
+          theme_preset?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vehicle_maintenance: {
         Row: {
           cost: number | null
