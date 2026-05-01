@@ -551,11 +551,23 @@ export const StationAttendanceReport = () => {
                                       if (f === 'present') return rec.status === 'present' && !rec.is_late;
                                       return true;
                                     });
+                                    const recHours = (x: AttendanceRow) =>
+                                      Number(x.work_hours || (x.work_minutes ? x.work_minutes / 60 : 0)) || 0;
                                     const counts = {
                                       all: r.records.length,
                                       present: r.records.filter(x => x.status === 'present' && !x.is_late).length,
                                       late: r.records.filter(x => x.status === 'present' && !!x.is_late).length,
                                       absent: r.records.filter(x => x.status === 'absent').length,
+                                    };
+                                    const filteredHours = filtered.reduce((s, x) => s + recHours(x), 0);
+                                    const filteredPresent = filtered.filter(x => x.status === 'present' && !x.is_late).length;
+                                    const filteredLate = filtered.filter(x => x.status === 'present' && !!x.is_late).length;
+                                    const filteredAbsent = filtered.filter(x => x.status === 'absent').length;
+                                    const filterLabels: Record<DayFilter, string> = {
+                                      all: ar ? 'كل الحالات' : 'All',
+                                      present: ar ? 'حاضر' : 'Present',
+                                      late: ar ? 'متأخر' : 'Late',
+                                      absent: ar ? 'غائب' : 'Absent',
                                     };
                                     const FilterBtn = ({ k, label, cls }: { k: DayFilter; label: string; cls?: string }) => (
                                       <Button
@@ -575,6 +587,21 @@ export const StationAttendanceReport = () => {
                                           <FilterBtn k="present" label={ar ? 'حاضر' : 'Present'} cls="bg-green-600 hover:bg-green-600" />
                                           <FilterBtn k="late" label={ar ? 'متأخر' : 'Late'} cls="bg-amber-500 hover:bg-amber-500" />
                                           <FilterBtn k="absent" label={ar ? 'غائب' : 'Absent'} cls="bg-red-600 hover:bg-red-600" />
+                                        </div>
+                                        {/* Filter-aware summary */}
+                                        <div className={cn('flex flex-wrap gap-2 mb-3 items-center', isRTL && 'flex-row-reverse')}>
+                                          <Badge variant="outline" className="text-xs">
+                                            {ar ? 'التصفية' : 'Filter'}: {filterLabels[f]}
+                                          </Badge>
+                                          <Badge className="bg-emerald-600 hover:bg-emerald-600 text-xs">
+                                            {ar ? 'إجمالي الساعات' : 'Total Hours'}: <span className="ms-1 tabular-nums">{fmtHours(filteredHours)}</span>
+                                          </Badge>
+                                          <Badge className="bg-blue-600 hover:bg-blue-600 text-xs">
+                                            {ar ? 'عدد الأيام' : 'Days'}: <span className="ms-1 tabular-nums">{filtered.length}</span>
+                                          </Badge>
+                                          <Badge className="bg-green-600 hover:bg-green-600 text-xs">{ar ? 'حاضر' : 'Present'}: {filteredPresent}</Badge>
+                                          <Badge className="bg-amber-500 hover:bg-amber-500 text-xs">{ar ? 'متأخر' : 'Late'}: {filteredLate}</Badge>
+                                          <Badge className="bg-red-600 hover:bg-red-600 text-xs">{ar ? 'غائب' : 'Absent'}: {filteredAbsent}</Badge>
                                         </div>
                                         {filtered.length === 0 ? (
                                           <p className="text-xs text-muted-foreground text-center py-4">{ar ? 'لا توجد سجلات مطابقة للتصفية' : 'No records match this filter'}</p>
