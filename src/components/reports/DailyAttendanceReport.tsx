@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import {
   Download, Printer, FileText, Building2, Users, Clock,
   CalendarDays, Search, X, CalendarIcon,
+  LogIn, LogOut, CheckCircle2, AlertTriangle, XCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
