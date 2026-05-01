@@ -21,7 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 import { toast } from '@/hooks/use-toast';
 
-interface StationRow { id: string; name_ar: string; name_en: string; }
+interface StationRow { id: string; name_ar: string; name_en: string; weekend_days?: number[] | null; }
 interface EmployeeRow { id: string; employee_code: string; name_ar: string; name_en: string; station_id: string | null; department_id: string | null; }
 interface DepartmentRow { id: string; name_ar: string; name_en: string; }
 interface AttendanceRow {
