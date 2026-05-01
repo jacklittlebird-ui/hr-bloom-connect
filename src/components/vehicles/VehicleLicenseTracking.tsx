@@ -372,7 +372,10 @@ export const VehicleLicenseTracking = () => {
               </SelectContent>
             </Select>
             <Button size="sm" variant="outline" onClick={exportCsv}>
-              <Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}
+              <Download className="w-4 h-4 me-1" />{isAr ? 'CSV' : 'CSV'}
+            </Button>
+            <Button size="sm" onClick={exportPdf} className="bg-primary text-primary-foreground">
+              <FileDown className="w-4 h-4 me-1" />{isAr ? 'تصدير PDF' : 'PDF'}
             </Button>
           </div>
         </CardHeader>
