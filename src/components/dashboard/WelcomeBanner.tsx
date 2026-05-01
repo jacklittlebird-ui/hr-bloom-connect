@@ -58,7 +58,7 @@ export const WelcomeBanner = () => {
         className="absolute inset-0 w-full h-full object-cover"
       />
       {/* Color overlay for readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/85 via-primary/70 to-primary/55" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-primary/45 to-primary/25" />
 
       {/* Animated decorative elements */}
       <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-primary-foreground/8 blur-3xl animate-pulse" />
