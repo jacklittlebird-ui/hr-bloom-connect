@@ -392,6 +392,22 @@ export const StationAttendanceReport = () => {
                   <SelectItem value="1">{ar ? 'يبدأ الإثنين' : 'Starts Monday'}</SelectItem>
                 </SelectContent>
               </Select>
+              <Select
+                value={globalStatusFilter}
+                onValueChange={(v) => {
+                  setGlobalStatusFilter(v as DayFilter);
+                  // Reset per-employee overrides so the global filter applies to everyone
+                  setDayFilter(new Map());
+                }}
+              >
+                <SelectTrigger className="w-44"><SelectValue placeholder={ar ? 'حالة الأيام' : 'Day Status'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'كل الحالات' : 'All Statuses'}</SelectItem>
+                  <SelectItem value="present">{ar ? 'حاضر فقط' : 'Present only'}</SelectItem>
+                  <SelectItem value="late">{ar ? 'متأخر فقط' : 'Late only'}</SelectItem>
+                  <SelectItem value="absent">{ar ? 'غائب فقط' : 'Absent only'}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className={cn('flex gap-2', isRTL && 'flex-row-reverse')}>
               <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)}>
