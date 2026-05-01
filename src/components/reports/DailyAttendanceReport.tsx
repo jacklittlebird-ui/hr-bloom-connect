@@ -628,30 +628,30 @@ export const DailyAttendanceReport = () => {
                           const baseCell = 'border p-1 text-center font-mono whitespace-nowrap';
                           if (c.kind === 'none') {
                             return (
-                              <>
-                                <td key={`${ci}-in`} className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
-                                <td key={`${ci}-out`} className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
-                                <td key={`${ci}-h`} className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
-                              </>
+                              <Fragment key={ci}>
+                                <td className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
+                                <td className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
+                                <td className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
+                              </Fragment>
                             );
                           }
                           if (c.kind === 'absent') {
                             return (
-                              <>
-                                <td key={`${ci}-in`} colSpan={3} className={cn(baseCell, 'text-red-700 font-bold', dimmed ? 'bg-red-50/30 opacity-40' : 'bg-red-100')}>
+                              <Fragment key={ci}>
+                                <td colSpan={3} className={cn(baseCell, 'text-red-700 font-bold', dimmed ? 'bg-red-50/30 opacity-40' : 'bg-red-100')}>
                                   {ar ? 'غائب' : 'Absent'}
                                 </td>
-                              </>
+                              </Fragment>
                             );
                           }
                           const bg = c.kind === 'late' ? 'bg-amber-50' : 'bg-emerald-50/40';
                           const dimCls = dimmed ? 'opacity-40' : '';
                           return (
-                            <>
-                              <td key={`${ci}-in`} className={cn(baseCell, bg, dimCls)}>{formatTimeCairo(c.record!.check_in)}</td>
-                              <td key={`${ci}-out`} className={cn(baseCell, bg, dimCls)}>{formatTimeCairo(c.record!.check_out)}</td>
-                              <td key={`${ci}-h`} className={cn(baseCell, bg, dimCls, 'tabular-nums font-semibold')}>{fmtHours(c.hours)}</td>
-                            </>
+                            <Fragment key={ci}>
+                              <td className={cn(baseCell, bg, dimCls)}>{formatTimeCairo(c.record!.check_in)}</td>
+                              <td className={cn(baseCell, bg, dimCls)}>{formatTimeCairo(c.record!.check_out)}</td>
+                              <td className={cn(baseCell, bg, dimCls, 'tabular-nums font-semibold')}>{fmtHours(c.hours)}</td>
+                            </Fragment>
                           );
                         })}
                       </tr>
