@@ -175,109 +175,183 @@ export const DailyAttendanceReport = () => {
     return set;
   }, [employees, search, deptMap]);
 
-  // Build flat daily rows
-  type FlatRow = AttendanceRow & {
+  // Build the list of all dates in the selected range (inclusive).
+  const dateRange = useMemo<string[]>(() => {
+    const out: string[] = [];
+    const start = new Date(fromDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(toDate);
+    end.setHours(0, 0, 0, 0);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      out.push(toIsoDate(d));
+    }
+    return out;
+  }, [fromDate, toDate]);
+
+  // Cell shape for a single (employee, day) intersection.
+  type DayCell = {
+    record: AttendanceRow | null;
+    hours: number;
+    matchesStatus: boolean; // does this cell match the active status filter?
+    kind: 'present' | 'late' | 'absent' | 'none';
+  };
+
+  // Map: employee_id -> date -> record
+  const recordIndex = useMemo(() => {
+    const m = new Map<string, Map<string, AttendanceRow>>();
+    records.forEach(r => {
+      let inner = m.get(r.employee_id);
+      if (!inner) { inner = new Map(); m.set(r.employee_id, inner); }
+      inner.set(r.date, r);
+    });
+    return m;
+  }, [records]);
+
+  type EmpRow = {
     employee: EmployeeRow;
     department: DepartmentRow | null;
     station: StationRow | null;
-    hours: number;
+    cells: DayCell[];
+    totals: { present: number; late: number; absent: number; hours: number; matched: number };
   };
 
-  const flatRows = useMemo<FlatRow[]>(() => {
-    const out: FlatRow[] = [];
-    records.forEach(r => {
-      const emp = empMap.get(r.employee_id);
-      if (!emp) return;
+  // Visible (pivoted) employee rows. We always render the full date range as columns;
+  // the status filter only colors / counts matching cells (no rows are dropped because
+  // a single employee can have mixed statuses across days).
+  const empRows = useMemo<EmpRow[]>(() => {
+    const rows: EmpRow[] = [];
+    employees.forEach(emp => {
       if (!visibleEmpIds.has(emp.id)) return;
-      // Status filter
-      if (globalStatusFilter !== 'all') {
-        if (globalStatusFilter === 'absent' && r.status !== 'absent') return;
-        if (globalStatusFilter === 'late' && !(r.status === 'present' && !!r.is_late)) return;
-        if (globalStatusFilter === 'present' && !(r.status === 'present' && !r.is_late)) return;
-      }
-      const hours = Number(r.work_hours || (r.work_minutes ? r.work_minutes / 60 : 0)) || 0;
-      out.push({
-        ...r,
+      const inner = recordIndex.get(emp.id);
+      let present = 0, late = 0, absent = 0, hours = 0, matched = 0;
+      const cells: DayCell[] = dateRange.map(d => {
+        const rec = inner?.get(d) || null;
+        let kind: DayCell['kind'] = 'none';
+        let h = 0;
+        if (rec) {
+          h = Number(rec.work_hours || (rec.work_minutes ? rec.work_minutes / 60 : 0)) || 0;
+          if (rec.status === 'present' && !rec.is_late) kind = 'present';
+          else if (rec.status === 'present' && !!rec.is_late) kind = 'late';
+          else if (rec.status === 'absent') kind = 'absent';
+        }
+        const matchesStatus =
+          globalStatusFilter === 'all'
+            ? kind !== 'none'
+            : kind === globalStatusFilter;
+        if (kind === 'present') present++;
+        else if (kind === 'late') late++;
+        else if (kind === 'absent') absent++;
+        if (matchesStatus) {
+          matched++;
+          if (kind === 'present' || kind === 'late') hours += h;
+        }
+        return { record: rec, hours: h, matchesStatus, kind };
+      });
+      // If a status filter is active, hide employees with zero matching days.
+      if (globalStatusFilter !== 'all' && matched === 0) return;
+      rows.push({
         employee: emp,
         department: emp.department_id ? (deptMap.get(emp.department_id) || null) : null,
         station: emp.station_id ? (stationMap.get(emp.station_id) || null) : null,
-        hours,
+        cells,
+        totals: { present, late, absent, hours, matched },
       });
     });
-    // Sort by date asc, then station, then employee code
-    out.sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date);
+    // Sort by station then employee code
+    rows.sort((a, b) => {
       const sa = a.station ? (ar ? a.station.name_ar : a.station.name_en) : 'zzz';
       const sb = b.station ? (ar ? b.station.name_ar : b.station.name_en) : 'zzz';
       if (sa !== sb) return sa.localeCompare(sb, 'ar');
       return a.employee.employee_code.localeCompare(b.employee.employee_code);
     });
-    return out;
-  }, [records, empMap, visibleEmpIds, globalStatusFilter, deptMap, stationMap, ar]);
+    return rows;
+  }, [employees, visibleEmpIds, recordIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar]);
 
-  // Counters (for the badges) — always show counts BEFORE the status filter
+  // Counters (status badges) — across all visible employees and days, regardless of filter.
   const counters = useMemo(() => {
     let present = 0, late = 0, absent = 0;
-    records.forEach(r => {
-      const emp = empMap.get(r.employee_id);
-      if (!emp || !visibleEmpIds.has(emp.id)) return;
-      if (r.status === 'present' && !r.is_late) present++;
-      else if (r.status === 'present' && r.is_late) late++;
-      else if (r.status === 'absent') absent++;
+    employees.forEach(emp => {
+      if (!visibleEmpIds.has(emp.id)) return;
+      const inner = recordIndex.get(emp.id);
+      if (!inner) return;
+      dateRange.forEach(d => {
+        const r = inner.get(d);
+        if (!r) return;
+        if (r.status === 'present' && !r.is_late) present++;
+        else if (r.status === 'present' && r.is_late) late++;
+        else if (r.status === 'absent') absent++;
+      });
     });
     return { present, late, absent, total: present + late + absent };
-  }, [records, empMap, visibleEmpIds]);
+  }, [employees, visibleEmpIds, recordIndex, dateRange]);
 
-  // Totals after status filter
+  // Totals after status filter (uses per-row totals so they reflect the filter).
   const totals = useMemo(() => {
-    let totalHours = 0, present = 0, late = 0, absent = 0;
-    const empSet = new Set<string>();
+    let totalHours = 0, present = 0, late = 0, absent = 0, matched = 0;
     const stSet = new Set<string>();
-    flatRows.forEach(r => {
-      empSet.add(r.employee.id);
+    empRows.forEach(r => {
       if (r.station) stSet.add(r.station.id);
-      totalHours += r.hours;
-      if (r.status === 'present' && !r.is_late) present++;
-      else if (r.status === 'present' && r.is_late) late++;
-      else if (r.status === 'absent') absent++;
+      totalHours += r.totals.hours;
+      present += r.totals.present;
+      late += r.totals.late;
+      absent += r.totals.absent;
+      matched += r.totals.matched;
     });
     return {
       totalHours, present, late, absent,
-      employeesCount: empSet.size,
+      employeesCount: empRows.length,
       stationsCount: stSet.size,
-      rows: flatRows.length,
+      rows: matched,
     };
-  }, [flatRows]);
+  }, [empRows]);
 
-  const buildExportRows = () => flatRows.map((r, idx) => ({
-    _idx: idx + 1,
-    date: r.date,
-    station: r.station ? (ar ? r.station.name_ar : r.station.name_en) : (ar ? 'بدون محطة' : 'No Station'),
-    code: r.employee.employee_code,
-    name: ar ? r.employee.name_ar : r.employee.name_en,
-    department: r.department ? (ar ? r.department.name_ar : r.department.name_en) : '—',
-    check_in: formatTimeCairo(r.check_in),
-    check_out: formatTimeCairo(r.check_out),
-    hours: fmtHours(r.hours),
-    status: r.status === 'absent'
-      ? (ar ? 'غائب' : 'Absent')
-      : r.is_late
-        ? (ar ? 'متأخر' : 'Late')
-        : (ar ? 'حاضر' : 'Present'),
-  }));
+  // Export: one row per employee, with one block of columns per day (hours / in / out / status code).
+  const buildExportRows = () => empRows.map((r, idx) => {
+    const row: Record<string, unknown> = {
+      _idx: idx + 1,
+      station: r.station ? (ar ? r.station.name_ar : r.station.name_en) : (ar ? 'بدون محطة' : 'No Station'),
+      code: r.employee.employee_code,
+      name: ar ? r.employee.name_ar : r.employee.name_en,
+      department: r.department ? (ar ? r.department.name_ar : r.department.name_en) : '—',
+      present: r.totals.present,
+      late: r.totals.late,
+      absent: r.totals.absent,
+      total_hours: fmtHours(r.totals.hours),
+    };
+    r.cells.forEach((c, i) => {
+      const dateKey = dateRange[i];
+      row[`${dateKey}__in`] = formatTimeCairo(c.record?.check_in ?? null);
+      row[`${dateKey}__out`] = formatTimeCairo(c.record?.check_out ?? null);
+      row[`${dateKey}__hours`] = c.kind === 'none' ? '' : fmtHours(c.hours);
+      row[`${dateKey}__status`] = c.kind === 'present' ? (ar ? 'حاضر' : 'P')
+        : c.kind === 'late' ? (ar ? 'متأخر' : 'L')
+        : c.kind === 'absent' ? (ar ? 'غائب' : 'A')
+        : '—';
+    });
+    return row;
+  });
 
   const exportColumns = [
     { header: '#', key: '_idx' },
-    { header: ar ? 'التاريخ' : 'Date', key: 'date' },
     { header: ar ? 'المحطة' : 'Station', key: 'station' },
     { header: ar ? 'الكود' : 'Code', key: 'code' },
     { header: ar ? 'الاسم' : 'Name', key: 'name' },
     { header: ar ? 'القسم' : 'Department', key: 'department' },
-    { header: ar ? 'الحضور' : 'Check-in', key: 'check_in' },
-    { header: ar ? 'الانصراف' : 'Check-out', key: 'check_out' },
-    { header: ar ? 'الساعات' : 'Hours', key: 'hours' },
-    { header: ar ? 'الحالة' : 'Status', key: 'status' },
+    { header: ar ? 'حاضر' : 'Present', key: 'present' },
+    { header: ar ? 'متأخر' : 'Late', key: 'late' },
+    { header: ar ? 'غائب' : 'Absent', key: 'absent' },
+    { header: ar ? 'إجمالي الساعات' : 'Total Hours', key: 'total_hours' },
+    ...dateRange.flatMap(d => {
+      const short = format(new Date(d + 'T00:00:00'), 'dd/MM');
+      return [
+        { header: `${short} ${ar ? 'حضور' : 'In'}`, key: `${d}__in` },
+        { header: `${short} ${ar ? 'انصراف' : 'Out'}`, key: `${d}__out` },
+        { header: `${short} ${ar ? 'ساعات' : 'Hrs'}`, key: `${d}__hours` },
+        { header: `${short} ${ar ? 'حالة' : 'St'}`, key: `${d}__status` },
+      ];
+    }),
   ];
+
 
   const reportTitle = ar
     ? `تقرير الحضور التفصيلي اليومي — ${format(fromDate, 'dd/MM/yyyy')} → ${format(toDate, 'dd/MM/yyyy')}`
