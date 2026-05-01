@@ -273,14 +273,14 @@ export const StationAttendanceReport = () => {
     return { employeesCount, totalHours, presentDays, lateDays, absentDays, stationsCount: stationGroups.length };
   }, [empSummaries, stationGroups]);
 
-  // Export rows: one row per employee with weekly breakdown
+  // Export rows: one row per employee with weekly breakdown (dynamic week count)
   const buildExportRows = () => {
     const rows: Record<string, unknown>[] = [];
     stationGroups.forEach(group => {
       const stName = group.station ? (ar ? group.station.name_ar : group.station.name_en) : (ar ? 'بدون محطة' : 'No Station');
       group.rows.forEach((r, idx) => {
         const dept = r.employee.department_id ? deptMap.get(r.employee.department_id) : null;
-        rows.push({
+        const row: Record<string, unknown> = {
           _idx: idx + 1,
           station: stName,
           code: r.employee.employee_code,
@@ -289,22 +289,19 @@ export const StationAttendanceReport = () => {
           present: r.presentDays,
           late: r.lateDays,
           absent: r.absentDays,
-          w1: fmtHours(r.weeks[0]),
-          w2: fmtHours(r.weeks[1]),
-          w3: fmtHours(r.weeks[2]),
-          w4: fmtHours(r.weeks[3]),
-          w5: fmtHours(r.weeks[4]),
-          total: fmtHours(r.totalHours),
-        });
+        };
+        for (let i = 0; i < weeksCount; i++) row[`w${i + 1}`] = fmtHours(r.weeks[i] || 0);
+        row.total = fmtHours(r.totalHours);
+        rows.push(row);
       });
       // station subtotal row
       const sub = group.rows.reduce((acc, r) => {
         acc.present += r.presentDays; acc.late += r.lateDays; acc.absent += r.absentDays;
         acc.total += r.totalHours;
-        for (let i = 0; i < 5; i++) acc.weeks[i] += r.weeks[i];
+        for (let i = 0; i < weeksCount; i++) acc.weeks[i] = (acc.weeks[i] || 0) + (r.weeks[i] || 0);
         return acc;
-      }, { present: 0, late: 0, absent: 0, total: 0, weeks: [0, 0, 0, 0, 0] });
-      rows.push({
+      }, { present: 0, late: 0, absent: 0, total: 0, weeks: Array.from({ length: weeksCount }, () => 0) as number[] });
+      const subRow: Record<string, unknown> = {
         _idx: '',
         station: stName,
         code: ar ? 'مجموع المحطة' : 'Station Total',
@@ -313,13 +310,10 @@ export const StationAttendanceReport = () => {
         present: sub.present,
         late: sub.late,
         absent: sub.absent,
-        w1: fmtHours(sub.weeks[0]),
-        w2: fmtHours(sub.weeks[1]),
-        w3: fmtHours(sub.weeks[2]),
-        w4: fmtHours(sub.weeks[3]),
-        w5: fmtHours(sub.weeks[4]),
-        total: fmtHours(sub.total),
-      });
+      };
+      for (let i = 0; i < weeksCount; i++) subRow[`w${i + 1}`] = fmtHours(sub.weeks[i] || 0);
+      subRow.total = fmtHours(sub.total);
+      rows.push(subRow);
     });
     return rows;
   };
@@ -333,11 +327,10 @@ export const StationAttendanceReport = () => {
     { header: ar ? 'حضور' : 'Present', key: 'present' },
     { header: ar ? 'تأخير' : 'Late', key: 'late' },
     { header: ar ? 'غياب' : 'Absent', key: 'absent' },
-    { header: ar ? 'أسبوع 1' : 'Week 1', key: 'w1' },
-    { header: ar ? 'أسبوع 2' : 'Week 2', key: 'w2' },
-    { header: ar ? 'أسبوع 3' : 'Week 3', key: 'w3' },
-    { header: ar ? 'أسبوع 4' : 'Week 4', key: 'w4' },
-    { header: ar ? 'أسبوع 5' : 'Week 5', key: 'w5' },
+    ...Array.from({ length: weeksCount }, (_, i) => ({
+      header: `${ar ? 'أسبوع' : 'Week'} ${i + 1} (${weekRangeLabels[i]})`,
+      key: `w${i + 1}`,
+    })),
     { header: ar ? 'إجمالي ساعات الشهر' : 'Monthly Total Hours', key: 'total' },
   ];
 
