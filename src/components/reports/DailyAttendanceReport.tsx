@@ -718,7 +718,8 @@ export const DailyAttendanceReport = () => {
                           );
                         })}
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                   <tfoot>
                     <tr className="bg-emerald-50 font-bold">
