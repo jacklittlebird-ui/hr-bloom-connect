@@ -108,9 +108,24 @@ const SiteSettings = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const isAr = language === 'ar';
 
-  // Re-apply theme settings when component mounts with saved config
+  // Re-apply theme settings on mount, then merge any saved per-user prefs from DB
   useEffect(() => {
     applyThemeSettings(config);
+    (async () => {
+      const remote = await loadAndApplyUserThemePrefs();
+      if (remote) {
+        setConfig(prev => ({
+          ...prev,
+          ...(remote.theme ? { theme: remote.theme } : {}),
+          ...(remote.themePreset ? { themePreset: remote.themePreset } : {}),
+          ...(remote.primaryColor ? { primaryColor: remote.primaryColor } : {}),
+          ...(remote.radius ? { radius: remote.radius } : {}),
+          ...(remote.density ? { density: remote.density } : {}),
+          ...(remote.font ? { font: remote.font } : {}),
+        }));
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const update = (key: keyof SiteConfig, value: any) => {
@@ -136,23 +151,43 @@ const SiteSettings = () => {
     update('workingDays', days);
   };
 
-  const handleSave = () => {
-    // Ensure theme is applied on save
+  const handleSave = async () => {
     applyThemeSettings(config);
-    // Also force-save to localStorage in case usePersistedState hasn't flushed yet
     try {
       localStorage.setItem('hr_site_config', JSON.stringify(config));
     } catch {}
+    // Persist appearance prefs per user in the database
+    const ok = await saveUserThemePrefs({
+      theme: config.theme,
+      themePreset: config.themePreset,
+      primaryColor: config.primaryColor,
+      radius: config.radius,
+      density: config.density,
+      font: config.font,
+    });
     setHasChanges(false);
-    toast({ title: isAr ? 'تم الحفظ' : 'Saved', description: isAr ? 'تم حفظ إعدادات الموقع بنجاح' : 'Site settings saved successfully' });
+    toast({
+      title: isAr ? 'تم الحفظ' : 'Saved',
+      description: ok
+        ? (isAr ? 'تم حفظ الإعدادات وتفضيلات المظهر للمستخدم' : 'Settings and appearance preferences saved for your account')
+        : (isAr ? 'تم الحفظ محلياً (تعذّر المزامنة مع الحساب)' : 'Saved locally (could not sync with account)'),
+    });
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setConfig(defaultConfig);
     applyThemeSettings(defaultConfig);
     try {
       localStorage.setItem('hr_site_config', JSON.stringify(defaultConfig));
     } catch {}
+    await saveUserThemePrefs({
+      theme: defaultConfig.theme,
+      themePreset: defaultConfig.themePreset,
+      primaryColor: defaultConfig.primaryColor,
+      radius: defaultConfig.radius,
+      density: defaultConfig.density,
+      font: defaultConfig.font,
+    });
     setHasChanges(false);
     toast({ title: isAr ? 'تم الاستعادة' : 'Reset', description: isAr ? 'تم استعادة الإعدادات الافتراضية' : 'Default settings restored' });
   };
