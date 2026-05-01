@@ -127,6 +127,7 @@ const SiteSettings = () => {
           ...(remote.density ? { density: remote.density } : {}),
           ...(remote.font ? { font: remote.font } : {}),
           ...(remote.headerStyle ? { headerStyle: remote.headerStyle } : {}),
+          ...(remote.welcomeBg ? { welcomeBg: remote.welcomeBg } : {}),
         }));
       }
     })();
