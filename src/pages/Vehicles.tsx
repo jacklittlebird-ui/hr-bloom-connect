@@ -7,6 +7,7 @@ import { VehicleRegistry } from '@/components/vehicles/VehicleRegistry';
 import { VehicleLicenseTracking } from '@/components/vehicles/VehicleLicenseTracking';
 import { VehicleMaintenance } from '@/components/vehicles/VehicleMaintenance';
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
+import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
 
 const Vehicles = () => {
   const { language, isRTL } = useLanguage();
@@ -15,6 +16,7 @@ const Vehicles = () => {
 
   const tabs = [
     { id: 'by-station', label: isAr ? 'سيارات لكل محطة' : 'Vehicles per Station' },
+    { id: 'alerts', label: isAr ? 'تنبيهات التراخيص' : 'License Alerts' },
     { id: 'registry', label: isAr ? 'سجل السيارات' : 'Vehicle Registry' },
     { id: 'licenses', label: isAr ? 'متابعة التراخيص' : 'License Tracking' },
     { id: 'maintenance', label: isAr ? 'الصيانة' : 'Maintenance' },
@@ -41,6 +43,7 @@ const Vehicles = () => {
         </TabsList>
 
         <TabsContent value="by-station"><FleetByStation /></TabsContent>
+        <TabsContent value="alerts"><LicenseAlerts /></TabsContent>
         <TabsContent value="registry"><VehicleRegistry /></TabsContent>
         <TabsContent value="licenses"><VehicleLicenseTracking /></TabsContent>
         <TabsContent value="maintenance"><VehicleMaintenance /></TabsContent>
