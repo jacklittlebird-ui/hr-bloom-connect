@@ -174,12 +174,7 @@ export const useReportExport = () => {
     toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
   }, [t]);
 
-  const exportToWord = useCallback(async ({ title, data, columns, fileName }: ReportExportOptions) => {
-    if (!data.length) {
-      toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
-      return;
-    }
-
+  const buildWordHtml = useCallback(async ({ title, data, columns }: ReportExportOptions): Promise<string> => {
     // Fetch logo as base64 so it embeds inside the .doc file (no broken image when emailed)
     let logoDataUrl = '';
     try {
@@ -196,11 +191,9 @@ export const useReportExport = () => {
     const dir = isRTL ? 'rtl' : 'ltr';
     const align = isRTL ? 'right' : 'left';
     const colCount = columns.length;
-    // Auto-shrink font when too many columns to keep table readable on one page
     const autoBodyFont = colCount > 14 ? 8 : colCount > 10 ? 9 : colCount > 7 ? 10 : 11;
     const autoHeaderFont = autoBodyFont + 1;
     const autoCellPad = colCount > 12 ? '3px 4px' : '5px 7px';
-    // Auto-narrow margin when many columns
     const pageMargin = colCount > 12 ? '1.6cm 0.7cm 1.4cm 0.7cm' : '2.2cm 1.2cm 2cm 1.2cm';
 
     const headerHtml = columns.map(c => `<th style="background:#1e40af;color:#fff;padding:${autoCellPad};border:1px solid #94a3b8;font-size:${autoHeaderFont}px;text-align:center;font-weight:700;">${c.header}</th>`).join('');
@@ -231,7 +224,7 @@ export const useReportExport = () => {
       ? `<img src="${logoDataUrl}" alt="logo" style="height:22px;width:auto;vertical-align:middle;margin-${isRTL ? 'left' : 'right'}:6px;" />`
       : '';
 
-    const html = `<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40" dir="${dir}">
 <head>
 <meta charset="utf-8" />
@@ -325,7 +318,9 @@ export const useReportExport = () => {
 </div>
 </body>
 </html>`;
+  }, [isRTL, logoUrl]);
 
+  const downloadWordHtml = useCallback((html: string, title: string, fileName?: string) => {
     const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
     const url = URL.createObjectURL(blob);
     const downloadName = `${fileName || title}_${new Date().toISOString().slice(0, 10)}.doc`;
@@ -339,9 +334,26 @@ export const useReportExport = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     }, 1000);
+  }, []);
 
+  const exportToWord = useCallback(async (opts: ReportExportOptions) => {
+    if (!opts.data.length) {
+      toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
+      return;
+    }
+    const html = await buildWordHtml(opts);
+    downloadWordHtml(html, opts.title, opts.fileName);
     toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
-  }, [t, isRTL, logoUrl]);
+  }, [buildWordHtml, downloadWordHtml, t]);
+
+  const previewWordExport = useCallback(async (opts: ReportExportOptions): Promise<string | null> => {
+    if (!opts.data.length) {
+      toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
+      return null;
+    }
+    return await buildWordHtml(opts);
+  }, [buildWordHtml, t]);
+
 
   const exportToPDF = useCallback(({ title, data, columns, fileName }: ReportExportOptions) => {
     if (!data.length) {
