@@ -62,7 +62,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents'>('renewals');
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -72,6 +72,8 @@ const Documents = () => {
   const [viewDoc, setViewDoc] = useState<Document | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', category: '', type: 'PDF', description: '', tags: '', expiryDate: '' });
+
+  const { stats: alertStats, summary, loading: statsLoading, lastUpdated, refresh: refreshStats } = useAlertsStats();
 
   const isAr = language === 'ar';
 
