@@ -691,13 +691,22 @@ export const DailyAttendanceReport = () => {
                         <td className="border p-2 text-center font-bold tabular-nums bg-emerald-50/40">{fmtHours(r.totals.hours)}</td>
                         {r.cells.map((c, ci) => {
                           const dimmed = !c.matchesStatus;
-                          const baseCell = 'border p-1 text-center font-mono whitespace-nowrap';
+                          const dow = new Date(dateRange[ci] + 'T00:00:00').getDay();
+                          const isFri = dow === 5;
+                          const isSat = dow === 6;
+                          const weekendBorder = isFri
+                            ? 'border-x-2 border-x-amber-500'
+                            : isSat
+                            ? 'border-x-2 border-x-amber-300'
+                            : '';
+                          const weekendBg = isFri ? 'bg-amber-50/60' : isSat ? 'bg-amber-50/30' : '';
+                          const baseCell = cn('border p-1 text-center font-mono whitespace-nowrap', weekendBorder);
                           if (c.kind === 'none') {
                             return (
                               <Fragment key={ci}>
-                                <td className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
-                                <td className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
-                                <td className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
+                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')} title={isFri ? (ar ? 'الجمعة — عطلة' : 'Friday — Off') : isSat ? (ar ? 'السبت' : 'Saturday') : undefined}>{isFri ? '🕌' : '—'}</td>
+                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')}>—</td>
+                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')}>—</td>
                               </Fragment>
                             );
                           }
