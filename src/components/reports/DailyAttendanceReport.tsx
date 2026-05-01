@@ -674,15 +674,33 @@ export const DailyAttendanceReport = () => {
                   </thead>
                   <tbody>
                     {empRows.map((r, i) => {
-                      const hasAbsent = r.totals.absent > 0;
-                      const hasLate = r.totals.late > 0;
-                      const rowFlag = hasAbsent
-                        ? 'bg-red-50/60 hover:bg-red-50 font-bold'
-                        : hasLate
-                        ? 'bg-amber-50/50 hover:bg-amber-50 font-semibold'
-                        : 'hover:bg-muted/30';
+                      const absent = r.totals.absent;
+                      const late = r.totals.late;
+                      // Severity tiers — darker shading as counts grow.
+                      // Absent dominates Late.
+                      let rowFlag = 'hover:bg-muted/30';
+                      let titleTxt: string | undefined;
+                      if (absent >= 5) {
+                        rowFlag = 'bg-red-300/70 hover:bg-red-300 text-red-950 font-bold ring-1 ring-red-400';
+                        titleTxt = ar ? `غياب مرتفع جداً: ${absent} يوم` : `Critical absences: ${absent} days`;
+                      } else if (absent >= 3) {
+                        rowFlag = 'bg-red-200/70 hover:bg-red-200 font-bold';
+                        titleTxt = ar ? `غياب مرتفع: ${absent} يوم` : `High absences: ${absent} days`;
+                      } else if (absent >= 1) {
+                        rowFlag = 'bg-red-100/70 hover:bg-red-100 font-bold';
+                        titleTxt = ar ? `يحتوي على غياب: ${absent} يوم` : `Has absences: ${absent}`;
+                      } else if (late >= 5) {
+                        rowFlag = 'bg-amber-200/70 hover:bg-amber-200 font-bold';
+                        titleTxt = ar ? `تأخير مرتفع: ${late} يوم` : `High late: ${late} days`;
+                      } else if (late >= 3) {
+                        rowFlag = 'bg-amber-100/80 hover:bg-amber-100 font-semibold';
+                        titleTxt = ar ? `تأخير متوسط: ${late} يوم` : `Moderate late: ${late} days`;
+                      } else if (late >= 1) {
+                        rowFlag = 'bg-amber-50 hover:bg-amber-100/60 font-semibold';
+                        titleTxt = ar ? `تأخير: ${late} يوم` : `Late: ${late}`;
+                      }
                       return (
-                      <tr key={r.employee.id} className={cn(rowFlag)} title={hasAbsent ? (ar ? 'يحتوي على غياب' : 'Has absences') : hasLate ? (ar ? 'يحتوي على تأخير' : 'Has late days') : undefined}>
+                      <tr key={r.employee.id} className={cn(rowFlag)} title={titleTxt}>
                         <td className="border p-2 text-center text-muted-foreground tabular-nums">{i + 1}</td>
                         <td className="border p-2 text-center font-mono">{r.employee.employee_code}</td>
                         <td className="border p-2 whitespace-pre-wrap break-words font-medium">
