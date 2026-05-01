@@ -408,7 +408,7 @@ export const VehicleRegistry = () => {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((v) => (
-                    <TableRow key={v.id}>
+                    <TableRow key={v.id} id={`vehicle-row-${v.id}`} className={cn(focusedId === v.id && 'bg-primary/10 ring-2 ring-primary')}>
                       <TableCell className="font-mono text-xs">{v.vehicle_code}</TableCell>
                       <TableCell>{v.brand}</TableCell>
                       <TableCell>{v.model} ({v.year})</TableCell>
