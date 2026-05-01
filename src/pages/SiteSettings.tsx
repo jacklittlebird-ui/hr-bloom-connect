@@ -44,6 +44,10 @@ interface SiteConfig {
   ipRestriction: boolean;
   theme: string;
   primaryColor: string;
+  themePreset?: string;
+  radius?: string;
+  density?: string;
+  font?: string;
   autoBackup: boolean;
   backupFrequency: string;
   dataRetention: string;
