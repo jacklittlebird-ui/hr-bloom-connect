@@ -54,6 +54,16 @@ export const LicenseAlerts = () => {
   const [search, setSearch] = useState('');
   const [stationFilter, setStationFilter] = useState<string | null>(null);
   const [severityFilter, setSeverityFilter] = useState<'all' | Severity>('all');
+  const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
+  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
+  const [toDate, setToDate] = useState<Date | undefined>(undefined);
+
+  const applyPreset = (days: number | 'all') => {
+    if (days === 'all') { setFromDate(undefined); setToDate(undefined); return; }
+    const f = new Date(today);
+    const t = new Date(today); t.setDate(t.getDate() + days);
+    setFromDate(f); setToDate(t);
+  };
 
   useEffect(() => {
     (async () => {
