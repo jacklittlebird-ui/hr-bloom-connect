@@ -432,7 +432,7 @@ export const VehicleRegistry = () => {
             {/* Mobile cards */}
             <div className="md:hidden space-y-2">
               {filtered.map((v) => (
-                <div key={v.id} className="border rounded-lg p-3 bg-card">
+                <div key={v.id} id={`vehicle-row-${v.id}`} className={cn('border rounded-lg p-3 bg-card', focusedId === v.id && 'ring-2 ring-primary bg-primary/5')}>
                   <div className={cn('flex items-start justify-between gap-2', isRTL && 'flex-row-reverse')}>
                     <div className="min-w-0">
                       <div className="font-semibold">{v.brand} {v.model}</div>
