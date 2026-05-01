@@ -26,6 +26,7 @@ function mergeIntoLocalConfig(prefs: UserThemePrefs) {
       ...(prefs.density !== undefined && prefs.density !== null ? { density: prefs.density } : {}),
       ...(prefs.font !== undefined && prefs.font !== null ? { font: prefs.font } : {}),
       ...(prefs.headerStyle !== undefined && prefs.headerStyle !== null ? { headerStyle: prefs.headerStyle } : {}),
+      ...(prefs.welcomeBg !== undefined && prefs.welcomeBg !== null ? { welcomeBg: prefs.welcomeBg } : {}),
     };
     localStorage.setItem(LS_KEY, JSON.stringify(next));
     return next;
