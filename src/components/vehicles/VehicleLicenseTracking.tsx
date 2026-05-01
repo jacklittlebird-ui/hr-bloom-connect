@@ -208,7 +208,7 @@ export const VehicleLicenseTracking = () => {
     }
   };
 
-  const exportWord = async () => {
+  const exportWord = async (paged = false) => {
     if (filtered.length === 0) {
       toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export');
       return;
@@ -216,7 +216,8 @@ export const VehicleLicenseTracking = () => {
     try {
       await exportVehicleWord({
         ...buildReportPayload(),
-        fileName: `vehicle_licenses_${new Date().toISOString().slice(0, 10)}.docx`,
+        rowsPerPage: paged ? 20 : undefined,
+        fileName: `vehicle_licenses${paged ? '_paged' : ''}_${new Date().toISOString().slice(0, 10)}.docx`,
       });
       toast.success(isAr ? 'تم تصدير Word بنجاح' : 'Word exported successfully');
     } catch (e: any) {
@@ -400,8 +401,11 @@ export const VehicleLicenseTracking = () => {
             <Button size="sm" onClick={exportPdf} className="bg-primary text-primary-foreground">
               <FileDown className="w-4 h-4 me-1" />{isAr ? 'تصدير PDF' : 'PDF'}
             </Button>
-            <Button size="sm" onClick={exportWord} className="bg-blue-700 hover:bg-blue-800 text-white">
+            <Button size="sm" onClick={() => exportWord(false)} className="bg-blue-700 hover:bg-blue-800 text-white">
               <FileType2 className="w-4 h-4 me-1" />{isAr ? 'تصدير Word' : 'Word'}
+            </Button>
+            <Button size="sm" onClick={() => exportWord(true)} variant="outline" className="border-blue-700 text-blue-700 hover:bg-blue-50">
+              <FileType2 className="w-4 h-4 me-1" />{isAr ? 'Word (صفحات)' : 'Word (paged)'}
             </Button>
           </div>
         </CardHeader>

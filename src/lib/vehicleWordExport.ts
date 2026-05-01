@@ -15,6 +15,7 @@ import {
   Header,
   Footer,
   PageNumber,
+  PageBreak,
 } from 'docx';
 
 export interface WordColumn {
@@ -31,6 +32,13 @@ export interface WordExportOptions {
   fileName?: string;
   signatureLabels?: string[];
   orientation?: 'portrait' | 'landscape';
+  /**
+   * If set (>0), the body rows will be split across multiple pages with this
+   * many rows per page. The header row is repeated on every chunk and a page
+   * break is inserted between chunks. The signatures block always appears on
+   * the very last page.
+   */
+  rowsPerPage?: number;
 }
 
 const BRAND_BLUE = '1E40AF';
@@ -111,26 +119,39 @@ export async function exportVehicleWord(opts: WordExportOptions): Promise<void> 
   const sum = columnWidths.reduce((a, b) => a + b, 0);
   columnWidths[columnWidths.length - 1] += contentWidth - sum;
 
-  const headerRow = new TableRow({
-    tableHeader: true,
-    children: cols.map((c, i) => headerCell(c.header, columnWidths[i])),
-  });
+  const buildHeaderRow = () =>
+    new TableRow({
+      tableHeader: true,
+      children: cols.map((c, i) => headerCell(c.header, columnWidths[i])),
+    });
 
-  const bodyRows = opts.rows.map(
-    (r, ri) =>
-      new TableRow({
-        children: cols.map((c, ci) =>
-          bodyCell(String(r[c.key] ?? '—'), columnWidths[ci], ri % 2 === 1)
-        ),
+  const buildBodyRow = (r: Record<string, string | number>, ri: number) =>
+    new TableRow({
+      children: cols.map((c, ci) =>
+        bodyCell(String(r[c.key] ?? '—'), columnWidths[ci], ri % 2 === 1)
+      ),
+    });
+
+  // Split rows into chunks if rowsPerPage is set
+  const rowsPerPage = opts.rowsPerPage && opts.rowsPerPage > 0 ? opts.rowsPerPage : 0;
+  const chunks: Record<string, string | number>[][] = [];
+  if (rowsPerPage > 0 && opts.rows.length > rowsPerPage) {
+    for (let i = 0; i < opts.rows.length; i += rowsPerPage) {
+      chunks.push(opts.rows.slice(i, i + rowsPerPage));
+    }
+  } else {
+    chunks.push(opts.rows);
+  }
+
+  const tables: Table[] = chunks.map(
+    (chunk) =>
+      new Table({
+        width: { size: contentWidth, type: WidthType.DXA },
+        columnWidths,
+        rows: [buildHeaderRow(), ...chunk.map((r, ri) => buildBodyRow(r, ri))],
+        visuallyRightToLeft: true,
       })
   );
-
-  const table = new Table({
-    width: { size: contentWidth, type: WidthType.DXA },
-    columnWidths,
-    rows: [headerRow, ...bodyRows],
-    visuallyRightToLeft: true,
-  });
 
   // Meta paragraphs
   const metaParagraphs: Paragraph[] = [];
@@ -271,7 +292,29 @@ export async function exportVehicleWord(opts: WordExportOptions): Promise<void> 
     }),
     ...(metaParagraphs as (Paragraph | Table)[]),
     new Paragraph({ spacing: { after: 200 }, children: [] }),
-    table,
+    ...tables.flatMap((t, idx) => {
+      const isLast = idx === tables.length - 1;
+      const pageInfo = tables.length > 1
+        ? [
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              bidirectional: true,
+              spacing: { before: 60, after: 120 },
+              children: [
+                arRun(`الصفحة ${idx + 1} من ${tables.length}`, {
+                  bold: true,
+                  size: 18,
+                  color: '6B7280',
+                }),
+              ],
+            }),
+          ]
+        : [];
+      const breakAfter = !isLast
+        ? [new Paragraph({ children: [new PageBreak()] })]
+        : [];
+      return [...pageInfo, t, ...breakAfter];
+    }),
     ...signatureBlock,
   ];
 
