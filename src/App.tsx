@@ -13,6 +13,7 @@ import { LoanDataProvider } from "@/contexts/LoanDataContext";
 import { UniformDataProvider } from "@/contexts/UniformDataContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { PdfPreviewProvider } from "@/contexts/PdfPreviewContext";
 import { PerformanceDataProvider } from "@/contexts/PerformanceDataContext";
 import React, { Suspense } from "react";
 
