@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { Building2, Globe, Bell, Shield, Palette, Database, Save, Check, Sun, Moon, Monitor, Sparkles, Type, LayoutGrid, RotateCcw } from 'lucide-react';
 import { applyThemeSettings, THEME_PRESETS, ACCENT_PALETTE, FONT_OPTIONS } from '@/lib/themeUtils';
+import { loadAndApplyUserThemePrefs, saveUserThemePrefs } from '@/lib/userThemePrefs';
 
 interface SiteConfig {
   companyName: string;
