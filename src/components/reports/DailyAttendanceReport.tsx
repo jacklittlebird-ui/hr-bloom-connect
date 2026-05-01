@@ -551,95 +551,127 @@ export const DailyAttendanceReport = () => {
           </div>
         )}
 
-        {!loading && flatRows.length === 0 && (
+        {!loading && empRows.length === 0 && (
           <Card><CardContent className="p-10 text-center text-muted-foreground">
             {ar ? 'لا توجد بيانات حضور لهذه الفترة' : 'No attendance data for this period'}
           </CardContent></Card>
         )}
 
-        {!loading && flatRows.length > 0 && (
+        {!loading && empRows.length > 0 && (
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <div className={cn('overflow-auto bg-background', pinSummary && 'max-h-[640px]')}>
-                <table className="w-full text-xs border-collapse">
+                <table className="text-xs border-collapse" style={{ minWidth: '100%' }}>
                   <thead>
-                    {pinSummary && (
-                      <tr className="bg-emerald-50 font-bold sticky top-0 z-20 shadow-sm">
-                        <td className="border p-2 text-center" colSpan={5}>
-                          {ar ? 'الإجمالي بعد التصفية' : 'Filtered Total'}
-                        </td>
-                        <td className="border p-2 text-center tabular-nums" colSpan={3}>
-                          {ar ? 'عدد السجلات' : 'Records'}: {totals.rows}
-                        </td>
-                        <td className="border p-2 text-center tabular-nums">{fmtHours(totals.totalHours)}</td>
-                        <td className="border p-2 text-center">
-                          <div className={cn('flex flex-wrap gap-1 justify-center items-center', isRTL && 'flex-row-reverse')}>
-                            <Badge className="bg-green-600 hover:bg-green-600 text-[10px] h-5 px-1.5">{ar ? 'حاضر' : 'P'}: {totals.present}</Badge>
-                            <Badge className="bg-amber-500 hover:bg-amber-500 text-[10px] h-5 px-1.5">{ar ? 'متأخر' : 'L'}: {totals.late}</Badge>
-                            <Badge className="bg-red-600 hover:bg-red-600 text-[10px] h-5 px-1.5">{ar ? 'غائب' : 'A'}: {totals.absent}</Badge>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
+                    {/* Top header row: groups */}
+                    <tr className={cn('bg-muted/60', pinSummary && 'sticky top-0 z-30 shadow-sm')}>
+                      <th className="border p-2 text-center" rowSpan={2} style={{ minWidth: 32 }}>#</th>
+                      <th className="border p-2 text-center" rowSpan={2} style={{ minWidth: 80 }}>{ar ? 'الكود' : 'Code'}</th>
+                      <th className="border p-2 text-center" rowSpan={2} style={{ minWidth: 200 }}>{ar ? 'الاسم' : 'Name'}</th>
+                      <th className="border p-2 text-center" rowSpan={2} style={{ minWidth: 130 }}>{ar ? 'المحطة' : 'Station'}</th>
+                      <th className="border p-2 text-center" rowSpan={2} style={{ minWidth: 120 }}>{ar ? 'القسم' : 'Department'}</th>
+                      <th className="border p-2 text-center bg-emerald-50" colSpan={4}>
+                        {ar ? 'الملخص' : 'Summary'}
+                      </th>
+                      {dateRange.map(d => {
+                        const dObj = new Date(d + 'T00:00:00');
+                        const dayLabel = dObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short' });
+                        const dateLabel = format(dObj, 'dd/MM');
+                        const isFri = dObj.getDay() === 5;
+                        return (
+                          <th
+                            key={d}
+                            colSpan={3}
+                            className={cn('border p-1 text-center whitespace-nowrap', isFri ? 'bg-amber-50' : 'bg-blue-50')}
+                            style={{ minWidth: 150 }}
+                          >
+                            <div className="font-bold tabular-nums">{dateLabel}</div>
+                            <div className="text-[10px] font-normal text-muted-foreground">{dayLabel}</div>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                    {/* Second header row: subcolumns */}
                     <tr
-                      className={cn('bg-muted/50', pinSummary && 'sticky z-10 shadow-sm')}
-                      style={pinSummary ? { top: '41px' } : undefined}
+                      className={cn('bg-muted/40', pinSummary && 'sticky z-20 shadow-sm')}
+                      style={pinSummary ? { top: 56 } : undefined}
                     >
-                      <th className="border p-2 text-center w-12">#</th>
-                      <th className="border p-2 text-center whitespace-nowrap">{ar ? 'التاريخ' : 'Date'}</th>
-                      <th className="border p-2 text-center">{ar ? 'المحطة' : 'Station'}</th>
-                      <th className="border p-2 text-center">{ar ? 'الكود' : 'Code'}</th>
-                      <th className="border p-2 text-center min-w-[180px]">{ar ? 'الاسم' : 'Name'}</th>
-                      <th className="border p-2 text-center">{ar ? 'القسم' : 'Department'}</th>
-                      <th className="border p-2 text-center">{ar ? 'الحضور' : 'Check-in'}</th>
-                      <th className="border p-2 text-center">{ar ? 'الانصراف' : 'Check-out'}</th>
-                      <th className="border p-2 text-center">{ar ? 'الساعات' : 'Hours'}</th>
-                      <th className="border p-2 text-center">{ar ? 'الحالة' : 'Status'}</th>
+                      <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'حاضر' : 'P'}</th>
+                      <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'متأخر' : 'L'}</th>
+                      <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'غائب' : 'A'}</th>
+                      <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'الساعات' : 'Hrs'}</th>
+                      {dateRange.map(d => (
+                        <>
+                          <th key={`${d}-in`} className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'حضور' : 'In'}</th>
+                          <th key={`${d}-out`} className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'انصراف' : 'Out'}</th>
+                          <th key={`${d}-h`} className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'س' : 'H'}</th>
+                        </>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {flatRows.map((r, i) => {
-                      const dateObj = new Date(r.date + 'T00:00:00');
-                      const dayLabel = dateObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
-                      return (
-                        <tr key={`${r.employee_id}-${r.date}-${i}`} className={cn('hover:bg-muted/30', r.status === 'absent' && 'bg-red-50/40')}>
-                          <td className="border p-2 text-center text-muted-foreground tabular-nums">{i + 1}</td>
-                          <td className="border p-2 text-center whitespace-nowrap">{dayLabel}</td>
-                          <td className="border p-2 text-center">{r.station ? (ar ? r.station.name_ar : r.station.name_en) : '—'}</td>
-                          <td className="border p-2 text-center font-mono">{r.employee.employee_code}</td>
-                          <td className="border p-2 whitespace-pre-wrap break-words font-medium">{ar ? r.employee.name_ar : r.employee.name_en}</td>
-                          <td className="border p-2 text-center text-muted-foreground">{r.department ? (ar ? r.department.name_ar : r.department.name_en) : '—'}</td>
-                          <td className="border p-2 text-center font-mono">{formatTimeCairo(r.check_in)}</td>
-                          <td className="border p-2 text-center font-mono">{formatTimeCairo(r.check_out)}</td>
-                          <td className="border p-2 text-center tabular-nums">{fmtHours(r.hours)}</td>
-                          <td className="border p-2 text-center">
-                            {r.status === 'present' && (
-                              <Badge variant={r.is_late ? 'outline' : 'secondary'} className={r.is_late ? 'text-amber-700 border-amber-400' : ''}>
-                                {r.is_late ? (ar ? 'متأخر' : 'Late') : (ar ? 'حاضر' : 'Present')}
-                              </Badge>
-                            )}
-                            {r.status === 'absent' && <Badge variant="destructive">{ar ? 'غائب' : 'Absent'}</Badge>}
-                            {r.status !== 'present' && r.status !== 'absent' && <Badge variant="outline">{r.status}</Badge>}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {empRows.map((r, i) => (
+                      <tr key={r.employee.id} className="hover:bg-muted/30">
+                        <td className="border p-2 text-center text-muted-foreground tabular-nums">{i + 1}</td>
+                        <td className="border p-2 text-center font-mono">{r.employee.employee_code}</td>
+                        <td className="border p-2 whitespace-pre-wrap break-words font-medium">
+                          {ar ? r.employee.name_ar : r.employee.name_en}
+                        </td>
+                        <td className="border p-2 text-center">{r.station ? (ar ? r.station.name_ar : r.station.name_en) : '—'}</td>
+                        <td className="border p-2 text-center text-muted-foreground">{r.department ? (ar ? r.department.name_ar : r.department.name_en) : '—'}</td>
+                        <td className="border p-2 text-center text-green-700 font-semibold tabular-nums bg-emerald-50/30">{r.totals.present}</td>
+                        <td className="border p-2 text-center text-amber-600 tabular-nums bg-emerald-50/30">{r.totals.late}</td>
+                        <td className="border p-2 text-center text-red-600 tabular-nums bg-emerald-50/30">{r.totals.absent}</td>
+                        <td className="border p-2 text-center font-bold tabular-nums bg-emerald-50/40">{fmtHours(r.totals.hours)}</td>
+                        {r.cells.map((c, ci) => {
+                          const dimmed = !c.matchesStatus;
+                          const baseCell = 'border p-1 text-center font-mono whitespace-nowrap';
+                          if (c.kind === 'none') {
+                            return (
+                              <>
+                                <td key={`${ci}-in`} className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
+                                <td key={`${ci}-out`} className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
+                                <td key={`${ci}-h`} className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
+                              </>
+                            );
+                          }
+                          if (c.kind === 'absent') {
+                            return (
+                              <>
+                                <td key={`${ci}-in`} colSpan={3} className={cn(baseCell, 'text-red-700 font-bold', dimmed ? 'bg-red-50/30 opacity-40' : 'bg-red-100')}>
+                                  {ar ? 'غائب' : 'Absent'}
+                                </td>
+                              </>
+                            );
+                          }
+                          const bg = c.kind === 'late' ? 'bg-amber-50' : 'bg-emerald-50/40';
+                          const dimCls = dimmed ? 'opacity-40' : '';
+                          return (
+                            <>
+                              <td key={`${ci}-in`} className={cn(baseCell, bg, dimCls)}>{formatTimeCairo(c.record!.check_in)}</td>
+                              <td key={`${ci}-out`} className={cn(baseCell, bg, dimCls)}>{formatTimeCairo(c.record!.check_out)}</td>
+                              <td key={`${ci}-h`} className={cn(baseCell, bg, dimCls, 'tabular-nums font-semibold')}>{fmtHours(c.hours)}</td>
+                            </>
+                          );
+                        })}
+                      </tr>
+                    ))}
                   </tbody>
                   <tfoot>
                     <tr className="bg-emerald-50 font-bold">
                       <td className="border p-2 text-center" colSpan={5}>
-                        {ar ? 'الإجمالي بعد التصفية' : 'Filtered Total'}
+                        {ar ? 'الإجمالي العام (بعد التصفية)' : 'Grand Total (filtered)'}
                       </td>
-                      <td className="border p-2 text-center tabular-nums" colSpan={3}>
-                        {ar ? 'عدد السجلات' : 'Records'}: {totals.rows}
-                      </td>
+                      <td className="border p-2 text-center tabular-nums">{totals.present}</td>
+                      <td className="border p-2 text-center tabular-nums">{totals.late}</td>
+                      <td className="border p-2 text-center tabular-nums">{totals.absent}</td>
                       <td className="border p-2 text-center tabular-nums">{fmtHours(totals.totalHours)}</td>
-                      <td className="border p-2 text-center">
-                        <div className={cn('flex flex-wrap gap-1 justify-center items-center', isRTL && 'flex-row-reverse')}>
-                          <Badge className="bg-green-600 hover:bg-green-600 text-[10px] h-5 px-1.5">{ar ? 'حاضر' : 'P'}: {totals.present}</Badge>
-                          <Badge className="bg-amber-500 hover:bg-amber-500 text-[10px] h-5 px-1.5">{ar ? 'متأخر' : 'L'}: {totals.late}</Badge>
-                          <Badge className="bg-red-600 hover:bg-red-600 text-[10px] h-5 px-1.5">{ar ? 'غائب' : 'A'}: {totals.absent}</Badge>
-                        </div>
+                      <td className="border p-2 text-center text-muted-foreground" colSpan={dateRange.length * 3}>
+                        {ar ? 'عدد الموظفين' : 'Employees'}: {totals.employeesCount}
+                        {' • '}
+                        {ar ? 'عدد الأيام' : 'Days'}: {dateRange.length}
+                        {' • '}
+                        {ar ? 'سجلات مطابقة' : 'Matched records'}: {totals.rows}
                       </td>
                     </tr>
                   </tfoot>
