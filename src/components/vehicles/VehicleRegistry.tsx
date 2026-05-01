@@ -60,6 +60,7 @@ export const VehicleRegistry = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [alertFilter, setAlertFilter] = useState<'all' | 'expired' | 'soon'>('all');
 
   const fetchAll = async () => {
     setLoading(true);
