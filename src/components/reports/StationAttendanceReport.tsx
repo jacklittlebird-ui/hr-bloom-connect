@@ -675,11 +675,26 @@ export const StationAttendanceReport = () => {
                                               </tbody>
                                               <tfoot>
                                                 <tr className="bg-emerald-50 font-bold">
-                                                  <td className="border p-2 text-center" colSpan={4}>
+                                                  <td className="border p-2 text-center" colSpan={3}>
                                                     {ar ? 'الإجمالي بعد التصفية' : 'Filtered Total'}
                                                   </td>
+                                                  <td className="border p-2 text-center tabular-nums">
+                                                    {ar ? 'عدد الأيام' : 'Days'}: {filtered.length}
+                                                  </td>
                                                   <td className="border p-2 text-center tabular-nums">{fmtHours(filteredHours)}</td>
-                                                  <td className="border p-2 text-center tabular-nums">{filtered.length}</td>
+                                                  <td className="border p-2 text-center">
+                                                    <div className={cn('flex flex-wrap gap-1 justify-center items-center', isRTL && 'flex-row-reverse')}>
+                                                      <Badge className="bg-green-600 hover:bg-green-600 text-[10px] h-5 px-1.5">
+                                                        {ar ? 'حاضر' : 'P'}: {filteredPresent}
+                                                      </Badge>
+                                                      <Badge className="bg-amber-500 hover:bg-amber-500 text-[10px] h-5 px-1.5">
+                                                        {ar ? 'متأخر' : 'L'}: {filteredLate}
+                                                      </Badge>
+                                                      <Badge className="bg-red-600 hover:bg-red-600 text-[10px] h-5 px-1.5">
+                                                        {ar ? 'غائب' : 'A'}: {filteredAbsent}
+                                                      </Badge>
+                                                    </div>
+                                                  </td>
                                                 </tr>
                                               </tfoot>
                                             </table>
