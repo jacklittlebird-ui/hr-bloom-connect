@@ -60,7 +60,7 @@ function toIsoDate(d: Date): string {
 export const DailyAttendanceReport = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
-  const { reportRef, handlePrint, exportToPDF, exportToCSV } = useReportExport();
+  const { reportRef, handlePrint, exportToPDF, exportToCSV, exportToWord } = useReportExport();
 
   const now = new Date();
   // Default range: current month
@@ -561,6 +561,9 @@ export const DailyAttendanceReport = () => {
               </Button>
               <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: reportTitle, data: buildExportRows(), columns: exportColumns })}>
                 <FileText className="w-4 h-4 mr-2" />Excel
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportToWord({ title: reportTitle, data: buildExportRows(), columns: exportColumns })}>
+                <FileText className="w-4 h-4 mr-2" />Word
               </Button>
             </div>
           </div>
