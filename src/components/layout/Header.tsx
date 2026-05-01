@@ -18,7 +18,14 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-primary z-50 flex items-center justify-between px-4 md:px-6">
+    <header
+      className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-4 md:px-6 shadow-md"
+      style={{
+        backgroundImage: isRTL
+          ? 'linear-gradient(270deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 55%, hsl(0 84% 50%) 100%)'
+          : 'linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 55%, hsl(0 84% 50%) 100%)',
+      }}
+    >
       <div className="flex items-center gap-2 md:gap-3">
         {onToggleSidebar && (
           <Button
