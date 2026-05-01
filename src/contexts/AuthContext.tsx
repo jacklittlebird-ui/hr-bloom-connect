@@ -461,6 +461,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
       initialLoadDone.current = true;
 
+      // Load per-user appearance prefs after successful login
+      void import('@/lib/userThemePrefs')
+        .then(m => m.loadAndApplyUserThemePrefs())
+        .catch(() => undefined);
+
       return { success: true, redirectTo: getRoleRedirectPath(profile.role) };
     }
 
