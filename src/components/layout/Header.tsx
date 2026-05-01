@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,30 @@ import { NotificationDropdown } from '@/components/notifications/NotificationDro
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
+}
+
+const BLUE = 'hsl(var(--primary))';
+const RED = 'hsl(0 84% 50%)';
+
+function buildGradient(style: 'smooth' | 'sharp', isRTL: boolean) {
+  const dir = isRTL ? '270deg' : '90deg';
+  if (style === 'sharp') {
+    // Hard split with razor-thin transition
+    return `linear-gradient(${dir}, ${BLUE} 0%, ${BLUE} 49.5%, ${RED} 50.5%, ${RED} 100%)`;
+  }
+  // Smooth blend through purple
+  return `linear-gradient(${dir}, ${BLUE} 0%, hsl(280 70% 45%) 50%, ${RED} 100%)`;
+}
+
+function readHeaderStyle(): 'smooth' | 'sharp' {
+  // 1) data attribute set by applyThemeSettings, 2) localStorage, 3) default
+  const ds = document.documentElement.dataset.headerStyle;
+  if (ds === 'smooth' || ds === 'sharp') return ds;
+  try {
+    const cfg = JSON.parse(localStorage.getItem('hr_site_config') || '{}');
+    if (cfg.headerStyle === 'sharp') return 'sharp';
+  } catch {}
+  return 'smooth';
 }
 
 export const Header = ({ onToggleSidebar }: HeaderProps) => {
