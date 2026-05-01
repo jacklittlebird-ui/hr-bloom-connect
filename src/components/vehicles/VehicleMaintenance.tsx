@@ -282,6 +282,23 @@ export const VehicleMaintenance = () => {
               stations={stations} value={stationFilter} onChange={setStationFilter} isAr={isAr}
               allowAll allLabel={isAr ? 'كل المحطات' : 'All stations'} className="w-44"
             />
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-36 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{isAr ? 'كل الأنواع' : 'All Types'}</SelectItem>
+                {TYPES.map((t) => (<SelectItem key={t.value} value={t.value}>{isAr ? t.ar : t.en}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 w-36" title={isAr ? 'من تاريخ' : 'From date'} />
+            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9 w-36" title={isAr ? 'إلى تاريخ' : 'To date'} />
+            {(fromDate || toDate) && (
+              <Button size="sm" variant="ghost" onClick={() => { setFromDate(''); setToDate(''); }}>
+                {isAr ? 'مسح التواريخ' : 'Clear dates'}
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={exportCsv}>
+              <Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}
+            </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 me-1" />{isAr ? 'إضافة صيانة' : 'Add Maintenance'}</Button>
