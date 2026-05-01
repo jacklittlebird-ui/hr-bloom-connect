@@ -2,17 +2,38 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { CalendarDays, Clock } from 'lucide-react';
-import welcomeBannerBg from '@/assets/welcome-banner-bg.jpg';
+import { getWelcomeBgSrc, DEFAULT_WELCOME_BG } from '@/lib/welcomeBackgrounds';
+
+function readWelcomeBg(): string {
+  const ds = document.documentElement.dataset.welcomeBg;
+  if (ds) return ds;
+  try {
+    const cfg = JSON.parse(localStorage.getItem('hr_site_config') || '{}');
+    if (cfg.welcomeBg) return cfg.welcomeBg;
+  } catch {}
+  return DEFAULT_WELCOME_BG;
+}
 
 export const WelcomeBanner = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
 
   const [now, setNow] = useState(new Date());
+  const [bgId, setBgId] = useState<string>(() => readWelcomeBg());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => setBgId(readWelcomeBg());
+    window.addEventListener('hr-welcome-bg-changed', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('hr-welcome-bg-changed', refresh);
+      window.removeEventListener('storage', refresh);
+    };
   }, []);
 
   const hour = now.getHours();
@@ -50,7 +71,7 @@ export const WelcomeBanner = () => {
     >
       {/* Background image */}
       <img
-        src={welcomeBannerBg}
+        src={getWelcomeBgSrc(bgId)}
         alt=""
         loading="lazy"
         width={1536}

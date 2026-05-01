@@ -220,6 +220,7 @@ interface ApplyConfig {
   font?: string;
   sidebarStyle?: 'auto' | 'dark' | 'light' | 'glass';
   headerStyle?: 'smooth' | 'sharp';
+  welcomeBg?: string;
 }
 
 // HEX -> "H S% L%" string for CSS HSL variables
@@ -335,5 +336,10 @@ export function applyThemeSettings(config?: ApplyConfig) {
   // 6) Header style (smooth gradient vs sharp split)
   if (config.headerStyle === 'smooth' || config.headerStyle === 'sharp') {
     root.dataset.headerStyle = config.headerStyle;
+  }
+
+  // 7) Welcome banner background id
+  if (config.welcomeBg) {
+    root.dataset.welcomeBg = config.welcomeBg;
   }
 }

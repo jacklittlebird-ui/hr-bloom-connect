@@ -9,6 +9,7 @@ export interface UserThemePrefs {
   density?: string | null;
   font?: string | null;
   headerStyle?: 'smooth' | 'sharp' | null;
+  welcomeBg?: string | null;
 }
 
 const LS_KEY = 'hr_site_config';
@@ -25,6 +26,7 @@ function mergeIntoLocalConfig(prefs: UserThemePrefs) {
       ...(prefs.density !== undefined && prefs.density !== null ? { density: prefs.density } : {}),
       ...(prefs.font !== undefined && prefs.font !== null ? { font: prefs.font } : {}),
       ...(prefs.headerStyle !== undefined && prefs.headerStyle !== null ? { headerStyle: prefs.headerStyle } : {}),
+      ...(prefs.welcomeBg !== undefined && prefs.welcomeBg !== null ? { welcomeBg: prefs.welcomeBg } : {}),
     };
     localStorage.setItem(LS_KEY, JSON.stringify(next));
     return next;
@@ -40,7 +42,7 @@ export async function loadAndApplyUserThemePrefs(): Promise<UserThemePrefs | nul
     if (!user) return null;
     const { data, error } = await supabase
       .from('user_theme_preferences')
-      .select('theme, theme_preset, primary_color, radius, density, font, header_style')
+      .select('theme, theme_preset, primary_color, radius, density, font, header_style, welcome_bg')
       .eq('user_id', user.id)
       .maybeSingle();
     if (error || !data) return null;
@@ -52,10 +54,12 @@ export async function loadAndApplyUserThemePrefs(): Promise<UserThemePrefs | nul
       density: data.density,
       font: data.font,
       headerStyle: (data as any).header_style ?? null,
+      welcomeBg: (data as any).welcome_bg ?? null,
     };
     const merged = mergeIntoLocalConfig(prefs);
     if (merged) applyThemeSettings(merged);
     try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
+    try { window.dispatchEvent(new Event('hr-welcome-bg-changed')); } catch {}
     return prefs;
   } catch {
     return null;
@@ -78,6 +82,7 @@ export async function saveUserThemePrefs(prefs: UserThemePrefs): Promise<boolean
         density: prefs.density ?? null,
         font: prefs.font ?? null,
         header_style: prefs.headerStyle ?? null,
+        welcome_bg: prefs.welcomeBg ?? null,
       } as any, { onConflict: 'user_id' });
     return !error;
   } catch {

@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { Building2, Globe, Bell, Shield, Palette, Database, Save, Check, Sun, Moon, Monitor, Sparkles, Type, LayoutGrid, RotateCcw } from 'lucide-react';
 import { applyThemeSettings, THEME_PRESETS, ACCENT_PALETTE, FONT_OPTIONS } from '@/lib/themeUtils';
 import { loadAndApplyUserThemePrefs, saveUserThemePrefs } from '@/lib/userThemePrefs';
+import { WELCOME_BG_OPTIONS } from '@/lib/welcomeBackgrounds';
 
 interface SiteConfig {
   companyName: string;
@@ -50,6 +51,7 @@ interface SiteConfig {
   density?: string;
   font?: string;
   headerStyle?: 'smooth' | 'sharp';
+  welcomeBg?: string;
   autoBackup: boolean;
   backupFrequency: string;
   dataRetention: string;
@@ -89,6 +91,7 @@ const defaultConfig: SiteConfig = {
   density: 'comfortable',
   font: 'baloo',
   headerStyle: 'smooth',
+  welcomeBg: 'misty',
   autoBackup: true,
   backupFrequency: 'daily',
   dataRetention: '5years',
@@ -125,6 +128,7 @@ const SiteSettings = () => {
           ...(remote.density ? { density: remote.density } : {}),
           ...(remote.font ? { font: remote.font } : {}),
           ...(remote.headerStyle ? { headerStyle: remote.headerStyle } : {}),
+          ...(remote.welcomeBg ? { welcomeBg: remote.welcomeBg } : {}),
         }));
       }
     })();
@@ -135,10 +139,13 @@ const SiteSettings = () => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
     setHasChanges(true);
-    if (['theme', 'primaryColor', 'themePreset', 'radius', 'density', 'font', 'headerStyle'].includes(key as string)) {
+    if (['theme', 'primaryColor', 'themePreset', 'radius', 'density', 'font', 'headerStyle', 'welcomeBg'].includes(key as string)) {
       applyThemeSettings(newConfig as any);
       if (key === 'headerStyle') {
         try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
+      }
+      if (key === 'welcomeBg') {
+        try { window.dispatchEvent(new Event('hr-welcome-bg-changed')); } catch {}
       }
     }
   };
@@ -171,8 +178,10 @@ const SiteSettings = () => {
       density: config.density,
       font: config.font,
       headerStyle: config.headerStyle,
+      welcomeBg: config.welcomeBg,
     });
     try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
+    try { window.dispatchEvent(new Event('hr-welcome-bg-changed')); } catch {}
     setHasChanges(false);
     toast({
       title: isAr ? 'تم الحفظ' : 'Saved',
@@ -196,8 +205,10 @@ const SiteSettings = () => {
       density: defaultConfig.density,
       font: defaultConfig.font,
       headerStyle: defaultConfig.headerStyle,
+      welcomeBg: defaultConfig.welcomeBg,
     });
     try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
+    try { window.dispatchEvent(new Event('hr-welcome-bg-changed')); } catch {}
     setHasChanges(false);
     toast({ title: isAr ? 'تم الاستعادة' : 'Reset', description: isAr ? 'تم استعادة الإعدادات الافتراضية' : 'Default settings restored' });
   };
@@ -381,7 +392,7 @@ const SiteSettings = () => {
                     className="gap-2"
                     onClick={() => updateMany({
                       themePreset: 'corporate-blue', theme: 'system', primaryColor: '#2563eb',
-                      radius: 'md', density: 'comfortable', font: 'baloo', headerStyle: 'smooth',
+                      radius: 'md', density: 'comfortable', font: 'baloo', headerStyle: 'smooth', welcomeBg: 'misty',
                     })}
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -590,6 +601,33 @@ const SiteSettings = () => {
                           >
                             <div className="h-9 w-full rounded-md mb-2" style={{ backgroundImage: bg }} />
                             <span>{isAr ? opt.ar : opt.en}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Welcome banner background */}
+                  <div className="md:col-span-2">
+                    <Label className="mb-3 block">{isAr ? 'خلفية بطاقة الترحيب' : 'Welcome Card Background'}</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {WELCOME_BG_OPTIONS.map(opt => {
+                        const active = (config.welcomeBg || 'misty') === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => update('welcomeBg', opt.id)}
+                            className={cn(
+                              "rounded-lg border-2 p-2 text-xs font-medium transition-all hover:border-primary/50 text-left overflow-hidden",
+                              active ? "border-primary ring-2 ring-primary/30" : "border-border"
+                            )}
+                          >
+                            <div
+                              className="h-16 w-full rounded-md mb-2 bg-cover bg-center"
+                              style={{ backgroundImage: `url(${opt.src})` }}
+                            />
+                            <span>{isAr ? opt.label.ar : opt.label.en}</span>
                           </button>
                         );
                       })}
