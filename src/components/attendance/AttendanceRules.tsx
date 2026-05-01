@@ -15,6 +15,7 @@ import {
   Plane, Timer, AlertCircle, CheckCircle2, Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { StationWeekendSettings } from './StationWeekendSettings';
 import { AttendanceRule, ScheduleType } from '@/types/attendance';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -200,6 +201,9 @@ export const AttendanceRules = () => {
 
   return (
     <div className="space-y-6">
+      {/* Per-station weekend off-days configuration */}
+      <StationWeekendSettings />
+
       {/* Header */}
       <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
         <div>

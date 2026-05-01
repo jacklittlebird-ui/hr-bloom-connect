@@ -21,7 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 import { toast } from '@/hooks/use-toast';
 
-interface StationRow { id: string; name_ar: string; name_en: string; }
+interface StationRow { id: string; name_ar: string; name_en: string; weekend_days?: number[] | null; }
 interface EmployeeRow { id: string; employee_code: string; name_ar: string; name_en: string; station_id: string | null; department_id: string | null; }
 interface DepartmentRow { id: string; name_ar: string; name_en: string; }
 interface AttendanceRow {
@@ -88,7 +88,7 @@ export const DailyAttendanceReport = () => {
   useEffect(() => {
     (async () => {
       const [{ data: st }, { data: dp }] = await Promise.all([
-        supabase.from('stations').select('id,name_ar,name_en').order('name_ar'),
+        supabase.from('stations').select('id,name_ar,name_en,weekend_days').order('name_ar'),
         supabase.from('departments').select('id,name_ar,name_en'),
       ]);
       setStations((st as StationRow[]) || []);
@@ -146,6 +146,38 @@ export const DailyAttendanceReport = () => {
     stations.forEach(s => m.set(s.id, s));
     return m;
   }, [stations]);
+
+  // Weekend day-of-week set per station (defaults to [5,6] = Fri/Sat).
+  const weekendByStation = useMemo(() => {
+    const m = new Map<string, Set<number>>();
+    stations.forEach(s => {
+      const arr = Array.isArray(s.weekend_days) ? s.weekend_days : [5, 6];
+      const set = new Set<number>();
+      arr.forEach((v: any) => {
+        const n = typeof v === 'number' ? v : Number(v);
+        if (Number.isFinite(n) && n >= 0 && n <= 6) set.add(n);
+      });
+      m.set(s.id, set.size ? set : new Set([5, 6]));
+    });
+    return m;
+  }, [stations]);
+
+  // Header weekend set: when filtering to one station use its days,
+  // otherwise show the union across all stations so weekends remain visible.
+  const headerWeekend = useMemo(() => {
+    if (stationFilter !== 'all') {
+      return weekendByStation.get(stationFilter) || new Set([5, 6]);
+    }
+    const u = new Set<number>();
+    weekendByStation.forEach(s => s.forEach(d => u.add(d)));
+    return u.size ? u : new Set([5, 6]);
+  }, [weekendByStation, stationFilter]);
+
+  const isHeaderWeekend = (dow: number) => headerWeekend.has(dow);
+  const isEmpWeekend = (empStationId: string | null, dow: number) => {
+    if (!empStationId) return headerWeekend.has(dow);
+    return (weekendByStation.get(empStationId) || new Set([5, 6])).has(dow);
+  };
 
   const deptMap = useMemo(() => {
     const m = new Map<string, DepartmentRow>();
@@ -588,12 +620,7 @@ export const DailyAttendanceReport = () => {
                 <span className="mx-1 text-muted-foreground">|</span>
                 <span className="inline-flex items-center gap-1 text-amber-700">
                   <span className="inline-block w-3 h-3 rounded-sm bg-amber-100 border-2 border-amber-500" aria-hidden />
-                  <span aria-hidden>🕌</span>
-                  <span className="font-medium">{ar ? 'الجمعة (عطلة)' : 'Friday (Off)'}</span>
-                </span>
-                <span className="inline-flex items-center gap-1 text-amber-600">
-                  <span className="inline-block w-3 h-3 rounded-sm bg-amber-50 border-2 border-amber-300" aria-hidden />
-                  <span className="font-medium">{ar ? 'السبت' : 'Saturday'}</span>
+                  <span className="font-medium">{ar ? 'يوم عطلة (حسب إعداد المحطة)' : 'Off-day (per station setting)'}</span>
                 </span>
                 <span className="inline-flex items-center gap-1 text-muted-foreground">
                   <span className="text-muted-foreground/60">—</span>
@@ -618,14 +645,10 @@ export const DailyAttendanceReport = () => {
                         const dayLabel = dObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short' });
                         const dateLabel = format(dObj, 'dd/MM');
                         const dow = dObj.getDay();
+                        const isOff = isHeaderWeekend(dow);
                         const isFri = dow === 5;
-                        const isSat = dow === 6;
-                        const headBg = isFri ? 'bg-amber-100' : isSat ? 'bg-amber-50' : 'bg-blue-50';
-                        const borderCls = isFri
-                          ? 'border-x-2 border-x-amber-500'
-                          : isSat
-                          ? 'border-x-2 border-x-amber-300'
-                          : '';
+                        const headBg = isOff ? 'bg-amber-100' : 'bg-blue-50';
+                        const borderCls = isOff ? 'border-x-2 border-x-amber-500' : '';
                         return (
                           <th
                             key={d}
@@ -633,18 +656,15 @@ export const DailyAttendanceReport = () => {
                             className={cn('border p-1 text-center whitespace-nowrap relative', headBg, borderCls)}
                             style={{ minWidth: 150 }}
                           >
-                            {isFri && (
+                            {isOff && (
                               <div className="absolute inset-x-0 top-0 h-1 bg-amber-500" aria-hidden />
                             )}
-                            {isSat && (
-                              <div className="absolute inset-x-0 top-0 h-1 bg-amber-300" aria-hidden />
-                            )}
                             <div className="font-bold tabular-nums flex items-center justify-center gap-1">
-                              {isFri && <span aria-hidden>🕌</span>}
+                              {isOff && isFri && <span aria-hidden>🕌</span>}
                               {dateLabel}
                             </div>
-                            <div className={cn('text-[10px] font-normal', isFri ? 'text-amber-700 font-semibold' : isSat ? 'text-amber-600' : 'text-muted-foreground')}>
-                              {isFri ? (ar ? 'الجمعة — عطلة' : 'Friday — Off') : isSat ? (ar ? 'السبت' : 'Saturday') : dayLabel}
+                            <div className={cn('text-[10px] font-normal', isOff ? 'text-amber-700 font-semibold' : 'text-muted-foreground')}>
+                              {isOff ? `${dayLabel} — ${ar ? 'عطلة' : 'Off'}` : dayLabel}
                             </div>
                           </th>
                         );
@@ -661,7 +681,7 @@ export const DailyAttendanceReport = () => {
                       <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'الساعات' : 'Hrs'}</th>
                       {dateRange.map(d => {
                         const dow = new Date(d + 'T00:00:00').getDay();
-                        const sub = dow === 5 ? 'bg-amber-100/70' : dow === 6 ? 'bg-amber-50/70' : '';
+                        const sub = isHeaderWeekend(dow) ? 'bg-amber-100/70' : '';
                         return (
                         <Fragment key={d}>
                           <th className={cn('border p-1 text-center text-[10px] font-normal text-muted-foreground', sub)}>{ar ? 'حضور' : 'In'}</th>
@@ -715,19 +735,18 @@ export const DailyAttendanceReport = () => {
                         {r.cells.map((c, ci) => {
                           const dimmed = !c.matchesStatus;
                           const dow = new Date(dateRange[ci] + 'T00:00:00').getDay();
+                          const isOff = isEmpWeekend(r.station?.id || null, dow);
                           const isFri = dow === 5;
-                          const isSat = dow === 6;
-                          const weekendBorder = isFri
-                            ? 'border-x-2 border-x-amber-500'
-                            : isSat
-                            ? 'border-x-2 border-x-amber-300'
-                            : '';
-                          const weekendBg = isFri ? 'bg-amber-50/60' : isSat ? 'bg-amber-50/30' : '';
+                          const weekendBorder = isOff ? 'border-x-2 border-x-amber-500' : '';
+                          const weekendBg = isOff ? 'bg-amber-50/60' : '';
+                          const offTitle = isOff
+                            ? (ar ? `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('ar-EG', { weekday: 'long' })} — عطلة` : `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' })} — Off`)
+                            : undefined;
                           const baseCell = cn('border p-1 text-center font-mono whitespace-nowrap', weekendBorder);
                           if (c.kind === 'none') {
                             return (
                               <Fragment key={ci}>
-                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')} title={isFri ? (ar ? 'الجمعة — عطلة' : 'Friday — Off') : isSat ? (ar ? 'السبت' : 'Saturday') : undefined}>{isFri ? '🕌' : '—'}</td>
+                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')} title={offTitle}>{isOff && isFri ? '🕌' : '—'}</td>
                                 <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')}>—</td>
                                 <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')}>—</td>
                               </Fragment>
