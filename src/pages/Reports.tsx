@@ -67,11 +67,15 @@ const Reports = () => {
               <TabsTrigger value="stations" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 {isRTL ? 'تقرير المحطات الشهري' : 'Monthly Stations Report'}
               </TabsTrigger>
+              <TabsTrigger value="daily" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {isRTL ? 'تقرير تفصيلي يومي' : 'Daily Detailed Report'}
+              </TabsTrigger>
               <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 {isRTL ? 'نظرة عامة' : 'Overview'}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="stations"><StationAttendanceReport /></TabsContent>
+            <TabsContent value="daily"><DailyAttendanceReport /></TabsContent>
             <TabsContent value="overview"><AttendanceReportsTab /></TabsContent>
           </Tabs>
         </TabsContent>
