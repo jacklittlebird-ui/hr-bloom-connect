@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePdfPreviewContext } from '@/contexts/PdfPreviewContext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { toast } from '@/hooks/use-toast';
