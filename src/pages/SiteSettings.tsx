@@ -50,6 +50,7 @@ interface SiteConfig {
   density?: string;
   font?: string;
   headerStyle?: 'smooth' | 'sharp';
+  welcomeBg?: string;
   autoBackup: boolean;
   backupFrequency: string;
   dataRetention: string;
