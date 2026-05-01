@@ -254,6 +254,8 @@ function placeCanvas(pdf: jsPDF, canvas: HTMLCanvasElement, x: number, y: number
 
 export async function exportVehiclePdf(opts: ExportOptions): Promise<void> {
   const logoDataUrl = await loadLogo();
+  await ensureFontsReady();
+
   const orientation = opts.orientation || 'landscape';
   const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation, compress: true });
   const pageW = pdf.internal.pageSize.getWidth();
@@ -263,112 +265,118 @@ export async function exportVehiclePdf(opts: ExportOptions): Promise<void> {
   const contentW = pageW - margin * 2;
   const usableH = pageH - margin * 2 - footerH;
 
-  // 1) Render header (top of first page)
-  const headerCanvas = await htmlToCanvas(buildHeaderHtml(opts, logoDataUrl));
-  const headerHmm = (headerCanvas.height * contentW) / headerCanvas.width;
+  // Single shared off-screen stage reused for ALL renders & measurements.
+  const stage = createStage();
 
-  // 2) Render signatures (bottom of last page)
-  const signatureCanvas = await htmlToCanvas(buildSignatureHtml(opts));
-  const signatureHmm = (signatureCanvas.height * contentW) / signatureCanvas.width;
+  try {
+    // 1) Render header (top of first page)
+    const headerCanvas = await htmlToCanvasOnStage(stage, buildHeaderHtml(opts, logoDataUrl));
+    const headerHmm = (headerCanvas.height * contentW) / headerCanvas.width;
 
-  // 3) Edge-case: empty table — single page with header + "no data" + signatures
-  if (opts.rows.length === 0) {
-    let y = margin;
-    y += placeCanvas(pdf, headerCanvas, margin, y, contentW);
-    const emptyCanvas = await htmlToCanvas(
-      buildTableHtml(opts.columns, `<tr><td colspan="${opts.columns.length}" style="padding:24px;text-align:center;color:#64748b;font-size:12px;border:1px solid #cbd5e1;">لا توجد بيانات للعرض</td></tr>`, true),
-    );
-    y += placeCanvas(pdf, emptyCanvas, margin, y, contentW);
-    placeCanvas(pdf, signatureCanvas, margin, y + 2, contentW);
-    drawFooter(pdf, pageW, pageH, footerH, margin);
-    pdf.save(opts.fileName);
-    return;
-  }
+    // 2) Render signatures (bottom of last page)
+    const signatureCanvas = await htmlToCanvasOnStage(stage, buildSignatureHtml(opts));
+    const signatureHmm = (signatureCanvas.height * contentW) / signatureCanvas.width;
 
-  // 4) Measure row heights
-  const { headerMm: tableHeaderMm, rowsMm } = await measureRowHeights(opts.columns, opts.rows, contentW);
-
-  // 5) Pack rows into pages
-  // Page 1 reserves: header banner. Last page reserves: signatures.
-  // Each page reserves: table header (repeated).
-  const pages: number[][] = []; // array of row indices per page
-  let current: number[] = [];
-  let used = 0;
-  const SAFETY = 1.5; // mm safety per row to compensate measurement rounding
-
-  const reserveTop = (pageIndex: number) => (pageIndex === 0 ? headerHmm + 2 : 0) + tableHeaderMm;
-
-  for (let i = 0; i < rowsMm.length; i++) {
-    const isLastRow = i === rowsMm.length - 1;
-    const pageIndex = pages.length; // index of the page we're filling
-    const top = reserveTop(pageIndex);
-    const remaining = usableH - top - used;
-    const rowH = rowsMm[i] + SAFETY;
-    // If this row is the last one in the dataset, it must also fit the signatures
-    const needed = rowH + (isLastRow ? signatureHmm + 4 : 0);
-
-    if (rowH > usableH - top) {
-      // Pathological tall row — place it alone on its own page
-      if (current.length > 0) { pages.push(current); current = []; used = 0; }
-      pages.push([i]);
-      continue;
+    // 3) Edge-case: empty table
+    if (opts.rows.length === 0) {
+      let y = margin;
+      y += placeCanvas(pdf, headerCanvas, margin, y, contentW);
+      const emptyCanvas = await htmlToCanvasOnStage(
+        stage,
+        buildTableHtml(opts.columns, `<tr><td colspan="${opts.columns.length}" style="padding:24px;text-align:center;color:#64748b;font-size:12px;border:1px solid #cbd5e1;">لا توجد بيانات للعرض</td></tr>`, true),
+      );
+      y += placeCanvas(pdf, emptyCanvas, margin, y, contentW);
+      placeCanvas(pdf, signatureCanvas, margin, y + 2, contentW);
+      drawFooter(pdf, pageW, pageH, footerH, margin);
+      pdf.save(opts.fileName);
+      return;
     }
 
-    if (needed <= remaining) {
-      current.push(i);
-      used += rowH;
-    } else {
-      // Push current page and try this row on a fresh page
-      if (current.length > 0) { pages.push(current); current = []; used = 0; }
-      const freshTop = reserveTop(pages.length);
-      const freshRemaining = usableH - freshTop;
-      if (needed <= freshRemaining) {
+    // 4) Measure row heights (single render pass, batched reads)
+    const { headerMm: tableHeaderMm, rowsMm } = await measureRowHeightsOnStage(
+      stage,
+      opts.columns,
+      opts.rows,
+      contentW,
+    );
+
+    // 5) Pack rows into pages
+    const pages: number[][] = [];
+    let current: number[] = [];
+    let used = 0;
+    const SAFETY = 1.5;
+
+    const reserveTop = (pageIndex: number) => (pageIndex === 0 ? headerHmm + 2 : 0) + tableHeaderMm;
+
+    for (let i = 0; i < rowsMm.length; i++) {
+      const isLastRow = i === rowsMm.length - 1;
+      const pageIndex = pages.length;
+      const top = reserveTop(pageIndex);
+      const remaining = usableH - top - used;
+      const rowH = rowsMm[i] + SAFETY;
+      const needed = rowH + (isLastRow ? signatureHmm + 4 : 0);
+
+      if (rowH > usableH - top) {
+        if (current.length > 0) { pages.push(current); current = []; used = 0; }
+        pages.push([i]);
+        continue;
+      }
+
+      if (needed <= remaining) {
         current.push(i);
-        used = rowH;
+        used += rowH;
       } else {
-        // Even alone the row + signature don't fit → put row alone, signature spills
+        if (current.length > 0) { pages.push(current); current = []; used = 0; }
         current.push(i);
         used = rowH;
       }
     }
-  }
-  if (current.length > 0) pages.push(current);
+    if (current.length > 0) pages.push(current);
 
-  // Determine if signature fits on last page; else add an extra page
-  const lastPageIdx = pages.length - 1;
-  const lastPageRowsHeight = pages[lastPageIdx].reduce((s, idx) => s + rowsMm[idx] + SAFETY, 0);
-  const lastPageTop = reserveTop(lastPageIdx);
-  const lastPageRemaining = usableH - lastPageTop - lastPageRowsHeight;
-  const signatureOnSeparatePage = signatureHmm + 4 > lastPageRemaining;
+    // Determine if signature fits on last page
+    const lastPageIdx = pages.length - 1;
+    const lastPageRowsHeight = pages[lastPageIdx].reduce((s, idx) => s + rowsMm[idx] + SAFETY, 0);
+    const lastPageTop = reserveTop(lastPageIdx);
+    const lastPageRemaining = usableH - lastPageTop - lastPageRowsHeight;
+    const signatureOnSeparatePage = signatureHmm + 4 > lastPageRemaining;
 
-  // 6) Render each page: header (page 1), table (header + chunk rows), signatures (last page)
-  for (let p = 0; p < pages.length; p++) {
-    if (p > 0) pdf.addPage();
-    let y = margin;
+    // 6) Render each page using the shared stage
+    for (let p = 0; p < pages.length; p++) {
+      if (p > 0) pdf.addPage();
+      let y = margin;
 
-    if (p === 0) {
-      y += placeCanvas(pdf, headerCanvas, margin, y, contentW);
-      y += 2;
+      if (p === 0) {
+        y += placeCanvas(pdf, headerCanvas, margin, y, contentW);
+        y += 2;
+      }
+
+      // Build chunk HTML directly without intermediate arrays for big pages
+      let chunkRowsHtml = '';
+      const idxs = pages[p];
+      for (let k = 0; k < idxs.length; k++) {
+        const idx = idxs[k];
+        chunkRowsHtml += buildRowHtml(opts.rows[idx], opts.columns, idx);
+      }
+      const tableCanvas = await htmlToCanvasOnStage(stage, buildTableHtml(opts.columns, chunkRowsHtml, true));
+      const tableHmm = placeCanvas(pdf, tableCanvas, margin, y, contentW);
+      y += tableHmm;
+
+      if (p === lastPageIdx && !signatureOnSeparatePage) {
+        placeCanvas(pdf, signatureCanvas, margin, y + 2, contentW);
+      }
     }
 
-    // Render this page's table chunk (header + its rows)
-    const chunkRowsHtml = pages[p].map((idx) => buildRowHtml(opts.rows[idx], opts.columns, idx)).join('');
-    const tableCanvas = await htmlToCanvas(buildTableHtml(opts.columns, chunkRowsHtml, true));
-    const tableHmm = placeCanvas(pdf, tableCanvas, margin, y, contentW);
-    y += tableHmm;
-
-    if (p === lastPageIdx && !signatureOnSeparatePage) {
-      placeCanvas(pdf, signatureCanvas, margin, y + 2, contentW);
+    if (signatureOnSeparatePage) {
+      pdf.addPage();
+      placeCanvas(pdf, signatureCanvas, margin, margin, contentW);
     }
-  }
 
-  if (signatureOnSeparatePage) {
-    pdf.addPage();
-    placeCanvas(pdf, signatureCanvas, margin, margin, contentW);
+    drawFooter(pdf, pageW, pageH, footerH, margin);
+    pdf.save(opts.fileName);
+  } finally {
+    // Always clean up the shared stage
+    if (stage.parentNode) stage.parentNode.removeChild(stage);
   }
-
-  drawFooter(pdf, pageW, pageH, footerH, margin);
-  pdf.save(opts.fileName);
 }
 
 function drawFooter(pdf: jsPDF, pageW: number, pageH: number, footerH: number, margin: number) {
