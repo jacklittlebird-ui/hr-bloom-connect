@@ -341,7 +341,7 @@ export const useReportExport = () => {
     }, 1000);
 
     toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
-  }, [t, isRTL]);
+  }, [t, isRTL, logoUrl]);
 
   const exportToPDF = useCallback(({ title, data, columns, fileName }: ReportExportOptions) => {
     if (!data.length) {
