@@ -187,7 +187,7 @@ export const TrainingDebtReport = () => {
                 <Printer className="w-4 h-4 mr-2" />{ar ? 'طباعة' : 'Print'}
               </Button>
               <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: getExportColumns() })}>
-                <Download className="w-4 h-4 mr-2" />PDF
+                <Download className="w-4 h-4 mr-2" />{ar ? 'معاينة PDF' : 'Preview PDF'}
               </Button>
               <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: reportTitle, data: getExportData(), columns: getExportColumns() })}>
                 <FileText className="w-4 h-4 mr-2" />CSV

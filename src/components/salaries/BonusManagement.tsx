@@ -497,7 +497,7 @@ export const BonusManagement = () => {
                   </Button>
                   <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-1.5">
                     <FileText className="w-4 h-4" />
-                    PDF
+                    {ar ? 'معاينة PDF' : 'Preview PDF'}
                   </Button>
                   <Button variant="outline" size="sm" onClick={handleExportExcel} className="gap-1.5">
                     <FileSpreadsheet className="w-4 h-4" />
