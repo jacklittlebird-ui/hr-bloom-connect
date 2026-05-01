@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import {
   Download, Printer, FileText, Building2, Users, Clock,
   CalendarDays, Search, X, CalendarIcon,
+  LogIn, LogOut, CheckCircle2, AlertTriangle, XCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
@@ -639,17 +640,37 @@ export const DailyAttendanceReport = () => {
                             return (
                               <Fragment key={ci}>
                                 <td colSpan={3} className={cn(baseCell, 'text-red-700 font-bold', dimmed ? 'bg-red-50/30 opacity-40' : 'bg-red-100')}>
-                                  {ar ? 'غائب' : 'Absent'}
+                                  <span className="inline-flex items-center justify-center gap-1">
+                                    <XCircle className="w-3.5 h-3.5" aria-hidden />
+                                    {ar ? 'غائب' : 'Absent'}
+                                  </span>
                                 </td>
                               </Fragment>
                             );
                           }
-                          const bg = c.kind === 'late' ? 'bg-amber-50' : 'bg-emerald-50/40';
+                          const isLate = c.kind === 'late';
+                          const bg = isLate ? 'bg-amber-50' : 'bg-emerald-50/40';
                           const dimCls = dimmed ? 'opacity-40' : '';
+                          const StatusIcon = isLate ? AlertTriangle : CheckCircle2;
+                          const statusColor = isLate ? 'text-amber-600' : 'text-emerald-600';
+                          const statusTitle = isLate
+                            ? (ar ? 'متأخر' : 'Late')
+                            : (ar ? 'حاضر' : 'Present');
                           return (
                             <Fragment key={ci}>
-                              <td className={cn(baseCell, bg, dimCls)}>{formatTimeCairo(c.record!.check_in)}</td>
-                              <td className={cn(baseCell, bg, dimCls)}>{formatTimeCairo(c.record!.check_out)}</td>
+                              <td className={cn(baseCell, bg, dimCls)} title={statusTitle}>
+                                <span className="inline-flex items-center justify-center gap-1">
+                                  <LogIn className={cn('w-3 h-3', statusColor)} aria-hidden />
+                                  <StatusIcon className={cn('w-3 h-3', statusColor)} aria-hidden />
+                                  <span>{formatTimeCairo(c.record!.check_in)}</span>
+                                </span>
+                              </td>
+                              <td className={cn(baseCell, bg, dimCls)} title={statusTitle}>
+                                <span className="inline-flex items-center justify-center gap-1">
+                                  <LogOut className="w-3 h-3 text-rose-500" aria-hidden />
+                                  <span>{formatTimeCairo(c.record!.check_out)}</span>
+                                </span>
+                              </td>
                               <td className={cn(baseCell, bg, dimCls, 'tabular-nums font-semibold')}>{fmtHours(c.hours)}</td>
                             </Fragment>
                           );
