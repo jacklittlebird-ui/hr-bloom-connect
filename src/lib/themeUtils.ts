@@ -220,6 +220,7 @@ interface ApplyConfig {
   font?: string;
   sidebarStyle?: 'auto' | 'dark' | 'light' | 'glass';
   headerStyle?: 'smooth' | 'sharp';
+  welcomeBg?: string;
 }
 
 // HEX -> "H S% L%" string for CSS HSL variables
