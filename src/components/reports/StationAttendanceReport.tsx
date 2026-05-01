@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Download, Printer, FileText, Building2, Users, Clock, CalendarDays, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Download, Printer, FileText, Building2, Users, Clock, CalendarDays, ChevronDown, ChevronUp, Eye, Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 import { toast } from '@/hooks/use-toast';
@@ -95,6 +96,7 @@ export const StationAttendanceReport = () => {
   const [year, setYear] = useState<number>(now.getFullYear());
   const [month, setMonth] = useState<number>(now.getMonth() + 1); // 1..12
   const [stationFilter, setStationFilter] = useState<string>('all');
+  const [search, setSearch] = useState<string>('');
   // Week start: 6=Saturday (default for Egypt/Arabic context), 0=Sunday, 1=Monday
   const [weekStart, setWeekStart] = useState<number>(() => {
     const saved = localStorage.getItem('attendanceReport.weekStart');
@@ -206,11 +208,21 @@ export const StationAttendanceReport = () => {
     return m;
   }, [departments]);
 
-  // Filter to only employees that belong to a station (skip unassigned for cleanliness)
-  const visibleEmployees = useMemo(
-    () => employees.filter(e => !!e.station_id),
-    [employees],
-  );
+  // Filter to only employees that belong to a station (skip unassigned for cleanliness),
+  // then apply the free-text search across name (ar/en), code, and department name (ar/en).
+  const visibleEmployees = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return employees.filter(e => {
+      if (!e.station_id) return false;
+      if (!q) return true;
+      const dept = e.department_id ? deptMap.get(e.department_id) : null;
+      const haystack = [
+        e.name_ar, e.name_en, e.employee_code,
+        dept?.name_ar, dept?.name_en,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [employees, search, deptMap]);
 
   // Group records by employee
   const recordsByEmp = useMemo(() => {
@@ -369,6 +381,28 @@ export const StationAttendanceReport = () => {
         <CardContent className="p-4">
           <div className={cn('flex flex-wrap gap-3 items-center justify-between', isRTL && 'flex-row-reverse')}>
             <div className={cn('flex flex-wrap gap-3', isRTL && 'flex-row-reverse')}>
+              <div className="relative w-64">
+                <Search className={cn('absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none', isRTL ? 'right-2.5' : 'left-2.5')} />
+                <Input
+                  type="text"
+                  inputMode="search"
+                  placeholder={ar ? 'بحث: اسم الموظف أو القسم أو الكود' : 'Search: name, department, or code'}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className={cn('h-9 text-sm', isRTL ? 'pr-8 pl-7' : 'pl-8 pr-7')}
+                  aria-label={ar ? 'بحث الموظفين' : 'Search employees'}
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className={cn('absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground', isRTL ? 'left-2' : 'right-2')}
+                    aria-label={ar ? 'مسح البحث' : 'Clear search'}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
               <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
