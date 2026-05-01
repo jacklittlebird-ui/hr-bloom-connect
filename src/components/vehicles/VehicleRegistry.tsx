@@ -137,14 +137,55 @@ export const VehicleRegistry = () => {
     fetchAll();
   };
 
+  const daysLeft = (d: string | null): number | null => {
+    if (!d) return null;
+    const ms = new Date(d).getTime() - Date.now();
+    return Math.ceil(ms / 86400000);
+  };
+
+  const licenseFields: { key: keyof Vehicle; labelAr: string; labelEn: string }[] = [
+    { key: 'license_end_date', labelAr: 'الترخيص الرئيسي', labelEn: 'Main License' },
+    { key: 'curtains_license_end', labelAr: 'ترخيص الستائر', labelEn: 'Curtains License' },
+    { key: 'transport_license_end', labelAr: 'ترخيص النقل البري', labelEn: 'Transport License' },
+  ];
+
+  const alerts = useMemo(() => {
+    const arr: { vehicle: Vehicle; type: 'expired' | 'soon'; license: string; date: string; days: number }[] = [];
+    vehicles.forEach((v) => {
+      licenseFields.forEach((f) => {
+        const date = (v as any)[f.key] as string | null;
+        const dl = daysLeft(date);
+        if (dl === null) return;
+        if (dl < 0) arr.push({ vehicle: v, type: 'expired', license: isAr ? f.labelAr : f.labelEn, date: date!, days: dl });
+        else if (dl <= 30) arr.push({ vehicle: v, type: 'soon', license: isAr ? f.labelAr : f.labelEn, date: date!, days: dl });
+      });
+    });
+    return arr.sort((a, b) => a.days - b.days);
+  }, [vehicles, isAr]);
+
+  const expiredCount = alerts.filter((a) => a.type === 'expired').length;
+  const soonCount = alerts.filter((a) => a.type === 'soon').length;
+
+  const focusVehicle = (id: string) => {
+    setFocusedId(id);
+    setSearch('');
+    setStationFilter(null);
+    setStatusFilter('all');
+    setTimeout(() => {
+      const el = document.getElementById(`vehicle-row-${id}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
   const filtered = useMemo(() => vehicles.filter((v) => {
+    if (focusedId) return v.id === focusedId;
     const txt = search.trim().toLowerCase();
     const txtMatch = !txt || [v.vehicle_code, v.brand, v.model, v.plate_number, v.insured_driver_name]
       .some((f) => f?.toLowerCase().includes(txt));
     const stMatch = !stationFilter || v.station_id === stationFilter;
     const stsMatch = statusFilter === 'all' || v.status === statusFilter;
     return txtMatch && stMatch && stsMatch;
-  }), [vehicles, search, stationFilter, statusFilter]);
+  }), [vehicles, search, stationFilter, statusFilter, focusedId]);
 
   const exportCsv = () => {
     const rows = [[
