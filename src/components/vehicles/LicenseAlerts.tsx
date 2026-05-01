@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, AlertOctagon, Clock, Search, Download, Building2, Car } from 'lucide-react';
+import { AlertTriangle, AlertOctagon, Clock, Search, Download, Building2, Car, CalendarIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 interface Vehicle {
   id: string;
