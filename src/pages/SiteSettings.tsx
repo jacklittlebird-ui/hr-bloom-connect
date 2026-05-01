@@ -124,6 +124,7 @@ const SiteSettings = () => {
           ...(remote.radius ? { radius: remote.radius } : {}),
           ...(remote.density ? { density: remote.density } : {}),
           ...(remote.font ? { font: remote.font } : {}),
+          ...(remote.headerStyle ? { headerStyle: remote.headerStyle } : {}),
         }));
       }
     })();
@@ -134,8 +135,11 @@ const SiteSettings = () => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
     setHasChanges(true);
-    if (['theme', 'primaryColor', 'themePreset', 'radius', 'density', 'font'].includes(key as string)) {
+    if (['theme', 'primaryColor', 'themePreset', 'radius', 'density', 'font', 'headerStyle'].includes(key as string)) {
       applyThemeSettings(newConfig as any);
+      if (key === 'headerStyle') {
+        try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
+      }
     }
   };
 
