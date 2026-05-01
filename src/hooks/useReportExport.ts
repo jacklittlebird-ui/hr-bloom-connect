@@ -181,18 +181,28 @@ export const useReportExport = () => {
     }
 
     const dir = isRTL ? 'rtl' : 'ltr';
-    const headerHtml = columns.map(c => `<th style="background:#1e40af;color:#fff;padding:8px;border:1px solid #94a3b8;font-size:12px;text-align:${isRTL ? 'right' : 'left'};">${c.header}</th>`).join('');
+    const align = isRTL ? 'right' : 'left';
+    const headerHtml = columns.map(c => `<th style="background:#1e40af;color:#fff;padding:8px;border:1px solid #94a3b8;font-size:12px;text-align:center;font-weight:700;">${c.header}</th>`).join('');
     const bodyHtml = data.map((row, i) => {
       const cells = columns.map(col => {
         const val = row[col.key];
         const strVal = String(val ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return `<td style="padding:6px 8px;border:1px solid #cbd5e1;font-size:11px;text-align:${isRTL ? 'right' : 'left'};">${strVal}</td>`;
+        return `<td style="padding:6px 8px;border:1px solid #cbd5e1;font-size:11px;text-align:${align};">${strVal}</td>`;
       }).join('');
-      const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+      const bg = i % 2 === 0 ? '#ffffff' : '#f1f5f9';
       return `<tr style="background:${bg};">${cells}</tr>`;
     }).join('');
 
     const dateStr = new Date().toLocaleDateString(isRTL ? 'ar-EG' : 'en-GB');
+    const timeStr = new Date().toLocaleTimeString(isRTL ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const orgName = isRTL ? 'نظام إدارة الموارد البشرية' : 'HR Management System';
+    const reportLabel = isRTL ? 'تقرير' : 'Report';
+    const dateLabel = isRTL ? 'تاريخ الإصدار' : 'Generated';
+    const recordsLabel = isRTL ? 'عدد السجلات' : 'Records';
+    const pageLabel = isRTL ? 'صفحة' : 'Page';
+    const ofLabel = isRTL ? 'من' : 'of';
+    const confidentialLabel = isRTL ? 'مستند سري - للاستخدام الداخلي فقط' : 'Confidential — Internal Use Only';
+
     const html = `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40" dir="${dir}">
 <head>
@@ -202,24 +212,64 @@ export const useReportExport = () => {
 <xml>
   <w:WordDocument>
     <w:View>Print</w:View>
-    <w:Zoom>90</w:Zoom>
+    <w:Zoom>100</w:Zoom>
     <w:DoNotOptimizeForBrowser/>
   </w:WordDocument>
 </xml>
 <![endif]-->
 <style>
-  @page WordSection1 { size: 297mm 210mm; mso-page-orientation: landscape; margin: 1cm 1.2cm; }
+  @page WordSection1 {
+    size: 297mm 210mm;
+    mso-page-orientation: landscape;
+    margin: 2.2cm 1.4cm 2cm 1.4cm;
+    mso-header-margin: 0.6cm;
+    mso-footer-margin: 0.6cm;
+    mso-header: url("#h1") h1;
+    mso-footer: url("#f1") f1;
+  }
   div.WordSection1 { page: WordSection1; }
-  body { font-family: 'Arial', 'Tahoma', sans-serif; direction: ${dir}; }
+  body { font-family: 'Arial', 'Tahoma', sans-serif; direction: ${dir}; color:#1f2937; }
   table { border-collapse: collapse; width: 100%; }
-  h1 { color: #1e40af; font-size: 18px; margin: 0 0 4px 0; }
-  .meta { font-size: 11px; color: #64748b; margin-bottom: 12px; }
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; }
+  h1.doc-title { color: #1e40af; font-size: 20px; margin: 0 0 4px 0; text-align:center; }
+  .doc-subtitle { font-size: 12px; color:#475569; text-align:center; margin-bottom:14px; }
+  .meta-bar { border:1px solid #e2e8f0; background:#f8fafc; padding:8px 12px; margin-bottom:12px; font-size:11px; color:#334155; }
+  .meta-bar span { margin-${isRTL ? 'left' : 'right'}: 18px; }
+  .meta-bar b { color:#1e40af; }
+  .header-bar { border-bottom: 2px solid #1e40af; padding: 4px 0; font-size:11px; color:#1e40af; font-weight:700; }
+  .header-bar .right { float: ${isRTL ? 'left' : 'right'}; color:#64748b; font-weight:400; }
+  .footer-bar { border-top: 1px solid #cbd5e1; padding-top: 4px; font-size:10px; color:#64748b; }
+  .footer-bar .pages { float: ${isRTL ? 'left' : 'right'}; }
 </style>
 </head>
 <body>
 <div class="WordSection1">
-  <h1>${title}</h1>
-  <div class="meta">${dateStr}</div>
+
+  <div style="mso-element:header" id="h1">
+    <div class="header-bar">
+      ${orgName}
+      <span class="right">${title}</span>
+      <div style="clear:both;"></div>
+    </div>
+  </div>
+
+  <div style="mso-element:footer" id="f1">
+    <div class="footer-bar">
+      ${confidentialLabel}
+      <span class="pages">${pageLabel} <span style="mso-field-code:PAGE"></span> ${ofLabel} <span style="mso-field-code:NUMPAGES"></span></span>
+      <div style="clear:both;"></div>
+    </div>
+  </div>
+
+  <h1 class="doc-title">${title}</h1>
+  <div class="doc-subtitle">${reportLabel} • ${orgName}</div>
+
+  <div class="meta-bar">
+    <span><b>${dateLabel}:</b> ${dateStr} ${timeStr}</span>
+    <span><b>${recordsLabel}:</b> ${data.length}</span>
+  </div>
+
   <table>
     <thead><tr>${headerHtml}</tr></thead>
     <tbody>${bodyHtml}</tbody>
