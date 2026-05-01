@@ -163,7 +163,7 @@ const Documents = () => {
 
   return (
     <DashboardLayout>
-      <div className={cn("space-y-6", isRTL && "text-right")}>
+      <div dir={isRTL ? 'rtl' : 'ltr'} className={cn("space-y-6", isRTL && "text-right")}>
         {/* Header */}
         <div className={cn("flex items-start justify-between gap-4 flex-wrap", isRTL && "flex-row-reverse")}>
           <div>
