@@ -60,7 +60,7 @@ function toIsoDate(d: Date): string {
 export const DailyAttendanceReport = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
-  const { reportRef, handlePrint, exportToPDF, exportToCSV } = useReportExport();
+  const { reportRef, handlePrint, exportToPDF, exportToCSV, exportToWord } = useReportExport();
 
   const now = new Date();
   // Default range: current month
