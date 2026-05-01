@@ -38,7 +38,6 @@ function formatTimeCairo(iso: string | null): string {
   } catch { return '—'; }
 }
 
-function getWeekOfMonth(dateStr: string): number {
 // Calendar-aware week index inside a given month.
 // weekStart: 0=Sunday, 1=Monday, ..., 6=Saturday.
 // Returns 1-based week index. Days in the same calendar week share the same index.
