@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { EmployeeReports } from '@/components/reports/EmployeeReports';
 import { AttendanceReportsTab } from '@/components/reports/AttendanceReportsTab';
 import { StationAttendanceReport } from '@/components/reports/StationAttendanceReport';
+import { DailyAttendanceReport } from '@/components/reports/DailyAttendanceReport';
 import { LeaveReports } from '@/components/reports/LeaveReports';
 import { SalaryReports } from '@/components/reports/SalaryReports';
 import { PerformanceReports } from '@/components/reports/PerformanceReports';
@@ -66,11 +67,15 @@ const Reports = () => {
               <TabsTrigger value="stations" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 {isRTL ? 'تقرير المحطات الشهري' : 'Monthly Stations Report'}
               </TabsTrigger>
+              <TabsTrigger value="daily" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {isRTL ? 'تقرير تفصيلي يومي' : 'Daily Detailed Report'}
+              </TabsTrigger>
               <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 {isRTL ? 'نظرة عامة' : 'Overview'}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="stations"><StationAttendanceReport /></TabsContent>
+            <TabsContent value="daily"><DailyAttendanceReport /></TabsContent>
             <TabsContent value="overview"><AttendanceReportsTab /></TabsContent>
           </Tabs>
         </TabsContent>
