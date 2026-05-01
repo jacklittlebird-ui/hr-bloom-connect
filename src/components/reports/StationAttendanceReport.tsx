@@ -202,18 +202,26 @@ export const StationAttendanceReport = () => {
     return m;
   }, [records]);
 
+  // Number of calendar weeks the selected month actually spans (4..6) given weekStart
+  const weeksCount = useMemo(() => getWeeksInMonth(year, month, weekStart), [year, month, weekStart]);
+  const weekRangeLabels = useMemo(
+    () => Array.from({ length: weeksCount }, (_, i) => getWeekRangeLabel(i + 1, year, month, weekStart)),
+    [weeksCount, year, month, weekStart],
+  );
+
   // Aggregate per employee
   const empSummaries = useMemo(() => {
     return visibleEmployees.map(emp => {
       const recs = recordsByEmp.get(emp.id) || [];
-      const weeks = [0, 0, 0, 0, 0]; // weeks 1..5
-      const weekDays = [0, 0, 0, 0, 0];
+      const weeks = Array.from({ length: weeksCount }, () => 0);
+      const weekDays = Array.from({ length: weeksCount }, () => 0);
       let totalHours = 0;
       let presentDays = 0;
       let lateDays = 0;
       let absentDays = 0;
       recs.forEach(r => {
-        const w = getWeekOfMonth(r.date) - 1;
+        const w = getWeekOfMonth(r.date, year, month, weekStart) - 1;
+        if (w < 0 || w >= weeksCount) return;
         const h = Number(r.work_hours || (r.work_minutes ? r.work_minutes / 60 : 0)) || 0;
         weeks[w] += h;
         if (r.status === 'present') {
@@ -232,7 +240,7 @@ export const StationAttendanceReport = () => {
         totalHours, presentDays, lateDays, absentDays,
       };
     });
-  }, [visibleEmployees, recordsByEmp]);
+  }, [visibleEmployees, recordsByEmp, weeksCount, year, month, weekStart]);
 
   // Group by station
   const stationGroups = useMemo(() => {
