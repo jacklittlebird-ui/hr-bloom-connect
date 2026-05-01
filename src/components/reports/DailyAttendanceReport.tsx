@@ -147,6 +147,38 @@ export const DailyAttendanceReport = () => {
     return m;
   }, [stations]);
 
+  // Weekend day-of-week set per station (defaults to [5,6] = Fri/Sat).
+  const weekendByStation = useMemo(() => {
+    const m = new Map<string, Set<number>>();
+    stations.forEach(s => {
+      const arr = Array.isArray(s.weekend_days) ? s.weekend_days : [5, 6];
+      const set = new Set<number>();
+      arr.forEach((v: any) => {
+        const n = typeof v === 'number' ? v : Number(v);
+        if (Number.isFinite(n) && n >= 0 && n <= 6) set.add(n);
+      });
+      m.set(s.id, set.size ? set : new Set([5, 6]));
+    });
+    return m;
+  }, [stations]);
+
+  // Header weekend set: when filtering to one station use its days,
+  // otherwise show the union across all stations so weekends remain visible.
+  const headerWeekend = useMemo(() => {
+    if (stationFilter !== 'all') {
+      return weekendByStation.get(stationFilter) || new Set([5, 6]);
+    }
+    const u = new Set<number>();
+    weekendByStation.forEach(s => s.forEach(d => u.add(d)));
+    return u.size ? u : new Set([5, 6]);
+  }, [weekendByStation, stationFilter]);
+
+  const isHeaderWeekend = (dow: number) => headerWeekend.has(dow);
+  const isEmpWeekend = (empStationId: string | null, dow: number) => {
+    if (!empStationId) return headerWeekend.has(dow);
+    return (weekendByStation.get(empStationId) || new Set([5, 6])).has(dow);
+  };
+
   const deptMap = useMemo(() => {
     const m = new Map<string, DepartmentRow>();
     departments.forEach(d => m.set(d.id, d));
