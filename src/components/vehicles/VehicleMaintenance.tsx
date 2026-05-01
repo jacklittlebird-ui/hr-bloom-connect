@@ -65,8 +65,8 @@ export const VehicleMaintenance = () => {
     next_maintenance_date: '', odometer_reading: '', provider: '', notes: '',
   });
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoader = true) => {
+    if (showLoader) setLoading(true);
     const [{ data: mData }, { data: vData }, { data: sData }] = await Promise.all([
       supabase.from('vehicle_maintenance').select('*').order('maintenance_date', { ascending: false }),
       supabase.from('vehicles').select('id, vehicle_code, brand, model, plate_number, station_id').order('vehicle_code'),
@@ -75,10 +75,17 @@ export const VehicleMaintenance = () => {
     if (mData) setRecords(mData as unknown as MaintenanceRecord[]);
     if (vData) setVehicles(vData as unknown as VehicleOption[]);
     if (sData) setStations(sData as StationOption[]);
-    setLoading(false);
+    if (showLoader) setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData(true);
+    const REFRESH_MS = 3 * 60 * 60 * 1000;
+    const interval = setInterval(() => fetchData(false), REFRESH_MS);
+    const onVis = () => { if (document.visibilityState === 'visible') fetchData(false); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVis); };
+  }, []);
 
   const vehicleMap = useMemo(() => Object.fromEntries(vehicles.map((v) => [v.id, v])), [vehicles]);
   const stationMap = useMemo(() => Object.fromEntries(stations.map((s) => [s.id, s])), [stations]);
