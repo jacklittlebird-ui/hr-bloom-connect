@@ -174,6 +174,77 @@ export const useReportExport = () => {
     toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
   }, [t]);
 
+  const exportToWord = useCallback(({ title, data, columns, fileName }: ReportExportOptions) => {
+    if (!data.length) {
+      toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
+      return;
+    }
+
+    const dir = isRTL ? 'rtl' : 'ltr';
+    const headerHtml = columns.map(c => `<th style="background:#1e40af;color:#fff;padding:8px;border:1px solid #94a3b8;font-size:12px;text-align:${isRTL ? 'right' : 'left'};">${c.header}</th>`).join('');
+    const bodyHtml = data.map((row, i) => {
+      const cells = columns.map(col => {
+        const val = row[col.key];
+        const strVal = String(val ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<td style="padding:6px 8px;border:1px solid #cbd5e1;font-size:11px;text-align:${isRTL ? 'right' : 'left'};">${strVal}</td>`;
+      }).join('');
+      const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+      return `<tr style="background:${bg};">${cells}</tr>`;
+    }).join('');
+
+    const dateStr = new Date().toLocaleDateString(isRTL ? 'ar-EG' : 'en-GB');
+    const html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40" dir="${dir}">
+<head>
+<meta charset="utf-8" />
+<title>${title}</title>
+<!--[if gte mso 9]>
+<xml>
+  <w:WordDocument>
+    <w:View>Print</w:View>
+    <w:Zoom>90</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+  </w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+  @page WordSection1 { size: 297mm 210mm; mso-page-orientation: landscape; margin: 1cm 1.2cm; }
+  div.WordSection1 { page: WordSection1; }
+  body { font-family: 'Arial', 'Tahoma', sans-serif; direction: ${dir}; }
+  table { border-collapse: collapse; width: 100%; }
+  h1 { color: #1e40af; font-size: 18px; margin: 0 0 4px 0; }
+  .meta { font-size: 11px; color: #64748b; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="WordSection1">
+  <h1>${title}</h1>
+  <div class="meta">${dateStr}</div>
+  <table>
+    <thead><tr>${headerHtml}</tr></thead>
+    <tbody>${bodyHtml}</tbody>
+  </table>
+</div>
+</body>
+</html>`;
+
+    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const downloadName = `${fileName || title}_${new Date().toISOString().slice(0, 10)}.doc`;
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = downloadName;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 1000);
+
+    toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
+  }, [t, isRTL]);
+
   const exportToPDF = useCallback(({ title, data, columns, fileName }: ReportExportOptions) => {
     if (!data.length) {
       toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
