@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, AlertOctagon, Clock, Search, Download, Building2, Car } from 'lucide-react';
+import { AlertTriangle, AlertOctagon, Clock, Search, Download, Building2, Car, CalendarIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 interface Vehicle {
   id: string;
@@ -51,6 +54,16 @@ export const LicenseAlerts = () => {
   const [search, setSearch] = useState('');
   const [stationFilter, setStationFilter] = useState<string | null>(null);
   const [severityFilter, setSeverityFilter] = useState<'all' | Severity>('all');
+  const today = useMemo(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; }, []);
+  const [fromDate, setFromDate] = useState<Date | undefined>(undefined);
+  const [toDate, setToDate] = useState<Date | undefined>(undefined);
+
+  const applyPreset = (days: number | 'all') => {
+    if (days === 'all') { setFromDate(undefined); setToDate(undefined); return; }
+    const f = new Date(today);
+    const t = new Date(today); t.setDate(t.getDate() + days);
+    setFromDate(f); setToDate(t);
+  };
 
   useEffect(() => {
     (async () => {
@@ -97,13 +110,18 @@ export const LicenseAlerts = () => {
   const filtered = useMemo(() => allAlerts.filter((a) => {
     if (severityFilter !== 'all' && a.severity !== severityFilter) return false;
     if (stationFilter && a.vehicle.station_id !== stationFilter) return false;
+    if (fromDate || toDate) {
+      const d = new Date(a.date); d.setHours(0, 0, 0, 0);
+      if (fromDate && d.getTime() < fromDate.getTime()) return false;
+      if (toDate && d.getTime() > toDate.getTime()) return false;
+    }
     const txt = search.trim().toLowerCase();
     if (txt) {
       const hay = [a.vehicle.vehicle_code, a.vehicle.brand, a.vehicle.model, a.vehicle.plate_number].join(' ').toLowerCase();
       if (!hay.includes(txt)) return false;
     }
     return true;
-  }), [allAlerts, severityFilter, stationFilter, search]);
+  }), [allAlerts, severityFilter, stationFilter, search, fromDate, toDate]);
 
   const exportCsv = () => {
     const rows = [[
@@ -190,6 +208,38 @@ export const LicenseAlerts = () => {
             allLabel={isAr ? 'كل المحطات' : 'All stations'}
             className="w-44"
           />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="outline" className="h-9 gap-1">
+                <CalendarIcon className="w-4 h-4" />
+                {fromDate ? format(fromDate, 'dd/MM/yyyy') : (isAr ? 'من' : 'From')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={fromDate} onSelect={setFromDate} initialFocus className={cn('p-3 pointer-events-auto')} />
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="outline" className="h-9 gap-1">
+                <CalendarIcon className="w-4 h-4" />
+                {toDate ? format(toDate, 'dd/MM/yyyy') : (isAr ? 'إلى' : 'To')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={toDate} onSelect={setToDate} initialFocus className={cn('p-3 pointer-events-auto')} />
+            </PopoverContent>
+          </Popover>
+          <div className="flex items-center gap-1">
+            <Button size="sm" variant="ghost" className="h-9 px-2 text-xs" onClick={() => applyPreset(30)}>30{isAr ? 'ي' : 'd'}</Button>
+            <Button size="sm" variant="ghost" className="h-9 px-2 text-xs" onClick={() => applyPreset(60)}>60{isAr ? 'ي' : 'd'}</Button>
+            <Button size="sm" variant="ghost" className="h-9 px-2 text-xs" onClick={() => applyPreset(90)}>90{isAr ? 'ي' : 'd'}</Button>
+            {(fromDate || toDate) && (
+              <Button size="sm" variant="ghost" className="h-9 px-2" onClick={() => applyPreset('all')} title={isAr ? 'مسح' : 'Clear'}>
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
           <Button size="sm" variant="outline" onClick={exportCsv}>
             <Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}
           </Button>
