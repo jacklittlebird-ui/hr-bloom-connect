@@ -55,6 +55,9 @@ export const VehicleMaintenance = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [stationFilter, setStationFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'periodic', description: '',
