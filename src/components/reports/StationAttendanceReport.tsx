@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Download, Printer, FileText, Building2, Users, Clock, CalendarDays, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -104,6 +106,12 @@ export const StationAttendanceReport = () => {
   type DayFilter = 'all' | 'present' | 'late' | 'absent';
   const [globalStatusFilter, setGlobalStatusFilter] = useState<DayFilter>('all');
   const [dayFilter, setDayFilter] = useState<Map<string, DayFilter>>(new Map());
+  // Pin the per-employee summary row to the top while scrolling daily details
+  const [pinSummary, setPinSummary] = useState<boolean>(() => {
+    const saved = localStorage.getItem('attendanceReport.pinSummary');
+    return saved === null ? true : saved === '1';
+  });
+  useEffect(() => { localStorage.setItem('attendanceReport.pinSummary', pinSummary ? '1' : '0'); }, [pinSummary]);
 
   // Per-employee filter falls back to the global filter when not explicitly overridden
   const getDayFilter = (id: string): DayFilter => dayFilter.get(id) ?? globalStatusFilter;
@@ -438,6 +446,12 @@ export const StationAttendanceReport = () => {
                   </Badge>
                 )}
               </div>
+              <div className={cn('flex items-center gap-2 px-2 py-1 rounded-md border bg-background', isRTL && 'flex-row-reverse')}>
+                <Switch id="pin-summary" checked={pinSummary} onCheckedChange={setPinSummary} />
+                <Label htmlFor="pin-summary" className="text-xs cursor-pointer whitespace-nowrap">
+                  {ar ? 'تثبيت ملخص الموظف أعلى الجدول' : 'Pin employee summary on top'}
+                </Label>
+              </div>
             </div>
             <div className={cn('flex gap-2', isRTL && 'flex-row-reverse')}>
               <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)}>
@@ -636,10 +650,34 @@ export const StationAttendanceReport = () => {
                                         {filtered.length === 0 ? (
                                           <p className="text-xs text-muted-foreground text-center py-4">{ar ? 'لا توجد سجلات مطابقة للتصفية' : 'No records match this filter'}</p>
                                         ) : (
-                                          <div className="overflow-x-auto bg-background rounded-lg border">
+                                          <div className={cn('overflow-auto bg-background rounded-lg border', pinSummary && 'max-h-[420px]')}>
                                             <table className="w-full text-xs border-collapse">
                                               <thead>
-                                                <tr className="bg-muted/40">
+                                                {pinSummary && (
+                                                  <tr className="bg-emerald-50 font-bold sticky top-0 z-20 shadow-sm">
+                                                    <td className="border p-2 text-center" colSpan={3}>
+                                                      {ar ? 'ملخص الموظف (بعد التصفية)' : 'Employee Summary (filtered)'}
+                                                    </td>
+                                                    <td className="border p-2 text-center tabular-nums">
+                                                      {ar ? 'عدد الأيام' : 'Days'}: {filtered.length}
+                                                    </td>
+                                                    <td className="border p-2 text-center tabular-nums">{fmtHours(filteredHours)}</td>
+                                                    <td className="border p-2 text-center">
+                                                      <div className={cn('flex flex-wrap gap-1 justify-center items-center', isRTL && 'flex-row-reverse')}>
+                                                        <Badge className="bg-green-600 hover:bg-green-600 text-[10px] h-5 px-1.5">
+                                                          {ar ? 'حاضر' : 'P'}: {filteredPresent}
+                                                        </Badge>
+                                                        <Badge className="bg-amber-500 hover:bg-amber-500 text-[10px] h-5 px-1.5">
+                                                          {ar ? 'متأخر' : 'L'}: {filteredLate}
+                                                        </Badge>
+                                                        <Badge className="bg-red-600 hover:bg-red-600 text-[10px] h-5 px-1.5">
+                                                          {ar ? 'غائب' : 'A'}: {filteredAbsent}
+                                                        </Badge>
+                                                      </div>
+                                                    </td>
+                                                  </tr>
+                                                )}
+                                                <tr className={cn('bg-muted/40', pinSummary && 'sticky z-10 shadow-sm')} style={pinSummary ? { top: '41px' } : undefined}>
                                                   <th className="border p-2 text-center">{ar ? 'التاريخ' : 'Date'}</th>
                                                   <th className="border p-2 text-center">{ar ? 'الأسبوع' : 'Week'}</th>
                                                   <th className="border p-2 text-center">{ar ? 'الحضور' : 'Check-in'}</th>
