@@ -297,7 +297,6 @@ export async function exportVehicleWord(opts: WordExportOptions): Promise<void> 
             },
             margin: { top: margin, right: margin, bottom: margin, left: margin },
           },
-          bidi: true,
         },
         headers: {
           default: new Header({
