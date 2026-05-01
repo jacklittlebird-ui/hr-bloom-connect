@@ -102,9 +102,11 @@ export const StationAttendanceReport = () => {
   const [loading, setLoading] = useState(false);
   const [expandedEmp, setExpandedEmp] = useState<Set<string>>(new Set());
   type DayFilter = 'all' | 'present' | 'late' | 'absent';
+  const [globalStatusFilter, setGlobalStatusFilter] = useState<DayFilter>('all');
   const [dayFilter, setDayFilter] = useState<Map<string, DayFilter>>(new Map());
 
-  const getDayFilter = (id: string): DayFilter => dayFilter.get(id) || 'all';
+  // Per-employee filter falls back to the global filter when not explicitly overridden
+  const getDayFilter = (id: string): DayFilter => dayFilter.get(id) ?? globalStatusFilter;
   const setEmpDayFilter = (id: string, f: DayFilter) => {
     setDayFilter(prev => {
       const next = new Map(prev);
@@ -388,6 +390,22 @@ export const StationAttendanceReport = () => {
                   <SelectItem value="6">{ar ? 'يبدأ السبت' : 'Starts Saturday'}</SelectItem>
                   <SelectItem value="0">{ar ? 'يبدأ الأحد' : 'Starts Sunday'}</SelectItem>
                   <SelectItem value="1">{ar ? 'يبدأ الإثنين' : 'Starts Monday'}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={globalStatusFilter}
+                onValueChange={(v) => {
+                  setGlobalStatusFilter(v as DayFilter);
+                  // Reset per-employee overrides so the global filter applies to everyone
+                  setDayFilter(new Map());
+                }}
+              >
+                <SelectTrigger className="w-44"><SelectValue placeholder={ar ? 'حالة الأيام' : 'Day Status'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'كل الحالات' : 'All Statuses'}</SelectItem>
+                  <SelectItem value="present">{ar ? 'حاضر فقط' : 'Present only'}</SelectItem>
+                  <SelectItem value="late">{ar ? 'متأخر فقط' : 'Late only'}</SelectItem>
+                  <SelectItem value="absent">{ar ? 'غائب فقط' : 'Absent only'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
