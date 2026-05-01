@@ -12,8 +12,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Building2, Globe, Bell, Shield, Palette, Database, Save } from 'lucide-react';
-import { applyThemeSettings } from '@/lib/themeUtils';
+import { Building2, Globe, Bell, Shield, Palette, Database, Save, Check, Sun, Moon, Monitor, Sparkles, Type, LayoutGrid, RotateCcw } from 'lucide-react';
+import { applyThemeSettings, THEME_PRESETS, ACCENT_PALETTE, FONT_OPTIONS } from '@/lib/themeUtils';
 
 interface SiteConfig {
   companyName: string;
