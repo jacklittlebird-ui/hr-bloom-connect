@@ -567,7 +567,15 @@ export const DailyAttendanceReport = () => {
               <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: reportTitle, data: buildExportRows(), columns: exportColumns })}>
                 <FileText className="w-4 h-4 mr-2" />Excel
               </Button>
-              <Button variant="outline" size="sm" onClick={() => exportToWord({ title: reportTitle, data: buildExportRows(), columns: exportColumns })}>
+              <Button variant="outline" size="sm" onClick={async () => {
+                setWordPreviewTitle(reportTitle);
+                setWordPreviewOpen(true);
+                setWordPreviewLoading(true);
+                setWordPreviewHtml(null);
+                const html = await previewWordExport({ title: reportTitle, data: buildExportRows(), columns: exportColumns });
+                setWordPreviewHtml(html);
+                setWordPreviewLoading(false);
+              }}>
                 <FileText className="w-4 h-4 mr-2" />Word
               </Button>
             </div>
