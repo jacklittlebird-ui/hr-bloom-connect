@@ -381,6 +381,28 @@ export const StationAttendanceReport = () => {
         <CardContent className="p-4">
           <div className={cn('flex flex-wrap gap-3 items-center justify-between', isRTL && 'flex-row-reverse')}>
             <div className={cn('flex flex-wrap gap-3', isRTL && 'flex-row-reverse')}>
+              <div className="relative w-64">
+                <Search className={cn('absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none', isRTL ? 'right-2.5' : 'left-2.5')} />
+                <Input
+                  type="text"
+                  inputMode="search"
+                  placeholder={ar ? 'بحث: اسم الموظف أو القسم أو الكود' : 'Search: name, department, or code'}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className={cn('h-9 text-sm', isRTL ? 'pr-8 pl-7' : 'pl-8 pr-7')}
+                  aria-label={ar ? 'بحث الموظفين' : 'Search employees'}
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    className={cn('absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground', isRTL ? 'left-2' : 'right-2')}
+                    aria-label={ar ? 'مسح البحث' : 'Clear search'}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
               <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
