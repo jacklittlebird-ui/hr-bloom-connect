@@ -186,6 +186,7 @@ async function downloadElementAsPDF(container: HTMLElement, downloadName: string
 
 export const useReportExport = () => {
   const { t, isRTL } = useLanguage();
+  const previewCtx = usePdfPreviewContext();
   const reportRef = useRef<HTMLDivElement>(null);
   const logoUrl = `${window.location.origin}/images/company-logo.png`;
 
