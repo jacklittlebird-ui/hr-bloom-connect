@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { CalendarDays, Clock } from 'lucide-react';
+import welcomeBannerBg from '@/assets/welcome-banner-bg.jpg';
 
 export const WelcomeBanner = () => {
   const { isRTL, language } = useLanguage();
