@@ -44,16 +44,26 @@ export const WelcomeBanner = () => {
     <div
       className={cn(
         "relative overflow-hidden rounded-2xl mb-8",
-        "bg-gradient-to-br from-primary via-primary/85 to-primary/60",
         "shadow-xl shadow-primary/20",
         isRTL && "text-right"
       )}
     >
+      {/* Background image */}
+      <img
+        src={welcomeBannerBg}
+        alt=""
+        loading="lazy"
+        width={1536}
+        height={512}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Color overlay for readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/85 via-primary/70 to-primary/55" />
+
       {/* Animated decorative elements */}
       <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-primary-foreground/8 blur-3xl animate-pulse" />
       <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-primary-foreground/5 blur-2xl" />
-      <div className="absolute top-1/2 right-1/4 w-24 h-24 rounded-full bg-primary-foreground/5 blur-xl" />
-      
+
       {/* Geometric pattern overlay */}
       <div className="absolute inset-0 opacity-[0.04]" style={{
         backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
