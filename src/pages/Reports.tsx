@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { EmployeeReports } from '@/components/reports/EmployeeReports';
 import { AttendanceReportsTab } from '@/components/reports/AttendanceReportsTab';
 import { StationAttendanceReport } from '@/components/reports/StationAttendanceReport';
+import { DailyAttendanceReport } from '@/components/reports/DailyAttendanceReport';
 import { LeaveReports } from '@/components/reports/LeaveReports';
 import { SalaryReports } from '@/components/reports/SalaryReports';
 import { PerformanceReports } from '@/components/reports/PerformanceReports';
