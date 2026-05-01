@@ -392,7 +392,7 @@ const SiteSettings = () => {
                     className="gap-2"
                     onClick={() => updateMany({
                       themePreset: 'corporate-blue', theme: 'system', primaryColor: '#2563eb',
-                      radius: 'md', density: 'comfortable', font: 'baloo', headerStyle: 'smooth',
+                      radius: 'md', density: 'comfortable', font: 'baloo', headerStyle: 'smooth', welcomeBg: 'misty',
                     })}
                   >
                     <RotateCcw className="w-4 h-4" />
