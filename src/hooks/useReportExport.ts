@@ -418,5 +418,5 @@ export const useReportExport = () => {
     toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
   }, [isRTL, t]);
 
-  return { reportRef, handlePrint, exportToCSV, exportToPDF, exportBilingualCSV, exportBilingualPDF };
+  return { reportRef, handlePrint, exportToCSV, exportToPDF, exportToWord, exportBilingualCSV, exportBilingualPDF };
 };
