@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
+import { WordPreviewDialog } from '@/components/reports/WordPreviewDialog';
 import { toast } from '@/hooks/use-toast';
 
 interface StationRow { id: string; name_ar: string; name_en: string; weekend_days?: number[] | null; }
