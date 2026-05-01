@@ -416,9 +416,9 @@ export const StationAttendanceReport = () => {
           const sub = group.rows.reduce((acc, r) => {
             acc.present += r.presentDays; acc.late += r.lateDays; acc.absent += r.absentDays;
             acc.total += r.totalHours;
-            for (let i = 0; i < 5; i++) acc.weeks[i] += r.weeks[i];
+            for (let i = 0; i < weeksCount; i++) acc.weeks[i] = (acc.weeks[i] || 0) + (r.weeks[i] || 0);
             return acc;
-          }, { present: 0, late: 0, absent: 0, total: 0, weeks: [0, 0, 0, 0, 0] });
+          }, { present: 0, late: 0, absent: 0, total: 0, weeks: Array.from({ length: weeksCount }, () => 0) as number[] });
 
           return (
             <Card key={(group.station?.id) || 'none'} className="overflow-hidden border-2">
