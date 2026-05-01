@@ -168,7 +168,85 @@ export const VehicleLicenseTracking = () => {
 
   return (
     <div className="space-y-4">
-      {/* Summary cards (clickable filters) */}
+      {/* KPI Panel — aggregate of all 3 license types per vehicle */}
+      <Card className="border-primary/20">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center justify-between flex-wrap gap-2">
+            <span className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-primary" />
+              {isAr ? 'ملخص حالة التراخيص' : 'Licenses Status Summary'}
+            </span>
+            <Badge variant="outline" className="font-normal">
+              {isAr ? 'إجمالي السيارات:' : 'Total vehicles:'} <span className="font-bold ms-1">{kpi.total}</span>
+              {stationFilter && <span className="ms-2 text-xs text-muted-foreground">({isAr ? 'محطة محددة' : 'filtered station'})</span>}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0 space-y-4">
+          {/* KPI numbers grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="p-3 rounded-lg border border-red-200 bg-red-50/50 dark:bg-red-950/20">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-red-700 dark:text-red-400 font-medium">{isAr ? 'منتهية' : 'Expired'}</span>
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+              </div>
+              <div className="flex items-end justify-between mt-1">
+                <span className="text-2xl font-bold text-red-700 dark:text-red-400">{kpi.expired}</span>
+                <span className="text-sm font-semibold text-red-600 dark:text-red-400">{kpi.pctExpired}%</span>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg border border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-yellow-700 dark:text-yellow-400 font-medium">{isAr ? 'قريبة (30 يوم)' : 'Soon (30d)'}</span>
+                <Clock className="w-4 h-4 text-yellow-600" />
+              </div>
+              <div className="flex items-end justify-between mt-1">
+                <span className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{kpi.soon}</span>
+                <span className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">{kpi.pctSoon}%</span>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg border border-green-200 bg-green-50/50 dark:bg-green-950/20">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-green-700 dark:text-green-400 font-medium">{isAr ? 'سارية' : 'Valid'}</span>
+                <CheckCircle className="w-4 h-4 text-green-600" />
+              </div>
+              <div className="flex items-end justify-between mt-1">
+                <span className="text-2xl font-bold text-green-700 dark:text-green-400">{kpi.valid}</span>
+                <span className="text-sm font-semibold text-green-600 dark:text-green-400">{kpi.pctValid}%</span>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg border bg-muted/30">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground font-medium">{isAr ? 'بدون بيانات' : 'No data'}</span>
+                <Clock className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex items-end justify-between mt-1">
+                <span className="text-2xl font-bold">{kpi.missing}</span>
+                <span className="text-sm font-semibold text-muted-foreground">{kpi.pctMissing}%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stacked progress bar */}
+          {kpi.total > 0 && (
+            <div>
+              <div className="flex h-3 w-full overflow-hidden rounded-full border bg-muted/30">
+                <div className="bg-red-500" style={{ width: `${kpi.pctExpired}%` }} title={`${isAr ? 'منتهية' : 'Expired'}: ${kpi.pctExpired}%`} />
+                <div className="bg-yellow-500" style={{ width: `${kpi.pctSoon}%` }} title={`${isAr ? 'قريبة' : 'Soon'}: ${kpi.pctSoon}%`} />
+                <div className="bg-green-500" style={{ width: `${kpi.pctValid}%` }} title={`${isAr ? 'سارية' : 'Valid'}: ${kpi.pctValid}%`} />
+                <div className="bg-muted-foreground/40" style={{ width: `${kpi.pctMissing}%` }} title={`${isAr ? 'بدون بيانات' : 'No data'}: ${kpi.pctMissing}%`} />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {isAr
+                  ? 'يتم احتساب الحالة بناءً على أسوأ ترخيص (السيارة، الستائر، النقل) لكل سيارة.'
+                  : 'Status is computed using the worst of all 3 licenses (vehicle, curtains, transport) per vehicle.'}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Summary cards (clickable filters — Vehicle License only) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button onClick={() => setStatusBucket(statusBucket === 'expired' ? 'all' : 'expired')} className="text-start">
           <Card className={cn('border-red-200 bg-red-50/50 dark:bg-red-950/20 hover:shadow-md transition cursor-pointer', statusBucket === 'expired' && 'ring-2 ring-red-400')}>
