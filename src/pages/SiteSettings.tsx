@@ -606,6 +606,33 @@ const SiteSettings = () => {
                       })}
                     </div>
                   </div>
+
+                  {/* Welcome banner background */}
+                  <div className="md:col-span-2">
+                    <Label className="mb-3 block">{isAr ? 'خلفية بطاقة الترحيب' : 'Welcome Card Background'}</Label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {WELCOME_BG_OPTIONS.map(opt => {
+                        const active = (config.welcomeBg || 'misty') === opt.id;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => update('welcomeBg', opt.id)}
+                            className={cn(
+                              "rounded-lg border-2 p-2 text-xs font-medium transition-all hover:border-primary/50 text-left overflow-hidden",
+                              active ? "border-primary ring-2 ring-primary/30" : "border-border"
+                            )}
+                          >
+                            <div
+                              className="h-16 w-full rounded-md mb-2 bg-cover bg-center"
+                              style={{ backgroundImage: `url(${opt.src})` }}
+                            />
+                            <span>{isAr ? opt.label.ar : opt.label.en}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Live preview */}
