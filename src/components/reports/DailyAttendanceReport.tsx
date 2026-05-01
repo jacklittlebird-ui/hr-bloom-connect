@@ -586,9 +586,14 @@ export const DailyAttendanceReport = () => {
                   <span className="font-medium">{ar ? 'وقت الانصراف' : 'Check-out'}</span>
                 </span>
                 <span className="mx-1 text-muted-foreground">|</span>
-                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                  <span className="inline-block w-3 h-3 rounded-sm bg-amber-50 border" aria-hidden />
-                  {ar ? 'الجمعة' : 'Friday'}
+                <span className="inline-flex items-center gap-1 text-amber-700">
+                  <span className="inline-block w-3 h-3 rounded-sm bg-amber-100 border-2 border-amber-500" aria-hidden />
+                  <span aria-hidden>🕌</span>
+                  <span className="font-medium">{ar ? 'الجمعة (عطلة)' : 'Friday (Off)'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 text-amber-600">
+                  <span className="inline-block w-3 h-3 rounded-sm bg-amber-50 border-2 border-amber-300" aria-hidden />
+                  <span className="font-medium">{ar ? 'السبت' : 'Saturday'}</span>
                 </span>
                 <span className="inline-flex items-center gap-1 text-muted-foreground">
                   <span className="text-muted-foreground/60">—</span>
@@ -612,16 +617,35 @@ export const DailyAttendanceReport = () => {
                         const dObj = new Date(d + 'T00:00:00');
                         const dayLabel = dObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short' });
                         const dateLabel = format(dObj, 'dd/MM');
-                        const isFri = dObj.getDay() === 5;
+                        const dow = dObj.getDay();
+                        const isFri = dow === 5;
+                        const isSat = dow === 6;
+                        const headBg = isFri ? 'bg-amber-100' : isSat ? 'bg-amber-50' : 'bg-blue-50';
+                        const borderCls = isFri
+                          ? 'border-x-2 border-x-amber-500'
+                          : isSat
+                          ? 'border-x-2 border-x-amber-300'
+                          : '';
                         return (
                           <th
                             key={d}
                             colSpan={3}
-                            className={cn('border p-1 text-center whitespace-nowrap', isFri ? 'bg-amber-50' : 'bg-blue-50')}
+                            className={cn('border p-1 text-center whitespace-nowrap relative', headBg, borderCls)}
                             style={{ minWidth: 150 }}
                           >
-                            <div className="font-bold tabular-nums">{dateLabel}</div>
-                            <div className="text-[10px] font-normal text-muted-foreground">{dayLabel}</div>
+                            {isFri && (
+                              <div className="absolute inset-x-0 top-0 h-1 bg-amber-500" aria-hidden />
+                            )}
+                            {isSat && (
+                              <div className="absolute inset-x-0 top-0 h-1 bg-amber-300" aria-hidden />
+                            )}
+                            <div className="font-bold tabular-nums flex items-center justify-center gap-1">
+                              {isFri && <span aria-hidden>🕌</span>}
+                              {dateLabel}
+                            </div>
+                            <div className={cn('text-[10px] font-normal', isFri ? 'text-amber-700 font-semibold' : isSat ? 'text-amber-600' : 'text-muted-foreground')}>
+                              {isFri ? (ar ? 'الجمعة — عطلة' : 'Friday — Off') : isSat ? (ar ? 'السبت' : 'Saturday') : dayLabel}
+                            </div>
                           </th>
                         );
                       })}
@@ -635,13 +659,17 @@ export const DailyAttendanceReport = () => {
                       <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'متأخر' : 'L'}</th>
                       <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'غائب' : 'A'}</th>
                       <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'الساعات' : 'Hrs'}</th>
-                      {dateRange.map(d => (
+                      {dateRange.map(d => {
+                        const dow = new Date(d + 'T00:00:00').getDay();
+                        const sub = dow === 5 ? 'bg-amber-100/70' : dow === 6 ? 'bg-amber-50/70' : '';
+                        return (
                         <Fragment key={d}>
-                          <th className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'حضور' : 'In'}</th>
-                          <th className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'انصراف' : 'Out'}</th>
-                          <th className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'س' : 'H'}</th>
+                          <th className={cn('border p-1 text-center text-[10px] font-normal text-muted-foreground', sub)}>{ar ? 'حضور' : 'In'}</th>
+                          <th className={cn('border p-1 text-center text-[10px] font-normal text-muted-foreground', sub)}>{ar ? 'انصراف' : 'Out'}</th>
+                          <th className={cn('border p-1 text-center text-[10px] font-normal text-muted-foreground', sub)}>{ar ? 'س' : 'H'}</th>
                         </Fragment>
-                      ))}
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody>
@@ -668,13 +696,22 @@ export const DailyAttendanceReport = () => {
                         <td className="border p-2 text-center font-bold tabular-nums bg-emerald-50/40">{fmtHours(r.totals.hours)}</td>
                         {r.cells.map((c, ci) => {
                           const dimmed = !c.matchesStatus;
-                          const baseCell = 'border p-1 text-center font-mono whitespace-nowrap';
+                          const dow = new Date(dateRange[ci] + 'T00:00:00').getDay();
+                          const isFri = dow === 5;
+                          const isSat = dow === 6;
+                          const weekendBorder = isFri
+                            ? 'border-x-2 border-x-amber-500'
+                            : isSat
+                            ? 'border-x-2 border-x-amber-300'
+                            : '';
+                          const weekendBg = isFri ? 'bg-amber-50/60' : isSat ? 'bg-amber-50/30' : '';
+                          const baseCell = cn('border p-1 text-center font-mono whitespace-nowrap', weekendBorder);
                           if (c.kind === 'none') {
                             return (
                               <Fragment key={ci}>
-                                <td className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
-                                <td className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
-                                <td className={cn(baseCell, 'text-muted-foreground/40')}>—</td>
+                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')} title={isFri ? (ar ? 'الجمعة — عطلة' : 'Friday — Off') : isSat ? (ar ? 'السبت' : 'Saturday') : undefined}>{isFri ? '🕌' : '—'}</td>
+                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')}>—</td>
+                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')}>—</td>
                               </Fragment>
                             );
                           }
