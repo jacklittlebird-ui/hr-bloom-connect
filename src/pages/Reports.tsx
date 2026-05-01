@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { EmployeeReports } from '@/components/reports/EmployeeReports';
 import { AttendanceReportsTab } from '@/components/reports/AttendanceReportsTab';
+import { StationAttendanceReport } from '@/components/reports/StationAttendanceReport';
 import { LeaveReports } from '@/components/reports/LeaveReports';
 import { SalaryReports } from '@/components/reports/SalaryReports';
 import { PerformanceReports } from '@/components/reports/PerformanceReports';
@@ -19,6 +20,7 @@ const Reports = () => {
   const { t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState('employees');
   const [trainingSubTab, setTrainingSubTab] = useState('stats');
+  const [attendanceSubTab, setAttendanceSubTab] = useState('stations');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const tabs = [
@@ -58,7 +60,20 @@ const Reports = () => {
         </TabsList>
 
         <TabsContent value="employees"><EmployeeReports /></TabsContent>
-        <TabsContent value="attendance"><AttendanceReportsTab /></TabsContent>
+        <TabsContent value="attendance">
+          <Tabs value={attendanceSubTab} onValueChange={setAttendanceSubTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+            <TabsList className="mb-4 bg-muted/30">
+              <TabsTrigger value="stations" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {isRTL ? 'تقرير المحطات الشهري' : 'Monthly Stations Report'}
+              </TabsTrigger>
+              <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {isRTL ? 'نظرة عامة' : 'Overview'}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="stations"><StationAttendanceReport /></TabsContent>
+            <TabsContent value="overview"><AttendanceReportsTab /></TabsContent>
+          </Tabs>
+        </TabsContent>
         <TabsContent value="leaves"><LeaveReports /></TabsContent>
         <TabsContent value="salaries"><SalaryReports /></TabsContent>
         <TabsContent value="performance"><PerformanceReports /></TabsContent>
