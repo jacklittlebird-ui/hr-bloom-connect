@@ -835,6 +835,19 @@ export const DailyAttendanceReport = () => {
           </Card>
         )}
       </div>
+      <WordPreviewDialog
+        open={wordPreviewOpen}
+        onOpenChange={setWordPreviewOpen}
+        html={wordPreviewHtml}
+        loading={wordPreviewLoading}
+        title={wordPreviewTitle}
+        onConfirm={() => {
+          if (wordPreviewHtml) {
+            downloadWordHtml(wordPreviewHtml, wordPreviewTitle);
+            setWordPreviewOpen(false);
+          }
+        }}
+      />
     </div>
   );
 };
