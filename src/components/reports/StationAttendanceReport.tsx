@@ -38,10 +38,45 @@ function formatTimeCairo(iso: string | null): string {
   } catch { return '—'; }
 }
 
-function getWeekOfMonth(dateStr: string): number {
+// Calendar-aware week index inside a given month.
+// weekStart: 0=Sunday, 1=Monday, ..., 6=Saturday.
+// Returns 1-based week index. Days in the same calendar week share the same index.
+function getWeekOfMonth(dateStr: string, year: number, month: number, weekStart: number): number {
   const d = new Date(dateStr + 'T00:00:00');
   const day = d.getDate();
-  return Math.min(5, Math.ceil(day / 7));
+  // Day-of-week of the 1st of the month (0=Sun..6=Sat)
+  const firstDow = new Date(year, month - 1, 1).getDay();
+  // How many days from the 1st belong to "week 1" (the partial first calendar week)
+  const offset = (firstDow - weekStart + 7) % 7;
+  const daysInFirstWeek = 7 - offset;
+  if (day <= daysInFirstWeek) return 1;
+  return Math.floor((day - daysInFirstWeek - 1) / 7) + 2;
+}
+
+// Number of calendar weeks the month spans, given a week-start day.
+function getWeeksInMonth(year: number, month: number, weekStart: number): number {
+  const firstDow = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const offset = (firstDow - weekStart + 7) % 7;
+  const daysInFirstWeek = 7 - offset;
+  if (daysInMonth <= daysInFirstWeek) return 1;
+  return 1 + Math.ceil((daysInMonth - daysInFirstWeek) / 7);
+}
+
+// Inclusive date range (DD/MM) covered by a given 1-based week index in the month.
+function getWeekRangeLabel(weekIdx: number, year: number, month: number, weekStart: number): string {
+  const firstDow = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const offset = (firstDow - weekStart + 7) % 7;
+  const daysInFirstWeek = 7 - offset;
+  let startDay: number, endDay: number;
+  if (weekIdx === 1) { startDay = 1; endDay = Math.min(daysInFirstWeek, daysInMonth); }
+  else {
+    startDay = daysInFirstWeek + (weekIdx - 2) * 7 + 1;
+    endDay = Math.min(startDay + 6, daysInMonth);
+  }
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(startDay)}–${pad(endDay)}/${pad(month)}`;
 }
 
 function fmtHours(h: number): string {
@@ -58,6 +93,12 @@ export const StationAttendanceReport = () => {
   const [year, setYear] = useState<number>(now.getFullYear());
   const [month, setMonth] = useState<number>(now.getMonth() + 1); // 1..12
   const [stationFilter, setStationFilter] = useState<string>('all');
+  // Week start: 6=Saturday (default for Egypt/Arabic context), 0=Sunday, 1=Monday
+  const [weekStart, setWeekStart] = useState<number>(() => {
+    const saved = localStorage.getItem('attendanceReport.weekStart');
+    return saved !== null ? Number(saved) : 6;
+  });
+  useEffect(() => { localStorage.setItem('attendanceReport.weekStart', String(weekStart)); }, [weekStart]);
   const [loading, setLoading] = useState(false);
   const [expandedEmp, setExpandedEmp] = useState<Set<string>>(new Set());
 
@@ -161,18 +202,26 @@ export const StationAttendanceReport = () => {
     return m;
   }, [records]);
 
+  // Number of calendar weeks the selected month actually spans (4..6) given weekStart
+  const weeksCount = useMemo(() => getWeeksInMonth(year, month, weekStart), [year, month, weekStart]);
+  const weekRangeLabels = useMemo(
+    () => Array.from({ length: weeksCount }, (_, i) => getWeekRangeLabel(i + 1, year, month, weekStart)),
+    [weeksCount, year, month, weekStart],
+  );
+
   // Aggregate per employee
   const empSummaries = useMemo(() => {
     return visibleEmployees.map(emp => {
       const recs = recordsByEmp.get(emp.id) || [];
-      const weeks = [0, 0, 0, 0, 0]; // weeks 1..5
-      const weekDays = [0, 0, 0, 0, 0];
+      const weeks = Array.from({ length: weeksCount }, () => 0);
+      const weekDays = Array.from({ length: weeksCount }, () => 0);
       let totalHours = 0;
       let presentDays = 0;
       let lateDays = 0;
       let absentDays = 0;
       recs.forEach(r => {
-        const w = getWeekOfMonth(r.date) - 1;
+        const w = getWeekOfMonth(r.date, year, month, weekStart) - 1;
+        if (w < 0 || w >= weeksCount) return;
         const h = Number(r.work_hours || (r.work_minutes ? r.work_minutes / 60 : 0)) || 0;
         weeks[w] += h;
         if (r.status === 'present') {
@@ -191,7 +240,7 @@ export const StationAttendanceReport = () => {
         totalHours, presentDays, lateDays, absentDays,
       };
     });
-  }, [visibleEmployees, recordsByEmp]);
+  }, [visibleEmployees, recordsByEmp, weeksCount, year, month, weekStart]);
 
   // Group by station
   const stationGroups = useMemo(() => {
@@ -224,14 +273,14 @@ export const StationAttendanceReport = () => {
     return { employeesCount, totalHours, presentDays, lateDays, absentDays, stationsCount: stationGroups.length };
   }, [empSummaries, stationGroups]);
 
-  // Export rows: one row per employee with weekly breakdown
+  // Export rows: one row per employee with weekly breakdown (dynamic week count)
   const buildExportRows = () => {
     const rows: Record<string, unknown>[] = [];
     stationGroups.forEach(group => {
       const stName = group.station ? (ar ? group.station.name_ar : group.station.name_en) : (ar ? 'بدون محطة' : 'No Station');
       group.rows.forEach((r, idx) => {
         const dept = r.employee.department_id ? deptMap.get(r.employee.department_id) : null;
-        rows.push({
+        const row: Record<string, unknown> = {
           _idx: idx + 1,
           station: stName,
           code: r.employee.employee_code,
@@ -240,22 +289,19 @@ export const StationAttendanceReport = () => {
           present: r.presentDays,
           late: r.lateDays,
           absent: r.absentDays,
-          w1: fmtHours(r.weeks[0]),
-          w2: fmtHours(r.weeks[1]),
-          w3: fmtHours(r.weeks[2]),
-          w4: fmtHours(r.weeks[3]),
-          w5: fmtHours(r.weeks[4]),
-          total: fmtHours(r.totalHours),
-        });
+        };
+        for (let i = 0; i < weeksCount; i++) row[`w${i + 1}`] = fmtHours(r.weeks[i] || 0);
+        row.total = fmtHours(r.totalHours);
+        rows.push(row);
       });
       // station subtotal row
       const sub = group.rows.reduce((acc, r) => {
         acc.present += r.presentDays; acc.late += r.lateDays; acc.absent += r.absentDays;
         acc.total += r.totalHours;
-        for (let i = 0; i < 5; i++) acc.weeks[i] += r.weeks[i];
+        for (let i = 0; i < weeksCount; i++) acc.weeks[i] = (acc.weeks[i] || 0) + (r.weeks[i] || 0);
         return acc;
-      }, { present: 0, late: 0, absent: 0, total: 0, weeks: [0, 0, 0, 0, 0] });
-      rows.push({
+      }, { present: 0, late: 0, absent: 0, total: 0, weeks: Array.from({ length: weeksCount }, () => 0) as number[] });
+      const subRow: Record<string, unknown> = {
         _idx: '',
         station: stName,
         code: ar ? 'مجموع المحطة' : 'Station Total',
@@ -264,13 +310,10 @@ export const StationAttendanceReport = () => {
         present: sub.present,
         late: sub.late,
         absent: sub.absent,
-        w1: fmtHours(sub.weeks[0]),
-        w2: fmtHours(sub.weeks[1]),
-        w3: fmtHours(sub.weeks[2]),
-        w4: fmtHours(sub.weeks[3]),
-        w5: fmtHours(sub.weeks[4]),
-        total: fmtHours(sub.total),
-      });
+      };
+      for (let i = 0; i < weeksCount; i++) subRow[`w${i + 1}`] = fmtHours(sub.weeks[i] || 0);
+      subRow.total = fmtHours(sub.total);
+      rows.push(subRow);
     });
     return rows;
   };
@@ -284,11 +327,10 @@ export const StationAttendanceReport = () => {
     { header: ar ? 'حضور' : 'Present', key: 'present' },
     { header: ar ? 'تأخير' : 'Late', key: 'late' },
     { header: ar ? 'غياب' : 'Absent', key: 'absent' },
-    { header: ar ? 'أسبوع 1' : 'Week 1', key: 'w1' },
-    { header: ar ? 'أسبوع 2' : 'Week 2', key: 'w2' },
-    { header: ar ? 'أسبوع 3' : 'Week 3', key: 'w3' },
-    { header: ar ? 'أسبوع 4' : 'Week 4', key: 'w4' },
-    { header: ar ? 'أسبوع 5' : 'Week 5', key: 'w5' },
+    ...Array.from({ length: weeksCount }, (_, i) => ({
+      header: `${ar ? 'أسبوع' : 'Week'} ${i + 1} (${weekRangeLabels[i]})`,
+      key: `w${i + 1}`,
+    })),
     { header: ar ? 'إجمالي ساعات الشهر' : 'Monthly Total Hours', key: 'total' },
   ];
 
@@ -327,6 +369,14 @@ export const StationAttendanceReport = () => {
                   {stations.map(s => (
                     <SelectItem key={s.id} value={s.id}>{ar ? s.name_ar : s.name_en}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <Select value={String(weekStart)} onValueChange={(v) => setWeekStart(Number(v))}>
+                <SelectTrigger className="w-44"><SelectValue placeholder={ar ? 'بداية الأسبوع' : 'Week starts on'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">{ar ? 'يبدأ السبت' : 'Starts Saturday'}</SelectItem>
+                  <SelectItem value="0">{ar ? 'يبدأ الأحد' : 'Starts Sunday'}</SelectItem>
+                  <SelectItem value="1">{ar ? 'يبدأ الإثنين' : 'Starts Monday'}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -374,9 +424,9 @@ export const StationAttendanceReport = () => {
           const sub = group.rows.reduce((acc, r) => {
             acc.present += r.presentDays; acc.late += r.lateDays; acc.absent += r.absentDays;
             acc.total += r.totalHours;
-            for (let i = 0; i < 5; i++) acc.weeks[i] += r.weeks[i];
+            for (let i = 0; i < weeksCount; i++) acc.weeks[i] = (acc.weeks[i] || 0) + (r.weeks[i] || 0);
             return acc;
-          }, { present: 0, late: 0, absent: 0, total: 0, weeks: [0, 0, 0, 0, 0] });
+          }, { present: 0, late: 0, absent: 0, total: 0, weeks: Array.from({ length: weeksCount }, () => 0) as number[] });
 
           return (
             <Card key={(group.station?.id) || 'none'} className="overflow-hidden border-2">
@@ -407,11 +457,14 @@ export const StationAttendanceReport = () => {
                         <TableHead className="text-center">{ar ? 'حضور' : 'Present'}</TableHead>
                         <TableHead className="text-center">{ar ? 'تأخير' : 'Late'}</TableHead>
                         <TableHead className="text-center">{ar ? 'غياب' : 'Absent'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 1' : 'Week 1'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 2' : 'Week 2'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 3' : 'Week 3'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 4' : 'Week 4'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 5' : 'Week 5'}</TableHead>
+                        {Array.from({ length: weeksCount }, (_, i) => (
+                          <TableHead key={i} className="text-center bg-blue-50 whitespace-nowrap">
+                            <div className="leading-tight">
+                              <div>{ar ? `أسبوع ${i + 1}` : `Week ${i + 1}`}</div>
+                              <div className="text-[10px] font-normal text-muted-foreground tabular-nums">{weekRangeLabels[i]}</div>
+                            </div>
+                          </TableHead>
+                        ))}
                         <TableHead className="text-center bg-emerald-50 font-bold">{ar ? 'إجمالي شهري' : 'Monthly Total'}</TableHead>
                         <TableHead className="text-center w-32">{ar ? 'تفاصيل الأيام' : 'Daily Details'}</TableHead>
                       </TableRow>
@@ -451,7 +504,7 @@ export const StationAttendanceReport = () => {
                             </TableRow>
                             {isOpen && (
                               <TableRow key={`${r.employee.id}-details`} className="bg-muted/20 hover:bg-muted/20">
-                                <TableCell colSpan={15} className="p-4">
+                                <TableCell colSpan={9 + weeksCount} className="p-4">
                                   <div className={cn('flex items-center justify-between mb-3 flex-wrap gap-2', isRTL && 'flex-row-reverse')}>
                                     <div className="font-semibold text-sm">
                                       {ar ? '📋 التفاصيل اليومية' : '📋 Daily Details'} — {r.employee.employee_code} — {ar ? r.employee.name_ar : r.employee.name_en}
@@ -483,7 +536,7 @@ export const StationAttendanceReport = () => {
                                             return (
                                               <tr key={i} className={rec.status === 'absent' ? 'bg-red-50' : ''}>
                                                 <td className="border p-2 text-center">{dayLabel}</td>
-                                                <td className="border p-2 text-center">W{getWeekOfMonth(rec.date)}</td>
+                                                <td className="border p-2 text-center">W{getWeekOfMonth(rec.date, year, month, weekStart)}</td>
                                                 <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_in)}</td>
                                                 <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_out)}</td>
                                                 <td className="border p-2 text-center tabular-nums">{fmtHours(hours)}</td>
