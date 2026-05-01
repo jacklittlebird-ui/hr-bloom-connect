@@ -102,9 +102,11 @@ export const StationAttendanceReport = () => {
   const [loading, setLoading] = useState(false);
   const [expandedEmp, setExpandedEmp] = useState<Set<string>>(new Set());
   type DayFilter = 'all' | 'present' | 'late' | 'absent';
+  const [globalStatusFilter, setGlobalStatusFilter] = useState<DayFilter>('all');
   const [dayFilter, setDayFilter] = useState<Map<string, DayFilter>>(new Map());
 
-  const getDayFilter = (id: string): DayFilter => dayFilter.get(id) || 'all';
+  // Per-employee filter falls back to the global filter when not explicitly overridden
+  const getDayFilter = (id: string): DayFilter => dayFilter.get(id) ?? globalStatusFilter;
   const setEmpDayFilter = (id: string, f: DayFilter) => {
     setDayFilter(prev => {
       const next = new Map(prev);
