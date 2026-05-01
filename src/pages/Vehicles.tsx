@@ -16,6 +16,7 @@ const Vehicles = () => {
 
   const tabs = [
     { id: 'by-station', label: isAr ? 'سيارات لكل محطة' : 'Vehicles per Station' },
+    { id: 'alerts', label: isAr ? 'تنبيهات التراخيص' : 'License Alerts' },
     { id: 'registry', label: isAr ? 'سجل السيارات' : 'Vehicle Registry' },
     { id: 'licenses', label: isAr ? 'متابعة التراخيص' : 'License Tracking' },
     { id: 'maintenance', label: isAr ? 'الصيانة' : 'Maintenance' },
