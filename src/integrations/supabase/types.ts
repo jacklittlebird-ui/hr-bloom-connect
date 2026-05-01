@@ -2758,6 +2758,7 @@ export type Database = {
           created_at: string
           density: string | null
           font: string | null
+          header_style: string | null
           primary_color: string | null
           radius: string | null
           theme: string | null
@@ -2769,6 +2770,7 @@ export type Database = {
           created_at?: string
           density?: string | null
           font?: string | null
+          header_style?: string | null
           primary_color?: string | null
           radius?: string | null
           theme?: string | null
@@ -2780,6 +2782,7 @@ export type Database = {
           created_at?: string
           density?: string | null
           font?: string | null
+          header_style?: string | null
           primary_color?: string | null
           radius?: string | null
           theme?: string | null

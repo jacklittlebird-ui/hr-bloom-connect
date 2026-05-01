@@ -219,6 +219,7 @@ interface ApplyConfig {
   density?: string;
   font?: string;
   sidebarStyle?: 'auto' | 'dark' | 'light' | 'glass';
+  headerStyle?: 'smooth' | 'sharp';
 }
 
 // HEX -> "H S% L%" string for CSS HSL variables
@@ -329,5 +330,10 @@ export function applyThemeSettings(config?: ApplyConfig) {
       root.style.setProperty('--font-arabic', f.family);
       document.body.style.fontFamily = f.family;
     }
+  }
+
+  // 6) Header style (smooth gradient vs sharp split)
+  if (config.headerStyle === 'smooth' || config.headerStyle === 'sharp') {
+    root.dataset.headerStyle = config.headerStyle;
   }
 }

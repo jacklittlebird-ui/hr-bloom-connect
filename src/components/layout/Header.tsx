@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,9 +10,45 @@ interface HeaderProps {
   onToggleSidebar?: () => void;
 }
 
+const BLUE = 'hsl(var(--primary))';
+const RED = 'hsl(0 84% 50%)';
+
+function buildGradient(style: 'smooth' | 'sharp', isRTL: boolean) {
+  const dir = isRTL ? '270deg' : '90deg';
+  if (style === 'sharp') {
+    // Hard split with razor-thin transition
+    return `linear-gradient(${dir}, ${BLUE} 0%, ${BLUE} 49.5%, ${RED} 50.5%, ${RED} 100%)`;
+  }
+  // Smooth blend through purple
+  return `linear-gradient(${dir}, ${BLUE} 0%, hsl(280 70% 45%) 50%, ${RED} 100%)`;
+}
+
+function readHeaderStyle(): 'smooth' | 'sharp' {
+  // 1) data attribute set by applyThemeSettings, 2) localStorage, 3) default
+  const ds = document.documentElement.dataset.headerStyle;
+  if (ds === 'smooth' || ds === 'sharp') return ds;
+  try {
+    const cfg = JSON.parse(localStorage.getItem('hr_site_config') || '{}');
+    if (cfg.headerStyle === 'sharp') return 'sharp';
+  } catch {}
+  return 'smooth';
+}
+
 export const Header = ({ onToggleSidebar }: HeaderProps) => {
   const { language, setLanguage, t, isRTL } = useLanguage();
   const { logout } = useAuth();
+  const [headerStyle, setHeaderStyle] = useState<'smooth' | 'sharp'>(() => readHeaderStyle());
+
+  // Re-read when settings page broadcasts a change
+  useEffect(() => {
+    const refresh = () => setHeaderStyle(readHeaderStyle());
+    window.addEventListener('hr-header-style-changed', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('hr-header-style-changed', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
 
   const toggleLanguage = () => {
     setLanguage(language === 'ar' ? 'en' : 'ar');
@@ -20,11 +57,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
   return (
     <header
       className="fixed top-0 left-0 right-0 h-16 z-50 flex items-center justify-between px-4 md:px-6 shadow-md"
-      style={{
-        backgroundImage: isRTL
-          ? 'linear-gradient(270deg, hsl(var(--primary)) 0%, hsl(280 70% 45%) 50%, hsl(0 84% 50%) 100%)'
-          : 'linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(280 70% 45%) 50%, hsl(0 84% 50%) 100%)',
-      }}
+      style={{ backgroundImage: buildGradient(headerStyle, isRTL) }}
     >
       <div className="flex items-center gap-2 md:gap-3">
         {onToggleSidebar && (

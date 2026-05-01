@@ -49,6 +49,7 @@ interface SiteConfig {
   radius?: string;
   density?: string;
   font?: string;
+  headerStyle?: 'smooth' | 'sharp';
   autoBackup: boolean;
   backupFrequency: string;
   dataRetention: string;
@@ -87,6 +88,7 @@ const defaultConfig: SiteConfig = {
   radius: 'md',
   density: 'comfortable',
   font: 'baloo',
+  headerStyle: 'smooth',
   autoBackup: true,
   backupFrequency: 'daily',
   dataRetention: '5years',
@@ -122,6 +124,7 @@ const SiteSettings = () => {
           ...(remote.radius ? { radius: remote.radius } : {}),
           ...(remote.density ? { density: remote.density } : {}),
           ...(remote.font ? { font: remote.font } : {}),
+          ...(remote.headerStyle ? { headerStyle: remote.headerStyle } : {}),
         }));
       }
     })();
@@ -132,8 +135,11 @@ const SiteSettings = () => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
     setHasChanges(true);
-    if (['theme', 'primaryColor', 'themePreset', 'radius', 'density', 'font'].includes(key as string)) {
+    if (['theme', 'primaryColor', 'themePreset', 'radius', 'density', 'font', 'headerStyle'].includes(key as string)) {
       applyThemeSettings(newConfig as any);
+      if (key === 'headerStyle') {
+        try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
+      }
     }
   };
 
@@ -164,7 +170,9 @@ const SiteSettings = () => {
       radius: config.radius,
       density: config.density,
       font: config.font,
+      headerStyle: config.headerStyle,
     });
+    try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
     setHasChanges(false);
     toast({
       title: isAr ? 'تم الحفظ' : 'Saved',
@@ -187,7 +195,9 @@ const SiteSettings = () => {
       radius: defaultConfig.radius,
       density: defaultConfig.density,
       font: defaultConfig.font,
+      headerStyle: defaultConfig.headerStyle,
     });
+    try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
     setHasChanges(false);
     toast({ title: isAr ? 'تم الاستعادة' : 'Reset', description: isAr ? 'تم استعادة الإعدادات الافتراضية' : 'Default settings restored' });
   };
@@ -371,7 +381,7 @@ const SiteSettings = () => {
                     className="gap-2"
                     onClick={() => updateMany({
                       themePreset: 'corporate-blue', theme: 'system', primaryColor: '#2563eb',
-                      radius: 'md', density: 'comfortable', font: 'baloo',
+                      radius: 'md', density: 'comfortable', font: 'baloo', headerStyle: 'smooth',
                     })}
                   >
                     <RotateCcw className="w-4 h-4" />
@@ -554,6 +564,36 @@ const SiteSettings = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Header style: smooth gradient vs sharp split */}
+                  <div className="md:col-span-2">
+                    <Label className="mb-3 block">{isAr ? 'نمط شريط الهيدر العلوي' : 'Top Header Style'}</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {([
+                        { v: 'smooth', ar: 'تدرّج ناعم', en: 'Smooth gradient' },
+                        { v: 'sharp', ar: 'تدرّج حاد (نصف/نصف)', en: 'Sharp split' },
+                      ] as const).map(opt => {
+                        const active = (config.headerStyle || 'smooth') === opt.v;
+                        const bg = opt.v === 'smooth'
+                          ? 'linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(280 70% 45%) 50%, hsl(0 84% 50%) 100%)'
+                          : 'linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 49.5%, hsl(0 84% 50%) 50.5%, hsl(0 84% 50%) 100%)';
+                        return (
+                          <button
+                            key={opt.v}
+                            type="button"
+                            onClick={() => update('headerStyle', opt.v)}
+                            className={cn(
+                              "rounded-lg border-2 p-2 text-xs font-medium transition-all hover:border-primary/50 text-left",
+                              active ? "border-primary ring-2 ring-primary/30" : "border-border"
+                            )}
+                          >
+                            <div className="h-9 w-full rounded-md mb-2" style={{ backgroundImage: bg }} />
+                            <span>{isAr ? opt.ar : opt.en}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 

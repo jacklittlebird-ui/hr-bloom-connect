@@ -1,0 +1,1 @@
+ALTER TABLE public.user_theme_preferences ADD COLUMN IF NOT EXISTS header_style text;
