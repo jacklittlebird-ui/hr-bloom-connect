@@ -19,6 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
+import { WordPreviewDialog } from '@/components/reports/WordPreviewDialog';
 import { toast } from '@/hooks/use-toast';
 
 interface StationRow { id: string; name_ar: string; name_en: string; weekend_days?: number[] | null; }
@@ -60,7 +61,11 @@ function toIsoDate(d: Date): string {
 export const DailyAttendanceReport = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
-  const { reportRef, handlePrint, exportToPDF, exportToCSV, exportToWord } = useReportExport();
+  const { reportRef, handlePrint, exportToPDF, exportToCSV, previewWordExport, downloadWordHtml } = useReportExport();
+  const [wordPreviewOpen, setWordPreviewOpen] = useState(false);
+  const [wordPreviewHtml, setWordPreviewHtml] = useState<string | null>(null);
+  const [wordPreviewLoading, setWordPreviewLoading] = useState(false);
+  const [wordPreviewTitle, setWordPreviewTitle] = useState('');
 
   const now = new Date();
   // Default range: current month
@@ -562,7 +567,15 @@ export const DailyAttendanceReport = () => {
               <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: reportTitle, data: buildExportRows(), columns: exportColumns })}>
                 <FileText className="w-4 h-4 mr-2" />Excel
               </Button>
-              <Button variant="outline" size="sm" onClick={() => exportToWord({ title: reportTitle, data: buildExportRows(), columns: exportColumns })}>
+              <Button variant="outline" size="sm" onClick={async () => {
+                setWordPreviewTitle(reportTitle);
+                setWordPreviewOpen(true);
+                setWordPreviewLoading(true);
+                setWordPreviewHtml(null);
+                const html = await previewWordExport({ title: reportTitle, data: buildExportRows(), columns: exportColumns });
+                setWordPreviewHtml(html);
+                setWordPreviewLoading(false);
+              }}>
                 <FileText className="w-4 h-4 mr-2" />Word
               </Button>
             </div>
@@ -822,6 +835,19 @@ export const DailyAttendanceReport = () => {
           </Card>
         )}
       </div>
+      <WordPreviewDialog
+        open={wordPreviewOpen}
+        onOpenChange={setWordPreviewOpen}
+        html={wordPreviewHtml}
+        loading={wordPreviewLoading}
+        title={wordPreviewTitle}
+        onConfirm={() => {
+          if (wordPreviewHtml) {
+            downloadWordHtml(wordPreviewHtml, wordPreviewTitle);
+            setWordPreviewOpen(false);
+          }
+        }}
+      />
     </div>
   );
 };
