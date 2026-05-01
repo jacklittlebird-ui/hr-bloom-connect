@@ -201,6 +201,9 @@ export const AttendanceRules = () => {
 
   return (
     <div className="space-y-6">
+      {/* Per-station weekend off-days configuration */}
+      <StationWeekendSettings />
+
       {/* Header */}
       <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
         <div>
