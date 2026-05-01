@@ -61,7 +61,7 @@ function toIsoDate(d: Date): string {
 export const DailyAttendanceReport = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
-  const { reportRef, handlePrint, exportToPDF, exportToCSV, exportToWord, previewWordExport, downloadWordHtml } = useReportExport();
+  const { reportRef, handlePrint, exportToPDF, exportToCSV, previewWordExport, downloadWordHtml } = useReportExport();
   const [wordPreviewOpen, setWordPreviewOpen] = useState(false);
   const [wordPreviewHtml, setWordPreviewHtml] = useState<string | null>(null);
   const [wordPreviewLoading, setWordPreviewLoading] = useState(false);
