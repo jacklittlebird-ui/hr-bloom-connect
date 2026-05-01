@@ -561,6 +561,40 @@ export const DailyAttendanceReport = () => {
         {!loading && empRows.length > 0 && (
           <Card className="overflow-hidden">
             <CardContent className="p-0">
+              {/* Legend */}
+              <div className={cn('flex flex-wrap items-center gap-2 px-3 py-2 border-b bg-muted/30 text-[11px]', isRTL && 'flex-row-reverse')}>
+                <span className="font-semibold text-muted-foreground">{ar ? 'المفتاح:' : 'Legend:'}</span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-emerald-50/60">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden />
+                  <span className="text-emerald-700 font-medium">{ar ? 'حاضر' : 'Present'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-amber-50">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" aria-hidden />
+                  <span className="text-amber-700 font-medium">{ar ? 'متأخر' : 'Late'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-red-100">
+                  <XCircle className="w-3.5 h-3.5 text-red-700" aria-hidden />
+                  <span className="text-red-700 font-medium">{ar ? 'غائب' : 'Absent'}</span>
+                </span>
+                <span className="mx-1 text-muted-foreground">|</span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-background">
+                  <LogIn className="w-3.5 h-3.5 text-emerald-600" aria-hidden />
+                  <span className="font-medium">{ar ? 'وقت الحضور' : 'Check-in'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-background">
+                  <LogOut className="w-3.5 h-3.5 text-rose-500" aria-hidden />
+                  <span className="font-medium">{ar ? 'وقت الانصراف' : 'Check-out'}</span>
+                </span>
+                <span className="mx-1 text-muted-foreground">|</span>
+                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                  <span className="inline-block w-3 h-3 rounded-sm bg-amber-50 border" aria-hidden />
+                  {ar ? 'الجمعة' : 'Friday'}
+                </span>
+                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                  <span className="text-muted-foreground/60">—</span>
+                  {ar ? 'لا يوجد سجل' : 'No record'}
+                </span>
+              </div>
               <div className={cn('overflow-auto bg-background', pinSummary && 'max-h-[640px]')}>
                 <table className="text-xs border-collapse" style={{ minWidth: '100%' }}>
                   <thead>
