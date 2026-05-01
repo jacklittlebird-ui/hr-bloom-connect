@@ -141,62 +141,84 @@ export const VehicleLicenseTracking = () => {
     a.click(); URL.revokeObjectURL(url);
   };
 
+  const buildReportPayload = () => {
+    const stationLabel = stationFilter
+      ? (isAr ? stationMap[stationFilter]?.name_ar : stationMap[stationFilter]?.name_en) || '-'
+      : (isAr ? 'كل المحطات' : 'All stations');
+    const bucketAr: Record<string, string> = { all: 'الكل', expired: 'منتهية', soon: 'قريبة الانتهاء', valid: 'سارية' };
+    return {
+      titleAr: 'تقرير متابعة تراخيص السيارات',
+      subtitleAr: 'كشف تفصيلي بحالة التراخيص حسب المحطة والفلاتر النشطة',
+      meta: [
+        { label: 'المحطة', value: String(stationLabel) },
+        { label: 'حالة الترخيص', value: bucketAr[statusBucket] || '-' },
+        { label: 'بحث', value: search || '—' },
+      ],
+      columns: [
+        { header: 'م', key: 'idx' },
+        { header: 'الكود', key: 'code' },
+        { header: 'السيارة', key: 'vehicle' },
+        { header: 'اللوحة', key: 'plate' },
+        { header: 'المحطة', key: 'station' },
+        { header: 'بداية الترخيص', key: 'ls' },
+        { header: 'نهاية الترخيص', key: 'le' },
+        { header: 'نهاية الستائر', key: 'ce' },
+        { header: 'نهاية النقل', key: 'te' },
+        { header: 'الحالة', key: 'status' },
+      ],
+      rows: filtered.map((v, i) => {
+        const days = getDaysRemaining(v.license_end_date);
+        const status =
+          days === null ? 'غير محدد'
+          : days < 0 ? `منتهي منذ ${Math.abs(days)} يوم`
+          : days <= 30 ? `قريب الانتهاء (${days} يوم)`
+          : days <= 90 ? `تنبيه (${days} يوم)`
+          : `ساري (${days} يوم)`;
+        return {
+          idx: i + 1,
+          code: v.vehicle_code,
+          vehicle: `${v.brand} ${v.model}`,
+          plate: v.plate_number,
+          station: v.station_id ? (stationMap[v.station_id]?.name_ar || '-') : 'غير مخصص',
+          ls: v.license_start_date || '—',
+          le: v.license_end_date || '—',
+          ce: v.curtains_license_end || '—',
+          te: v.transport_license_end || '—',
+          status,
+        };
+      }),
+      signatureLabels: ['مدير الأسطول', 'مدير الموارد البشرية', 'المدير العام'],
+      orientation: 'landscape' as const,
+    };
+  };
+
   const exportPdf = async () => {
     if (filtered.length === 0) {
       toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export');
       return;
     }
     try {
-      const stationLabel = stationFilter
-        ? (isAr ? stationMap[stationFilter]?.name_ar : stationMap[stationFilter]?.name_en) || '-'
-        : (isAr ? 'كل المحطات' : 'All stations');
-      const bucketAr: Record<string, string> = { all: 'الكل', expired: 'منتهية', soon: 'قريبة الانتهاء', valid: 'سارية' };
       await exportVehiclePdf({
-        titleAr: 'تقرير متابعة تراخيص السيارات',
-        subtitleAr: 'كشف تفصيلي بحالة التراخيص حسب المحطة والفلاتر النشطة',
-        meta: [
-          { label: 'المحطة', value: String(stationLabel) },
-          { label: 'حالة الترخيص', value: bucketAr[statusBucket] || '-' },
-          { label: 'بحث', value: search || '—' },
-        ],
-        columns: [
-          { header: 'م', key: 'idx' },
-          { header: 'الكود', key: 'code' },
-          { header: 'السيارة', key: 'vehicle' },
-          { header: 'اللوحة', key: 'plate' },
-          { header: 'المحطة', key: 'station' },
-          { header: 'بداية الترخيص', key: 'ls' },
-          { header: 'نهاية الترخيص', key: 'le' },
-          { header: 'نهاية الستائر', key: 'ce' },
-          { header: 'نهاية النقل', key: 'te' },
-          { header: 'الحالة', key: 'status' },
-        ],
-        rows: filtered.map((v, i) => {
-          const days = getDaysRemaining(v.license_end_date);
-          const status =
-            days === null ? 'غير محدد'
-            : days < 0 ? `منتهي منذ ${Math.abs(days)} يوم`
-            : days <= 30 ? `قريب الانتهاء (${days} يوم)`
-            : days <= 90 ? `تنبيه (${days} يوم)`
-            : `ساري (${days} يوم)`;
-          return {
-            idx: i + 1,
-            code: v.vehicle_code,
-            vehicle: `${v.brand} ${v.model}`,
-            plate: v.plate_number,
-            station: v.station_id ? (stationMap[v.station_id]?.name_ar || '-') : 'غير مخصص',
-            ls: v.license_start_date || '—',
-            le: v.license_end_date || '—',
-            ce: v.curtains_license_end || '—',
-            te: v.transport_license_end || '—',
-            status,
-          };
-        }),
+        ...buildReportPayload(),
         fileName: `vehicle_licenses_${new Date().toISOString().slice(0, 10)}.pdf`,
-        signatureLabels: ['مدير الأسطول', 'مدير الموارد البشرية', 'المدير العام'],
-        orientation: 'landscape',
       });
       toast.success(isAr ? 'تم تصدير PDF بنجاح' : 'PDF exported successfully');
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'فشل التصدير' : 'Export failed'));
+    }
+  };
+
+  const exportWord = async () => {
+    if (filtered.length === 0) {
+      toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export');
+      return;
+    }
+    try {
+      await exportVehicleWord({
+        ...buildReportPayload(),
+        fileName: `vehicle_licenses_${new Date().toISOString().slice(0, 10)}.docx`,
+      });
+      toast.success(isAr ? 'تم تصدير Word بنجاح' : 'Word exported successfully');
     } catch (e: any) {
       toast.error(e?.message || (isAr ? 'فشل التصدير' : 'Export failed'));
     }
