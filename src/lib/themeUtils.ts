@@ -331,4 +331,9 @@ export function applyThemeSettings(config?: ApplyConfig) {
       document.body.style.fontFamily = f.family;
     }
   }
+
+  // 6) Header style (smooth gradient vs sharp split)
+  if (config.headerStyle === 'smooth' || config.headerStyle === 'sharp') {
+    root.dataset.headerStyle = config.headerStyle;
+  }
 }
