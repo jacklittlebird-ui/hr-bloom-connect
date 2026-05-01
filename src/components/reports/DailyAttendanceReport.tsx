@@ -88,7 +88,7 @@ export const DailyAttendanceReport = () => {
   useEffect(() => {
     (async () => {
       const [{ data: st }, { data: dp }] = await Promise.all([
-        supabase.from('stations').select('id,name_ar,name_en').order('name_ar'),
+        supabase.from('stations').select('id,name_ar,name_en,weekend_days').order('name_ar'),
         supabase.from('departments').select('id,name_ar,name_en'),
       ]);
       setStations((st as StationRow[]) || []);
