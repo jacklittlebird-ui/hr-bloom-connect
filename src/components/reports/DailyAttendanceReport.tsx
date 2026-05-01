@@ -612,16 +612,35 @@ export const DailyAttendanceReport = () => {
                         const dObj = new Date(d + 'T00:00:00');
                         const dayLabel = dObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short' });
                         const dateLabel = format(dObj, 'dd/MM');
-                        const isFri = dObj.getDay() === 5;
+                        const dow = dObj.getDay();
+                        const isFri = dow === 5;
+                        const isSat = dow === 6;
+                        const headBg = isFri ? 'bg-amber-100' : isSat ? 'bg-amber-50' : 'bg-blue-50';
+                        const borderCls = isFri
+                          ? 'border-x-2 border-x-amber-500'
+                          : isSat
+                          ? 'border-x-2 border-x-amber-300'
+                          : '';
                         return (
                           <th
                             key={d}
                             colSpan={3}
-                            className={cn('border p-1 text-center whitespace-nowrap', isFri ? 'bg-amber-50' : 'bg-blue-50')}
+                            className={cn('border p-1 text-center whitespace-nowrap relative', headBg, borderCls)}
                             style={{ minWidth: 150 }}
                           >
-                            <div className="font-bold tabular-nums">{dateLabel}</div>
-                            <div className="text-[10px] font-normal text-muted-foreground">{dayLabel}</div>
+                            {isFri && (
+                              <div className="absolute inset-x-0 top-0 h-1 bg-amber-500" aria-hidden />
+                            )}
+                            {isSat && (
+                              <div className="absolute inset-x-0 top-0 h-1 bg-amber-300" aria-hidden />
+                            )}
+                            <div className="font-bold tabular-nums flex items-center justify-center gap-1">
+                              {isFri && <span aria-hidden>🕌</span>}
+                              {dateLabel}
+                            </div>
+                            <div className={cn('text-[10px] font-normal', isFri ? 'text-amber-700 font-semibold' : isSat ? 'text-amber-600' : 'text-muted-foreground')}>
+                              {isFri ? (ar ? 'الجمعة — عطلة' : 'Friday — Off') : isSat ? (ar ? 'السبت' : 'Saturday') : dayLabel}
+                            </div>
                           </th>
                         );
                       })}
