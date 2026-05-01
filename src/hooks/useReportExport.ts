@@ -70,7 +70,7 @@ function createExportContainer(html: string): HTMLDivElement {
   container.style.width = '1200px';
   container.style.maxWidth = 'none';
   container.style.background = '#ffffff';
-  container.style.zIndex = '-1';
+  container.style.zIndex = '2147483647';
   container.style.pointerEvents = 'none';
   container.innerHTML = html;
   document.body.appendChild(container);
