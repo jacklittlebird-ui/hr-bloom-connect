@@ -449,11 +449,14 @@ export const StationAttendanceReport = () => {
                         <TableHead className="text-center">{ar ? 'حضور' : 'Present'}</TableHead>
                         <TableHead className="text-center">{ar ? 'تأخير' : 'Late'}</TableHead>
                         <TableHead className="text-center">{ar ? 'غياب' : 'Absent'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 1' : 'Week 1'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 2' : 'Week 2'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 3' : 'Week 3'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 4' : 'Week 4'}</TableHead>
-                        <TableHead className="text-center bg-blue-50">{ar ? 'أسبوع 5' : 'Week 5'}</TableHead>
+                        {Array.from({ length: weeksCount }, (_, i) => (
+                          <TableHead key={i} className="text-center bg-blue-50 whitespace-nowrap">
+                            <div className="leading-tight">
+                              <div>{ar ? `أسبوع ${i + 1}` : `Week ${i + 1}`}</div>
+                              <div className="text-[10px] font-normal text-muted-foreground tabular-nums">{weekRangeLabels[i]}</div>
+                            </div>
+                          </TableHead>
+                        ))}
                         <TableHead className="text-center bg-emerald-50 font-bold">{ar ? 'إجمالي شهري' : 'Monthly Total'}</TableHead>
                         <TableHead className="text-center w-32">{ar ? 'تفاصيل الأيام' : 'Daily Details'}</TableHead>
                       </TableRow>
