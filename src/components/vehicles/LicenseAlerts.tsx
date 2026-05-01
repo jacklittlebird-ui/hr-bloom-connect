@@ -65,20 +65,32 @@ export const LicenseAlerts = () => {
     setFromDate(f); setToDate(t);
   };
 
+  const fetchData = async (showLoader = true) => {
+    if (showLoader) setLoading(true);
+    const [{ data: v }, { data: s }] = await Promise.all([
+      supabase
+        .from('vehicles')
+        .select('id, vehicle_code, brand, model, plate_number, station_id, license_end_date, curtains_license_end, transport_license_end')
+        .order('vehicle_code'),
+      supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar'),
+    ]);
+    if (v) setVehicles(v as unknown as Vehicle[]);
+    if (s) setStations(s as StationOption[]);
+    if (showLoader) setLoading(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const [{ data: v }, { data: s }] = await Promise.all([
-        supabase
-          .from('vehicles')
-          .select('id, vehicle_code, brand, model, plate_number, station_id, license_end_date, curtains_license_end, transport_license_end')
-          .order('vehicle_code'),
-        supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar'),
-      ]);
-      if (v) setVehicles(v as unknown as Vehicle[]);
-      if (s) setStations(s as StationOption[]);
-      setLoading(false);
-    })();
+    fetchData(true);
+    // Auto-refresh every 3 hours to keep thresholds current
+    const REFRESH_MS = 3 * 60 * 60 * 1000;
+    const interval = setInterval(() => fetchData(false), REFRESH_MS);
+    // Refresh when tab regains focus (after long idle)
+    const onVis = () => { if (document.visibilityState === 'visible') fetchData(false); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, []);
 
   const stationMap = useMemo(() => Object.fromEntries(stations.map((s) => [s.id, s])), [stations]);
