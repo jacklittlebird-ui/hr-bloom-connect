@@ -214,7 +214,7 @@ export const TrainingPlan = () => {
       <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
         <Button variant="outline" size="sm" onClick={handleExportPDF}>
           <FileText className="h-4 w-4 me-1" />
-          {ar ? 'تصدير PDF' : 'Export PDF'}
+          {ar ? 'معاينة PDF' : 'Preview PDF'}
         </Button>
         <Button variant="outline" size="sm" onClick={handleExportExcel}>
           <FileSpreadsheet className="h-4 w-4 me-1" />

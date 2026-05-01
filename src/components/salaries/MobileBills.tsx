@@ -459,7 +459,7 @@ export const MobileBills = () => {
                 </Button>
               )}
               <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)}><Printer className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })}><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })} className="gap-1.5"><FileText className="h-4 w-4" />{isRTL ? 'معاينة PDF' : 'Preview PDF'}</Button>
               <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'mobile-bills' })}><FileSpreadsheet className="h-4 w-4" /></Button>
             </div>
           </div>
