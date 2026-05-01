@@ -90,6 +90,7 @@ const defaultConfig: SiteConfig = {
   density: 'comfortable',
   font: 'baloo',
   headerStyle: 'smooth',
+  welcomeBg: 'misty',
   autoBackup: true,
   backupFrequency: 'daily',
   dataRetention: '5years',
