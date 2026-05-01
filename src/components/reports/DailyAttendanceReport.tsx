@@ -645,8 +645,16 @@ export const DailyAttendanceReport = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {empRows.map((r, i) => (
-                      <tr key={r.employee.id} className="hover:bg-muted/30">
+                    {empRows.map((r, i) => {
+                      const hasAbsent = r.totals.absent > 0;
+                      const hasLate = r.totals.late > 0;
+                      const rowFlag = hasAbsent
+                        ? 'bg-red-50/60 hover:bg-red-50 font-bold'
+                        : hasLate
+                        ? 'bg-amber-50/50 hover:bg-amber-50 font-semibold'
+                        : 'hover:bg-muted/30';
+                      return (
+                      <tr key={r.employee.id} className={cn(rowFlag)} title={hasAbsent ? (ar ? 'يحتوي على غياب' : 'Has absences') : hasLate ? (ar ? 'يحتوي على تأخير' : 'Has late days') : undefined}>
                         <td className="border p-2 text-center text-muted-foreground tabular-nums">{i + 1}</td>
                         <td className="border p-2 text-center font-mono">{r.employee.employee_code}</td>
                         <td className="border p-2 whitespace-pre-wrap break-words font-medium">
