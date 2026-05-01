@@ -39,9 +39,45 @@ function formatTimeCairo(iso: string | null): string {
 }
 
 function getWeekOfMonth(dateStr: string): number {
+// Calendar-aware week index inside a given month.
+// weekStart: 0=Sunday, 1=Monday, ..., 6=Saturday.
+// Returns 1-based week index. Days in the same calendar week share the same index.
+function getWeekOfMonth(dateStr: string, year: number, month: number, weekStart: number): number {
   const d = new Date(dateStr + 'T00:00:00');
   const day = d.getDate();
-  return Math.min(5, Math.ceil(day / 7));
+  // Day-of-week of the 1st of the month (0=Sun..6=Sat)
+  const firstDow = new Date(year, month - 1, 1).getDay();
+  // How many days from the 1st belong to "week 1" (the partial first calendar week)
+  const offset = (firstDow - weekStart + 7) % 7;
+  const daysInFirstWeek = 7 - offset;
+  if (day <= daysInFirstWeek) return 1;
+  return Math.floor((day - daysInFirstWeek - 1) / 7) + 2;
+}
+
+// Number of calendar weeks the month spans, given a week-start day.
+function getWeeksInMonth(year: number, month: number, weekStart: number): number {
+  const firstDow = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const offset = (firstDow - weekStart + 7) % 7;
+  const daysInFirstWeek = 7 - offset;
+  if (daysInMonth <= daysInFirstWeek) return 1;
+  return 1 + Math.ceil((daysInMonth - daysInFirstWeek) / 7);
+}
+
+// Inclusive date range (DD/MM) covered by a given 1-based week index in the month.
+function getWeekRangeLabel(weekIdx: number, year: number, month: number, weekStart: number): string {
+  const firstDow = new Date(year, month - 1, 1).getDay();
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const offset = (firstDow - weekStart + 7) % 7;
+  const daysInFirstWeek = 7 - offset;
+  let startDay: number, endDay: number;
+  if (weekIdx === 1) { startDay = 1; endDay = Math.min(daysInFirstWeek, daysInMonth); }
+  else {
+    startDay = daysInFirstWeek + (weekIdx - 2) * 7 + 1;
+    endDay = Math.min(startDay + 6, daysInMonth);
+  }
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(startDay)}–${pad(endDay)}/${pad(month)}`;
 }
 
 function fmtHours(h: number): string {
