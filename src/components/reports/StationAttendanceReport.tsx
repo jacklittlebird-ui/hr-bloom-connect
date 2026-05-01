@@ -101,6 +101,17 @@ export const StationAttendanceReport = () => {
   useEffect(() => { localStorage.setItem('attendanceReport.weekStart', String(weekStart)); }, [weekStart]);
   const [loading, setLoading] = useState(false);
   const [expandedEmp, setExpandedEmp] = useState<Set<string>>(new Set());
+  type DayFilter = 'all' | 'present' | 'late' | 'absent';
+  const [dayFilter, setDayFilter] = useState<Map<string, DayFilter>>(new Map());
+
+  const getDayFilter = (id: string): DayFilter => dayFilter.get(id) || 'all';
+  const setEmpDayFilter = (id: string, f: DayFilter) => {
+    setDayFilter(prev => {
+      const next = new Map(prev);
+      next.set(id, f);
+      return next;
+    });
+  };
 
   const toggleEmp = (id: string) => {
     setExpandedEmp(prev => {
@@ -513,49 +524,86 @@ export const StationAttendanceReport = () => {
                                       {ar ? 'إجمالي السجلات' : 'Records'}: {r.records.length}
                                     </div>
                                   </div>
-                                  {r.records.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground text-center py-4">{ar ? 'لا توجد سجلات لهذا الموظف خلال هذا الشهر' : 'No records for this employee in this month'}</p>
-                                  ) : (
-                                    <div className="overflow-x-auto bg-background rounded-lg border">
-                                      <table className="w-full text-xs border-collapse">
-                                        <thead>
-                                          <tr className="bg-muted/40">
-                                            <th className="border p-2 text-center">{ar ? 'التاريخ' : 'Date'}</th>
-                                            <th className="border p-2 text-center">{ar ? 'الأسبوع' : 'Week'}</th>
-                                            <th className="border p-2 text-center">{ar ? 'الحضور' : 'Check-in'}</th>
-                                            <th className="border p-2 text-center">{ar ? 'الانصراف' : 'Check-out'}</th>
-                                            <th className="border p-2 text-center">{ar ? 'الساعات' : 'Hours'}</th>
-                                            <th className="border p-2 text-center">{ar ? 'الحالة' : 'Status'}</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {r.records.map((rec, i) => {
-                                            const hours = Number(rec.work_hours || (rec.work_minutes ? rec.work_minutes / 60 : 0)) || 0;
-                                            const dateObj = new Date(rec.date + 'T00:00:00');
-                                            const dayLabel = dateObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short', day: '2-digit', month: '2-digit' });
-                                            return (
-                                              <tr key={i} className={rec.status === 'absent' ? 'bg-red-50' : ''}>
-                                                <td className="border p-2 text-center">{dayLabel}</td>
-                                                <td className="border p-2 text-center">W{getWeekOfMonth(rec.date, year, month, weekStart)}</td>
-                                                <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_in)}</td>
-                                                <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_out)}</td>
-                                                <td className="border p-2 text-center tabular-nums">{fmtHours(hours)}</td>
-                                                <td className="border p-2 text-center">
-                                                  {rec.status === 'present' && (
-                                                    <Badge variant={rec.is_late ? 'outline' : 'secondary'} className={rec.is_late ? 'text-amber-700 border-amber-400' : ''}>
-                                                      {rec.is_late ? (ar ? 'متأخر' : 'Late') : (ar ? 'حاضر' : 'Present')}
-                                                    </Badge>
-                                                  )}
-                                                  {rec.status === 'absent' && <Badge variant="destructive">{ar ? 'غائب' : 'Absent'}</Badge>}
-                                                  {rec.status !== 'present' && rec.status !== 'absent' && <Badge variant="outline">{rec.status}</Badge>}
-                                                </td>
-                                              </tr>
-                                            );
-                                          })}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  )}
+                                  {(() => {
+                                    const f = getDayFilter(r.employee.id);
+                                    const filtered = r.records.filter(rec => {
+                                      if (f === 'all') return true;
+                                      if (f === 'absent') return rec.status === 'absent';
+                                      if (f === 'late') return rec.status === 'present' && !!rec.is_late;
+                                      if (f === 'present') return rec.status === 'present' && !rec.is_late;
+                                      return true;
+                                    });
+                                    const counts = {
+                                      all: r.records.length,
+                                      present: r.records.filter(x => x.status === 'present' && !x.is_late).length,
+                                      late: r.records.filter(x => x.status === 'present' && !!x.is_late).length,
+                                      absent: r.records.filter(x => x.status === 'absent').length,
+                                    };
+                                    const FilterBtn = ({ k, label, cls }: { k: DayFilter; label: string; cls?: string }) => (
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant={f === k ? 'default' : 'outline'}
+                                        className={cn('h-7 px-2 text-xs', f === k && cls)}
+                                        onClick={() => setEmpDayFilter(r.employee.id, k)}
+                                      >
+                                        {label} <span className="ms-1 opacity-70 tabular-nums">({counts[k]})</span>
+                                      </Button>
+                                    );
+                                    return (
+                                      <>
+                                        <div className={cn('flex flex-wrap gap-2 mb-3', isRTL && 'flex-row-reverse')}>
+                                          <FilterBtn k="all" label={ar ? 'الكل' : 'All'} />
+                                          <FilterBtn k="present" label={ar ? 'حاضر' : 'Present'} cls="bg-green-600 hover:bg-green-600" />
+                                          <FilterBtn k="late" label={ar ? 'متأخر' : 'Late'} cls="bg-amber-500 hover:bg-amber-500" />
+                                          <FilterBtn k="absent" label={ar ? 'غائب' : 'Absent'} cls="bg-red-600 hover:bg-red-600" />
+                                        </div>
+                                        {filtered.length === 0 ? (
+                                          <p className="text-xs text-muted-foreground text-center py-4">{ar ? 'لا توجد سجلات مطابقة للتصفية' : 'No records match this filter'}</p>
+                                        ) : (
+                                          <div className="overflow-x-auto bg-background rounded-lg border">
+                                            <table className="w-full text-xs border-collapse">
+                                              <thead>
+                                                <tr className="bg-muted/40">
+                                                  <th className="border p-2 text-center">{ar ? 'التاريخ' : 'Date'}</th>
+                                                  <th className="border p-2 text-center">{ar ? 'الأسبوع' : 'Week'}</th>
+                                                  <th className="border p-2 text-center">{ar ? 'الحضور' : 'Check-in'}</th>
+                                                  <th className="border p-2 text-center">{ar ? 'الانصراف' : 'Check-out'}</th>
+                                                  <th className="border p-2 text-center">{ar ? 'الساعات' : 'Hours'}</th>
+                                                  <th className="border p-2 text-center">{ar ? 'الحالة' : 'Status'}</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody>
+                                                {filtered.map((rec, i) => {
+                                                  const hours = Number(rec.work_hours || (rec.work_minutes ? rec.work_minutes / 60 : 0)) || 0;
+                                                  const dateObj = new Date(rec.date + 'T00:00:00');
+                                                  const dayLabel = dateObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                                                  return (
+                                                    <tr key={i} className={rec.status === 'absent' ? 'bg-red-50' : ''}>
+                                                      <td className="border p-2 text-center">{dayLabel}</td>
+                                                      <td className="border p-2 text-center">W{getWeekOfMonth(rec.date, year, month, weekStart)}</td>
+                                                      <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_in)}</td>
+                                                      <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_out)}</td>
+                                                      <td className="border p-2 text-center tabular-nums">{fmtHours(hours)}</td>
+                                                      <td className="border p-2 text-center">
+                                                        {rec.status === 'present' && (
+                                                          <Badge variant={rec.is_late ? 'outline' : 'secondary'} className={rec.is_late ? 'text-amber-700 border-amber-400' : ''}>
+                                                            {rec.is_late ? (ar ? 'متأخر' : 'Late') : (ar ? 'حاضر' : 'Present')}
+                                                          </Badge>
+                                                        )}
+                                                        {rec.status === 'absent' && <Badge variant="destructive">{ar ? 'غائب' : 'Absent'}</Badge>}
+                                                        {rec.status !== 'present' && rec.status !== 'absent' && <Badge variant="outline">{rec.status}</Badge>}
+                                                      </td>
+                                                    </tr>
+                                                  );
+                                                })}
+                                              </tbody>
+                                            </table>
+                                          </div>
+                                        )}
+                                      </>
+                                    );
+                                  })()}
                                 </TableCell>
                               </TableRow>
                             )}
