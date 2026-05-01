@@ -336,6 +336,51 @@ export const VehicleRegistry = () => {
         </div>
       </CardHeader>
       <CardContent>
+        {alerts.length > 0 && (
+          <div className="mb-4 border rounded-lg overflow-hidden">
+            <div className={cn('px-3 py-2 bg-muted/50 flex items-center justify-between gap-2 flex-wrap', isRTL && 'flex-row-reverse')}>
+              <div className={cn('flex items-center gap-2 text-sm font-semibold', isRTL && 'flex-row-reverse')}>
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                <span>{isAr ? 'تنبيهات التراخيص' : 'License Alerts'}</span>
+                {expiredCount > 0 && (
+                  <Badge className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                    {isAr ? `منتهية: ${expiredCount}` : `Expired: ${expiredCount}`}
+                  </Badge>
+                )}
+                {soonCount > 0 && (
+                  <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                    {isAr ? `خلال 30 يوم: ${soonCount}` : `Within 30 days: ${soonCount}`}
+                  </Badge>
+                )}
+              </div>
+              {focusedId && (
+                <Button size="sm" variant="ghost" onClick={() => setFocusedId(null)}>
+                  <X className="w-3 h-3 me-1" />{isAr ? 'إلغاء التركيز' : 'Clear focus'}
+                </Button>
+              )}
+            </div>
+            <div className="max-h-48 overflow-y-auto divide-y">
+              {alerts.slice(0, 50).map((a, i) => (
+                <div key={`${a.vehicle.id}-${a.license}-${i}`} className={cn('px-3 py-2 text-xs flex items-center justify-between gap-2 flex-wrap', isRTL && 'flex-row-reverse')}>
+                  <div className={cn('flex items-center gap-2 min-w-0 flex-wrap', isRTL && 'flex-row-reverse')}>
+                    <Badge variant="outline" className={cn('shrink-0', a.type === 'expired' ? 'border-red-400 text-red-700 dark:text-red-300' : 'border-amber-400 text-amber-700 dark:text-amber-300')}>
+                      {a.type === 'expired'
+                        ? (isAr ? `منذ ${Math.abs(a.days)} يوم` : `${Math.abs(a.days)}d ago`)
+                        : (isAr ? `خلال ${a.days} يوم` : `in ${a.days}d`)}
+                    </Badge>
+                    <span className="font-mono shrink-0">{a.vehicle.vehicle_code}</span>
+                    <span className="font-mono text-muted-foreground shrink-0">{a.vehicle.plate_number}</span>
+                    <span className="text-muted-foreground">{a.license}</span>
+                    <span className="text-muted-foreground">· {a.date}</span>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-7" onClick={() => focusVehicle(a.vehicle.id)}>
+                    <Crosshair className="w-3 h-3 me-1" />{isAr ? 'تركيز' : 'Focus'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>
         ) : filtered.length === 0 ? (
