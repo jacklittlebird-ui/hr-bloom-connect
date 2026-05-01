@@ -223,41 +223,70 @@ export const VehicleLicenseTracking = () => {
           ) : filtered.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">{isAr ? 'لا توجد نتائج' : 'No results'}</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{isAr ? 'السيارة' : 'Vehicle'}</TableHead>
-                    <TableHead>{isAr ? 'اللوحة' : 'Plate'}</TableHead>
-                    <TableHead>{isAr ? 'المحطة' : 'Station'}</TableHead>
-                    {(filter === 'all' || filter === 'vehicle') && <TableHead>{isAr ? 'ترخيص السيارة' : 'Vehicle License'}</TableHead>}
-                    {(filter === 'all' || filter === 'curtains') && <TableHead>{isAr ? 'ترخيص الستائر' : 'Curtains License'}</TableHead>}
-                    {(filter === 'all' || filter === 'transport') && <TableHead>{isAr ? 'النقل البري' : 'Transport License'}</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((v) => (
-                    <TableRow key={v.id}>
-                      <TableCell>
-                        <div className="font-medium">{v.brand} {v.model}</div>
-                        <div className="text-xs text-muted-foreground">{v.vehicle_code}</div>
-                      </TableCell>
-                      <TableCell className="font-mono">{v.plate_number}</TableCell>
-                      <TableCell>{stationName(v.station_id)}</TableCell>
+            <>
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{isAr ? 'السيارة' : 'Vehicle'}</TableHead>
+                      <TableHead>{isAr ? 'اللوحة' : 'Plate'}</TableHead>
+                      <TableHead>{isAr ? 'المحطة' : 'Station'}</TableHead>
+                      {(filter === 'all' || filter === 'vehicle') && <TableHead>{isAr ? 'ترخيص السيارة' : 'Vehicle License'}</TableHead>}
+                      {(filter === 'all' || filter === 'curtains') && <TableHead>{isAr ? 'ترخيص الستائر' : 'Curtains License'}</TableHead>}
+                      {(filter === 'all' || filter === 'transport') && <TableHead>{isAr ? 'النقل البري' : 'Transport License'}</TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((v) => (
+                      <TableRow key={v.id}>
+                        <TableCell>
+                          <div className="font-medium">{v.brand} {v.model}</div>
+                          <div className="text-xs text-muted-foreground">{v.vehicle_code}</div>
+                        </TableCell>
+                        <TableCell className="font-mono">{v.plate_number}</TableCell>
+                        <TableCell>{stationName(v.station_id)}</TableCell>
+                        {(filter === 'all' || filter === 'vehicle') && (
+                          <TableCell><LicenseCell start={v.license_start_date} end={v.license_end_date} label={isAr ? 'ترخيص السيارة' : 'Vehicle'} /></TableCell>
+                        )}
+                        {(filter === 'all' || filter === 'curtains') && (
+                          <TableCell><LicenseCell start={v.curtains_license_start} end={v.curtains_license_end} label={isAr ? 'الستائر' : 'Curtains'} /></TableCell>
+                        )}
+                        {(filter === 'all' || filter === 'transport') && (
+                          <TableCell><LicenseCell start={v.transport_license_start} end={v.transport_license_end} label={isAr ? 'النقل البري' : 'Transport'} /></TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-2">
+                {filtered.map((v) => (
+                  <div key={v.id} className="border rounded-lg p-3 bg-card">
+                    <div className={cn('flex items-start justify-between gap-2', isRTL && 'flex-row-reverse')}>
+                      <div className="min-w-0">
+                        <div className="font-semibold">{v.brand} {v.model}</div>
+                        <div className="text-xs text-muted-foreground font-mono">{v.plate_number}</div>
+                        <div className="text-xs mt-1">{stationName(v.station_id)}</div>
+                      </div>
+                      <Badge variant="outline" className="text-xs shrink-0">{v.vehicle_code}</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 mt-2">
                       {(filter === 'all' || filter === 'vehicle') && (
-                        <TableCell><LicenseCell start={v.license_start_date} end={v.license_end_date} label={isAr ? 'ترخيص السيارة' : 'Vehicle'} /></TableCell>
+                        <LicenseCell start={v.license_start_date} end={v.license_end_date} label={isAr ? 'ترخيص السيارة' : 'Vehicle'} />
                       )}
                       {(filter === 'all' || filter === 'curtains') && (
-                        <TableCell><LicenseCell start={v.curtains_license_start} end={v.curtains_license_end} label={isAr ? 'الستائر' : 'Curtains'} /></TableCell>
+                        <LicenseCell start={v.curtains_license_start} end={v.curtains_license_end} label={isAr ? 'الستائر' : 'Curtains'} />
                       )}
                       {(filter === 'all' || filter === 'transport') && (
-                        <TableCell><LicenseCell start={v.transport_license_start} end={v.transport_license_end} label={isAr ? 'النقل البري' : 'Transport'} /></TableCell>
+                        <LicenseCell start={v.transport_license_start} end={v.transport_license_end} label={isAr ? 'النقل البري' : 'Transport'} />
                       )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
