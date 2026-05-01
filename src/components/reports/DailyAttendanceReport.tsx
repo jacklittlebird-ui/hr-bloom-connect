@@ -650,14 +650,10 @@ export const DailyAttendanceReport = () => {
                         const dayLabel = dObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short' });
                         const dateLabel = format(dObj, 'dd/MM');
                         const dow = dObj.getDay();
+                        const isOff = isHeaderWeekend(dow);
                         const isFri = dow === 5;
-                        const isSat = dow === 6;
-                        const headBg = isFri ? 'bg-amber-100' : isSat ? 'bg-amber-50' : 'bg-blue-50';
-                        const borderCls = isFri
-                          ? 'border-x-2 border-x-amber-500'
-                          : isSat
-                          ? 'border-x-2 border-x-amber-300'
-                          : '';
+                        const headBg = isOff ? 'bg-amber-100' : 'bg-blue-50';
+                        const borderCls = isOff ? 'border-x-2 border-x-amber-500' : '';
                         return (
                           <th
                             key={d}
@@ -665,18 +661,15 @@ export const DailyAttendanceReport = () => {
                             className={cn('border p-1 text-center whitespace-nowrap relative', headBg, borderCls)}
                             style={{ minWidth: 150 }}
                           >
-                            {isFri && (
+                            {isOff && (
                               <div className="absolute inset-x-0 top-0 h-1 bg-amber-500" aria-hidden />
                             )}
-                            {isSat && (
-                              <div className="absolute inset-x-0 top-0 h-1 bg-amber-300" aria-hidden />
-                            )}
                             <div className="font-bold tabular-nums flex items-center justify-center gap-1">
-                              {isFri && <span aria-hidden>🕌</span>}
+                              {isOff && isFri && <span aria-hidden>🕌</span>}
                               {dateLabel}
                             </div>
-                            <div className={cn('text-[10px] font-normal', isFri ? 'text-amber-700 font-semibold' : isSat ? 'text-amber-600' : 'text-muted-foreground')}>
-                              {isFri ? (ar ? 'الجمعة — عطلة' : 'Friday — Off') : isSat ? (ar ? 'السبت' : 'Saturday') : dayLabel}
+                            <div className={cn('text-[10px] font-normal', isOff ? 'text-amber-700 font-semibold' : 'text-muted-foreground')}>
+                              {isOff ? `${dayLabel} — ${ar ? 'عطلة' : 'Off'}` : dayLabel}
                             </div>
                           </th>
                         );
