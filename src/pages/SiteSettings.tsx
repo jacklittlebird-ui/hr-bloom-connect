@@ -88,6 +88,7 @@ const defaultConfig: SiteConfig = {
   radius: 'md',
   density: 'comfortable',
   font: 'baloo',
+  headerStyle: 'smooth',
   autoBackup: true,
   backupFrequency: 'daily',
   dataRetention: '5years',
