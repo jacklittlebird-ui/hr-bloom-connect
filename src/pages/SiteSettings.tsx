@@ -565,6 +565,36 @@ const SiteSettings = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Header style: smooth gradient vs sharp split */}
+                  <div className="md:col-span-2">
+                    <Label className="mb-3 block">{isAr ? 'نمط شريط الهيدر العلوي' : 'Top Header Style'}</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {([
+                        { v: 'smooth', ar: 'تدرّج ناعم', en: 'Smooth gradient' },
+                        { v: 'sharp', ar: 'تدرّج حاد (نصف/نصف)', en: 'Sharp split' },
+                      ] as const).map(opt => {
+                        const active = (config.headerStyle || 'smooth') === opt.v;
+                        const bg = opt.v === 'smooth'
+                          ? 'linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(280 70% 45%) 50%, hsl(0 84% 50%) 100%)'
+                          : 'linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 49.5%, hsl(0 84% 50%) 50.5%, hsl(0 84% 50%) 100%)';
+                        return (
+                          <button
+                            key={opt.v}
+                            type="button"
+                            onClick={() => update('headerStyle', opt.v)}
+                            className={cn(
+                              "rounded-lg border-2 p-2 text-xs font-medium transition-all hover:border-primary/50 text-left",
+                              active ? "border-primary ring-2 ring-primary/30" : "border-border"
+                            )}
+                          >
+                            <div className="h-9 w-full rounded-md mb-2" style={{ backgroundImage: bg }} />
+                            <span>{isAr ? opt.ar : opt.en}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Live preview */}
