@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { toast } from '@/hooks/use-toast';
 
 interface ExportColumn {
@@ -47,15 +48,30 @@ function buildSummaryCardsHtml(cards: SummaryCard[]): string {
   return `<div style="display:grid;grid-template-columns:repeat(${cols}, 1fr);gap:10px;margin-bottom:20px;">${items}</div>`;
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function sanitizeFileName(value: string): string {
+  return value.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '_').slice(0, 120);
+}
+
 function createExportContainer(html: string): HTMLDivElement {
   const container = document.createElement('div');
-  container.style.position = 'absolute';
+  container.style.position = 'fixed';
   container.style.top = '0';
-  container.style.left = '-10000px';
-  container.style.overflow = 'hidden';
+  container.style.left = '0';
+  container.style.overflow = 'visible';
   container.style.width = '1200px';
+  container.style.maxWidth = 'none';
   container.style.background = '#ffffff';
-  container.style.zIndex = '-9999';
+  container.style.zIndex = '-1';
+  container.style.pointerEvents = 'none';
   container.innerHTML = html;
   document.body.appendChild(container);
   return container;
