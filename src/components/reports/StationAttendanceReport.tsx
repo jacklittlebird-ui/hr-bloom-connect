@@ -207,11 +207,21 @@ export const StationAttendanceReport = () => {
     return m;
   }, [departments]);
 
-  // Filter to only employees that belong to a station (skip unassigned for cleanliness)
-  const visibleEmployees = useMemo(
-    () => employees.filter(e => !!e.station_id),
-    [employees],
-  );
+  // Filter to only employees that belong to a station (skip unassigned for cleanliness),
+  // then apply the free-text search across name (ar/en), code, and department name (ar/en).
+  const visibleEmployees = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return employees.filter(e => {
+      if (!e.station_id) return false;
+      if (!q) return true;
+      const dept = e.department_id ? deptMap.get(e.department_id) : null;
+      const haystack = [
+        e.name_ar, e.name_en, e.employee_code,
+        dept?.name_ar, dept?.name_en,
+      ].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [employees, search, deptMap]);
 
   // Group records by employee
   const recordsByEmp = useMemo(() => {
