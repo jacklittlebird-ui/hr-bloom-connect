@@ -255,53 +255,44 @@ const Documents = () => {
           </Card>
         </div>
 
-        {/* Grouped tab bar */}
+        {/* Flat tab bar — all tabs side by side */}
         <Card className="overflow-hidden">
           <CardContent className="p-3 md:p-4">
-            <div className="space-y-3">
-              {tabGroups.map((group) => (
-                <div key={group.title.en} className="space-y-1.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground px-1">
-                    {isAr ? group.title.ar : group.title.en}
-                  </p>
-                  <div className={cn("flex flex-wrap gap-2", isRTL && "flex-row-reverse")}>
-                    {group.items.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeMainTab === item.key;
-                      const stat = item.statKey ? alertStats[item.statKey] : null;
-                      const count = stat?.total ?? 0;
-                      const hasExpired = (stat?.expired ?? 0) > 0;
-                      return (
-                        <button
-                          key={item.key}
-                          onClick={() => setActiveMainTab(item.key)}
-                          className={cn(
-                            "group relative flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
-                            "hover:border-primary/40 hover:bg-primary/5",
-                            isActive
-                              ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                              : "border-border bg-card text-foreground"
-                          )}
-                        >
-                          <Icon className="w-4 h-4 shrink-0" />
-                          <span className="whitespace-nowrap">{isAr ? item.ar : item.en}</span>
-                          {item.statKey && count > 0 && (
-                            <Badge
-                              variant={hasExpired && !isActive ? 'destructive' : isActive ? 'secondary' : 'outline'}
-                              className={cn(
-                                "ms-1 h-5 min-w-[20px] justify-center px-1.5 text-[10px] font-bold",
-                                isActive && !hasExpired && "bg-primary-foreground/20 text-primary-foreground border-transparent"
-                              )}
-                            >
-                              {count}
-                            </Badge>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+            <div className={cn("flex flex-wrap gap-2", isRTL && "flex-row-reverse")}>
+              {tabGroups.flatMap((g) => g.items).map((item) => {
+                const Icon = item.icon;
+                const isActive = activeMainTab === item.key;
+                const stat = item.statKey ? alertStats[item.statKey] : null;
+                const count = stat?.total ?? 0;
+                const hasExpired = (stat?.expired ?? 0) > 0;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => setActiveMainTab(item.key)}
+                    className={cn(
+                      "group relative flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all",
+                      "hover:border-primary/40 hover:bg-primary/5",
+                      isActive
+                        ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                        : "border-border bg-card text-foreground"
+                    )}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="whitespace-nowrap">{isAr ? item.ar : item.en}</span>
+                    {item.statKey && count > 0 && (
+                      <Badge
+                        variant={hasExpired && !isActive ? 'destructive' : isActive ? 'secondary' : 'outline'}
+                        className={cn(
+                          "ms-1 h-5 min-w-[20px] justify-center px-1.5 text-[10px] font-bold",
+                          isActive && !hasExpired && "bg-primary-foreground/20 text-primary-foreground border-transparent"
+                        )}
+                      >
+                        {count}
+                      </Badge>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
