@@ -740,19 +740,18 @@ export const DailyAttendanceReport = () => {
                         {r.cells.map((c, ci) => {
                           const dimmed = !c.matchesStatus;
                           const dow = new Date(dateRange[ci] + 'T00:00:00').getDay();
+                          const isOff = isEmpWeekend(r.station?.id || null, dow);
                           const isFri = dow === 5;
-                          const isSat = dow === 6;
-                          const weekendBorder = isFri
-                            ? 'border-x-2 border-x-amber-500'
-                            : isSat
-                            ? 'border-x-2 border-x-amber-300'
-                            : '';
-                          const weekendBg = isFri ? 'bg-amber-50/60' : isSat ? 'bg-amber-50/30' : '';
+                          const weekendBorder = isOff ? 'border-x-2 border-x-amber-500' : '';
+                          const weekendBg = isOff ? 'bg-amber-50/60' : '';
+                          const offTitle = isOff
+                            ? (ar ? `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('ar-EG', { weekday: 'long' })} — عطلة` : `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' })} — Off`)
+                            : undefined;
                           const baseCell = cn('border p-1 text-center font-mono whitespace-nowrap', weekendBorder);
                           if (c.kind === 'none') {
                             return (
                               <Fragment key={ci}>
-                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')} title={isFri ? (ar ? 'الجمعة — عطلة' : 'Friday — Off') : isSat ? (ar ? 'السبت' : 'Saturday') : undefined}>{isFri ? '🕌' : '—'}</td>
+                                <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')} title={offTitle}>{isOff && isFri ? '🕌' : '—'}</td>
                                 <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')}>—</td>
                                 <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')}>—</td>
                               </Fragment>
