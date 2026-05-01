@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Download, Printer, FileText, Building2, Users, Clock, CalendarDays } from 'lucide-react';
+import { Download, Printer, FileText, Building2, Users, Clock, CalendarDays, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 import { toast } from '@/hooks/use-toast';
