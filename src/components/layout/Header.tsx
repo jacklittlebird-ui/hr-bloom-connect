@@ -71,7 +71,18 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
           </Button>
         )}
         <div className="hidden sm:flex items-center justify-center h-14 w-14 rounded-lg bg-white p-1.5">
-          <img src="/images/one-hr-logo.png" alt="One HR" className="h-full w-full object-contain" />
+          <picture>
+            <source srcSet="/images/one-hr-logo-sm.webp" type="image/webp" />
+            <img
+              src="/images/one-hr-logo.png"
+              alt="One HR"
+              width="56"
+              height="56"
+              decoding="async"
+              fetchPriority="high"
+              className="h-full w-full object-contain"
+            />
+          </picture>
         </div>
         <h1 className={cn(
           "text-lg md:text-xl font-bold text-primary-foreground truncate",
