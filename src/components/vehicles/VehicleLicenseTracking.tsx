@@ -208,7 +208,7 @@ export const VehicleLicenseTracking = () => {
     }
   };
 
-  const exportWord = async () => {
+  const exportWord = async (paged = false) => {
     if (filtered.length === 0) {
       toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export');
       return;
@@ -216,7 +216,8 @@ export const VehicleLicenseTracking = () => {
     try {
       await exportVehicleWord({
         ...buildReportPayload(),
-        fileName: `vehicle_licenses_${new Date().toISOString().slice(0, 10)}.docx`,
+        rowsPerPage: paged ? 20 : undefined,
+        fileName: `vehicle_licenses${paged ? '_paged' : ''}_${new Date().toISOString().slice(0, 10)}.docx`,
       });
       toast.success(isAr ? 'تم تصدير Word بنجاح' : 'Word exported successfully');
     } catch (e: any) {
