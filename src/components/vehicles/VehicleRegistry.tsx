@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Edit, Trash2, Car, Building2, Download } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Crosshair, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
@@ -59,6 +59,7 @@ export const VehicleRegistry = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -136,14 +137,55 @@ export const VehicleRegistry = () => {
     fetchAll();
   };
 
+  const daysLeft = (d: string | null): number | null => {
+    if (!d) return null;
+    const ms = new Date(d).getTime() - Date.now();
+    return Math.ceil(ms / 86400000);
+  };
+
+  const licenseFields: { key: keyof Vehicle; labelAr: string; labelEn: string }[] = [
+    { key: 'license_end_date', labelAr: 'الترخيص الرئيسي', labelEn: 'Main License' },
+    { key: 'curtains_license_end', labelAr: 'ترخيص الستائر', labelEn: 'Curtains License' },
+    { key: 'transport_license_end', labelAr: 'ترخيص النقل البري', labelEn: 'Transport License' },
+  ];
+
+  const alerts = useMemo(() => {
+    const arr: { vehicle: Vehicle; type: 'expired' | 'soon'; license: string; date: string; days: number }[] = [];
+    vehicles.forEach((v) => {
+      licenseFields.forEach((f) => {
+        const date = (v as any)[f.key] as string | null;
+        const dl = daysLeft(date);
+        if (dl === null) return;
+        if (dl < 0) arr.push({ vehicle: v, type: 'expired', license: isAr ? f.labelAr : f.labelEn, date: date!, days: dl });
+        else if (dl <= 30) arr.push({ vehicle: v, type: 'soon', license: isAr ? f.labelAr : f.labelEn, date: date!, days: dl });
+      });
+    });
+    return arr.sort((a, b) => a.days - b.days);
+  }, [vehicles, isAr]);
+
+  const expiredCount = alerts.filter((a) => a.type === 'expired').length;
+  const soonCount = alerts.filter((a) => a.type === 'soon').length;
+
+  const focusVehicle = (id: string) => {
+    setFocusedId(id);
+    setSearch('');
+    setStationFilter(null);
+    setStatusFilter('all');
+    setTimeout(() => {
+      const el = document.getElementById(`vehicle-row-${id}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
   const filtered = useMemo(() => vehicles.filter((v) => {
+    if (focusedId) return v.id === focusedId;
     const txt = search.trim().toLowerCase();
     const txtMatch = !txt || [v.vehicle_code, v.brand, v.model, v.plate_number, v.insured_driver_name]
       .some((f) => f?.toLowerCase().includes(txt));
     const stMatch = !stationFilter || v.station_id === stationFilter;
     const stsMatch = statusFilter === 'all' || v.status === statusFilter;
     return txtMatch && stMatch && stsMatch;
-  }), [vehicles, search, stationFilter, statusFilter]);
+  }), [vehicles, search, stationFilter, statusFilter, focusedId]);
 
   const exportCsv = () => {
     const rows = [[
@@ -294,6 +336,51 @@ export const VehicleRegistry = () => {
         </div>
       </CardHeader>
       <CardContent>
+        {alerts.length > 0 && (
+          <div className="mb-4 border rounded-lg overflow-hidden">
+            <div className={cn('px-3 py-2 bg-muted/50 flex items-center justify-between gap-2 flex-wrap', isRTL && 'flex-row-reverse')}>
+              <div className={cn('flex items-center gap-2 text-sm font-semibold', isRTL && 'flex-row-reverse')}>
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                <span>{isAr ? 'تنبيهات التراخيص' : 'License Alerts'}</span>
+                {expiredCount > 0 && (
+                  <Badge className="bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                    {isAr ? `منتهية: ${expiredCount}` : `Expired: ${expiredCount}`}
+                  </Badge>
+                )}
+                {soonCount > 0 && (
+                  <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                    {isAr ? `خلال 30 يوم: ${soonCount}` : `Within 30 days: ${soonCount}`}
+                  </Badge>
+                )}
+              </div>
+              {focusedId && (
+                <Button size="sm" variant="ghost" onClick={() => setFocusedId(null)}>
+                  <X className="w-3 h-3 me-1" />{isAr ? 'إلغاء التركيز' : 'Clear focus'}
+                </Button>
+              )}
+            </div>
+            <div className="max-h-48 overflow-y-auto divide-y">
+              {alerts.slice(0, 50).map((a, i) => (
+                <div key={`${a.vehicle.id}-${a.license}-${i}`} className={cn('px-3 py-2 text-xs flex items-center justify-between gap-2 flex-wrap', isRTL && 'flex-row-reverse')}>
+                  <div className={cn('flex items-center gap-2 min-w-0 flex-wrap', isRTL && 'flex-row-reverse')}>
+                    <Badge variant="outline" className={cn('shrink-0', a.type === 'expired' ? 'border-red-400 text-red-700 dark:text-red-300' : 'border-amber-400 text-amber-700 dark:text-amber-300')}>
+                      {a.type === 'expired'
+                        ? (isAr ? `منذ ${Math.abs(a.days)} يوم` : `${Math.abs(a.days)}d ago`)
+                        : (isAr ? `خلال ${a.days} يوم` : `in ${a.days}d`)}
+                    </Badge>
+                    <span className="font-mono shrink-0">{a.vehicle.vehicle_code}</span>
+                    <span className="font-mono text-muted-foreground shrink-0">{a.vehicle.plate_number}</span>
+                    <span className="text-muted-foreground">{a.license}</span>
+                    <span className="text-muted-foreground">· {a.date}</span>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-7" onClick={() => focusVehicle(a.vehicle.id)}>
+                    <Crosshair className="w-3 h-3 me-1" />{isAr ? 'تركيز' : 'Focus'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>
         ) : filtered.length === 0 ? (
@@ -321,7 +408,7 @@ export const VehicleRegistry = () => {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((v) => (
-                    <TableRow key={v.id}>
+                    <TableRow key={v.id} id={`vehicle-row-${v.id}`} className={cn(focusedId === v.id && 'bg-primary/10 ring-2 ring-primary')}>
                       <TableCell className="font-mono text-xs">{v.vehicle_code}</TableCell>
                       <TableCell>{v.brand}</TableCell>
                       <TableCell>{v.model} ({v.year})</TableCell>
@@ -345,7 +432,7 @@ export const VehicleRegistry = () => {
             {/* Mobile cards */}
             <div className="md:hidden space-y-2">
               {filtered.map((v) => (
-                <div key={v.id} className="border rounded-lg p-3 bg-card">
+                <div key={v.id} id={`vehicle-row-${v.id}`} className={cn('border rounded-lg p-3 bg-card', focusedId === v.id && 'ring-2 ring-primary bg-primary/5')}>
                   <div className={cn('flex items-start justify-between gap-2', isRTL && 'flex-row-reverse')}>
                     <div className="min-w-0">
                       <div className="font-semibold">{v.brand} {v.model}</div>
