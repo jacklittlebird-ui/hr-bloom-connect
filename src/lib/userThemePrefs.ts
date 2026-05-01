@@ -42,7 +42,7 @@ export async function loadAndApplyUserThemePrefs(): Promise<UserThemePrefs | nul
     if (!user) return null;
     const { data, error } = await supabase
       .from('user_theme_preferences')
-      .select('theme, theme_preset, primary_color, radius, density, font, header_style')
+      .select('theme, theme_preset, primary_color, radius, density, font, header_style, welcome_bg')
       .eq('user_id', user.id)
       .maybeSingle();
     if (error || !data) return null;
@@ -54,10 +54,12 @@ export async function loadAndApplyUserThemePrefs(): Promise<UserThemePrefs | nul
       density: data.density,
       font: data.font,
       headerStyle: (data as any).header_style ?? null,
+      welcomeBg: (data as any).welcome_bg ?? null,
     };
     const merged = mergeIntoLocalConfig(prefs);
     if (merged) applyThemeSettings(merged);
     try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
+    try { window.dispatchEvent(new Event('hr-welcome-bg-changed')); } catch {}
     return prefs;
   } catch {
     return null;
