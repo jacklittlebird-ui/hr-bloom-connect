@@ -146,7 +146,12 @@ function buildSignatureHtml(opts: ExportOptions): string {
 
 /* ──────────────────────────── Render helpers ──────────────────────────── */
 
-async function htmlToCanvas(html: string): Promise<HTMLCanvasElement> {
+/**
+ * Shared off-screen staging element. We create ONE wrapper for the whole
+ * export operation and reuse it for every measurement and canvas render.
+ * This eliminates the cost of repeated DOM attach/detach + style recompute.
+ */
+function createStage(): HTMLDivElement {
   const wrapper = document.createElement('div');
   wrapper.style.position = 'fixed';
   wrapper.style.top = '0';
@@ -154,73 +159,86 @@ async function htmlToCanvas(html: string): Promise<HTMLCanvasElement> {
   wrapper.style.background = '#ffffff';
   wrapper.style.zIndex = '-1';
   wrapper.style.colorScheme = 'light';
-  wrapper.innerHTML = html;
+  wrapper.style.contain = 'layout style';
   document.body.appendChild(wrapper);
-  try {
+  return wrapper;
+}
+
+let fontsReadyPromise: Promise<void> | null = null;
+function ensureFontsReady(): Promise<void> {
+  if (fontsReadyPromise) return fontsReadyPromise;
+  fontsReadyPromise = (async () => {
     if ('fonts' in document) {
       try { await (document as any).fonts.ready; } catch { /* ignore */ }
     }
-    await new Promise((r) => setTimeout(r, 30));
-    const target = wrapper.firstElementChild as HTMLElement;
-    const width = Math.max(target.scrollWidth, PAGE_BG_WIDTH_PX);
-    const height = Math.max(target.scrollHeight, 1);
-    const canvas = await html2canvas(target, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      width,
-      height,
-      windowWidth: width,
-      windowHeight: height,
-    });
-    return canvas;
-  } finally {
-    document.body.removeChild(wrapper);
-  }
+  })();
+  return fontsReadyPromise;
+}
+
+/** Wait for one paint frame — cheaper and more deterministic than setTimeout. */
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
 /**
- * Measure each row height (in PDF mm) by rendering all rows once with header,
- * then probing the DOM. Returns mm-heights for header + each row.
+ * Render arbitrary HTML into a canvas using the SHARED stage.
+ * Caller owns the stage's lifecycle.
  */
-async function measureRowHeights(
+async function htmlToCanvasOnStage(stage: HTMLDivElement, html: string): Promise<HTMLCanvasElement> {
+  stage.innerHTML = html;
+  await nextFrame();
+  const target = stage.firstElementChild as HTMLElement;
+  const width = Math.max(target.scrollWidth, PAGE_BG_WIDTH_PX);
+  const height = Math.max(target.scrollHeight, 1);
+  return html2canvas(target, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: '#ffffff',
+    logging: false,
+    width,
+    height,
+    windowWidth: width,
+    windowHeight: height,
+  });
+}
+
+/**
+ * Measure header + each row height (in PDF mm) in a SINGLE render pass.
+ * Uses offsetHeight (cheap, batched) instead of getBoundingClientRect per row,
+ * and reads all measurements within one rAF to avoid layout thrashing.
+ */
+async function measureRowHeightsOnStage(
+  stage: HTMLDivElement,
   columns: PdfColumn[],
   rows: Record<string, unknown>[],
   pdfWidthMm: number,
 ): Promise<{ headerMm: number; rowsMm: number[] }> {
-  const allRowsHtml = rows.map((r, i) => buildRowHtml(r, columns, i)).join('');
-  const html = buildTableHtml(columns, allRowsHtml, true);
+  // Build rows HTML in chunks to avoid a huge single concat for very large datasets
+  const parts: string[] = new Array(rows.length);
+  for (let i = 0; i < rows.length; i++) parts[i] = buildRowHtml(rows[i], columns, i);
+  const html = buildTableHtml(columns, parts.join(''), true);
 
-  const wrapper = document.createElement('div');
-  wrapper.style.position = 'fixed';
-  wrapper.style.top = '0';
-  wrapper.style.left = '-10000px';
-  wrapper.style.background = '#ffffff';
-  wrapper.style.zIndex = '-1';
-  wrapper.innerHTML = html;
-  document.body.appendChild(wrapper);
-  try {
-    if ('fonts' in document) {
-      try { await (document as any).fonts.ready; } catch { /* ignore */ }
+  stage.innerHTML = html;
+  await nextFrame();
+
+  const table = stage.querySelector('table') as HTMLTableElement;
+  // Force layout once, then read every height without intermediate writes
+  const containerWidthPx = table.offsetWidth || PAGE_BG_WIDTH_PX;
+  const pxToMm = pdfWidthMm / containerWidthPx;
+
+  const headerEl = table.tHead?.rows[0] as HTMLElement;
+  const headerMm = headerEl.offsetHeight * pxToMm;
+
+  const tbodyRows = table.tBodies[0]?.rows;
+  const rowsMm: number[] = new Array(tbodyRows?.length || 0);
+  if (tbodyRows) {
+    for (let i = 0; i < tbodyRows.length; i++) {
+      rowsMm[i] = (tbodyRows[i] as HTMLElement).offsetHeight * pxToMm;
     }
-    await new Promise((r) => setTimeout(r, 20));
-
-    const table = wrapper.querySelector('table') as HTMLTableElement;
-    const containerWidthPx = table.getBoundingClientRect().width || PAGE_BG_WIDTH_PX;
-    const pxToMm = pdfWidthMm / containerWidthPx;
-
-    const headerEl = table.querySelector('thead tr') as HTMLElement;
-    const headerMm = headerEl.getBoundingClientRect().height * pxToMm;
-
-    const trs = Array.from(table.querySelectorAll('tbody tr')) as HTMLElement[];
-    const rowsMm = trs.map((tr) => tr.getBoundingClientRect().height * pxToMm);
-
-    return { headerMm, rowsMm };
-  } finally {
-    document.body.removeChild(wrapper);
   }
+
+  return { headerMm, rowsMm };
 }
 
 /**
