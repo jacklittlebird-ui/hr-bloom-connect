@@ -643,6 +643,15 @@ export const StationAttendanceReport = () => {
                                                   );
                                                 })}
                                               </tbody>
+                                              <tfoot>
+                                                <tr className="bg-emerald-50 font-bold">
+                                                  <td className="border p-2 text-center" colSpan={4}>
+                                                    {ar ? 'الإجمالي بعد التصفية' : 'Filtered Total'}
+                                                  </td>
+                                                  <td className="border p-2 text-center tabular-nums">{fmtHours(filteredHours)}</td>
+                                                  <td className="border p-2 text-center tabular-nums">{filtered.length}</td>
+                                                </tr>
+                                              </tfoot>
                                             </table>
                                           </div>
                                         )}
