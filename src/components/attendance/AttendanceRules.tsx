@@ -15,6 +15,7 @@ import {
   Plane, Timer, AlertCircle, CheckCircle2, Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { StationWeekendSettings } from './StationWeekendSettings';
 import { AttendanceRule, ScheduleType } from '@/types/attendance';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
