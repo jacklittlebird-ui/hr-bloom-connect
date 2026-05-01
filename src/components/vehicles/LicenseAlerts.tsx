@@ -110,13 +110,18 @@ export const LicenseAlerts = () => {
   const filtered = useMemo(() => allAlerts.filter((a) => {
     if (severityFilter !== 'all' && a.severity !== severityFilter) return false;
     if (stationFilter && a.vehicle.station_id !== stationFilter) return false;
+    if (fromDate || toDate) {
+      const d = new Date(a.date); d.setHours(0, 0, 0, 0);
+      if (fromDate && d.getTime() < fromDate.getTime()) return false;
+      if (toDate && d.getTime() > toDate.getTime()) return false;
+    }
     const txt = search.trim().toLowerCase();
     if (txt) {
       const hay = [a.vehicle.vehicle_code, a.vehicle.brand, a.vehicle.model, a.vehicle.plate_number].join(' ').toLowerCase();
       if (!hay.includes(txt)) return false;
     }
     return true;
-  }), [allAlerts, severityFilter, stationFilter, search]);
+  }), [allAlerts, severityFilter, stationFilter, search, fromDate, toDate]);
 
   const exportCsv = () => {
     const rows = [[
