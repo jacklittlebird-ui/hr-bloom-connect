@@ -116,10 +116,16 @@ const SiteSettings = () => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
     setHasChanges(true);
-    // Apply theme/color changes immediately
-    if (key === 'theme' || key === 'primaryColor') {
-      applyThemeSettings(newConfig);
+    if (['theme', 'primaryColor', 'themePreset', 'radius', 'density', 'font'].includes(key as string)) {
+      applyThemeSettings(newConfig as any);
     }
+  };
+
+  const updateMany = (patch: Partial<SiteConfig>) => {
+    const newConfig = { ...config, ...patch };
+    setConfig(newConfig);
+    setHasChanges(true);
+    applyThemeSettings(newConfig as any);
   };
 
   const toggleDay = (day: string) => {
