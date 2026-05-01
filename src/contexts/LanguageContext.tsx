@@ -1525,21 +1525,58 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   });
 
-  // Persist + apply dir/lang on the document, and stay in sync across tabs/windows.
+  // Persist + apply dir/lang on the document, and broadcast to same-tab listeners.
   useEffect(() => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
-    try { window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language); } catch { /* ignore quota */ }
+    try {
+      window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+      // Notify same-tab listeners (storage event only fires in OTHER tabs).
+      window.dispatchEvent(new CustomEvent('app:language-change', { detail: language }));
+    } catch { /* ignore quota */ }
   }, [language]);
 
+  // Sync language across tabs/windows in real-time via the storage event,
+  // and across same-tab listeners via our custom event.
   useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === LANGUAGE_STORAGE_KEY && (e.newValue === 'ar' || e.newValue === 'en')) {
-        setLanguageState(e.newValue);
+    const applyIfValid = (value: string | null | undefined) => {
+      if (value === 'ar' || value === 'en') {
+        setLanguageState((prev) => (prev === value ? prev : (value as Language)));
       }
     };
+
+    const onStorage = (e: StorageEvent) => {
+      // Only react to our key, and ignore events from non-localStorage areas.
+      if (e.key !== LANGUAGE_STORAGE_KEY) return;
+      if (e.storageArea && e.storageArea !== window.localStorage) return;
+      // If newValue is null (cleared), fall back to a re-read from storage.
+      if (e.newValue == null) {
+        try { applyIfValid(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)); } catch { /* ignore */ }
+        return;
+      }
+      applyIfValid(e.newValue);
+    };
+
+    const onCustom = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      applyIfValid(detail);
+    };
+
+    // Re-sync when the tab becomes visible again (covers events missed while hidden).
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        try { applyIfValid(window.localStorage.getItem(LANGUAGE_STORAGE_KEY)); } catch { /* ignore */ }
+      }
+    };
+
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener('app:language-change', onCustom as EventListener);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('app:language-change', onCustom as EventListener);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, []);
 
   const setLanguage = (lang: Language) => setLanguageState(lang);
