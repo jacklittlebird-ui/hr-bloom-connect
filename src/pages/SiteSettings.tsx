@@ -49,6 +49,7 @@ interface SiteConfig {
   radius?: string;
   density?: string;
   font?: string;
+  headerStyle?: 'smooth' | 'sharp';
   autoBackup: boolean;
   backupFrequency: string;
   dataRetention: string;
