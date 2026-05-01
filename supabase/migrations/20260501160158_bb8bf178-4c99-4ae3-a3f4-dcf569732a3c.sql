@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS read_vehicle_maintenance ON public.vehicle_maintenance;
