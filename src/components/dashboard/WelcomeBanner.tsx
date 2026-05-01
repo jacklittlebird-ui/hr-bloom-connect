@@ -2,7 +2,17 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { CalendarDays, Clock } from 'lucide-react';
-import welcomeBannerBg from '@/assets/welcome-banner-bg.jpg';
+import { getWelcomeBgSrc, DEFAULT_WELCOME_BG } from '@/lib/welcomeBackgrounds';
+
+function readWelcomeBg(): string {
+  const ds = document.documentElement.dataset.welcomeBg;
+  if (ds) return ds;
+  try {
+    const cfg = JSON.parse(localStorage.getItem('hr_site_config') || '{}');
+    if (cfg.welcomeBg) return cfg.welcomeBg;
+  } catch {}
+  return DEFAULT_WELCOME_BG;
+}
 
 export const WelcomeBanner = () => {
   const { isRTL, language } = useLanguage();
