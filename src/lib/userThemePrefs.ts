@@ -9,6 +9,7 @@ export interface UserThemePrefs {
   density?: string | null;
   font?: string | null;
   headerStyle?: 'smooth' | 'sharp' | null;
+  welcomeBg?: string | null;
 }
 
 const LS_KEY = 'hr_site_config';
