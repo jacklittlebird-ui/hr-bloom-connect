@@ -94,6 +94,24 @@ export const VehicleLicenseTracking = () => {
   const soonCount = scope.filter((v) => { const d = getDaysRemaining(v.license_end_date); return d !== null && d >= 0 && d <= 30; }).length;
   const validCount = scope.filter((v) => { const d = getDaysRemaining(v.license_end_date); return d !== null && d > 30; }).length;
 
+  // Aggregate KPIs across ALL 3 license types per vehicle (worst-status wins)
+  const kpi = useMemo(() => {
+    let expired = 0, soon = 0, valid = 0, missing = 0;
+    scope.forEach((v) => {
+      const dates = [v.license_end_date, v.curtains_license_end, v.transport_license_end];
+      const days = dates.map(getDaysRemaining);
+      if (days.every((d) => d === null)) { missing++; return; }
+      const validDays = days.filter((d): d is number => d !== null);
+      const min = Math.min(...validDays);
+      if (min < 0) expired++;
+      else if (min <= 30) soon++;
+      else valid++;
+    });
+    const total = scope.length;
+    const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
+    return { total, expired, soon, valid, missing, pctExpired: pct(expired), pctSoon: pct(soon), pctValid: pct(valid), pctMissing: pct(missing) };
+  }, [scope]);
+
   const exportCsv = () => {
     const rows = [[
       isAr ? 'الكود' : 'Code', isAr ? 'الماركة' : 'Brand', isAr ? 'الموديل' : 'Model',
