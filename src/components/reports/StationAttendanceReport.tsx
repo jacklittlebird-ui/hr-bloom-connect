@@ -371,6 +371,14 @@ export const StationAttendanceReport = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={String(weekStart)} onValueChange={(v) => setWeekStart(Number(v))}>
+                <SelectTrigger className="w-44"><SelectValue placeholder={ar ? 'بداية الأسبوع' : 'Week starts on'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">{ar ? 'يبدأ السبت' : 'Starts Saturday'}</SelectItem>
+                  <SelectItem value="0">{ar ? 'يبدأ الأحد' : 'Starts Sunday'}</SelectItem>
+                  <SelectItem value="1">{ar ? 'يبدأ الإثنين' : 'Starts Monday'}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className={cn('flex gap-2', isRTL && 'flex-row-reverse')}>
               <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)}>
