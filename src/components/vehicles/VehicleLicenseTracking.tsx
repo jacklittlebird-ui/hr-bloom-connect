@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, CheckCircle, Clock, Search, FileText, Building2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Search, FileText, Building2, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
 
@@ -54,17 +55,22 @@ export const VehicleLicenseTracking = () => {
   const [statusBucket, setStatusBucket] = useState<'all' | 'expired' | 'soon' | 'valid'>('all');
 
   useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
+    const fetchAll = async (showLoader = true) => {
+      if (showLoader) setLoading(true);
       const [{ data: v }, { data: s }] = await Promise.all([
         supabase.from('vehicles').select('id, vehicle_code, brand, model, plate_number, station_id, license_start_date, license_end_date, curtains_license_start, curtains_license_end, transport_license_start, transport_license_end, status').order('vehicle_code'),
         supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar'),
       ]);
       if (v) setVehicles(v as unknown as Vehicle[]);
       if (s) setStations(s as StationOption[]);
-      setLoading(false);
+      if (showLoader) setLoading(false);
     };
-    fetchAll();
+    fetchAll(true);
+    const REFRESH_MS = 3 * 60 * 60 * 1000;
+    const interval = setInterval(() => fetchAll(false), REFRESH_MS);
+    const onVis = () => { if (document.visibilityState === 'visible') fetchAll(false); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVis); };
   }, []);
 
   const stationMap = useMemo(() => Object.fromEntries(stations.map((s) => [s.id, s])), [stations]);
@@ -87,6 +93,32 @@ export const VehicleLicenseTracking = () => {
   const expiredCount = scope.filter((v) => { const d = getDaysRemaining(v.license_end_date); return d !== null && d < 0; }).length;
   const soonCount = scope.filter((v) => { const d = getDaysRemaining(v.license_end_date); return d !== null && d >= 0 && d <= 30; }).length;
   const validCount = scope.filter((v) => { const d = getDaysRemaining(v.license_end_date); return d !== null && d > 30; }).length;
+
+  const exportCsv = () => {
+    const rows = [[
+      isAr ? 'الكود' : 'Code', isAr ? 'الماركة' : 'Brand', isAr ? 'الموديل' : 'Model',
+      isAr ? 'اللوحة' : 'Plate', isAr ? 'المحطة' : 'Station',
+      isAr ? 'بداية الترخيص' : 'License Start', isAr ? 'نهاية الترخيص' : 'License End',
+      isAr ? 'بداية الستائر' : 'Curtains Start', isAr ? 'نهاية الستائر' : 'Curtains End',
+      isAr ? 'بداية النقل' : 'Transport Start', isAr ? 'نهاية النقل' : 'Transport End',
+    ]];
+    filtered.forEach((v) => {
+      const st = v.station_id ? stationMap[v.station_id] : null;
+      rows.push([
+        v.vehicle_code, v.brand, v.model, v.plate_number,
+        st ? (isAr ? st.name_ar : st.name_en) : '',
+        v.license_start_date || '', v.license_end_date || '',
+        v.curtains_license_start || '', v.curtains_license_end || '',
+        v.transport_license_start || '', v.transport_license_end || '',
+      ]);
+    });
+    const csv = '\uFEFF' + rows.map((r) => r.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `license_tracking_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
 
   const LicenseCell = ({ start, end, label }: { start: string | null; end: string | null; label: string }) => {
     const days = getDaysRemaining(end);
@@ -180,6 +212,9 @@ export const VehicleLicenseTracking = () => {
                 <SelectItem value="transport">{isAr ? 'النقل البري' : 'Transport License'}</SelectItem>
               </SelectContent>
             </Select>
+            <Button size="sm" variant="outline" onClick={exportCsv}>
+              <Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -188,41 +223,70 @@ export const VehicleLicenseTracking = () => {
           ) : filtered.length === 0 ? (
             <p className="text-center py-8 text-muted-foreground">{isAr ? 'لا توجد نتائج' : 'No results'}</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{isAr ? 'السيارة' : 'Vehicle'}</TableHead>
-                    <TableHead>{isAr ? 'اللوحة' : 'Plate'}</TableHead>
-                    <TableHead>{isAr ? 'المحطة' : 'Station'}</TableHead>
-                    {(filter === 'all' || filter === 'vehicle') && <TableHead>{isAr ? 'ترخيص السيارة' : 'Vehicle License'}</TableHead>}
-                    {(filter === 'all' || filter === 'curtains') && <TableHead>{isAr ? 'ترخيص الستائر' : 'Curtains License'}</TableHead>}
-                    {(filter === 'all' || filter === 'transport') && <TableHead>{isAr ? 'النقل البري' : 'Transport License'}</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((v) => (
-                    <TableRow key={v.id}>
-                      <TableCell>
-                        <div className="font-medium">{v.brand} {v.model}</div>
-                        <div className="text-xs text-muted-foreground">{v.vehicle_code}</div>
-                      </TableCell>
-                      <TableCell className="font-mono">{v.plate_number}</TableCell>
-                      <TableCell>{stationName(v.station_id)}</TableCell>
+            <>
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{isAr ? 'السيارة' : 'Vehicle'}</TableHead>
+                      <TableHead>{isAr ? 'اللوحة' : 'Plate'}</TableHead>
+                      <TableHead>{isAr ? 'المحطة' : 'Station'}</TableHead>
+                      {(filter === 'all' || filter === 'vehicle') && <TableHead>{isAr ? 'ترخيص السيارة' : 'Vehicle License'}</TableHead>}
+                      {(filter === 'all' || filter === 'curtains') && <TableHead>{isAr ? 'ترخيص الستائر' : 'Curtains License'}</TableHead>}
+                      {(filter === 'all' || filter === 'transport') && <TableHead>{isAr ? 'النقل البري' : 'Transport License'}</TableHead>}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((v) => (
+                      <TableRow key={v.id}>
+                        <TableCell>
+                          <div className="font-medium">{v.brand} {v.model}</div>
+                          <div className="text-xs text-muted-foreground">{v.vehicle_code}</div>
+                        </TableCell>
+                        <TableCell className="font-mono">{v.plate_number}</TableCell>
+                        <TableCell>{stationName(v.station_id)}</TableCell>
+                        {(filter === 'all' || filter === 'vehicle') && (
+                          <TableCell><LicenseCell start={v.license_start_date} end={v.license_end_date} label={isAr ? 'ترخيص السيارة' : 'Vehicle'} /></TableCell>
+                        )}
+                        {(filter === 'all' || filter === 'curtains') && (
+                          <TableCell><LicenseCell start={v.curtains_license_start} end={v.curtains_license_end} label={isAr ? 'الستائر' : 'Curtains'} /></TableCell>
+                        )}
+                        {(filter === 'all' || filter === 'transport') && (
+                          <TableCell><LicenseCell start={v.transport_license_start} end={v.transport_license_end} label={isAr ? 'النقل البري' : 'Transport'} /></TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-2">
+                {filtered.map((v) => (
+                  <div key={v.id} className="border rounded-lg p-3 bg-card">
+                    <div className={cn('flex items-start justify-between gap-2', isRTL && 'flex-row-reverse')}>
+                      <div className="min-w-0">
+                        <div className="font-semibold">{v.brand} {v.model}</div>
+                        <div className="text-xs text-muted-foreground font-mono">{v.plate_number}</div>
+                        <div className="text-xs mt-1">{stationName(v.station_id)}</div>
+                      </div>
+                      <Badge variant="outline" className="text-xs shrink-0">{v.vehicle_code}</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 mt-2">
                       {(filter === 'all' || filter === 'vehicle') && (
-                        <TableCell><LicenseCell start={v.license_start_date} end={v.license_end_date} label={isAr ? 'ترخيص السيارة' : 'Vehicle'} /></TableCell>
+                        <LicenseCell start={v.license_start_date} end={v.license_end_date} label={isAr ? 'ترخيص السيارة' : 'Vehicle'} />
                       )}
                       {(filter === 'all' || filter === 'curtains') && (
-                        <TableCell><LicenseCell start={v.curtains_license_start} end={v.curtains_license_end} label={isAr ? 'الستائر' : 'Curtains'} /></TableCell>
+                        <LicenseCell start={v.curtains_license_start} end={v.curtains_license_end} label={isAr ? 'الستائر' : 'Curtains'} />
                       )}
                       {(filter === 'all' || filter === 'transport') && (
-                        <TableCell><LicenseCell start={v.transport_license_start} end={v.transport_license_end} label={isAr ? 'النقل البري' : 'Transport'} /></TableCell>
+                        <LicenseCell start={v.transport_license_start} end={v.transport_license_end} label={isAr ? 'النقل البري' : 'Transport'} />
                       )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar } from 'lucide-react';
+import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
@@ -55,6 +55,9 @@ export const VehicleMaintenance = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [stationFilter, setStationFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'periodic', description: '',
@@ -62,8 +65,8 @@ export const VehicleMaintenance = () => {
     next_maintenance_date: '', odometer_reading: '', provider: '', notes: '',
   });
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoader = true) => {
+    if (showLoader) setLoading(true);
     const [{ data: mData }, { data: vData }, { data: sData }] = await Promise.all([
       supabase.from('vehicle_maintenance').select('*').order('maintenance_date', { ascending: false }),
       supabase.from('vehicles').select('id, vehicle_code, brand, model, plate_number, station_id').order('vehicle_code'),
@@ -72,10 +75,17 @@ export const VehicleMaintenance = () => {
     if (mData) setRecords(mData as unknown as MaintenanceRecord[]);
     if (vData) setVehicles(vData as unknown as VehicleOption[]);
     if (sData) setStations(sData as StationOption[]);
-    setLoading(false);
+    if (showLoader) setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData(true);
+    const REFRESH_MS = 3 * 60 * 60 * 1000;
+    const interval = setInterval(() => fetchData(false), REFRESH_MS);
+    const onVis = () => { if (document.visibilityState === 'visible') fetchData(false); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVis); };
+  }, []);
 
   const vehicleMap = useMemo(() => Object.fromEntries(vehicles.map((v) => [v.id, v])), [vehicles]);
   const stationMap = useMemo(() => Object.fromEntries(stations.map((s) => [s.id, s])), [stations]);
@@ -124,8 +134,12 @@ export const VehicleMaintenance = () => {
     const txtMatch = !txt || [v?.vehicle_code, v?.brand, v?.plate_number, r.maintenance_type, r.provider]
       .some((f) => f?.toLowerCase().includes(txt));
     const stMatch = !stationFilter || v?.station_id === stationFilter;
-    return txtMatch && stMatch;
-  }), [records, vehicleMap, search, stationFilter]);
+    const typeMatch = typeFilter === 'all' || r.maintenance_type === typeFilter;
+    let dateMatch = true;
+    if (fromDate && r.maintenance_date < fromDate) dateMatch = false;
+    if (toDate && r.maintenance_date > toDate) dateMatch = false;
+    return txtMatch && stMatch && typeMatch && dateMatch;
+  }), [records, vehicleMap, search, stationFilter, typeFilter, fromDate, toDate]);
 
   const filteredVehiclesForStation = useMemo(() => {
     if (!stationFilter) return vehicles;
@@ -151,6 +165,32 @@ export const VehicleMaintenance = () => {
     if (!id) return isAr ? 'غير مخصص' : 'Unassigned';
     const st = stationMap[id];
     return st ? (isAr ? st.name_ar : st.name_en) : '-';
+  };
+
+  const exportCsv = () => {
+    const rows = [[
+      isAr ? 'الكود' : 'Code', isAr ? 'السيارة' : 'Vehicle', isAr ? 'اللوحة' : 'Plate',
+      isAr ? 'المحطة' : 'Station', isAr ? 'النوع' : 'Type', isAr ? 'التاريخ' : 'Date',
+      isAr ? 'التكلفة' : 'Cost', isAr ? 'العداد' : 'Odometer',
+      isAr ? 'مقدم الخدمة' : 'Provider', isAr ? 'الصيانة القادمة' : 'Next Date',
+      isAr ? 'الوصف' : 'Description',
+    ]];
+    filtered.forEach((r) => {
+      const v = vehicleMap[r.vehicle_id];
+      rows.push([
+        v?.vehicle_code || '', v ? `${v.brand} ${v.model}` : '', v?.plate_number || '',
+        stationName(v?.station_id), typeLabel(r.maintenance_type),
+        r.maintenance_date, String(r.cost || 0),
+        r.odometer_reading != null ? String(r.odometer_reading) : '',
+        r.provider || '', r.next_maintenance_date || '', r.description || '',
+      ]);
+    });
+    const csv = '\uFEFF' + rows.map((row) => row.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `vehicle_maintenance_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
   };
 
   return (
@@ -242,6 +282,23 @@ export const VehicleMaintenance = () => {
               stations={stations} value={stationFilter} onChange={setStationFilter} isAr={isAr}
               allowAll allLabel={isAr ? 'كل المحطات' : 'All stations'} className="w-44"
             />
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-36 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{isAr ? 'كل الأنواع' : 'All Types'}</SelectItem>
+                {TYPES.map((t) => (<SelectItem key={t.value} value={t.value}>{isAr ? t.ar : t.en}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 w-36" title={isAr ? 'من تاريخ' : 'From date'} />
+            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9 w-36" title={isAr ? 'إلى تاريخ' : 'To date'} />
+            {(fromDate || toDate) && (
+              <Button size="sm" variant="ghost" onClick={() => { setFromDate(''); setToDate(''); }}>
+                {isAr ? 'مسح التواريخ' : 'Clear dates'}
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={exportCsv}>
+              <Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}
+            </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 me-1" />{isAr ? 'إضافة صيانة' : 'Add Maintenance'}</Button>
