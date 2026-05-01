@@ -59,6 +59,7 @@ export const VehicleRegistry = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
 
   const fetchAll = async () => {
     setLoading(true);
