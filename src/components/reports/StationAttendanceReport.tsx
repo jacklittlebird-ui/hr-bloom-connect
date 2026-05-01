@@ -532,7 +532,7 @@ export const StationAttendanceReport = () => {
                                             return (
                                               <tr key={i} className={rec.status === 'absent' ? 'bg-red-50' : ''}>
                                                 <td className="border p-2 text-center">{dayLabel}</td>
-                                                <td className="border p-2 text-center">W{getWeekOfMonth(rec.date)}</td>
+                                                <td className="border p-2 text-center">W{getWeekOfMonth(rec.date, year, month, weekStart)}</td>
                                                 <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_in)}</td>
                                                 <td className="border p-2 text-center font-mono">{formatTimeCairo(rec.check_out)}</td>
                                                 <td className="border p-2 text-center tabular-nums">{fmtHours(hours)}</td>
