@@ -134,8 +134,12 @@ export const VehicleMaintenance = () => {
     const txtMatch = !txt || [v?.vehicle_code, v?.brand, v?.plate_number, r.maintenance_type, r.provider]
       .some((f) => f?.toLowerCase().includes(txt));
     const stMatch = !stationFilter || v?.station_id === stationFilter;
-    return txtMatch && stMatch;
-  }), [records, vehicleMap, search, stationFilter]);
+    const typeMatch = typeFilter === 'all' || r.maintenance_type === typeFilter;
+    let dateMatch = true;
+    if (fromDate && r.maintenance_date < fromDate) dateMatch = false;
+    if (toDate && r.maintenance_date > toDate) dateMatch = false;
+    return txtMatch && stMatch && typeMatch && dateMatch;
+  }), [records, vehicleMap, search, stationFilter, typeFilter, fromDate, toDate]);
 
   const filteredVehiclesForStation = useMemo(() => {
     if (!stationFilter) return vehicles;
