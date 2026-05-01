@@ -204,8 +204,10 @@ const SiteSettings = () => {
       density: defaultConfig.density,
       font: defaultConfig.font,
       headerStyle: defaultConfig.headerStyle,
+      welcomeBg: defaultConfig.welcomeBg,
     });
     try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
+    try { window.dispatchEvent(new Event('hr-welcome-bg-changed')); } catch {}
     setHasChanges(false);
     toast({ title: isAr ? 'تم الاستعادة' : 'Reset', description: isAr ? 'تم استعادة الإعدادات الافتراضية' : 'Default settings restored' });
   };
