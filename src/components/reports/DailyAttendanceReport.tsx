@@ -64,22 +64,7 @@ export const DailyAttendanceReport = () => {
   const [wordPreviewOpen, setWordPreviewOpen] = useState(false);
   const [wordPreviewHtml, setWordPreviewHtml] = useState<string | null>(null);
   const [wordPreviewLoading, setWordPreviewLoading] = useState(false);
-
-  const handleWordPreview = async () => {
-    setWordPreviewOpen(true);
-    setWordPreviewLoading(true);
-    setWordPreviewHtml(null);
-    const html = await previewWordExport({ title: reportTitle, data: buildExportRows(), columns: exportColumns });
-    setWordPreviewHtml(html);
-    setWordPreviewLoading(false);
-  };
-
-  const handleConfirmWordExport = () => {
-    if (wordPreviewHtml) {
-      downloadWordHtml(wordPreviewHtml, reportTitle);
-      setWordPreviewOpen(false);
-    }
-  };
+  const [wordPreviewTitle, setWordPreviewTitle] = useState('');
 
   const now = new Date();
   // Default range: current month
