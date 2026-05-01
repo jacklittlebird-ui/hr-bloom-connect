@@ -281,6 +281,14 @@ export const VehicleRegistry = () => {
               <SelectItem value="inactive">{isAr ? 'غير نشط' : 'Inactive'}</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={alertFilter} onValueChange={(v) => setAlertFilter(v as any)}>
+            <SelectTrigger className="w-40 h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{isAr ? 'كل التنبيهات' : 'All alerts'}</SelectItem>
+              <SelectItem value="expired">{isAr ? `منتهية (${expiredCount})` : `Expired (${expiredCount})`}</SelectItem>
+              <SelectItem value="soon">{isAr ? `خلال 30 يوم (${soonCount})` : `Within 30d (${soonCount})`}</SelectItem>
+            </SelectContent>
+          </Select>
           <Button size="sm" variant="outline" onClick={exportCsv}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
