@@ -473,8 +473,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [clearAuthState]);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    // 1) Clear Supabase session storage IMMEDIATELY so UI cannot stay logged in
+    //    even if the network call to /logout hangs (common on flaky mobile nets).
+    try {
+      Object.keys(localStorage).forEach((k) => {
+        if (k.startsWith('sb-') || k.includes('supabase.auth')) {
+          localStorage.removeItem(k);
+        }
+      });
+      Object.keys(sessionStorage).forEach((k) => {
+        if (k.startsWith('sb-') || k.includes('supabase.auth')) {
+          sessionStorage.removeItem(k);
+        }
+      });
+    } catch {}
+
+    // 2) Clear React auth state right away.
     clearAuthState();
+
+    // 3) Fire server-side signOut WITHOUT awaiting — never block UI.
+    try {
+      void supabase.auth.signOut();
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
+
+    // 4) Hard redirect guarantees React tree teardown on every browser
+    //    (including PWAs / in-app webviews).
+    try {
+      window.location.replace('/login');
+    } catch {}
   }, [clearAuthState]);
 
   return (
