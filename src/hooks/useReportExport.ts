@@ -174,20 +174,41 @@ export const useReportExport = () => {
     toast({ title: t('reports.exportSuccess') || 'Export completed successfully' });
   }, [t]);
 
-  const exportToWord = useCallback(({ title, data, columns, fileName }: ReportExportOptions) => {
+  const exportToWord = useCallback(async ({ title, data, columns, fileName }: ReportExportOptions) => {
     if (!data.length) {
       toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
       return;
     }
 
+    // Fetch logo as base64 so it embeds inside the .doc file (no broken image when emailed)
+    let logoDataUrl = '';
+    try {
+      const res = await fetch(logoUrl);
+      const buf = await res.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      logoDataUrl = `data:image/png;base64,${btoa(bin)}`;
+    } catch {
+      logoDataUrl = '';
+    }
+
     const dir = isRTL ? 'rtl' : 'ltr';
     const align = isRTL ? 'right' : 'left';
-    const headerHtml = columns.map(c => `<th style="background:#1e40af;color:#fff;padding:8px;border:1px solid #94a3b8;font-size:12px;text-align:center;font-weight:700;">${c.header}</th>`).join('');
+    const colCount = columns.length;
+    // Auto-shrink font when too many columns to keep table readable on one page
+    const autoBodyFont = colCount > 14 ? 8 : colCount > 10 ? 9 : colCount > 7 ? 10 : 11;
+    const autoHeaderFont = autoBodyFont + 1;
+    const autoCellPad = colCount > 12 ? '3px 4px' : '5px 7px';
+    // Auto-narrow margin when many columns
+    const pageMargin = colCount > 12 ? '1.6cm 0.7cm 1.4cm 0.7cm' : '2.2cm 1.2cm 2cm 1.2cm';
+
+    const headerHtml = columns.map(c => `<th style="background:#1e40af;color:#fff;padding:${autoCellPad};border:1px solid #94a3b8;font-size:${autoHeaderFont}px;text-align:center;font-weight:700;">${c.header}</th>`).join('');
     const bodyHtml = data.map((row, i) => {
       const cells = columns.map(col => {
         const val = row[col.key];
         const strVal = String(val ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return `<td style="padding:6px 8px;border:1px solid #cbd5e1;font-size:11px;text-align:${align};">${strVal}</td>`;
+        return `<td style="padding:${autoCellPad};border:1px solid #cbd5e1;font-size:${autoBodyFont}px;text-align:${align};">${strVal}</td>`;
       }).join('');
       const bg = i % 2 === 0 ? '#ffffff' : '#f1f5f9';
       return `<tr style="background:${bg};">${cells}</tr>`;
@@ -203,6 +224,13 @@ export const useReportExport = () => {
     const ofLabel = isRTL ? 'من' : 'of';
     const confidentialLabel = isRTL ? 'مستند سري - للاستخدام الداخلي فقط' : 'Confidential — Internal Use Only';
 
+    const logoImg = logoDataUrl
+      ? `<img src="${logoDataUrl}" alt="logo" style="height:42px;width:auto;vertical-align:middle;" />`
+      : '';
+    const logoHeaderImg = logoDataUrl
+      ? `<img src="${logoDataUrl}" alt="logo" style="height:22px;width:auto;vertical-align:middle;margin-${isRTL ? 'left' : 'right'}:6px;" />`
+      : '';
+
     const html = `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40" dir="${dir}">
 <head>
@@ -212,8 +240,16 @@ export const useReportExport = () => {
 <xml>
   <w:WordDocument>
     <w:View>Print</w:View>
-    <w:Zoom>100</w:Zoom>
+    <w:Zoom>110</w:Zoom>
     <w:DoNotOptimizeForBrowser/>
+    <w:DisplayHorizontalDrawingGridEvery>0</w:DisplayHorizontalDrawingGridEvery>
+    <w:DisplayVerticalDrawingGridEvery>2</w:DisplayVerticalDrawingGridEvery>
+    <w:UseMarginsForDrawingGridOrigin/>
+    <w:Compatibility>
+      <w:DoNotExpandShiftReturn/>
+      <w:BreakWrappedTables/>
+      <w:SnapToGridInCell/>
+    </w:Compatibility>
   </w:WordDocument>
 </xml>
 <![endif]-->
@@ -221,18 +257,21 @@ export const useReportExport = () => {
   @page WordSection1 {
     size: 297mm 210mm;
     mso-page-orientation: landscape;
-    margin: 2.2cm 1.4cm 2cm 1.4cm;
-    mso-header-margin: 0.6cm;
-    mso-footer-margin: 0.6cm;
+    margin: ${pageMargin};
+    mso-header-margin: 0.5cm;
+    mso-footer-margin: 0.5cm;
+    mso-paper-source: 0;
     mso-header: url("#h1") h1;
     mso-footer: url("#f1") f1;
+    mso-fit-text-to-page: yes;
   }
   div.WordSection1 { page: WordSection1; }
-  body { font-family: 'Arial', 'Tahoma', sans-serif; direction: ${dir}; color:#1f2937; }
-  table { border-collapse: collapse; width: 100%; }
-  thead { display: table-header-group; }
+  body { font-family: 'Arial', 'Tahoma', sans-serif; direction: ${dir}; color:#1f2937; mso-fareast-font-family:'Arial'; }
+  table { border-collapse: collapse; width: 100%; mso-table-layout-alt: fixed; mso-table-overlap: never; }
+  thead { display: table-header-group; mso-row-heading: yes; }
+  thead tr { mso-yfti-header: yes; }
   tr { page-break-inside: avoid; }
-  h1.doc-title { color: #1e40af; font-size: 20px; margin: 0 0 4px 0; text-align:center; }
+  h1.doc-title { color: #1e40af; font-size: 22px; margin: 0 0 4px 0; text-align:center; }
   .doc-subtitle { font-size: 12px; color:#475569; text-align:center; margin-bottom:14px; }
   .meta-bar { border:1px solid #e2e8f0; background:#f8fafc; padding:8px 12px; margin-bottom:12px; font-size:11px; color:#334155; }
   .meta-bar span { margin-${isRTL ? 'left' : 'right'}: 18px; }
@@ -241,6 +280,9 @@ export const useReportExport = () => {
   .header-bar .right { float: ${isRTL ? 'left' : 'right'}; color:#64748b; font-weight:400; }
   .footer-bar { border-top: 1px solid #cbd5e1; padding-top: 4px; font-size:10px; color:#64748b; }
   .footer-bar .pages { float: ${isRTL ? 'left' : 'right'}; }
+  .title-row { display:table; width:100%; margin-bottom:6px; }
+  .title-row .logo-cell { display:table-cell; width:80px; vertical-align:middle; text-align:${isRTL ? 'right' : 'left'}; }
+  .title-row .text-cell { display:table-cell; vertical-align:middle; text-align:center; }
 </style>
 </head>
 <body>
@@ -248,7 +290,7 @@ export const useReportExport = () => {
 
   <div style="mso-element:header" id="h1">
     <div class="header-bar">
-      ${orgName}
+      ${logoHeaderImg}${orgName}
       <span class="right">${title}</span>
       <div style="clear:both;"></div>
     </div>
@@ -262,8 +304,14 @@ export const useReportExport = () => {
     </div>
   </div>
 
-  <h1 class="doc-title">${title}</h1>
-  <div class="doc-subtitle">${reportLabel} • ${orgName}</div>
+  <div class="title-row">
+    <div class="logo-cell">${logoImg}</div>
+    <div class="text-cell">
+      <h1 class="doc-title">${title}</h1>
+      <div class="doc-subtitle">${reportLabel} • ${orgName}</div>
+    </div>
+    <div class="logo-cell"></div>
+  </div>
 
   <div class="meta-bar">
     <span><b>${dateLabel}:</b> ${dateStr} ${timeStr}</span>
