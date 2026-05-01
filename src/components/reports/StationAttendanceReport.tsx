@@ -59,6 +59,15 @@ export const StationAttendanceReport = () => {
   const [month, setMonth] = useState<number>(now.getMonth() + 1); // 1..12
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [loading, setLoading] = useState(false);
+  const [expandedEmp, setExpandedEmp] = useState<Set<string>>(new Set());
+
+  const toggleEmp = (id: string) => {
+    setExpandedEmp(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   const [stations, setStations] = useState<StationRow[]>([]);
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
