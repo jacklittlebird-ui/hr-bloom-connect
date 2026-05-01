@@ -178,6 +178,9 @@ export const VehicleRegistry = () => {
     }, 100);
   };
 
+  const expiredIds = useMemo(() => new Set(alerts.filter((a) => a.type === 'expired').map((a) => a.vehicle.id)), [alerts]);
+  const soonIds = useMemo(() => new Set(alerts.filter((a) => a.type === 'soon').map((a) => a.vehicle.id)), [alerts]);
+
   const filtered = useMemo(() => vehicles.filter((v) => {
     if (focusedId) return v.id === focusedId;
     const txt = search.trim().toLowerCase();
@@ -185,8 +188,12 @@ export const VehicleRegistry = () => {
       .some((f) => f?.toLowerCase().includes(txt));
     const stMatch = !stationFilter || v.station_id === stationFilter;
     const stsMatch = statusFilter === 'all' || v.status === statusFilter;
-    return txtMatch && stMatch && stsMatch;
-  }), [vehicles, search, stationFilter, statusFilter, focusedId]);
+    const alertMatch =
+      alertFilter === 'all' ? true :
+      alertFilter === 'expired' ? expiredIds.has(v.id) :
+      alertFilter === 'soon' ? (soonIds.has(v.id) && !expiredIds.has(v.id)) : true;
+    return txtMatch && stMatch && stsMatch && alertMatch;
+  }), [vehicles, search, stationFilter, statusFilter, focusedId, alertFilter, expiredIds, soonIds]);
 
   const exportCsv = () => {
     const rows = [[
