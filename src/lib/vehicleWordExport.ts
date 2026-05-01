@@ -292,7 +292,29 @@ export async function exportVehicleWord(opts: WordExportOptions): Promise<void> 
     }),
     ...(metaParagraphs as (Paragraph | Table)[]),
     new Paragraph({ spacing: { after: 200 }, children: [] }),
-    table,
+    ...tables.flatMap((t, idx) => {
+      const isLast = idx === tables.length - 1;
+      const pageInfo = tables.length > 1
+        ? [
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              bidirectional: true,
+              spacing: { before: 60, after: 120 },
+              children: [
+                arRun(`الصفحة ${idx + 1} من ${tables.length}`, {
+                  bold: true,
+                  size: 18,
+                  color: '6B7280',
+                }),
+              ],
+            }),
+          ]
+        : [];
+      const breakAfter = !isLast
+        ? [new Paragraph({ children: [new PageBreak()] })]
+        : [];
+      return [...pageInfo, t, ...breakAfter];
+    }),
     ...signatureBlock,
   ];
 
