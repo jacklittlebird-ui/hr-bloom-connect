@@ -496,7 +496,7 @@ export const StationAttendanceReport = () => {
                             </TableRow>
                             {isOpen && (
                               <TableRow key={`${r.employee.id}-details`} className="bg-muted/20 hover:bg-muted/20">
-                                <TableCell colSpan={15} className="p-4">
+                                <TableCell colSpan={9 + weeksCount} className="p-4">
                                   <div className={cn('flex items-center justify-between mb-3 flex-wrap gap-2', isRTL && 'flex-row-reverse')}>
                                     <div className="font-semibold text-sm">
                                       {ar ? '📋 التفاصيل اليومية' : '📋 Daily Details'} — {r.employee.employee_code} — {ar ? r.employee.name_ar : r.employee.name_en}
