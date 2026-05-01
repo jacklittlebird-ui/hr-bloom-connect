@@ -43,6 +43,7 @@ const Vehicles = () => {
         </TabsList>
 
         <TabsContent value="by-station"><FleetByStation /></TabsContent>
+        <TabsContent value="alerts"><LicenseAlerts /></TabsContent>
         <TabsContent value="registry"><VehicleRegistry /></TabsContent>
         <TabsContent value="licenses"><VehicleLicenseTracking /></TabsContent>
         <TabsContent value="maintenance"><VehicleMaintenance /></TabsContent>
