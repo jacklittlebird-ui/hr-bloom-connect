@@ -337,4 +337,9 @@ export function applyThemeSettings(config?: ApplyConfig) {
   if (config.headerStyle === 'smooth' || config.headerStyle === 'sharp') {
     root.dataset.headerStyle = config.headerStyle;
   }
+
+  // 7) Welcome banner background id
+  if (config.welcomeBg) {
+    root.dataset.welcomeBg = config.welcomeBg;
+  }
 }
