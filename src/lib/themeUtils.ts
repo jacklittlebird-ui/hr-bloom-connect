@@ -219,6 +219,7 @@ interface ApplyConfig {
   density?: string;
   font?: string;
   sidebarStyle?: 'auto' | 'dark' | 'light' | 'glass';
+  headerStyle?: 'smooth' | 'sharp';
 }
 
 // HEX -> "H S% L%" string for CSS HSL variables
