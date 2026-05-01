@@ -2261,6 +2261,7 @@ export type Database = {
           name_ar: string
           name_en: string
           timezone: string
+          weekend_days: Json
         }
         Insert: {
           checkin_method?: string
@@ -2271,6 +2272,7 @@ export type Database = {
           name_ar: string
           name_en: string
           timezone?: string
+          weekend_days?: Json
         }
         Update: {
           checkin_method?: string
@@ -2281,6 +2283,7 @@ export type Database = {
           name_ar?: string
           name_en?: string
           timezone?: string
+          weekend_days?: Json
         }
         Relationships: []
       }
