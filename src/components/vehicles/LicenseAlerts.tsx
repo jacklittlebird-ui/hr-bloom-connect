@@ -208,6 +208,38 @@ export const LicenseAlerts = () => {
             allLabel={isAr ? 'كل المحطات' : 'All stations'}
             className="w-44"
           />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="outline" className="h-9 gap-1">
+                <CalendarIcon className="w-4 h-4" />
+                {fromDate ? format(fromDate, 'dd/MM/yyyy') : (isAr ? 'من' : 'From')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={fromDate} onSelect={setFromDate} initialFocus className={cn('p-3 pointer-events-auto')} />
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="sm" variant="outline" className="h-9 gap-1">
+                <CalendarIcon className="w-4 h-4" />
+                {toDate ? format(toDate, 'dd/MM/yyyy') : (isAr ? 'إلى' : 'To')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar mode="single" selected={toDate} onSelect={setToDate} initialFocus className={cn('p-3 pointer-events-auto')} />
+            </PopoverContent>
+          </Popover>
+          <div className="flex items-center gap-1">
+            <Button size="sm" variant="ghost" className="h-9 px-2 text-xs" onClick={() => applyPreset(30)}>30{isAr ? 'ي' : 'd'}</Button>
+            <Button size="sm" variant="ghost" className="h-9 px-2 text-xs" onClick={() => applyPreset(60)}>60{isAr ? 'ي' : 'd'}</Button>
+            <Button size="sm" variant="ghost" className="h-9 px-2 text-xs" onClick={() => applyPreset(90)}>90{isAr ? 'ي' : 'd'}</Button>
+            {(fromDate || toDate) && (
+              <Button size="sm" variant="ghost" className="h-9 px-2" onClick={() => applyPreset('all')} title={isAr ? 'مسح' : 'Clear'}>
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
           <Button size="sm" variant="outline" onClick={exportCsv}>
             <Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}
           </Button>
