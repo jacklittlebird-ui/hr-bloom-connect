@@ -95,6 +95,7 @@ export const StationAttendanceReport = () => {
   const [year, setYear] = useState<number>(now.getFullYear());
   const [month, setMonth] = useState<number>(now.getMonth() + 1); // 1..12
   const [stationFilter, setStationFilter] = useState<string>('all');
+  const [search, setSearch] = useState<string>('');
   // Week start: 6=Saturday (default for Egypt/Arabic context), 0=Sunday, 1=Monday
   const [weekStart, setWeekStart] = useState<number>(() => {
     const saved = localStorage.getItem('attendanceReport.weekStart');
