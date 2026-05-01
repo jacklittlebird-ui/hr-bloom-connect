@@ -601,11 +601,11 @@ export const DailyAttendanceReport = () => {
                       <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'غائب' : 'A'}</th>
                       <th className="border p-1 text-center text-[10px] bg-emerald-50/70">{ar ? 'الساعات' : 'Hrs'}</th>
                       {dateRange.map(d => (
-                        <>
-                          <th key={`${d}-in`} className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'حضور' : 'In'}</th>
-                          <th key={`${d}-out`} className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'انصراف' : 'Out'}</th>
-                          <th key={`${d}-h`} className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'س' : 'H'}</th>
-                        </>
+                        <Fragment key={d}>
+                          <th className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'حضور' : 'In'}</th>
+                          <th className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'انصراف' : 'Out'}</th>
+                          <th className="border p-1 text-center text-[10px] font-normal text-muted-foreground">{ar ? 'س' : 'H'}</th>
+                        </Fragment>
                       ))}
                     </tr>
                   </thead>
