@@ -33,8 +33,8 @@ export const FleetByStation = () => {
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
+    const fetchAll = async (showLoader = true) => {
+      if (showLoader) setLoading(true);
       const [{ data: s }, { data: v }, { data: m }] = await Promise.all([
         supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar'),
         supabase.from('vehicles').select('id, vehicle_code, brand, model, year, plate_number, status, station_id, license_end_date, curtains_license_end, transport_license_end, insured_driver_name'),
@@ -43,8 +43,14 @@ export const FleetByStation = () => {
       if (s) setStations(s as Station[]);
       if (v) setVehicles(v as unknown as Vehicle[]);
       if (m) setMaint(m as unknown as MaintRow[]);
-      setLoading(false);
-    })();
+      if (showLoader) setLoading(false);
+    };
+    fetchAll(true);
+    const REFRESH_MS = 3 * 60 * 60 * 1000;
+    const interval = setInterval(() => fetchAll(false), REFRESH_MS);
+    const onVis = () => { if (document.visibilityState === 'visible') fetchAll(false); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVis); };
   }, []);
 
   const grouped = useMemo(() => {
