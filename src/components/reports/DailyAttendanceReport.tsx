@@ -60,7 +60,26 @@ function toIsoDate(d: Date): string {
 export const DailyAttendanceReport = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
-  const { reportRef, handlePrint, exportToPDF, exportToCSV, exportToWord } = useReportExport();
+  const { reportRef, handlePrint, exportToPDF, exportToCSV, exportToWord, previewWordExport, downloadWordHtml } = useReportExport();
+  const [wordPreviewOpen, setWordPreviewOpen] = useState(false);
+  const [wordPreviewHtml, setWordPreviewHtml] = useState<string | null>(null);
+  const [wordPreviewLoading, setWordPreviewLoading] = useState(false);
+
+  const handleWordPreview = async () => {
+    setWordPreviewOpen(true);
+    setWordPreviewLoading(true);
+    setWordPreviewHtml(null);
+    const html = await previewWordExport({ title: reportTitle, data: buildExportRows(), columns: exportColumns });
+    setWordPreviewHtml(html);
+    setWordPreviewLoading(false);
+  };
+
+  const handleConfirmWordExport = () => {
+    if (wordPreviewHtml) {
+      downloadWordHtml(wordPreviewHtml, reportTitle);
+      setWordPreviewOpen(false);
+    }
+  };
 
   const now = new Date();
   // Default range: current month
