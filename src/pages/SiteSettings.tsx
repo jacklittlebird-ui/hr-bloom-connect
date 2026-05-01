@@ -170,7 +170,9 @@ const SiteSettings = () => {
       radius: config.radius,
       density: config.density,
       font: config.font,
+      headerStyle: config.headerStyle,
     });
+    try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
     setHasChanges(false);
     toast({
       title: isAr ? 'تم الحفظ' : 'Saved',
@@ -193,7 +195,9 @@ const SiteSettings = () => {
       radius: defaultConfig.radius,
       density: defaultConfig.density,
       font: defaultConfig.font,
+      headerStyle: defaultConfig.headerStyle,
     });
+    try { window.dispatchEvent(new Event('hr-header-style-changed')); } catch {}
     setHasChanges(false);
     toast({ title: isAr ? 'تم الاستعادة' : 'Reset', description: isAr ? 'تم استعادة الإعدادات الافتراضية' : 'Default settings restored' });
   };
