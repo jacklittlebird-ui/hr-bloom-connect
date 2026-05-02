@@ -465,6 +465,68 @@ const Employees = () => {
     toast({ title: ar ? 'تم التصدير بنجاح (Excel)' : 'Export completed (Excel)' });
   };
 
+  // Full print: render ALL filtered employees (not just current page) with all key fields
+  const handlePrintFull = () => {
+    const data = getExportData();
+    if (!data.length) {
+      toast({ title: ar ? 'لا توجد بيانات للطباعة' : 'No data to print', variant: 'destructive' });
+      return;
+    }
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({ title: ar ? 'يرجى السماح بالنوافذ المنبثقة للطباعة' : 'Please allow pop-ups to print', variant: 'destructive' });
+      return;
+    }
+    const cols = exportColumns;
+    const headerRow = cols.map(c => `<th>${c.header}</th>`).join('');
+    const bodyRows = data.map((row, i) => {
+      const cells = cols.map(c => {
+        const v = String((row as any)[c.key] ?? '-')
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<td>${v}</td>`;
+      }).join('');
+      return `<tr style="background:${i % 2 ? '#f8fafc' : '#ffffff'};">${cells}</tr>`;
+    }).join('');
+
+    const dateStr = new Date().toLocaleDateString(ar ? 'ar-EG' : 'en-GB');
+    const logoUrl = `${window.location.origin}/images/company-logo.png`;
+    printWindow.document.write(`<!DOCTYPE html>
+<html dir="${ar ? 'rtl' : 'ltr'}">
+<head>
+<meta charset="UTF-8">
+<title>${reportTitle}</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A3 landscape; margin: 10mm; }
+  body { font-family: 'Baloo Bhaijaan 2','Cairo',sans-serif; padding: 0; margin: 0; color: #111827; }
+  .hdr { display:flex; align-items:center; gap:16px; padding:12px 0; border-bottom:2px solid #1e40af; margin-bottom:12px; }
+  .hdr img { height:50px; width:auto; }
+  .hdr h1 { margin:0; font-size:20px; color:#1e40af; }
+  .hdr .meta { font-size:11px; color:#475569; margin-top:2px; }
+  table { width:100%; border-collapse:collapse; font-size:9px; table-layout:auto; }
+  th { background:#1e40af; color:#fff; padding:5px 4px; border:1px solid #1e3a8a; font-weight:700; text-align:${ar ? 'right' : 'left'}; }
+  td { padding:4px; border:1px solid #cbd5e1; text-align:${ar ? 'right' : 'left'}; vertical-align:top; word-break:break-word; }
+  tr { page-break-inside: avoid; }
+  thead { display: table-header-group; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+  <div class="hdr">
+    <img src="${logoUrl}" onerror="this.style.display='none'" />
+    <div style="flex:1;">
+      <h1>${reportTitle}</h1>
+      <div class="meta">${ar ? 'تاريخ الإصدار' : 'Generated'}: ${dateStr} • ${ar ? 'عدد السجلات' : 'Records'}: ${data.length}</div>
+    </div>
+  </div>
+  <table><thead><tr>${headerRow}</tr></thead><tbody>${bodyRows}</tbody></table>
+</body>
+</html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 700);
+  };
+
 
   // Import from CSV
   const handleImportClick = () => {
