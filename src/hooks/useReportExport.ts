@@ -713,5 +713,27 @@ export const useReportExport = () => {
     await performExportBilingualPDF(opts, html);
   }, [buildBilingualPdfHtml, performExportBilingualPDF, previewCtx, t]);
 
-  return { reportRef, handlePrint, exportToCSV, exportToPDF, previewPDF, exportToWord, previewWordExport, downloadWordHtml, exportBilingualCSV, exportBilingualPDF, previewBilingualPDF };
+  // Bilingual Word: maps bilingual columns to underlying exportToWord, joining "AR / EN" in headers
+  const exportBilingualWord = useCallback(async (opts: BilingualExportOptions) => {
+    if (!opts.data.length) {
+      toast({ title: t('reports.noData') || 'No data to export', variant: 'destructive' });
+      return;
+    }
+    const monoColumns: ExportColumn[] = opts.columns.map(c => ({
+      key: c.key,
+      header: `${c.headerAr} / ${c.headerEn}`,
+    }));
+    const monoTitle = `${opts.titleAr} — ${opts.titleEn}`;
+    await exportToWord({
+      title: monoTitle,
+      data: opts.data,
+      columns: monoColumns,
+      fileName: opts.fileName,
+    });
+  }, [exportToWord, t]);
+
+  return {
+    reportRef, handlePrint, exportToCSV, exportToPDF, previewPDF, exportToWord, previewWordExport, downloadWordHtml,
+    exportBilingualCSV, exportBilingualPDF, previewBilingualPDF, exportBilingualWord,
+  };
 };

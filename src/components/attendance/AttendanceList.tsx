@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, ChevronLeft, ChevronRight } from 'lucide-react';
+import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, FileType, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const months = [
@@ -70,7 +70,7 @@ const formatTime = (ts: string | null): string | null => {
 export const AttendanceList = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
-  const { reportRef, handlePrint, exportBilingualPDF, exportBilingualCSV } = useReportExport();
+  const { reportRef, handlePrint, exportBilingualPDF, exportBilingualCSV, exportBilingualWord } = useReportExport();
 
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
@@ -285,6 +285,7 @@ export const AttendanceList = () => {
 
   const onPrint = () => handlePrint(ar ? reportTitle.ar : reportTitle.en);
   const onPDF = () => exportBilingualPDF({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
+  const onWord = () => exportBilingualWord({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
   const onExcel = () => exportBilingualCSV({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
 
   return (
@@ -303,6 +304,10 @@ export const AttendanceList = () => {
             <Button variant="outline" size="sm" onClick={onPDF} className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5">
               <FileText className="w-4 h-4" />
               PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={onWord} className="gap-1.5 text-blue-600 border-blue-600/30 hover:bg-blue-600/5">
+              <FileType className="w-4 h-4" />
+              Word
             </Button>
             <Button variant="outline" size="sm" onClick={onExcel} className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5">
               <FileSpreadsheet className="w-4 h-4" />

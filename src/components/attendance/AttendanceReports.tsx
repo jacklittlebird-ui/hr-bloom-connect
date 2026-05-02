@@ -2,10 +2,12 @@ import { useMemo, useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart3, Users, Clock, TrendingUp, PieChart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BarChart3, Users, Clock, TrendingUp, PieChart, Printer, FileText, FileSpreadsheet, FileType } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, LineChart, Line } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
+import { useReportExport } from '@/hooks/useReportExport';
 
 interface DBAttendanceRecord {
   id: string;
@@ -28,6 +30,7 @@ interface AttendanceReportsProps {
 export const AttendanceReports = ({ records: _legacyRecords }: AttendanceReportsProps) => {
   const { t, isRTL, language } = useLanguage();
   const ar = language === 'ar';
+  const { handlePrint, exportBilingualPDF, exportBilingualCSV, exportBilingualWord } = useReportExport();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1));
   const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
@@ -157,33 +160,117 @@ export const AttendanceReports = ({ records: _legacyRecords }: AttendanceReports
   const lLabel = ar ? 'متأخر' : 'Late';
   const aLabel = ar ? 'غائب' : 'Absent';
 
+  // ============ Export ============
+  const reportTitle = {
+    ar: `تقرير الحضور الشهري — ${monthNames[Number(selectedMonth) - 1]} ${selectedYear}`,
+    en: `Monthly Attendance Report — ${ar ? '' : monthNames[Number(selectedMonth) - 1] + ' '}${selectedYear}`,
+  };
+  // English month name (force English regardless of UI language) for the EN title
+  const monthNamesEn = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const reportTitleEn = `Monthly Attendance Report — ${monthNamesEn[Number(selectedMonth) - 1]} ${selectedYear}`;
+
+  // Department breakdown table — same column order as the bar chart series
+  const exportColumns = [
+    { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
+    { headerAr: 'حاضر', headerEn: 'Present', key: 'present' },
+    { headerAr: 'متأخر', headerEn: 'Late', key: 'late' },
+    { headerAr: 'غائب', headerEn: 'Absent', key: 'absent' },
+    { headerAr: 'الإجمالي', headerEn: 'Total', key: 'total' },
+  ];
+
+  const exportData = useMemo(() => {
+    const rows = departmentData.map(d => {
+      const present = (d as any)[pLabel] || 0;
+      const late = (d as any)[lLabel] || 0;
+      const absent = (d as any)[aLabel] || 0;
+      return {
+        department: d.name,
+        present,
+        late,
+        absent,
+        total: present + late + absent,
+      };
+    });
+    // Append totals row
+    if (rows.length > 0) {
+      rows.push({
+        department: ar ? 'الإجمالي' : 'Total',
+        present: rows.reduce((s, r) => s + r.present, 0),
+        late: rows.reduce((s, r) => s + r.late, 0),
+        absent: rows.reduce((s, r) => s + r.absent, 0),
+        total: rows.reduce((s, r) => s + r.total, 0),
+      });
+    }
+    return rows;
+  }, [departmentData, pLabel, lLabel, aLabel, ar]);
+
+  const summaryCards = [
+    { label: ar ? 'نسبة الحضور' : 'Attendance Rate', value: `${stats.attendanceRate}%` },
+    { label: ar ? 'نسبة الالتزام' : 'Punctuality Rate', value: `${stats.punctualityRate}%` },
+    { label: ar ? 'إجمالي ساعات العمل' : 'Total Work Hours', value: `${stats.totalWorkHours}h` },
+    { label: ar ? 'إجمالي الإضافي' : 'Total Overtime', value: `${stats.totalOvertimeHours}h` },
+  ];
+
+  const exportOpts = {
+    titleAr: reportTitle.ar,
+    titleEn: reportTitleEn,
+    data: exportData,
+    columns: exportColumns,
+    fileName: `attendance_report_${selectedYear}_${String(selectedMonth).padStart(2, '0')}`,
+    summaryCards,
+  };
+  const onPrint = () => handlePrint(ar ? reportTitle.ar : reportTitleEn);
+  const onPDF = () => exportBilingualPDF(exportOpts);
+  const onWord = () => exportBilingualWord(exportOpts);
+  const onExcel = () => exportBilingualCSV(exportOpts);
+
   return (
-    <div className="space-y-6">
-      {/* Month/Year Filter */}
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Filter + Export Toolbar */}
       <Card>
         <CardContent className="p-4">
-          <div className={cn("flex flex-wrap gap-4 items-center", isRTL && "flex-row-reverse")}>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder={ar ? 'الشهر' : 'Month'} />
-              </SelectTrigger>
-              <SelectContent>
-                {monthNames.map((name, i) => (
-                  <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder={ar ? 'السنة' : 'Year'} />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map(y => (
-                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {loading && <span className="text-sm text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</span>}
+          <div className="flex flex-wrap gap-3 items-center justify-between">
+            <div className="flex flex-wrap gap-3 items-center">
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder={ar ? 'الشهر' : 'Month'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthNames.map((name, i) => (
+                    <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder={ar ? 'السنة' : 'Year'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 2 + i).map(y => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {loading && <span className="text-sm text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</span>}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={onPrint} className="gap-1.5">
+                <Printer className="w-4 h-4" />
+                {ar ? 'طباعة' : 'Print'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={onPDF} className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5">
+                <FileText className="w-4 h-4" />
+                PDF
+              </Button>
+              <Button variant="outline" size="sm" onClick={onWord} className="gap-1.5 text-blue-600 border-blue-600/30 hover:bg-blue-600/5">
+                <FileType className="w-4 h-4" />
+                Word
+              </Button>
+              <Button variant="outline" size="sm" onClick={onExcel} className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5">
+                <FileSpreadsheet className="w-4 h-4" />
+                Excel
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
