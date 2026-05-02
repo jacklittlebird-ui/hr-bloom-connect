@@ -208,4 +208,14 @@
   .font-english {
     font-family: 'Baloo Bhaijaan 2', sans-serif !important;
   }
+
+  /* Adaptive company logo: brighter & subtle white halo in dark mode */
+  .logo-adaptive {
+    background-color: transparent;
+    transition: filter 0.2s ease, background-color 0.2s ease;
+  }
+  .dark .logo-adaptive {
+    background-color: hsl(0 0% 100% / 0.92);
+    filter: brightness(1.05) contrast(1.05);
+  }
 }
