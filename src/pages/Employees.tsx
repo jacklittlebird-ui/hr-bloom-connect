@@ -1064,7 +1064,7 @@ const Employees = () => {
         <div className="bg-primary rounded-xl p-6">
           <div className={cn("flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center", isRTL && "sm:flex-row-reverse")}>
             <h1 className="text-2xl font-bold text-primary-foreground">{t('employees.title')}</h1>
-            <div className={cn("flex flex-wrap gap-2", isRTL && "flex-row-reverse")}>
+            <div dir={isRTL ? 'rtl' : 'ltr'} className={cn("flex flex-wrap gap-2", isRTL ? "justify-end" : "justify-start")}>
               <Button variant="secondary" size="sm" className="gap-2" onClick={() => setShowAddDialog(true)}><Plus className="w-4 h-4" />{ar ? 'إضافة موظف' : 'Add Employee'}</Button>
               <Button variant="outline" size="icon" onClick={() => refreshEmployees()}><RefreshCw className="w-4 h-4" /></Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handlePrintFull} title={ar ? 'طباعة كل السجلات المعروضة' : 'Print all filtered records'}><Printer className="w-4 h-4" />{ar ? 'طباعة' : 'Print'}</Button>
