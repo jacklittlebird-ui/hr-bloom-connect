@@ -1062,15 +1062,15 @@ const Employees = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div className="bg-primary rounded-xl p-6">
-          <div className={cn("flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center", isRTL && "sm:flex-row-reverse")}>
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <h1 className="text-2xl font-bold text-primary-foreground">{t('employees.title')}</h1>
-            <div dir={isRTL ? 'rtl' : 'ltr'} className={cn("flex flex-wrap gap-2", isRTL ? "justify-end" : "justify-start")}>
+            <div className={cn("flex flex-wrap gap-2 w-full sm:w-auto", isRTL ? "sm:justify-start" : "sm:justify-end")}>
               <Button variant="secondary" size="sm" className="gap-2" onClick={() => setShowAddDialog(true)}><Plus className="w-4 h-4" />{ar ? 'إضافة موظف' : 'Add Employee'}</Button>
-              <Button variant="outline" size="icon" onClick={() => refreshEmployees()}><RefreshCw className="w-4 h-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => refreshEmployees()} aria-label={ar ? 'تحديث' : 'Refresh'}><RefreshCw className="w-4 h-4" /></Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handlePrintFull} title={ar ? 'طباعة كل السجلات المعروضة' : 'Print all filtered records'}><Printer className="w-4 h-4" />{ar ? 'طباعة' : 'Print'}</Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير PDF لكل السجلات' : 'Export all filtered as PDF'}><Download className="w-4 h-4" />PDF</Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToWord({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير Word' : 'Export Word'}><FileType className="w-4 h-4" />Word</Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportAll} title={ar ? 'تصدير Excel كامل بكل البيانات' : 'Export full Excel with all data'}><FileText className="w-4 h-4" />Excel</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير PDF لكل السجلات المفلترة' : 'Export all filtered as PDF'}><Download className="w-4 h-4" />PDF</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToWord({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير Word لكل السجلات المفلترة' : 'Export all filtered as Word'}><FileType className="w-4 h-4" />Word</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportAll} title={ar ? 'تصدير Excel كامل بكل البيانات المفلترة' : 'Export full Excel with all filtered data'}><FileText className="w-4 h-4" />Excel</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={downloadTemplate}><Download className="w-4 h-4" />{ar ? 'قالب الاستيراد' : 'Template'}</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handleImportClick} disabled={importing}>
                 <Upload className="w-4 h-4" />{importing ? (ar ? 'جاري الاستيراد...' : 'Importing...') : t('employees.importExcel')}
