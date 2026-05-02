@@ -111,7 +111,7 @@ export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize =
           {paginatedEmployees.map((employee) => (
             <TableRow key={employee.id} className="hover:bg-muted/50">
               <TableCell>
-                <Avatar className="w-10 h-10">
+                <Avatar className="w-16 h-16">
                   <AvatarImage src={employee.avatar} />
                   <AvatarFallback className="bg-primary text-primary-foreground">
                     {getInitials(language === 'ar' ? employee.nameAr : employee.nameEn)}
