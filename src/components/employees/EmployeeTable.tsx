@@ -74,7 +74,7 @@ export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize =
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-card">
+    <div className="border rounded-lg overflow-hidden bg-card" dir={isRTL ? 'rtl' : 'ltr'}>
       <Table>
         <TableHeader>
           <TableRow className="bg-primary hover:bg-primary">
@@ -187,20 +187,21 @@ export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize =
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className={cn("flex items-center justify-between px-4 py-3 border-t", isRTL && "flex-row-reverse")}>
+        <div className="flex items-center justify-between px-4 py-3 border-t flex-wrap gap-2">
           <span className="text-sm text-muted-foreground">
             {language === 'ar'
               ? `عرض ${((safeCurrentPage - 1) * pageSize) + 1} - ${Math.min(safeCurrentPage * pageSize, employees.length)} من ${employees.length}`
               : `Showing ${((safeCurrentPage - 1) * pageSize) + 1} - ${Math.min(safeCurrentPage * pageSize, employees.length)} of ${employees.length}`}
           </span>
-          <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               disabled={safeCurrentPage <= 1}
               onClick={() => onPageChange?.(safeCurrentPage - 1)}
+              aria-label={language === 'ar' ? 'السابق' : 'Previous'}
             >
-              <ChevronLeft className="w-4 h-4" />
+              {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </Button>
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(p => p === 1 || p === totalPages || Math.abs(p - safeCurrentPage) <= 2)
@@ -229,8 +230,9 @@ export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize =
               size="sm"
               disabled={safeCurrentPage >= totalPages}
               onClick={() => onPageChange?.(safeCurrentPage + 1)}
+              aria-label={language === 'ar' ? 'التالي' : 'Next'}
             >
-              <ChevronRight className="w-4 h-4" />
+              {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </Button>
           </div>
         </div>
