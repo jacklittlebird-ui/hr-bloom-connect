@@ -305,6 +305,10 @@ export const AttendanceList = () => {
               <FileText className="w-4 h-4" />
               PDF
             </Button>
+            <Button variant="outline" size="sm" onClick={onWord} className="gap-1.5 text-blue-600 border-blue-600/30 hover:bg-blue-600/5">
+              <FileType className="w-4 h-4" />
+              Word
+            </Button>
             <Button variant="outline" size="sm" onClick={onExcel} className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5">
               <FileSpreadsheet className="w-4 h-4" />
               Excel
