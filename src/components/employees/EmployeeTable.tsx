@@ -74,7 +74,7 @@ export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize =
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-card">
+    <div className="border rounded-lg overflow-hidden bg-card" dir={isRTL ? 'rtl' : 'ltr'}>
       <Table>
         <TableHeader>
           <TableRow className="bg-primary hover:bg-primary">
