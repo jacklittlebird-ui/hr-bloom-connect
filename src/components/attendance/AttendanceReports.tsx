@@ -30,6 +30,7 @@ interface AttendanceReportsProps {
 export const AttendanceReports = ({ records: _legacyRecords }: AttendanceReportsProps) => {
   const { t, isRTL, language } = useLanguage();
   const ar = language === 'ar';
+  const { handlePrint, exportBilingualPDF, exportBilingualCSV, exportBilingualWord } = useReportExport();
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1));
   const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
