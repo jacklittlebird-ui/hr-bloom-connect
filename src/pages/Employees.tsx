@@ -6,7 +6,7 @@ import { EmployeeTable } from '@/components/employees/EmployeeTable';
 import { EmployeeStatsCards } from '@/components/employees/EmployeeStatsCards';
 import { EmployeeFilters } from '@/components/employees/EmployeeFilters';
 import { Button } from '@/components/ui/button';
-import { Plus, RefreshCw, Download, Upload, Printer, FileText } from 'lucide-react';
+import { Plus, RefreshCw, Download, Upload, Printer, FileText, FileType } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AddEmployeeDialog } from '@/components/employees/AddEmployeeDialog';
 import { useReportExport } from '@/hooks/useReportExport';
@@ -20,7 +20,7 @@ type FilterStatus = 'all' | 'active' | 'inactive' | 'suspended';
 const Employees = () => {
   const { t, isRTL } = useLanguage();
   const { employees, refreshEmployees, loading } = useEmployeeData();
-  const { reportRef, handlePrint, exportBilingualCSV, exportToPDF } = useReportExport();
+  const { reportRef, handlePrint, exportBilingualCSV, exportToPDF, exportToWord } = useReportExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -463,6 +463,68 @@ const Employees = () => {
     XLSX.writeFile(wb, fileName, { bookType: 'xlsx', compression: true });
 
     toast({ title: ar ? 'تم التصدير بنجاح (Excel)' : 'Export completed (Excel)' });
+  };
+
+  // Full print: render ALL filtered employees (not just current page) with all key fields
+  const handlePrintFull = () => {
+    const data = getExportData();
+    if (!data.length) {
+      toast({ title: ar ? 'لا توجد بيانات للطباعة' : 'No data to print', variant: 'destructive' });
+      return;
+    }
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({ title: ar ? 'يرجى السماح بالنوافذ المنبثقة للطباعة' : 'Please allow pop-ups to print', variant: 'destructive' });
+      return;
+    }
+    const cols = exportColumns;
+    const headerRow = cols.map(c => `<th>${c.header}</th>`).join('');
+    const bodyRows = data.map((row, i) => {
+      const cells = cols.map(c => {
+        const v = String((row as any)[c.key] ?? '-')
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<td>${v}</td>`;
+      }).join('');
+      return `<tr style="background:${i % 2 ? '#f8fafc' : '#ffffff'};">${cells}</tr>`;
+    }).join('');
+
+    const dateStr = new Date().toLocaleDateString(ar ? 'ar-EG' : 'en-GB');
+    const logoUrl = `${window.location.origin}/images/company-logo.png`;
+    printWindow.document.write(`<!DOCTYPE html>
+<html dir="${ar ? 'rtl' : 'ltr'}">
+<head>
+<meta charset="UTF-8">
+<title>${reportTitle}</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A3 landscape; margin: 10mm; }
+  body { font-family: 'Baloo Bhaijaan 2','Cairo',sans-serif; padding: 0; margin: 0; color: #111827; }
+  .hdr { display:flex; align-items:center; gap:16px; padding:12px 0; border-bottom:2px solid #1e40af; margin-bottom:12px; }
+  .hdr img { height:50px; width:auto; }
+  .hdr h1 { margin:0; font-size:20px; color:#1e40af; }
+  .hdr .meta { font-size:11px; color:#475569; margin-top:2px; }
+  table { width:100%; border-collapse:collapse; font-size:9px; table-layout:auto; }
+  th { background:#1e40af; color:#fff; padding:5px 4px; border:1px solid #1e3a8a; font-weight:700; text-align:${ar ? 'right' : 'left'}; }
+  td { padding:4px; border:1px solid #cbd5e1; text-align:${ar ? 'right' : 'left'}; vertical-align:top; word-break:break-word; }
+  tr { page-break-inside: avoid; }
+  thead { display: table-header-group; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+  <div class="hdr">
+    <img src="${logoUrl}" onerror="this.style.display='none'" />
+    <div style="flex:1;">
+      <h1>${reportTitle}</h1>
+      <div class="meta">${ar ? 'تاريخ الإصدار' : 'Generated'}: ${dateStr} • ${ar ? 'عدد السجلات' : 'Records'}: ${data.length}</div>
+    </div>
+  </div>
+  <table><thead><tr>${headerRow}</tr></thead><tbody>${bodyRows}</tbody></table>
+</body>
+</html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 700);
   };
 
 
@@ -1005,9 +1067,10 @@ const Employees = () => {
             <div className={cn("flex flex-wrap gap-2", isRTL && "flex-row-reverse")}>
               <Button variant="secondary" size="sm" className="gap-2" onClick={() => setShowAddDialog(true)}><Plus className="w-4 h-4" />{ar ? 'إضافة موظف' : 'Add Employee'}</Button>
               <Button variant="outline" size="icon" onClick={() => refreshEmployees()}><RefreshCw className="w-4 h-4" /></Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={() => handlePrint(reportTitle)}><Printer className="w-4 h-4" />{ar ? 'طباعة' : 'Print'}</Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: exportColumns })}><Download className="w-4 h-4" />PDF</Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportAll}><FileText className="w-4 h-4" />Excel</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={handlePrintFull} title={ar ? 'طباعة كل السجلات المعروضة' : 'Print all filtered records'}><Printer className="w-4 h-4" />{ar ? 'طباعة' : 'Print'}</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير PDF لكل السجلات' : 'Export all filtered as PDF'}><Download className="w-4 h-4" />PDF</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToWord({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير Word' : 'Export Word'}><FileType className="w-4 h-4" />Word</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportAll} title={ar ? 'تصدير Excel كامل بكل البيانات' : 'Export full Excel with all data'}><FileText className="w-4 h-4" />Excel</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={downloadTemplate}><Download className="w-4 h-4" />{ar ? 'قالب الاستيراد' : 'Template'}</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handleImportClick} disabled={importing}>
                 <Upload className="w-4 h-4" />{importing ? (ar ? 'جاري الاستيراد...' : 'Importing...') : t('employees.importExcel')}
