@@ -288,8 +288,7 @@ const EmployeeDetails = () => {
                     "flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all text-sm font-medium",
                     isActive
                       ? "bg-primary text-primary-foreground border-primary shadow-md"
-                      : "bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/50",
-                    isRTL && "flex-row-reverse"
+                      : "bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/50"
                   )}
                 >
                   <Icon className="w-4 h-4" />
