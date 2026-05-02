@@ -2,10 +2,12 @@ import { useMemo, useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart3, Users, Clock, TrendingUp, PieChart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BarChart3, Users, Clock, TrendingUp, PieChart, Printer, FileText, FileSpreadsheet, FileType } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, LineChart, Line } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
+import { useReportExport } from '@/hooks/useReportExport';
 
 interface DBAttendanceRecord {
   id: string;
