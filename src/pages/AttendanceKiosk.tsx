@@ -433,7 +433,7 @@ const AttendanceKiosk = () => {
                     alt="Link Aero"
                     width="80"
                     height="80"
-                    className="h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-xl"
+                    className="logo-adaptive h-16 w-16 sm:h-20 sm:w-20 object-contain rounded-xl p-1"
                   />
                 </picture>
 
