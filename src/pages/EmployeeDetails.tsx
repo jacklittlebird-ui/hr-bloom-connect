@@ -197,22 +197,22 @@ const EmployeeDetails = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div className="bg-primary rounded-xl p-6">
-          <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
-            <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold text-primary-foreground">
                 {t('employees.details.title')}
               </h1>
               {isViewMode && (
                 <Badge className="bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30">
-                  <Eye className="w-3 h-3 mr-1" />
+                  <Eye className="w-3 h-3 mx-1" />
                   {language === 'ar' ? 'وضع العرض' : 'View Mode'}
                 </Badge>
               )}
             </div>
-            <div className={cn("flex gap-3 items-center", isRTL && "flex-row-reverse")}>
+            <div className="flex gap-3 items-center flex-wrap">
               <NotificationDropdown variant="header" employeeId={employee.employeeId} />
               <Button variant="secondary" size="sm" className="gap-2" onClick={() => navigate('/employees')}>
                 <ArrowRight className={cn("w-4 h-4", !isRTL && "rotate-180")} />
@@ -254,19 +254,19 @@ const EmployeeDetails = () => {
 
         {/* Employee Info Card */}
         <div className="border-2 border-destructive/30 rounded-xl p-6 bg-card">
-          <div className={cn("flex items-center gap-6", isRTL && "flex-row-reverse")}>
+          <div className="flex items-center gap-6 flex-wrap">
             <Avatar className="w-24 h-24 border-4 border-primary/20">
               <AvatarImage src={employee.avatar} />
               <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
                 {employee.nameAr.slice(0, 2)}
               </AvatarFallback>
             </Avatar>
-            <div className={cn("flex-1 space-y-3", isRTL && "text-right")}>
-              <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+            <div className={cn("flex-1 space-y-3", isRTL ? "text-right" : "text-left")}>
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-muted-foreground font-medium">{t('employees.details.nameAr')} :</span>
                 <span className="text-lg font-bold text-primary">{employee.nameAr}</span>
               </div>
-              <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-muted-foreground font-medium">{t('employees.details.nameEn')} :</span>
                 <span className="text-lg font-bold text-primary">{employee.nameEn}</span>
               </div>
@@ -288,8 +288,7 @@ const EmployeeDetails = () => {
                     "flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all text-sm font-medium",
                     isActive
                       ? "bg-primary text-primary-foreground border-primary shadow-md"
-                      : "bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/50",
-                    isRTL && "flex-row-reverse"
+                      : "bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/50"
                   )}
                 >
                   <Icon className="w-4 h-4" />
