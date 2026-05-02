@@ -1067,9 +1067,10 @@ const Employees = () => {
             <div className={cn("flex flex-wrap gap-2", isRTL && "flex-row-reverse")}>
               <Button variant="secondary" size="sm" className="gap-2" onClick={() => setShowAddDialog(true)}><Plus className="w-4 h-4" />{ar ? 'إضافة موظف' : 'Add Employee'}</Button>
               <Button variant="outline" size="icon" onClick={() => refreshEmployees()}><RefreshCw className="w-4 h-4" /></Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={() => handlePrint(reportTitle)}><Printer className="w-4 h-4" />{ar ? 'طباعة' : 'Print'}</Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: exportColumns })}><Download className="w-4 h-4" />PDF</Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportAll}><FileText className="w-4 h-4" />Excel</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={handlePrintFull} title={ar ? 'طباعة كل السجلات المعروضة' : 'Print all filtered records'}><Printer className="w-4 h-4" />{ar ? 'طباعة' : 'Print'}</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير PDF لكل السجلات' : 'Export all filtered as PDF'}><Download className="w-4 h-4" />PDF</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToWord({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير Word' : 'Export Word'}><FileType className="w-4 h-4" />Word</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportAll} title={ar ? 'تصدير Excel كامل بكل البيانات' : 'Export full Excel with all data'}><FileText className="w-4 h-4" />Excel</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={downloadTemplate}><Download className="w-4 h-4" />{ar ? 'قالب الاستيراد' : 'Template'}</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handleImportClick} disabled={importing}>
                 <Upload className="w-4 h-4" />{importing ? (ar ? 'جاري الاستيراد...' : 'Importing...') : t('employees.importExcel')}
