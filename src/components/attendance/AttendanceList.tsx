@@ -70,7 +70,7 @@ const formatTime = (ts: string | null): string | null => {
 export const AttendanceList = () => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
-  const { reportRef, handlePrint, exportBilingualPDF, exportBilingualCSV } = useReportExport();
+  const { reportRef, handlePrint, exportBilingualPDF, exportBilingualCSV, exportBilingualWord } = useReportExport();
 
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
