@@ -285,6 +285,7 @@ export const AttendanceList = () => {
 
   const onPrint = () => handlePrint(ar ? reportTitle.ar : reportTitle.en);
   const onPDF = () => exportBilingualPDF({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
+  const onWord = () => exportBilingualWord({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
   const onExcel = () => exportBilingualCSV({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
 
   return (
