@@ -6,7 +6,7 @@ import { EmployeeTable } from '@/components/employees/EmployeeTable';
 import { EmployeeStatsCards } from '@/components/employees/EmployeeStatsCards';
 import { EmployeeFilters } from '@/components/employees/EmployeeFilters';
 import { Button } from '@/components/ui/button';
-import { Plus, RefreshCw, Download, Upload, Printer, FileText } from 'lucide-react';
+import { Plus, RefreshCw, Download, Upload, Printer, FileText, FileType } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AddEmployeeDialog } from '@/components/employees/AddEmployeeDialog';
 import { useReportExport } from '@/hooks/useReportExport';
