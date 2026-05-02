@@ -217,12 +217,18 @@ const Employees = () => {
     },
   ];
 
-  // Flat columns for single-table exports
-  const bilingualExportColumns = exportSections.flatMap(s => s.columns).filter((col, idx, arr) => 
+  // Flat columns for single-table exports — ordered to MATCH the on-screen EmployeeTable
+  // (employeeId, name, station, department, jobTitle, phone, status), then all remaining fields.
+  const visibleTableOrder = ['employeeId', 'nameAr', 'nameEn', 'station', 'department', 'jobTitleAr', 'jobTitleEn', 'phone', 'status'];
+  const allFlatColumns = exportSections.flatMap(s => s.columns).filter((col, idx, arr) =>
     arr.findIndex(c => c.key === col.key) === idx
   );
+  const bilingualExportColumns = [
+    ...visibleTableOrder.map(k => allFlatColumns.find(c => c.key === k)).filter(Boolean) as typeof allFlatColumns,
+    ...allFlatColumns.filter(c => !visibleTableOrder.includes(c.key)),
+  ];
 
-  // Single-language columns for PDF fallback
+  // Single-language columns for PDF/Word — same order, localized header
   const exportColumns = bilingualExportColumns.map(c => ({ header: ar ? c.headerAr : c.headerEn, key: c.key }));
 
   const inactiveStatuses = ['inactive', 'external_stations', 'stopped', 'absent', 'pending_hire', 'resigned', 'under_resignation'];
