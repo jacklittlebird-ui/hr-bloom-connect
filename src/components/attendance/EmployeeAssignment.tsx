@@ -315,13 +315,18 @@ export const EmployeeAssignment = () => {
           <h2 className="text-xl font-semibold">{t('attendance.assignment.title')}</h2>
           <p className="text-sm text-muted-foreground">{t('attendance.assignment.subtitle')}</p>
         </div>
-        <Dialog open={isAssignDialogOpen} onOpenChange={(open) => { setIsAssignDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button className={cn("gap-2", isRTL && "flex-row-reverse")}>
-              <Plus className="w-4 h-4" />
-              {t('attendance.assignment.assignEmployee')}
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={async () => { setRefreshing(true); await fetchAll(true); setRefreshing(false); }} disabled={refreshing}
+            aria-label={ar ? 'تحديث' : 'Refresh'} title={ar ? 'تحديث' : 'Refresh'}>
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+          </Button>
+          <Dialog open={isAssignDialogOpen} onOpenChange={(open) => { setIsAssignDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                {t('attendance.assignment.assignEmployee')}
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
