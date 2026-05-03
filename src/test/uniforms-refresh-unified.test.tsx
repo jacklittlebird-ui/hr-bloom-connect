@@ -166,7 +166,7 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
     expect(refreshUniformsMock).not.toHaveBeenCalled();
 
     await waitFor(() => expect(updateUniformMock).toHaveBeenCalledTimes(1));
-    expect(sonnerSpy.success).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(sonnerSpy.success).toHaveBeenCalledTimes(1));
   });
 
   it('Edit: double-clicking Save still triggers exactly one updateUniform', async () => {
