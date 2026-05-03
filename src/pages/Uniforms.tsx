@@ -63,7 +63,7 @@ const Uniforms = () => {
   const itemToDelete = useMemo(() => uniforms.find(u => u.id === deleteId) || null, [uniforms, deleteId]);
 
   const handleRefresh = async () => {
-    if (refreshingRef.current || savingRef.current || savingEditRef.current || resettingRef.current) {
+    if (refreshingRef.current || savingRef.current || savingEditRef.current || resettingRef.current || deleting) {
       toast.message(language === 'ar' ? 'يوجد عملية جارية، يرجى الانتظار' : 'An operation is in progress, please wait');
       return;
     }
