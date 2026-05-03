@@ -133,6 +133,10 @@ const Uniforms = () => {
 
   const handleReset = () => {
     if (resettingRef.current) return;
+    if (savingRef.current || savingEditRef.current || deleting) {
+      toast.message(language === 'ar' ? 'يوجد عملية جارية، يرجى الانتظار' : 'An operation is in progress, please wait');
+      return;
+    }
     resettingRef.current = true;
     setResetting(true);
     try {
