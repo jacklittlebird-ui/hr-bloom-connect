@@ -328,7 +328,12 @@ export const VehicleRegistry = () => {
               <SelectItem value="soon">{isAr ? `خلال 30 يوم (${soonCount})` : `Within 30d (${soonCount})`}</SelectItem>
             </SelectContent>
           </Select>
-          <Button size="sm" variant="outline" onClick={exportCsv}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
+          {filtersActive && (
+            <Button size="sm" variant="ghost" onClick={resetFilters} aria-label={isAr ? 'إعادة ضبط الفلاتر' : 'Reset filters'}>
+              <FilterX className="w-4 h-4 me-1" />{isAr ? 'إعادة ضبط' : 'Reset'}
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={exportCsv} aria-label={isAr ? 'تصدير CSV' : 'Export CSV'}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="w-4 h-4 me-1" />{isAr ? 'إضافة سيارة' : 'Add Vehicle'}</Button>
