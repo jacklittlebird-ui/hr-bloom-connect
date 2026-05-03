@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { usePagination } from '@/hooks/usePagination';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Loader2 } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
@@ -43,6 +45,31 @@ const Uniforms = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ typeAr: '', typeEn: '', quantity: 1, unitPrice: 0, deliveryDate: '', notes: '' });
 
+  // Delete confirmation
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  // Refresh / save guards
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshingRef = useRef(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+
+  const handleRefresh = async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    setRefreshing(true);
+    try {
+      await refreshUniforms();
+      setRefreshKey(k => k + 1);
+      toast.success(language === 'ar' ? 'تم التحديث' : 'Refreshed');
+    } catch (e: any) {
+      toast.error(language === 'ar' ? 'تعذر التحديث' : 'Refresh failed');
+    } finally {
+      setRefreshing(false);
+      refreshingRef.current = false;
+    }
+  };
+
   const activeEmployees = useMemo(() => employees.filter(e => e.status === 'active'), [employees]);
   const { paginatedItems: paginatedUniforms, currentPage: uniPage, totalPages: uniTotalPages, totalItems: uniTotalItems, startIndex: uniStart, endIndex: uniEnd, setCurrentPage: setUniPage } = usePagination(uniforms, 20);
   const selectedEmployee = activeEmployees.find(e => e.id === employeeUUID);
@@ -55,7 +82,8 @@ const Uniforms = () => {
 
   const grandTotal = items.reduce((sum, r) => sum + r.quantity * r.unitPrice, 0);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (saving) return;
     if (!employeeUUID || !deliveryDate) {
       toast.error(language === 'ar' ? 'يرجى اختيار الموظف وتاريخ التسليم' : 'Please select employee and delivery date');
       return;
@@ -65,21 +93,28 @@ const Uniforms = () => {
       toast.error(language === 'ar' ? 'يرجى إضافة صنف واحد على الأقل' : 'Please add at least one item');
       return;
     }
-    validItems.forEach(r => {
-      const uType = UNIFORM_TYPES[parseInt(r.typeIndex)];
-      addUniform({
-        employeeId: employeeUUID,
-        typeAr: uType.ar,
-        typeEn: uType.en,
-        quantity: r.quantity,
-        unitPrice: r.unitPrice,
-        totalPrice: r.quantity * r.unitPrice,
-        deliveryDate,
-        notes,
-      });
-    });
-    toast.success(language === 'ar' ? 'تم حفظ اليونيفورم بنجاح' : 'Uniform saved successfully');
-    handleReset();
+    setSaving(true);
+    try {
+      for (const r of validItems) {
+        const uType = UNIFORM_TYPES[parseInt(r.typeIndex)];
+        await addUniform({
+          employeeId: employeeUUID,
+          typeAr: uType.ar,
+          typeEn: uType.en,
+          quantity: r.quantity,
+          unitPrice: r.unitPrice,
+          totalPrice: r.quantity * r.unitPrice,
+          deliveryDate,
+          notes,
+        } as any);
+      }
+      toast.success(language === 'ar' ? 'تم حفظ اليونيفورم بنجاح' : 'Uniform saved successfully');
+      handleReset();
+    } catch (e: any) {
+      toast.error(language === 'ar' ? 'تعذر الحفظ' : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -96,25 +131,36 @@ const Uniforms = () => {
     setEditDialogOpen(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingId === null) return;
-    updateUniform(editingId, {
-      typeAr: editForm.typeAr,
-      typeEn: editForm.typeEn,
-      quantity: editForm.quantity,
-      unitPrice: editForm.unitPrice,
-      totalPrice: editForm.quantity * editForm.unitPrice,
-      deliveryDate: editForm.deliveryDate,
-      notes: editForm.notes,
-    });
-    toast.success(language === 'ar' ? 'تم التعديل بنجاح' : 'Updated successfully');
-    setEditDialogOpen(false);
-    setEditingId(null);
+    try {
+      await updateUniform(editingId, {
+        typeAr: editForm.typeAr,
+        typeEn: editForm.typeEn,
+        quantity: editForm.quantity,
+        unitPrice: editForm.unitPrice,
+        totalPrice: editForm.quantity * editForm.unitPrice,
+        deliveryDate: editForm.deliveryDate,
+        notes: editForm.notes,
+      } as any);
+      toast.success(language === 'ar' ? 'تم التعديل بنجاح' : 'Updated successfully');
+      setEditDialogOpen(false);
+      setEditingId(null);
+    } catch {
+      toast.error(language === 'ar' ? 'تعذر التعديل' : 'Update failed');
+    }
   };
 
-  const handleDelete = (id: number) => {
-    deleteUniform(id);
-    toast.success(language === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully');
+  const confirmDelete = async () => {
+    if (deleteId === null) return;
+    try {
+      await deleteUniform(deleteId);
+      toast.success(language === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully');
+    } catch {
+      toast.error(language === 'ar' ? 'تعذر الحذف' : 'Delete failed');
+    } finally {
+      setDeleteId(null);
+    }
   };
 
   // Stats
@@ -172,10 +218,17 @@ const Uniforms = () => {
             <Shirt className="w-7 h-7 text-primary" />
             {language === 'ar' ? 'إدارة يونيفورم الموظفين' : 'Employee Uniform Management'}
           </h1>
-          <Button variant="outline" size="icon" onClick={() => { refreshUniforms(); toast.success(language === 'ar' ? 'تم التحديث' : 'Refreshed'); }}>
-            <RefreshCw className="w-4 h-4" />
+          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing} aria-label={language === 'ar' ? 'تحديث' : 'Refresh'}>
+            <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
           </Button>
         </div>
+
+        {refreshing && (
+          <div role="status" aria-live="polite" className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>{language === 'ar' ? 'جاري تحديث بيانات اليونيفورم...' : 'Refreshing uniform data...'}</span>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -201,7 +254,7 @@ const Uniforms = () => {
           ))}
         </div>
 
-        <Tabs defaultValue="manage" className="w-full">
+        <Tabs defaultValue="manage" className="w-full" key={refreshKey}>
           <TabsList className="grid w-full grid-cols-2" dir="rtl">
             <TabsTrigger value="manage">{language === 'ar' ? 'إدارة اليونيفورم' : 'Manage Uniforms'}</TabsTrigger>
             <TabsTrigger value="report">{language === 'ar' ? 'التقرير الشامل' : 'Full Report'}</TabsTrigger>
@@ -346,9 +399,9 @@ const Uniforms = () => {
                     <RefreshCw className="w-4 h-4" />
                     {language === 'ar' ? 'إعادة تعيين' : 'Reset'}
                   </Button>
-                  <Button onClick={handleSave} className="gap-1.5">
-                    <Package className="w-4 h-4" />
-                    {language === 'ar' ? 'حفظ جميع الأصناف' : 'Save All Items'}
+                  <Button onClick={handleSave} disabled={saving} className="gap-1.5">
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}
+                    {saving ? (language === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (language === 'ar' ? 'حفظ جميع الأصناف' : 'Save All Items')}
                   </Button>
                 </div>
               </CardContent>
@@ -411,7 +464,7 @@ const Uniforms = () => {
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleEdit(u)}>
                                   <Edit2 className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(u.id)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(u.id)}>
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
@@ -540,6 +593,24 @@ const Uniforms = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{language === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'ar' ? 'هل أنت متأكد من حذف هذا الصنف؟ لا يمكن التراجع.' : 'Are you sure you want to delete this item? This cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{language === 'ar' ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {language === 'ar' ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
