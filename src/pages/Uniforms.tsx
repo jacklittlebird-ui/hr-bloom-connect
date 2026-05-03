@@ -58,12 +58,12 @@ const Uniforms = () => {
   const savingEditRef = useRef(false);
   const [resetting, setResetting] = useState(false);
   const resettingRef = useRef(false);
-  const [deleting, setDeleting] = useState(false);
-
+    const [deleting, setDeleting] = useState(false);
+  const deletingRef = useRef(false);
   const itemToDelete = useMemo(() => uniforms.find(u => u.id === deleteId) || null, [uniforms, deleteId]);
 
   const handleRefresh = async () => {
-    if (refreshingRef.current || savingRef.current || savingEditRef.current || resettingRef.current) {
+    if (refreshingRef.current || savingRef.current || savingEditRef.current || resettingRef.current || deleting) {
       toast.message(language === 'ar' ? 'يوجد عملية جارية، يرجى الانتظار' : 'An operation is in progress, please wait');
       return;
     }
@@ -133,6 +133,10 @@ const Uniforms = () => {
 
   const handleReset = () => {
     if (resettingRef.current) return;
+    if (savingRef.current || savingEditRef.current || deleting) {
+      toast.message(language === 'ar' ? 'يوجد عملية جارية، يرجى الانتظار' : 'An operation is in progress, please wait');
+      return;
+    }
     resettingRef.current = true;
     setResetting(true);
     try {
@@ -180,7 +184,9 @@ const Uniforms = () => {
   };
 
   const confirmDelete = async () => {
-    if (deleteId === null || deleting) return;
+    if (deleteId === null) return;
+    if (deletingRef.current) return;
+    deletingRef.current = true;
     setDeleting(true);
     try {
       await deleteUniform(deleteId);
@@ -189,6 +195,7 @@ const Uniforms = () => {
       toast.error(language === 'ar' ? 'تعذر الحذف' : 'Delete failed');
     } finally {
       setDeleting(false);
+      deletingRef.current = false;
       setDeleteId(null);
     }
   };
@@ -425,7 +432,7 @@ const Uniforms = () => {
                 </div>
 
                 <div className={cn("flex gap-3 justify-end", isRTL && "flex-row-reverse")}>
-                  <Button variant="outline" onClick={handleReset} disabled={resetting || saving} className="gap-1.5">
+                  <Button variant="outline" onClick={handleReset} disabled={resetting || saving || savingEdit || deleting} className="gap-1.5">
                     <RefreshCw className={cn("w-4 h-4", resetting && "animate-spin")} />
                     {language === 'ar' ? 'إعادة تعيين' : 'Reset'}
                   </Button>
