@@ -369,7 +369,7 @@ export const EmployeeReports = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={status} onValueChange={setStatus}>
+              <Select value={status} onValueChange={onChangeStatus}>
                 <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع الحالات' : 'All Status'}</SelectItem>
