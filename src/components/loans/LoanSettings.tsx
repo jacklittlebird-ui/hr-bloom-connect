@@ -104,6 +104,7 @@ export const LoanSettings = () => {
   const [loanTypes, setLoanTypes] = useState<LoanType[]>(initialLoanTypes);
   const [selectedType, setSelectedType] = useState<string>(loanTypes[0].id);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false); // synchronous guard against rapid double-clicks
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [criticalChanges, setCriticalChanges] = useState<string[]>([]);
   const initialSnapshotRef = useRef<{ general: GeneralSettings; types: LoanType[] }>({
