@@ -529,6 +529,39 @@ export const VehicleRegistry = () => {
           </>
         )}
       </CardContent>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && !deleting && setDeleteTarget(null)}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isAr ? 'تأكيد حذف السيارة' : 'Confirm vehicle deletion'}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>{isAr ? 'سيتم حذف هذه السيارة نهائياً ولا يمكن التراجع.' : 'This vehicle will be permanently deleted.'}</p>
+                {deleteTarget && (
+                  <div className="rounded-md border bg-muted/40 p-3 space-y-1">
+                    <div><span className="text-muted-foreground">{isAr ? 'الكود:' : 'Code:'}</span> <span className="font-mono">{deleteTarget.vehicle_code}</span></div>
+                    <div><span className="text-muted-foreground">{isAr ? 'السيارة:' : 'Vehicle:'}</span> {deleteTarget.brand} {deleteTarget.model} ({deleteTarget.year})</div>
+                    <div><span className="text-muted-foreground">{isAr ? 'اللوحة:' : 'Plate:'}</span> <span className="font-mono">{deleteTarget.plate_number}</span></div>
+                    <div><span className="text-muted-foreground">{isAr ? 'المحطة:' : 'Station:'}</span> {stationName(deleteTarget.station_id)}</div>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{isAr ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={deleting}
+              aria-busy={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
+              {isAr ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
