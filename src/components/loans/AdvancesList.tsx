@@ -91,14 +91,27 @@ export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) =
 
   const resetForm = () => { setFormData({ employeeId: '', amount: '', deductionMonth: '', reason: '' }); setEditingAdvance(null); };
 
+  const [submitting, setSubmitting] = useState(false);
+  const [actioningId, setActioningId] = useState<string | null>(null);
+
   const handleSubmit = async () => {
-    if (!formData.employeeId || !formData.amount || !formData.deductionMonth) {
-      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى ملء جميع الحقول' : 'Please fill all fields', variant: 'destructive' });
+    if (submitting) return;
+    if (!formData.employeeId) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار موظف' : 'Please select an employee', variant: 'destructive' });
+      return;
+    }
+    const amount = parseFloat(formData.amount);
+    if (!formData.amount || amount <= 0) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'المبلغ يجب أن يكون أكبر من صفر' : 'Amount must be greater than zero', variant: 'destructive' });
+      return;
+    }
+    if (!formData.deductionMonth) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى تحديد شهر الخصم' : 'Please select deduction month', variant: 'destructive' });
       return;
     }
     const emp = activeEmployees.find(e => e.id === formData.employeeId);
-    const amount = parseFloat(formData.amount);
 
+    setSubmitting(true);
     try {
       if (editingAdvance) {
         await updateAdvance(editingAdvance.id, {
@@ -107,7 +120,7 @@ export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) =
           deductionMonth: formData.deductionMonth,
           reason: formData.reason,
         });
-        toast({ title: isRTL ? 'تم التحديث' : 'Updated' });
+        toast({ title: isRTL ? 'تم التحديث' : 'Updated', description: isRTL ? 'تم تعديل السلفة' : 'Advance updated' });
       } else {
         await addAdvance({
           employeeId: formData.employeeId,
@@ -119,32 +132,55 @@ export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) =
           status: 'pending',
           reason: formData.reason,
         });
-        toast({ title: isRTL ? 'تم الإضافة' : 'Added' });
+        toast({ title: isRTL ? 'تم الإضافة' : 'Added', description: isRTL ? 'تم إضافة السلفة' : 'Advance added' });
       }
       setShowDialog(false);
       resetForm();
-    } catch {
-      toast({ title: isRTL ? 'خطأ' : 'Error', variant: 'destructive' });
+    } catch (e: any) {
+      console.error('Advance save error:', e);
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message || (isRTL ? 'فشل الحفظ' : 'Save failed'), variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleApprove = async (id: string) => {
-    await updateAdvance(id, { status: 'approved' });
-    toast({ title: isRTL ? 'تمت الموافقة' : 'Approved' });
+    if (actioningId) return;
+    setActioningId(id);
+    try {
+      await updateAdvance(id, { status: 'approved' });
+      toast({ title: isRTL ? 'تمت الموافقة' : 'Approved' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
+    }
   };
 
   const handleDeduct = async (id: string) => {
-    await updateAdvance(id, { status: 'deducted' });
-    toast({ title: isRTL ? 'تم الخصم' : 'Deducted' });
+    if (actioningId) return;
+    setActioningId(id);
+    try {
+      await updateAdvance(id, { status: 'deducted' });
+      toast({ title: isRTL ? 'تم الخصم' : 'Deducted' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
+    }
   };
 
   const confirmDelete = async () => {
-    if (deletingId) {
+    if (!deletingId) return;
+    try {
       await deleteAdvance(deletingId);
       toast({ title: isRTL ? 'تم الحذف' : 'Deleted' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setShowDeleteDialog(false);
+      setDeletingId(null);
     }
-    setShowDeleteDialog(false);
-    setDeletingId(null);
   };
 
   const getStationLabel = (empId: string) => {
