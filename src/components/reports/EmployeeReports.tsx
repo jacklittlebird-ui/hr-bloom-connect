@@ -360,7 +360,7 @@ export const EmployeeReports = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={station} onValueChange={setStation}>
+              <Select value={station} onValueChange={onChangeStation}>
                 <SelectTrigger className="w-44"><SelectValue placeholder={ar ? 'المحطة/الموقع' : 'Station'} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع المحطات' : 'All Stations'}</SelectItem>
