@@ -67,12 +67,16 @@ export const PerformanceReports = () => {
     dept: d.dept, score: d.score,
   }));
 
+  const hasFilters = period !== 'year' || station !== 'all';
+  const resetFilters = () => { setPeriod('year'); setStation('all'); };
+
   return (
     <div className="space-y-6">
+      <DemoDataBanner />
       <Card>
         <CardContent className="p-4">
           <div className={cn("flex flex-wrap gap-4 items-center justify-between", isRTL && "flex-row-reverse")}>
-            <div className={cn("flex gap-4", isRTL && "flex-row-reverse")}>
+            <div className={cn("flex flex-wrap gap-4 items-center", isRTL && "flex-row-reverse")}>
               <Select value={period} onValueChange={setPeriod}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
