@@ -86,7 +86,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import Training from '@/pages/Training';
 
 const TAB_VALUES = ['records', 'trainers', 'syllabus', 'courses', 'plan', 'reports', 'id-cards'] as const;
-const COUNTER_KEY: Record<typeof TAB_VALUES[number], keyof typeof (globalThis as any).__mc> = {
+const COUNTER_KEY: Record<string, string> = {
   records: 'records',
   trainers: 'trainers',
   syllabus: 'syllabus',
