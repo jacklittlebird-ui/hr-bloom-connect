@@ -11,12 +11,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Users, Search, Plus, Edit2, Building2, Plane, Timer,
-  Clock, Filter, Trash2, UsersRound, UserPlus
+  Clock, Filter, Trash2, UsersRound, UserPlus, RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { sampleShiftDefinitions, ScheduleType } from '@/types/attendance';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
