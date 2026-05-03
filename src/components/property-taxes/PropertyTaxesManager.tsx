@@ -259,34 +259,57 @@ export const PropertyTaxesManager = () => {
       toast.error(isAr ? 'يرجى إدخال المبلغ وتاريخ الاستحقاق' : 'Please enter amount and due date');
       return;
     }
-    const payload: any = {
-      station_id: form.station_id || null, amount: Number(form.amount), due_date: form.due_date,
-      paid_date: form.paid_date || null, status: form.status,
-      receipt_number: form.receipt_number || null, property_type: form.property_type || null,
-      address: form.address || null,
-      area_sqm: form.area_sqm ? Number(form.area_sqm) : null,
-      rental_value: form.rental_value ? Number(form.rental_value) : null,
-      tax_period: form.tax_period, notes: form.notes || null,
-    };
-    if (editingId) {
-      const { error } = await supabase.from('property_taxes').update(payload).eq('id', editingId);
-      if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تم التحديث بنجاح' : 'Updated successfully');
-    } else {
-      const { error } = await supabase.from('property_taxes').insert(payload);
-      if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تمت الإضافة بنجاح' : 'Added successfully');
+    const amt = Number(form.amount);
+    if (!isFinite(amt) || amt <= 0) {
+      toast.error(isAr ? 'المبلغ يجب أن يكون أكبر من صفر' : 'Amount must be greater than zero');
+      return;
     }
-    setDialogOpen(false);
-    fetchData();
+    if (form.status === 'paid' && !form.paid_date) {
+      toast.error(isAr ? 'حالة "مدفوع" تتطلب تاريخ الدفع' : 'Paid status requires a payment date');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        station_id: form.station_id || null, amount: amt, due_date: form.due_date,
+        paid_date: form.paid_date || null, status: form.status,
+        receipt_number: form.receipt_number || null, property_type: form.property_type || null,
+        address: form.address || null,
+        area_sqm: form.area_sqm ? Number(form.area_sqm) : null,
+        rental_value: form.rental_value ? Number(form.rental_value) : null,
+        tax_period: form.tax_period, notes: form.notes || null,
+      };
+      if (editingId) {
+        const { error } = await supabase.from('property_taxes').update(payload).eq('id', editingId);
+        if (error) throw error;
+        toast.success(isAr ? 'تم التحديث بنجاح' : 'Updated successfully');
+      } else {
+        const { error } = await supabase.from('property_taxes').insert(payload);
+        if (error) throw error;
+        toast.success(isAr ? 'تمت الإضافة بنجاح' : 'Added successfully');
+      }
+      setDialogOpen(false);
+      fetchData();
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'تعذر الحفظ' : 'Save failed'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('property_taxes').delete().eq('id', id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم الحذف' : 'Deleted');
-    setDeleteConfirm(null);
-    fetchData();
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('property_taxes').delete().eq('id', id);
+      if (error) throw error;
+      toast.success(isAr ? 'تم الحذف' : 'Deleted');
+      setDeleteConfirm(null);
+      fetchData();
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'تعذر الحذف' : 'Delete failed'));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const openPayment = (r: PropertyTax) => {
@@ -297,14 +320,21 @@ export const PropertyTaxesManager = () => {
   const handleMarkPaid = async () => {
     if (!paymentDialog) return;
     if (!paymentForm.paid_date) { toast.error(isAr ? 'أدخل تاريخ الدفع' : 'Enter paid date'); return; }
-    const { error } = await supabase.from('property_taxes').update({
-      status: 'paid', paid_date: paymentForm.paid_date,
-      receipt_number: paymentForm.receipt_number || paymentDialog.receipt_number,
-    }).eq('id', paymentDialog.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم تسجيل الدفع' : 'Payment recorded');
-    setPaymentDialog(null);
-    fetchData();
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('property_taxes').update({
+        status: 'paid', paid_date: paymentForm.paid_date,
+        receipt_number: paymentForm.receipt_number || paymentDialog.receipt_number,
+      }).eq('id', paymentDialog.id);
+      if (error) throw error;
+      toast.success(isAr ? 'تم تسجيل الدفع' : 'Payment recorded');
+      setPaymentDialog(null);
+      fetchData();
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'تعذر تسجيل الدفع' : 'Failed to record payment'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Exports
