@@ -7,9 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar, Download, FileDown, FileType2 } from 'lucide-react';
+import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar, Download, FileDown, FileType2, Loader2, FilterX } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
@@ -61,11 +66,20 @@ export const VehicleMaintenance = () => {
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<MaintenanceRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'periodic', description: '',
     cost: 0, maintenance_date: new Date().toISOString().split('T')[0],
     next_maintenance_date: '', odometer_reading: '', provider: '', notes: '',
   });
+
+  const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || !!fromDate || !!toDate;
+  const resetFilters = () => {
+    setSearch(''); setStationFilter(null); setTypeFilter('all'); setFromDate(''); setToDate('');
+    toast.success(isAr ? 'تم إعادة ضبط الفلاتر' : 'Filters reset');
+  };
 
   const fetchData = async (showLoader = true) => {
     if (showLoader) setLoading(true);
@@ -97,32 +111,51 @@ export const VehicleMaintenance = () => {
       toast.error(isAr ? 'يرجى اختيار السيارة ونوع الصيانة' : 'Please select vehicle and type');
       return;
     }
-    const payload = {
-      vehicle_id: form.vehicle_id,
-      maintenance_type: form.maintenance_type,
-      description: form.description || null,
-      cost: Number(form.cost) || 0,
-      maintenance_date: form.maintenance_date,
-      next_maintenance_date: form.next_maintenance_date || null,
-      odometer_reading: form.odometer_reading ? Number(form.odometer_reading) : null,
-      provider: form.provider || null,
-      notes: form.notes || null,
-      status: 'completed',
-    };
-    const { error } = await supabase.from('vehicle_maintenance').insert(payload as any);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added');
-    setDialogOpen(false);
-    setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_date: '', odometer_reading: '', provider: '', notes: '' });
-    fetchData();
+    if (Number(form.cost) < 0) {
+      toast.error(isAr ? 'التكلفة لا يمكن أن تكون سالبة' : 'Cost cannot be negative');
+      return;
+    }
+    if (form.next_maintenance_date && form.next_maintenance_date < form.maintenance_date) {
+      toast.error(isAr ? 'تاريخ الصيانة القادمة قبل تاريخ الصيانة' : 'Next date is before maintenance date');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        vehicle_id: form.vehicle_id,
+        maintenance_type: form.maintenance_type,
+        description: form.description || null,
+        cost: Number(form.cost) || 0,
+        maintenance_date: form.maintenance_date,
+        next_maintenance_date: form.next_maintenance_date || null,
+        odometer_reading: form.odometer_reading ? Number(form.odometer_reading) : null,
+        provider: form.provider || null,
+        notes: form.notes || null,
+        status: 'completed',
+      };
+      const { error } = await supabase.from('vehicle_maintenance').insert(payload as any);
+      if (error) { toast.error(error.message); return; }
+      toast.success(isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added');
+      setDialogOpen(false);
+      setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_date: '', odometer_reading: '', provider: '', notes: '' });
+      fetchData();
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(isAr ? 'حذف هذا السجل؟' : 'Delete this record?')) return;
-    const { error } = await supabase.from('vehicle_maintenance').delete().eq('id', id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم الحذف' : 'Deleted');
-    fetchData();
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('vehicle_maintenance').delete().eq('id', deleteTarget.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success(isAr ? 'تم الحذف' : 'Deleted');
+      setDeleteTarget(null);
+      fetchData();
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const typeLabel = (t: string) => {
@@ -377,9 +410,9 @@ export const VehicleMaintenance = () => {
             </Select>
             <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 w-36" title={isAr ? 'من تاريخ' : 'From date'} />
             <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9 w-36" title={isAr ? 'إلى تاريخ' : 'To date'} />
-            {(fromDate || toDate) && (
-              <Button size="sm" variant="ghost" onClick={() => { setFromDate(''); setToDate(''); }}>
-                {isAr ? 'مسح التواريخ' : 'Clear dates'}
+            {filtersActive && (
+              <Button size="sm" variant="ghost" onClick={resetFilters} aria-label={isAr ? 'إعادة ضبط الفلاتر' : 'Reset filters'}>
+                <FilterX className="w-4 h-4 me-1" />{isAr ? 'إعادة ضبط' : 'Reset'}
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={exportCsv}>
@@ -455,8 +488,11 @@ export const VehicleMaintenance = () => {
                     <Input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="h-9" />
                   </div>
                   <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={() => setDialogOpen(false)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-                    <Button onClick={handleSave}>{isAr ? 'حفظ' : 'Save'}</Button>
+                    <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+                    <Button onClick={handleSave} disabled={saving} aria-busy={saving}>
+                      {saving && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
+                      {isAr ? 'حفظ' : 'Save'}
+                    </Button>
                   </div>
                 </div>
               </DialogContent>
@@ -517,7 +553,12 @@ export const VehicleMaintenance = () => {
                             ) : '-'}
                           </TableCell>
                           <TableCell>
-                            <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(r.id)}><Trash2 className="w-4 h-4" /></Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent>
+                            </Tooltip>
                           </TableCell>
                         </TableRow>
                       );
@@ -555,7 +596,7 @@ export const VehicleMaintenance = () => {
                         )}
                       </div>
                       <div className={cn('flex justify-end mt-2', isRTL && 'justify-start')}>
-                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDelete(r.id)}><Trash2 className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   );
@@ -565,6 +606,42 @@ export const VehicleMaintenance = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && !deleting && setDeleteTarget(null)}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isAr ? 'تأكيد حذف سجل الصيانة' : 'Confirm maintenance deletion'}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>{isAr ? 'سيتم حذف هذا السجل نهائياً ولا يمكن التراجع.' : 'This record will be permanently deleted.'}</p>
+                {deleteTarget && (() => {
+                  const v = vehicleMap[deleteTarget.vehicle_id];
+                  return (
+                    <div className="rounded-md border bg-muted/40 p-3 space-y-1">
+                      <div><span className="text-muted-foreground">{isAr ? 'السيارة:' : 'Vehicle:'}</span> {v ? `${v.brand} ${v.model} (${v.plate_number})` : '-'}</div>
+                      <div><span className="text-muted-foreground">{isAr ? 'النوع:' : 'Type:'}</span> {typeLabel(deleteTarget.maintenance_type)}</div>
+                      <div><span className="text-muted-foreground">{isAr ? 'التاريخ:' : 'Date:'}</span> {deleteTarget.maintenance_date}</div>
+                      <div><span className="text-muted-foreground">{isAr ? 'التكلفة:' : 'Cost:'}</span> {deleteTarget.cost?.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{isAr ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={deleting}
+              aria-busy={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
+              {isAr ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

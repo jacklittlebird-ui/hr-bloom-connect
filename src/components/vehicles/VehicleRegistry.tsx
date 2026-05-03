@@ -7,9 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Crosshair, X } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Crosshair, X, Loader2, FilterX } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
@@ -61,6 +66,21 @@ export const VehicleRegistry = () => {
   const [form, setForm] = useState(emptyForm);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [alertFilter, setAlertFilter] = useState<'all' | 'expired' | 'soon'>('all');
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const filtersActive =
+    !!search || !!stationFilter || statusFilter !== 'all' || alertFilter !== 'all' || !!focusedId;
+
+  const resetFilters = () => {
+    setSearch('');
+    setStationFilter(null);
+    setStatusFilter('all');
+    setAlertFilter('all');
+    setFocusedId(null);
+    toast.success(isAr ? 'تم إعادة ضبط الفلاتر' : 'Filters reset');
+  };
 
   const fetchAll = async () => {
     setLoading(true);
@@ -82,37 +102,50 @@ export const VehicleRegistry = () => {
       toast.error(isAr ? 'يرجى ملء الحقول المطلوبة' : 'Please fill required fields');
       return;
     }
-    const payload = {
-      ...form,
-      year: Number(form.year),
-      color: form.color || null,
-      engine_number: form.engine_number || null,
-      chassis_number: form.chassis_number || null,
-      license_start_date: form.license_start_date || null,
-      license_end_date: form.license_end_date || null,
-      curtains_license_start: form.curtains_license_start || null,
-      curtains_license_end: form.curtains_license_end || null,
-      transport_license_start: form.transport_license_start || null,
-      transport_license_end: form.transport_license_end || null,
-      insured_driver_name: form.insured_driver_name || null,
-      insurance_number: form.insurance_number || null,
-      notes: form.notes || null,
-      station_id: form.station_id || null,
-    };
-
-    if (editingId) {
-      const { error } = await supabase.from('vehicles').update(payload as any).eq('id', editingId);
-      if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تم تحديث السيارة' : 'Vehicle updated');
-    } else {
-      const { error } = await supabase.from('vehicles').insert(payload as any);
-      if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تم إضافة السيارة' : 'Vehicle added');
+    if (!form.year || Number(form.year) < 1900 || Number(form.year) > new Date().getFullYear() + 1) {
+      toast.error(isAr ? 'سنة الصنع غير صحيحة' : 'Invalid year');
+      return;
     }
-    setDialogOpen(false);
-    setEditingId(null);
-    setForm(emptyForm);
-    fetchAll();
+    if (form.license_start_date && form.license_end_date && form.license_end_date < form.license_start_date) {
+      toast.error(isAr ? 'تاريخ نهاية الترخيص قبل البداية' : 'License end before start');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        year: Number(form.year),
+        color: form.color || null,
+        engine_number: form.engine_number || null,
+        chassis_number: form.chassis_number || null,
+        license_start_date: form.license_start_date || null,
+        license_end_date: form.license_end_date || null,
+        curtains_license_start: form.curtains_license_start || null,
+        curtains_license_end: form.curtains_license_end || null,
+        transport_license_start: form.transport_license_start || null,
+        transport_license_end: form.transport_license_end || null,
+        insured_driver_name: form.insured_driver_name || null,
+        insurance_number: form.insurance_number || null,
+        notes: form.notes || null,
+        station_id: form.station_id || null,
+      };
+
+      if (editingId) {
+        const { error } = await supabase.from('vehicles').update(payload as any).eq('id', editingId);
+        if (error) { toast.error(error.message); return; }
+        toast.success(isAr ? 'تم تحديث السيارة' : 'Vehicle updated');
+      } else {
+        const { error } = await supabase.from('vehicles').insert(payload as any);
+        if (error) { toast.error(error.message); return; }
+        toast.success(isAr ? 'تم إضافة السيارة' : 'Vehicle added');
+      }
+      setDialogOpen(false);
+      setEditingId(null);
+      setForm(emptyForm);
+      fetchAll();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (v: Vehicle) => {
@@ -130,12 +163,18 @@ export const VehicleRegistry = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(isAr ? 'هل أنت متأكد من حذف هذه السيارة؟' : 'Delete this vehicle?')) return;
-    const { error } = await supabase.from('vehicles').delete().eq('id', id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم حذف السيارة' : 'Vehicle deleted');
-    fetchAll();
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('vehicles').delete().eq('id', deleteTarget.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success(isAr ? 'تم حذف السيارة' : 'Vehicle deleted');
+      setDeleteTarget(null);
+      fetchAll();
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const daysLeft = (d: string | null): number | null => {
@@ -289,7 +328,12 @@ export const VehicleRegistry = () => {
               <SelectItem value="soon">{isAr ? `خلال 30 يوم (${soonCount})` : `Within 30d (${soonCount})`}</SelectItem>
             </SelectContent>
           </Select>
-          <Button size="sm" variant="outline" onClick={exportCsv}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
+          {filtersActive && (
+            <Button size="sm" variant="ghost" onClick={resetFilters} aria-label={isAr ? 'إعادة ضبط الفلاتر' : 'Reset filters'}>
+              <FilterX className="w-4 h-4 me-1" />{isAr ? 'إعادة ضبط' : 'Reset'}
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={exportCsv} aria-label={isAr ? 'تصدير CSV' : 'Export CSV'}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="w-4 h-4 me-1" />{isAr ? 'إضافة سيارة' : 'Add Vehicle'}</Button>
@@ -344,8 +388,11 @@ export const VehicleRegistry = () => {
                 <Input value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} />
               </div>
               <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-                <Button onClick={handleSave}>{isAr ? 'حفظ' : 'Save'}</Button>
+                <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+                <Button onClick={handleSave} disabled={saving} aria-busy={saving}>
+                  {saving && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
+                  {isAr ? 'حفظ' : 'Save'}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -435,8 +482,18 @@ export const VehicleRegistry = () => {
                       <TableCell>{statusBadge(v.status)}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => handleEdit(v)}><Edit className="w-4 h-4" /></Button>
-                          <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(v.id)}><Trash2 className="w-4 h-4" /></Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" onClick={() => handleEdit(v)} aria-label={isAr ? 'تعديل' : 'Edit'}><Edit className="w-4 h-4" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isAr ? 'تعديل' : 'Edit'}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(v)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent>
+                          </Tooltip>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -463,8 +520,8 @@ export const VehicleRegistry = () => {
                     {v.insured_driver_name && <div className="col-span-2 whitespace-pre-wrap break-words"><span className="text-muted-foreground">{isAr ? 'السائق:' : 'Driver:'}</span> {v.insured_driver_name}</div>}
                   </div>
                   <div className={cn('flex gap-1 mt-2 justify-end', isRTL && 'justify-start')}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEdit(v)}><Edit className="w-4 h-4 me-1" />{isAr ? 'تعديل' : 'Edit'}</Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDelete(v.id)}><Trash2 className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => handleEdit(v)} aria-label={isAr ? 'تعديل' : 'Edit'}><Edit className="w-4 h-4 me-1" />{isAr ? 'تعديل' : 'Edit'}</Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(v)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
                   </div>
                 </div>
               ))}
@@ -472,6 +529,39 @@ export const VehicleRegistry = () => {
           </>
         )}
       </CardContent>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && !deleting && setDeleteTarget(null)}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isAr ? 'تأكيد حذف السيارة' : 'Confirm vehicle deletion'}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>{isAr ? 'سيتم حذف هذه السيارة نهائياً ولا يمكن التراجع.' : 'This vehicle will be permanently deleted.'}</p>
+                {deleteTarget && (
+                  <div className="rounded-md border bg-muted/40 p-3 space-y-1">
+                    <div><span className="text-muted-foreground">{isAr ? 'الكود:' : 'Code:'}</span> <span className="font-mono">{deleteTarget.vehicle_code}</span></div>
+                    <div><span className="text-muted-foreground">{isAr ? 'السيارة:' : 'Vehicle:'}</span> {deleteTarget.brand} {deleteTarget.model} ({deleteTarget.year})</div>
+                    <div><span className="text-muted-foreground">{isAr ? 'اللوحة:' : 'Plate:'}</span> <span className="font-mono">{deleteTarget.plate_number}</span></div>
+                    <div><span className="text-muted-foreground">{isAr ? 'المحطة:' : 'Station:'}</span> {stationName(deleteTarget.station_id)}</div>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{isAr ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={deleting}
+              aria-busy={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
+              {isAr ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
