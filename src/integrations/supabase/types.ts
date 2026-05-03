@@ -2222,6 +2222,68 @@ export type Database = {
           },
         ]
       }
+      shifts: {
+        Row: {
+          break_duration: number
+          code: string
+          color: string
+          created_at: string
+          display_order: number
+          end_time: string
+          id: string
+          is_active: boolean
+          is_overnight: boolean
+          name_ar: string
+          name_en: string
+          start_time: string
+          station_id: string | null
+          updated_at: string
+          work_duration: number
+        }
+        Insert: {
+          break_duration?: number
+          code: string
+          color?: string
+          created_at?: string
+          display_order?: number
+          end_time: string
+          id?: string
+          is_active?: boolean
+          is_overnight?: boolean
+          name_ar: string
+          name_en: string
+          start_time: string
+          station_id?: string | null
+          updated_at?: string
+          work_duration?: number
+        }
+        Update: {
+          break_duration?: number
+          code?: string
+          color?: string
+          created_at?: string
+          display_order?: number
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          is_overnight?: boolean
+          name_ar?: string
+          name_en?: string
+          start_time?: string
+          station_id?: string | null
+          updated_at?: string
+          work_duration?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       station_hr_stations: {
         Row: {
           created_at: string

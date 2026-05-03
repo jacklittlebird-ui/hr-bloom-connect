@@ -11,12 +11,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Users, Search, Plus, Edit2, Building2, Plane, Timer,
-  Clock, Filter, Trash2, UsersRound, UserPlus
+  Clock, Filter, Trash2, UsersRound, UserPlus, RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { sampleShiftDefinitions, ScheduleType } from '@/types/attendance';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,6 +44,7 @@ interface Assignment {
 
 interface StationOption { id: string; name: string; }
 interface DeptOption { id: string; name: string; }
+interface ShiftOption { id: string; nameAr: string; nameEn: string; startTime: string; endTime: string; color: string; }
 
 export const EmployeeAssignment = () => {
   const { t, isRTL, language } = useLanguage();
@@ -74,20 +78,28 @@ export const EmployeeAssignment = () => {
   const [empSearch, setEmpSearch] = useState('');
   const [stations, setStations] = useState<StationOption[]>([]);
   const [departments, setDepartments] = useState<DeptOption[]>([]);
+  const [shifts, setShifts] = useState<ShiftOption[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const shifts = sampleShiftDefinitions;
 
   // Fetch rules, stations, departments, and assignments
-  const fetchAll = useCallback(async () => {
-    const [rulesRes, stationsRes, deptsRes, assignRes] = await Promise.all([
+  const fetchAll = useCallback(async (showToast = false) => {
+    if (showToast) setRefreshing(true);
+    const [rulesRes, stationsRes, deptsRes, assignRes, shiftsRes] = await Promise.all([
       supabase.from('attendance_rules').select('id, name, name_ar, schedule_type').eq('is_active', true).order('name'),
       supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).order('name_ar'),
       supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true).order('name_ar'),
       supabase.from('attendance_assignments').select('*, stations(name_ar, name_en)').eq('is_active', true).order('created_at', { ascending: false }),
+      supabase.from('shifts').select('id, name_ar, name_en, start_time, end_time, color').eq('is_active', true).order('display_order'),
     ]);
     if (rulesRes.data) setRules(rulesRes.data);
     if (stationsRes.data) setStations(stationsRes.data.map(s => ({ id: s.id, name: ar ? s.name_ar : s.name_en })));
     if (deptsRes.data) setDepartments(deptsRes.data.map(d => ({ id: d.id, name: ar ? d.name_ar : d.name_en })));
+    if (shiftsRes.data) setShifts(shiftsRes.data.map((s: any) => ({
+      id: s.id, nameAr: s.name_ar, nameEn: s.name_en,
+      startTime: (s.start_time || '').slice(0, 5), endTime: (s.end_time || '').slice(0, 5), color: s.color,
+    })));
     if (assignRes.data) {
       setAssignments(assignRes.data.map((a: any) => ({
         id: a.id,
@@ -258,14 +270,16 @@ export const EmployeeAssignment = () => {
     setIsAssignDialogOpen(true);
   };
 
-  const handleDeleteAssignment = async (id: string) => {
-    const { error } = await supabase.from('attendance_assignments').delete().eq('id', id);
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const { error } = await supabase.from('attendance_assignments').delete().eq('id', deleteId);
     if (error) {
       toast({ title: ar ? 'خطأ في الحذف' : 'Delete failed', description: error.message, variant: 'destructive' });
-      return;
+    } else {
+      toast({ title: ar ? 'تم حذف التعيين' : 'Assignment deleted' });
+      await fetchAll();
     }
-    toast({ title: ar ? 'تم حذف التعيين' : 'Assignment deleted' });
-    await fetchAll();
+    setDeleteId(null);
   };
 
   const resetForm = () => {
@@ -301,13 +315,18 @@ export const EmployeeAssignment = () => {
           <h2 className="text-xl font-semibold">{t('attendance.assignment.title')}</h2>
           <p className="text-sm text-muted-foreground">{t('attendance.assignment.subtitle')}</p>
         </div>
-        <Dialog open={isAssignDialogOpen} onOpenChange={(open) => { setIsAssignDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button className={cn("gap-2", isRTL && "flex-row-reverse")}>
-              <Plus className="w-4 h-4" />
-              {t('attendance.assignment.assignEmployee')}
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="icon" onClick={async () => { setRefreshing(true); await fetchAll(true); setRefreshing(false); }} disabled={refreshing}
+            aria-label={ar ? 'تحديث' : 'Refresh'} title={ar ? 'تحديث' : 'Refresh'}>
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+          </Button>
+          <Dialog open={isAssignDialogOpen} onOpenChange={(open) => { setIsAssignDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                {t('attendance.assignment.assignEmployee')}
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -401,7 +420,7 @@ export const EmployeeAssignment = () => {
                         <SelectTrigger><SelectValue placeholder={ar ? 'اختر الوردية' : 'Select Shift'} /></SelectTrigger>
                         <SelectContent>
                           {shifts.map(shift => (
-                            <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.name} ({shift.startTime} - {shift.endTime})</SelectItem>
+                            <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.nameEn} ({shift.startTime} - {shift.endTime})</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -460,7 +479,7 @@ export const EmployeeAssignment = () => {
                       <Select value={bulkData.shiftId} onValueChange={v => setBulkData(prev => ({ ...prev, shiftId: v }))}>
                         <SelectTrigger><SelectValue placeholder={ar ? 'اختر الوردية' : 'Select Shift'} /></SelectTrigger>
                         <SelectContent>
-                          {shifts.map(shift => <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.name} ({shift.startTime} - {shift.endTime})</SelectItem>)}
+                          {shifts.map(shift => <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.nameEn} ({shift.startTime} - {shift.endTime})</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -497,7 +516,7 @@ export const EmployeeAssignment = () => {
                     <Select value={formData.shiftId} onValueChange={(v) => setFormData(prev => ({ ...prev, shiftId: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {shifts.map(shift => <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.name}</SelectItem>)}
+                        {shifts.map(shift => <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.nameEn}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -511,6 +530,7 @@ export const EmployeeAssignment = () => {
             )}
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
@@ -649,7 +669,7 @@ export const EmployeeAssignment = () => {
                           {shift ? (
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: shift.color }} />
-                              <span className="text-sm">{ar ? shift.nameAr : shift.name}</span>
+                              <span className="text-sm">{ar ? shift.nameAr : shift.nameEn}</span>
                             </div>
                           ) : <span className="text-sm text-muted-foreground">-</span>}
                         </TableCell>
@@ -657,7 +677,7 @@ export const EmployeeAssignment = () => {
                         <TableCell>
                           <div className="flex gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditAssignment(assignment)}><Edit2 className="w-4 h-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDeleteAssignment(assignment.id)}><Trash2 className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(assignment.id)} aria-label={ar ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -669,6 +689,23 @@ export const EmployeeAssignment = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{ar ? 'تأكيد الحذف' : 'Confirm Delete'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {ar ? 'هل تريد حذف هذا التعيين؟ لا يمكن التراجع.' : 'Delete this assignment? This cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {ar ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
