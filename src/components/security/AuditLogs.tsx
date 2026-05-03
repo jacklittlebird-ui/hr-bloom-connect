@@ -19,21 +19,34 @@ interface AuditLog {
   created_at: string;
 }
 
-const AuditLogs = () => {
+interface AuditLogsProps {
+  /** Restrict logs to a specific actor user_id */
+  userIdFilter?: string;
+  /** Restrict to a fixed list of tables (also limits the filter dropdown) */
+  tablesScope?: string[];
+  /** Hide the page header */
+  hideHeader?: boolean;
+  /** Default selected table filter */
+  defaultTable?: string;
+}
+
+const SECURITY_TABLES = ['user_roles', 'permission_profiles', 'user_module_permissions', 'profiles'];
+
+const AuditLogs = ({ userIdFilter, tablesScope, hideHeader, defaultTable }: AuditLogsProps = {}) => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const t = (ar: string, en: string) => language === 'ar' ? ar : en;
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [tableFilter, setTableFilter] = useState('all');
+  const [tableFilter, setTableFilter] = useState(defaultTable || 'all');
   const [actionFilter, setActionFilter] = useState('all');
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
 
   useEffect(() => {
     fetchLogs();
-  }, [page, tableFilter, actionFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, tableFilter, actionFilter, userIdFilter, tablesScope?.join(',')]);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -44,7 +57,9 @@ const AuditLogs = () => {
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
     if (tableFilter !== 'all') query = query.eq('affected_table', tableFilter);
+    else if (tablesScope && tablesScope.length) query = query.in('affected_table', tablesScope);
     if (actionFilter !== 'all') query = query.eq('action_type', actionFilter);
+    if (userIdFilter) query = query.eq('user_id', userIdFilter);
 
     const { data } = await query;
     setLogs(data || []);
