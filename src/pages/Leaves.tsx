@@ -301,15 +301,59 @@ const Leaves = () => {
     });
   }, [employeeRequests, searchQuery, selectedDepartment, selectedStation]);
 
+  // Unified loading state — set of mutation keys currently running
+  const [mutating, setMutating] = useState<Set<string>>(new Set());
+  const isMutating = (key?: string) => key ? mutating.has(key) : mutating.size > 0;
+
+  // Translate raw DB errors into user-friendly bilingual messages
+  const friendlyError = (raw: string): string => {
+    const m = (raw || '').toLowerCase();
+    if (m.includes('existing leave request')) {
+      return language === 'ar' ? 'لا يمكن تنفيذ العملية: يوجد إجازة مسجلة في نفس اليوم' : 'Cannot proceed: an existing leave request exists for that day';
+    }
+    if (m.includes('duplicate') || m.includes('unique')) {
+      return language === 'ar' ? 'سجل مكرر — العملية موجودة مسبقاً' : 'Duplicate record — this entry already exists';
+    }
+    if (m.includes('permission') && m.includes('denied')) {
+      return language === 'ar' ? 'لا تملك صلاحية تنفيذ هذه العملية' : 'You do not have permission to perform this action';
+    }
+    if (m.includes('foreign key') || m.includes('violates')) {
+      return language === 'ar' ? 'العملية مرفوضة بسبب ارتباط البيانات بسجلات أخرى' : 'Action blocked due to related records';
+    }
+    if (m.includes('network') || m.includes('fetch')) {
+      return language === 'ar' ? 'تعذّر الاتصال بالخادم — تحقق من الإنترنت' : 'Network error — please check your connection';
+    }
+    if (m.includes('timeout')) {
+      return language === 'ar' ? 'انتهت مهلة الطلب، حاول مرة أخرى' : 'Request timed out, please try again';
+    }
+    return raw || (language === 'ar' ? 'حدث خطأ غير متوقع' : 'Unexpected error occurred');
+  };
+
   const runMutation = async (
     fn: () => PromiseLike<{ error: { message: string } | null }>,
     successMsg: string,
+    opts?: { key?: string; loadingMsg?: string },
   ) => {
-    const { error } = await fn();
-    if (error) { toast.error(error.message); return false; }
-    toast.success(successMsg);
-    fetchData();
-    return true;
+    const key = opts?.key || `op-${Date.now()}-${Math.random()}`;
+    const loading = opts?.loadingMsg || (language === 'ar' ? 'جارٍ التنفيذ...' : 'Processing...');
+    setMutating(prev => { const next = new Set(prev); next.add(key); return next; });
+    const toastId = toast.loading(loading);
+    try {
+      const { error } = await fn();
+      if (error) {
+        toast.error(friendlyError(error.message), { id: toastId });
+        return false;
+      }
+      toast.success(successMsg, { id: toastId });
+      await fetchData();
+      return true;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(friendlyError(msg), { id: toastId });
+      return false;
+    } finally {
+      setMutating(prev => { const next = new Set(prev); next.delete(key); return next; });
+    }
   };
 
   const handleApproveLeave = (id: string) => runMutation(
