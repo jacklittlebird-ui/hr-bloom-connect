@@ -24,11 +24,11 @@ vi.mock('@/contexts/LanguageContext', () => ({
   }),
 }));
 
-// Track mount counts per report subcomponent on global to survive hoisting
+// Track mount counts on global to survive hoisting
 (globalThis as any).__mountCounts = (globalThis as any).__mountCounts || {};
 const mountCounts: Record<string, number> = (globalThis as any).__mountCounts;
 
-const buildMock = (name: string) => () => {
+const mkFactory = (name: string) => () => {
   const ReactLib = require('react');
   const Comp = () => {
     ReactLib.useEffect(() => {
@@ -40,18 +40,18 @@ const buildMock = (name: string) => () => {
   return { [name]: Comp, default: Comp };
 };
 
-vi.mock('@/components/reports/EmployeeReports', buildMock('EmployeeReports'));
-vi.mock('@/components/reports/AttendanceReportsTab', buildMock('AttendanceReportsTab'));
-vi.mock('@/components/reports/StationAttendanceReport', buildMock('StationAttendanceReport'));
-vi.mock('@/components/reports/DailyAttendanceReport', buildMock('DailyAttendanceReport'));
-vi.mock('@/components/reports/LeaveReports', buildMock('LeaveReports'));
-vi.mock('@/components/reports/SalaryReports', buildMock('SalaryReports'));
-vi.mock('@/components/reports/PerformanceReports', buildMock('PerformanceReports'));
-vi.mock('@/components/reports/TrainingReports', buildMock('TrainingReports'));
-vi.mock('@/components/reports/TrainingDebtReport', buildMock('TrainingDebtReport'));
-vi.mock('@/components/reports/UniformReport', buildMock('UniformReport'));
-vi.mock('@/components/reports/TrainingQualificationReport', buildMock('TrainingQualificationReport'));
-vi.mock('@/components/training/TrainingRecordsReport', buildMock('TrainingRecordsReport'));
+vi.mock('@/components/reports/EmployeeReports', mkFactory('EmployeeReports'));
+vi.mock('@/components/reports/AttendanceReportsTab', mkFactory('AttendanceReportsTab'));
+vi.mock('@/components/reports/StationAttendanceReport', mkFactory('StationAttendanceReport'));
+vi.mock('@/components/reports/DailyAttendanceReport', mkFactory('DailyAttendanceReport'));
+vi.mock('@/components/reports/LeaveReports', mkFactory('LeaveReports'));
+vi.mock('@/components/reports/SalaryReports', mkFactory('SalaryReports'));
+vi.mock('@/components/reports/PerformanceReports', mkFactory('PerformanceReports'));
+vi.mock('@/components/reports/TrainingReports', mkFactory('TrainingReports'));
+vi.mock('@/components/reports/TrainingDebtReport', mkFactory('TrainingDebtReport'));
+vi.mock('@/components/reports/UniformReport', mkFactory('UniformReport'));
+vi.mock('@/components/reports/TrainingQualificationReport', mkFactory('TrainingQualificationReport'));
+vi.mock('@/components/training/TrainingRecordsReport', mkFactory('TrainingRecordsReport'));
 
 import Reports from '@/pages/Reports';
 
