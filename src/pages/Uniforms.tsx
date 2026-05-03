@@ -45,6 +45,31 @@ const Uniforms = () => {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ typeAr: '', typeEn: '', quantity: 1, unitPrice: 0, deliveryDate: '', notes: '' });
 
+  // Delete confirmation
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  // Refresh / save guards
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshingRef = useRef(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [saving, setSaving] = useState(false);
+
+  const handleRefresh = async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    setRefreshing(true);
+    try {
+      await refreshUniforms();
+      setRefreshKey(k => k + 1);
+      toast.success(language === 'ar' ? 'تم التحديث' : 'Refreshed');
+    } catch (e: any) {
+      toast.error(language === 'ar' ? 'تعذر التحديث' : 'Refresh failed');
+    } finally {
+      setRefreshing(false);
+      refreshingRef.current = false;
+    }
+  };
+
   const activeEmployees = useMemo(() => employees.filter(e => e.status === 'active'), [employees]);
   const { paginatedItems: paginatedUniforms, currentPage: uniPage, totalPages: uniTotalPages, totalItems: uniTotalItems, startIndex: uniStart, endIndex: uniEnd, setCurrentPage: setUniPage } = usePagination(uniforms, 20);
   const selectedEmployee = activeEmployees.find(e => e.id === employeeUUID);
