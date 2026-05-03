@@ -84,16 +84,22 @@ export const EmployeeAssignment = () => {
 
 
   // Fetch rules, stations, departments, and assignments
-  const fetchAll = useCallback(async () => {
-    const [rulesRes, stationsRes, deptsRes, assignRes] = await Promise.all([
+  const fetchAll = useCallback(async (showToast = false) => {
+    if (showToast) setRefreshing(true);
+    const [rulesRes, stationsRes, deptsRes, assignRes, shiftsRes] = await Promise.all([
       supabase.from('attendance_rules').select('id, name, name_ar, schedule_type').eq('is_active', true).order('name'),
       supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).order('name_ar'),
       supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true).order('name_ar'),
       supabase.from('attendance_assignments').select('*, stations(name_ar, name_en)').eq('is_active', true).order('created_at', { ascending: false }),
+      supabase.from('shifts').select('id, name_ar, name_en, start_time, end_time, color').eq('is_active', true).order('display_order'),
     ]);
     if (rulesRes.data) setRules(rulesRes.data);
     if (stationsRes.data) setStations(stationsRes.data.map(s => ({ id: s.id, name: ar ? s.name_ar : s.name_en })));
     if (deptsRes.data) setDepartments(deptsRes.data.map(d => ({ id: d.id, name: ar ? d.name_ar : d.name_en })));
+    if (shiftsRes.data) setShifts(shiftsRes.data.map((s: any) => ({
+      id: s.id, nameAr: s.name_ar, nameEn: s.name_en,
+      startTime: (s.start_time || '').slice(0, 5), endTime: (s.end_time || '').slice(0, 5), color: s.color,
+    })));
     if (assignRes.data) {
       setAssignments(assignRes.data.map((a: any) => ({
         id: a.id,
