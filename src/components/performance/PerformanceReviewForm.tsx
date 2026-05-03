@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
@@ -55,6 +55,7 @@ export const PerformanceReviewForm = () => {
   const [improvements, setImprovements] = useState('');
   const [goals, setGoals] = useState('');
   const [managerComments, setManagerComments] = useState('');
+  const [saving, setSaving] = useState<null | 'draft' | 'submitted' | 'approved'>(null);
 
   // Find existing review for selected employee+quarter+year
   const existingReview = useMemo(() => {
@@ -177,9 +178,15 @@ export const PerformanceReviewForm = () => {
       toast.error(t('performance.form.fillRequired'));
       return;
     }
+    // Validate scores 1..5
+    if (criteria.some(c => c.score < 1 || c.score > 5)) {
+      toast.error(ar ? 'الدرجات يجب أن تكون بين 1 و 5' : 'Scores must be between 1 and 5');
+      return;
+    }
     const review = buildReview(status);
     if (!review) return;
 
+    setSaving(status);
     try {
       if (existingReview) {
         await updateReview(existingReview.id, { ...review });
@@ -195,6 +202,8 @@ export const PerformanceReviewForm = () => {
     } catch (err) {
       toast.error(ar ? 'حدث خطأ أثناء الحفظ' : 'Error saving review');
       console.error(err);
+    } finally {
+      setSaving(null);
     }
   };
 
@@ -446,9 +455,18 @@ export const PerformanceReviewForm = () => {
       </Card>
 
       <div className={cn("flex gap-3", isRTL ? "flex-row-reverse justify-start" : "justify-end")}>
-        <Button variant="outline" onClick={handleSaveDraft} className="gap-2"><Save className="w-4 h-4" />{t('performance.form.saveDraft')}</Button>
-        <Button onClick={handleSubmit} className="gap-2"><Send className="w-4 h-4" />{t('performance.form.submit')}</Button>
-        <Button onClick={handleApprove} className="gap-2 bg-stat-green hover:bg-stat-green/90"><CheckCircle className="w-4 h-4" />{ar ? 'اعتماد' : 'Approve'}</Button>
+        <Button variant="outline" onClick={handleSaveDraft} disabled={!!saving} className="gap-2" aria-label={t('performance.form.saveDraft')}>
+          {saving === 'draft' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {t('performance.form.saveDraft')}
+        </Button>
+        <Button onClick={handleSubmit} disabled={!!saving} className="gap-2" aria-label={t('performance.form.submit')}>
+          {saving === 'submitted' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          {t('performance.form.submit')}
+        </Button>
+        <Button onClick={handleApprove} disabled={!!saving} className="gap-2 bg-stat-green hover:bg-stat-green/90" aria-label={ar ? 'اعتماد' : 'Approve'}>
+          {saving === 'approved' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+          {ar ? 'اعتماد' : 'Approve'}
+        </Button>
       </div>
     </div>
   );

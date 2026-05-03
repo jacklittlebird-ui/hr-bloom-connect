@@ -5,12 +5,14 @@ import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Star, TrendingUp, Users, Target, Award, BarChart3, CheckCircle, Clock, FileText, Send, ShieldCheck, Building2, MapPin, UserCheck, UserX } from 'lucide-react';
+import { Star, TrendingUp, Users, Target, Award, BarChart3, CheckCircle, Clock, FileText, Send, ShieldCheck, Building2, MapPin, UserCheck, UserX, RotateCcw } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { stationLocations } from '@/data/stationLocations';
+import { toast } from 'sonner';
 
 export const PerformanceDashboard = () => {
   const { t, isRTL, language } = useLanguage();
@@ -163,14 +165,14 @@ export const PerformanceDashboard = () => {
             <div className="space-y-1">
               <Label className="text-xs">{ar ? 'السنة' : 'Year'}</Label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[120px]" aria-label={ar ? 'السنة' : 'Year'}><SelectValue /></SelectTrigger>
                 <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{ar ? 'الربع السنوي' : 'Quarter'}</Label>
               <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-                <SelectTrigger className="w-[140px]"><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
+                <SelectTrigger className="w-[140px]" aria-label={ar ? 'الربع السنوي' : 'Quarter'}><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع الأرباع' : 'All Quarters'}</SelectItem>
                   {quarters.map(q => <SelectItem key={q} value={q}>{q}</SelectItem>)}
@@ -180,7 +182,7 @@ export const PerformanceDashboard = () => {
             <div className="space-y-1">
               <Label className="text-xs">{ar ? 'المحطة' : 'Station'}</Label>
               <Select value={stationFilter} onValueChange={setStationFilter}>
-                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[160px]" aria-label={ar ? 'المحطة' : 'Station'}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع المحطات' : 'All Stations'}</SelectItem>
                   {stationLocations.map(s => <SelectItem key={s.value} value={s.value}>{ar ? s.labelAr : s.labelEn}</SelectItem>)}
@@ -190,13 +192,31 @@ export const PerformanceDashboard = () => {
             <div className="space-y-1">
               <Label className="text-xs">{ar ? 'القسم' : 'Department'}</Label>
               <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[160px]" aria-label={ar ? 'القسم' : 'Department'}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع الأقسام' : 'All Departments'}</SelectItem>
                   {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+            {(selectedQuarter !== '' || stationFilter !== 'all' || departmentFilter !== 'all' || selectedYear !== String(new Date().getFullYear())) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  setSelectedYear(String(new Date().getFullYear()));
+                  setSelectedQuarter('');
+                  setStationFilter('all');
+                  setDepartmentFilter('all');
+                  toast.success(ar ? 'تمت إعادة ضبط الفلاتر' : 'Filters reset');
+                }}
+                aria-label={ar ? 'إعادة ضبط الفلاتر' : 'Reset filters'}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {ar ? 'إعادة الضبط' : 'Reset'}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

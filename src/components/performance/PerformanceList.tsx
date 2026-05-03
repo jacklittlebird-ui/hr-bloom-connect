@@ -14,8 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Search, Eye, Edit, Star, FileText, Printer, Download, FileSpreadsheet, Save, Send, Target, TrendingUp, Lightbulb, MessageSquare, Trash2 } from 'lucide-react';
+import { Search, Eye, Edit, Star, FileText, Printer, Download, FileSpreadsheet, Save, Send, Target, TrendingUp, Lightbulb, MessageSquare, Trash2, RotateCcw, Loader2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
 import { initialDepartments } from '@/data/departments';
@@ -36,12 +37,27 @@ export const PerformanceList = () => {
   const [viewReview, setViewReview] = useState<PerformanceReview | null>(null);
   const [editReview, setEditReview] = useState<PerformanceReview | null>(null);
   const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [editCriteria, setEditCriteria] = useState<CriteriaItem[]>([]);
   const [editStrengths, setEditStrengths] = useState('');
   const [editImprovements, setEditImprovements] = useState('');
   const [editGoals, setEditGoals] = useState('');
   const [editManagerComments, setEditManagerComments] = useState('');
+
+  const ar = language === 'ar';
+  const filtersActive = searchQuery !== '' || statusFilter !== 'all' || quarterFilter !== 'all' || yearFilter !== 'all' || stationFilter !== 'all' || departmentFilter !== 'all';
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setQuarterFilter('all');
+    setYearFilter('all');
+    setStationFilter('all');
+    setDepartmentFilter('all');
+    toast.success(ar ? 'تمت إعادة ضبط الفلاتر' : 'Filters reset');
+  };
 
   const openEditDialog = (review: PerformanceReview) => {
     setEditReview(review);
@@ -52,20 +68,34 @@ export const PerformanceList = () => {
     setEditManagerComments(review.managerComments || '');
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editReview) return;
-    const newScore = calculateScore(editCriteria);
-    updateReview(editReview.id, { criteria: editCriteria, score: newScore, strengths: editStrengths, improvements: editImprovements, goals: editGoals, managerComments: editManagerComments });
-    setEditReview(null);
-    toast.success(language === 'ar' ? 'تم حفظ التعديلات بنجاح' : 'Changes saved successfully');
+    setSaving(true);
+    try {
+      const newScore = calculateScore(editCriteria);
+      await updateReview(editReview.id, { criteria: editCriteria, score: newScore, strengths: editStrengths, improvements: editImprovements, goals: editGoals, managerComments: editManagerComments });
+      setEditReview(null);
+      toast.success(ar ? 'تم حفظ التعديلات بنجاح' : 'Changes saved successfully');
+    } catch {
+      toast.error(ar ? 'فشل حفظ التعديلات' : 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSubmitEdit = () => {
+  const handleSubmitEdit = async () => {
     if (!editReview) return;
-    const newScore = calculateScore(editCriteria);
-    updateReview(editReview.id, { criteria: editCriteria, score: newScore, strengths: editStrengths, improvements: editImprovements, goals: editGoals, managerComments: editManagerComments, status: 'submitted' });
-    setEditReview(null);
-    toast.success(language === 'ar' ? 'تم إرسال التقييم بنجاح' : 'Review submitted successfully');
+    setSaving(true);
+    try {
+      const newScore = calculateScore(editCriteria);
+      await updateReview(editReview.id, { criteria: editCriteria, score: newScore, strengths: editStrengths, improvements: editImprovements, goals: editGoals, managerComments: editManagerComments, status: 'submitted' });
+      setEditReview(null);
+      toast.success(ar ? 'تم إرسال التقييم بنجاح' : 'Review submitted successfully');
+    } catch {
+      toast.error(ar ? 'فشل إرسال التقييم' : 'Failed to submit review');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const filteredReviews = reviews.filter(review => {
@@ -212,6 +242,12 @@ export const PerformanceList = () => {
                 ))}
               </SelectContent>
             </Select>
+            {filtersActive && (
+              <Button variant="outline" size="sm" onClick={handleResetFilters} className="gap-1.5" aria-label={ar ? 'إعادة ضبط الفلاتر' : 'Reset filters'}>
+                <RotateCcw className="w-3.5 h-3.5" />
+                {ar ? 'إعادة الضبط' : 'Reset'}
+              </Button>
+            )}
           </div>
 
           {/* Table */}
@@ -246,17 +282,34 @@ export const PerformanceList = () => {
                     <TableCell>{getStatusBadge(review.status)}</TableCell>
                     <TableCell>{review.reviewer}</TableCell>
                     <TableCell>
-                      <div className={cn("flex gap-1", isRTL && "flex-row-reverse")}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewReview(review)} title={language === 'ar' ? 'عرض' : 'View'}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(review)} title={language === 'ar' ? 'تعديل' : 'Edit'}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteReviewId(review.id)} title={language === 'ar' ? 'حذف' : 'Delete'}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <TooltipProvider>
+                        <div className={cn("flex gap-1", isRTL && "flex-row-reverse")}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewReview(review)} aria-label={ar ? 'عرض التقييم' : 'View review'}>
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{ar ? 'عرض' : 'View'}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(review)} aria-label={ar ? 'تعديل التقييم' : 'Edit review'}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{ar ? 'تعديل' : 'Edit'}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteReviewId(review.id)} aria-label={ar ? 'حذف التقييم' : 'Delete review'}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{ar ? 'حذف' : 'Delete'}</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TooltipProvider>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -417,8 +470,14 @@ export const PerformanceList = () => {
               </div>
 
               <div className={cn("flex gap-3 pt-2", isRTL ? "flex-row-reverse justify-start" : "justify-end")}>
-                <Button variant="outline" onClick={handleSaveEdit} className="gap-2"><Save className="w-4 h-4" />{language === 'ar' ? 'حفظ كمسودة' : 'Save Draft'}</Button>
-                <Button onClick={handleSubmitEdit} className="gap-2 bg-stat-green hover:bg-stat-green/90"><Send className="w-4 h-4" />{language === 'ar' ? 'إرسال التقييم' : 'Submit Review'}</Button>
+                <Button variant="outline" onClick={handleSaveEdit} disabled={saving} className="gap-2">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {ar ? 'حفظ كمسودة' : 'Save Draft'}
+                </Button>
+                <Button onClick={handleSubmitEdit} disabled={saving} className="gap-2 bg-stat-green hover:bg-stat-green/90">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {ar ? 'إرسال التقييم' : 'Submit Review'}
+                </Button>
               </div>
             </div>
           )}
@@ -426,24 +485,50 @@ export const PerformanceList = () => {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteReviewId} onOpenChange={() => setDeleteReviewId(null)}>
+      <AlertDialog open={!!deleteReviewId} onOpenChange={(o) => { if (!o && !deleting) setDeleteReviewId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{language === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {language === 'ar' ? 'هل أنت متأكد من حذف هذا التقييم؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to delete this review? This action cannot be undone.'}
+            <AlertDialogTitle>{ar ? 'تأكيد حذف التقييم' : 'Confirm Review Delete'}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>{ar ? 'سيتم حذف التقييم التالي نهائياً ولا يمكن التراجع:' : 'This review will be permanently deleted and cannot be restored:'}</p>
+                {(() => {
+                  const r = reviews.find(x => x.id === deleteReviewId);
+                  if (!r) return null;
+                  return (
+                    <div className="rounded-md border bg-muted/40 p-3 space-y-1">
+                      <div><strong>{ar ? 'الموظف:' : 'Employee:'}</strong> {r.employeeName}</div>
+                      <div><strong>{ar ? 'الفترة:' : 'Period:'}</strong> {r.quarter} {r.year}</div>
+                      <div><strong>{ar ? 'الدرجة:' : 'Score:'}</strong> {r.score}/5</div>
+                      <div><strong>{ar ? 'الحالة:' : 'Status:'}</strong> {t(`performance.status.${r.status}`)}</div>
+                    </div>
+                  );
+                })()}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{language === 'ar' ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => {
-              if (deleteReviewId) {
-                deleteReview(deleteReviewId);
-                toast.success(language === 'ar' ? 'تم حذف التقييم بنجاح' : 'Review deleted successfully');
-                setDeleteReviewId(null);
-              }
-            }}>
-              {language === 'ar' ? 'حذف' : 'Delete'}
+            <AlertDialogCancel disabled={deleting}>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!deleteReviewId) return;
+                setDeleting(true);
+                try {
+                  await deleteReview(deleteReviewId);
+                  toast.success(ar ? 'تم حذف التقييم بنجاح' : 'Review deleted successfully');
+                  setDeleteReviewId(null);
+                } catch {
+                  toast.error(ar ? 'فشل حذف التقييم' : 'Failed to delete review');
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {ar ? 'حذف' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
