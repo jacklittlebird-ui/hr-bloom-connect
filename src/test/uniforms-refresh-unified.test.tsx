@@ -116,8 +116,8 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(deleteUniformMock).not.toHaveBeenCalled();
 
-    // Click first row's delete (Trash) icon
-    const trashButtons = screen.getAllByRole('button').filter(b => b.className.includes('text-destructive'));
+    // Click first row's delete (Trash) icon — only row action buttons have h-8 w-8 + text-destructive
+    const trashButtons = screen.getAllByRole('button').filter(b => b.className.includes('h-8 w-8') && b.className.includes('text-destructive'));
     expect(trashButtons.length).toBeGreaterThan(0);
     await act(async () => { fireEvent.click(trashButtons[0]); });
 
