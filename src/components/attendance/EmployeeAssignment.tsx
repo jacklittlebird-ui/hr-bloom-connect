@@ -413,7 +413,7 @@ export const EmployeeAssignment = () => {
                         <SelectTrigger><SelectValue placeholder={ar ? 'اختر الوردية' : 'Select Shift'} /></SelectTrigger>
                         <SelectContent>
                           {shifts.map(shift => (
-                            <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.name} ({shift.startTime} - {shift.endTime})</SelectItem>
+                            <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.nameEn} ({shift.startTime} - {shift.endTime})</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -472,7 +472,7 @@ export const EmployeeAssignment = () => {
                       <Select value={bulkData.shiftId} onValueChange={v => setBulkData(prev => ({ ...prev, shiftId: v }))}>
                         <SelectTrigger><SelectValue placeholder={ar ? 'اختر الوردية' : 'Select Shift'} /></SelectTrigger>
                         <SelectContent>
-                          {shifts.map(shift => <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.name} ({shift.startTime} - {shift.endTime})</SelectItem>)}
+                          {shifts.map(shift => <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.nameEn} ({shift.startTime} - {shift.endTime})</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -509,7 +509,7 @@ export const EmployeeAssignment = () => {
                     <Select value={formData.shiftId} onValueChange={(v) => setFormData(prev => ({ ...prev, shiftId: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {shifts.map(shift => <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.name}</SelectItem>)}
+                        {shifts.map(shift => <SelectItem key={shift.id} value={shift.id}>{ar ? shift.nameAr : shift.nameEn}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -661,7 +661,7 @@ export const EmployeeAssignment = () => {
                           {shift ? (
                             <div className="flex items-center gap-2">
                               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: shift.color }} />
-                              <span className="text-sm">{ar ? shift.nameAr : shift.name}</span>
+                              <span className="text-sm">{ar ? shift.nameAr : shift.nameEn}</span>
                             </div>
                           ) : <span className="text-sm text-muted-foreground">-</span>}
                         </TableCell>
