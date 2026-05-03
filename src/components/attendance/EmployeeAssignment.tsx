@@ -116,6 +116,17 @@ export const EmployeeAssignment = () => {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // Realtime: auto-refresh when shifts change in any other view
+  useEffect(() => {
+    const ch = supabase
+      .channel('employee-assignment-shifts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts' }, () => {
+        fetchAll();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [fetchAll]);
+
   const getRule = (ruleId: string) => rules.find(r => r.id === ruleId);
   const getShift = (shiftId?: string) => shiftId ? shifts.find(s => s.id === shiftId) : null;
   const getEmployee = (empId: string) => contextEmployees.find(e => e.id === empId);
