@@ -79,7 +79,9 @@ export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) =
     const empStation = getEmployeeStation(a.employeeId);
     const matchesStation = stationFilter === 'all' || empStation === stationFilter || a.station === stationFilter;
     const matchesMonth = monthFilter === 'all' || a.deductionMonth === monthFilter;
-    return matchesSearch && matchesStatus && matchesStation && matchesMonth;
+    const matchesFrom = !dateFrom || (a.requestDate && a.requestDate >= dateFrom);
+    const matchesTo = !dateTo || (a.requestDate && a.requestDate <= dateTo);
+    return matchesSearch && matchesStatus && matchesStation && matchesMonth && matchesFrom && matchesTo;
   });
 
   const { paginatedItems: paginatedAdvances, currentPage: advPage, totalPages: advTotalPages, totalItems: advTotalItems, startIndex: advStart, endIndex: advEnd, setCurrentPage: setAdvPage } = usePagination(filteredAdvances);
