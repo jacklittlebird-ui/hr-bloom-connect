@@ -104,6 +104,8 @@ const Uniforms = () => {
       toast.error(language === 'ar' ? 'يرجى إضافة صنف واحد على الأقل' : 'Please add at least one item');
       return;
     }
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
       for (const r of validItems) {
@@ -125,15 +127,24 @@ const Uniforms = () => {
       toast.error(language === 'ar' ? 'تعذر الحفظ' : 'Save failed');
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
   };
 
   const handleReset = () => {
-    setEmployeeId('');
-    setEmployeeUUID('');
-    setDeliveryDate('');
-    setNotes('');
-    setItems([{ typeIndex: '', quantity: 1, unitPrice: 0 }]);
+    if (resettingRef.current) return;
+    resettingRef.current = true;
+    setResetting(true);
+    try {
+      setEmployeeId('');
+      setEmployeeUUID('');
+      setDeliveryDate('');
+      setNotes('');
+      setItems([{ typeIndex: '', quantity: 1, unitPrice: 0 }]);
+    } finally {
+      setResetting(false);
+      resettingRef.current = false;
+    }
   };
 
   const handleEdit = (u: typeof uniforms[0]) => {
