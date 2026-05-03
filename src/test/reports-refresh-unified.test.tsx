@@ -165,41 +165,21 @@ describe('Reports — unified refresh E2E', () => {
   });
 
   it('shows an error toast when refresh cycle throws and does not over-remount tabs', async () => {
-    // Force the refresh handler internal await to throw via setTimeout patch
-    const originalSetTimeout = globalThis.setTimeout;
-    let calls = 0;
-    const spy = vi.spyOn(globalThis, 'setTimeout').mockImplementation(((fn: any, ms?: number) => {
-      // Throw inside the awaited timeout used by handleRefresh (~400ms)
-      if (ms === 400) {
-        calls++;
-        return originalSetTimeout(() => {
-          try { fn(); } catch {}
-          throw new Error('forced');
-        }, 0) as any;
-      }
-      return originalSetTimeout(fn, ms) as any;
-    }) as any);
+    render(<Reports />);
+    await waitFor(() => expect(mountCounts['EmployeeReports']).toBe(1));
+    const btn = screen.getByLabelText('Refresh');
 
-    try {
-      render(<Reports />);
-      await waitFor(() => expect(mountCounts['EmployeeReports']).toBe(1));
-      const btn = screen.getByLabelText('Refresh');
+    // Force the success path to throw exactly once → triggers catch → toast.error
+    sonnerSpy.success.mockImplementationOnce(() => { throw new Error('toast failed'); });
 
-      // Make the awaited promise reject by stubbing once
-      const rejectOnce = vi.spyOn(global, 'Promise').mockImplementationOnce(((exec: any) => {
-        return new (Promise as any)((_res: any, rej: any) => rej(new Error('refresh failed')));
-      }) as any);
+    await act(async () => { fireEvent.click(btn); });
+    await flush(600);
 
-      await act(async () => { fireEvent.click(btn); });
-      await flush(600);
-
-      rejectOnce.mockRestore();
-
-      expect(sonnerSpy.error).toHaveBeenCalledTimes(1);
-      // Tabs remount at most twice (initial + the one triggered before error)
-      expect(mountCounts['EmployeeReports']).toBeLessThanOrEqual(2);
-    } finally {
-      spy.mockRestore();
-    }
+    expect(sonnerSpy.error).toHaveBeenCalledTimes(1);
+    // refreshKey bumped exactly once → at most one extra remount
+    expect(mountCounts['EmployeeReports']).toBeLessThanOrEqual(2);
+    // Refresh button is re-enabled and banner cleared even on error
+    expect((btn as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.queryByRole('status')).toBeNull();
   });
 });
