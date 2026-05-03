@@ -10,6 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Clock, CheckCircle, XCircle, Briefcase, Trash2 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { MissionRequest } from '@/types/leaves';
+import { ExportButton } from './ExportButton';
+import type { ExportColumn } from '@/lib/leavesExport';
 
 interface MissionRequestsListProps {
   requests: MissionRequest[];
