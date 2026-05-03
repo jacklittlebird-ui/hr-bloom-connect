@@ -24,30 +24,34 @@ vi.mock('@/contexts/LanguageContext', () => ({
   }),
 }));
 
-// Track mount counts per report subcomponent
-const mountCounts: Record<string, number> = {};
-const makeMock = (name: string) => {
+// Track mount counts per report subcomponent on global to survive hoisting
+(globalThis as any).__mountCounts = (globalThis as any).__mountCounts || {};
+const mountCounts: Record<string, number> = (globalThis as any).__mountCounts;
+
+const buildMock = (name: string) => () => {
+  const ReactLib = require('react');
   const Comp = () => {
-    React.useEffect(() => {
-      mountCounts[name] = (mountCounts[name] || 0) + 1;
+    ReactLib.useEffect(() => {
+      const c = (globalThis as any).__mountCounts;
+      c[name] = (c[name] || 0) + 1;
     }, []);
-    return <div data-testid={`report-${name}`}>{name}</div>;
+    return ReactLib.createElement('div', { 'data-testid': `report-${name}` }, name);
   };
-  return { default: Comp, [name]: Comp };
+  return { [name]: Comp, default: Comp };
 };
 
-vi.mock('@/components/reports/EmployeeReports', () => ({ EmployeeReports: makeMock('EmployeeReports').EmployeeReports }));
-vi.mock('@/components/reports/AttendanceReportsTab', () => ({ AttendanceReportsTab: makeMock('AttendanceReportsTab').AttendanceReportsTab }));
-vi.mock('@/components/reports/StationAttendanceReport', () => ({ StationAttendanceReport: makeMock('StationAttendanceReport').StationAttendanceReport }));
-vi.mock('@/components/reports/DailyAttendanceReport', () => ({ DailyAttendanceReport: makeMock('DailyAttendanceReport').DailyAttendanceReport }));
-vi.mock('@/components/reports/LeaveReports', () => ({ LeaveReports: makeMock('LeaveReports').LeaveReports }));
-vi.mock('@/components/reports/SalaryReports', () => ({ SalaryReports: makeMock('SalaryReports').SalaryReports }));
-vi.mock('@/components/reports/PerformanceReports', () => ({ PerformanceReports: makeMock('PerformanceReports').PerformanceReports }));
-vi.mock('@/components/reports/TrainingReports', () => ({ TrainingReports: makeMock('TrainingReports').TrainingReports }));
-vi.mock('@/components/reports/TrainingDebtReport', () => ({ TrainingDebtReport: makeMock('TrainingDebtReport').TrainingDebtReport }));
-vi.mock('@/components/reports/UniformReport', () => ({ UniformReport: makeMock('UniformReport').UniformReport }));
-vi.mock('@/components/reports/TrainingQualificationReport', () => ({ TrainingQualificationReport: makeMock('TrainingQualificationReport').TrainingQualificationReport }));
-vi.mock('@/components/training/TrainingRecordsReport', () => ({ TrainingRecordsReport: makeMock('TrainingRecordsReport').TrainingRecordsReport }));
+vi.mock('@/components/reports/EmployeeReports', buildMock('EmployeeReports'));
+vi.mock('@/components/reports/AttendanceReportsTab', buildMock('AttendanceReportsTab'));
+vi.mock('@/components/reports/StationAttendanceReport', buildMock('StationAttendanceReport'));
+vi.mock('@/components/reports/DailyAttendanceReport', buildMock('DailyAttendanceReport'));
+vi.mock('@/components/reports/LeaveReports', buildMock('LeaveReports'));
+vi.mock('@/components/reports/SalaryReports', buildMock('SalaryReports'));
+vi.mock('@/components/reports/PerformanceReports', buildMock('PerformanceReports'));
+vi.mock('@/components/reports/TrainingReports', buildMock('TrainingReports'));
+vi.mock('@/components/reports/TrainingDebtReport', buildMock('TrainingDebtReport'));
+vi.mock('@/components/reports/UniformReport', buildMock('UniformReport'));
+vi.mock('@/components/reports/TrainingQualificationReport', buildMock('TrainingQualificationReport'));
+vi.mock('@/components/training/TrainingRecordsReport', buildMock('TrainingRecordsReport'));
 
 import Reports from '@/pages/Reports';
 
