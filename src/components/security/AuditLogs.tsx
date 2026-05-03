@@ -30,7 +30,7 @@ interface AuditLogsProps {
   defaultTable?: string;
 }
 
-const SECURITY_TABLES = ['user_roles', 'permission_profiles', 'user_module_permissions', 'profiles'];
+export const SECURITY_TABLES = ['user_roles', 'permission_profiles', 'user_module_permissions', 'profiles'];
 
 const AuditLogs = ({ userIdFilter, tablesScope, hideHeader, defaultTable }: AuditLogsProps = {}) => {
   const { user } = useAuth();
