@@ -557,6 +557,13 @@ const Leaves = () => {
               onStationChange={setSelectedStation}
               departments={departments}
               stations={stations}
+              selectedStatus={selectedStatus}
+              onStatusChange={setSelectedStatus}
+              fromDate={fromDate}
+              onFromDateChange={setFromDate}
+              toDate={toDate}
+              onToDateChange={setToDate}
+              showAdvanced={activeTab !== 'balance'}
             />
           )}
 
