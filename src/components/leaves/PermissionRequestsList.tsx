@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Clock, CheckCircle, XCircle, ShieldCheck, Trash2, Pencil } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { PermissionRequest } from '@/types/leaves';
+import { ExportButton } from './ExportButton';
+import type { ExportColumn } from '@/lib/leavesExport';
 
 interface PermissionEditData {
   id: string;
