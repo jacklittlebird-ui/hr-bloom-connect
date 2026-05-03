@@ -248,7 +248,7 @@ const Uniforms = () => {
             <Shirt className="w-7 h-7 text-primary" />
             {language === 'ar' ? 'إدارة يونيفورم الموظفين' : 'Employee Uniform Management'}
           </h1>
-          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing} aria-label={language === 'ar' ? 'تحديث' : 'Refresh'}>
+          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing || saving || savingEdit || resetting} aria-label={language === 'ar' ? 'تحديث' : 'Refresh'}>
             <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
           </Button>
         </div>
