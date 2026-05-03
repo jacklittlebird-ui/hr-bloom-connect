@@ -72,7 +72,7 @@ const defaultFilters: ReportFilters = {
 
 export const LoanReports = () => {
   const { isRTL } = useLanguage();
-  const { handlePrint, exportBilingualPDF, exportToCSV } = useReportExport();
+  const { handlePrint, exportBilingualPDF, exportBilingualCSV } = useReportExport();
   const [filters, setFilters] = usePersistedState<ReportFilters>('hr_loan_reports_filters_v1', defaultFilters);
 
   const update = <K extends keyof ReportFilters>(k: K, v: ReportFilters[K]) =>
