@@ -520,8 +520,8 @@ export const VehicleRegistry = () => {
                     {v.insured_driver_name && <div className="col-span-2 whitespace-pre-wrap break-words"><span className="text-muted-foreground">{isAr ? 'السائق:' : 'Driver:'}</span> {v.insured_driver_name}</div>}
                   </div>
                   <div className={cn('flex gap-1 mt-2 justify-end', isRTL && 'justify-start')}>
-                    <Button size="sm" variant="ghost" onClick={() => handleEdit(v)}><Edit className="w-4 h-4 me-1" />{isAr ? 'تعديل' : 'Edit'}</Button>
-                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDelete(v.id)}><Trash2 className="w-4 h-4" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => handleEdit(v)} aria-label={isAr ? 'تعديل' : 'Edit'}><Edit className="w-4 h-4 me-1" />{isAr ? 'تعديل' : 'Edit'}</Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(v)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
                   </div>
                 </div>
               ))}
