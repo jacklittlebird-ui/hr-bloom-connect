@@ -178,9 +178,15 @@ export const PerformanceReviewForm = () => {
       toast.error(t('performance.form.fillRequired'));
       return;
     }
+    // Validate scores 1..5
+    if (criteria.some(c => c.score < 1 || c.score > 5)) {
+      toast.error(ar ? 'الدرجات يجب أن تكون بين 1 و 5' : 'Scores must be between 1 and 5');
+      return;
+    }
     const review = buildReview(status);
     if (!review) return;
 
+    setSaving(status);
     try {
       if (existingReview) {
         await updateReview(existingReview.id, { ...review });
@@ -196,6 +202,8 @@ export const PerformanceReviewForm = () => {
     } catch (err) {
       toast.error(ar ? 'حدث خطأ أثناء الحفظ' : 'Error saving review');
       console.error(err);
+    } finally {
+      setSaving(null);
     }
   };
 
