@@ -145,6 +145,9 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
   it('Refresh is blocked while a save/edit operation is in progress', async () => {
     render(<LanguageProvider><Uniforms /></LanguageProvider>);
 
+    // Capture the page-level Refresh button BEFORE opening the modal (Radix sets aria-hidden on outer content)
+    const refreshBtn = screen.getByRole('button', { name: /تحديث|Refresh/ }) as HTMLButtonElement;
+
     // Open Edit dialog on first row
     const editButtons = screen.getAllByRole('button').filter(b => b.className.includes('h-8 w-8') && b.className.includes('text-primary'));
     await act(async () => { fireEvent.click(editButtons[0]); });
