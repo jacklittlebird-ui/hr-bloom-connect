@@ -82,7 +82,8 @@ const Uniforms = () => {
 
   const grandTotal = items.reduce((sum, r) => sum + r.quantity * r.unitPrice, 0);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (saving) return;
     if (!employeeUUID || !deliveryDate) {
       toast.error(language === 'ar' ? 'يرجى اختيار الموظف وتاريخ التسليم' : 'Please select employee and delivery date');
       return;
@@ -92,21 +93,28 @@ const Uniforms = () => {
       toast.error(language === 'ar' ? 'يرجى إضافة صنف واحد على الأقل' : 'Please add at least one item');
       return;
     }
-    validItems.forEach(r => {
-      const uType = UNIFORM_TYPES[parseInt(r.typeIndex)];
-      addUniform({
-        employeeId: employeeUUID,
-        typeAr: uType.ar,
-        typeEn: uType.en,
-        quantity: r.quantity,
-        unitPrice: r.unitPrice,
-        totalPrice: r.quantity * r.unitPrice,
-        deliveryDate,
-        notes,
-      });
-    });
-    toast.success(language === 'ar' ? 'تم حفظ اليونيفورم بنجاح' : 'Uniform saved successfully');
-    handleReset();
+    setSaving(true);
+    try {
+      for (const r of validItems) {
+        const uType = UNIFORM_TYPES[parseInt(r.typeIndex)];
+        await addUniform({
+          employeeId: employeeUUID,
+          typeAr: uType.ar,
+          typeEn: uType.en,
+          quantity: r.quantity,
+          unitPrice: r.unitPrice,
+          totalPrice: r.quantity * r.unitPrice,
+          deliveryDate,
+          notes,
+        } as any);
+      }
+      toast.success(language === 'ar' ? 'تم حفظ اليونيفورم بنجاح' : 'Uniform saved successfully');
+      handleReset();
+    } catch (e: any) {
+      toast.error(language === 'ar' ? 'تعذر الحفظ' : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -123,25 +131,36 @@ const Uniforms = () => {
     setEditDialogOpen(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editingId === null) return;
-    updateUniform(editingId, {
-      typeAr: editForm.typeAr,
-      typeEn: editForm.typeEn,
-      quantity: editForm.quantity,
-      unitPrice: editForm.unitPrice,
-      totalPrice: editForm.quantity * editForm.unitPrice,
-      deliveryDate: editForm.deliveryDate,
-      notes: editForm.notes,
-    });
-    toast.success(language === 'ar' ? 'تم التعديل بنجاح' : 'Updated successfully');
-    setEditDialogOpen(false);
-    setEditingId(null);
+    try {
+      await updateUniform(editingId, {
+        typeAr: editForm.typeAr,
+        typeEn: editForm.typeEn,
+        quantity: editForm.quantity,
+        unitPrice: editForm.unitPrice,
+        totalPrice: editForm.quantity * editForm.unitPrice,
+        deliveryDate: editForm.deliveryDate,
+        notes: editForm.notes,
+      } as any);
+      toast.success(language === 'ar' ? 'تم التعديل بنجاح' : 'Updated successfully');
+      setEditDialogOpen(false);
+      setEditingId(null);
+    } catch {
+      toast.error(language === 'ar' ? 'تعذر التعديل' : 'Update failed');
+    }
   };
 
-  const handleDelete = (id: number) => {
-    deleteUniform(id);
-    toast.success(language === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully');
+  const confirmDelete = async () => {
+    if (deleteId === null) return;
+    try {
+      await deleteUniform(deleteId);
+      toast.success(language === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully');
+    } catch {
+      toast.error(language === 'ar' ? 'تعذر الحذف' : 'Delete failed');
+    } finally {
+      setDeleteId(null);
+    }
   };
 
   // Stats
