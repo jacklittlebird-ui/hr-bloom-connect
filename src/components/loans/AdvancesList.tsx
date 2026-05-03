@@ -15,7 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, Plus, Edit, Trash2, Eye, Banknote, Clock, CheckCircle, TrendingUp, Printer, FileText, FileSpreadsheet, Check, ChevronsUpDown } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, Banknote, Clock, CheckCircle, TrendingUp, Printer, FileText, FileSpreadsheet, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { stationLocations } from '@/data/stationLocations';
@@ -28,19 +29,22 @@ const getMonthName = (dateStr: string, lang: string) => {
   return date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'long', year: 'numeric' });
 };
 
-export const AdvancesList = () => {
+export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
   const { isRTL, language } = useLanguage();
   const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
-  const { advances, addAdvance, updateAdvance, deleteAdvance, ensureLoaded } = useLoanData();
+  const { advances, addAdvance, updateAdvance, deleteAdvance, ensureLoaded, refreshData } = useLoanData();
   const { employees } = useEmployeeData();
   const activeEmployees = employees.filter(e => e.status === 'active');
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
+  useEffect(() => { if (refreshKey > 0) refreshData(); }, [refreshKey, refreshData]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [monthFilter, setMonthFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -76,7 +80,9 @@ export const AdvancesList = () => {
     const empStation = getEmployeeStation(a.employeeId);
     const matchesStation = stationFilter === 'all' || empStation === stationFilter || a.station === stationFilter;
     const matchesMonth = monthFilter === 'all' || a.deductionMonth === monthFilter;
-    return matchesSearch && matchesStatus && matchesStation && matchesMonth;
+    const matchesFrom = !dateFrom || (a.requestDate && a.requestDate >= dateFrom);
+    const matchesTo = !dateTo || (a.requestDate && a.requestDate <= dateTo);
+    return matchesSearch && matchesStatus && matchesStation && matchesMonth && matchesFrom && matchesTo;
   });
 
   const { paginatedItems: paginatedAdvances, currentPage: advPage, totalPages: advTotalPages, totalItems: advTotalItems, startIndex: advStart, endIndex: advEnd, setCurrentPage: setAdvPage } = usePagination(filteredAdvances);
@@ -90,14 +96,27 @@ export const AdvancesList = () => {
 
   const resetForm = () => { setFormData({ employeeId: '', amount: '', deductionMonth: '', reason: '' }); setEditingAdvance(null); };
 
+  const [submitting, setSubmitting] = useState(false);
+  const [actioningId, setActioningId] = useState<string | null>(null);
+
   const handleSubmit = async () => {
-    if (!formData.employeeId || !formData.amount || !formData.deductionMonth) {
-      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى ملء جميع الحقول' : 'Please fill all fields', variant: 'destructive' });
+    if (submitting) return;
+    if (!formData.employeeId) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار موظف' : 'Please select an employee', variant: 'destructive' });
+      return;
+    }
+    const amount = parseFloat(formData.amount);
+    if (!formData.amount || amount <= 0) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'المبلغ يجب أن يكون أكبر من صفر' : 'Amount must be greater than zero', variant: 'destructive' });
+      return;
+    }
+    if (!formData.deductionMonth) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى تحديد شهر الخصم' : 'Please select deduction month', variant: 'destructive' });
       return;
     }
     const emp = activeEmployees.find(e => e.id === formData.employeeId);
-    const amount = parseFloat(formData.amount);
 
+    setSubmitting(true);
     try {
       if (editingAdvance) {
         await updateAdvance(editingAdvance.id, {
@@ -106,7 +125,7 @@ export const AdvancesList = () => {
           deductionMonth: formData.deductionMonth,
           reason: formData.reason,
         });
-        toast({ title: isRTL ? 'تم التحديث' : 'Updated' });
+        toast({ title: isRTL ? 'تم التحديث' : 'Updated', description: isRTL ? 'تم تعديل السلفة' : 'Advance updated' });
       } else {
         await addAdvance({
           employeeId: formData.employeeId,
@@ -118,32 +137,55 @@ export const AdvancesList = () => {
           status: 'pending',
           reason: formData.reason,
         });
-        toast({ title: isRTL ? 'تم الإضافة' : 'Added' });
+        toast({ title: isRTL ? 'تم الإضافة' : 'Added', description: isRTL ? 'تم إضافة السلفة' : 'Advance added' });
       }
       setShowDialog(false);
       resetForm();
-    } catch {
-      toast({ title: isRTL ? 'خطأ' : 'Error', variant: 'destructive' });
+    } catch (e: any) {
+      console.error('Advance save error:', e);
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message || (isRTL ? 'فشل الحفظ' : 'Save failed'), variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleApprove = async (id: string) => {
-    await updateAdvance(id, { status: 'approved' });
-    toast({ title: isRTL ? 'تمت الموافقة' : 'Approved' });
+    if (actioningId) return;
+    setActioningId(id);
+    try {
+      await updateAdvance(id, { status: 'approved' });
+      toast({ title: isRTL ? 'تمت الموافقة' : 'Approved' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
+    }
   };
 
   const handleDeduct = async (id: string) => {
-    await updateAdvance(id, { status: 'deducted' });
-    toast({ title: isRTL ? 'تم الخصم' : 'Deducted' });
+    if (actioningId) return;
+    setActioningId(id);
+    try {
+      await updateAdvance(id, { status: 'deducted' });
+      toast({ title: isRTL ? 'تم الخصم' : 'Deducted' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
+    }
   };
 
   const confirmDelete = async () => {
-    if (deletingId) {
+    if (!deletingId) return;
+    try {
       await deleteAdvance(deletingId);
       toast({ title: isRTL ? 'تم الحذف' : 'Deleted' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setShowDeleteDialog(false);
+      setDeletingId(null);
     }
-    setShowDeleteDialog(false);
-    setDeletingId(null);
   };
 
   const getStationLabel = (empId: string) => {
@@ -215,9 +257,11 @@ export const AdvancesList = () => {
                   {uniqueDeductionMonths.map(m => <SelectItem key={m} value={m}>{getMonthName(m, language)}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)}><Printer className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })}><FileText className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'advances' })}><FileSpreadsheet className="h-4 w-4" /></Button>
+              <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-36" aria-label={isRTL ? 'من تاريخ الطلب' : 'Request from'} />
+              <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-36" aria-label={isRTL ? 'إلى تاريخ الطلب' : 'Request to'} />
+              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)} aria-label="Print"><Printer className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })} aria-label="PDF"><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'advances' })} aria-label="CSV"><FileSpreadsheet className="h-4 w-4" /></Button>
               <Button onClick={() => { resetForm(); setShowDialog(true); }}><Plus className="h-4 w-4 mr-1" />{isRTL ? 'إضافة سلفة' : 'Add Advance'}</Button>
             </div>
           </div>
@@ -249,7 +293,7 @@ export const AdvancesList = () => {
                     </div>
                     <div className={`flex justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <span className="text-muted-foreground">{isRTL ? 'تاريخ الطلب' : 'Request Date'}</span>
-                      <span className="font-semibold">{adv.requestDate}</span>
+                      <span className="font-semibold">{formatDate(adv.requestDate)}</span>
                     </div>
                     <div className="bg-muted/50 rounded p-2 text-xs">
                       <span className="text-muted-foreground">{isRTL ? 'ملاحظة: ' : 'Note: '}</span>
@@ -262,13 +306,13 @@ export const AdvancesList = () => {
                       <Eye className="h-3 w-3" />{isRTL ? 'عرض' : 'View'}
                     </Button>
                     {adv.status === 'pending' && (
-                      <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={() => handleApprove(adv.id)}>
-                        <CheckCircle className="h-3 w-3" />{isRTL ? 'موافقة' : 'Approve'}
+                      <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={() => handleApprove(adv.id)} disabled={actioningId === adv.id}>
+                        {actioningId === adv.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}{isRTL ? 'موافقة' : 'Approve'}
                       </Button>
                     )}
                     {adv.status === 'approved' && (
-                      <Button size="sm" variant="outline" className="text-xs gap-1 text-blue-600" onClick={() => handleDeduct(adv.id)}>
-                        <TrendingUp className="h-3 w-3" />{isRTL ? 'خصم' : 'Deduct'}
+                      <Button size="sm" variant="outline" className="text-xs gap-1 text-blue-600" onClick={() => handleDeduct(adv.id)} disabled={actioningId === adv.id}>
+                        {actioningId === adv.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <TrendingUp className="h-3 w-3" />}{isRTL ? 'خصم' : 'Deduct'}
                       </Button>
                     )}
                     <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => { setEditingAdvance(adv); setFormData({ employeeId: adv.employeeId, amount: String(adv.amount), deductionMonth: adv.deductionMonth, reason: adv.reason }); setShowDialog(true); }}>
@@ -353,7 +397,7 @@ export const AdvancesList = () => {
           </div>
           <DialogFooter className="gap-2 mt-4">
             <Button variant="outline" onClick={() => { setShowDialog(false); resetForm(); }}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSubmit}>{editingAdvance ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ' : 'Save')}</Button>
+            <Button onClick={handleSubmit} disabled={submitting}>{submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{editingAdvance ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ' : 'Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List, RefreshCw, Undo2 } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List, RefreshCw, Undo2, Loader2 } from 'lucide-react';
 import { InstallmentScheduleDialog } from './InstallmentScheduleDialog';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,7 +31,7 @@ const getMonthName = (dateStr: string, lang: string) => {
   return `${monthName} ${year}`;
 };
 
-export const LoansList = () => {
+export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
   const { t, isRTL, language } = useLanguage();
   const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
   const { loans, addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment, refreshData, ensureLoaded } = useLoanData();
@@ -39,6 +39,7 @@ export const LoansList = () => {
   const activeEmployees = employees.filter(e => e.status === 'active');
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
+  useEffect(() => { if (refreshKey > 0) refreshData(); }, [refreshKey, refreshData]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
@@ -63,6 +64,10 @@ export const LoansList = () => {
   const [showBulkPayDialog, setShowBulkPayDialog] = useState(false);
   const [bulkPayMonth, setBulkPayMonth] = useState('');
   const [bulkPayLoading, setBulkPayLoading] = useState(false);
+  const [actioningId, setActioningId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [dateFromFilter, setDateFromFilter] = useState('');
+  const [dateToFilter, setDateToFilter] = useState('');
 
   const [formData, setFormData] = useState({
     employeeId: '', // UUID
@@ -127,7 +132,9 @@ export const LoansList = () => {
     const empStation = getEmployeeStation(loan.employeeId);
     const matchesStation = stationFilter === 'all' || empStation === stationFilter || loan.station === stationFilter;
     const matchesStartDate = startDateFilter === 'all' || loan.startDate?.startsWith(startDateFilter);
-    return matchesSearch && matchesStatus && matchesStation && matchesStartDate;
+    const matchesFrom = !dateFromFilter || (loan.startDate && loan.startDate >= dateFromFilter);
+    const matchesTo = !dateToFilter || (loan.startDate && loan.startDate <= dateToFilter);
+    return matchesSearch && matchesStatus && matchesStation && matchesStartDate && matchesFrom && matchesTo;
   });
 
   const { paginatedItems: paginatedLoans, currentPage: loanPage, totalPages: loanTotalPages, totalItems: loanTotalItems, startIndex: loanStart, endIndex: loanEnd, setCurrentPage: setLoanPage } = usePagination(filteredLoans);
@@ -167,6 +174,7 @@ export const LoansList = () => {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
     const amount = parseFloat(formData.amount);
     const isManual = formData.calculationMethod === 'manual';
     const monthlyPayment = isManual ? parseFloat(formData.monthlyPayment || '0') : 0;
@@ -176,12 +184,21 @@ export const LoansList = () => {
       toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار الموظف من القائمة' : 'Please select an employee from the list', variant: 'destructive' });
       return;
     }
-    if (!formData.amount || !formData.startDate || installments <= 0) {
+    if (!formData.amount || amount <= 0) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'مبلغ القرض يجب أن يكون أكبر من صفر' : 'Loan amount must be greater than zero', variant: 'destructive' });
+      return;
+    }
+    if (!formData.startDate || installments <= 0) {
       toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+    if (isManual && monthlyPayment > amount) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'القسط الشهري لا يمكن أن يتجاوز مبلغ القرض' : 'Monthly payment cannot exceed loan amount', variant: 'destructive' });
       return;
     }
     const employee = activeEmployees.find(e => e.id === formData.employeeId);
 
+    setSubmitting(true);
     try {
       if (editingLoan) {
         await updateLoan(editingLoan.id, {
@@ -213,24 +230,34 @@ export const LoansList = () => {
     } catch (err: any) {
       console.error('Loan save error:', err);
       toast({ title: isRTL ? 'خطأ' : 'Error', description: err?.message || (isRTL ? 'حدث خطأ أثناء الحفظ' : 'Error saving'), variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleRecordPayment = async (loanId: string) => {
+    if (actioningId) return;
+    setActioningId(loanId);
     try {
       await recordLoanPayment(loanId);
       toast({ title: isRTL ? 'تم' : 'Done', description: isRTL ? 'تم تسجيل الدفعة' : 'Payment recorded' });
-    } catch {
-      toast({ title: isRTL ? 'خطأ' : 'Error', variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
     }
   };
 
   const handleReversePayment = async (loanId: string) => {
+    if (actioningId) return;
+    setActioningId(loanId);
     try {
       await reverseLoanPayment(loanId);
       toast({ title: isRTL ? 'تم' : 'Done', description: isRTL ? 'تم التراجع عن الدفعة' : 'Payment reversed' });
-    } catch {
-      toast({ title: isRTL ? 'خطأ' : 'Error', variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
     }
   };
 
@@ -420,9 +447,11 @@ export const LoansList = () => {
                   {uniqueStartDates.map(d => <SelectItem key={d} value={d}>{getMonthName(d, language)}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)}><Printer className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })}><FileText className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'loans' })}><FileSpreadsheet className="h-4 w-4" /></Button>
+              <Input type="date" value={dateFromFilter} onChange={e => setDateFromFilter(e.target.value)} className="w-36" aria-label={isRTL ? 'من' : 'From'} />
+              <Input type="date" value={dateToFilter} onChange={e => setDateToFilter(e.target.value)} className="w-36" aria-label={isRTL ? 'إلى' : 'To'} />
+              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)} aria-label="Print"><Printer className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })} aria-label="PDF"><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'loans' })} aria-label="CSV"><FileSpreadsheet className="h-4 w-4" /></Button>
               <Button variant="secondary" onClick={() => { setBulkPayMonth(''); setShowBulkPayDialog(true); }}>
                 <CheckCircle className="h-4 w-4 mr-1" />{isRTL ? 'دفعة جماعية' : 'Bulk Payment'}
               </Button>
@@ -480,13 +509,13 @@ export const LoansList = () => {
                         <List className="h-3 w-3" />{isRTL ? 'الأقساط' : 'Schedule'}
                       </Button>
                       {loan.status === 'active' && (
-                        <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={() => handleRecordPayment(loan.id)}>
-                          <CreditCard className="h-3 w-3" />{isRTL ? 'تسجيل دفعة' : 'Pay'}
+                        <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={() => handleRecordPayment(loan.id)} disabled={actioningId === loan.id}>
+                          {actioningId === loan.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CreditCard className="h-3 w-3" />}{isRTL ? 'تسجيل دفعة' : 'Pay'}
                         </Button>
                       )}
                       {loan.paidInstallments > 0 && loan.status !== 'completed' && (
-                        <Button size="sm" variant="ghost" className="text-xs gap-1 text-destructive hover:text-destructive" onClick={() => handleReversePayment(loan.id)}>
-                          <Undo2 className="h-3 w-3" />{isRTL ? 'تراجع' : 'Undo'}
+                        <Button size="sm" variant="ghost" className="text-xs gap-1 text-destructive hover:text-destructive" onClick={() => handleReversePayment(loan.id)} disabled={actioningId === loan.id}>
+                          {actioningId === loan.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />}{isRTL ? 'تراجع' : 'Undo'}
                         </Button>
                       )}
                       {loan.status === 'active' && loan.remainingAmount > 0 && (
@@ -598,7 +627,7 @@ export const LoansList = () => {
           </div>
           <DialogFooter className="gap-2 mt-4">
             <Button variant="outline" onClick={() => { setShowDialog(false); resetForm(); }}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSubmit}>{editingLoan ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ' : 'Save')}</Button>
+            <Button onClick={handleSubmit} disabled={submitting}>{submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{editingLoan ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ' : 'Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Undo2 } from 'lucide-react';
+import { Undo2, Loader2, RefreshCw, FileText, FileSpreadsheet, Printer } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,10 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Search, CheckCircle, Clock, AlertCircle, Calendar, Banknote } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { markInstallmentPaid, revertInstallmentPayment } from '@/lib/loanPayments';
+import { formatDate } from '@/lib/utils';
+import { useReportExport } from '@/hooks/useReportExport';
 
 interface Installment {
   id: string;
@@ -26,55 +29,70 @@ interface Installment {
   status: 'paid' | 'pending' | 'overdue';
 }
 
-export const InstallmentsList = () => {
+export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
   const { t, isRTL, language } = useLanguage();
+  const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [monthFilter, setMonthFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [installments, setInstallments] = useState<Installment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
 
   const fetchInstallments = async () => {
-    // Fetch all installments across the 1000-row default limit using ranged pagination
-    const pageSize = 1000;
-    let allRows: any[] = [];
-    let from = 0;
-    while (true) {
-      const { data, error } = await supabase
-        .from('loan_installments')
-        .select('*, loans(amount, installments_count)')
-        .order('due_date', { ascending: true })
-        .range(from, from + pageSize - 1);
-      if (error) break;
-      const rows = data || [];
-      allRows = allRows.concat(rows);
-      if (rows.length < pageSize) break;
-      from += pageSize;
-    }
-    const data = allRows;
-    const { data: employees } = await supabase.from('employees').select('id, employee_code, name_ar, name_en, department_id').order('employee_code');
-    const { data: departments } = await supabase.from('departments').select('id, name_ar, name_en');
-    const empMap = new Map(employees?.map(e => [e.id, e]) || []);
-    const deptMap = new Map(departments?.map(d => [d.id, d]) || []);
+    setLoading(true);
+    setError(null);
+    try {
+      const pageSize = 1000;
+      let allRows: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from('loan_installments')
+          .select('*, loans(amount, installments_count)')
+          .order('due_date', { ascending: true })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        const rows = data || [];
+        allRows = allRows.concat(rows);
+        if (rows.length < pageSize) break;
+        from += pageSize;
+      }
+      const data = allRows;
+      const { data: employees } = await supabase.from('employees').select('id, employee_code, name_ar, name_en, department_id').order('employee_code');
+      const { data: departments } = await supabase.from('departments').select('id, name_ar, name_en');
+      const empMap = new Map(employees?.map(e => [e.id, e]) || []);
+      const deptMap = new Map(departments?.map(d => [d.id, d]) || []);
 
-    setInstallments((data || []).map(i => {
-      const emp = empMap.get(i.employee_id);
-      const dept = emp?.department_id ? deptMap.get(emp.department_id) : null;
-      const today = new Date().toISOString().split('T')[0];
-      let status: 'paid' | 'pending' | 'overdue' = i.status as any;
-      if (status !== 'paid' && i.due_date < today) status = 'overdue';
-      return {
-        id: i.id, loanId: i.loan_id, employeeId: i.employee_id,
-        employeeName: emp ? (language === 'ar' ? emp.name_ar : emp.name_en) : '',
-        department: dept ? (language === 'ar' ? dept.name_ar : dept.name_en) : '',
-        installmentNumber: i.installment_number,
-        totalInstallments: (i.loans as any)?.installments_count || 0,
-        amount: i.amount, dueDate: i.due_date,
-        paidDate: i.paid_at ? i.paid_at.split('T')[0] : null, status,
-      };
-    }));
+      setInstallments((data || []).map(i => {
+        const emp = empMap.get(i.employee_id);
+        const dept = emp?.department_id ? deptMap.get(emp.department_id) : null;
+        const today = new Date().toISOString().split('T')[0];
+        let status: 'paid' | 'pending' | 'overdue' = i.status as any;
+        if (status !== 'paid' && i.due_date < today) status = 'overdue';
+        return {
+          id: i.id, loanId: i.loan_id, employeeId: i.employee_id,
+          employeeName: emp ? (language === 'ar' ? emp.name_ar : emp.name_en) : '',
+          department: dept ? (language === 'ar' ? dept.name_ar : dept.name_en) : '',
+          installmentNumber: i.installment_number,
+          totalInstallments: (i.loans as any)?.installments_count || 0,
+          amount: i.amount, dueDate: i.due_date,
+          paidDate: i.paid_at ? i.paid_at.split('T')[0] : null, status,
+        };
+      }));
+    } catch (e: any) {
+      console.error('Installments fetch error:', e);
+      setError(e?.message || (language === 'ar' ? 'تعذر تحميل الأقساط' : 'Failed to load'));
+      toast({ title: language === 'ar' ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchInstallments(); }, [language]);
+  useEffect(() => { fetchInstallments(); }, [language, refreshKey]);
 
   const statusLabels: Record<string, { en: string; ar: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
     paid: { en: 'Paid', ar: 'مدفوع', variant: 'default' },
@@ -88,19 +106,57 @@ export const InstallmentsList = () => {
     const matchesSearch = i.employeeName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || i.status === statusFilter;
     const matchesMonth = monthFilter === 'all' || i.dueDate.slice(0, 7) === monthFilter;
-    return matchesSearch && matchesStatus && matchesMonth;
+    const matchesFrom = !dateFrom || i.dueDate >= dateFrom;
+    const matchesTo = !dateTo || i.dueDate <= dateTo;
+    return matchesSearch && matchesStatus && matchesMonth && matchesFrom && matchesTo;
   });
 
+  const exportTitle = language === 'ar' ? 'تقرير الأقساط' : 'Installments Report';
+  const exportColumns = [
+    { header: language === 'ar' ? 'الموظف' : 'Employee', key: 'employeeName' },
+    { header: language === 'ar' ? 'القسم' : 'Department', key: 'department' },
+    { header: language === 'ar' ? 'القسط' : 'Installment', key: 'installmentLabel' },
+    { header: language === 'ar' ? 'المبلغ' : 'Amount', key: 'amount' },
+    { header: language === 'ar' ? 'تاريخ الاستحقاق' : 'Due Date', key: 'dueDateLabel' },
+    { header: language === 'ar' ? 'تاريخ الدفع' : 'Paid Date', key: 'paidDateLabel' },
+    { header: language === 'ar' ? 'الحالة' : 'Status', key: 'statusLabel' },
+  ];
+  const exportData = filteredInstallments.map(i => ({
+    ...i,
+    installmentLabel: `${i.installmentNumber}/${i.totalInstallments}`,
+    dueDateLabel: formatDate(i.dueDate),
+    paidDateLabel: i.paidDate ? formatDate(i.paidDate) : '-',
+    statusLabel: language === 'ar' ? statusLabels[i.status]?.ar : statusLabels[i.status]?.en,
+  }));
+  const clearFilters = () => { setSearchQuery(''); setStatusFilter('all'); setMonthFilter('all'); setDateFrom(''); setDateTo(''); };
+  const hasFilters = searchQuery || statusFilter !== 'all' || monthFilter !== 'all' || dateFrom || dateTo;
+
   const handlePayInstallment = async (installmentId: string) => {
-    await markInstallmentPaid(installmentId);
-    toast({ title: t('common.success'), description: t('loans.installments.paid') });
-    fetchInstallments();
+    if (actioningId) return;
+    setActioningId(installmentId);
+    try {
+      await markInstallmentPaid(installmentId);
+      toast({ title: t('common.success'), description: t('loans.installments.paid') });
+      await fetchInstallments();
+    } catch (e: any) {
+      toast({ title: language === 'ar' ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
+    }
   };
 
   const handleUnpayInstallment = async (installmentId: string) => {
-    await revertInstallmentPayment(installmentId);
-    toast({ title: t('common.success'), description: language === 'ar' ? 'تم التراجع عن تسجيل الدفع' : 'Payment reversed' });
-    fetchInstallments();
+    if (actioningId) return;
+    setActioningId(installmentId);
+    try {
+      await revertInstallmentPayment(installmentId);
+      toast({ title: t('common.success'), description: language === 'ar' ? 'تم التراجع عن تسجيل الدفع' : 'Payment reversed' });
+      await fetchInstallments();
+    } catch (e: any) {
+      toast({ title: language === 'ar' ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
+    }
   };
 
   const stats = {
@@ -127,13 +183,13 @@ export const InstallmentsList = () => {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>{t('loans.installments.title')}</CardTitle>
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-wrap gap-3">
               <div className="relative">
                 <Search className={`absolute top-3 h-4 w-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
-                <Input placeholder={t('loans.search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`w-full md:w-64 ${isRTL ? 'pr-9' : 'pl-9'}`} />
+                <Input placeholder={t('loans.search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`w-full md:w-56 ${isRTL ? 'pr-9' : 'pl-9'}`} />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-40"><SelectValue placeholder={t('loans.filterStatus')} /></SelectTrigger>
+                <SelectTrigger className="w-full md:w-36"><SelectValue placeholder={t('loans.filterStatus')} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('common.all')}</SelectItem>
                   {Object.entries(statusLabels).map(([key, label]) => (<SelectItem key={key} value={key}>{isRTL ? label.ar : label.en}</SelectItem>))}
@@ -155,10 +211,34 @@ export const InstallmentsList = () => {
                   })}
                 </SelectContent>
               </Select>
+              <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-36" aria-label={language === 'ar' ? 'من' : 'From'} />
+              <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-36" aria-label={language === 'ar' ? 'إلى' : 'To'} />
+              {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  {language === 'ar' ? 'مسح' : 'Clear'}
+                </Button>
+              )}
+              <Button variant="outline" size="icon" onClick={() => fetchInstallments()} disabled={loading} aria-label={language === 'ar' ? 'تحديث' : 'Refresh'}>
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)} aria-label="Print"><Printer className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })} aria-label="PDF"><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'installments' })} aria-label="CSV"><FileSpreadsheet className="h-4 w-4" /></Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {loading ? (
+            <div className="py-12 flex items-center justify-center text-muted-foreground gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+            </div>
+          ) : (
           <Table>
             <TableHeader><TableRow>
               <TableHead>{t('loans.employee')}</TableHead>
@@ -177,18 +257,20 @@ export const InstallmentsList = () => {
                   <TableCell><div><p className="font-medium">{inst.employeeName}</p><p className="text-sm text-muted-foreground">{inst.department}</p></div></TableCell>
                   <TableCell>{inst.installmentNumber}/{inst.totalInstallments}</TableCell>
                   <TableCell>{inst.amount.toLocaleString()}</TableCell>
-                  <TableCell>{inst.dueDate}</TableCell>
-                  <TableCell>{inst.paidDate || '-'}</TableCell>
+                  <TableCell>{formatDate(inst.dueDate)}</TableCell>
+                  <TableCell>{inst.paidDate ? formatDate(inst.paidDate) : '-'}</TableCell>
                   <TableCell><Badge variant={statusLabels[inst.status].variant}>{isRTL ? statusLabels[inst.status].ar : statusLabels[inst.status].en}</Badge></TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       {inst.status !== 'paid' ? (
-                        <Button variant="outline" size="sm" onClick={() => handlePayInstallment(inst.id)}>
-                          <CheckCircle className="h-4 w-4 mr-2" />{t('loans.installments.markPaid')}
+                        <Button variant="outline" size="sm" onClick={() => handlePayInstallment(inst.id)} disabled={actioningId === inst.id}>
+                          {actioningId === inst.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                          {t('loans.installments.markPaid')}
                         </Button>
                       ) : (
-                        <Button variant="ghost" size="sm" onClick={() => handleUnpayInstallment(inst.id)} className="text-destructive hover:text-destructive">
-                          <Undo2 className="h-4 w-4 mr-2" />{language === 'ar' ? 'تراجع' : 'Undo'}
+                        <Button variant="ghost" size="sm" onClick={() => handleUnpayInstallment(inst.id)} className="text-destructive hover:text-destructive" disabled={actioningId === inst.id}>
+                          {actioningId === inst.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Undo2 className="h-4 w-4 mr-2" />}
+                          {language === 'ar' ? 'تراجع' : 'Undo'}
                         </Button>
                       )}
                     </div>
@@ -197,6 +279,7 @@ export const InstallmentsList = () => {
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>

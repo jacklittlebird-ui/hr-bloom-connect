@@ -10,10 +10,28 @@ import { LoanSettings } from '@/components/loans/LoanSettings';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLoanData } from '@/contexts/LoanDataContext';
+import { toast } from '@/hooks/use-toast';
 
 const Loans = () => {
   const { t, isRTL } = useLanguage();
+  const { refreshData } = useLoanData();
   const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshData();
+      setRefreshKey(k => k + 1);
+      toast({ title: isRTL ? 'تم التحديث' : 'Refreshed', description: isRTL ? 'تم تحديث بيانات القروض' : 'Loans data refreshed' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'تعذر التحديث' : 'Refresh failed', description: e?.message, variant: 'destructive' });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -23,8 +41,8 @@ const Loans = () => {
             <h1 className="text-3xl font-bold text-foreground">{t('loans.title')}</h1>
             <p className="text-muted-foreground mt-1">{t('loans.subtitle')}</p>
           </div>
-          <Button variant="outline" size="icon" onClick={() => setRefreshKey(k => k + 1)}>
-            <RefreshCw className="w-4 h-4" />
+          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing} aria-label={isRTL ? 'تحديث' : 'Refresh'}>
+            <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
           </Button>
         </div>
 
@@ -37,25 +55,11 @@ const Loans = () => {
             <TabsTrigger value="settings">{t('loans.tabs.settings')}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="loans">
-            <LoansList />
-          </TabsContent>
-
-          <TabsContent value="advances">
-            <AdvancesList />
-          </TabsContent>
-
-          <TabsContent value="installments">
-            <InstallmentsList />
-          </TabsContent>
-
-          <TabsContent value="reports">
-            <LoanReports />
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <LoanSettings />
-          </TabsContent>
+          <TabsContent value="loans"><LoansList refreshKey={refreshKey} /></TabsContent>
+          <TabsContent value="advances"><AdvancesList refreshKey={refreshKey} /></TabsContent>
+          <TabsContent value="installments"><InstallmentsList refreshKey={refreshKey} /></TabsContent>
+          <TabsContent value="reports"><LoanReports /></TabsContent>
+          <TabsContent value="settings"><LoanSettings /></TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
