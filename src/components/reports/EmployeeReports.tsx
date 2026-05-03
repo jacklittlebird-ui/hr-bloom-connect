@@ -351,7 +351,7 @@ export const EmployeeReports = () => {
         <CardContent className="p-4 space-y-3">
           <div className={cn("flex flex-wrap gap-4 items-center justify-between", isRTL && "flex-row-reverse")}>
             <div className={cn("flex flex-wrap gap-3", isRTL && "flex-row-reverse")}>
-              <Select value={department} onValueChange={setDepartment}>
+              <Select value={department} onValueChange={onChangeDepartment}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('reports.allDepartments')}</SelectItem>
