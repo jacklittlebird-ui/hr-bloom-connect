@@ -405,20 +405,33 @@ export const EmployeeReports = () => {
           {presets.length > 0 && (
             <div className={cn("flex flex-wrap gap-2 items-center pt-2 border-t border-border", isRTL && "flex-row-reverse")}>
               <span className="text-xs text-muted-foreground font-medium">{ar ? 'الإعدادات المحفوظة:' : 'Saved Presets:'}</span>
-              {presets.map(p => (
-                <div key={p.id} className="flex items-center gap-1">
-                  <Badge
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-primary/10 transition-colors px-3 py-1"
-                    onClick={() => loadPreset(p)}
-                  >
-                    {p.name}
-                  </Badge>
-                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => deletePreset(p.id)}>
-                    <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
-                  </Button>
-                </div>
-              ))}
+              {presets.map(p => {
+                const isActive = activePresetId === p.id;
+                return (
+                  <div key={p.id} className="flex items-center gap-1">
+                    <Badge
+                      variant={isActive ? 'default' : 'secondary'}
+                      className={cn(
+                        'cursor-pointer transition-colors px-3 py-1',
+                        isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/10',
+                      )}
+                      onClick={() => loadPreset(p)}
+                      aria-pressed={isActive}
+                    >
+                      {p.name}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => requestDeletePreset(p)}
+                      aria-label={ar ? `حذف الإعداد ${p.name}` : `Delete preset ${p.name}`}
+                    >
+                      <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
