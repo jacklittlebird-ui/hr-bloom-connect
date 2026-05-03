@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Clock, CheckCircle, XCircle, Briefcase, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { MissionRequest } from '@/types/leaves';
 
 interface MissionRequestsListProps {
@@ -81,7 +81,7 @@ export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListP
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
                       <TableCell>{request.department}</TableCell>
                       <TableCell>{getMissionTypeBadge(request.missionType)}</TableCell>
-                      <TableCell>{request.date}</TableCell>
+                      <TableCell>{formatDate(request.date)}</TableCell>
                       <TableCell>{request.destination || '-'}</TableCell>
                       <TableCell className="max-w-[300px] whitespace-normal break-words">{request.reason}</TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>

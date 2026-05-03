@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { ClipboardList, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/utils';
 
 interface EmployeeRequestItem {
   id: string;
@@ -94,7 +95,7 @@ export const EmployeeRequestsList = ({ requests, onRefresh }: Props) => {
                   <TableCell>{r.employeeCode}</TableCell>
                   <TableCell>{ar ? r.typeAr : r.typeEn}</TableCell>
                   <TableCell className="max-w-[300px] whitespace-normal break-words">{r.reason || '-'}</TableCell>
-                  <TableCell>{r.date}</TableCell>
+                  <TableCell>{formatDate(r.date)}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={statusCls[r.status]}>
                       {r.status === 'approved' ? (ar ? 'مقبول' : 'Approved') : r.status === 'pending' ? (ar ? 'معلق' : 'Pending') : (ar ? 'مرفوض' : 'Rejected')}

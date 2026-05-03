@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Clock, CheckCircle, XCircle, Trash2, Pencil } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { LeaveRequest } from '@/types/leaves';
 
 interface LeaveEditData {
@@ -116,8 +116,8 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
                       <TableCell>{request.department}</TableCell>
                       <TableCell>{getLeaveTypeBadge(request.leaveType)}</TableCell>
-                      <TableCell>{request.startDate}</TableCell>
-                      <TableCell>{request.endDate}</TableCell>
+                      <TableCell>{formatDate(request.startDate)}</TableCell>
+                      <TableCell>{formatDate(request.endDate)}</TableCell>
                       <TableCell>{request.days}</TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
                       {(onDelete || onEdit) && (

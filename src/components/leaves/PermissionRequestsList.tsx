@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, CheckCircle, XCircle, ShieldCheck, Trash2, Pencil } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { PermissionRequest } from '@/types/leaves';
 
 interface PermissionEditData {
@@ -73,10 +73,13 @@ export const PermissionRequestsList = ({ requests, onDelete, onEdit }: Permissio
   };
 
   const handleSaveEdit = () => {
-    if (editData && onEdit) {
-      onEdit(editData);
-      setEditData(null);
+    if (!editData || !onEdit) return;
+    if (editData.durationHours < 1 || editData.durationHours > 2) {
+      // Permissions max 2 hours per memory rules
+      return;
     }
+    onEdit(editData);
+    setEditData(null);
   };
 
   return (
@@ -119,7 +122,7 @@ export const PermissionRequestsList = ({ requests, onDelete, onEdit }: Permissio
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
                       <TableCell>{request.department}</TableCell>
                       <TableCell>{getPermTypeBadge(request.permissionType)}</TableCell>
-                      <TableCell>{request.date}</TableCell>
+                      <TableCell>{formatDate(request.date)}</TableCell>
                       <TableCell>{request.fromTime}</TableCell>
                       <TableCell>{request.toTime}</TableCell>
                       <TableCell>{request.durationHours} {t('leaveBalance.hours')}</TableCell>
