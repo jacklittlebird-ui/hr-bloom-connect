@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Banknote, Percent, Calendar, Bell, Shield, Save } from 'lucide-react';
+import { Settings, Banknote, Percent, Calendar, Bell, Shield, Save, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface LoanType {
