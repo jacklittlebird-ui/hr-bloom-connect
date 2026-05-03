@@ -66,6 +66,21 @@ export const VehicleRegistry = () => {
   const [form, setForm] = useState(emptyForm);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [alertFilter, setAlertFilter] = useState<'all' | 'expired' | 'soon'>('all');
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const filtersActive =
+    !!search || !!stationFilter || statusFilter !== 'all' || alertFilter !== 'all' || !!focusedId;
+
+  const resetFilters = () => {
+    setSearch('');
+    setStationFilter(null);
+    setStatusFilter('all');
+    setAlertFilter('all');
+    setFocusedId(null);
+    toast.success(isAr ? 'تم إعادة ضبط الفلاتر' : 'Filters reset');
+  };
 
   const fetchAll = async () => {
     setLoading(true);
