@@ -1362,6 +1362,7 @@ export type Database = {
           id: string
           mission_type: string
           reason: string | null
+          rejection_reason: string | null
           status: string
         }
         Insert: {
@@ -1376,6 +1377,7 @@ export type Database = {
           id?: string
           mission_type?: string
           reason?: string | null
+          rejection_reason?: string | null
           status?: string
         }
         Update: {
@@ -1390,6 +1392,7 @@ export type Database = {
           id?: string
           mission_type?: string
           reason?: string | null
+          rejection_reason?: string | null
           status?: string
         }
         Relationships: [
@@ -1579,6 +1582,7 @@ export type Database = {
           id: string
           overtime_type: string
           reason: string | null
+          rejection_reason: string | null
           status: string
         }
         Insert: {
@@ -1589,6 +1593,7 @@ export type Database = {
           id?: string
           overtime_type?: string
           reason?: string | null
+          rejection_reason?: string | null
           status?: string
         }
         Update: {
@@ -1599,6 +1604,7 @@ export type Database = {
           id?: string
           overtime_type?: string
           reason?: string | null
+          rejection_reason?: string | null
           status?: string
         }
         Relationships: [
@@ -1841,6 +1847,7 @@ export type Database = {
           id: string
           permission_type: string
           reason: string | null
+          rejection_reason: string | null
           start_time: string
           status: string
         }
@@ -1853,6 +1860,7 @@ export type Database = {
           id?: string
           permission_type: string
           reason?: string | null
+          rejection_reason?: string | null
           start_time: string
           status?: string
         }
@@ -1865,6 +1873,7 @@ export type Database = {
           id?: string
           permission_type?: string
           reason?: string | null
+          rejection_reason?: string | null
           start_time?: string
           status?: string
         }
