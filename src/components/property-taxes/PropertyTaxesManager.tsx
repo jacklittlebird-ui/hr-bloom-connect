@@ -85,27 +85,36 @@ export const PropertyTaxesManager = () => {
   const [paymentForm, setPaymentForm] = useState({ paid_date: '', receipt_number: '' });
 
   const [activeTab, setActiveTab] = useState('overview');
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    const [taxRes, stRes] = await Promise.all([
-      supabase.from('property_taxes').select('*').order('due_date', { ascending: false }),
-      supabase.from('stations').select('id, name_ar, name_en').order('name_ar'),
-    ]);
-    if (taxRes.data) {
-      // auto-flag overdue records (client-side derived view)
-      const today = new Date();
-      const updated = (taxRes.data as any[]).map(r => {
-        if (r.status !== 'paid' && differenceInDays(parseISO(r.due_date), today) < 0) {
-          return { ...r, status: 'overdue' };
-        }
-        return r;
-      });
-      setRecords(updated as PropertyTax[]);
+  const fetchData = useCallback(async (isManual = false) => {
+    if (isManual) setRefreshing(true); else setLoading(true);
+    try {
+      const [taxRes, stRes] = await Promise.all([
+        supabase.from('property_taxes').select('*').order('due_date', { ascending: false }),
+        supabase.from('stations').select('id, name_ar, name_en').order('name_ar'),
+      ]);
+      if (taxRes.error) throw taxRes.error;
+      if (taxRes.data) {
+        const today = new Date();
+        const updated = (taxRes.data as any[]).map(r => {
+          if (r.status !== 'paid' && differenceInDays(parseISO(r.due_date), today) < 0) {
+            return { ...r, status: 'overdue' };
+          }
+          return r;
+        });
+        setRecords(updated as PropertyTax[]);
+      }
+      if (stRes.data) setStations(stRes.data as any);
+      if (isManual) toast.success(isAr ? 'تم تحديث البيانات' : 'Data refreshed');
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'فشل تحميل البيانات' : 'Failed to load data'));
+    } finally {
+      if (isManual) setRefreshing(false); else setLoading(false);
     }
-    if (stRes.data) setStations(stRes.data as any);
-    setLoading(false);
-  }, []);
+  }, [isAr]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
