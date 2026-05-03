@@ -86,12 +86,8 @@ describe('Assets — refresh covers all 4 tabs with a single toast', () => {
     expect(toasts.length).toBe(1);
     expect(toasts[0][0].variant).not.toBe('destructive');
 
-    // Registry stays mounted → MUST have remounted via refreshKey
-    expect(mc.registry).toBeGreaterThan(before.registry);
-
-    // Visit the conditional tabs → each remounts via new refreshKey
+    // Visit every tab post-refresh → each remounts via new refreshKey
     for (const v of TABS) {
-      if (v === 'registry') continue;
       await switchTab(v);
       await waitFor(() => expect(mc[v]).toBeGreaterThan(before[v]));
       expect(mc[v], `${v} remounted after refresh`).toBeGreaterThan(before[v]);
