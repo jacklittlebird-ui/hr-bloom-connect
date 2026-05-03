@@ -408,9 +408,9 @@ export const LoanSettings = () => {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} size="lg">
-          <Save className="h-4 w-4 mr-2" />
-          {t('loans.settings.saveAll')}
+        <Button onClick={handleSave} size="lg" disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+          {saving ? (isRTL ? 'جاري الحفظ...' : 'Saving...') : t('loans.settings.saveAll')}
         </Button>
       </div>
     </div>
