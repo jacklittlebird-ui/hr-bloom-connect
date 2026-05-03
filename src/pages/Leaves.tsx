@@ -301,15 +301,59 @@ const Leaves = () => {
     });
   }, [employeeRequests, searchQuery, selectedDepartment, selectedStation]);
 
+  // Unified loading state — set of mutation keys currently running
+  const [mutating, setMutating] = useState<Set<string>>(new Set());
+  const isMutating = (key?: string) => key ? mutating.has(key) : mutating.size > 0;
+
+  // Translate raw DB errors into user-friendly bilingual messages
+  const friendlyError = (raw: string): string => {
+    const m = (raw || '').toLowerCase();
+    if (m.includes('existing leave request')) {
+      return language === 'ar' ? 'لا يمكن تنفيذ العملية: يوجد إجازة مسجلة في نفس اليوم' : 'Cannot proceed: an existing leave request exists for that day';
+    }
+    if (m.includes('duplicate') || m.includes('unique')) {
+      return language === 'ar' ? 'سجل مكرر — العملية موجودة مسبقاً' : 'Duplicate record — this entry already exists';
+    }
+    if (m.includes('permission') && m.includes('denied')) {
+      return language === 'ar' ? 'لا تملك صلاحية تنفيذ هذه العملية' : 'You do not have permission to perform this action';
+    }
+    if (m.includes('foreign key') || m.includes('violates')) {
+      return language === 'ar' ? 'العملية مرفوضة بسبب ارتباط البيانات بسجلات أخرى' : 'Action blocked due to related records';
+    }
+    if (m.includes('network') || m.includes('fetch')) {
+      return language === 'ar' ? 'تعذّر الاتصال بالخادم — تحقق من الإنترنت' : 'Network error — please check your connection';
+    }
+    if (m.includes('timeout')) {
+      return language === 'ar' ? 'انتهت مهلة الطلب، حاول مرة أخرى' : 'Request timed out, please try again';
+    }
+    return raw || (language === 'ar' ? 'حدث خطأ غير متوقع' : 'Unexpected error occurred');
+  };
+
   const runMutation = async (
     fn: () => PromiseLike<{ error: { message: string } | null }>,
     successMsg: string,
+    opts?: { key?: string; loadingMsg?: string },
   ) => {
-    const { error } = await fn();
-    if (error) { toast.error(error.message); return false; }
-    toast.success(successMsg);
-    fetchData();
-    return true;
+    const key = opts?.key || `op-${Date.now()}-${Math.random()}`;
+    const loading = opts?.loadingMsg || (language === 'ar' ? 'جارٍ التنفيذ...' : 'Processing...');
+    setMutating(prev => { const next = new Set(prev); next.add(key); return next; });
+    const toastId = toast.loading(loading);
+    try {
+      const { error } = await fn();
+      if (error) {
+        toast.error(friendlyError(error.message), { id: toastId });
+        return false;
+      }
+      toast.success(successMsg, { id: toastId });
+      await fetchData();
+      return true;
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast.error(friendlyError(msg), { id: toastId });
+      return false;
+    } finally {
+      setMutating(prev => { const next = new Set(prev); next.delete(key); return next; });
+    }
   };
 
   const handleApproveLeave = (id: string) => runMutation(
@@ -370,22 +414,21 @@ const Leaves = () => {
     language === 'ar' ? 'تم حذف العمل الإضافي' : 'Overtime deleted',
   );
 
-  const handleEditLeave = async (data: { id: string; leaveType: string; startDate: string; endDate: string; days: number; status: string; reason: string }) => {
-    const { error } = await supabase.from('leave_requests').update({
+  const handleEditLeave = (data: { id: string; leaveType: string; startDate: string; endDate: string; days: number; status: string; reason: string }) => runMutation(
+    () => supabase.from('leave_requests').update({
       leave_type: data.leaveType,
       start_date: data.startDate,
       end_date: data.endDate,
       days: data.days,
       status: data.status,
       reason: data.reason,
-    }).eq('id', data.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(language === 'ar' ? 'تم تعديل الإجازة بنجاح' : 'Leave updated successfully');
-    fetchData();
-  };
+    }).eq('id', data.id),
+    language === 'ar' ? 'تم تعديل الإجازة بنجاح' : 'Leave updated successfully',
+    { key: `edit-leave-${data.id}` },
+  );
 
-  const handleEditPermission = async (data: { id: string; permissionType: string; date: string; fromTime: string; toTime: string; durationHours: number; status: string; reason: string }) => {
-    const { error } = await supabase.from('permission_requests').update({
+  const handleEditPermission = (data: { id: string; permissionType: string; date: string; fromTime: string; toTime: string; durationHours: number; status: string; reason: string }) => runMutation(
+    () => supabase.from('permission_requests').update({
       permission_type: data.permissionType,
       date: data.date,
       start_time: data.fromTime,
@@ -393,11 +436,10 @@ const Leaves = () => {
       hours: data.durationHours,
       status: data.status,
       reason: data.reason,
-    }).eq('id', data.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(language === 'ar' ? 'تم تعديل الإذن بنجاح' : 'Permission updated successfully');
-    fetchData();
-  };
+    }).eq('id', data.id),
+    language === 'ar' ? 'تم تعديل الإذن بنجاح' : 'Permission updated successfully',
+    { key: `edit-perm-${data.id}` },
+  );
 
   const resolveEmployeeUUID = async (employeeCode: string): Promise<string | null> => {
     const { data } = await supabase.from('employees').select('id').eq('employee_code', employeeCode).single();
@@ -406,38 +448,46 @@ const Leaves = () => {
 
   const handleNewLeave = async (data: Omit<LeaveRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
-    if (!uuid) return;
-    await supabase.from('leave_requests').insert({ employee_id: uuid, leave_type: data.leaveType, start_date: data.startDate, end_date: data.endDate, days: data.days, reason: data.reason });
-    fetchData(); setActiveTab('leaves');
+    if (!uuid) { toast.error(language === 'ar' ? 'تعذّر العثور على بيانات الموظف' : 'Employee not found'); return; }
+    const ok = await runMutation(
+      () => supabase.from('leave_requests').insert({ employee_id: uuid, leave_type: data.leaveType, start_date: data.startDate, end_date: data.endDate, days: data.days, reason: data.reason }),
+      language === 'ar' ? 'تم تسجيل طلب الإجازة' : 'Leave request submitted',
+      { key: 'new-leave' },
+    );
+    if (ok) setActiveTab('leaves');
   };
 
   const handleNewPermission = async (data: Omit<PermissionRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
-    if (!uuid) return;
-    const { error } = await supabase.from('permission_requests').insert({ employee_id: uuid, permission_type: data.permissionType, date: data.date, start_time: data.fromTime, end_time: data.toTime, hours: data.durationHours, reason: data.reason });
-    if (error) {
-      if (error.message?.includes('existing leave request')) {
-        toast.error(isRTL ? 'لا يمكن طلب إذن في يوم به إجازة مسجلة بالفعل' : 'Cannot request permission on a day with an existing leave request');
-      } else {
-        toast.error(error.message);
-      }
-      return;
-    }
-    fetchData(); setActiveTab('permissions');
+    if (!uuid) { toast.error(language === 'ar' ? 'تعذّر العثور على بيانات الموظف' : 'Employee not found'); return; }
+    const ok = await runMutation(
+      () => supabase.from('permission_requests').insert({ employee_id: uuid, permission_type: data.permissionType, date: data.date, start_time: data.fromTime, end_time: data.toTime, hours: data.durationHours, reason: data.reason }),
+      language === 'ar' ? 'تم تسجيل طلب الإذن' : 'Permission request submitted',
+      { key: 'new-perm' },
+    );
+    if (ok) setActiveTab('permissions');
   };
 
   const handleNewMission = async (data: Omit<MissionRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
-    if (!uuid) return;
-    await supabase.from('missions').insert({ employee_id: uuid, mission_type: data.missionType, date: data.date, destination: data.destination, reason: data.reason });
-    fetchData(); setActiveTab('missions');
+    if (!uuid) { toast.error(language === 'ar' ? 'تعذّر العثور على بيانات الموظف' : 'Employee not found'); return; }
+    const ok = await runMutation(
+      () => supabase.from('missions').insert({ employee_id: uuid, mission_type: data.missionType, date: data.date, destination: data.destination, reason: data.reason }),
+      language === 'ar' ? 'تم تسجيل طلب المأمورية' : 'Mission request submitted',
+      { key: 'new-mission' },
+    );
+    if (ok) setActiveTab('missions');
   };
 
   const handleNewOvertime = async (data: Omit<OvertimeRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
-    if (!uuid) return;
-    await supabase.from('overtime_requests').insert({ employee_id: uuid, date: data.date, hours: data.hours, reason: data.reason, overtime_type: data.overtimeType || 'regular' });
-    fetchData(); setActiveTab('overtime');
+    if (!uuid) { toast.error(language === 'ar' ? 'تعذّر العثور على بيانات الموظف' : 'Employee not found'); return; }
+    const ok = await runMutation(
+      () => supabase.from('overtime_requests').insert({ employee_id: uuid, date: data.date, hours: data.hours, reason: data.reason, overtime_type: data.overtimeType || 'regular' }),
+      language === 'ar' ? 'تم تسجيل طلب العمل الإضافي' : 'Overtime request submitted',
+      { key: 'new-overtime' },
+    );
+    if (ok) setActiveTab('overtime');
   };
 
   const pendingCount = leaveRequests.filter(r => r.status === 'pending').length +
