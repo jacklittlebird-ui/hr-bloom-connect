@@ -606,6 +606,42 @@ export const VehicleMaintenance = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && !deleting && setDeleteTarget(null)}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{isAr ? 'تأكيد حذف سجل الصيانة' : 'Confirm maintenance deletion'}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>{isAr ? 'سيتم حذف هذا السجل نهائياً ولا يمكن التراجع.' : 'This record will be permanently deleted.'}</p>
+                {deleteTarget && (() => {
+                  const v = vehicleMap[deleteTarget.vehicle_id];
+                  return (
+                    <div className="rounded-md border bg-muted/40 p-3 space-y-1">
+                      <div><span className="text-muted-foreground">{isAr ? 'السيارة:' : 'Vehicle:'}</span> {v ? `${v.brand} ${v.model} (${v.plate_number})` : '-'}</div>
+                      <div><span className="text-muted-foreground">{isAr ? 'النوع:' : 'Type:'}</span> {typeLabel(deleteTarget.maintenance_type)}</div>
+                      <div><span className="text-muted-foreground">{isAr ? 'التاريخ:' : 'Date:'}</span> {deleteTarget.maintenance_date}</div>
+                      <div><span className="text-muted-foreground">{isAr ? 'التكلفة:' : 'Cost:'}</span> {deleteTarget.cost?.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{isAr ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={deleting}
+              aria-busy={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
+              {isAr ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
