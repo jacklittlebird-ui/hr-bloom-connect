@@ -48,14 +48,25 @@ const Uniforms = () => {
   // Delete confirmation
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // Refresh / save guards
+  // Refresh / save / edit / reset guards
   const [refreshing, setRefreshing] = useState(false);
   const refreshingRef = useRef(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const savingEditRef = useRef(false);
+  const [resetting, setResetting] = useState(false);
+  const resettingRef = useRef(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const itemToDelete = useMemo(() => uniforms.find(u => u.id === deleteId) || null, [uniforms, deleteId]);
 
   const handleRefresh = async () => {
-    if (refreshingRef.current) return;
+    if (refreshingRef.current || savingRef.current || savingEditRef.current || resettingRef.current) {
+      toast.message(language === 'ar' ? 'يوجد عملية جارية، يرجى الانتظار' : 'An operation is in progress, please wait');
+      return;
+    }
     refreshingRef.current = true;
     setRefreshing(true);
     try {
@@ -93,6 +104,8 @@ const Uniforms = () => {
       toast.error(language === 'ar' ? 'يرجى إضافة صنف واحد على الأقل' : 'Please add at least one item');
       return;
     }
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
       for (const r of validItems) {
@@ -114,15 +127,24 @@ const Uniforms = () => {
       toast.error(language === 'ar' ? 'تعذر الحفظ' : 'Save failed');
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
   };
 
   const handleReset = () => {
-    setEmployeeId('');
-    setEmployeeUUID('');
-    setDeliveryDate('');
-    setNotes('');
-    setItems([{ typeIndex: '', quantity: 1, unitPrice: 0 }]);
+    if (resettingRef.current) return;
+    resettingRef.current = true;
+    setResetting(true);
+    try {
+      setEmployeeId('');
+      setEmployeeUUID('');
+      setDeliveryDate('');
+      setNotes('');
+      setItems([{ typeIndex: '', quantity: 1, unitPrice: 0 }]);
+    } finally {
+      setResetting(false);
+      resettingRef.current = false;
+    }
   };
 
   const handleEdit = (u: typeof uniforms[0]) => {
@@ -133,6 +155,9 @@ const Uniforms = () => {
 
   const handleSaveEdit = async () => {
     if (editingId === null) return;
+    if (savingEditRef.current) return;
+    savingEditRef.current = true;
+    setSavingEdit(true);
     try {
       await updateUniform(editingId, {
         typeAr: editForm.typeAr,
@@ -143,22 +168,27 @@ const Uniforms = () => {
         deliveryDate: editForm.deliveryDate,
         notes: editForm.notes,
       } as any);
-      toast.success(language === 'ar' ? 'تم التعديل بنجاح' : 'Updated successfully');
+      toast.success(language === 'ar' ? 'تم تعديل اليونيفورم بنجاح' : 'Uniform updated successfully');
       setEditDialogOpen(false);
       setEditingId(null);
     } catch {
-      toast.error(language === 'ar' ? 'تعذر التعديل' : 'Update failed');
+      toast.error(language === 'ar' ? 'تعذر تعديل اليونيفورم' : 'Failed to update uniform');
+    } finally {
+      setSavingEdit(false);
+      savingEditRef.current = false;
     }
   };
 
   const confirmDelete = async () => {
-    if (deleteId === null) return;
+    if (deleteId === null || deleting) return;
+    setDeleting(true);
     try {
       await deleteUniform(deleteId);
       toast.success(language === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully');
     } catch {
       toast.error(language === 'ar' ? 'تعذر الحذف' : 'Delete failed');
     } finally {
+      setDeleting(false);
       setDeleteId(null);
     }
   };
@@ -218,7 +248,7 @@ const Uniforms = () => {
             <Shirt className="w-7 h-7 text-primary" />
             {language === 'ar' ? 'إدارة يونيفورم الموظفين' : 'Employee Uniform Management'}
           </h1>
-          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing} aria-label={language === 'ar' ? 'تحديث' : 'Refresh'}>
+          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing || saving || savingEdit || resetting} aria-label={language === 'ar' ? 'تحديث' : 'Refresh'}>
             <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
           </Button>
         </div>
@@ -395,8 +425,8 @@ const Uniforms = () => {
                 </div>
 
                 <div className={cn("flex gap-3 justify-end", isRTL && "flex-row-reverse")}>
-                  <Button variant="outline" onClick={handleReset} className="gap-1.5">
-                    <RefreshCw className="w-4 h-4" />
+                  <Button variant="outline" onClick={handleReset} disabled={resetting || saving} className="gap-1.5">
+                    <RefreshCw className={cn("w-4 h-4", resetting && "animate-spin")} />
                     {language === 'ar' ? 'إعادة تعيين' : 'Reset'}
                   </Button>
                   <Button onClick={handleSave} disabled={saving} className="gap-1.5">
@@ -588,25 +618,51 @@ const Uniforms = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSaveEdit}>{language === 'ar' ? 'حفظ' : 'Save'}</Button>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)} disabled={savingEdit}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleSaveEdit} disabled={savingEdit} className="gap-1.5">
+              {savingEdit && <Loader2 className="w-4 h-4 animate-spin" />}
+              {savingEdit ? (language === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (language === 'ar' ? 'حفظ' : 'Save')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete confirmation */}
-      <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
+      <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && !deleting && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{language === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {language === 'ar' ? 'هل أنت متأكد من حذف هذا الصنف؟ لا يمكن التراجع.' : 'Are you sure you want to delete this item? This cannot be undone.'}
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>{language === 'ar' ? 'هل أنت متأكد من حذف هذا الصنف؟ لا يمكن التراجع.' : 'Are you sure you want to delete this item? This cannot be undone.'}</p>
+                {itemToDelete && (
+                  <div data-testid="delete-item-details" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'النوع:' : 'Type:'}</span>
+                      <span className="font-semibold">{language === 'ar' ? itemToDelete.typeAr : itemToDelete.typeEn}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الكمية:' : 'Quantity:'}</span>
+                      <span className="font-semibold">{itemToDelete.quantity}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'تاريخ التسليم:' : 'Delivery:'}</span>
+                      <span className="font-semibold">{itemToDelete.deliveryDate}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الإجمالي:' : 'Total:'}</span>
+                      <span className="font-semibold">{itemToDelete.totalPrice.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{language === 'ar' ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {language === 'ar' ? 'حذف' : 'Delete'}
+            <AlertDialogCancel disabled={deleting}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5">
+              {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {deleting ? (language === 'ar' ? 'جاري الحذف...' : 'Deleting...') : (language === 'ar' ? 'حذف' : 'Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
