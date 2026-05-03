@@ -282,17 +282,34 @@ export const PerformanceList = () => {
                     <TableCell>{getStatusBadge(review.status)}</TableCell>
                     <TableCell>{review.reviewer}</TableCell>
                     <TableCell>
-                      <div className={cn("flex gap-1", isRTL && "flex-row-reverse")}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewReview(review)} title={language === 'ar' ? 'عرض' : 'View'}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(review)} title={language === 'ar' ? 'تعديل' : 'Edit'}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteReviewId(review.id)} title={language === 'ar' ? 'حذف' : 'Delete'}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <TooltipProvider>
+                        <div className={cn("flex gap-1", isRTL && "flex-row-reverse")}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewReview(review)} aria-label={ar ? 'عرض التقييم' : 'View review'}>
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{ar ? 'عرض' : 'View'}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(review)} aria-label={ar ? 'تعديل التقييم' : 'Edit review'}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{ar ? 'تعديل' : 'Edit'}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteReviewId(review.id)} aria-label={ar ? 'حذف التقييم' : 'Delete review'}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{ar ? 'حذف' : 'Delete'}</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TooltipProvider>
                     </TableCell>
                   </TableRow>
                 ))}
