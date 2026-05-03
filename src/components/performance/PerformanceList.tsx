@@ -37,12 +37,27 @@ export const PerformanceList = () => {
   const [viewReview, setViewReview] = useState<PerformanceReview | null>(null);
   const [editReview, setEditReview] = useState<PerformanceReview | null>(null);
   const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [editCriteria, setEditCriteria] = useState<CriteriaItem[]>([]);
   const [editStrengths, setEditStrengths] = useState('');
   const [editImprovements, setEditImprovements] = useState('');
   const [editGoals, setEditGoals] = useState('');
   const [editManagerComments, setEditManagerComments] = useState('');
+
+  const ar = language === 'ar';
+  const filtersActive = searchQuery !== '' || statusFilter !== 'all' || quarterFilter !== 'all' || yearFilter !== 'all' || stationFilter !== 'all' || departmentFilter !== 'all';
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setQuarterFilter('all');
+    setYearFilter('all');
+    setStationFilter('all');
+    setDepartmentFilter('all');
+    toast.success(ar ? 'تمت إعادة ضبط الفلاتر' : 'Filters reset');
+  };
 
   const openEditDialog = (review: PerformanceReview) => {
     setEditReview(review);
@@ -53,20 +68,34 @@ export const PerformanceList = () => {
     setEditManagerComments(review.managerComments || '');
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editReview) return;
-    const newScore = calculateScore(editCriteria);
-    updateReview(editReview.id, { criteria: editCriteria, score: newScore, strengths: editStrengths, improvements: editImprovements, goals: editGoals, managerComments: editManagerComments });
-    setEditReview(null);
-    toast.success(language === 'ar' ? 'تم حفظ التعديلات بنجاح' : 'Changes saved successfully');
+    setSaving(true);
+    try {
+      const newScore = calculateScore(editCriteria);
+      await updateReview(editReview.id, { criteria: editCriteria, score: newScore, strengths: editStrengths, improvements: editImprovements, goals: editGoals, managerComments: editManagerComments });
+      setEditReview(null);
+      toast.success(ar ? 'تم حفظ التعديلات بنجاح' : 'Changes saved successfully');
+    } catch {
+      toast.error(ar ? 'فشل حفظ التعديلات' : 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSubmitEdit = () => {
+  const handleSubmitEdit = async () => {
     if (!editReview) return;
-    const newScore = calculateScore(editCriteria);
-    updateReview(editReview.id, { criteria: editCriteria, score: newScore, strengths: editStrengths, improvements: editImprovements, goals: editGoals, managerComments: editManagerComments, status: 'submitted' });
-    setEditReview(null);
-    toast.success(language === 'ar' ? 'تم إرسال التقييم بنجاح' : 'Review submitted successfully');
+    setSaving(true);
+    try {
+      const newScore = calculateScore(editCriteria);
+      await updateReview(editReview.id, { criteria: editCriteria, score: newScore, strengths: editStrengths, improvements: editImprovements, goals: editGoals, managerComments: editManagerComments, status: 'submitted' });
+      setEditReview(null);
+      toast.success(ar ? 'تم إرسال التقييم بنجاح' : 'Review submitted successfully');
+    } catch {
+      toast.error(ar ? 'فشل إرسال التقييم' : 'Failed to submit review');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const filteredReviews = reviews.filter(review => {
