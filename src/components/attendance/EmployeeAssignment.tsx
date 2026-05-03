@@ -44,6 +44,7 @@ interface Assignment {
 
 interface StationOption { id: string; name: string; }
 interface DeptOption { id: string; name: string; }
+interface ShiftOption { id: string; nameAr: string; nameEn: string; startTime: string; endTime: string; color: string; }
 
 export const EmployeeAssignment = () => {
   const { t, isRTL, language } = useLanguage();
@@ -77,8 +78,10 @@ export const EmployeeAssignment = () => {
   const [empSearch, setEmpSearch] = useState('');
   const [stations, setStations] = useState<StationOption[]>([]);
   const [departments, setDepartments] = useState<DeptOption[]>([]);
+  const [shifts, setShifts] = useState<ShiftOption[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const shifts = sampleShiftDefinitions;
 
   // Fetch rules, stations, departments, and assignments
   const fetchAll = useCallback(async () => {
