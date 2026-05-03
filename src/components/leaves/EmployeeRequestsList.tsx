@@ -168,7 +168,7 @@ export const EmployeeRequestsList = ({ requests, onRefresh }: Props) => {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => { setRejectDialog(null); setRejectReason(''); }}>{ar ? 'إلغاء' : 'Cancel'}</Button>
-            <Button variant="destructive" onClick={handleReject}>{ar ? 'رفض' : 'Reject'}</Button>
+            <Button variant="destructive" disabled={!!busyId} onClick={handleReject}>{ar ? 'رفض' : 'Reject'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
