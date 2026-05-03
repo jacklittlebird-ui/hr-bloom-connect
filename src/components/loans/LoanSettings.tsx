@@ -463,11 +463,43 @@ export const LoanSettings = () => {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} size="lg" disabled={saving}>
+        <Button onClick={handleSaveClick} data-testid="loan-settings-save" size="lg" disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           {saving ? (isRTL ? 'جاري الحفظ...' : 'Saving...') : t('loans.settings.saveAll')}
         </Button>
       </div>
+
+      {/* Critical changes confirmation */}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              {isRTL ? 'تأكيد تغييرات حرجة' : 'Confirm Critical Changes'}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>{isRTL
+                  ? 'أنت على وشك تعديل إعدادات حرجة قد تؤثر على جميع طلبات القروض المستقبلية:'
+                  : 'You are about to change critical settings that may affect all future loan requests:'}</p>
+                <ul className="list-disc pr-5 ps-5 text-sm space-y-1">
+                  {criticalChanges.map((c, i) => <li key={i}>{c}</li>)}
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>{isRTL ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={performSave} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {isRTL ? 'تأكيد الحفظ' : 'Confirm & Save'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
     </div>
   );
 };
