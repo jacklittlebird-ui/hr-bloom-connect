@@ -102,37 +102,50 @@ export const VehicleRegistry = () => {
       toast.error(isAr ? 'يرجى ملء الحقول المطلوبة' : 'Please fill required fields');
       return;
     }
-    const payload = {
-      ...form,
-      year: Number(form.year),
-      color: form.color || null,
-      engine_number: form.engine_number || null,
-      chassis_number: form.chassis_number || null,
-      license_start_date: form.license_start_date || null,
-      license_end_date: form.license_end_date || null,
-      curtains_license_start: form.curtains_license_start || null,
-      curtains_license_end: form.curtains_license_end || null,
-      transport_license_start: form.transport_license_start || null,
-      transport_license_end: form.transport_license_end || null,
-      insured_driver_name: form.insured_driver_name || null,
-      insurance_number: form.insurance_number || null,
-      notes: form.notes || null,
-      station_id: form.station_id || null,
-    };
-
-    if (editingId) {
-      const { error } = await supabase.from('vehicles').update(payload as any).eq('id', editingId);
-      if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تم تحديث السيارة' : 'Vehicle updated');
-    } else {
-      const { error } = await supabase.from('vehicles').insert(payload as any);
-      if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تم إضافة السيارة' : 'Vehicle added');
+    if (!form.year || Number(form.year) < 1900 || Number(form.year) > new Date().getFullYear() + 1) {
+      toast.error(isAr ? 'سنة الصنع غير صحيحة' : 'Invalid year');
+      return;
     }
-    setDialogOpen(false);
-    setEditingId(null);
-    setForm(emptyForm);
-    fetchAll();
+    if (form.license_start_date && form.license_end_date && form.license_end_date < form.license_start_date) {
+      toast.error(isAr ? 'تاريخ نهاية الترخيص قبل البداية' : 'License end before start');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        year: Number(form.year),
+        color: form.color || null,
+        engine_number: form.engine_number || null,
+        chassis_number: form.chassis_number || null,
+        license_start_date: form.license_start_date || null,
+        license_end_date: form.license_end_date || null,
+        curtains_license_start: form.curtains_license_start || null,
+        curtains_license_end: form.curtains_license_end || null,
+        transport_license_start: form.transport_license_start || null,
+        transport_license_end: form.transport_license_end || null,
+        insured_driver_name: form.insured_driver_name || null,
+        insurance_number: form.insurance_number || null,
+        notes: form.notes || null,
+        station_id: form.station_id || null,
+      };
+
+      if (editingId) {
+        const { error } = await supabase.from('vehicles').update(payload as any).eq('id', editingId);
+        if (error) { toast.error(error.message); return; }
+        toast.success(isAr ? 'تم تحديث السيارة' : 'Vehicle updated');
+      } else {
+        const { error } = await supabase.from('vehicles').insert(payload as any);
+        if (error) { toast.error(error.message); return; }
+        toast.success(isAr ? 'تم إضافة السيارة' : 'Vehicle added');
+      }
+      setDialogOpen(false);
+      setEditingId(null);
+      setForm(emptyForm);
+      fetchAll();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (v: Vehicle) => {
@@ -150,12 +163,18 @@ export const VehicleRegistry = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(isAr ? 'هل أنت متأكد من حذف هذه السيارة؟' : 'Delete this vehicle?')) return;
-    const { error } = await supabase.from('vehicles').delete().eq('id', id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم حذف السيارة' : 'Vehicle deleted');
-    fetchAll();
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('vehicles').delete().eq('id', deleteTarget.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success(isAr ? 'تم حذف السيارة' : 'Vehicle deleted');
+      setDeleteTarget(null);
+      fetchAll();
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const daysLeft = (d: string | null): number | null => {
