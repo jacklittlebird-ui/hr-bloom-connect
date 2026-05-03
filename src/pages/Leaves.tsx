@@ -301,28 +301,74 @@ const Leaves = () => {
     });
   }, [employeeRequests, searchQuery, selectedDepartment, selectedStation]);
 
-  // Handlers
-  const handleApproveLeave = async (id: string) => { await supabase.from('leave_requests').update({ status: 'approved' }).eq('id', id); fetchData(); };
-  const handleRejectLeave = async (id: string, reason: string) => { await supabase.from('leave_requests').update({ status: 'rejected', rejection_reason: reason }).eq('id', id); fetchData(); };
-  const handleApprovePermission = async (id: string) => { await supabase.from('permission_requests').update({ status: 'approved' }).eq('id', id); fetchData(); };
-  const handleRejectPermission = async (id: string, _reason: string) => { await supabase.from('permission_requests').update({ status: 'rejected' }).eq('id', id); fetchData(); };
+  const runMutation = async (
+    fn: () => Promise<{ error: { message: string } | null }>,
+    successMsg: string,
+  ) => {
+    const { error } = await fn();
+    if (error) { toast.error(error.message); return false; }
+    toast.success(successMsg);
+    fetchData();
+    return true;
+  };
+
+  const handleApproveLeave = (id: string) => runMutation(
+    () => supabase.from('leave_requests').update({ status: 'approved', rejection_reason: null }).eq('id', id),
+    language === 'ar' ? 'تمت الموافقة على الإجازة' : 'Leave approved',
+  );
+  const handleRejectLeave = (id: string, reason: string) => runMutation(
+    () => supabase.from('leave_requests').update({ status: 'rejected', rejection_reason: reason }).eq('id', id),
+    language === 'ar' ? 'تم رفض الإجازة' : 'Leave rejected',
+  );
+  const handleApprovePermission = (id: string) => runMutation(
+    () => supabase.from('permission_requests').update({ status: 'approved', rejection_reason: null } as any).eq('id', id),
+    language === 'ar' ? 'تمت الموافقة على الإذن' : 'Permission approved',
+  );
+  const handleRejectPermission = (id: string, reason: string) => runMutation(
+    () => supabase.from('permission_requests').update({ status: 'rejected', rejection_reason: reason } as any).eq('id', id),
+    language === 'ar' ? 'تم رفض الإذن' : 'Permission rejected',
+  );
   const handleApproveMission = async (id: string) => {
-    await supabase.from('missions').update({ status: 'approved' }).eq('id', id);
+    const ok = await runMutation(
+      () => supabase.from('missions').update({ status: 'approved', rejection_reason: null } as any).eq('id', id),
+      language === 'ar' ? 'تمت الموافقة على المأمورية' : 'Mission approved',
+    );
+    if (!ok) return;
     const mission = missionRequests.find(r => r.id === id);
     if (mission) {
       const config = MISSION_TIME_CONFIG[mission.missionType];
       addMissionAttendance(mission.employeeId, mission.employeeName, mission.employeeNameAr, mission.department, mission.date, config.checkIn, config.checkOut, config.hours);
     }
-    fetchData();
   };
-  const handleRejectMission = async (id: string, _reason: string) => { await supabase.from('missions').update({ status: 'rejected' }).eq('id', id); fetchData(); };
-  const handleApproveOvertime = async (id: string) => { await supabase.from('overtime_requests').update({ status: 'approved' }).eq('id', id); fetchData(); };
-  const handleRejectOvertime = async (id: string, _reason: string) => { await supabase.from('overtime_requests').update({ status: 'rejected' }).eq('id', id); fetchData(); };
+  const handleRejectMission = (id: string, reason: string) => runMutation(
+    () => supabase.from('missions').update({ status: 'rejected', rejection_reason: reason } as any).eq('id', id),
+    language === 'ar' ? 'تم رفض المأمورية' : 'Mission rejected',
+  );
+  const handleApproveOvertime = (id: string) => runMutation(
+    () => supabase.from('overtime_requests').update({ status: 'approved', rejection_reason: null } as any).eq('id', id),
+    language === 'ar' ? 'تمت الموافقة على العمل الإضافي' : 'Overtime approved',
+  );
+  const handleRejectOvertime = (id: string, reason: string) => runMutation(
+    () => supabase.from('overtime_requests').update({ status: 'rejected', rejection_reason: reason } as any).eq('id', id),
+    language === 'ar' ? 'تم رفض العمل الإضافي' : 'Overtime rejected',
+  );
 
-  const handleDeleteLeave = async (id: string) => { await supabase.from('leave_requests').delete().eq('id', id); fetchData(); };
-  const handleDeletePermission = async (id: string) => { await supabase.from('permission_requests').delete().eq('id', id); fetchData(); };
-  const handleDeleteMission = async (id: string) => { await supabase.from('missions').delete().eq('id', id); fetchData(); };
-  const handleDeleteOvertime = async (id: string) => { await supabase.from('overtime_requests').delete().eq('id', id); fetchData(); };
+  const handleDeleteLeave = (id: string) => runMutation(
+    () => supabase.from('leave_requests').delete().eq('id', id),
+    language === 'ar' ? 'تم حذف الإجازة' : 'Leave deleted',
+  );
+  const handleDeletePermission = (id: string) => runMutation(
+    () => supabase.from('permission_requests').delete().eq('id', id),
+    language === 'ar' ? 'تم حذف الإذن' : 'Permission deleted',
+  );
+  const handleDeleteMission = (id: string) => runMutation(
+    () => supabase.from('missions').delete().eq('id', id),
+    language === 'ar' ? 'تم حذف المأمورية' : 'Mission deleted',
+  );
+  const handleDeleteOvertime = (id: string) => runMutation(
+    () => supabase.from('overtime_requests').delete().eq('id', id),
+    language === 'ar' ? 'تم حذف العمل الإضافي' : 'Overtime deleted',
+  );
 
   const handleEditLeave = async (data: { id: string; leaveType: string; startDate: string; endDate: string; days: number; status: string; reason: string }) => {
     const { error } = await supabase.from('leave_requests').update({
