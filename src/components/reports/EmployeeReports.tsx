@@ -301,19 +301,41 @@ export const EmployeeReports = () => {
     setDepartment(preset.department);
     setStation(preset.station);
     setStatus(preset.status);
+    setActivePresetId(preset.id);
     toast({ title: ar ? `تم تحميل: ${preset.name}` : `Loaded: ${preset.name}` });
-  }, [ar]);
+  }, [ar, setDepartment, setStation, setStatus, setActivePresetId]);
 
-  const deletePreset = useCallback((id: string) => {
-    setPresets(prev => prev.filter(p => p.id !== id));
-    toast({ title: ar ? 'تم حذف الإعداد المسبق' : 'Preset deleted' });
-  }, [ar]);
+  // Open confirmation dialog instead of deleting immediately
+  const requestDeletePreset = useCallback((preset: ExportPreset) => {
+    setPresetToDelete(preset);
+  }, []);
+
+  const confirmDeletePreset = useCallback(async () => {
+    if (!presetToDelete || deletingPreset) return;
+    setDeletingPreset(true);
+    try {
+      // Tiny delay to surface loading state for visual feedback
+      await new Promise(r => setTimeout(r, 150));
+      const id = presetToDelete.id;
+      setPresets(prev => prev.filter(p => p.id !== id));
+      if (activePresetId === id) setActivePresetId(null);
+      toast({
+        title: ar ? 'تم حذف الإعداد المسبق' : 'Preset deleted',
+        description: ar ? `الاسم: ${presetToDelete.name}` : `Name: ${presetToDelete.name}`,
+      });
+      setPresetToDelete(null);
+    } finally {
+      setDeletingPreset(false);
+    }
+  }, [presetToDelete, deletingPreset, activePresetId, ar, setPresets, setActivePresetId]);
 
   const resetFilters = useCallback(() => {
     setDepartment('all');
     setStation('all');
     setStatus('all');
-  }, []);
+    setActivePresetId(null);
+    toast({ title: ar ? 'تمت إعادة ضبط الفلاتر' : 'Filters reset' });
+  }, [ar, setDepartment, setStation, setStatus, setActivePresetId]);
 
   const hasActiveFilters = department !== 'all' || station !== 'all' || status !== 'all';
 
