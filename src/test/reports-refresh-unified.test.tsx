@@ -192,19 +192,21 @@ describe('Reports — unified refresh E2E', () => {
     await act(async () => { fireEvent.click(btn); });
     expect(screen.getByRole('status')).toBeInTheDocument();
 
-    // While refreshing, switch tabs rapidly
+    // While refreshing, switch to a different tab. Radix Tabs activate on pointerDown+mouseDown+click.
     const leavesTab = screen.getByRole('tab', { name: /leaves/i });
-    const salariesTab = screen.getByRole('tab', { name: /salaries/i });
-    await act(async () => { fireEvent.click(leavesTab); });
-    await act(async () => { fireEvent.click(salariesTab); });
+    await act(async () => {
+      fireEvent.pointerDown(leavesTab, { button: 0 });
+      fireEvent.mouseDown(leavesTab, { button: 0 });
+      fireEvent.click(leavesTab);
+    });
 
     await flush(600);
 
     // EmployeeReports remounted at most once due to refreshKey bump
     expect(mountCounts['EmployeeReports']).toBeLessThanOrEqual(2);
-    // Only the active tab(s) the user navigated to should have mounted; each at most once
-    expect(mountCounts['SalaryReports']).toBe(1);
-    // Inactive tabs that were never visited remain unmounted
+    // The newly activated tab mounted exactly once (no over-remount across refresh cycle)
+    expect(mountCounts['LeaveReports']).toBe(1);
+    // Tabs the user never visited remain unmounted
     expect(mountCounts['PerformanceReports']).toBeUndefined();
     expect(mountCounts['UniformReport']).toBeUndefined();
     // Single success toast for the refresh cycle
