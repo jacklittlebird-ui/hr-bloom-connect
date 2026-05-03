@@ -51,11 +51,15 @@ export const LateArrivals = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [records, setRecords] = useState<LateRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const years = Array.from({ length: 3 }, (_, i) => String(now.getFullYear() - i));
 
-  useEffect(() => {
-    const fetchLateRecords = async () => {
-      setLoading(true);
+  const fetchLateRecords = async (showToast = false) => {
+    if (showToast) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+    try {
       const startDate = `${selectedYear}-${selectedMonth}-01`;
       const endMonth = parseInt(selectedMonth);
       const endYear = parseInt(selectedYear);
@@ -73,24 +77,34 @@ export const LateArrivals = () => {
         .lte('date', endDate)
         .order('check_in', { ascending: false });
 
-      if (!error && data) {
-        const mapped: LateRecord[] = data.map((r: any) => ({
-          id: r.id,
-          employee_id: r.employee_id,
-          employee_code: r.employees?.employee_code || '',
-          employee_name_ar: r.employees?.name_ar || '',
-          employee_name_en: r.employees?.name_en || '',
-          station_name_ar: r.employees?.stations?.name_ar || '',
-          station_name_en: r.employees?.stations?.name_en || '',
-          date: r.date,
-          check_in: r.check_in,
-          work_hours: r.work_hours || 0,
-        }));
-        setRecords(mapped);
-      }
+      if (error) throw error;
+      const mapped: LateRecord[] = (data || []).map((r: any) => ({
+        id: r.id,
+        employee_id: r.employee_id,
+        employee_code: r.employees?.employee_code || '',
+        employee_name_ar: r.employees?.name_ar || '',
+        employee_name_en: r.employees?.name_en || '',
+        station_name_ar: r.employees?.stations?.name_ar || '',
+        station_name_en: r.employees?.stations?.name_en || '',
+        date: r.date,
+        check_in: r.check_in,
+        work_hours: r.work_hours || 0,
+      }));
+      setRecords(mapped);
+      if (showToast) toast.success(ar ? 'تم تحديث البيانات' : 'Data refreshed');
+    } catch (e: any) {
+      const msg = e?.message || (ar ? 'فشل تحميل التأخيرات' : 'Failed to load late arrivals');
+      setError(msg);
+      toast.error(ar ? 'تعذر تحميل البيانات' : 'Failed to load', { description: msg });
+    } finally {
       setLoading(false);
-    };
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchLateRecords();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, selectedYear]);
 
   // Group by employee
