@@ -37,47 +37,56 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
   const [actioningId, setActioningId] = useState<string | null>(null);
 
   const fetchInstallments = async () => {
-    // Fetch all installments across the 1000-row default limit using ranged pagination
-    const pageSize = 1000;
-    let allRows: any[] = [];
-    let from = 0;
-    while (true) {
-      const { data, error } = await supabase
-        .from('loan_installments')
-        .select('*, loans(amount, installments_count)')
-        .order('due_date', { ascending: true })
-        .range(from, from + pageSize - 1);
-      if (error) break;
-      const rows = data || [];
-      allRows = allRows.concat(rows);
-      if (rows.length < pageSize) break;
-      from += pageSize;
-    }
-    const data = allRows;
-    const { data: employees } = await supabase.from('employees').select('id, employee_code, name_ar, name_en, department_id').order('employee_code');
-    const { data: departments } = await supabase.from('departments').select('id, name_ar, name_en');
-    const empMap = new Map(employees?.map(e => [e.id, e]) || []);
-    const deptMap = new Map(departments?.map(d => [d.id, d]) || []);
+    setLoading(true);
+    setError(null);
+    try {
+      const pageSize = 1000;
+      let allRows: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from('loan_installments')
+          .select('*, loans(amount, installments_count)')
+          .order('due_date', { ascending: true })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        const rows = data || [];
+        allRows = allRows.concat(rows);
+        if (rows.length < pageSize) break;
+        from += pageSize;
+      }
+      const data = allRows;
+      const { data: employees } = await supabase.from('employees').select('id, employee_code, name_ar, name_en, department_id').order('employee_code');
+      const { data: departments } = await supabase.from('departments').select('id, name_ar, name_en');
+      const empMap = new Map(employees?.map(e => [e.id, e]) || []);
+      const deptMap = new Map(departments?.map(d => [d.id, d]) || []);
 
-    setInstallments((data || []).map(i => {
-      const emp = empMap.get(i.employee_id);
-      const dept = emp?.department_id ? deptMap.get(emp.department_id) : null;
-      const today = new Date().toISOString().split('T')[0];
-      let status: 'paid' | 'pending' | 'overdue' = i.status as any;
-      if (status !== 'paid' && i.due_date < today) status = 'overdue';
-      return {
-        id: i.id, loanId: i.loan_id, employeeId: i.employee_id,
-        employeeName: emp ? (language === 'ar' ? emp.name_ar : emp.name_en) : '',
-        department: dept ? (language === 'ar' ? dept.name_ar : dept.name_en) : '',
-        installmentNumber: i.installment_number,
-        totalInstallments: (i.loans as any)?.installments_count || 0,
-        amount: i.amount, dueDate: i.due_date,
-        paidDate: i.paid_at ? i.paid_at.split('T')[0] : null, status,
-      };
-    }));
+      setInstallments((data || []).map(i => {
+        const emp = empMap.get(i.employee_id);
+        const dept = emp?.department_id ? deptMap.get(emp.department_id) : null;
+        const today = new Date().toISOString().split('T')[0];
+        let status: 'paid' | 'pending' | 'overdue' = i.status as any;
+        if (status !== 'paid' && i.due_date < today) status = 'overdue';
+        return {
+          id: i.id, loanId: i.loan_id, employeeId: i.employee_id,
+          employeeName: emp ? (language === 'ar' ? emp.name_ar : emp.name_en) : '',
+          department: dept ? (language === 'ar' ? dept.name_ar : dept.name_en) : '',
+          installmentNumber: i.installment_number,
+          totalInstallments: (i.loans as any)?.installments_count || 0,
+          amount: i.amount, dueDate: i.due_date,
+          paidDate: i.paid_at ? i.paid_at.split('T')[0] : null, status,
+        };
+      }));
+    } catch (e: any) {
+      console.error('Installments fetch error:', e);
+      setError(e?.message || (language === 'ar' ? 'تعذر تحميل الأقساط' : 'Failed to load'));
+      toast({ title: language === 'ar' ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { fetchInstallments(); }, [language]);
+  useEffect(() => { fetchInstallments(); }, [language, refreshKey]);
 
   const statusLabels: Record<string, { en: string; ar: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
     paid: { en: 'Paid', ar: 'مدفوع', variant: 'default' },
@@ -95,15 +104,31 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
   });
 
   const handlePayInstallment = async (installmentId: string) => {
-    await markInstallmentPaid(installmentId);
-    toast({ title: t('common.success'), description: t('loans.installments.paid') });
-    fetchInstallments();
+    if (actioningId) return;
+    setActioningId(installmentId);
+    try {
+      await markInstallmentPaid(installmentId);
+      toast({ title: t('common.success'), description: t('loans.installments.paid') });
+      await fetchInstallments();
+    } catch (e: any) {
+      toast({ title: language === 'ar' ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
+    }
   };
 
   const handleUnpayInstallment = async (installmentId: string) => {
-    await revertInstallmentPayment(installmentId);
-    toast({ title: t('common.success'), description: language === 'ar' ? 'تم التراجع عن تسجيل الدفع' : 'Payment reversed' });
-    fetchInstallments();
+    if (actioningId) return;
+    setActioningId(installmentId);
+    try {
+      await revertInstallmentPayment(installmentId);
+      toast({ title: t('common.success'), description: language === 'ar' ? 'تم التراجع عن تسجيل الدفع' : 'Payment reversed' });
+      await fetchInstallments();
+    } catch (e: any) {
+      toast({ title: language === 'ar' ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
+    }
   };
 
   const stats = {
