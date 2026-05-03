@@ -944,24 +944,24 @@ export const PropertyTaxesManager = () => {
             </div>
           </div>
           <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSave} className="gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              {editingId ? (isAr ? 'تحديث' : 'Update') : (isAr ? 'إضافة' : 'Add')}
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleSave} className="gap-2" disabled={saving} aria-busy={saving}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              {saving ? (isAr ? 'جارٍ الحفظ...' : 'Saving...') : (editingId ? (isAr ? 'تحديث' : 'Update') : (isAr ? 'إضافة' : 'Add'))}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Quick Payment Dialog */}
-      <Dialog open={!!paymentDialog} onOpenChange={() => setPaymentDialog(null)}>
+      <Dialog open={!!paymentDialog} onOpenChange={(o) => { if (!o && !saving) setPaymentDialog(null); }}>
         <DialogContent dir="rtl" className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
               <CheckCircle className="w-5 h-5" /> {isAr ? 'تسجيل دفع' : 'Record Payment'}
             </DialogTitle>
             <DialogDescription>
-              {paymentDialog && `${stationName(paymentDialog.station_id)} • ${fmtMoney(Number(paymentDialog.amount))} ${isAr ? 'ج.م' : 'EGP'}`}
+              {paymentDialog && `${stationName(paymentDialog.station_id)} • ${fmtMoney(Number(paymentDialog.amount))} ${isAr ? 'ج.م' : 'EGP'} • ${fmtDate(paymentDialog.due_date)}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -975,16 +975,17 @@ export const PropertyTaxesManager = () => {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setPaymentDialog(null)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleMarkPaid} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-              <CheckCircle className="w-4 h-4" /> {isAr ? 'تأكيد الدفع' : 'Confirm Payment'}
+            <Button variant="outline" onClick={() => setPaymentDialog(null)} disabled={saving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleMarkPaid} className="gap-2 bg-emerald-600 hover:bg-emerald-700" disabled={saving} aria-busy={saving}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+              {saving ? (isAr ? 'جارٍ التسجيل...' : 'Recording...') : (isAr ? 'تأكيد الدفع' : 'Confirm Payment')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirm */}
-      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+      <Dialog open={!!deleteConfirm} onOpenChange={(o) => { if (!o && !deleting) setDeleteConfirm(null); }}>
         <DialogContent dir="rtl" className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
@@ -994,9 +995,24 @@ export const PropertyTaxesManager = () => {
               {isAr ? 'هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to delete this record? This action cannot be undone.'}
             </DialogDescription>
           </DialogHeader>
+          {deleteConfirm && (() => {
+            const r = records.find(x => x.id === deleteConfirm);
+            if (!r) return null;
+            return (
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1">
+                <div className="flex justify-between"><span className="text-muted-foreground">{isAr ? 'المحطة:' : 'Station:'}</span><span className="font-medium">{stationName(r.station_id)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{isAr ? 'المبلغ:' : 'Amount:'}</span><span className="font-semibold tabular-nums">{fmtMoney(Number(r.amount))} {isAr ? 'ج.م' : 'EGP'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{isAr ? 'الاستحقاق:' : 'Due:'}</span><span className="tabular-nums">{fmtDate(r.due_date)}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">{isAr ? 'الحالة:' : 'Status:'}</span>{statusBadge(r.status)}</div>
+              </div>
+            );
+          })()}
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>{isAr ? 'حذف' : 'Delete'}</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)} disabled={deleting}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} disabled={deleting} aria-busy={deleting} className="gap-2">
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {deleting ? (isAr ? 'جارٍ الحذف...' : 'Deleting...') : (isAr ? 'حذف' : 'Delete')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
