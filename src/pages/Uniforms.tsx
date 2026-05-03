@@ -464,7 +464,7 @@ const Uniforms = () => {
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={() => handleEdit(u)}>
                                   <Edit2 className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(u.id)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => setDeleteId(u.id)}>
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
