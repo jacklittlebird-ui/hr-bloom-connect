@@ -788,6 +788,19 @@ const Users = () => {
               })}
             </div>
           </TabsContent>
+
+          {/* ========== AUDIT LOG TAB ========== */}
+          <TabsContent value="audit" className="space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold">{isAr ? 'سجل تدقيق الأدوار والصلاحيات' : 'Roles & Permissions Audit'}</h2>
+              <p className="text-sm text-muted-foreground">
+                {isAr
+                  ? 'كل تغييرات الأدوار وملفات الصلاحيات وصلاحيات المستخدم — مع إمكانية الفلترة'
+                  : 'All changes to roles, permission profiles, and per-user module overrides — filterable'}
+              </p>
+            </div>
+            <AuditLogs hideHeader tablesScope={SECURITY_TABLES} />
+          </TabsContent>
         </Tabs>
 
         {/* ========== EDIT USER DIALOG ========== */}
