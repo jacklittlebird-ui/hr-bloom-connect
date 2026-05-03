@@ -33,15 +33,19 @@ export const EmployeeReports = () => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const { employees } = useEmployeeData();
-  const [department, setDepartment] = useState('all');
-  const [station, setStation] = useState('all');
-  const [status, setStatus] = useState('all');
+  // Persist filters across tab switches/navigation
+  const [department, setDepartment] = usePersistedState<string>('hr_emp_report_department', 'all');
+  const [station, setStation] = usePersistedState<string>('hr_emp_report_station', 'all');
+  const [status, setStatus] = usePersistedState<string>('hr_emp_report_status', 'all');
+  const [activePresetId, setActivePresetId] = usePersistedState<string | null>('hr_emp_report_active_preset', null);
   const { reportRef, handlePrint, exportToCSV, exportBilingualCSV, exportBilingualPDF } = useReportExport();
 
   // Presets
   const [presets, setPresets] = usePersistedState<ExportPreset[]>('hr_report_presets', []);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [presetName, setPresetName] = useState('');
+  const [presetToDelete, setPresetToDelete] = useState<ExportPreset | null>(null);
+  const [deletingPreset, setDeletingPreset] = useState(false);
 
   const departments = useMemo(() => {
     const depts = new Set(employees.map(e => e.department).filter(d => d && d !== '-'));
