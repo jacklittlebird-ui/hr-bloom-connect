@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List, RefreshCw, Undo2 } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List, RefreshCw, Undo2, Loader2 } from 'lucide-react';
 import { InstallmentScheduleDialog } from './InstallmentScheduleDialog';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -447,9 +447,11 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
                   {uniqueStartDates.map(d => <SelectItem key={d} value={d}>{getMonthName(d, language)}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)}><Printer className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })}><FileText className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'loans' })}><FileSpreadsheet className="h-4 w-4" /></Button>
+              <Input type="date" value={dateFromFilter} onChange={e => setDateFromFilter(e.target.value)} className="w-36" aria-label={isRTL ? 'من' : 'From'} />
+              <Input type="date" value={dateToFilter} onChange={e => setDateToFilter(e.target.value)} className="w-36" aria-label={isRTL ? 'إلى' : 'To'} />
+              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)} aria-label="Print"><Printer className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })} aria-label="PDF"><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'loans' })} aria-label="CSV"><FileSpreadsheet className="h-4 w-4" /></Button>
               <Button variant="secondary" onClick={() => { setBulkPayMonth(''); setShowBulkPayDialog(true); }}>
                 <CheckCircle className="h-4 w-4 mr-1" />{isRTL ? 'دفعة جماعية' : 'Bulk Payment'}
               </Button>
