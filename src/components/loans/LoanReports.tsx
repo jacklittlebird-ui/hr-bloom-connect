@@ -258,7 +258,7 @@ export const LoanReports = () => {
               <Button variant="outline" onClick={handleExportPDF}>
                 <FileText className="h-4 w-4 mr-1" />{isRTL ? 'تصدير PDF' : 'Export PDF'}
               </Button>
-              <Button variant="outline" onClick={() => exportToCSV({ title: isRTL ? titleAr : titleEn, data: exportData, columns: csvColumns, fileName: 'loan-station-report' })}>
+              <Button variant="outline" onClick={() => exportBilingualCSV({ titleAr, titleEn, data: exportData, columns: bilingualColumns, fileName: 'loan-station-report', summaryCards })}>
                 <FileSpreadsheet className="h-4 w-4 mr-1" />{isRTL ? 'تصدير CSV' : 'Export CSV'}
               </Button>
             </div>
