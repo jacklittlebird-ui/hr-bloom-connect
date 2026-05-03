@@ -48,10 +48,27 @@ export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListP
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Briefcase className="w-5 h-5" />
-            {t('leaves.missions.listTitle')}
-          </CardTitle>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="w-5 h-5" />
+              {t('leaves.missions.listTitle')}
+            </CardTitle>
+            <ExportButton
+              rows={requests}
+              filenameBase="missions"
+              title={language === 'ar' ? 'تقرير المأموريات' : 'Missions Report'}
+              columns={[
+                { header: language === 'ar' ? 'كود الموظف' : 'Employee ID', accessor: (r) => r.employeeCode || '' },
+                { header: language === 'ar' ? 'الموظف' : 'Employee', accessor: (r) => language === 'ar' ? r.employeeNameAr : r.employeeName },
+                { header: language === 'ar' ? 'القسم' : 'Department', accessor: (r) => r.department },
+                { header: language === 'ar' ? 'النوع' : 'Type', accessor: (r) => r.missionType },
+                { header: language === 'ar' ? 'التاريخ' : 'Date', accessor: (r) => formatDate(r.date) },
+                { header: language === 'ar' ? 'الوجهة' : 'Destination', accessor: (r) => r.destination || '' },
+                { header: language === 'ar' ? 'السبب' : 'Reason', accessor: (r) => r.reason || '' },
+                { header: language === 'ar' ? 'الحالة' : 'Status', accessor: (r) => r.status },
+              ] as ExportColumn<MissionRequest>[]}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
