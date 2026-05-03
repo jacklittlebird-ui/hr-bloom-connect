@@ -530,6 +530,7 @@ export const EmployeeAssignment = () => {
             )}
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
