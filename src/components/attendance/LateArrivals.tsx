@@ -6,11 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, Clock, User, TrendingUp, Search } from 'lucide-react';
+import { AlertTriangle, Clock, User, TrendingUp, Search, Loader2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { getCairoDateString } from '@/lib/cairoDate';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const months = [
   { value: '01', ar: 'يناير', en: 'January' },
@@ -49,11 +51,15 @@ export const LateArrivals = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [records, setRecords] = useState<LateRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const years = Array.from({ length: 3 }, (_, i) => String(now.getFullYear() - i));
 
-  useEffect(() => {
-    const fetchLateRecords = async () => {
-      setLoading(true);
+  const fetchLateRecords = async (showToast = false) => {
+    if (showToast) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+    try {
       const startDate = `${selectedYear}-${selectedMonth}-01`;
       const endMonth = parseInt(selectedMonth);
       const endYear = parseInt(selectedYear);
@@ -71,24 +77,34 @@ export const LateArrivals = () => {
         .lte('date', endDate)
         .order('check_in', { ascending: false });
 
-      if (!error && data) {
-        const mapped: LateRecord[] = data.map((r: any) => ({
-          id: r.id,
-          employee_id: r.employee_id,
-          employee_code: r.employees?.employee_code || '',
-          employee_name_ar: r.employees?.name_ar || '',
-          employee_name_en: r.employees?.name_en || '',
-          station_name_ar: r.employees?.stations?.name_ar || '',
-          station_name_en: r.employees?.stations?.name_en || '',
-          date: r.date,
-          check_in: r.check_in,
-          work_hours: r.work_hours || 0,
-        }));
-        setRecords(mapped);
-      }
+      if (error) throw error;
+      const mapped: LateRecord[] = (data || []).map((r: any) => ({
+        id: r.id,
+        employee_id: r.employee_id,
+        employee_code: r.employees?.employee_code || '',
+        employee_name_ar: r.employees?.name_ar || '',
+        employee_name_en: r.employees?.name_en || '',
+        station_name_ar: r.employees?.stations?.name_ar || '',
+        station_name_en: r.employees?.stations?.name_en || '',
+        date: r.date,
+        check_in: r.check_in,
+        work_hours: r.work_hours || 0,
+      }));
+      setRecords(mapped);
+      if (showToast) toast.success(ar ? 'تم تحديث البيانات' : 'Data refreshed');
+    } catch (e: any) {
+      const msg = e?.message || (ar ? 'فشل تحميل التأخيرات' : 'Failed to load late arrivals');
+      setError(msg);
+      toast.error(ar ? 'تعذر تحميل البيانات' : 'Failed to load', { description: msg });
+    } finally {
       setLoading(false);
-    };
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchLateRecords();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, selectedYear]);
 
   // Group by employee
@@ -196,7 +212,24 @@ export const LateArrivals = () => {
             className={cn(isRTL ? "pr-10" : "pl-10")}
           />
         </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => fetchLateRecords(true)}
+          disabled={refreshing || loading}
+          aria-label={ar ? 'تحديث' : 'Refresh'}
+          title={ar ? 'تحديث' : 'Refresh'}
+        >
+          <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+        </Button>
       </div>
+
+      {error && !loading && (
+        <div className="flex items-start gap-2 p-3 rounded-md border border-destructive/40 bg-destructive/10 text-destructive text-sm">
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Today's Late */}
       {todayLate.length > 0 && (
@@ -243,7 +276,10 @@ export const LateArrivals = () => {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</div>
+            <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>{ar ? 'جاري التحميل...' : 'Loading...'}</span>
+            </div>
           ) : groupedByEmployee.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <AlertTriangle className="w-12 h-12 mx-auto mb-4 opacity-50" />
