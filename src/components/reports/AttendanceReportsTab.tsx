@@ -98,6 +98,11 @@ export const AttendanceReportsTab = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-muted-foreground">
+                  <RotateCcw className="w-4 h-4" />{language === 'ar' ? 'إعادة ضبط' : 'Reset'}
+                </Button>
+              )}
             </div>
             <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
               <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)}>
