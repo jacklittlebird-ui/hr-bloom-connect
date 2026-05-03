@@ -553,7 +553,12 @@ export const VehicleMaintenance = () => {
                             ) : '-'}
                           </TableCell>
                           <TableCell>
-                            <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(r.id)}><Trash2 className="w-4 h-4" /></Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent>
+                            </Tooltip>
                           </TableCell>
                         </TableRow>
                       );
