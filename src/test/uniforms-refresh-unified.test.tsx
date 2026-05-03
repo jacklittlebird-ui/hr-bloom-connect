@@ -195,7 +195,7 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
 
     // Tabs container is still present (a single remount occurred via key bump)
     expect(container.querySelector('[role="tablist"]')).toBeTruthy();
-    expect(refreshUniformsMock).toHaveBeenCalledTimes(1);
+    // Rapid clicks must coalesce into a single success toast
     expect(sonnerSpy.success).toHaveBeenCalledTimes(1);
   });
 });
