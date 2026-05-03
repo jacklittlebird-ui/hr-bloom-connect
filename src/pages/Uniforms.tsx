@@ -1,5 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { usePagination } from '@/hooks/usePagination';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Loader2 } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
