@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Banknote, Percent, Calendar, Bell, Shield, Save } from 'lucide-react';
+import { Settings, Banknote, Percent, Calendar, Bell, Shield, Save, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface LoanType {
@@ -102,6 +102,7 @@ export const LoanSettings = () => {
   const { t, isRTL } = useLanguage();
   const [loanTypes, setLoanTypes] = useState<LoanType[]>(initialLoanTypes);
   const [selectedType, setSelectedType] = useState<string>(loanTypes[0].id);
+  const [saving, setSaving] = useState(false);
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
     maxConcurrentLoans: 2,
     advanceMaxPercent: 50,
@@ -117,13 +118,40 @@ export const LoanSettings = () => {
   const selectedLoanType = loanTypes.find(lt => lt.id === selectedType);
 
   const handleLoanTypeUpdate = (field: keyof LoanType, value: any) => {
-    setLoanTypes(loanTypes.map(lt => 
+    setLoanTypes(loanTypes.map(lt =>
       lt.id === selectedType ? { ...lt, [field]: value } : lt
     ));
   };
 
-  const handleSave = () => {
-    toast({ title: t('common.success'), description: t('loans.settings.saved') });
+  const validateSettings = (): string | null => {
+    if (generalSettings.maxConcurrentLoans < 1) return isRTL ? 'الحد الأقصى للقروض يجب أن يكون 1 على الأقل' : 'Max concurrent loans must be at least 1';
+    if (generalSettings.advanceMaxPercent <= 0 || generalSettings.advanceMaxPercent > 100) return isRTL ? 'نسبة السلفة يجب أن تكون بين 1 و100' : 'Advance percent must be 1-100';
+    if (generalSettings.sendNotifications && generalSettings.notifyBeforeDueDays < 0) return isRTL ? 'أيام التنبيه غير صالحة' : 'Notify days invalid';
+    for (const lt of loanTypes) {
+      if (lt.maxAmount <= 0) return isRTL ? `المبلغ الأقصى لـ${lt.nameAr} يجب أن يكون أكبر من صفر` : `Max amount for ${lt.nameEn} must be > 0`;
+      if (lt.maxInstallments <= 0) return isRTL ? `عدد الأقساط لـ${lt.nameAr} غير صالح` : `Installments for ${lt.nameEn} invalid`;
+      if (lt.maxPercentOfSalary <= 0 || lt.maxPercentOfSalary > 100) return isRTL ? `نسبة الراتب لـ${lt.nameAr} يجب أن تكون 1-100` : `Salary % for ${lt.nameEn} must be 1-100`;
+    }
+    return null;
+  };
+
+  const handleSave = async () => {
+    if (saving) return;
+    const err = validateSettings();
+    if (err) {
+      toast({ title: isRTL ? 'بيانات غير صالحة' : 'Invalid data', description: err, variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    try {
+      // Persist settings (placeholder for backend save)
+      await new Promise(r => setTimeout(r, 400));
+      toast({ title: t('common.success'), description: t('loans.settings.saved') });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'تعذر الحفظ' : 'Save failed', description: e?.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -380,9 +408,9 @@ export const LoanSettings = () => {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} size="lg">
-          <Save className="h-4 w-4 mr-2" />
-          {t('loans.settings.saveAll')}
+        <Button onClick={handleSave} size="lg" disabled={saving}>
+          {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+          {saving ? (isRTL ? 'جاري الحفظ...' : 'Saving...') : t('loans.settings.saveAll')}
         </Button>
       </div>
     </div>
