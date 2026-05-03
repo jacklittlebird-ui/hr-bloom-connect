@@ -28,14 +28,15 @@ const getMonthName = (dateStr: string, lang: string) => {
   return date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { month: 'long', year: 'numeric' });
 };
 
-export const AdvancesList = () => {
+export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
   const { isRTL, language } = useLanguage();
   const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
-  const { advances, addAdvance, updateAdvance, deleteAdvance, ensureLoaded } = useLoanData();
+  const { advances, addAdvance, updateAdvance, deleteAdvance, ensureLoaded, refreshData } = useLoanData();
   const { employees } = useEmployeeData();
   const activeEmployees = employees.filter(e => e.status === 'active');
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
+  useEffect(() => { if (refreshKey > 0) refreshData(); }, [refreshKey, refreshData]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');

@@ -31,7 +31,7 @@ const getMonthName = (dateStr: string, lang: string) => {
   return `${monthName} ${year}`;
 };
 
-export const LoansList = () => {
+export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
   const { t, isRTL, language } = useLanguage();
   const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
   const { loans, addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment, refreshData, ensureLoaded } = useLoanData();
@@ -39,6 +39,7 @@ export const LoansList = () => {
   const activeEmployees = employees.filter(e => e.status === 'active');
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
+  useEffect(() => { if (refreshKey > 0) refreshData(); }, [refreshKey, refreshData]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');

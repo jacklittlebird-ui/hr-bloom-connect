@@ -26,12 +26,15 @@ interface Installment {
   status: 'paid' | 'pending' | 'overdue';
 }
 
-export const InstallmentsList = () => {
+export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
   const { t, isRTL, language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [installments, setInstallments] = useState<Installment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
 
   const fetchInstallments = async () => {
     // Fetch all installments across the 1000-row default limit using ranged pagination
