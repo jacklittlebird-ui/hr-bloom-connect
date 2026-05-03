@@ -64,6 +64,10 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
   const [showBulkPayDialog, setShowBulkPayDialog] = useState(false);
   const [bulkPayMonth, setBulkPayMonth] = useState('');
   const [bulkPayLoading, setBulkPayLoading] = useState(false);
+  const [actioningId, setActioningId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [dateFromFilter, setDateFromFilter] = useState('');
+  const [dateToFilter, setDateToFilter] = useState('');
 
   const [formData, setFormData] = useState({
     employeeId: '', // UUID
@@ -128,7 +132,9 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
     const empStation = getEmployeeStation(loan.employeeId);
     const matchesStation = stationFilter === 'all' || empStation === stationFilter || loan.station === stationFilter;
     const matchesStartDate = startDateFilter === 'all' || loan.startDate?.startsWith(startDateFilter);
-    return matchesSearch && matchesStatus && matchesStation && matchesStartDate;
+    const matchesFrom = !dateFromFilter || (loan.startDate && loan.startDate >= dateFromFilter);
+    const matchesTo = !dateToFilter || (loan.startDate && loan.startDate <= dateToFilter);
+    return matchesSearch && matchesStatus && matchesStation && matchesStartDate && matchesFrom && matchesTo;
   });
 
   const { paginatedItems: paginatedLoans, currentPage: loanPage, totalPages: loanTotalPages, totalItems: loanTotalItems, startIndex: loanStart, endIndex: loanEnd, setCurrentPage: setLoanPage } = usePagination(filteredLoans);
@@ -168,6 +174,7 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
     const amount = parseFloat(formData.amount);
     const isManual = formData.calculationMethod === 'manual';
     const monthlyPayment = isManual ? parseFloat(formData.monthlyPayment || '0') : 0;
@@ -177,12 +184,21 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
       toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار الموظف من القائمة' : 'Please select an employee from the list', variant: 'destructive' });
       return;
     }
-    if (!formData.amount || !formData.startDate || installments <= 0) {
+    if (!formData.amount || amount <= 0) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'مبلغ القرض يجب أن يكون أكبر من صفر' : 'Loan amount must be greater than zero', variant: 'destructive' });
+      return;
+    }
+    if (!formData.startDate || installments <= 0) {
       toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+    if (isManual && monthlyPayment > amount) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'القسط الشهري لا يمكن أن يتجاوز مبلغ القرض' : 'Monthly payment cannot exceed loan amount', variant: 'destructive' });
       return;
     }
     const employee = activeEmployees.find(e => e.id === formData.employeeId);
 
+    setSubmitting(true);
     try {
       if (editingLoan) {
         await updateLoan(editingLoan.id, {
@@ -214,24 +230,34 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
     } catch (err: any) {
       console.error('Loan save error:', err);
       toast({ title: isRTL ? 'خطأ' : 'Error', description: err?.message || (isRTL ? 'حدث خطأ أثناء الحفظ' : 'Error saving'), variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleRecordPayment = async (loanId: string) => {
+    if (actioningId) return;
+    setActioningId(loanId);
     try {
       await recordLoanPayment(loanId);
       toast({ title: isRTL ? 'تم' : 'Done', description: isRTL ? 'تم تسجيل الدفعة' : 'Payment recorded' });
-    } catch {
-      toast({ title: isRTL ? 'خطأ' : 'Error', variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
     }
   };
 
   const handleReversePayment = async (loanId: string) => {
+    if (actioningId) return;
+    setActioningId(loanId);
     try {
       await reverseLoanPayment(loanId);
       toast({ title: isRTL ? 'تم' : 'Done', description: isRTL ? 'تم التراجع عن الدفعة' : 'Payment reversed' });
-    } catch {
-      toast({ title: isRTL ? 'خطأ' : 'Error', variant: 'destructive' });
+    } catch (e: any) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' });
+    } finally {
+      setActioningId(null);
     }
   };
 
