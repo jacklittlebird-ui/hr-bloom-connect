@@ -455,9 +455,18 @@ export const PerformanceReviewForm = () => {
       </Card>
 
       <div className={cn("flex gap-3", isRTL ? "flex-row-reverse justify-start" : "justify-end")}>
-        <Button variant="outline" onClick={handleSaveDraft} className="gap-2"><Save className="w-4 h-4" />{t('performance.form.saveDraft')}</Button>
-        <Button onClick={handleSubmit} className="gap-2"><Send className="w-4 h-4" />{t('performance.form.submit')}</Button>
-        <Button onClick={handleApprove} className="gap-2 bg-stat-green hover:bg-stat-green/90"><CheckCircle className="w-4 h-4" />{ar ? 'اعتماد' : 'Approve'}</Button>
+        <Button variant="outline" onClick={handleSaveDraft} disabled={!!saving} className="gap-2" aria-label={t('performance.form.saveDraft')}>
+          {saving === 'draft' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {t('performance.form.saveDraft')}
+        </Button>
+        <Button onClick={handleSubmit} disabled={!!saving} className="gap-2" aria-label={t('performance.form.submit')}>
+          {saving === 'submitted' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+          {t('performance.form.submit')}
+        </Button>
+        <Button onClick={handleApprove} disabled={!!saving} className="gap-2 bg-stat-green hover:bg-stat-green/90" aria-label={ar ? 'اعتماد' : 'Approve'}>
+          {saving === 'approved' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+          {ar ? 'اعتماد' : 'Approve'}
+        </Button>
       </div>
     </div>
   );
