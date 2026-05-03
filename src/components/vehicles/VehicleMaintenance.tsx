@@ -66,11 +66,20 @@ export const VehicleMaintenance = () => {
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<MaintenanceRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'periodic', description: '',
     cost: 0, maintenance_date: new Date().toISOString().split('T')[0],
     next_maintenance_date: '', odometer_reading: '', provider: '', notes: '',
   });
+
+  const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || !!fromDate || !!toDate;
+  const resetFilters = () => {
+    setSearch(''); setStationFilter(null); setTypeFilter('all'); setFromDate(''); setToDate('');
+    toast.success(isAr ? 'تم إعادة ضبط الفلاتر' : 'Filters reset');
+  };
 
   const fetchData = async (showLoader = true) => {
     if (showLoader) setLoading(true);
