@@ -24,15 +24,15 @@ vi.mock('@/contexts/LanguageContext', () => ({
   }),
 }));
 
-// Track mount counts on global to survive hoisting
+// Track mount counts on global to survive vi.mock hoisting
 (globalThis as any).__mountCounts = (globalThis as any).__mountCounts || {};
 const mountCounts: Record<string, number> = (globalThis as any).__mountCounts;
 
-const mkFactory = (name: string) => () => {
+const inlineMock = (name: string) => () => {
   const ReactLib = require('react');
   const Comp = () => {
     ReactLib.useEffect(() => {
-      const c = (globalThis as any).__mountCounts;
+      const c = ((globalThis as any).__mountCounts ||= {});
       c[name] = (c[name] || 0) + 1;
     }, []);
     return ReactLib.createElement('div', { 'data-testid': `report-${name}` }, name);
@@ -40,18 +40,67 @@ const mkFactory = (name: string) => () => {
   return { [name]: Comp, default: Comp };
 };
 
-vi.mock('@/components/reports/EmployeeReports', mkFactory('EmployeeReports'));
-vi.mock('@/components/reports/AttendanceReportsTab', mkFactory('AttendanceReportsTab'));
-vi.mock('@/components/reports/StationAttendanceReport', mkFactory('StationAttendanceReport'));
-vi.mock('@/components/reports/DailyAttendanceReport', mkFactory('DailyAttendanceReport'));
-vi.mock('@/components/reports/LeaveReports', mkFactory('LeaveReports'));
-vi.mock('@/components/reports/SalaryReports', mkFactory('SalaryReports'));
-vi.mock('@/components/reports/PerformanceReports', mkFactory('PerformanceReports'));
-vi.mock('@/components/reports/TrainingReports', mkFactory('TrainingReports'));
-vi.mock('@/components/reports/TrainingDebtReport', mkFactory('TrainingDebtReport'));
-vi.mock('@/components/reports/UniformReport', mkFactory('UniformReport'));
-vi.mock('@/components/reports/TrainingQualificationReport', mkFactory('TrainingQualificationReport'));
-vi.mock('@/components/training/TrainingRecordsReport', mkFactory('TrainingRecordsReport'));
+// NOTE: factories must be self-contained because vi.mock is hoisted; we inline a helper inside each.
+vi.mock('@/components/reports/EmployeeReports', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['EmployeeReports'] = (c['EmployeeReports']||0)+1; }, []); return R.createElement('div', null, 'EmployeeReports'); };
+  return { EmployeeReports: C };
+});
+vi.mock('@/components/reports/AttendanceReportsTab', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['AttendanceReportsTab'] = (c['AttendanceReportsTab']||0)+1; }, []); return R.createElement('div', null, 'AttendanceReportsTab'); };
+  return { AttendanceReportsTab: C };
+});
+vi.mock('@/components/reports/StationAttendanceReport', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['StationAttendanceReport'] = (c['StationAttendanceReport']||0)+1; }, []); return R.createElement('div', null, 'StationAttendanceReport'); };
+  return { StationAttendanceReport: C };
+});
+vi.mock('@/components/reports/DailyAttendanceReport', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['DailyAttendanceReport'] = (c['DailyAttendanceReport']||0)+1; }, []); return R.createElement('div', null, 'DailyAttendanceReport'); };
+  return { DailyAttendanceReport: C };
+});
+vi.mock('@/components/reports/LeaveReports', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['LeaveReports'] = (c['LeaveReports']||0)+1; }, []); return R.createElement('div', null, 'LeaveReports'); };
+  return { LeaveReports: C };
+});
+vi.mock('@/components/reports/SalaryReports', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['SalaryReports'] = (c['SalaryReports']||0)+1; }, []); return R.createElement('div', null, 'SalaryReports'); };
+  return { SalaryReports: C };
+});
+vi.mock('@/components/reports/PerformanceReports', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['PerformanceReports'] = (c['PerformanceReports']||0)+1; }, []); return R.createElement('div', null, 'PerformanceReports'); };
+  return { PerformanceReports: C };
+});
+vi.mock('@/components/reports/TrainingReports', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['TrainingReports'] = (c['TrainingReports']||0)+1; }, []); return R.createElement('div', null, 'TrainingReports'); };
+  return { TrainingReports: C };
+});
+vi.mock('@/components/reports/TrainingDebtReport', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['TrainingDebtReport'] = (c['TrainingDebtReport']||0)+1; }, []); return R.createElement('div', null, 'TrainingDebtReport'); };
+  return { TrainingDebtReport: C };
+});
+vi.mock('@/components/reports/UniformReport', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['UniformReport'] = (c['UniformReport']||0)+1; }, []); return R.createElement('div', null, 'UniformReport'); };
+  return { UniformReport: C };
+});
+vi.mock('@/components/reports/TrainingQualificationReport', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['TrainingQualificationReport'] = (c['TrainingQualificationReport']||0)+1; }, []); return R.createElement('div', null, 'TrainingQualificationReport'); };
+  return { TrainingQualificationReport: C };
+});
+vi.mock('@/components/training/TrainingRecordsReport', () => {
+  const R = require('react');
+  const C = () => { R.useEffect(() => { const c = ((globalThis as any).__mountCounts ||= {}); c['TrainingRecordsReport'] = (c['TrainingRecordsReport']||0)+1; }, []); return R.createElement('div', null, 'TrainingRecordsReport'); };
+  return { TrainingRecordsReport: C };
+});
 
 import Reports from '@/pages/Reports';
 
