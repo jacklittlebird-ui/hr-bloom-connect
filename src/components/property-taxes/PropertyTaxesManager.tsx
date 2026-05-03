@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import {
   Plus, Search, AlertTriangle, Clock, CheckCircle2, XCircle, Edit, Trash2, Bell, Landmark,
   CalendarDays, Receipt, FileSpreadsheet, FileText, RefreshCw, TrendingUp, Wallet, Filter,
-  ArrowUpDown, CheckCircle, MapPin, Building2, Calculator, ChevronRight,
+  ArrowUpDown, CheckCircle, MapPin, Building2, Calculator, ChevronRight, Loader2,
 } from 'lucide-react';
 import { format, differenceInDays, startOfYear, endOfYear, isWithinInterval, parseISO } from 'date-fns';
 import * as XLSX from 'xlsx';
@@ -85,27 +85,36 @@ export const PropertyTaxesManager = () => {
   const [paymentForm, setPaymentForm] = useState({ paid_date: '', receipt_number: '' });
 
   const [activeTab, setActiveTab] = useState('overview');
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    const [taxRes, stRes] = await Promise.all([
-      supabase.from('property_taxes').select('*').order('due_date', { ascending: false }),
-      supabase.from('stations').select('id, name_ar, name_en').order('name_ar'),
-    ]);
-    if (taxRes.data) {
-      // auto-flag overdue records (client-side derived view)
-      const today = new Date();
-      const updated = (taxRes.data as any[]).map(r => {
-        if (r.status !== 'paid' && differenceInDays(parseISO(r.due_date), today) < 0) {
-          return { ...r, status: 'overdue' };
-        }
-        return r;
-      });
-      setRecords(updated as PropertyTax[]);
+  const fetchData = useCallback(async (isManual = false) => {
+    if (isManual) setRefreshing(true); else setLoading(true);
+    try {
+      const [taxRes, stRes] = await Promise.all([
+        supabase.from('property_taxes').select('*').order('due_date', { ascending: false }),
+        supabase.from('stations').select('id, name_ar, name_en').order('name_ar'),
+      ]);
+      if (taxRes.error) throw taxRes.error;
+      if (taxRes.data) {
+        const today = new Date();
+        const updated = (taxRes.data as any[]).map(r => {
+          if (r.status !== 'paid' && differenceInDays(parseISO(r.due_date), today) < 0) {
+            return { ...r, status: 'overdue' };
+          }
+          return r;
+        });
+        setRecords(updated as PropertyTax[]);
+      }
+      if (stRes.data) setStations(stRes.data as any);
+      if (isManual) toast.success(isAr ? 'تم تحديث البيانات' : 'Data refreshed');
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'فشل تحميل البيانات' : 'Failed to load data'));
+    } finally {
+      if (isManual) setRefreshing(false); else setLoading(false);
     }
-    if (stRes.data) setStations(stRes.data as any);
-    setLoading(false);
-  }, []);
+  }, [isAr]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -228,6 +237,7 @@ export const PropertyTaxesManager = () => {
   const resetFilters = () => {
     setSearch(''); setStatusFilter('all'); setStationFilter('all');
     setPeriodFilter('all'); setYearFilter('all'); setTypeFilter('all');
+    toast.success(isAr ? 'تم إعادة ضبط الفلاتر' : 'Filters reset');
   };
 
   // CRUD
@@ -249,34 +259,57 @@ export const PropertyTaxesManager = () => {
       toast.error(isAr ? 'يرجى إدخال المبلغ وتاريخ الاستحقاق' : 'Please enter amount and due date');
       return;
     }
-    const payload: any = {
-      station_id: form.station_id || null, amount: Number(form.amount), due_date: form.due_date,
-      paid_date: form.paid_date || null, status: form.status,
-      receipt_number: form.receipt_number || null, property_type: form.property_type || null,
-      address: form.address || null,
-      area_sqm: form.area_sqm ? Number(form.area_sqm) : null,
-      rental_value: form.rental_value ? Number(form.rental_value) : null,
-      tax_period: form.tax_period, notes: form.notes || null,
-    };
-    if (editingId) {
-      const { error } = await supabase.from('property_taxes').update(payload).eq('id', editingId);
-      if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تم التحديث بنجاح' : 'Updated successfully');
-    } else {
-      const { error } = await supabase.from('property_taxes').insert(payload);
-      if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تمت الإضافة بنجاح' : 'Added successfully');
+    const amt = Number(form.amount);
+    if (!isFinite(amt) || amt <= 0) {
+      toast.error(isAr ? 'المبلغ يجب أن يكون أكبر من صفر' : 'Amount must be greater than zero');
+      return;
     }
-    setDialogOpen(false);
-    fetchData();
+    if (form.status === 'paid' && !form.paid_date) {
+      toast.error(isAr ? 'حالة "مدفوع" تتطلب تاريخ الدفع' : 'Paid status requires a payment date');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        station_id: form.station_id || null, amount: amt, due_date: form.due_date,
+        paid_date: form.paid_date || null, status: form.status,
+        receipt_number: form.receipt_number || null, property_type: form.property_type || null,
+        address: form.address || null,
+        area_sqm: form.area_sqm ? Number(form.area_sqm) : null,
+        rental_value: form.rental_value ? Number(form.rental_value) : null,
+        tax_period: form.tax_period, notes: form.notes || null,
+      };
+      if (editingId) {
+        const { error } = await supabase.from('property_taxes').update(payload).eq('id', editingId);
+        if (error) throw error;
+        toast.success(isAr ? 'تم التحديث بنجاح' : 'Updated successfully');
+      } else {
+        const { error } = await supabase.from('property_taxes').insert(payload);
+        if (error) throw error;
+        toast.success(isAr ? 'تمت الإضافة بنجاح' : 'Added successfully');
+      }
+      setDialogOpen(false);
+      fetchData();
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'تعذر الحفظ' : 'Save failed'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from('property_taxes').delete().eq('id', id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم الحذف' : 'Deleted');
-    setDeleteConfirm(null);
-    fetchData();
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('property_taxes').delete().eq('id', id);
+      if (error) throw error;
+      toast.success(isAr ? 'تم الحذف' : 'Deleted');
+      setDeleteConfirm(null);
+      fetchData();
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'تعذر الحذف' : 'Delete failed'));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const openPayment = (r: PropertyTax) => {
@@ -287,14 +320,21 @@ export const PropertyTaxesManager = () => {
   const handleMarkPaid = async () => {
     if (!paymentDialog) return;
     if (!paymentForm.paid_date) { toast.error(isAr ? 'أدخل تاريخ الدفع' : 'Enter paid date'); return; }
-    const { error } = await supabase.from('property_taxes').update({
-      status: 'paid', paid_date: paymentForm.paid_date,
-      receipt_number: paymentForm.receipt_number || paymentDialog.receipt_number,
-    }).eq('id', paymentDialog.id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم تسجيل الدفع' : 'Payment recorded');
-    setPaymentDialog(null);
-    fetchData();
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('property_taxes').update({
+        status: 'paid', paid_date: paymentForm.paid_date,
+        receipt_number: paymentForm.receipt_number || paymentDialog.receipt_number,
+      }).eq('id', paymentDialog.id);
+      if (error) throw error;
+      toast.success(isAr ? 'تم تسجيل الدفع' : 'Payment recorded');
+      setPaymentDialog(null);
+      fetchData();
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'تعذر تسجيل الدفع' : 'Failed to record payment'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Exports
@@ -372,7 +412,17 @@ export const PropertyTaxesManager = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Tooltip><TooltipTrigger asChild>
-            <Button variant="outline" size="icon" onClick={fetchData}><RefreshCw className="w-4 h-4" /></Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => fetchData(true)}
+              disabled={refreshing || loading}
+              aria-busy={refreshing}
+              aria-label={isAr ? 'تحديث البيانات' : 'Refresh data'}
+              title={isAr ? 'تحديث' : 'Refresh'}
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
           </TooltipTrigger><TooltipContent>{isAr ? 'تحديث' : 'Refresh'}</TooltipContent></Tooltip>
           <Button variant="outline" onClick={exportExcel} className="gap-2 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10">
             <FileSpreadsheet className="w-4 h-4" /> Excel
@@ -663,18 +713,18 @@ export const PropertyTaxesManager = () => {
                           <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
                             {r.status !== 'paid' && (
                               <Tooltip><TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-emerald-500/10" onClick={() => openPayment(r)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-emerald-500/10" onClick={() => openPayment(r)} aria-label={isAr ? 'تسجيل دفع' : 'Mark paid'}>
                                   <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
                                 </Button>
                               </TooltipTrigger><TooltipContent>{isAr ? 'تسجيل دفع' : 'Mark Paid'}</TooltipContent></Tooltip>
                             )}
                             <Tooltip><TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" onClick={() => openEdit(r)}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" onClick={() => openEdit(r)} aria-label={isAr ? 'تعديل السجل' : 'Edit record'}>
                                 <Edit className="w-3.5 h-3.5" />
                               </Button>
                             </TooltipTrigger><TooltipContent>{isAr ? 'تعديل' : 'Edit'}</TooltipContent></Tooltip>
                             <Tooltip><TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10" onClick={() => setDeleteConfirm(r.id)}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10" onClick={() => setDeleteConfirm(r.id)} aria-label={isAr ? 'حذف السجل' : 'Delete record'}>
                                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
                               </Button>
                             </TooltipTrigger><TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent></Tooltip>
@@ -894,24 +944,24 @@ export const PropertyTaxesManager = () => {
             </div>
           </div>
           <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSave} className="gap-2">
-              <CheckCircle2 className="w-4 h-4" />
-              {editingId ? (isAr ? 'تحديث' : 'Update') : (isAr ? 'إضافة' : 'Add')}
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleSave} className="gap-2" disabled={saving} aria-busy={saving}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              {saving ? (isAr ? 'جارٍ الحفظ...' : 'Saving...') : (editingId ? (isAr ? 'تحديث' : 'Update') : (isAr ? 'إضافة' : 'Add'))}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Quick Payment Dialog */}
-      <Dialog open={!!paymentDialog} onOpenChange={() => setPaymentDialog(null)}>
+      <Dialog open={!!paymentDialog} onOpenChange={(o) => { if (!o && !saving) setPaymentDialog(null); }}>
         <DialogContent dir="rtl" className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
               <CheckCircle className="w-5 h-5" /> {isAr ? 'تسجيل دفع' : 'Record Payment'}
             </DialogTitle>
             <DialogDescription>
-              {paymentDialog && `${stationName(paymentDialog.station_id)} • ${fmtMoney(Number(paymentDialog.amount))} ${isAr ? 'ج.م' : 'EGP'}`}
+              {paymentDialog && `${stationName(paymentDialog.station_id)} • ${fmtMoney(Number(paymentDialog.amount))} ${isAr ? 'ج.م' : 'EGP'} • ${fmtDate(paymentDialog.due_date)}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -925,16 +975,17 @@ export const PropertyTaxesManager = () => {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setPaymentDialog(null)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleMarkPaid} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
-              <CheckCircle className="w-4 h-4" /> {isAr ? 'تأكيد الدفع' : 'Confirm Payment'}
+            <Button variant="outline" onClick={() => setPaymentDialog(null)} disabled={saving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleMarkPaid} className="gap-2 bg-emerald-600 hover:bg-emerald-700" disabled={saving} aria-busy={saving}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+              {saving ? (isAr ? 'جارٍ التسجيل...' : 'Recording...') : (isAr ? 'تأكيد الدفع' : 'Confirm Payment')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirm */}
-      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+      <Dialog open={!!deleteConfirm} onOpenChange={(o) => { if (!o && !deleting) setDeleteConfirm(null); }}>
         <DialogContent dir="rtl" className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
@@ -944,9 +995,24 @@ export const PropertyTaxesManager = () => {
               {isAr ? 'هل أنت متأكد من حذف هذا السجل؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to delete this record? This action cannot be undone.'}
             </DialogDescription>
           </DialogHeader>
+          {deleteConfirm && (() => {
+            const r = records.find(x => x.id === deleteConfirm);
+            if (!r) return null;
+            return (
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1">
+                <div className="flex justify-between"><span className="text-muted-foreground">{isAr ? 'المحطة:' : 'Station:'}</span><span className="font-medium">{stationName(r.station_id)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{isAr ? 'المبلغ:' : 'Amount:'}</span><span className="font-semibold tabular-nums">{fmtMoney(Number(r.amount))} {isAr ? 'ج.م' : 'EGP'}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">{isAr ? 'الاستحقاق:' : 'Due:'}</span><span className="tabular-nums">{fmtDate(r.due_date)}</span></div>
+                <div className="flex justify-between items-center"><span className="text-muted-foreground">{isAr ? 'الحالة:' : 'Status:'}</span>{statusBadge(r.status)}</div>
+              </div>
+            );
+          })()}
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>{isAr ? 'حذف' : 'Delete'}</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)} disabled={deleting}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} disabled={deleting} aria-busy={deleting} className="gap-2">
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {deleting ? (isAr ? 'جارٍ الحذف...' : 'Deleting...') : (isAr ? 'حذف' : 'Delete')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
