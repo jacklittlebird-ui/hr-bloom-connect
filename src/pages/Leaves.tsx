@@ -273,8 +273,8 @@ const Leaves = () => {
 
   useEffect(() => { fetchData(); }, [language]);
 
-  // Generic filter function
-  const filterRequests = <T extends { employeeId: string; employeeCode?: string; employeeName: string; employeeNameAr: string }>(requests: T[]): T[] => {
+  // Generic filter (search + dept + station)
+  const filterBase = <T extends { employeeId: string; employeeCode?: string; employeeName: string; employeeNameAr: string }>(requests: T[]): T[] => {
     return requests.filter(r => {
       const q = searchQuery.trim().toLowerCase();
       const matchSearch = !q ||
@@ -287,11 +287,24 @@ const Leaves = () => {
     });
   };
 
-  const filteredLeaves = useMemo(() => filterRequests(leaveRequests), [leaveRequests, searchQuery, selectedDepartment, selectedStation]);
-  const filteredPermissions = useMemo(() => filterRequests(permissionRequests), [permissionRequests, searchQuery, selectedDepartment, selectedStation]);
-  const filteredMissions = useMemo(() => filterRequests(missionRequests), [missionRequests, searchQuery, selectedDepartment, selectedStation]);
-  const filteredOvertime = useMemo(() => filterRequests(overtimeRequests), [overtimeRequests, searchQuery, selectedDepartment, selectedStation]);
-  const filteredBalances = useMemo(() => filterRequests(leaveBalances), [leaveBalances, searchQuery, selectedDepartment, selectedStation]);
+  // Status + date-range filter applied on top of base
+  const inDateRange = (dateStr?: string) => {
+    if (!dateStr) return true;
+    if (fromDate && dateStr < fromDate) return false;
+    if (toDate && dateStr > toDate) return false;
+    return true;
+  };
+  const matchStatus = (status?: string) => selectedStatus === 'all' || status === selectedStatus;
+
+  const filteredLeaves = useMemo(() => filterBase(leaveRequests).filter(r => matchStatus(r.status) && inDateRange(r.startDate)),
+    [leaveRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
+  const filteredPermissions = useMemo(() => filterBase(permissionRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
+    [permissionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
+  const filteredMissions = useMemo(() => filterBase(missionRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
+    [missionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
+  const filteredOvertime = useMemo(() => filterBase(overtimeRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
+    [overtimeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
+  const filteredBalances = useMemo(() => filterBase(leaveBalances), [leaveBalances, searchQuery, selectedDepartment, selectedStation]);
   const filteredEmployeeRequests = useMemo(() => {
     return employeeRequests.filter(r => {
       const matchSearch = !searchQuery ||
@@ -300,9 +313,10 @@ const Leaves = () => {
         r.employeeCode.includes(searchQuery);
       const matchDept = selectedDepartment === 'all' || empDeptMap.get(r.employeeId) === selectedDepartment;
       const matchStation = selectedStation === 'all' || empStationMap.get(r.employeeId) === selectedStation;
-      return matchSearch && matchDept && matchStation;
+      const matchSt = selectedStatus === 'all' || r.status === selectedStatus;
+      return matchSearch && matchDept && matchStation && matchSt && inDateRange(r.date);
     });
-  }, [employeeRequests, searchQuery, selectedDepartment, selectedStation]);
+  }, [employeeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
 
   // Unified loading state — set of mutation keys currently running
   const [mutating, setMutating] = useState<Set<string>>(new Set());
