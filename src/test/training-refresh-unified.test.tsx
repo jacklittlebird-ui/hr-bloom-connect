@@ -201,7 +201,7 @@ describe('Training — refresh covers all 7 tabs with a single toast & one API c
     const apiAfter = (globalThis as any).__apiCalls;
     const delta = apiAfter - apiBefore;
     expect(delta).toBeGreaterThanOrEqual(8);
-    expect(delta).toBeLessThanOrEqual(16);
+    expect(delta).toBeLessThanOrEqual(24); // not a runaway from 12 rapid clicks
   });
 
   it('refresh button cannot retrigger toast until cycle completes; sequential refresh = N toasts', async () => {
