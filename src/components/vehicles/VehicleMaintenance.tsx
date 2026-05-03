@@ -410,9 +410,9 @@ export const VehicleMaintenance = () => {
             </Select>
             <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 w-36" title={isAr ? 'من تاريخ' : 'From date'} />
             <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9 w-36" title={isAr ? 'إلى تاريخ' : 'To date'} />
-            {(fromDate || toDate) && (
-              <Button size="sm" variant="ghost" onClick={() => { setFromDate(''); setToDate(''); }}>
-                {isAr ? 'مسح التواريخ' : 'Clear dates'}
+            {filtersActive && (
+              <Button size="sm" variant="ghost" onClick={resetFilters} aria-label={isAr ? 'إعادة ضبط الفلاتر' : 'Reset filters'}>
+                <FilterX className="w-4 h-4 me-1" />{isAr ? 'إعادة ضبط' : 'Reset'}
               </Button>
             )}
             <Button size="sm" variant="outline" onClick={exportCsv}>
