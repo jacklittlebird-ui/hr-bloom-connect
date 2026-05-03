@@ -279,6 +279,10 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
   });
 
   it('Add/Save: error toast surfaces when addUniform throws (no false success)', async () => {
+    // Drain any deferred toast from prior async tests
+    await act(async () => { await new Promise(r => setTimeout(r, 100)); });
+    sonnerSpy.success.mockClear();
+    sonnerSpy.error.mockClear();
     addUniformMock.mockImplementationOnce(async () => { throw new Error('boom'); });
     render(<LanguageProvider><Uniforms /></LanguageProvider>);
 
