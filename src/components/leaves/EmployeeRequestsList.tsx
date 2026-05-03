@@ -132,15 +132,15 @@ export const EmployeeRequestsList = ({ requests, onRefresh }: Props) => {
                     <div className="flex items-center gap-1">
                       {r.status === 'pending' && (
                         <>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-success hover:text-success" onClick={() => handleApprove(r.id)}>
+                          <Button size="icon" variant="ghost" disabled={busyId === r.id} className="h-8 w-8 text-success hover:text-success" onClick={() => handleApprove(r.id)}>
                             <CheckCircle className="w-4 h-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setRejectDialog(r.id)}>
+                          <Button size="icon" variant="ghost" disabled={busyId === r.id} className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setRejectDialog(r.id)}>
                             <XCircle className="w-4 h-4" />
                           </Button>
                         </>
                       )}
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(r.id)}>
+                      <Button size="icon" variant="ghost" disabled={busyId === r.id} className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(r.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
