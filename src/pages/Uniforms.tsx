@@ -399,9 +399,9 @@ const Uniforms = () => {
                     <RefreshCw className="w-4 h-4" />
                     {language === 'ar' ? 'إعادة تعيين' : 'Reset'}
                   </Button>
-                  <Button onClick={handleSave} className="gap-1.5">
-                    <Package className="w-4 h-4" />
-                    {language === 'ar' ? 'حفظ جميع الأصناف' : 'Save All Items'}
+                  <Button onClick={handleSave} disabled={saving} className="gap-1.5">
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />}
+                    {saving ? (language === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (language === 'ar' ? 'حفظ جميع الأصناف' : 'Save All Items')}
                   </Button>
                 </div>
               </CardContent>
