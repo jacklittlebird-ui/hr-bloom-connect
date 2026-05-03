@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
