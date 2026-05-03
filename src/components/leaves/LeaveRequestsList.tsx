@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FileText, Clock, CheckCircle, XCircle, Trash2, Pencil } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { LeaveRequest } from '@/types/leaves';
+import { ExportButton } from './ExportButton';
+import type { ExportColumn } from '@/lib/leavesExport';
 
 interface LeaveEditData {
   id: string;
