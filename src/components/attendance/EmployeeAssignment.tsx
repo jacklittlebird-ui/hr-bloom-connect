@@ -270,14 +270,16 @@ export const EmployeeAssignment = () => {
     setIsAssignDialogOpen(true);
   };
 
-  const handleDeleteAssignment = async (id: string) => {
-    const { error } = await supabase.from('attendance_assignments').delete().eq('id', id);
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const { error } = await supabase.from('attendance_assignments').delete().eq('id', deleteId);
     if (error) {
       toast({ title: ar ? 'خطأ في الحذف' : 'Delete failed', description: error.message, variant: 'destructive' });
-      return;
+    } else {
+      toast({ title: ar ? 'تم حذف التعيين' : 'Assignment deleted' });
+      await fetchAll();
     }
-    toast({ title: ar ? 'تم حذف التعيين' : 'Assignment deleted' });
-    await fetchAll();
+    setDeleteId(null);
   };
 
   const resetForm = () => {
