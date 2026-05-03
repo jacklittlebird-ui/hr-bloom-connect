@@ -237,6 +237,7 @@ export const PropertyTaxesManager = () => {
   const resetFilters = () => {
     setSearch(''); setStatusFilter('all'); setStationFilter('all');
     setPeriodFilter('all'); setYearFilter('all'); setTypeFilter('all');
+    toast.success(isAr ? 'تم إعادة ضبط الفلاتر' : 'Filters reset');
   };
 
   // CRUD
