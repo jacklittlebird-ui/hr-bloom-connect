@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,9 +18,11 @@ const Loans = () => {
   const { refreshData } = useLoanData();
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const refreshingRef = useRef(false); // synchronous guard against rapid clicks
 
   const handleRefresh = async () => {
-    if (refreshing) return;
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
     setRefreshing(true);
     try {
       await refreshData();
@@ -31,6 +33,7 @@ const Loans = () => {
       toast({ title: isRTL ? 'تعذر التحديث' : 'Refresh failed', description: e?.message, variant: 'destructive' });
     } finally {
       setRefreshing(false);
+      refreshingRef.current = false;
     }
   };
 
