@@ -61,12 +61,16 @@ export const LeaveReports = () => {
     month: d.month, requests: d.requests, approved: d.approved, rejected: d.rejected,
   }));
 
+  const hasFilters = period !== 'year' || station !== 'all';
+  const resetFilters = () => { setPeriod('year'); setStation('all'); };
+
   return (
     <div className="space-y-6">
+      <DemoDataBanner />
       <Card>
         <CardContent className="p-4">
           <div className={cn("flex flex-wrap gap-4 items-center justify-between", isRTL && "flex-row-reverse")}>
-            <div className={cn("flex gap-4", isRTL && "flex-row-reverse")}>
+            <div className={cn("flex flex-wrap gap-4 items-center", isRTL && "flex-row-reverse")}>
               <Select value={period} onValueChange={setPeriod}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -84,6 +88,11 @@ export const LeaveReports = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-muted-foreground">
+                  <RotateCcw className="w-4 h-4" />{language === 'ar' ? 'إعادة ضبط' : 'Reset'}
+                </Button>
+              )}
             </div>
             <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
               <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)}>
