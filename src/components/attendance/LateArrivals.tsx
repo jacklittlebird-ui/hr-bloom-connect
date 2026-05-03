@@ -276,7 +276,10 @@ export const LateArrivals = () => {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</div>
+            <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>{ar ? 'جاري التحميل...' : 'Loading...'}</span>
+            </div>
           ) : groupedByEmployee.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <AlertTriangle className="w-12 h-12 mx-auto mb-4 opacity-50" />
