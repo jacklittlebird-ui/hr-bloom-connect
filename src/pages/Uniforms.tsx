@@ -48,14 +48,25 @@ const Uniforms = () => {
   // Delete confirmation
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // Refresh / save guards
+  // Refresh / save / edit / reset guards
   const [refreshing, setRefreshing] = useState(false);
   const refreshingRef = useRef(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const savingEditRef = useRef(false);
+  const [resetting, setResetting] = useState(false);
+  const resettingRef = useRef(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const itemToDelete = useMemo(() => uniforms.find(u => u.id === deleteId) || null, [uniforms, deleteId]);
 
   const handleRefresh = async () => {
-    if (refreshingRef.current) return;
+    if (refreshingRef.current || savingRef.current || savingEditRef.current || resettingRef.current) {
+      toast.message(language === 'ar' ? 'يوجد عملية جارية، يرجى الانتظار' : 'An operation is in progress, please wait');
+      return;
+    }
     refreshingRef.current = true;
     setRefreshing(true);
     try {
