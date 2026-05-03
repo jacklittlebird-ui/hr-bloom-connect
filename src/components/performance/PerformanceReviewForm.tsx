@@ -55,6 +55,7 @@ export const PerformanceReviewForm = () => {
   const [improvements, setImprovements] = useState('');
   const [goals, setGoals] = useState('');
   const [managerComments, setManagerComments] = useState('');
+  const [saving, setSaving] = useState<null | 'draft' | 'submitted' | 'approved'>(null);
 
   // Find existing review for selected employee+quarter+year
   const existingReview = useMemo(() => {
