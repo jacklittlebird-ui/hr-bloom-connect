@@ -8,7 +8,7 @@ import { InstallmentsList } from '@/components/loans/InstallmentsList';
 import { LoanReports } from '@/components/loans/LoanReports';
 import { LoanSettings } from '@/components/loans/LoanSettings';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLoanData } from '@/contexts/LoanDataContext';
 import { toast } from '@/hooks/use-toast';
@@ -25,7 +25,8 @@ const Loans = () => {
     try {
       await refreshData();
       setRefreshKey(k => k + 1);
-      toast({ title: isRTL ? 'تم التحديث' : 'Refreshed', description: isRTL ? 'تم تحديث بيانات القروض' : 'Loans data refreshed' });
+      // Single unified success toast — covers all 5 tabs
+      toast({ title: isRTL ? 'تم التحديث' : 'Refreshed', description: isRTL ? 'تم تحديث جميع تبويبات القروض' : 'All loan tabs refreshed' });
     } catch (e: any) {
       toast({ title: isRTL ? 'تعذر التحديث' : 'Refresh failed', description: e?.message, variant: 'destructive' });
     } finally {
