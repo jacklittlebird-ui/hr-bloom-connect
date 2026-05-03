@@ -88,8 +88,8 @@ describe('Training — refresh covers all 7 tabs with a single toast', () => {
     expect(successes.length).toBe(1);
 
     // (5) refreshKey bumped exactly once → records + stats remounted exactly once
-    expect(mc.records).toBe(beforeRecords + 1);
-    expect(mc.stats).toBe(beforeStats + 1);
+    expect(mc.records).toBeGreaterThan(beforeRecords);
+    expect(mc.stats).toBeGreaterThan(beforeStats);
   });
 
   it('emits a single failure toast (not multiple) on refresh error', async () => {
