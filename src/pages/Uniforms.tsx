@@ -425,8 +425,8 @@ const Uniforms = () => {
                 </div>
 
                 <div className={cn("flex gap-3 justify-end", isRTL && "flex-row-reverse")}>
-                  <Button variant="outline" onClick={handleReset} className="gap-1.5">
-                    <RefreshCw className="w-4 h-4" />
+                  <Button variant="outline" onClick={handleReset} disabled={resetting || saving} className="gap-1.5">
+                    <RefreshCw className={cn("w-4 h-4", resetting && "animate-spin")} />
                     {language === 'ar' ? 'إعادة تعيين' : 'Reset'}
                   </Button>
                   <Button onClick={handleSave} disabled={saving} className="gap-1.5">
