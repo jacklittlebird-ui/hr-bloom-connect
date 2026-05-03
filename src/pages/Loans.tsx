@@ -8,7 +8,7 @@ import { InstallmentsList } from '@/components/loans/InstallmentsList';
 import { LoanReports } from '@/components/loans/LoanReports';
 import { LoanSettings } from '@/components/loans/LoanSettings';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLoanData } from '@/contexts/LoanDataContext';
 import { toast } from '@/hooks/use-toast';
@@ -25,7 +25,8 @@ const Loans = () => {
     try {
       await refreshData();
       setRefreshKey(k => k + 1);
-      toast({ title: isRTL ? 'تم التحديث' : 'Refreshed', description: isRTL ? 'تم تحديث بيانات القروض' : 'Loans data refreshed' });
+      // Single unified success toast — covers all 5 tabs
+      toast({ title: isRTL ? 'تم التحديث' : 'Refreshed', description: isRTL ? 'تم تحديث جميع تبويبات القروض' : 'All loan tabs refreshed' });
     } catch (e: any) {
       toast({ title: isRTL ? 'تعذر التحديث' : 'Refresh failed', description: e?.message, variant: 'destructive' });
     } finally {
@@ -45,6 +46,18 @@ const Loans = () => {
             <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
           </Button>
         </div>
+
+        {/* Unified refresh status banner — visible while refreshKey propagates to all 5 tabs */}
+        {refreshing && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>{isRTL ? 'جاري تحديث جميع تبويبات القروض...' : 'Refreshing all loan tabs...'}</span>
+          </div>
+        )}
 
         <Tabs defaultValue="loans" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6" dir="rtl">

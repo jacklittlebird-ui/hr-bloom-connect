@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Banknote, Percent, Calendar, Bell, Shield, Save, Loader2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Settings, Banknote, Percent, Calendar, Bell, Shield, Save, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface LoanType {
@@ -103,17 +104,24 @@ export const LoanSettings = () => {
   const [loanTypes, setLoanTypes] = useState<LoanType[]>(initialLoanTypes);
   const [selectedType, setSelectedType] = useState<string>(loanTypes[0].id);
   const [saving, setSaving] = useState(false);
-  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
-    maxConcurrentLoans: 2,
-    advanceMaxPercent: 50,
-    advanceDeductionMethod: 'next_month',
-    autoDeductFromSalary: true,
-    sendNotifications: true,
-    notifyBeforeDueDays: 5,
-    allowEarlyRepayment: true,
-    requireGuarantor: false,
-    guarantorMinService: 24,
+  const savingRef = useRef(false); // synchronous guard against rapid double-clicks
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [criticalChanges, setCriticalChanges] = useState<string[]>([]);
+  const initialSnapshotRef = useRef<{ general: GeneralSettings; types: LoanType[] }>({
+    general: {
+      maxConcurrentLoans: 2,
+      advanceMaxPercent: 50,
+      advanceDeductionMethod: 'next_month',
+      autoDeductFromSalary: true,
+      sendNotifications: true,
+      notifyBeforeDueDays: 5,
+      allowEarlyRepayment: true,
+      requireGuarantor: false,
+      guarantorMinService: 24,
+    },
+    types: JSON.parse(JSON.stringify(initialLoanTypes)),
   });
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>(initialSnapshotRef.current.general);
 
   const selectedLoanType = loanTypes.find(lt => lt.id === selectedType);
 
@@ -135,22 +143,71 @@ export const LoanSettings = () => {
     return null;
   };
 
-  const handleSave = async () => {
-    if (saving) return;
+  // Detect changes to critical fields (salary %, installment counts, advance %)
+  const detectCriticalChanges = (): string[] => {
+    const changes: string[] = [];
+    const orig = initialSnapshotRef.current;
+    if (orig.general.advanceMaxPercent !== generalSettings.advanceMaxPercent) {
+      changes.push(isRTL
+        ? `نسبة السلفة القصوى: ${orig.general.advanceMaxPercent}% → ${generalSettings.advanceMaxPercent}%`
+        : `Advance max percent: ${orig.general.advanceMaxPercent}% → ${generalSettings.advanceMaxPercent}%`);
+    }
+    if (orig.general.maxConcurrentLoans !== generalSettings.maxConcurrentLoans) {
+      changes.push(isRTL
+        ? `الحد الأقصى للقروض المتزامنة: ${orig.general.maxConcurrentLoans} → ${generalSettings.maxConcurrentLoans}`
+        : `Max concurrent loans: ${orig.general.maxConcurrentLoans} → ${generalSettings.maxConcurrentLoans}`);
+    }
+    for (const lt of loanTypes) {
+      const o = orig.types.find(x => x.id === lt.id);
+      if (!o) continue;
+      const name = isRTL ? lt.nameAr : lt.nameEn;
+      if (o.maxPercentOfSalary !== lt.maxPercentOfSalary) {
+        changes.push(isRTL
+          ? `${name} - نسبة الراتب: ${o.maxPercentOfSalary}% → ${lt.maxPercentOfSalary}%`
+          : `${name} - Salary %: ${o.maxPercentOfSalary}% → ${lt.maxPercentOfSalary}%`);
+      }
+      if (o.maxInstallments !== lt.maxInstallments) {
+        changes.push(isRTL
+          ? `${name} - عدد الأقساط: ${o.maxInstallments} → ${lt.maxInstallments}`
+          : `${name} - Installments: ${o.maxInstallments} → ${lt.maxInstallments}`);
+      }
+    }
+    return changes;
+  };
+
+  const handleSaveClick = () => {
+    if (savingRef.current || saving) return;
     const err = validateSettings();
     if (err) {
       toast({ title: isRTL ? 'بيانات غير صالحة' : 'Invalid data', description: err, variant: 'destructive' });
       return;
     }
+    const critical = detectCriticalChanges();
+    if (critical.length > 0) {
+      setCriticalChanges(critical);
+      setConfirmOpen(true);
+      return;
+    }
+    void performSave();
+  };
+
+  const performSave = async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
+    setConfirmOpen(false);
     try {
-      // Persist settings (placeholder for backend save)
       await new Promise(r => setTimeout(r, 400));
+      initialSnapshotRef.current = {
+        general: { ...generalSettings },
+        types: JSON.parse(JSON.stringify(loanTypes)),
+      };
       toast({ title: t('common.success'), description: t('loans.settings.saved') });
     } catch (e: any) {
       toast({ title: isRTL ? 'تعذر الحفظ' : 'Save failed', description: e?.message, variant: 'destructive' });
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
   };
 
@@ -408,11 +465,40 @@ export const LoanSettings = () => {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSave} size="lg" disabled={saving}>
+        <Button onClick={handleSaveClick} data-testid="loan-settings-save" size="lg" disabled={saving}>
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           {saving ? (isRTL ? 'جاري الحفظ...' : 'Saving...') : t('loans.settings.saveAll')}
         </Button>
       </div>
+
+      {/* Critical changes confirmation */}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              {isRTL ? 'تأكيد تغييرات حرجة' : 'Confirm Critical Changes'}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>{isRTL
+                  ? 'أنت على وشك تعديل إعدادات حرجة قد تؤثر على جميع طلبات القروض المستقبلية:'
+                  : 'You are about to change critical settings that may affect all future loan requests:'}</p>
+                <ul className="list-disc pr-5 ps-5 text-sm space-y-1">
+                  {criticalChanges.map((c, i) => <li key={i}>{c}</li>)}
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>{isRTL ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={performSave} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {isRTL ? 'تأكيد الحفظ' : 'Confirm & Save'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
