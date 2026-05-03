@@ -713,18 +713,18 @@ export const PropertyTaxesManager = () => {
                           <div className="flex gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
                             {r.status !== 'paid' && (
                               <Tooltip><TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-emerald-500/10" onClick={() => openPayment(r)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-emerald-500/10" onClick={() => openPayment(r)} aria-label={isAr ? 'تسجيل دفع' : 'Mark paid'}>
                                   <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
                                 </Button>
                               </TooltipTrigger><TooltipContent>{isAr ? 'تسجيل دفع' : 'Mark Paid'}</TooltipContent></Tooltip>
                             )}
                             <Tooltip><TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" onClick={() => openEdit(r)}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10" onClick={() => openEdit(r)} aria-label={isAr ? 'تعديل السجل' : 'Edit record'}>
                                 <Edit className="w-3.5 h-3.5" />
                               </Button>
                             </TooltipTrigger><TooltipContent>{isAr ? 'تعديل' : 'Edit'}</TooltipContent></Tooltip>
                             <Tooltip><TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10" onClick={() => setDeleteConfirm(r.id)}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10" onClick={() => setDeleteConfirm(r.id)} aria-label={isAr ? 'حذف السجل' : 'Delete record'}>
                                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
                               </Button>
                             </TooltipTrigger><TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent></Tooltip>
