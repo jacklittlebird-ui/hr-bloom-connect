@@ -302,7 +302,7 @@ const Leaves = () => {
   }, [employeeRequests, searchQuery, selectedDepartment, selectedStation]);
 
   const runMutation = async (
-    fn: () => Promise<{ error: { message: string } | null }>,
+    fn: () => PromiseLike<{ error: { message: string } | null }>,
     successMsg: string,
   ) => {
     const { error } = await fn();
