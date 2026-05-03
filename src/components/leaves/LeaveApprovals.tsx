@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CheckCircle, XCircle, User, Calendar, FileText, ShieldCheck, Briefcase, PlusCircle, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { LeaveRequest, PermissionRequest, MissionRequest, OvertimeRequest } from '@/types/leaves';
 import { toast } from '@/hooks/use-toast';
 
@@ -67,7 +67,7 @@ export const LeaveApprovals = ({
       employeeNameAr: r.employeeNameAr,
       department: r.department,
       reason: r.reason,
-      details: `${r.startDate} → ${r.endDate} (${r.days} ${t('leaves.days')})`,
+      details: `${formatDate(r.startDate)} → ${formatDate(r.endDate)} (${r.days} ${t('leaves.days')})`,
       badgeLabel: t(`leaves.types.${r.leaveType}`),
       badgeColor: 'bg-blue-500',
     })),
@@ -79,7 +79,7 @@ export const LeaveApprovals = ({
       employeeNameAr: r.employeeNameAr,
       department: r.department,
       reason: r.reason,
-      details: `${r.date} | ${r.fromTime} - ${r.toTime} (${r.durationHours} ${t('leaveBalance.hours')})`,
+      details: `${formatDate(r.date)} | ${r.fromTime} - ${r.toTime} (${r.durationHours} ${t('leaveBalance.hours')})`,
       badgeLabel: t(`leaves.permTypes.${r.permissionType}`),
       badgeColor: 'bg-orange-500',
     })),
@@ -98,7 +98,7 @@ export const LeaveApprovals = ({
         employeeNameAr: r.employeeNameAr,
         department: r.department,
         reason: r.reason,
-        details: `${r.date}${r.destination ? ` | ${r.destination}` : ''}`,
+        details: `${formatDate(r.date)}${r.destination ? ` | ${r.destination}` : ''}`,
         badgeLabel: language === 'ar' ? lbl.ar : lbl.en,
         badgeColor: 'bg-purple-500',
       };
@@ -111,7 +111,7 @@ export const LeaveApprovals = ({
       employeeNameAr: r.employeeNameAr,
       department: r.department,
       reason: r.reason,
-      details: `${r.date} | ${r.hours} ${t('leaveBalance.hours')}`,
+      details: `${formatDate(r.date)} | ${r.hours} ${t('leaveBalance.hours')}`,
       badgeLabel: t(`leaves.overtimeTypes.${r.overtimeType}`),
       badgeColor: 'bg-green-500',
     })),
