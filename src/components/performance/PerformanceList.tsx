@@ -14,8 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Search, Eye, Edit, Star, FileText, Printer, Download, FileSpreadsheet, Save, Send, Target, TrendingUp, Lightbulb, MessageSquare, Trash2 } from 'lucide-react';
+import { Search, Eye, Edit, Star, FileText, Printer, Download, FileSpreadsheet, Save, Send, Target, TrendingUp, Lightbulb, MessageSquare, Trash2, RotateCcw, Loader2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
 import { initialDepartments } from '@/data/departments';
