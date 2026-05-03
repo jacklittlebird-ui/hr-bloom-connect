@@ -68,6 +68,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import Uniforms from '@/pages/Uniforms';
 
 const reset = () => {
+  cleanup();
   refreshUniformsMock.mockClear();
   updateUniformMock.mockClear();
   deleteUniformMock.mockClear();
