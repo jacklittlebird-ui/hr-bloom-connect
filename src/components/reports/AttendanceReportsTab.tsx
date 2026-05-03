@@ -15,8 +15,8 @@ import { DemoDataBanner } from './DemoDataBanner';
 export const AttendanceReportsTab = () => {
   const { t, isRTL } = useLanguage();
   const { language } = useLanguage();
-  const [period, setPeriod] = useState('month');
-  const [station, setStation] = useState('all');
+  const [period, setPeriod] = usePersistedState<string>('attendance_overview_reports_period', 'month');
+  const [station, setStation] = usePersistedState<string>('attendance_overview_reports_station', 'all');
   const { reportRef, handlePrint, exportToCSV, exportToPDF } = useReportExport();
 
   const dailyAttendance = [
@@ -73,7 +73,11 @@ export const AttendanceReportsTab = () => {
   }));
 
   const hasFilters = period !== 'month' || station !== 'all';
-  const resetFilters = () => { setPeriod('month'); setStation('all'); };
+  const resetFilters = () => {
+    setPeriod('month');
+    setStation('all');
+    toast({ title: language === 'ar' ? 'تمت إعادة ضبط الفلاتر' : 'Filters reset' });
+  };
 
   return (
     <div className="space-y-6">
