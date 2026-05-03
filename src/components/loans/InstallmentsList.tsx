@@ -183,13 +183,13 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle>{t('loans.installments.title')}</CardTitle>
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-wrap gap-3">
               <div className="relative">
                 <Search className={`absolute top-3 h-4 w-4 text-muted-foreground ${isRTL ? 'right-3' : 'left-3'}`} />
-                <Input placeholder={t('loans.search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`w-full md:w-64 ${isRTL ? 'pr-9' : 'pl-9'}`} />
+                <Input placeholder={t('loans.search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`w-full md:w-56 ${isRTL ? 'pr-9' : 'pl-9'}`} />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-40"><SelectValue placeholder={t('loans.filterStatus')} /></SelectTrigger>
+                <SelectTrigger className="w-full md:w-36"><SelectValue placeholder={t('loans.filterStatus')} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('common.all')}</SelectItem>
                   {Object.entries(statusLabels).map(([key, label]) => (<SelectItem key={key} value={key}>{isRTL ? label.ar : label.en}</SelectItem>))}
@@ -211,10 +211,34 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
                   })}
                 </SelectContent>
               </Select>
+              <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-36" aria-label={language === 'ar' ? 'من' : 'From'} />
+              <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-36" aria-label={language === 'ar' ? 'إلى' : 'To'} />
+              {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  {language === 'ar' ? 'مسح' : 'Clear'}
+                </Button>
+              )}
+              <Button variant="outline" size="icon" onClick={() => fetchInstallments()} disabled={loading} aria-label={language === 'ar' ? 'تحديث' : 'Refresh'}>
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)} aria-label="Print"><Printer className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })} aria-label="PDF"><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'installments' })} aria-label="CSV"><FileSpreadsheet className="h-4 w-4" /></Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {loading ? (
+            <div className="py-12 flex items-center justify-center text-muted-foreground gap-2">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+            </div>
+          ) : (
           <Table>
             <TableHeader><TableRow>
               <TableHead>{t('loans.employee')}</TableHead>
@@ -233,18 +257,20 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
                   <TableCell><div><p className="font-medium">{inst.employeeName}</p><p className="text-sm text-muted-foreground">{inst.department}</p></div></TableCell>
                   <TableCell>{inst.installmentNumber}/{inst.totalInstallments}</TableCell>
                   <TableCell>{inst.amount.toLocaleString()}</TableCell>
-                  <TableCell>{inst.dueDate}</TableCell>
-                  <TableCell>{inst.paidDate || '-'}</TableCell>
+                  <TableCell>{formatDate(inst.dueDate)}</TableCell>
+                  <TableCell>{inst.paidDate ? formatDate(inst.paidDate) : '-'}</TableCell>
                   <TableCell><Badge variant={statusLabels[inst.status].variant}>{isRTL ? statusLabels[inst.status].ar : statusLabels[inst.status].en}</Badge></TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       {inst.status !== 'paid' ? (
-                        <Button variant="outline" size="sm" onClick={() => handlePayInstallment(inst.id)}>
-                          <CheckCircle className="h-4 w-4 mr-2" />{t('loans.installments.markPaid')}
+                        <Button variant="outline" size="sm" onClick={() => handlePayInstallment(inst.id)} disabled={actioningId === inst.id}>
+                          {actioningId === inst.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+                          {t('loans.installments.markPaid')}
                         </Button>
                       ) : (
-                        <Button variant="ghost" size="sm" onClick={() => handleUnpayInstallment(inst.id)} className="text-destructive hover:text-destructive">
-                          <Undo2 className="h-4 w-4 mr-2" />{language === 'ar' ? 'تراجع' : 'Undo'}
+                        <Button variant="ghost" size="sm" onClick={() => handleUnpayInstallment(inst.id)} className="text-destructive hover:text-destructive" disabled={actioningId === inst.id}>
+                          {actioningId === inst.id ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Undo2 className="h-4 w-4 mr-2" />}
+                          {language === 'ar' ? 'تراجع' : 'Undo'}
                         </Button>
                       )}
                     </div>
@@ -253,6 +279,7 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </div>
