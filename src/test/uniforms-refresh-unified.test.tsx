@@ -187,8 +187,11 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
 
   it('refreshKey remounts the tabs container exactly once per refresh cycle', async () => {
     cleanup();
+    // Drain any stray microtasks/timers from previous tests before measuring
+    await act(async () => { await new Promise(r => setTimeout(r, 100)); });
     refreshUniformsMock.mockClear();
     sonnerSpy.success.mockClear();
+
     const { container } = render(<LanguageProvider><Uniforms /></LanguageProvider>);
     expect(container.querySelector('[role="tablist"]')).toBeTruthy();
 
