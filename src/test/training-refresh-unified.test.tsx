@@ -13,27 +13,39 @@ vi.mock('@/components/layout/DashboardLayout', () => ({
   DashboardLayout: ({ children }: any) => <div>{children}</div>,
 }));
 
-// Mount counters per tab — let us verify the refreshKey forces a remount.
-const mountCounts: Record<string, number> = {
-  records: 0, trainers: 0, syllabus: 0, courses: 0, plan: 0, reports: 0, idcards: 0, stats: 0,
-};
-const makeStub = (key: keyof typeof mountCounts, testid: string) => () => {
-  mountCounts[key] += 1;
-  return <div data-testid={testid} />;
-};
+// Mount counters per tab — verify the refreshKey forces a remount.
+// Defined on globalThis so vi.mock factories (hoisted) can access them.
+(globalThis as any).__mc = { records: 0, trainers: 0, syllabus: 0, courses: 0, plan: 0, reports: 0, idcards: 0, stats: 0 };
+const mountCounts = (globalThis as any).__mc as Record<string, number>;
 
-vi.mock('@/components/training/BulkTrainingImport', () => ({ BulkTrainingImport: () => <div /> }));
-vi.mock('@/components/training/TrainingStatsCards', () => ({ TrainingStatsCards: makeStub('stats', 'stats') }));
-vi.mock('@/components/training/TrainingRecords', () => ({ TrainingRecords: makeStub('records', 'tab-records') }));
-vi.mock('@/components/training/Trainers', () => ({ Trainers: makeStub('trainers', 'tab-trainers') }));
-vi.mock('@/components/training/CoursesSyllabus', () => ({ CoursesSyllabus: makeStub('syllabus', 'tab-syllabus') }));
-vi.mock('@/components/training/CoursesList', () => ({ CoursesList: makeStub('courses', 'tab-courses') }));
-vi.mock('@/components/training/TrainingPlan', () => ({ TrainingPlan: makeStub('plan', 'tab-plan') }));
-vi.mock('@/components/training/EmployeeIdCards', () => ({ EmployeeIdCards: makeStub('idcards', 'tab-idcards') }));
-vi.mock('@/components/reports/TrainingReports', () => ({ TrainingReports: makeStub('reports', 'tab-reports') }));
-vi.mock('@/components/reports/TrainingQualificationReport', () => ({ TrainingQualificationReport: () => <div /> }));
-vi.mock('@/components/reports/MissingCourseRecords', () => ({ MissingCourseRecords: () => <div /> }));
-vi.mock('@/components/training/TrainingRecordsReport', () => ({ TrainingRecordsReport: () => <div /> }));
+vi.mock('@/components/training/BulkTrainingImport', () => ({ BulkTrainingImport: () => null }));
+vi.mock('@/components/training/TrainingStatsCards', () => ({
+  TrainingStatsCards: () => { (globalThis as any).__mc.stats++; return <div data-testid="stats" />; },
+}));
+vi.mock('@/components/training/TrainingRecords', () => ({
+  TrainingRecords: () => { (globalThis as any).__mc.records++; return <div data-testid="tab-records" />; },
+}));
+vi.mock('@/components/training/Trainers', () => ({
+  Trainers: () => { (globalThis as any).__mc.trainers++; return <div data-testid="tab-trainers" />; },
+}));
+vi.mock('@/components/training/CoursesSyllabus', () => ({
+  CoursesSyllabus: () => { (globalThis as any).__mc.syllabus++; return <div data-testid="tab-syllabus" />; },
+}));
+vi.mock('@/components/training/CoursesList', () => ({
+  CoursesList: () => { (globalThis as any).__mc.courses++; return <div data-testid="tab-courses" />; },
+}));
+vi.mock('@/components/training/TrainingPlan', () => ({
+  TrainingPlan: () => { (globalThis as any).__mc.plan++; return <div data-testid="tab-plan" />; },
+}));
+vi.mock('@/components/training/EmployeeIdCards', () => ({
+  EmployeeIdCards: () => { (globalThis as any).__mc.idcards++; return <div data-testid="tab-idcards" />; },
+}));
+vi.mock('@/components/reports/TrainingReports', () => ({
+  TrainingReports: () => { (globalThis as any).__mc.reports++; return <div data-testid="tab-reports" />; },
+}));
+vi.mock('@/components/reports/TrainingQualificationReport', () => ({ TrainingQualificationReport: () => null }));
+vi.mock('@/components/reports/MissingCourseRecords', () => ({ MissingCourseRecords: () => null }));
+vi.mock('@/components/training/TrainingRecordsReport', () => ({ TrainingRecordsReport: () => null }));
 
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import Training from '@/pages/Training';
