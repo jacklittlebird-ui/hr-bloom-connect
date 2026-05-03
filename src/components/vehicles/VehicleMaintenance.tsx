@@ -111,32 +111,51 @@ export const VehicleMaintenance = () => {
       toast.error(isAr ? 'يرجى اختيار السيارة ونوع الصيانة' : 'Please select vehicle and type');
       return;
     }
-    const payload = {
-      vehicle_id: form.vehicle_id,
-      maintenance_type: form.maintenance_type,
-      description: form.description || null,
-      cost: Number(form.cost) || 0,
-      maintenance_date: form.maintenance_date,
-      next_maintenance_date: form.next_maintenance_date || null,
-      odometer_reading: form.odometer_reading ? Number(form.odometer_reading) : null,
-      provider: form.provider || null,
-      notes: form.notes || null,
-      status: 'completed',
-    };
-    const { error } = await supabase.from('vehicle_maintenance').insert(payload as any);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added');
-    setDialogOpen(false);
-    setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_date: '', odometer_reading: '', provider: '', notes: '' });
-    fetchData();
+    if (Number(form.cost) < 0) {
+      toast.error(isAr ? 'التكلفة لا يمكن أن تكون سالبة' : 'Cost cannot be negative');
+      return;
+    }
+    if (form.next_maintenance_date && form.next_maintenance_date < form.maintenance_date) {
+      toast.error(isAr ? 'تاريخ الصيانة القادمة قبل تاريخ الصيانة' : 'Next date is before maintenance date');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        vehicle_id: form.vehicle_id,
+        maintenance_type: form.maintenance_type,
+        description: form.description || null,
+        cost: Number(form.cost) || 0,
+        maintenance_date: form.maintenance_date,
+        next_maintenance_date: form.next_maintenance_date || null,
+        odometer_reading: form.odometer_reading ? Number(form.odometer_reading) : null,
+        provider: form.provider || null,
+        notes: form.notes || null,
+        status: 'completed',
+      };
+      const { error } = await supabase.from('vehicle_maintenance').insert(payload as any);
+      if (error) { toast.error(error.message); return; }
+      toast.success(isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added');
+      setDialogOpen(false);
+      setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_date: '', odometer_reading: '', provider: '', notes: '' });
+      fetchData();
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(isAr ? 'حذف هذا السجل؟' : 'Delete this record?')) return;
-    const { error } = await supabase.from('vehicle_maintenance').delete().eq('id', id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(isAr ? 'تم الحذف' : 'Deleted');
-    fetchData();
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('vehicle_maintenance').delete().eq('id', deleteTarget.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success(isAr ? 'تم الحذف' : 'Deleted');
+      setDeleteTarget(null);
+      fetchData();
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const typeLabel = (t: string) => {
