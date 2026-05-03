@@ -242,6 +242,12 @@ export const PerformanceList = () => {
                 ))}
               </SelectContent>
             </Select>
+            {filtersActive && (
+              <Button variant="outline" size="sm" onClick={handleResetFilters} className="gap-1.5" aria-label={ar ? 'إعادة ضبط الفلاتر' : 'Reset filters'}>
+                <RotateCcw className="w-3.5 h-3.5" />
+                {ar ? 'إعادة الضبط' : 'Reset'}
+              </Button>
+            )}
           </div>
 
           {/* Table */}
