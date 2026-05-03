@@ -111,9 +111,13 @@ const clickRefresh = async (btn: HTMLButtonElement, times = 8) => {
 };
 
 const switchTab = async (value: string) => {
-  const trigger = screen.getAllByRole('tab').find(el => (el.id || '').endsWith(`-trigger-${value}`));
+  const trigger = screen.getAllByRole('tab').find(el => (el.id || '').endsWith(`-trigger-${value}`)) as HTMLElement;
   expect(trigger).toBeTruthy();
-  await act(async () => { fireEvent.click(trigger!); });
+  await act(async () => {
+    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+    fireEvent.mouseDown(trigger, { button: 0 });
+    fireEvent.click(trigger);
+  });
 };
 
 describe('Training — refresh covers all 7 tabs with a single toast & one API cycle', () => {
