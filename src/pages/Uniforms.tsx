@@ -155,6 +155,9 @@ const Uniforms = () => {
 
   const handleSaveEdit = async () => {
     if (editingId === null) return;
+    if (savingEditRef.current) return;
+    savingEditRef.current = true;
+    setSavingEdit(true);
     try {
       await updateUniform(editingId, {
         typeAr: editForm.typeAr,
@@ -165,22 +168,27 @@ const Uniforms = () => {
         deliveryDate: editForm.deliveryDate,
         notes: editForm.notes,
       } as any);
-      toast.success(language === 'ar' ? 'تم التعديل بنجاح' : 'Updated successfully');
+      toast.success(language === 'ar' ? 'تم تعديل اليونيفورم بنجاح' : 'Uniform updated successfully');
       setEditDialogOpen(false);
       setEditingId(null);
     } catch {
-      toast.error(language === 'ar' ? 'تعذر التعديل' : 'Update failed');
+      toast.error(language === 'ar' ? 'تعذر تعديل اليونيفورم' : 'Failed to update uniform');
+    } finally {
+      setSavingEdit(false);
+      savingEditRef.current = false;
     }
   };
 
   const confirmDelete = async () => {
-    if (deleteId === null) return;
+    if (deleteId === null || deleting) return;
+    setDeleting(true);
     try {
       await deleteUniform(deleteId);
       toast.success(language === 'ar' ? 'تم الحذف بنجاح' : 'Deleted successfully');
     } catch {
       toast.error(language === 'ar' ? 'تعذر الحذف' : 'Delete failed');
     } finally {
+      setDeleting(false);
       setDeleteId(null);
     }
   };
