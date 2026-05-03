@@ -488,8 +488,11 @@ export const VehicleMaintenance = () => {
                     <Input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="h-9" />
                   </div>
                   <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={() => setDialogOpen(false)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-                    <Button onClick={handleSave}>{isAr ? 'حفظ' : 'Save'}</Button>
+                    <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+                    <Button onClick={handleSave} disabled={saving} aria-busy={saving}>
+                      {saving && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
+                      {isAr ? 'حفظ' : 'Save'}
+                    </Button>
                   </div>
                 </div>
               </DialogContent>
