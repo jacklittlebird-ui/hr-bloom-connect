@@ -186,18 +186,18 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
   });
 
   it('refreshKey remounts the tabs container exactly once per refresh cycle', async () => {
+    cleanup();
+    refreshUniformsMock.mockClear();
+    sonnerSpy.success.mockClear();
     const { container } = render(<LanguageProvider><Uniforms /></LanguageProvider>);
     expect(container.querySelector('[role="tablist"]')).toBeTruthy();
-
-    const successBefore = sonnerSpy.success.mock.calls.length;
-    const refreshCallsBefore = refreshUniformsMock.mock.calls.length;
 
     const refreshBtn = screen.getByRole('button', { name: /تحديث|Refresh/ }) as HTMLButtonElement;
     await act(async () => { for (let i = 0; i < 6; i++) fireEvent.click(refreshBtn); });
     await waitFor(() => expect(refreshBtn.disabled).toBe(false));
 
     expect(container.querySelector('[role="tablist"]')).toBeTruthy();
-    expect(refreshUniformsMock.mock.calls.length - refreshCallsBefore).toBe(1);
-    expect(sonnerSpy.success.mock.calls.length - successBefore).toBe(1);
+    expect(refreshUniformsMock).toHaveBeenCalledTimes(1);
+    expect(sonnerSpy.success).toHaveBeenCalledTimes(1);
   });
 });
