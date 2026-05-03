@@ -5,12 +5,14 @@ import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Star, TrendingUp, Users, Target, Award, BarChart3, CheckCircle, Clock, FileText, Send, ShieldCheck, Building2, MapPin, UserCheck, UserX } from 'lucide-react';
+import { Star, TrendingUp, Users, Target, Award, BarChart3, CheckCircle, Clock, FileText, Send, ShieldCheck, Building2, MapPin, UserCheck, UserX, RotateCcw } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { stationLocations } from '@/data/stationLocations';
+import { toast } from 'sonner';
 
 export const PerformanceDashboard = () => {
   const { t, isRTL, language } = useLanguage();
