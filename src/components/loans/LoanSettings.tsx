@@ -500,6 +500,3 @@ export const LoanSettings = () => {
     </div>
   );
 };
-    </div>
-  );
-};
