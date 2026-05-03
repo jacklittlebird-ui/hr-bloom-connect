@@ -412,7 +412,17 @@ export const PropertyTaxesManager = () => {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Tooltip><TooltipTrigger asChild>
-            <Button variant="outline" size="icon" onClick={fetchData}><RefreshCw className="w-4 h-4" /></Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => fetchData(true)}
+              disabled={refreshing || loading}
+              aria-busy={refreshing}
+              aria-label={isAr ? 'تحديث البيانات' : 'Refresh data'}
+              title={isAr ? 'تحديث' : 'Refresh'}
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
           </TooltipTrigger><TooltipContent>{isAr ? 'تحديث' : 'Refresh'}</TooltipContent></Tooltip>
           <Button variant="outline" onClick={exportExcel} className="gap-2 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10">
             <FileSpreadsheet className="w-4 h-4" /> Excel
