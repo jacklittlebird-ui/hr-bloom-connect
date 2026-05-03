@@ -212,7 +212,24 @@ export const LateArrivals = () => {
             className={cn(isRTL ? "pr-10" : "pl-10")}
           />
         </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => fetchLateRecords(true)}
+          disabled={refreshing || loading}
+          aria-label={ar ? 'تحديث' : 'Refresh'}
+          title={ar ? 'تحديث' : 'Refresh'}
+        >
+          <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+        </Button>
       </div>
+
+      {error && !loading && (
+        <div className="flex items-start gap-2 p-3 rounded-md border border-destructive/40 bg-destructive/10 text-destructive text-sm">
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Today's Late */}
       {todayLate.length > 0 && (
