@@ -10,6 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Clock, CheckCircle, XCircle, PlusCircle, Trash2 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { OvertimeRequest } from '@/types/leaves';
+import { ExportButton } from './ExportButton';
+import type { ExportColumn } from '@/lib/leavesExport';
 
 interface OvertimeRequestsListProps {
   requests: OvertimeRequest[];
@@ -46,10 +48,27 @@ export const OvertimeRequestsList = ({ requests, onDelete }: OvertimeRequestsLis
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <PlusCircle className="w-5 h-5" />
-            {t('leaves.overtime.listTitle')}
-          </CardTitle>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="flex items-center gap-2">
+              <PlusCircle className="w-5 h-5" />
+              {t('leaves.overtime.listTitle')}
+            </CardTitle>
+            <ExportButton
+              rows={requests}
+              filenameBase="overtime"
+              title={language === 'ar' ? 'تقرير العمل الإضافي' : 'Overtime Report'}
+              columns={[
+                { header: language === 'ar' ? 'كود الموظف' : 'Employee ID', accessor: (r) => r.employeeCode || '' },
+                { header: language === 'ar' ? 'الموظف' : 'Employee', accessor: (r) => language === 'ar' ? r.employeeNameAr : r.employeeName },
+                { header: language === 'ar' ? 'القسم' : 'Department', accessor: (r) => r.department },
+                { header: language === 'ar' ? 'النوع' : 'Type', accessor: (r) => r.overtimeType },
+                { header: language === 'ar' ? 'التاريخ' : 'Date', accessor: (r) => formatDate(r.date) },
+                { header: language === 'ar' ? 'الساعات' : 'Hours', accessor: (r) => r.hours },
+                { header: language === 'ar' ? 'السبب' : 'Reason', accessor: (r) => r.reason || '' },
+                { header: language === 'ar' ? 'الحالة' : 'Status', accessor: (r) => r.status },
+              ] as ExportColumn<OvertimeRequest>[]}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
