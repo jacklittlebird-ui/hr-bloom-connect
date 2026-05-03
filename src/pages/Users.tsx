@@ -22,8 +22,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from '@/components/ui/command';
 import {
   Plus, Search, Shield, Users as UsersIcon, UserCheck, MapPin, User,
-  RefreshCw, Eye, EyeOff, Edit, Trash2, Layers, ShieldCheck, Lock, Settings2, Upload, Check, ChevronsUpDown,
+  RefreshCw, Eye, EyeOff, Edit, Trash2, Layers, ShieldCheck, Lock, Settings2, Upload, Check, ChevronsUpDown, History,
 } from 'lucide-react';
+import AuditLogs, { SECURITY_TABLES } from '@/components/security/AuditLogs';
 import { EMPLOYEE_CREDENTIALS } from '@/data/employeeCredentials';
 
 // ========== TYPES ==========
@@ -584,7 +585,7 @@ const Users = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className={cn("grid w-full grid-cols-2 mb-6")} dir="rtl">
+          <TabsList className={cn("grid w-full grid-cols-3 mb-6")} dir="rtl">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <UsersIcon className="w-4 h-4" />
               <span>{isAr ? 'المستخدمين' : 'Users'}</span>
@@ -592,6 +593,10 @@ const Users = () => {
             <TabsTrigger value="profiles" className="flex items-center gap-2">
               <Layers className="w-4 h-4" />
               <span>{isAr ? 'ملفات الصلاحيات' : 'Permission Profiles'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="flex items-center gap-2">
+              <History className="w-4 h-4" />
+              <span>{isAr ? 'سجل التدقيق' : 'Audit Log'}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -782,6 +787,19 @@ const Users = () => {
                 );
               })}
             </div>
+          </TabsContent>
+
+          {/* ========== AUDIT LOG TAB ========== */}
+          <TabsContent value="audit" className="space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold">{isAr ? 'سجل تدقيق الأدوار والصلاحيات' : 'Roles & Permissions Audit'}</h2>
+              <p className="text-sm text-muted-foreground">
+                {isAr
+                  ? 'كل تغييرات الأدوار وملفات الصلاحيات وصلاحيات المستخدم — مع إمكانية الفلترة'
+                  : 'All changes to roles, permission profiles, and per-user module overrides — filterable'}
+              </p>
+            </div>
+            <AuditLogs hideHeader tablesScope={SECURITY_TABLES} />
           </TabsContent>
         </Tabs>
 
