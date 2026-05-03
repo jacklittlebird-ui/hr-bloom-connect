@@ -585,7 +585,7 @@ const Users = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className={cn("grid w-full grid-cols-2 mb-6")} dir="rtl">
+          <TabsList className={cn("grid w-full grid-cols-3 mb-6")} dir="rtl">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <UsersIcon className="w-4 h-4" />
               <span>{isAr ? 'المستخدمين' : 'Users'}</span>
@@ -593,6 +593,10 @@ const Users = () => {
             <TabsTrigger value="profiles" className="flex items-center gap-2">
               <Layers className="w-4 h-4" />
               <span>{isAr ? 'ملفات الصلاحيات' : 'Permission Profiles'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="flex items-center gap-2">
+              <History className="w-4 h-4" />
+              <span>{isAr ? 'سجل التدقيق' : 'Audit Log'}</span>
             </TabsTrigger>
           </TabsList>
 
