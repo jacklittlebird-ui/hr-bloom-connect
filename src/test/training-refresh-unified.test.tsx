@@ -77,14 +77,12 @@ describe('Training — refresh covers all 7 tabs with a single toast', () => {
 
     const refreshBtn = screen.getByRole('button', { name: /تحديث|Refresh/ }) as HTMLButtonElement;
 
-    // Walk through all 7 tabs and verify each one mounts on activation
-    for (const tab of TABS) {
-      if (tab.value !== 'records') {
-        const trigger = screen.getByRole('tab', { name: new RegExp(tab.value === 'id-cards' ? 'بطاقة|Company Card' : tab.value, 'i') })
-          ?? screen.getAllByRole('tab').find(t => t.getAttribute('data-state') !== null && t.textContent?.toLowerCase().includes(tab.value));
-        if (trigger) await act(async () => { fireEvent.click(trigger); });
-      }
-      await waitFor(() => expect(screen.getByTestId(tab.testid)).toBeInTheDocument());
+    // Walk through all 7 tabs by order (i18n labels vary in test env)
+    const triggers = screen.getAllByRole('tab');
+    expect(triggers.length).toBe(7);
+    for (let i = 0; i < TABS.length; i++) {
+      await act(async () => { fireEvent.click(triggers[i]); });
+      await waitFor(() => expect(screen.getByTestId(TABS[i].testid)).toBeInTheDocument());
     }
 
     // Snapshot mount counts after navigating through all tabs
