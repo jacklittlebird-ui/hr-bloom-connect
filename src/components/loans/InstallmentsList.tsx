@@ -106,8 +106,30 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
     const matchesSearch = i.employeeName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || i.status === statusFilter;
     const matchesMonth = monthFilter === 'all' || i.dueDate.slice(0, 7) === monthFilter;
-    return matchesSearch && matchesStatus && matchesMonth;
+    const matchesFrom = !dateFrom || i.dueDate >= dateFrom;
+    const matchesTo = !dateTo || i.dueDate <= dateTo;
+    return matchesSearch && matchesStatus && matchesMonth && matchesFrom && matchesTo;
   });
+
+  const exportTitle = language === 'ar' ? 'تقرير الأقساط' : 'Installments Report';
+  const exportColumns = [
+    { header: language === 'ar' ? 'الموظف' : 'Employee', key: 'employeeName' },
+    { header: language === 'ar' ? 'القسم' : 'Department', key: 'department' },
+    { header: language === 'ar' ? 'القسط' : 'Installment', key: 'installmentLabel' },
+    { header: language === 'ar' ? 'المبلغ' : 'Amount', key: 'amount' },
+    { header: language === 'ar' ? 'تاريخ الاستحقاق' : 'Due Date', key: 'dueDateLabel' },
+    { header: language === 'ar' ? 'تاريخ الدفع' : 'Paid Date', key: 'paidDateLabel' },
+    { header: language === 'ar' ? 'الحالة' : 'Status', key: 'statusLabel' },
+  ];
+  const exportData = filteredInstallments.map(i => ({
+    ...i,
+    installmentLabel: `${i.installmentNumber}/${i.totalInstallments}`,
+    dueDateLabel: formatDate(i.dueDate),
+    paidDateLabel: i.paidDate ? formatDate(i.paidDate) : '-',
+    statusLabel: language === 'ar' ? statusLabels[i.status]?.ar : statusLabels[i.status]?.en,
+  }));
+  const clearFilters = () => { setSearchQuery(''); setStatusFilter('all'); setMonthFilter('all'); setDateFrom(''); setDateTo(''); };
+  const hasFilters = searchQuery || statusFilter !== 'all' || monthFilter !== 'all' || dateFrom || dateTo;
 
   const handlePayInstallment = async (installmentId: string) => {
     if (actioningId) return;
