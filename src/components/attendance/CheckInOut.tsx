@@ -19,7 +19,7 @@ import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AttendanceRecord } from '@/pages/Attendance';
 import { toast } from '@/hooks/use-toast';
-import { getCairoOffsetString } from '@/lib/cairoDate';
+import { getCairoOffsetString, getCairoDateString } from '@/lib/cairoDate';
 
 interface CheckInOutProps {
   records: AttendanceRecord[];
@@ -68,7 +68,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
     return Array.from(deptMap.values());
   };
   
-  const today = new Date().toISOString().split('T')[0];
+  const today = getCairoDateString();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -120,7 +120,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const [manualStation, setManualStation] = useState<string>('all');
   const [manualDept, setManualDept] = useState<string>('all');
   const [manualEmployee, setManualEmployee] = useState<string>('');
-  const [manualDate, setManualDate] = useState(new Date().toISOString().split('T')[0]);
+  const [manualDate, setManualDate] = useState(getCairoDateString());
   const [manualCheckIn, setManualCheckIn] = useState('');
   const [manualCheckOut, setManualCheckOut] = useState('');
   const [manualNotes, setManualNotes] = useState('');

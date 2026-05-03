@@ -10,6 +10,7 @@ import { AlertTriangle, Clock, User, TrendingUp, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
+import { getCairoDateString } from '@/lib/cairoDate';
 
 const months = [
   { value: '01', ar: 'يناير', en: 'January' },
@@ -114,7 +115,7 @@ export const LateArrivals = () => {
     return result.sort((a, b) => b.count - a.count);
   }, [records, searchTerm]);
 
-  const today = now.toISOString().split('T')[0];
+  const today = getCairoDateString();
   const todayLate = records.filter(r => r.date === today);
 
   const { paginatedItems, currentPage, totalPages, totalItems, startIndex, endIndex, setCurrentPage } = usePagination(groupedByEmployee, 20);
