@@ -169,7 +169,7 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
   it('Edit: double-clicking Save still triggers exactly one updateUniform', async () => {
     render(<LanguageProvider><Uniforms /></LanguageProvider>);
 
-    const editButtons = screen.getAllByRole('button').filter(b => b.className.includes('text-primary') && b.querySelector('svg'));
+    const editButtons = screen.getAllByRole('button').filter(b => b.className.includes('h-8 w-8') && b.className.includes('text-primary'));
     await act(async () => { fireEvent.click(editButtons[0]); });
     const editDialog = await screen.findByRole('dialog');
     const saveBtn = within(editDialog).getByRole('button', { name: /^حفظ$|^Save$|جاري الحفظ|Saving/ }) as HTMLButtonElement;
