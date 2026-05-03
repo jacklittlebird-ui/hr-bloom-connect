@@ -482,8 +482,18 @@ export const VehicleRegistry = () => {
                       <TableCell>{statusBadge(v.status)}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button size="icon" variant="ghost" onClick={() => handleEdit(v)}><Edit className="w-4 h-4" /></Button>
-                          <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(v.id)}><Trash2 className="w-4 h-4" /></Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" onClick={() => handleEdit(v)} aria-label={isAr ? 'تعديل' : 'Edit'}><Edit className="w-4 h-4" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isAr ? 'تعديل' : 'Edit'}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(v)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent>
+                          </Tooltip>
                         </div>
                       </TableCell>
                     </TableRow>
