@@ -596,7 +596,7 @@ export const VehicleMaintenance = () => {
                         )}
                       </div>
                       <div className={cn('flex justify-end mt-2', isRTL && 'justify-start')}>
-                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDelete(r.id)}><Trash2 className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   );
