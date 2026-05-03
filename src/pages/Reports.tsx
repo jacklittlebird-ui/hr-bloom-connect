@@ -81,7 +81,9 @@ const Reports = () => {
           size="icon"
           onClick={handleRefresh}
           disabled={refreshing}
-          aria-label={ar ? 'تحديث' : 'Refresh'}
+          aria-busy={refreshing}
+          aria-label={refreshing ? (ar ? 'جاري التحديث' : 'Refreshing') : (ar ? 'تحديث' : 'Refresh')}
+          title={ar ? 'تحديث جميع التقارير' : 'Refresh all reports'}
         >
           {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
         </Button>

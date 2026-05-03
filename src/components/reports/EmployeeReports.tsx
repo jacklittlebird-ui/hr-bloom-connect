@@ -252,12 +252,32 @@ export const EmployeeReports = () => {
     toast({ title: ar ? 'تم تصدير التقرير بنجاح' : 'Report exported successfully' });
   }, [filteredEmployees, realStats, realDeptData, realStationData, department, station, status, ar, isRTL, reportTitle]);
 
-  // Presets management
+  // Presets management — uniqueness + cap
+  const MAX_PRESETS = 10;
   const savePreset = useCallback(() => {
-    if (!presetName.trim()) return;
+    const name = presetName.trim();
+    if (!name) return;
+    if (presets.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+      toast({
+        title: ar ? 'الاسم مستخدم بالفعل' : 'Name already exists',
+        description: ar ? 'الرجاء اختيار اسم آخر للإعداد' : 'Please choose a different preset name',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (presets.length >= MAX_PRESETS) {
+      toast({
+        title: ar ? 'تم بلوغ الحد الأقصى' : 'Maximum reached',
+        description: ar
+          ? `يمكن حفظ ${MAX_PRESETS} إعدادات كحد أقصى. احذف واحداً قبل الإضافة.`
+          : `Up to ${MAX_PRESETS} presets allowed. Delete one before adding.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     const newPreset: ExportPreset = {
       id: Date.now().toString(),
-      name: presetName.trim(),
+      name,
       department,
       station,
       status,
@@ -267,7 +287,7 @@ export const EmployeeReports = () => {
     setPresetName('');
     setSaveDialogOpen(false);
     toast({ title: ar ? 'تم حفظ الإعداد المسبق' : 'Preset saved' });
-  }, [presetName, department, station, status, ar]);
+  }, [presetName, presets, department, station, status, ar, setPresets]);
 
   const loadPreset = useCallback((preset: ExportPreset) => {
     setDepartment(preset.department);

@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Clock, UserCheck, UserX, AlertTriangle, Download, Printer, FileText } from 'lucide-react';
+import { Clock, UserCheck, UserX, AlertTriangle, Download, Printer, FileText, RotateCcw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
+import { DemoDataBanner } from './DemoDataBanner';
 
 export const AttendanceReportsTab = () => {
   const { t, isRTL } = useLanguage();
@@ -69,12 +70,16 @@ export const AttendanceReportsTab = () => {
     day: d.day, present: d.present, absent: d.absent, late: d.late,
   }));
 
+  const hasFilters = period !== 'month' || station !== 'all';
+  const resetFilters = () => { setPeriod('month'); setStation('all'); };
+
   return (
     <div className="space-y-6">
+      <DemoDataBanner />
       <Card>
         <CardContent className="p-4">
           <div className={cn("flex flex-wrap gap-4 items-center justify-between", isRTL && "flex-row-reverse")}>
-            <div className={cn("flex gap-4", isRTL && "flex-row-reverse")}>
+            <div className={cn("flex flex-wrap gap-4 items-center", isRTL && "flex-row-reverse")}>
               <Select value={period} onValueChange={setPeriod}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -93,6 +98,11 @@ export const AttendanceReportsTab = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-muted-foreground">
+                  <RotateCcw className="w-4 h-4" />{language === 'ar' ? 'إعادة ضبط' : 'Reset'}
+                </Button>
+              )}
             </div>
             <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
               <Button variant="outline" size="sm" onClick={() => handlePrint(reportTitle)}>
