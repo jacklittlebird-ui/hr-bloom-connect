@@ -293,7 +293,7 @@ export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) =
                     </div>
                     <div className={`flex justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <span className="text-muted-foreground">{isRTL ? 'تاريخ الطلب' : 'Request Date'}</span>
-                      <span className="font-semibold">{adv.requestDate}</span>
+                      <span className="font-semibold">{formatDate(adv.requestDate)}</span>
                     </div>
                     <div className="bg-muted/50 rounded p-2 text-xs">
                       <span className="text-muted-foreground">{isRTL ? 'ملاحظة: ' : 'Note: '}</span>
@@ -306,13 +306,13 @@ export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) =
                       <Eye className="h-3 w-3" />{isRTL ? 'عرض' : 'View'}
                     </Button>
                     {adv.status === 'pending' && (
-                      <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={() => handleApprove(adv.id)}>
-                        <CheckCircle className="h-3 w-3" />{isRTL ? 'موافقة' : 'Approve'}
+                      <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={() => handleApprove(adv.id)} disabled={actioningId === adv.id}>
+                        {actioningId === adv.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}{isRTL ? 'موافقة' : 'Approve'}
                       </Button>
                     )}
                     {adv.status === 'approved' && (
-                      <Button size="sm" variant="outline" className="text-xs gap-1 text-blue-600" onClick={() => handleDeduct(adv.id)}>
-                        <TrendingUp className="h-3 w-3" />{isRTL ? 'خصم' : 'Deduct'}
+                      <Button size="sm" variant="outline" className="text-xs gap-1 text-blue-600" onClick={() => handleDeduct(adv.id)} disabled={actioningId === adv.id}>
+                        {actioningId === adv.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <TrendingUp className="h-3 w-3" />}{isRTL ? 'خصم' : 'Deduct'}
                       </Button>
                     )}
                     <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => { setEditingAdvance(adv); setFormData({ employeeId: adv.employeeId, amount: String(adv.amount), deductionMonth: adv.deductionMonth, reason: adv.reason }); setShowDialog(true); }}>
