@@ -15,7 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, Plus, Edit, Trash2, Eye, Banknote, Clock, CheckCircle, TrendingUp, Printer, FileText, FileSpreadsheet, Check, ChevronsUpDown } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, Banknote, Clock, CheckCircle, TrendingUp, Printer, FileText, FileSpreadsheet, Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { stationLocations } from '@/data/stationLocations';
@@ -256,9 +257,11 @@ export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) =
                   {uniqueDeductionMonths.map(m => <SelectItem key={m} value={m}>{getMonthName(m, language)}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)}><Printer className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })}><FileText className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'advances' })}><FileSpreadsheet className="h-4 w-4" /></Button>
+              <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-36" aria-label={isRTL ? 'من تاريخ الطلب' : 'Request from'} />
+              <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-36" aria-label={isRTL ? 'إلى تاريخ الطلب' : 'Request to'} />
+              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)} aria-label="Print"><Printer className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })} aria-label="PDF"><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'advances' })} aria-label="CSV"><FileSpreadsheet className="h-4 w-4" /></Button>
               <Button onClick={() => { resetForm(); setShowDialog(true); }}><Plus className="h-4 w-4 mr-1" />{isRTL ? 'إضافة سلفة' : 'Add Advance'}</Button>
             </div>
           </div>
@@ -394,7 +397,7 @@ export const AdvancesList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) =
           </div>
           <DialogFooter className="gap-2 mt-4">
             <Button variant="outline" onClick={() => { setShowDialog(false); resetForm(); }}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSubmit}>{editingAdvance ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ' : 'Save')}</Button>
+            <Button onClick={handleSubmit} disabled={submitting}>{submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{editingAdvance ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ' : 'Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
