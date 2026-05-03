@@ -100,29 +100,41 @@ const AuditLogs = ({ userIdFilter, tablesScope, hideHeader, defaultTable }: Audi
     );
   }
 
+  const allTableOptions: { value: string; label: string }[] = [
+    { value: 'employees', label: t('الموظفين', 'Employees') },
+    { value: 'payroll_entries', label: t('الرواتب', 'Payroll') },
+    { value: 'user_roles', label: t('الأدوار', 'Roles') },
+    { value: 'permission_profiles', label: t('ملفات الصلاحيات', 'Permission Profiles') },
+    { value: 'user_module_permissions', label: t('صلاحيات المستخدم', 'User Module Perms') },
+    { value: 'profiles', label: t('الملفات الشخصية', 'Profiles') },
+    { value: 'loans', label: t('القروض', 'Loans') },
+    { value: 'bonus_records', label: t('المكافآت', 'Bonuses') },
+    { value: 'eid_bonuses', label: t('العيديات', 'Eid Bonuses') },
+    { value: 'assets', label: t('العهد', 'Assets') },
+  ];
+  const tableOptions = tablesScope?.length
+    ? allTableOptions.filter(o => tablesScope.includes(o.value))
+    : allTableOptions;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Shield className="h-6 w-6 text-primary" />
-        <h2 className="text-xl font-bold">{t('سجل التدقيق الأمني', 'Security Audit Log')}</h2>
-      </div>
+      {!hideHeader && (
+        <div className="flex items-center gap-2">
+          <Shield className="h-6 w-6 text-primary" />
+          <h2 className="text-xl font-bold">{t('سجل التدقيق الأمني', 'Security Audit Log')}</h2>
+        </div>
+      )}
 
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-wrap gap-3">
             <Select value={tableFilter} onValueChange={v => { setTableFilter(v); setPage(0); }}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[200px]" aria-label={t('الجدول', 'Table')}>
                 <SelectValue placeholder={t('الجدول', 'Table')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t('كل الجداول', 'All Tables')}</SelectItem>
-                <SelectItem value="employees">{t('الموظفين', 'Employees')}</SelectItem>
-                <SelectItem value="payroll_entries">{t('الرواتب', 'Payroll')}</SelectItem>
-                <SelectItem value="user_roles">{t('الأدوار', 'Roles')}</SelectItem>
-                <SelectItem value="loans">{t('القروض', 'Loans')}</SelectItem>
-                <SelectItem value="bonus_records">{t('المكافآت', 'Bonuses')}</SelectItem>
-                <SelectItem value="eid_bonuses">{t('العيديات', 'Eid Bonuses')}</SelectItem>
-                <SelectItem value="assets">{t('العهد', 'Assets')}</SelectItem>
+                <SelectItem value="all">{tablesScope?.length ? t('كل الجداول الأمنية', 'All Security Tables') : t('كل الجداول', 'All Tables')}</SelectItem>
+                {tableOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={actionFilter} onValueChange={v => { setActionFilter(v); setPage(0); }}>
