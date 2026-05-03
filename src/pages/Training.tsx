@@ -142,3 +142,43 @@ const Training = () => {
     </DashboardLayout>
   );
 };
+
+const MissingCourseRecords = lazy(() => import('@/components/reports/MissingCourseRecords').then(m => ({ default: m.MissingCourseRecords })));
+
+const TrainingReportsTabs = ({ ar, isRTL }: { ar: boolean; isRTL: boolean }) => {
+  const [subTab, setSubTab] = useState('stats');
+  return (
+    <Tabs value={subTab} onValueChange={setSubTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+      <TabsList className="mb-4 bg-muted/30">
+        <TabsTrigger value="stats" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          {ar ? 'إحصائيات التدريب' : 'Training Stats'}
+        </TabsTrigger>
+        <TabsTrigger value="records" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          {ar ? 'سجلات التدريب' : 'Training Records'}
+        </TabsTrigger>
+        <TabsTrigger value="qualification" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          {ar ? 'سجل التأهيل' : 'Qualification Record'}
+        </TabsTrigger>
+        <TabsTrigger value="missing" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+          {ar ? 'دورات بدون اسم' : 'Missing Courses'}
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="stats">
+        <Suspense fallback={<TabFallback />}><TrainingReports /></Suspense>
+      </TabsContent>
+      <TabsContent value="records">
+        <Suspense fallback={<TabFallback />}><TrainingRecordsReport /></Suspense>
+      </TabsContent>
+      <TabsContent value="qualification">
+        <Suspense fallback={<TabFallback />}><TrainingQualificationReport /></Suspense>
+      </TabsContent>
+      {subTab === 'missing' && (
+        <TabsContent value="missing">
+          <Suspense fallback={<TabFallback />}><MissingCourseRecords /></Suspense>
+        </TabsContent>
+      )}
+    </Tabs>
+  );
+};
+
+export default Training;
