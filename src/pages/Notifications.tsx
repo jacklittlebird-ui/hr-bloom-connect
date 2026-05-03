@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -14,11 +14,15 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import {
   Send, Bell, Users, Building2, MapPin, Megaphone, CheckCircle, AlertCircle,
-  Info, AlertTriangle, Trash2, Check, Search, Loader2
+  Info, AlertTriangle, Trash2, Check, Search, Loader2, RefreshCw
 } from 'lucide-react';
 
 const typeIcons: Record<string, any> = { success: CheckCircle, warning: AlertTriangle, info: Info, error: AlertCircle };
@@ -41,6 +45,7 @@ const NotificationsPage = () => {
   const [module, setModule] = useState<string>('general');
   const [senderName, setSenderName] = useState('');
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
 
   // Target selections
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
@@ -51,6 +56,16 @@ const NotificationsPage = () => {
   // Departments & stations
   const [departments, setDepartments] = useState<any[]>([]);
   const [stations, setStations] = useState<any[]>([]);
+
+  // Operation guards / unified refresh
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshingRef = useRef(false);
+  const [marking, setMarking] = useState(false);
+  const markingRef = useRef(false);
+  const [clearing, setClearing] = useState(false);
+  const clearingRef = useRef(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -72,21 +87,36 @@ const NotificationsPage = () => {
   const toggleEmployee = (id: string) => {
     setSelectedEmployees(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
-
   const toggleDepartment = (id: string) => {
     setSelectedDepartments(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
-
   const toggleStation = (id: string) => {
     setSelectedStations(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  const handleRefresh = async () => {
+    if (refreshingRef.current || sendingRef.current || markingRef.current || clearingRef.current) return;
+    refreshingRef.current = true;
+    setRefreshing(true);
+    try {
+      await Promise.resolve(refreshNotifications());
+      setRefreshKey(k => k + 1);
+      await new Promise(r => setTimeout(r, 350));
+      toast({ title: ar ? 'تم التحديث' : 'Refreshed', description: ar ? 'تم تحديث الإشعارات' : 'Notifications refreshed' });
+    } catch (e: any) {
+      toast({ title: ar ? 'خطأ' : 'Error', description: ar ? 'فشل التحديث' : 'Refresh failed', variant: 'destructive' });
+    } finally {
+      setRefreshing(false);
+      refreshingRef.current = false;
+    }
+  };
+
   const handleSend = async () => {
+    if (sendingRef.current) return;
     if (!titleAr || !titleEn) {
       toast({ title: ar ? 'خطأ' : 'Error', description: ar ? 'يرجى ملء العنوان بالعربية والإنجليزية' : 'Please fill title in both languages', variant: 'destructive' });
       return;
     }
-
     if (targetType === 'employee' && selectedEmployees.length === 0) {
       toast({ title: ar ? 'خطأ' : 'Error', description: ar ? 'يرجى اختيار موظف واحد على الأقل' : 'Please select at least one employee', variant: 'destructive' });
       return;
@@ -100,6 +130,7 @@ const NotificationsPage = () => {
       return;
     }
 
+    sendingRef.current = true;
     setSending(true);
     try {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
@@ -130,7 +161,6 @@ const NotificationsPage = () => {
           title: ar ? 'تم الإرسال' : 'Sent',
           description: ar ? `تم إرسال الإشعار إلى ${json.count} مستخدم` : `Notification sent to ${json.count} users`,
         });
-        // Reset form
         setTitleAr(''); setTitleEn(''); setDescAr(''); setDescEn('');
         setSenderName('');
         setSelectedEmployees([]); setSelectedDepartments([]); setSelectedStations([]);
@@ -142,6 +172,38 @@ const NotificationsPage = () => {
       toast({ title: ar ? 'خطأ' : 'Error', description: e.message, variant: 'destructive' });
     } finally {
       setSending(false);
+      sendingRef.current = false;
+    }
+  };
+
+  const handleMarkAll = async () => {
+    if (markingRef.current) return;
+    markingRef.current = true;
+    setMarking(true);
+    try {
+      await Promise.resolve(markAllAsRead());
+      toast({ title: ar ? 'تم' : 'Done', description: ar ? 'تم تعليم جميع الإشعارات كمقروءة' : 'All notifications marked as read' });
+    } catch {
+      toast({ title: ar ? 'خطأ' : 'Error', description: ar ? 'فشلت العملية' : 'Operation failed', variant: 'destructive' });
+    } finally {
+      setMarking(false);
+      markingRef.current = false;
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (clearingRef.current) return;
+    clearingRef.current = true;
+    setClearing(true);
+    try {
+      await Promise.resolve(clearAll());
+      toast({ title: ar ? 'تم المسح' : 'Cleared', description: ar ? 'تم مسح جميع الإشعارات' : 'All notifications cleared' });
+    } catch {
+      toast({ title: ar ? 'خطأ' : 'Error', description: ar ? 'فشل المسح' : 'Clear failed', variant: 'destructive' });
+    } finally {
+      setClearing(false);
+      clearingRef.current = false;
+      setConfirmClear(false);
     }
   };
 
@@ -166,15 +228,38 @@ const NotificationsPage = () => {
     return ar ? labels[t]?.ar : labels[t]?.en;
   };
 
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const anyOpInProgress = sending || marking || clearing || refreshing;
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Bell className="w-6 h-6 text-primary" />
             {ar ? 'إدارة الإشعارات' : 'Notification Management'}
           </h1>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={anyOpInProgress}
+            aria-label={ar ? 'تحديث' : 'Refresh'}
+          >
+            {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          </Button>
         </div>
+
+        {refreshing && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-primary"
+          >
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>{ar ? 'جاري تحديث الإشعارات...' : 'Refreshing notifications...'}</span>
+          </div>
+        )}
 
         <Tabs defaultValue="compose" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -185,11 +270,14 @@ const NotificationsPage = () => {
             <TabsTrigger value="history" className="gap-1.5">
               <Bell className="w-4 h-4" />
               {ar ? 'السجل' : 'History'}
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="ms-1 h-5 px-1.5 text-[10px]">{unreadCount}</Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
           {/* COMPOSE TAB */}
-          <TabsContent value="compose" className="mt-6">
+          <TabsContent value="compose" className="mt-6" key={`compose-${refreshKey}`}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Message form */}
               <Card>
@@ -203,21 +291,21 @@ const NotificationsPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">{ar ? 'العنوان (عربي) *' : 'Title (Arabic) *'}</label>
-                      <Input value={titleAr} onChange={e => setTitleAr(e.target.value)} dir="rtl" placeholder={ar ? 'عنوان الإشعار...' : 'Notification title...'} />
+                      <Input value={titleAr} onChange={e => setTitleAr(e.target.value)} dir="rtl" placeholder={ar ? 'عنوان الإشعار...' : 'Notification title...'} maxLength={200} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">{ar ? 'العنوان (إنجليزي) *' : 'Title (English) *'}</label>
-                      <Input value={titleEn} onChange={e => setTitleEn(e.target.value)} dir="ltr" placeholder="Notification title..." />
+                      <Input value={titleEn} onChange={e => setTitleEn(e.target.value)} dir="ltr" placeholder="Notification title..." maxLength={200} />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-sm font-medium">{ar ? 'التفاصيل (عربي)' : 'Description (Arabic)'}</label>
-                      <Textarea value={descAr} onChange={e => setDescAr(e.target.value)} dir="rtl" rows={3} />
+                      <Textarea value={descAr} onChange={e => setDescAr(e.target.value)} dir="rtl" rows={3} maxLength={1000} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">{ar ? 'التفاصيل (إنجليزي)' : 'Description (English)'}</label>
-                      <Textarea value={descEn} onChange={e => setDescEn(e.target.value)} dir="ltr" rows={3} />
+                      <Textarea value={descEn} onChange={e => setDescEn(e.target.value)} dir="ltr" rows={3} maxLength={1000} />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -250,7 +338,7 @@ const NotificationsPage = () => {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">{ar ? 'اسم المرسل (اختياري)' : 'Sender Name (optional)'}</label>
-                      <Input value={senderName} onChange={e => setSenderName(e.target.value)} placeholder={ar ? 'إدارة الموارد البشرية' : 'HR Department'} />
+                      <Input value={senderName} onChange={e => setSenderName(e.target.value)} placeholder={ar ? 'إدارة الموارد البشرية' : 'HR Department'} maxLength={100} />
                     </div>
                   </div>
                 </CardContent>
@@ -375,9 +463,15 @@ const NotificationsPage = () => {
                     </div>
                   )}
 
-                  <Button onClick={handleSend} disabled={sending} className="w-full gap-2" size="lg">
+                  <Button
+                    onClick={handleSend}
+                    disabled={sending || refreshing}
+                    aria-label={ar ? 'إرسال الإشعار' : 'Send Notification'}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {ar ? 'إرسال الإشعار' : 'Send Notification'}
+                    {sending ? (ar ? 'جاري الإرسال...' : 'Sending...') : (ar ? 'إرسال الإشعار' : 'Send Notification')}
                   </Button>
                 </CardContent>
               </Card>
@@ -385,21 +479,32 @@ const NotificationsPage = () => {
           </TabsContent>
 
           {/* HISTORY TAB */}
-          <TabsContent value="history" className="mt-6">
+          <TabsContent value="history" className="mt-6" key={`history-${refreshKey}`}>
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{ar ? 'سجل الإشعارات' : 'Notification History'}</CardTitle>
+                <div className={cn("flex items-center justify-between gap-2 flex-wrap", isRTL && "flex-row-reverse")}>
+                  <CardTitle>
+                    {ar ? 'سجل الإشعارات' : 'Notification History'}
+                    <span className="ms-2 text-sm font-normal text-muted-foreground">
+                      ({notifications.length}{unreadCount > 0 ? ` · ${unreadCount} ${ar ? 'غير مقروء' : 'unread'}` : ''})
+                    </span>
+                  </CardTitle>
                   <div className="flex gap-2">
-                    {notifications.filter(n => !n.read).length > 0 && (
-                      <Button variant="outline" size="sm" onClick={markAllAsRead}>
-                        <Check className="w-4 h-4 me-1" />
+                    {unreadCount > 0 && (
+                      <Button variant="outline" size="sm" onClick={handleMarkAll} disabled={marking || clearing || refreshing}>
+                        {marking ? <Loader2 className="w-4 h-4 me-1 animate-spin" /> : <Check className="w-4 h-4 me-1" />}
                         {ar ? 'قراءة الكل' : 'Mark all read'}
                       </Button>
                     )}
                     {notifications.length > 0 && (
-                      <Button variant="outline" size="sm" onClick={clearAll} className="text-destructive">
-                        <Trash2 className="w-4 h-4 me-1" />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setConfirmClear(true)}
+                        disabled={clearing || marking || refreshing}
+                        className="text-destructive"
+                      >
+                        {clearing ? <Loader2 className="w-4 h-4 me-1 animate-spin" /> : <Trash2 className="w-4 h-4 me-1" />}
                         {ar ? 'مسح الكل' : 'Clear all'}
                       </Button>
                     )}
@@ -409,6 +514,7 @@ const NotificationsPage = () => {
               <CardContent>
                 {notifications.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground">
+                    <Bell className="w-10 h-10 mx-auto mb-2 opacity-40" />
                     {ar ? 'لا توجد إشعارات' : 'No notifications'}
                   </div>
                 ) : (
@@ -419,16 +525,20 @@ const NotificationsPage = () => {
                         return (
                           <div
                             key={n.id}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={ar ? n.titleAr : n.titleEn}
                             className={cn(
                               "flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors",
                               !n.read && "bg-primary/5 border-primary/20"
                             )}
-                            onClick={() => markAsRead(n.id)}
+                            onClick={() => !n.read && markAsRead(n.id)}
+                            onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !n.read) { e.preventDefault(); markAsRead(n.id); } }}
                           >
                             <Icon className={cn("w-5 h-5 mt-0.5 shrink-0", typeColors[n.type] || 'text-blue-500')} />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <p className={cn("text-sm", !n.read && "font-semibold")}>
+                                <p className={cn("text-sm whitespace-pre-wrap break-words", !n.read && "font-semibold")}>
                                   {ar ? n.titleAr : n.titleEn}
                                 </p>
                                 {n.targetType && n.targetType !== 'general' && (
@@ -438,7 +548,7 @@ const NotificationsPage = () => {
                                 )}
                               </div>
                               {(n.descAr || n.descEn) && (
-                                <p className="text-xs text-muted-foreground mt-0.5">
+                                <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap break-words">
                                   {ar ? n.descAr : n.descEn}
                                 </p>
                               )}
@@ -447,7 +557,7 @@ const NotificationsPage = () => {
                                 <span className="text-[10px] text-muted-foreground">{formatTime(n.timestamp)}</span>
                               </div>
                             </div>
-                            {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" />}
+                            {!n.read && <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-2" aria-label={ar ? 'غير مقروء' : 'unread'} />}
                           </div>
                         );
                       })}
@@ -458,6 +568,30 @@ const NotificationsPage = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <AlertDialog open={confirmClear} onOpenChange={(o) => !clearing && setConfirmClear(o)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{ar ? 'تأكيد مسح جميع الإشعارات' : 'Confirm Clear All Notifications'}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {ar
+                  ? `سيتم مسح ${notifications.length} إشعار نهائياً ولا يمكن التراجع عن هذه العملية.`
+                  : `This will permanently clear ${notifications.length} notification(s). This action cannot be undone.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={clearing}>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleClearAll(); }}
+                disabled={clearing}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {clearing ? <Loader2 className="w-4 h-4 me-1 animate-spin" /> : <Trash2 className="w-4 h-4 me-1" />}
+                {ar ? 'تأكيد المسح' : 'Confirm Clear'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
