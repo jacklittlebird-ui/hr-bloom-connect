@@ -58,8 +58,8 @@ const Uniforms = () => {
   const savingEditRef = useRef(false);
   const [resetting, setResetting] = useState(false);
   const resettingRef = useRef(false);
-  const [deleting, setDeleting] = useState(false);
-
+    const [deleting, setDeleting] = useState(false);
+  const deletingRef = useRef(false);
   const itemToDelete = useMemo(() => uniforms.find(u => u.id === deleteId) || null, [uniforms, deleteId]);
 
   const handleRefresh = async () => {
