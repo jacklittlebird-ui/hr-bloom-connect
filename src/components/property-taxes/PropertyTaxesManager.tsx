@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import {
   Plus, Search, AlertTriangle, Clock, CheckCircle2, XCircle, Edit, Trash2, Bell, Landmark,
   CalendarDays, Receipt, FileSpreadsheet, FileText, RefreshCw, TrendingUp, Wallet, Filter,
-  ArrowUpDown, CheckCircle, MapPin, Building2, Calculator, ChevronRight,
+  ArrowUpDown, CheckCircle, MapPin, Building2, Calculator, ChevronRight, Loader2,
 } from 'lucide-react';
 import { format, differenceInDays, startOfYear, endOfYear, isWithinInterval, parseISO } from 'date-fns';
 import * as XLSX from 'xlsx';
