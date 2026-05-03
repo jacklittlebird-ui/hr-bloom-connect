@@ -88,10 +88,29 @@ export const PermissionRequestsList = ({ requests, onDelete, onEdit }: Permissio
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5" />
-            {t('leaves.permissions.listTitle')}
-          </CardTitle>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5" />
+              {t('leaves.permissions.listTitle')}
+            </CardTitle>
+            <ExportButton
+              rows={requests}
+              filenameBase="permissions"
+              title={language === 'ar' ? 'تقرير الأذونات' : 'Permissions Report'}
+              columns={[
+                { header: language === 'ar' ? 'كود الموظف' : 'Employee ID', accessor: (r) => r.employeeCode || '' },
+                { header: language === 'ar' ? 'الموظف' : 'Employee', accessor: (r) => language === 'ar' ? r.employeeNameAr : r.employeeName },
+                { header: language === 'ar' ? 'القسم' : 'Department', accessor: (r) => r.department },
+                { header: language === 'ar' ? 'النوع' : 'Type', accessor: (r) => r.permissionType },
+                { header: language === 'ar' ? 'التاريخ' : 'Date', accessor: (r) => formatDate(r.date) },
+                { header: language === 'ar' ? 'من' : 'From', accessor: (r) => r.fromTime },
+                { header: language === 'ar' ? 'إلى' : 'To', accessor: (r) => r.toTime },
+                { header: language === 'ar' ? 'المدة (س)' : 'Duration (h)', accessor: (r) => r.durationHours },
+                { header: language === 'ar' ? 'الحالة' : 'Status', accessor: (r) => r.status },
+                { header: language === 'ar' ? 'السبب' : 'Reason', accessor: (r) => r.reason || '' },
+              ] as ExportColumn<PermissionRequest>[]}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
