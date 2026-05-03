@@ -339,6 +339,11 @@ export const EmployeeReports = () => {
 
   const hasActiveFilters = department !== 'all' || station !== 'all' || status !== 'all';
 
+  // Wrap setters so manual changes clear the active preset selection
+  const onChangeDepartment = (v: string) => { setDepartment(v); if (activePresetId) setActivePresetId(null); };
+  const onChangeStation = (v: string) => { setStation(v); if (activePresetId) setActivePresetId(null); };
+  const onChangeStatus = (v: string) => { setStatus(v); if (activePresetId) setActivePresetId(null); };
+
   return (
     <div className="space-y-6">
       {/* Filters + Actions */}
