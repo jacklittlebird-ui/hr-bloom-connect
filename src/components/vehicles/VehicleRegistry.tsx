@@ -344,7 +344,20 @@ export const VehicleRegistry = () => {
               </DialogHeader>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
                 <Field label={isAr ? 'كود السيارة' : 'Vehicle Code'} name="vehicle_code" required />
-                <Field label={isAr ? 'الماركة' : 'Brand'} name="brand" required />
+                <div className="space-y-1">
+                  <Label className="text-xs">{isAr ? 'الماركة' : 'Brand'} <span className="text-destructive">*</span></Label>
+                  <Select value={form.brand} onValueChange={(v) => setForm((p) => ({ ...p, brand: v }))}>
+                    <SelectTrigger className="h-9" aria-label={isAr ? 'الماركة' : 'Brand'}>
+                      <SelectValue placeholder={isAr ? 'اختر الماركة' : 'Select brand'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Hyundai">{isAr ? 'هيونداي' : 'Hyundai'}</SelectItem>
+                      <SelectItem value="Toyota">{isAr ? 'تويوتا' : 'Toyota'}</SelectItem>
+                      <SelectItem value="King Long">{isAr ? 'كينج لونج' : 'King Long'}</SelectItem>
+                      <SelectItem value="Suzuki">{isAr ? 'سوزوكي' : 'Suzuki'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <Field label={isAr ? 'الموديل' : 'Model'} name="model" required />
                 <Field label={isAr ? 'سنة الصنع' : 'Year'} name="year" type="number" required />
                 <Field label={isAr ? 'اللون' : 'Color'} name="color" />
