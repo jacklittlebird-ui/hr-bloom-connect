@@ -470,8 +470,14 @@ export const PerformanceList = () => {
               </div>
 
               <div className={cn("flex gap-3 pt-2", isRTL ? "flex-row-reverse justify-start" : "justify-end")}>
-                <Button variant="outline" onClick={handleSaveEdit} className="gap-2"><Save className="w-4 h-4" />{language === 'ar' ? 'حفظ كمسودة' : 'Save Draft'}</Button>
-                <Button onClick={handleSubmitEdit} className="gap-2 bg-stat-green hover:bg-stat-green/90"><Send className="w-4 h-4" />{language === 'ar' ? 'إرسال التقييم' : 'Submit Review'}</Button>
+                <Button variant="outline" onClick={handleSaveEdit} disabled={saving} className="gap-2">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {ar ? 'حفظ كمسودة' : 'Save Draft'}
+                </Button>
+                <Button onClick={handleSubmitEdit} disabled={saving} className="gap-2 bg-stat-green hover:bg-stat-green/90">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  {ar ? 'إرسال التقييم' : 'Submit Review'}
+                </Button>
               </div>
             </div>
           )}
@@ -479,24 +485,50 @@ export const PerformanceList = () => {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteReviewId} onOpenChange={() => setDeleteReviewId(null)}>
+      <AlertDialog open={!!deleteReviewId} onOpenChange={(o) => { if (!o && !deleting) setDeleteReviewId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{language === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {language === 'ar' ? 'هل أنت متأكد من حذف هذا التقييم؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to delete this review? This action cannot be undone.'}
+            <AlertDialogTitle>{ar ? 'تأكيد حذف التقييم' : 'Confirm Review Delete'}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>{ar ? 'سيتم حذف التقييم التالي نهائياً ولا يمكن التراجع:' : 'This review will be permanently deleted and cannot be restored:'}</p>
+                {(() => {
+                  const r = reviews.find(x => x.id === deleteReviewId);
+                  if (!r) return null;
+                  return (
+                    <div className="rounded-md border bg-muted/40 p-3 space-y-1">
+                      <div><strong>{ar ? 'الموظف:' : 'Employee:'}</strong> {r.employeeName}</div>
+                      <div><strong>{ar ? 'الفترة:' : 'Period:'}</strong> {r.quarter} {r.year}</div>
+                      <div><strong>{ar ? 'الدرجة:' : 'Score:'}</strong> {r.score}/5</div>
+                      <div><strong>{ar ? 'الحالة:' : 'Status:'}</strong> {t(`performance.status.${r.status}`)}</div>
+                    </div>
+                  );
+                })()}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{language === 'ar' ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => {
-              if (deleteReviewId) {
-                deleteReview(deleteReviewId);
-                toast.success(language === 'ar' ? 'تم حذف التقييم بنجاح' : 'Review deleted successfully');
-                setDeleteReviewId(null);
-              }
-            }}>
-              {language === 'ar' ? 'حذف' : 'Delete'}
+            <AlertDialogCancel disabled={deleting}>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!deleteReviewId) return;
+                setDeleting(true);
+                try {
+                  await deleteReview(deleteReviewId);
+                  toast.success(ar ? 'تم حذف التقييم بنجاح' : 'Review deleted successfully');
+                  setDeleteReviewId(null);
+                } catch {
+                  toast.error(ar ? 'فشل حذف التقييم' : 'Failed to delete review');
+                } finally {
+                  setDeleting(false);
+                }
+              }}
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {ar ? 'حذف' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
