@@ -509,13 +509,13 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
                         <List className="h-3 w-3" />{isRTL ? 'الأقساط' : 'Schedule'}
                       </Button>
                       {loan.status === 'active' && (
-                        <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={() => handleRecordPayment(loan.id)}>
-                          <CreditCard className="h-3 w-3" />{isRTL ? 'تسجيل دفعة' : 'Pay'}
+                        <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={() => handleRecordPayment(loan.id)} disabled={actioningId === loan.id}>
+                          {actioningId === loan.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CreditCard className="h-3 w-3" />}{isRTL ? 'تسجيل دفعة' : 'Pay'}
                         </Button>
                       )}
                       {loan.paidInstallments > 0 && loan.status !== 'completed' && (
-                        <Button size="sm" variant="ghost" className="text-xs gap-1 text-destructive hover:text-destructive" onClick={() => handleReversePayment(loan.id)}>
-                          <Undo2 className="h-3 w-3" />{isRTL ? 'تراجع' : 'Undo'}
+                        <Button size="sm" variant="ghost" className="text-xs gap-1 text-destructive hover:text-destructive" onClick={() => handleReversePayment(loan.id)} disabled={actioningId === loan.id}>
+                          {actioningId === loan.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />}{isRTL ? 'تراجع' : 'Undo'}
                         </Button>
                       )}
                       {loan.status === 'active' && loan.remainingAmount > 0 && (
@@ -627,7 +627,7 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
           </div>
           <DialogFooter className="gap-2 mt-4">
             <Button variant="outline" onClick={() => { setShowDialog(false); resetForm(); }}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSubmit}>{editingLoan ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ' : 'Save')}</Button>
+            <Button onClick={handleSubmit} disabled={submitting}>{submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{editingLoan ? (isRTL ? 'تحديث' : 'Update') : (isRTL ? 'حفظ' : 'Save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
