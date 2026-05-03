@@ -104,17 +104,23 @@ export const LoanSettings = () => {
   const [loanTypes, setLoanTypes] = useState<LoanType[]>(initialLoanTypes);
   const [selectedType, setSelectedType] = useState<string>(loanTypes[0].id);
   const [saving, setSaving] = useState(false);
-  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
-    maxConcurrentLoans: 2,
-    advanceMaxPercent: 50,
-    advanceDeductionMethod: 'next_month',
-    autoDeductFromSalary: true,
-    sendNotifications: true,
-    notifyBeforeDueDays: 5,
-    allowEarlyRepayment: true,
-    requireGuarantor: false,
-    guarantorMinService: 24,
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [criticalChanges, setCriticalChanges] = useState<string[]>([]);
+  const initialSnapshotRef = useRef<{ general: GeneralSettings; types: LoanType[] }>({
+    general: {
+      maxConcurrentLoans: 2,
+      advanceMaxPercent: 50,
+      advanceDeductionMethod: 'next_month',
+      autoDeductFromSalary: true,
+      sendNotifications: true,
+      notifyBeforeDueDays: 5,
+      allowEarlyRepayment: true,
+      requireGuarantor: false,
+      guarantorMinService: 24,
+    },
+    types: JSON.parse(JSON.stringify(initialLoanTypes)),
   });
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>(initialSnapshotRef.current.general);
 
   const selectedLoanType = loanTypes.find(lt => lt.id === selectedType);
 
@@ -136,17 +142,65 @@ export const LoanSettings = () => {
     return null;
   };
 
-  const handleSave = async () => {
+  // Detect changes to critical fields (salary %, installment counts, advance %)
+  const detectCriticalChanges = (): string[] => {
+    const changes: string[] = [];
+    const orig = initialSnapshotRef.current;
+    if (orig.general.advanceMaxPercent !== generalSettings.advanceMaxPercent) {
+      changes.push(isRTL
+        ? `نسبة السلفة القصوى: ${orig.general.advanceMaxPercent}% → ${generalSettings.advanceMaxPercent}%`
+        : `Advance max percent: ${orig.general.advanceMaxPercent}% → ${generalSettings.advanceMaxPercent}%`);
+    }
+    if (orig.general.maxConcurrentLoans !== generalSettings.maxConcurrentLoans) {
+      changes.push(isRTL
+        ? `الحد الأقصى للقروض المتزامنة: ${orig.general.maxConcurrentLoans} → ${generalSettings.maxConcurrentLoans}`
+        : `Max concurrent loans: ${orig.general.maxConcurrentLoans} → ${generalSettings.maxConcurrentLoans}`);
+    }
+    for (const lt of loanTypes) {
+      const o = orig.types.find(x => x.id === lt.id);
+      if (!o) continue;
+      const name = isRTL ? lt.nameAr : lt.nameEn;
+      if (o.maxPercentOfSalary !== lt.maxPercentOfSalary) {
+        changes.push(isRTL
+          ? `${name} - نسبة الراتب: ${o.maxPercentOfSalary}% → ${lt.maxPercentOfSalary}%`
+          : `${name} - Salary %: ${o.maxPercentOfSalary}% → ${lt.maxPercentOfSalary}%`);
+      }
+      if (o.maxInstallments !== lt.maxInstallments) {
+        changes.push(isRTL
+          ? `${name} - عدد الأقساط: ${o.maxInstallments} → ${lt.maxInstallments}`
+          : `${name} - Installments: ${o.maxInstallments} → ${lt.maxInstallments}`);
+      }
+    }
+    return changes;
+  };
+
+  const handleSaveClick = () => {
     if (saving) return;
     const err = validateSettings();
     if (err) {
       toast({ title: isRTL ? 'بيانات غير صالحة' : 'Invalid data', description: err, variant: 'destructive' });
       return;
     }
+    const critical = detectCriticalChanges();
+    if (critical.length > 0) {
+      setCriticalChanges(critical);
+      setConfirmOpen(true);
+      return;
+    }
+    void performSave();
+  };
+
+  const performSave = async () => {
+    if (saving) return;
     setSaving(true);
+    setConfirmOpen(false);
     try {
-      // Persist settings (placeholder for backend save)
       await new Promise(r => setTimeout(r, 400));
+      // Update snapshot to reflect newly persisted state
+      initialSnapshotRef.current = {
+        general: { ...generalSettings },
+        types: JSON.parse(JSON.stringify(loanTypes)),
+      };
       toast({ title: t('common.success'), description: t('loans.settings.saved') });
     } catch (e: any) {
       toast({ title: isRTL ? 'تعذر الحفظ' : 'Save failed', description: e?.message, variant: 'destructive' });
