@@ -541,6 +541,70 @@ export const EmployeeReports = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Preset Confirmation */}
+      <AlertDialog
+        open={!!presetToDelete}
+        onOpenChange={(open) => { if (!open && !deletingPreset) setPresetToDelete(null); }}
+      >
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{ar ? 'حذف الإعداد المسبق' : 'Delete Preset'}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  {ar
+                    ? 'سيتم حذف الإعداد التالي بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.'
+                    : 'The following preset will be permanently deleted. This action cannot be undone.'}
+                </p>
+                {presetToDelete && (
+                  <div className="rounded-md border border-border bg-muted/40 p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{ar ? 'الاسم:' : 'Name:'}</span>
+                      <Badge variant="default" className="bg-primary text-primary-foreground">
+                        {presetToDelete.name}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline">
+                        {ar ? 'القسم' : 'Dept'}: {presetToDelete.department === 'all' ? (ar ? 'الكل' : 'All') : presetToDelete.department}
+                      </Badge>
+                      <Badge variant="outline">
+                        {ar ? 'المحطة' : 'Station'}: {getStationLabel(presetToDelete.station)}
+                      </Badge>
+                      <Badge variant="outline">
+                        {ar ? 'الحالة' : 'Status'}: {getStatusLabel(presetToDelete.status)}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {ar
+                        ? `سيتأثر ${[presetToDelete.department !== 'all', presetToDelete.station !== 'all', presetToDelete.status !== 'all'].filter(Boolean).length} فلتر محفوظ`
+                        : `${[presetToDelete.department !== 'all', presetToDelete.station !== 'all', presetToDelete.status !== 'all'].filter(Boolean).length} stored filter(s) affected`}
+                      {activePresetId === presetToDelete.id && (
+                        <> · {ar ? 'هذا الإعداد مفعّل حالياً' : 'currently active'}</>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingPreset}>
+              {ar ? 'إلغاء' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDeletePreset(); }}
+              disabled={deletingPreset}
+              aria-busy={deletingPreset}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
+            >
+              {deletingPreset ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {deletingPreset ? (ar ? 'جاري الحذف...' : 'Deleting...') : (ar ? 'حذف' : 'Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
