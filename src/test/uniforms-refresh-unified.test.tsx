@@ -160,7 +160,6 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
     expect(saveBtn.disabled).toBe(true);
 
     // While editing is in flight, try clicking Refresh: must NOT trigger refreshUniforms
-    const refreshBtn = screen.getByRole('button', { name: /تحديث|Refresh/ }) as HTMLButtonElement;
     expect(refreshBtn.disabled).toBe(true);
     await act(async () => { fireEvent.click(refreshBtn); });
     expect(refreshUniformsMock).not.toHaveBeenCalled();
