@@ -72,7 +72,7 @@ const defaultFilters: ReportFilters = {
 
 export const LoanReports = () => {
   const { isRTL } = useLanguage();
-  const { handlePrint, exportBilingualPDF, exportToCSV } = useReportExport();
+  const { handlePrint, exportBilingualPDF, exportBilingualCSV } = useReportExport();
   const [filters, setFilters] = usePersistedState<ReportFilters>('hr_loan_reports_filters_v1', defaultFilters);
 
   const update = <K extends keyof ReportFilters>(k: K, v: ReportFilters[K]) =>
@@ -258,7 +258,7 @@ export const LoanReports = () => {
               <Button variant="outline" onClick={handleExportPDF}>
                 <FileText className="h-4 w-4 mr-1" />{isRTL ? 'تصدير PDF' : 'Export PDF'}
               </Button>
-              <Button variant="outline" onClick={() => exportToCSV({ title: isRTL ? titleAr : titleEn, data: exportData, columns: csvColumns, fileName: 'loan-station-report' })}>
+              <Button variant="outline" onClick={() => exportBilingualCSV({ titleAr, titleEn, data: exportData, columns: bilingualColumns, fileName: 'loan-station-report', summaryCards })}>
                 <FileSpreadsheet className="h-4 w-4 mr-1" />{isRTL ? 'تصدير CSV' : 'Export CSV'}
               </Button>
             </div>
