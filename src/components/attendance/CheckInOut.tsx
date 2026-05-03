@@ -19,7 +19,7 @@ import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { AttendanceRecord } from '@/pages/Attendance';
 import { toast } from '@/hooks/use-toast';
-import { getCairoOffsetString } from '@/lib/cairoDate';
+import { getCairoOffsetString, getCairoDateString } from '@/lib/cairoDate';
 
 interface CheckInOutProps {
   records: AttendanceRecord[];
@@ -68,7 +68,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
     return Array.from(deptMap.values());
   };
   
-  const today = new Date().toISOString().split('T')[0];
+  const today = getCairoDateString();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -76,7 +76,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   }, []);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-GB', { 
+    return date.toLocaleTimeString('en-GB', { 
       hour: '2-digit', 
       minute: '2-digit',
       second: '2-digit',
@@ -120,7 +120,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const [manualStation, setManualStation] = useState<string>('all');
   const [manualDept, setManualDept] = useState<string>('all');
   const [manualEmployee, setManualEmployee] = useState<string>('');
-  const [manualDate, setManualDate] = useState(new Date().toISOString().split('T')[0]);
+  const [manualDate, setManualDate] = useState(getCairoDateString());
   const [manualCheckIn, setManualCheckIn] = useState('');
   const [manualCheckOut, setManualCheckOut] = useState('');
   const [manualNotes, setManualNotes] = useState('');
@@ -249,7 +249,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
     onCheckIn(selectedEmpData.id, selectedEmpData.name, selectedEmpData.nameAr, selectedEmpData.department);
     toast({
       title: t('attendance.checkin.success'),
-      description: `${language === 'ar' ? selectedEmpData.nameAr : selectedEmpData.name} - ${currentTime.toLocaleTimeString(language === 'ar' ? 'ar-EG' : 'en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}`,
+      description: `${language === 'ar' ? selectedEmpData.nameAr : selectedEmpData.name} - ${currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}`,
     });
   };
 

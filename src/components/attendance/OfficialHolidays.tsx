@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Calendar as CalendarIcon, Pencil, Trash2, Loader2 } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface Station {
@@ -31,7 +32,7 @@ interface OfficialHoliday {
 }
 
 export const OfficialHolidays = () => {
-  const { language } = useLanguage();
+  const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
 
   const [holidays, setHolidays] = useState<OfficialHoliday[]>([]);
@@ -40,6 +41,7 @@ export const OfficialHolidays = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<OfficialHoliday | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name_ar: '',
@@ -128,13 +130,13 @@ export const OfficialHolidays = () => {
   };
 
   const remove = async (id: string) => {
-    if (!confirm(ar ? 'هل أنت متأكد من الحذف؟' : 'Are you sure you want to delete?')) return;
     const { error } = await supabase.from('official_holidays').delete().eq('id', id);
     if (error) {
       toast.error(ar ? 'فشل الحذف' : 'Delete failed');
       return;
     }
     toast.success(ar ? 'تم الحذف' : 'Deleted');
+    setDeleteId(null);
     loadData();
   };
 
@@ -144,13 +146,13 @@ export const OfficialHolidays = () => {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
+    <Card dir={isRTL ? 'rtl' : 'ltr'}>
+      <CardHeader className={cn("flex flex-row items-center justify-between", isRTL && "flex-row-reverse")}>
+        <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
           <CalendarIcon className="w-5 h-5" />
           {ar ? 'الإجازات الرسمية' : 'Official Holidays'}
         </CardTitle>
-        <Button onClick={openNew} className="gap-2">
+        <Button onClick={openNew} className={cn("gap-2", isRTL && "flex-row-reverse")}>
           <Plus className="w-4 h-4" />
           {ar ? 'إضافة إجازة رسمية' : 'Add Holiday'}
         </Button>
@@ -165,11 +167,11 @@ export const OfficialHolidays = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead>{ar ? 'الاسم' : 'Name'}</TableHead>
-                  <TableHead>{ar ? 'التاريخ' : 'Date'}</TableHead>
-                  <TableHead>{ar ? 'المحطات' : 'Stations'}</TableHead>
-                  <TableHead>{ar ? 'ملاحظات' : 'Notes'}</TableHead>
-                  <TableHead className="w-[120px]">{ar ? 'إجراءات' : 'Actions'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الاسم' : 'Name'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{ar ? 'التاريخ' : 'Date'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطات' : 'Stations'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{ar ? 'ملاحظات' : 'Notes'}</TableHead>
+                  <TableHead className={cn("w-[120px]", isRTL && "text-right")}>{ar ? 'إجراءات' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -197,11 +199,11 @@ export const OfficialHolidays = () => {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm max-w-xs truncate">{h.notes || '-'}</TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
+                        <div className={cn("flex gap-1", isRTL && "flex-row-reverse")}>
                           <Button variant="ghost" size="icon" onClick={() => openEdit(h)}>
                             <Pencil className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => remove(h.id)}>
+                          <Button variant="ghost" size="icon" onClick={() => setDeleteId(h.id)}>
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
                         </div>
@@ -216,7 +218,7 @@ export const OfficialHolidays = () => {
       </CardContent>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
           <DialogHeader>
             <DialogTitle>
               {editing ? (ar ? 'تعديل إجازة رسمية' : 'Edit Holiday') : (ar ? 'إضافة إجازة رسمية' : 'Add Holiday')}
@@ -226,11 +228,11 @@ export const OfficialHolidays = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>{ar ? 'الاسم (عربي)' : 'Name (Arabic)'} *</Label>
-                <Input value={form.name_ar} onChange={e => setForm({ ...form, name_ar: e.target.value })} placeholder="عيد الفطر" />
+                <Input dir="rtl" value={form.name_ar} onChange={e => setForm({ ...form, name_ar: e.target.value })} placeholder="عيد الفطر" />
               </div>
               <div>
                 <Label>{ar ? 'الاسم (إنجليزي)' : 'Name (English)'} *</Label>
-                <Input value={form.name_en} onChange={e => setForm({ ...form, name_en: e.target.value })} placeholder="Eid Al-Fitr" />
+                <Input dir="ltr" value={form.name_en} onChange={e => setForm({ ...form, name_en: e.target.value })} placeholder="Eid Al-Fitr" />
               </div>
             </div>
             <div>
@@ -267,6 +269,23 @@ export const OfficialHolidays = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{ar ? 'تأكيد الحذف' : 'Confirm Deletion'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {ar ? 'هل أنت متأكد من حذف هذه الإجازة الرسمية؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to delete this official holiday? This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteId && remove(deleteId)} className="bg-destructive hover:bg-destructive/90">
+              {ar ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
