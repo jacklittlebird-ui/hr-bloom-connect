@@ -72,6 +72,9 @@ const Leaves = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedStation, setSelectedStation] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
 
   // Employee maps for filtering
   const [empDeptMap, setEmpDeptMap] = useState<Map<string, string>>(new Map());
