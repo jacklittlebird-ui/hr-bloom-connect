@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { usePersistedState } from '@/hooks/usePersistedState';
+import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,8 +15,8 @@ import { DemoDataBanner } from './DemoDataBanner';
 export const TrainingReports = () => {
   const { t, isRTL } = useLanguage();
   const { language } = useLanguage();
-  const [period, setPeriod] = useState('year');
-  const [station, setStation] = useState('all');
+  const [period, setPeriod] = usePersistedState<string>('training_stats_reports_period', 'year');
+  const [station, setStation] = usePersistedState<string>('training_stats_reports_station', 'all');
   const { reportRef, handlePrint, exportToCSV, exportToPDF } = useReportExport();
 
   const courseCompletion = [
@@ -73,7 +75,11 @@ export const TrainingReports = () => {
   }));
 
   const hasFilters = period !== 'year' || station !== 'all';
-  const resetFilters = () => { setPeriod('year'); setStation('all'); };
+  const resetFilters = () => {
+    setPeriod('year');
+    setStation('all');
+    toast({ title: language === 'ar' ? 'تمت إعادة ضبط الفلاتر' : 'Filters reset' });
+  };
 
   return (
     <div className="space-y-6">

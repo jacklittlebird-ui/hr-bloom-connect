@@ -5,9 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Users, UserPlus, UserMinus, Building2, Download, FileText, Printer, Save, BookmarkPlus, Trash2, RotateCcw, Languages } from 'lucide-react';
+import { Users, UserPlus, UserMinus, Building2, Download, FileText, Printer, Save, BookmarkPlus, Trash2, RotateCcw, Languages, Loader2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
@@ -29,15 +33,19 @@ export const EmployeeReports = () => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const { employees } = useEmployeeData();
-  const [department, setDepartment] = useState('all');
-  const [station, setStation] = useState('all');
-  const [status, setStatus] = useState('all');
+  // Persist filters across tab switches/navigation
+  const [department, setDepartment] = usePersistedState<string>('hr_emp_report_department', 'all');
+  const [station, setStation] = usePersistedState<string>('hr_emp_report_station', 'all');
+  const [status, setStatus] = usePersistedState<string>('hr_emp_report_status', 'all');
+  const [activePresetId, setActivePresetId] = usePersistedState<string | null>('hr_emp_report_active_preset', null);
   const { reportRef, handlePrint, exportToCSV, exportBilingualCSV, exportBilingualPDF } = useReportExport();
 
   // Presets
   const [presets, setPresets] = usePersistedState<ExportPreset[]>('hr_report_presets', []);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [presetName, setPresetName] = useState('');
+  const [presetToDelete, setPresetToDelete] = useState<ExportPreset | null>(null);
+  const [deletingPreset, setDeletingPreset] = useState(false);
 
   const departments = useMemo(() => {
     const depts = new Set(employees.map(e => e.department).filter(d => d && d !== '-'));
@@ -293,21 +301,48 @@ export const EmployeeReports = () => {
     setDepartment(preset.department);
     setStation(preset.station);
     setStatus(preset.status);
+    setActivePresetId(preset.id);
     toast({ title: ar ? `تم تحميل: ${preset.name}` : `Loaded: ${preset.name}` });
-  }, [ar]);
+  }, [ar, setDepartment, setStation, setStatus, setActivePresetId]);
 
-  const deletePreset = useCallback((id: string) => {
-    setPresets(prev => prev.filter(p => p.id !== id));
-    toast({ title: ar ? 'تم حذف الإعداد المسبق' : 'Preset deleted' });
-  }, [ar]);
+  // Open confirmation dialog instead of deleting immediately
+  const requestDeletePreset = useCallback((preset: ExportPreset) => {
+    setPresetToDelete(preset);
+  }, []);
+
+  const confirmDeletePreset = useCallback(async () => {
+    if (!presetToDelete || deletingPreset) return;
+    setDeletingPreset(true);
+    try {
+      // Tiny delay to surface loading state for visual feedback
+      await new Promise(r => setTimeout(r, 150));
+      const id = presetToDelete.id;
+      setPresets(prev => prev.filter(p => p.id !== id));
+      if (activePresetId === id) setActivePresetId(null);
+      toast({
+        title: ar ? 'تم حذف الإعداد المسبق' : 'Preset deleted',
+        description: ar ? `الاسم: ${presetToDelete.name}` : `Name: ${presetToDelete.name}`,
+      });
+      setPresetToDelete(null);
+    } finally {
+      setDeletingPreset(false);
+    }
+  }, [presetToDelete, deletingPreset, activePresetId, ar, setPresets, setActivePresetId]);
 
   const resetFilters = useCallback(() => {
     setDepartment('all');
     setStation('all');
     setStatus('all');
-  }, []);
+    setActivePresetId(null);
+    toast({ title: ar ? 'تمت إعادة ضبط الفلاتر' : 'Filters reset' });
+  }, [ar, setDepartment, setStation, setStatus, setActivePresetId]);
 
   const hasActiveFilters = department !== 'all' || station !== 'all' || status !== 'all';
+
+  // Wrap setters so manual changes clear the active preset selection
+  const onChangeDepartment = (v: string) => { setDepartment(v); if (activePresetId) setActivePresetId(null); };
+  const onChangeStation = (v: string) => { setStation(v); if (activePresetId) setActivePresetId(null); };
+  const onChangeStatus = (v: string) => { setStatus(v); if (activePresetId) setActivePresetId(null); };
 
   return (
     <div className="space-y-6">
@@ -316,7 +351,7 @@ export const EmployeeReports = () => {
         <CardContent className="p-4 space-y-3">
           <div className={cn("flex flex-wrap gap-4 items-center justify-between", isRTL && "flex-row-reverse")}>
             <div className={cn("flex flex-wrap gap-3", isRTL && "flex-row-reverse")}>
-              <Select value={department} onValueChange={setDepartment}>
+              <Select value={department} onValueChange={onChangeDepartment}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('reports.allDepartments')}</SelectItem>
@@ -325,7 +360,7 @@ export const EmployeeReports = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={station} onValueChange={setStation}>
+              <Select value={station} onValueChange={onChangeStation}>
                 <SelectTrigger className="w-44"><SelectValue placeholder={ar ? 'المحطة/الموقع' : 'Station'} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع المحطات' : 'All Stations'}</SelectItem>
@@ -334,7 +369,7 @@ export const EmployeeReports = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={status} onValueChange={setStatus}>
+              <Select value={status} onValueChange={onChangeStatus}>
                 <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع الحالات' : 'All Status'}</SelectItem>
@@ -375,20 +410,33 @@ export const EmployeeReports = () => {
           {presets.length > 0 && (
             <div className={cn("flex flex-wrap gap-2 items-center pt-2 border-t border-border", isRTL && "flex-row-reverse")}>
               <span className="text-xs text-muted-foreground font-medium">{ar ? 'الإعدادات المحفوظة:' : 'Saved Presets:'}</span>
-              {presets.map(p => (
-                <div key={p.id} className="flex items-center gap-1">
-                  <Badge
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-primary/10 transition-colors px-3 py-1"
-                    onClick={() => loadPreset(p)}
-                  >
-                    {p.name}
-                  </Badge>
-                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => deletePreset(p.id)}>
-                    <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
-                  </Button>
-                </div>
-              ))}
+              {presets.map(p => {
+                const isActive = activePresetId === p.id;
+                return (
+                  <div key={p.id} className="flex items-center gap-1">
+                    <Badge
+                      variant={isActive ? 'default' : 'secondary'}
+                      className={cn(
+                        'cursor-pointer transition-colors px-3 py-1',
+                        isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/10',
+                      )}
+                      onClick={() => loadPreset(p)}
+                      aria-pressed={isActive}
+                    >
+                      {p.name}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5"
+                      onClick={() => requestDeletePreset(p)}
+                      aria-label={ar ? `حذف الإعداد ${p.name}` : `Delete preset ${p.name}`}
+                    >
+                      <Trash2 className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -493,6 +541,70 @@ export const EmployeeReports = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Preset Confirmation */}
+      <AlertDialog
+        open={!!presetToDelete}
+        onOpenChange={(open) => { if (!open && !deletingPreset) setPresetToDelete(null); }}
+      >
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{ar ? 'حذف الإعداد المسبق' : 'Delete Preset'}</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  {ar
+                    ? 'سيتم حذف الإعداد التالي بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.'
+                    : 'The following preset will be permanently deleted. This action cannot be undone.'}
+                </p>
+                {presetToDelete && (
+                  <div className="rounded-md border border-border bg-muted/40 p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{ar ? 'الاسم:' : 'Name:'}</span>
+                      <Badge variant="default" className="bg-primary text-primary-foreground">
+                        {presetToDelete.name}
+                      </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline">
+                        {ar ? 'القسم' : 'Dept'}: {presetToDelete.department === 'all' ? (ar ? 'الكل' : 'All') : presetToDelete.department}
+                      </Badge>
+                      <Badge variant="outline">
+                        {ar ? 'المحطة' : 'Station'}: {getStationLabel(presetToDelete.station)}
+                      </Badge>
+                      <Badge variant="outline">
+                        {ar ? 'الحالة' : 'Status'}: {getStatusLabel(presetToDelete.status)}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {ar
+                        ? `سيتأثر ${[presetToDelete.department !== 'all', presetToDelete.station !== 'all', presetToDelete.status !== 'all'].filter(Boolean).length} فلتر محفوظ`
+                        : `${[presetToDelete.department !== 'all', presetToDelete.station !== 'all', presetToDelete.status !== 'all'].filter(Boolean).length} stored filter(s) affected`}
+                      {activePresetId === presetToDelete.id && (
+                        <> · {ar ? 'هذا الإعداد مفعّل حالياً' : 'currently active'}</>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingPreset}>
+              {ar ? 'إلغاء' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDeletePreset(); }}
+              disabled={deletingPreset}
+              aria-busy={deletingPreset}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-2"
+            >
+              {deletingPreset ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {deletingPreset ? (ar ? 'جاري الحذف...' : 'Deleting...') : (ar ? 'حذف' : 'Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
