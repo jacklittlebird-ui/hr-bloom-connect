@@ -176,7 +176,7 @@ export const LoanSettings = () => {
   };
 
   const handleSaveClick = () => {
-    if (saving) return;
+    if (savingRef.current || saving) return;
     const err = validateSettings();
     if (err) {
       toast({ title: isRTL ? 'بيانات غير صالحة' : 'Invalid data', description: err, variant: 'destructive' });
@@ -192,12 +192,12 @@ export const LoanSettings = () => {
   };
 
   const performSave = async () => {
-    if (saving) return;
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setConfirmOpen(false);
     try {
       await new Promise(r => setTimeout(r, 400));
-      // Update snapshot to reflect newly persisted state
       initialSnapshotRef.current = {
         general: { ...generalSettings },
         types: JSON.parse(JSON.stringify(loanTypes)),
@@ -207,6 +207,7 @@ export const LoanSettings = () => {
       toast({ title: isRTL ? 'تعذر الحفظ' : 'Save failed', description: e?.message, variant: 'destructive' });
     } finally {
       setSaving(false);
+      savingRef.current = false;
     }
   };
 
