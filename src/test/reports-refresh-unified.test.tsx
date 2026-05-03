@@ -182,4 +182,76 @@ describe('Reports — unified refresh E2E', () => {
     expect((btn as HTMLButtonElement).disabled).toBe(false);
     expect(screen.queryByRole('status')).toBeNull();
   });
+
+  it('switching tabs during a refresh only mounts the newly active tab (no over-remount)', async () => {
+    render(<Reports />);
+    await waitFor(() => expect(mountCounts['EmployeeReports']).toBe(1));
+
+    const btn = screen.getByLabelText('Refresh');
+    // Start refresh
+    await act(async () => { fireEvent.click(btn); });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+
+    // While refreshing, switch to a different tab. Radix Tabs activate on pointerDown+mouseDown+click.
+    const leavesTab = screen.getByRole('tab', { name: /leaves/i });
+    await act(async () => {
+      fireEvent.pointerDown(leavesTab, { button: 0 });
+      fireEvent.mouseDown(leavesTab, { button: 0 });
+      fireEvent.click(leavesTab);
+    });
+
+    await flush(600);
+
+    // EmployeeReports remounted at most once due to refreshKey bump
+    expect(mountCounts['EmployeeReports']).toBeLessThanOrEqual(2);
+    // The newly activated tab mounted exactly once (no over-remount across refresh cycle)
+    expect(mountCounts['LeaveReports']).toBe(1);
+    // Tabs the user never visited remain unmounted
+    expect(mountCounts['PerformanceReports']).toBeUndefined();
+    expect(mountCounts['UniformReport']).toBeUndefined();
+    // Single success toast for the refresh cycle
+    expect(sonnerSpy.success).toHaveBeenCalledTimes(1);
+  });
+
+  it('rapid Refresh clicks trigger only one refresh cycle (single setRefreshKey bump per cycle)', async () => {
+    render(<Reports />);
+    await waitFor(() => expect(mountCounts['EmployeeReports']).toBe(1));
+    const btn = screen.getByLabelText('Refresh');
+
+    await act(async () => {
+      for (let i = 0; i < 8; i++) fireEvent.click(btn);
+    });
+    await flush(600);
+
+    // Exactly one extra remount of the active tab → proves only one refreshKey bump
+    expect(mountCounts['EmployeeReports']).toBe(2);
+    expect(sonnerSpy.success).toHaveBeenCalledTimes(1);
+    expect(sonnerSpy.error).not.toHaveBeenCalled();
+  });
+
+  it('verifies success/error toast text and role="status" banner text & lifecycle', async () => {
+    render(<Reports />);
+    const btn = screen.getByLabelText('Refresh') as HTMLButtonElement;
+
+    // Success scenario — English (mocked language='en')
+    await act(async () => { fireEvent.click(btn); });
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent(/Refreshing all reports/i);
+    expect(status.getAttribute('aria-live')).toBe('polite');
+    expect(btn.disabled).toBe(true);
+
+    await flush(600);
+    expect(sonnerSpy.success).toHaveBeenCalledWith('Reports refreshed');
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(btn.disabled).toBe(false);
+
+    // Error scenario — force toast.success to throw → catch path fires toast.error
+    sonnerSpy.success.mockImplementationOnce(() => { throw new Error('fail'); });
+    await act(async () => { fireEvent.click(btn); });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    await flush(600);
+    expect(sonnerSpy.error).toHaveBeenCalledWith('Refresh failed');
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(btn.disabled).toBe(false);
+  });
 });
