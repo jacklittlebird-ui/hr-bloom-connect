@@ -218,10 +218,17 @@ const Uniforms = () => {
             <Shirt className="w-7 h-7 text-primary" />
             {language === 'ar' ? 'إدارة يونيفورم الموظفين' : 'Employee Uniform Management'}
           </h1>
-          <Button variant="outline" size="icon" onClick={() => { refreshUniforms(); toast.success(language === 'ar' ? 'تم التحديث' : 'Refreshed'); }}>
-            <RefreshCw className="w-4 h-4" />
+          <Button variant="outline" size="icon" onClick={handleRefresh} disabled={refreshing} aria-label={language === 'ar' ? 'تحديث' : 'Refresh'}>
+            <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
           </Button>
         </div>
+
+        {refreshing && (
+          <div role="status" aria-live="polite" className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>{language === 'ar' ? 'جاري تحديث بيانات اليونيفورم...' : 'Refreshing uniform data...'}</span>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
