@@ -618,25 +618,51 @@ const Uniforms = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
-            <Button onClick={handleSaveEdit}>{language === 'ar' ? 'حفظ' : 'Save'}</Button>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)} disabled={savingEdit}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</Button>
+            <Button onClick={handleSaveEdit} disabled={savingEdit} className="gap-1.5">
+              {savingEdit && <Loader2 className="w-4 h-4 animate-spin" />}
+              {savingEdit ? (language === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (language === 'ar' ? 'حفظ' : 'Save')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete confirmation */}
-      <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
+      <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && !deleting && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{language === 'ar' ? 'تأكيد الحذف' : 'Confirm Delete'}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {language === 'ar' ? 'هل أنت متأكد من حذف هذا الصنف؟ لا يمكن التراجع.' : 'Are you sure you want to delete this item? This cannot be undone.'}
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>{language === 'ar' ? 'هل أنت متأكد من حذف هذا الصنف؟ لا يمكن التراجع.' : 'Are you sure you want to delete this item? This cannot be undone.'}</p>
+                {itemToDelete && (
+                  <div data-testid="delete-item-details" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'النوع:' : 'Type:'}</span>
+                      <span className="font-semibold">{language === 'ar' ? itemToDelete.typeAr : itemToDelete.typeEn}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الكمية:' : 'Quantity:'}</span>
+                      <span className="font-semibold">{itemToDelete.quantity}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'تاريخ التسليم:' : 'Delivery:'}</span>
+                      <span className="font-semibold">{itemToDelete.deliveryDate}</span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">{language === 'ar' ? 'الإجمالي:' : 'Total:'}</span>
+                      <span className="font-semibold">{itemToDelete.totalPrice.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{language === 'ar' ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {language === 'ar' ? 'حذف' : 'Delete'}
+            <AlertDialogCancel disabled={deleting}>{language === 'ar' ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5">
+              {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {deleting ? (language === 'ar' ? 'جاري الحذف...' : 'Deleting...') : (language === 'ar' ? 'حذف' : 'Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
