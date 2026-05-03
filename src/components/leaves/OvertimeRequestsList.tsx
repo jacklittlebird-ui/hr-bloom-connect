@@ -10,6 +10,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Clock, CheckCircle, XCircle, PlusCircle, Trash2 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { OvertimeRequest } from '@/types/leaves';
+import { ExportButton } from './ExportButton';
+import type { ExportColumn } from '@/lib/leavesExport';
 
 interface OvertimeRequestsListProps {
   requests: OvertimeRequest[];
