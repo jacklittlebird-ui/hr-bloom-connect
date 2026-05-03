@@ -146,7 +146,7 @@ describe('Uniforms — unified refresh + safe edit/delete', () => {
     render(<LanguageProvider><Uniforms /></LanguageProvider>);
 
     // Open Edit dialog on first row
-    const editButtons = screen.getAllByRole('button').filter(b => b.className.includes('text-primary') && b.querySelector('svg'));
+    const editButtons = screen.getAllByRole('button').filter(b => b.className.includes('h-8 w-8') && b.className.includes('text-primary'));
     await act(async () => { fireEvent.click(editButtons[0]); });
     const editDialog = await screen.findByRole('dialog');
     const saveBtn = within(editDialog).getByRole('button', { name: /^حفظ$|^Save$/ }) as HTMLButtonElement;
