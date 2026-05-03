@@ -47,6 +47,18 @@ const Loans = () => {
           </Button>
         </div>
 
+        {/* Unified refresh status banner — visible while refreshKey propagates to all 5 tabs */}
+        {refreshing && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>{isRTL ? 'جاري تحديث جميع تبويبات القروض...' : 'Refreshing all loan tabs...'}</span>
+          </div>
+        )}
+
         <Tabs defaultValue="loans" className="w-full">
           <TabsList className="grid w-full grid-cols-5 mb-6" dir="rtl">
             <TabsTrigger value="loans">{t('loans.tabs.loans')}</TabsTrigger>
