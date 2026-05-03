@@ -85,7 +85,7 @@ describe('Training — refresh covers all 7 tabs with a single toast', () => {
       const trigger = allTriggers.find(el => (el.id || '').endsWith(`-trigger-${tab.value}`));
       expect(trigger, `trigger for ${tab.value}`).toBeTruthy();
       await act(async () => { fireEvent.click(trigger!); });
-      await waitFor(() => expect(screen.getByTestId(tab.testid)).toBeInTheDocument());
+      await screen.findByTestId(tab.testid, {}, { timeout: 3000 });
     }
 
     // Snapshot mount counts after navigating through all tabs
