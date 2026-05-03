@@ -184,7 +184,9 @@ const Uniforms = () => {
   };
 
   const confirmDelete = async () => {
-    if (deleteId === null || deleting) return;
+    if (deleteId === null) return;
+    if (deletingRef.current) return;
+    deletingRef.current = true;
     setDeleting(true);
     try {
       await deleteUniform(deleteId);
@@ -193,6 +195,7 @@ const Uniforms = () => {
       toast.error(language === 'ar' ? 'تعذر الحذف' : 'Delete failed');
     } finally {
       setDeleting(false);
+      deletingRef.current = false;
       setDeleteId(null);
     }
   };
