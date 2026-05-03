@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Undo2 } from 'lucide-react';
+import { Undo2, Loader2, RefreshCw, FileText, FileSpreadsheet, Printer } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,10 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Search, CheckCircle, Clock, AlertCircle, Calendar, Banknote } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { markInstallmentPaid, revertInstallmentPayment } from '@/lib/loanPayments';
+import { formatDate } from '@/lib/utils';
+import { useReportExport } from '@/hooks/useReportExport';
 
 interface Installment {
   id: string;
