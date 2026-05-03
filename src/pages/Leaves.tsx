@@ -456,13 +456,14 @@ const Leaves = () => {
             <h1 className="text-2xl font-bold text-foreground">{t('leaves.title')}</h1>
             <p className="text-muted-foreground">{t('leaves.subtitle')}</p>
           </div>
-          <Button variant="outline" size="icon" onClick={fetchData}>
+          <Button variant="outline" size="sm" onClick={fetchData} className="gap-1.5">
             <RefreshCw className="w-4 h-4" />
+            <span className="hidden sm:inline">{language === 'ar' ? 'تحديث' : 'Refresh'}</span>
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn("grid w-full grid-cols-5 lg:grid-cols-10 mb-6")} dir="rtl">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+          <TabsList className={cn("grid w-full grid-cols-5 lg:grid-cols-10 mb-6")}>
             <TabsTrigger value="leaves" className="flex items-center gap-1.5"><FileText className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.leaves')}</span></TabsTrigger>
             <TabsTrigger value="permissions" className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.permissions')}</span></TabsTrigger>
             <TabsTrigger value="missions" className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.missions')}</span></TabsTrigger>
