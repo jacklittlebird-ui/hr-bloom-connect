@@ -360,7 +360,7 @@ export const VehicleRegistry = () => {
                 <DialogTitle>{editingId ? (isAr ? 'تعديل سيارة' : 'Edit Vehicle') : (isAr ? 'إضافة سيارة جديدة' : 'Add New Vehicle')}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-                {renderField(isAr ? 'كود السيارة' : 'Vehicle Code', "vehicle_code" ? ", """ : ", "text"" required ? ", true" : "")}
+                {renderField(isAr ? 'كود السيارة' : 'Vehicle Code', 'vehicle_code', 'text', true)}
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? 'الماركة' : 'Brand'} <span className="text-destructive">*</span></Label>
                   <Select value={form.brand} onValueChange={(v) => setForm((p) => ({ ...p, brand: v }))}>
