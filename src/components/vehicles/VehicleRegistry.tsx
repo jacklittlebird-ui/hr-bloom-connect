@@ -40,6 +40,10 @@ interface Vehicle {
   station_id: string | null;
   status: string;
   notes: string | null;
+  engine_capacity_liters: number | null;
+  cylinders_count: number | null;
+  passengers_count: number | null;
+  inspection_year: number | null;
 }
 
 const emptyForm = {
@@ -50,6 +54,10 @@ const emptyForm = {
   transport_license_start: '', transport_license_end: '',
   insured_driver_name: '', insurance_number: '', notes: '', status: 'active',
   station_id: null as string | null,
+  engine_capacity_liters: '' as string | number,
+  cylinders_count: '' as string | number,
+  passengers_count: '' as string | number,
+  inspection_year: '' as string | number,
 };
 
 export const VehicleRegistry = () => {
@@ -128,6 +136,10 @@ export const VehicleRegistry = () => {
         insurance_number: form.insurance_number || null,
         notes: form.notes || null,
         station_id: form.station_id || null,
+        engine_capacity_liters: form.engine_capacity_liters === '' ? null : Number(form.engine_capacity_liters),
+        cylinders_count: form.cylinders_count === '' ? null : Number(form.cylinders_count),
+        passengers_count: form.passengers_count === '' ? null : Number(form.passengers_count),
+        inspection_year: form.inspection_year === '' ? null : Number(form.inspection_year),
       };
 
       if (editingId) {
@@ -159,6 +171,10 @@ export const VehicleRegistry = () => {
       transport_license_start: v.transport_license_start || '', transport_license_end: v.transport_license_end || '',
       insured_driver_name: v.insured_driver_name || '', insurance_number: v.insurance_number || '',
       notes: v.notes || '', status: v.status, station_id: v.station_id,
+      engine_capacity_liters: v.engine_capacity_liters ?? '',
+      cylinders_count: v.cylinders_count ?? '',
+      passengers_count: v.passengers_count ?? '',
+      inspection_year: v.inspection_year ?? '',
     });
     setDialogOpen(true);
   };
@@ -381,6 +397,10 @@ export const VehicleRegistry = () => {
                 {renderField(isAr ? 'رقم اللوحة' : 'Plate Number', 'plate_number', 'text', true)}
                 {renderField(isAr ? 'رقم الموتور' : 'Engine Number', 'engine_number', 'text')}
                 {renderField(isAr ? 'رقم الشاسيه' : 'Chassis Number', 'chassis_number', 'text')}
+                {renderField(isAr ? 'السعة اللترية' : 'Engine Capacity (L)', 'engine_capacity_liters', 'number')}
+                {renderField(isAr ? 'عدد السلندر' : 'Cylinders', 'cylinders_count', 'number')}
+                {renderField(isAr ? 'عدد الركاب' : 'Passengers', 'passengers_count', 'number')}
+                {renderField(isAr ? 'سنة الفحص' : 'Inspection Year', 'inspection_year', 'number')}
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? 'المحطة' : 'Station'}</Label>
                   <StationCombobox

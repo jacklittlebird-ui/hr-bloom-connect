@@ -2927,14 +2927,18 @@ export type Database = {
           created_at: string
           curtains_license_end: string | null
           curtains_license_start: string | null
+          cylinders_count: number | null
+          engine_capacity_liters: number | null
           engine_number: string | null
           id: string
+          inspection_year: number | null
           insurance_number: string | null
           insured_driver_name: string | null
           license_end_date: string | null
           license_start_date: string | null
           model: string
           notes: string | null
+          passengers_count: number | null
           plate_number: string
           station_id: string | null
           status: string
@@ -2951,14 +2955,18 @@ export type Database = {
           created_at?: string
           curtains_license_end?: string | null
           curtains_license_start?: string | null
+          cylinders_count?: number | null
+          engine_capacity_liters?: number | null
           engine_number?: string | null
           id?: string
+          inspection_year?: number | null
           insurance_number?: string | null
           insured_driver_name?: string | null
           license_end_date?: string | null
           license_start_date?: string | null
           model: string
           notes?: string | null
+          passengers_count?: number | null
           plate_number: string
           station_id?: string | null
           status?: string
@@ -2975,14 +2983,18 @@ export type Database = {
           created_at?: string
           curtains_license_end?: string | null
           curtains_license_start?: string | null
+          cylinders_count?: number | null
+          engine_capacity_liters?: number | null
           engine_number?: string | null
           id?: string
+          inspection_year?: number | null
           insurance_number?: string | null
           insured_driver_name?: string | null
           license_end_date?: string | null
           license_start_date?: string | null
           model?: string
           notes?: string | null
+          passengers_count?: number | null
           plate_number?: string
           station_id?: string | null
           status?: string
