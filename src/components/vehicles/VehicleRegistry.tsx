@@ -406,12 +406,12 @@ export const VehicleRegistry = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                {renderField(isAr ? 'بداية الترخيص' : 'License Start', "license_start_date" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
-                {renderField(isAr ? 'نهاية الترخيص' : 'License End', "license_end_date" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
-                {renderField(isAr ? 'بداية ترخيص الستائر' : 'Curtains License Start', "curtains_license_start" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
-                {renderField(isAr ? 'نهاية ترخيص الستائر' : 'Curtains License End', "curtains_license_end" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
-                {renderField(isAr ? 'بداية ترخيص النقل البري' : 'Transport License Start', "transport_license_start" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
-                {renderField(isAr ? 'نهاية ترخيص النقل البري' : 'Transport License End', "transport_license_end" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'بداية الترخيص' : 'License Start', 'license_start_date', 'date')}
+                {renderField(isAr ? 'نهاية الترخيص' : 'License End', 'license_end_date', 'date')}
+                {renderField(isAr ? 'بداية ترخيص الستائر' : 'Curtains License Start', 'curtains_license_start', 'date')}
+                {renderField(isAr ? 'نهاية ترخيص الستائر' : 'Curtains License End', 'curtains_license_end', 'date')}
+                {renderField(isAr ? 'بداية ترخيص النقل البري' : 'Transport License Start', 'transport_license_start', 'date')}
+                {renderField(isAr ? 'نهاية ترخيص النقل البري' : 'Transport License End', 'transport_license_end', 'date')}
               </div>
               <div className="mt-3">
                 <Label className="text-xs">{isAr ? 'ملاحظات' : 'Notes'}</Label>
