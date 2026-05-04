@@ -77,6 +77,7 @@ export const VehicleRegistry = () => {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [viewTarget, setViewTarget] = useState<Vehicle | null>(null);
 
   const filtersActive =
     !!search || !!stationFilter || statusFilter !== 'all' || alertFilter !== 'all' || !!focusedId;
