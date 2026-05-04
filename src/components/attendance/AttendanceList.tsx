@@ -510,6 +510,31 @@ export const AttendanceList = () => {
           </div>
         )}
       </CardContent>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {ar ? 'تأكيد حذف السجل' : 'Confirm Deletion'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {ar
+                ? `هل أنت متأكد من حذف سجل الحضور للموظف "${deleteTarget?.employeeNameAr || ''}" بتاريخ ${deleteTarget?.date || ''}؟ لا يمكن التراجع عن هذا الإجراء.`
+                : `Are you sure you want to delete the attendance record for "${deleteTarget?.employeeName || ''}" on ${deleteTarget?.date || ''}? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (ar ? 'جاري الحذف...' : 'Deleting...') : (ar ? 'حذف' : 'Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
