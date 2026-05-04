@@ -121,8 +121,8 @@ export const VehicleRegistry = () => {
     }
     // Validation: numeric fields must be positive within sensible ranges
     const currentYear = new Date().getFullYear();
-    if (form.engine_capacity_liters !== '' && (Number(form.engine_capacity_liters) <= 0 || Number(form.engine_capacity_liters) > 30)) {
-      toast.error(isAr ? 'السعة اللترية غير صحيحة (0.1 - 30)' : 'Invalid engine capacity (0.1 - 30)');
+    if (form.engine_capacity_liters !== '' && (!Number.isInteger(Number(form.engine_capacity_liters)) || Number(form.engine_capacity_liters) < 600 || Number(form.engine_capacity_liters) > 8000)) {
+      toast.error(isAr ? 'السعة اللترية غير صحيحة (600 - 8000 سي سي)' : 'Invalid engine capacity (600 - 8000 CC)');
       return;
     }
     if (form.cylinders_count !== '' && (!Number.isInteger(Number(form.cylinders_count)) || Number(form.cylinders_count) <= 0 || Number(form.cylinders_count) > 16)) {
@@ -416,7 +416,7 @@ export const VehicleRegistry = () => {
                 {renderField(isAr ? 'رقم اللوحة' : 'Plate Number', 'plate_number', 'text', true)}
                 {renderField(isAr ? 'رقم الموتور' : 'Engine Number', 'engine_number', 'text')}
                 {renderField(isAr ? 'رقم الشاسيه' : 'Chassis Number', 'chassis_number', 'text')}
-                {renderField(isAr ? 'السعة اللترية' : 'Engine Capacity (L)', 'engine_capacity_liters', 'number')}
+                {renderField(isAr ? 'السعة اللترية (CC)' : 'Engine Capacity (CC)', 'engine_capacity_liters', 'number')}
                 {renderField(isAr ? 'عدد السلندر' : 'Cylinders', 'cylinders_count', 'number')}
                 {renderField(isAr ? 'عدد الركاب' : 'Passengers', 'passengers_count', 'number')}
                 {renderField(isAr ? 'سنة الفحص' : 'Inspection Year', 'inspection_year', 'number')}
@@ -666,7 +666,7 @@ export const VehicleRegistry = () => {
                   <Row label={isAr ? 'رقم اللوحة' : 'Plate Number'} value={<span className="font-mono">{v.plate_number}</span>} />
                   <Row label={isAr ? 'رقم الموتور' : 'Engine Number'} value={v.engine_number || '-'} />
                   <Row label={isAr ? 'رقم الشاسيه' : 'Chassis Number'} value={v.chassis_number || '-'} />
-                  <Row label={isAr ? 'السعة اللترية' : 'Engine Capacity (L)'} value={v.engine_capacity_liters ?? '-'} />
+                  <Row label={isAr ? 'السعة اللترية (CC)' : 'Engine Capacity (CC)'} value={v.engine_capacity_liters ?? '-'} />
                   <Row label={isAr ? 'عدد السلندر' : 'Cylinders'} value={v.cylinders_count ?? '-'} />
                   <Row label={isAr ? 'عدد الركاب' : 'Passengers'} value={v.passengers_count ?? '-'} />
                   <Row label={isAr ? 'سنة الفحص' : 'Inspection Year'} value={v.inspection_year ?? '-'} />
