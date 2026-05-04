@@ -638,6 +638,66 @@ export const VehicleRegistry = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!viewTarget} onOpenChange={(o) => !o && setViewTarget(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Car className="w-5 h-5" />
+              {isAr ? 'تفاصيل السيارة' : 'Vehicle Details'}
+            </DialogTitle>
+          </DialogHeader>
+          {viewTarget && (() => {
+            const v = viewTarget;
+            const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
+              <div className="space-y-0.5">
+                <div className="text-xs text-muted-foreground">{label}</div>
+                <div className="text-sm font-medium break-words">{value ?? '-'}</div>
+              </div>
+            );
+            return (
+              <div className="space-y-4 mt-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <Row label={isAr ? 'كود السيارة' : 'Vehicle Code'} value={<span className="font-mono">{v.vehicle_code}</span>} />
+                  <Row label={isAr ? 'الماركة' : 'Brand'} value={v.brand} />
+                  <Row label={isAr ? 'الموديل' : 'Model'} value={v.model} />
+                  <Row label={isAr ? 'سنة الصنع' : 'Year'} value={v.year} />
+                  <Row label={isAr ? 'اللون' : 'Color'} value={v.color || '-'} />
+                  <Row label={isAr ? 'رقم اللوحة' : 'Plate Number'} value={<span className="font-mono">{v.plate_number}</span>} />
+                  <Row label={isAr ? 'رقم الموتور' : 'Engine Number'} value={v.engine_number || '-'} />
+                  <Row label={isAr ? 'رقم الشاسيه' : 'Chassis Number'} value={v.chassis_number || '-'} />
+                  <Row label={isAr ? 'السعة اللترية' : 'Engine Capacity (L)'} value={v.engine_capacity_liters ?? '-'} />
+                  <Row label={isAr ? 'عدد السلندر' : 'Cylinders'} value={v.cylinders_count ?? '-'} />
+                  <Row label={isAr ? 'عدد الركاب' : 'Passengers'} value={v.passengers_count ?? '-'} />
+                  <Row label={isAr ? 'سنة الفحص' : 'Inspection Year'} value={v.inspection_year ?? '-'} />
+                  <Row label={isAr ? 'المحطة' : 'Station'} value={stationName(v.station_id)} />
+                  <Row label={isAr ? 'الحالة' : 'Status'} value={statusBadge(v.status)} />
+                  <Row label={isAr ? 'اسم السائق المؤمن عليه' : 'Insured Driver'} value={v.insured_driver_name || '-'} />
+                  <Row label={isAr ? 'الرقم التأميني' : 'Insurance Number'} value={v.insurance_number || '-'} />
+                  <Row label={isAr ? 'بداية الترخيص' : 'License Start'} value={v.license_start_date || '-'} />
+                  <Row label={isAr ? 'نهاية الترخيص' : 'License End'} value={v.license_end_date || '-'} />
+                  <Row label={isAr ? 'بداية ترخيص الستائر' : 'Curtains License Start'} value={v.curtains_license_start || '-'} />
+                  <Row label={isAr ? 'نهاية ترخيص الستائر' : 'Curtains License End'} value={v.curtains_license_end || '-'} />
+                  <Row label={isAr ? 'بداية ترخيص النقل البري' : 'Transport License Start'} value={v.transport_license_start || '-'} />
+                  <Row label={isAr ? 'نهاية ترخيص النقل البري' : 'Transport License End'} value={v.transport_license_end || '-'} />
+                </div>
+                {v.notes && (
+                  <div className="space-y-0.5 border-t pt-3">
+                    <div className="text-xs text-muted-foreground">{isAr ? 'ملاحظات' : 'Notes'}</div>
+                    <div className="text-sm whitespace-pre-wrap break-words">{v.notes}</div>
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setViewTarget(null)}>{isAr ? 'إغلاق' : 'Close'}</Button>
+                  <Button onClick={() => { handleEdit(v); setViewTarget(null); }}>
+                    <Edit className="w-4 h-4 me-1" />{isAr ? 'تعديل' : 'Edit'}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
