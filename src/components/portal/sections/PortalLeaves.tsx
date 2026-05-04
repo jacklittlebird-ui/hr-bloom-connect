@@ -78,6 +78,7 @@ export const PortalLeaves = () => {
     { value: 'sick', ar: 'مرضية', en: 'Sick' },
     { value: 'casual', ar: 'عارضة', en: 'Casual' },
     { value: 'unpaid', ar: 'بدون راتب', en: 'Unpaid' },
+    { value: 'marriage', ar: 'زواج', en: 'Marriage' },
   ];
 
   // Check balances for availability
