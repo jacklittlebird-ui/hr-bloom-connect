@@ -9,8 +9,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, FileType, ChevronLeft, ChevronRight } from 'lucide-react';
+import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, FileType, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 const months = [
   { value: '01', ar: 'يناير', en: 'January' },
