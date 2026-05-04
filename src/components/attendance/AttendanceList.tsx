@@ -104,6 +104,23 @@ export const AttendanceList = () => {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AttendanceRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from('attendance_records').delete().eq('id', deleteTarget.id);
+    setDeleting(false);
+    if (error) {
+      toast.error(ar ? 'تعذر حذف السجل' : 'Failed to delete record');
+      return;
+    }
+    toast.success(ar ? 'تم حذف السجل' : 'Record deleted');
+    setRecords(prev => prev.filter(r => r.id !== deleteTarget.id));
+    setTotalCount(c => Math.max(0, c - 1));
+    setDeleteTarget(null);
+  };
 
 
   useEffect(() => {
