@@ -202,6 +202,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                     <SelectItem value="sick">{language === 'ar' ? 'مرضية' : 'Sick'}</SelectItem>
                     <SelectItem value="casual">{language === 'ar' ? 'عارضة' : 'Casual'}</SelectItem>
                     <SelectItem value="unpaid">{language === 'ar' ? 'بدون راتب' : 'Unpaid'}</SelectItem>
+                    <SelectItem value="marriage">{language === 'ar' ? 'زواج' : 'Marriage'}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
