@@ -1,4 +1,4 @@
-const CACHE_NAME = "hr-link-v2";
+const CACHE_NAME = "hr-link-v3";
 const PRECACHE = ["/", "/manifest.json"];
 const NETWORK_ONLY_PATHS = ["/auth/v1/", "/rest/v1/", "/functions/v1/", "/storage/v1/", "/realtime/v1/"];
 
