@@ -136,6 +136,10 @@ export const VehicleRegistry = () => {
         insurance_number: form.insurance_number || null,
         notes: form.notes || null,
         station_id: form.station_id || null,
+        engine_capacity_liters: form.engine_capacity_liters === '' ? null : Number(form.engine_capacity_liters),
+        cylinders_count: form.cylinders_count === '' ? null : Number(form.cylinders_count),
+        passengers_count: form.passengers_count === '' ? null : Number(form.passengers_count),
+        inspection_year: form.inspection_year === '' ? null : Number(form.inspection_year),
       };
 
       if (editingId) {
