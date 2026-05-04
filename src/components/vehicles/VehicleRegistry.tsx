@@ -40,6 +40,10 @@ interface Vehicle {
   station_id: string | null;
   status: string;
   notes: string | null;
+  engine_capacity_liters: number | null;
+  cylinders_count: number | null;
+  passengers_count: number | null;
+  inspection_year: number | null;
 }
 
 const emptyForm = {
@@ -50,6 +54,10 @@ const emptyForm = {
   transport_license_start: '', transport_license_end: '',
   insured_driver_name: '', insurance_number: '', notes: '', status: 'active',
   station_id: null as string | null,
+  engine_capacity_liters: '' as string | number,
+  cylinders_count: '' as string | number,
+  passengers_count: '' as string | number,
+  inspection_year: '' as string | number,
 };
 
 export const VehicleRegistry = () => {
