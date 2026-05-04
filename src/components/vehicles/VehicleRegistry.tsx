@@ -14,7 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Crosshair, X, Loader2, FilterX } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Crosshair, X, Loader2, FilterX, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
@@ -77,6 +77,7 @@ export const VehicleRegistry = () => {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [viewTarget, setViewTarget] = useState<Vehicle | null>(null);
 
   const filtersActive =
     !!search || !!stationFilter || statusFilter !== 'all' || alertFilter !== 'all' || !!focusedId;
@@ -116,6 +117,24 @@ export const VehicleRegistry = () => {
     }
     if (form.license_start_date && form.license_end_date && form.license_end_date < form.license_start_date) {
       toast.error(isAr ? 'تاريخ نهاية الترخيص قبل البداية' : 'License end before start');
+      return;
+    }
+    // Validation: numeric fields must be positive within sensible ranges
+    const currentYear = new Date().getFullYear();
+    if (form.engine_capacity_liters !== '' && (Number(form.engine_capacity_liters) <= 0 || Number(form.engine_capacity_liters) > 30)) {
+      toast.error(isAr ? 'السعة اللترية غير صحيحة (0.1 - 30)' : 'Invalid engine capacity (0.1 - 30)');
+      return;
+    }
+    if (form.cylinders_count !== '' && (!Number.isInteger(Number(form.cylinders_count)) || Number(form.cylinders_count) <= 0 || Number(form.cylinders_count) > 16)) {
+      toast.error(isAr ? 'عدد السلندر غير صحيح (1 - 16)' : 'Invalid cylinders count (1 - 16)');
+      return;
+    }
+    if (form.passengers_count !== '' && (!Number.isInteger(Number(form.passengers_count)) || Number(form.passengers_count) <= 0 || Number(form.passengers_count) > 100)) {
+      toast.error(isAr ? 'عدد الركاب غير صحيح (1 - 100)' : 'Invalid passengers count (1 - 100)');
+      return;
+    }
+    if (form.inspection_year !== '' && (!Number.isInteger(Number(form.inspection_year)) || Number(form.inspection_year) < 1990 || Number(form.inspection_year) > currentYear + 1)) {
+      toast.error(isAr ? `سنة الفحص غير صحيحة (1990 - ${currentYear + 1})` : `Invalid inspection year (1990 - ${currentYear + 1})`);
       return;
     }
     setSaving(true);
@@ -534,6 +553,12 @@ export const VehicleRegistry = () => {
                         <div className="flex gap-1">
                           <Tooltip>
                             <TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" onClick={() => setViewTarget(v)} aria-label={isAr ? 'عرض' : 'View'}><Eye className="w-4 h-4" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isAr ? 'عرض' : 'View'}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <Button size="icon" variant="ghost" onClick={() => handleEdit(v)} aria-label={isAr ? 'تعديل' : 'Edit'}><Edit className="w-4 h-4" /></Button>
                             </TooltipTrigger>
                             <TooltipContent>{isAr ? 'تعديل' : 'Edit'}</TooltipContent>
@@ -570,6 +595,7 @@ export const VehicleRegistry = () => {
                     {v.insured_driver_name && <div className="col-span-2 whitespace-pre-wrap break-words"><span className="text-muted-foreground">{isAr ? 'السائق:' : 'Driver:'}</span> {v.insured_driver_name}</div>}
                   </div>
                   <div className={cn('flex gap-1 mt-2 justify-end', isRTL && 'justify-start')}>
+                    <Button size="sm" variant="ghost" onClick={() => setViewTarget(v)} aria-label={isAr ? 'عرض' : 'View'}><Eye className="w-4 h-4 me-1" />{isAr ? 'عرض' : 'View'}</Button>
                     <Button size="sm" variant="ghost" onClick={() => handleEdit(v)} aria-label={isAr ? 'تعديل' : 'Edit'}><Edit className="w-4 h-4 me-1" />{isAr ? 'تعديل' : 'Edit'}</Button>
                     <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(v)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
                   </div>
@@ -612,6 +638,66 @@ export const VehicleRegistry = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!viewTarget} onOpenChange={(o) => !o && setViewTarget(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Car className="w-5 h-5" />
+              {isAr ? 'تفاصيل السيارة' : 'Vehicle Details'}
+            </DialogTitle>
+          </DialogHeader>
+          {viewTarget && (() => {
+            const v = viewTarget;
+            const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
+              <div className="space-y-0.5">
+                <div className="text-xs text-muted-foreground">{label}</div>
+                <div className="text-sm font-medium break-words">{value ?? '-'}</div>
+              </div>
+            );
+            return (
+              <div className="space-y-4 mt-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <Row label={isAr ? 'كود السيارة' : 'Vehicle Code'} value={<span className="font-mono">{v.vehicle_code}</span>} />
+                  <Row label={isAr ? 'الماركة' : 'Brand'} value={v.brand} />
+                  <Row label={isAr ? 'الموديل' : 'Model'} value={v.model} />
+                  <Row label={isAr ? 'سنة الصنع' : 'Year'} value={v.year} />
+                  <Row label={isAr ? 'اللون' : 'Color'} value={v.color || '-'} />
+                  <Row label={isAr ? 'رقم اللوحة' : 'Plate Number'} value={<span className="font-mono">{v.plate_number}</span>} />
+                  <Row label={isAr ? 'رقم الموتور' : 'Engine Number'} value={v.engine_number || '-'} />
+                  <Row label={isAr ? 'رقم الشاسيه' : 'Chassis Number'} value={v.chassis_number || '-'} />
+                  <Row label={isAr ? 'السعة اللترية' : 'Engine Capacity (L)'} value={v.engine_capacity_liters ?? '-'} />
+                  <Row label={isAr ? 'عدد السلندر' : 'Cylinders'} value={v.cylinders_count ?? '-'} />
+                  <Row label={isAr ? 'عدد الركاب' : 'Passengers'} value={v.passengers_count ?? '-'} />
+                  <Row label={isAr ? 'سنة الفحص' : 'Inspection Year'} value={v.inspection_year ?? '-'} />
+                  <Row label={isAr ? 'المحطة' : 'Station'} value={stationName(v.station_id)} />
+                  <Row label={isAr ? 'الحالة' : 'Status'} value={statusBadge(v.status)} />
+                  <Row label={isAr ? 'اسم السائق المؤمن عليه' : 'Insured Driver'} value={v.insured_driver_name || '-'} />
+                  <Row label={isAr ? 'الرقم التأميني' : 'Insurance Number'} value={v.insurance_number || '-'} />
+                  <Row label={isAr ? 'بداية الترخيص' : 'License Start'} value={v.license_start_date || '-'} />
+                  <Row label={isAr ? 'نهاية الترخيص' : 'License End'} value={v.license_end_date || '-'} />
+                  <Row label={isAr ? 'بداية ترخيص الستائر' : 'Curtains License Start'} value={v.curtains_license_start || '-'} />
+                  <Row label={isAr ? 'نهاية ترخيص الستائر' : 'Curtains License End'} value={v.curtains_license_end || '-'} />
+                  <Row label={isAr ? 'بداية ترخيص النقل البري' : 'Transport License Start'} value={v.transport_license_start || '-'} />
+                  <Row label={isAr ? 'نهاية ترخيص النقل البري' : 'Transport License End'} value={v.transport_license_end || '-'} />
+                </div>
+                {v.notes && (
+                  <div className="space-y-0.5 border-t pt-3">
+                    <div className="text-xs text-muted-foreground">{isAr ? 'ملاحظات' : 'Notes'}</div>
+                    <div className="text-sm whitespace-pre-wrap break-words">{v.notes}</div>
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setViewTarget(null)}>{isAr ? 'إغلاق' : 'Close'}</Button>
+                  <Button onClick={() => { handleEdit(v); setViewTarget(null); }}>
+                    <Edit className="w-4 h-4 me-1" />{isAr ? 'تعديل' : 'Edit'}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };
