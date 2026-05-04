@@ -78,6 +78,7 @@ export const PortalLeaves = () => {
     { value: 'sick', ar: 'مرضية', en: 'Sick' },
     { value: 'casual', ar: 'عارضة', en: 'Casual' },
     { value: 'unpaid', ar: 'بدون راتب', en: 'Unpaid' },
+    { value: 'marriage', ar: 'زواج', en: 'Marriage' },
   ];
 
   // Check balances for availability
@@ -126,6 +127,12 @@ export const PortalLeaves = () => {
     // Annual leave: must be future date (not today or before)
     if (leaveType === 'annual' && leaveStartDate < tomorrow) {
       toast.error(ar ? 'الإجازة السنوية لا يمكن طلبها في نفس اليوم أو قبله، يجب أن تبدأ من الغد على الأقل' : 'Annual leave must start from tomorrow or later');
+      return;
+    }
+
+    // Marriage leave: max 8 days, no balance deduction
+    if (leaveType === 'marriage' && calculateDays() > 8) {
+      toast.error(ar ? 'إجازة الزواج بحد أقصى 8 أيام' : 'Marriage leave is limited to a maximum of 8 days');
       return;
     }
 

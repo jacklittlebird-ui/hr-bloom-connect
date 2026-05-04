@@ -56,6 +56,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
       sick: 'bg-red-100 text-red-700 border-red-300',
       casual: 'bg-green-100 text-green-700 border-green-300',
       unpaid: 'bg-gray-100 text-gray-700 border-gray-300',
+      marriage: 'bg-pink-100 text-pink-700 border-pink-300',
     };
     return <Badge variant="outline" className={colors[type]}>{t(`leaves.types.${type}`)}</Badge>;
   };
@@ -201,6 +202,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                     <SelectItem value="sick">{language === 'ar' ? 'مرضية' : 'Sick'}</SelectItem>
                     <SelectItem value="casual">{language === 'ar' ? 'عارضة' : 'Casual'}</SelectItem>
                     <SelectItem value="unpaid">{language === 'ar' ? 'بدون راتب' : 'Unpaid'}</SelectItem>
+                    <SelectItem value="marriage">{language === 'ar' ? 'زواج' : 'Marriage'}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
