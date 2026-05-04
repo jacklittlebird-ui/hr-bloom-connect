@@ -393,8 +393,8 @@ export const VehicleRegistry = () => {
                     className="w-full"
                   />
                 </div>
-                {renderField(isAr ? 'اسم السائق المؤمن عليه' : 'Insured Driver', "insured_driver_name" ? ", """ : ", "text"" ? ", true" : "")}
-                {renderField(isAr ? 'الرقم التأميني' : 'Insurance Number', "insurance_number" ? ", """ : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'اسم السائق المؤمن عليه' : 'Insured Driver', 'insured_driver_name', 'text')}
+                {renderField(isAr ? 'الرقم التأميني' : 'Insurance Number', 'insurance_number', 'text')}
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? 'الحالة' : 'Status'}</Label>
                   <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}>
