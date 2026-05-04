@@ -360,7 +360,7 @@ export const VehicleRegistry = () => {
                 <DialogTitle>{editingId ? (isAr ? 'تعديل سيارة' : 'Edit Vehicle') : (isAr ? 'إضافة سيارة جديدة' : 'Add New Vehicle')}</DialogTitle>
               </DialogHeader>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-                <Field label={isAr ? 'كود السيارة' : 'Vehicle Code'} name="vehicle_code" required />
+                {renderField(isAr ? 'كود السيارة' : 'Vehicle Code', "vehicle_code" ? ", """ : ", "text"" required ? ", true" : "")}
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? 'الماركة' : 'Brand'} <span className="text-destructive">*</span></Label>
                   <Select value={form.brand} onValueChange={(v) => setForm((p) => ({ ...p, brand: v }))}>
@@ -375,12 +375,12 @@ export const VehicleRegistry = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Field label={isAr ? 'الموديل' : 'Model'} name="model" required />
-                <Field label={isAr ? 'سنة الصنع' : 'Year'} name="year" type="number" required />
-                <Field label={isAr ? 'اللون' : 'Color'} name="color" />
-                <Field label={isAr ? 'رقم اللوحة' : 'Plate Number'} name="plate_number" required />
-                <Field label={isAr ? 'رقم الموتور' : 'Engine Number'} name="engine_number" />
-                <Field label={isAr ? 'رقم الشاسيه' : 'Chassis Number'} name="chassis_number" />
+                {renderField(isAr ? 'الموديل' : 'Model', "model" ? ", """ : ", "text"" required ? ", true" : "")}
+                {renderField(isAr ? 'سنة الصنع' : 'Year', "year" type="number" ? ", " type="number""" : ", "text"" required ? ", true" : "")}
+                {renderField(isAr ? 'اللون' : 'Color', "color" ? ", """ : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'رقم اللوحة' : 'Plate Number', "plate_number" ? ", """ : ", "text"" required ? ", true" : "")}
+                {renderField(isAr ? 'رقم الموتور' : 'Engine Number', "engine_number" ? ", """ : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'رقم الشاسيه' : 'Chassis Number', "chassis_number" ? ", """ : ", "text"" ? ", true" : "")}
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? 'المحطة' : 'Station'}</Label>
                   <StationCombobox
@@ -393,8 +393,8 @@ export const VehicleRegistry = () => {
                     className="w-full"
                   />
                 </div>
-                <Field label={isAr ? 'اسم السائق المؤمن عليه' : 'Insured Driver'} name="insured_driver_name" />
-                <Field label={isAr ? 'الرقم التأميني' : 'Insurance Number'} name="insurance_number" />
+                {renderField(isAr ? 'اسم السائق المؤمن عليه' : 'Insured Driver', "insured_driver_name" ? ", """ : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'الرقم التأميني' : 'Insurance Number', "insurance_number" ? ", """ : ", "text"" ? ", true" : "")}
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? 'الحالة' : 'Status'}</Label>
                   <Select value={form.status} onValueChange={(v) => setForm((p) => ({ ...p, status: v }))}>
@@ -406,12 +406,12 @@ export const VehicleRegistry = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Field label={isAr ? 'بداية الترخيص' : 'License Start'} name="license_start_date" type="date" />
-                <Field label={isAr ? 'نهاية الترخيص' : 'License End'} name="license_end_date" type="date" />
-                <Field label={isAr ? 'بداية ترخيص الستائر' : 'Curtains License Start'} name="curtains_license_start" type="date" />
-                <Field label={isAr ? 'نهاية ترخيص الستائر' : 'Curtains License End'} name="curtains_license_end" type="date" />
-                <Field label={isAr ? 'بداية ترخيص النقل البري' : 'Transport License Start'} name="transport_license_start" type="date" />
-                <Field label={isAr ? 'نهاية ترخيص النقل البري' : 'Transport License End'} name="transport_license_end" type="date" />
+                {renderField(isAr ? 'بداية الترخيص' : 'License Start', "license_start_date" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'نهاية الترخيص' : 'License End', "license_end_date" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'بداية ترخيص الستائر' : 'Curtains License Start', "curtains_license_start" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'نهاية ترخيص الستائر' : 'Curtains License End', "curtains_license_end" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'بداية ترخيص النقل البري' : 'Transport License Start', "transport_license_start" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'نهاية ترخيص النقل البري' : 'Transport License End', "transport_license_end" type="date" ? ", " type="date""" : ", "text"" ? ", true" : "")}
               </div>
               <div className="mt-3">
                 <Label className="text-xs">{isAr ? 'ملاحظات' : 'Notes'}</Label>
