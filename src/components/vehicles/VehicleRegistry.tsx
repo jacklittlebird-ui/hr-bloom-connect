@@ -282,12 +282,29 @@ export const VehicleRegistry = () => {
     ) : '-';
   };
 
-  const Field = ({ label, name, type = 'text', required = false }: { label: string; name: keyof typeof emptyForm; type?: string; required?: boolean }) => (
-    <div className="space-y-1">
-      <Label className="text-xs">{label} {required && <span className="text-destructive">*</span>}</Label>
-      <Input type={type} value={(form as any)[name] ?? ''} onChange={(e) => setForm((p) => ({ ...p, [name]: e.target.value }))} className="h-9" />
-    </div>
-  );
+  // Fields restricted to letters (A-Z, Arabic) + digits + space/dash/slash only
+  const ALPHANUMERIC_FIELDS = new Set(['vehicle_code', 'plate_number', 'engine_number', 'chassis_number']);
+  const sanitizeAlphanumeric = (val: string) => val.replace(/[^A-Za-z0-9\u0600-\u06FF\s\-\/]/g, '');
+
+  const renderField = (label: string, name: keyof typeof emptyForm, type: string = 'text', required: boolean = false) => {
+    const isAlnum = ALPHANUMERIC_FIELDS.has(name as string);
+    return (
+      <div className="space-y-1" key={name as string}>
+        <Label className="text-xs">{label} {required && <span className="text-destructive">*</span>}</Label>
+        <Input
+          type={type}
+          value={(form as any)[name] ?? ''}
+          onChange={(e) => {
+            const raw = e.target.value;
+            const next = isAlnum ? sanitizeAlphanumeric(raw) : raw;
+            setForm((p) => ({ ...p, [name]: next }));
+          }}
+          inputMode={isAlnum ? 'text' : undefined}
+          className="h-9"
+        />
+      </div>
+    );
+  };
 
   return (
     <Card>
