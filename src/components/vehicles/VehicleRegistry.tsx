@@ -121,8 +121,8 @@ export const VehicleRegistry = () => {
     }
     // Validation: numeric fields must be positive within sensible ranges
     const currentYear = new Date().getFullYear();
-    if (form.engine_capacity_liters !== '' && (Number(form.engine_capacity_liters) <= 0 || Number(form.engine_capacity_liters) > 30)) {
-      toast.error(isAr ? 'السعة اللترية غير صحيحة (0.1 - 30)' : 'Invalid engine capacity (0.1 - 30)');
+    if (form.engine_capacity_liters !== '' && (!Number.isInteger(Number(form.engine_capacity_liters)) || Number(form.engine_capacity_liters) < 600 || Number(form.engine_capacity_liters) > 8000)) {
+      toast.error(isAr ? 'السعة اللترية غير صحيحة (600 - 8000 سي سي)' : 'Invalid engine capacity (600 - 8000 CC)');
       return;
     }
     if (form.cylinders_count !== '' && (!Number.isInteger(Number(form.cylinders_count)) || Number(form.cylinders_count) <= 0 || Number(form.cylinders_count) > 16)) {
