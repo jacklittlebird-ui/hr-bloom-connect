@@ -9,8 +9,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, FileType, ChevronLeft, ChevronRight } from 'lucide-react';
+import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, FileType, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 const months = [
   { value: '01', ar: 'يناير', en: 'January' },
@@ -93,6 +104,23 @@ export const AttendanceList = () => {
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AttendanceRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from('attendance_records').delete().eq('id', deleteTarget.id);
+    setDeleting(false);
+    if (error) {
+      toast.error(ar ? 'تعذر حذف السجل' : 'Failed to delete record');
+      return;
+    }
+    toast.success(ar ? 'تم حذف السجل' : 'Record deleted');
+    setRecords(prev => prev.filter(r => r.id !== deleteTarget.id));
+    setTotalCount(c => Math.max(0, c - 1));
+    setDeleteTarget(null);
+  };
 
 
   useEffect(() => {
@@ -399,18 +427,19 @@ export const AttendanceList = () => {
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'ساعات العمل' : 'Work Hours'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'إضافي' : 'Overtime'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحالة' : 'Status'}</TableHead>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'إجراءات' : 'Actions'}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     {ar ? 'جاري التحميل...' : 'Loading...'}
                   </TableCell>
                 </TableRow>
               ) : records.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     {ar ? 'لا توجد سجلات حضور' : 'No attendance records'}
                   </TableCell>
                 </TableRow>
@@ -434,6 +463,17 @@ export const AttendanceList = () => {
                       ) : '-'}
                     </TableCell>
                     <TableCell>{getStatusBadge(record.status)}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setDeleteTarget(record)}
+                        aria-label={ar ? 'حذف' : 'Delete'}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -470,6 +510,31 @@ export const AttendanceList = () => {
           </div>
         )}
       </CardContent>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {ar ? 'تأكيد حذف السجل' : 'Confirm Deletion'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {ar
+                ? `هل أنت متأكد من حذف سجل الحضور للموظف "${deleteTarget?.employeeNameAr || ''}" بتاريخ ${deleteTarget?.date || ''}؟ لا يمكن التراجع عن هذا الإجراء.`
+                : `Are you sure you want to delete the attendance record for "${deleteTarget?.employeeName || ''}" on ${deleteTarget?.date || ''}? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (ar ? 'جاري الحذف...' : 'Deleting...') : (ar ? 'حذف' : 'Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
