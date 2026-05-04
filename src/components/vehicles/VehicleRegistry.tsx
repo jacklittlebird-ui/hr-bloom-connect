@@ -416,7 +416,7 @@ export const VehicleRegistry = () => {
                 {renderField(isAr ? 'رقم اللوحة' : 'Plate Number', 'plate_number', 'text', true)}
                 {renderField(isAr ? 'رقم الموتور' : 'Engine Number', 'engine_number', 'text')}
                 {renderField(isAr ? 'رقم الشاسيه' : 'Chassis Number', 'chassis_number', 'text')}
-                {renderField(isAr ? 'السعة اللترية' : 'Engine Capacity (L)', 'engine_capacity_liters', 'number')}
+                {renderField(isAr ? 'السعة اللترية (CC)' : 'Engine Capacity (CC)', 'engine_capacity_liters', 'number')}
                 {renderField(isAr ? 'عدد السلندر' : 'Cylinders', 'cylinders_count', 'number')}
                 {renderField(isAr ? 'عدد الركاب' : 'Passengers', 'passengers_count', 'number')}
                 {renderField(isAr ? 'سنة الفحص' : 'Inspection Year', 'inspection_year', 'number')}
