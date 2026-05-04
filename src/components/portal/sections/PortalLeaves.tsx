@@ -130,6 +130,12 @@ export const PortalLeaves = () => {
       return;
     }
 
+    // Marriage leave: max 8 days, no balance deduction
+    if (leaveType === 'marriage' && calculateDays() > 8) {
+      toast.error(ar ? 'إجازة الزواج بحد أقصى 8 أيام' : 'Marriage leave is limited to a maximum of 8 days');
+      return;
+    }
+
     // Sick leave: show warning about medical report
     if (leaveType === 'sick') {
       toast.warning(
