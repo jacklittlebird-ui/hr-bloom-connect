@@ -119,6 +119,24 @@ export const VehicleRegistry = () => {
       toast.error(isAr ? 'تاريخ نهاية الترخيص قبل البداية' : 'License end before start');
       return;
     }
+    // Validation: numeric fields must be positive within sensible ranges
+    const currentYear = new Date().getFullYear();
+    if (form.engine_capacity_liters !== '' && (Number(form.engine_capacity_liters) <= 0 || Number(form.engine_capacity_liters) > 30)) {
+      toast.error(isAr ? 'السعة اللترية غير صحيحة (0.1 - 30)' : 'Invalid engine capacity (0.1 - 30)');
+      return;
+    }
+    if (form.cylinders_count !== '' && (!Number.isInteger(Number(form.cylinders_count)) || Number(form.cylinders_count) <= 0 || Number(form.cylinders_count) > 16)) {
+      toast.error(isAr ? 'عدد السلندر غير صحيح (1 - 16)' : 'Invalid cylinders count (1 - 16)');
+      return;
+    }
+    if (form.passengers_count !== '' && (!Number.isInteger(Number(form.passengers_count)) || Number(form.passengers_count) <= 0 || Number(form.passengers_count) > 100)) {
+      toast.error(isAr ? 'عدد الركاب غير صحيح (1 - 100)' : 'Invalid passengers count (1 - 100)');
+      return;
+    }
+    if (form.inspection_year !== '' && (!Number.isInteger(Number(form.inspection_year)) || Number(form.inspection_year) < 1990 || Number(form.inspection_year) > currentYear + 1)) {
+      toast.error(isAr ? `سنة الفحص غير صحيحة (1990 - ${currentYear + 1})` : `Invalid inspection year (1990 - ${currentYear + 1})`);
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
