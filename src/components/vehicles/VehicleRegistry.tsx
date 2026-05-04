@@ -666,7 +666,7 @@ export const VehicleRegistry = () => {
                   <Row label={isAr ? 'رقم اللوحة' : 'Plate Number'} value={<span className="font-mono">{v.plate_number}</span>} />
                   <Row label={isAr ? 'رقم الموتور' : 'Engine Number'} value={v.engine_number || '-'} />
                   <Row label={isAr ? 'رقم الشاسيه' : 'Chassis Number'} value={v.chassis_number || '-'} />
-                  <Row label={isAr ? 'السعة اللترية' : 'Engine Capacity (L)'} value={v.engine_capacity_liters ?? '-'} />
+                  <Row label={isAr ? 'السعة اللترية (CC)' : 'Engine Capacity (CC)'} value={v.engine_capacity_liters ?? '-'} />
                   <Row label={isAr ? 'عدد السلندر' : 'Cylinders'} value={v.cylinders_count ?? '-'} />
                   <Row label={isAr ? 'عدد الركاب' : 'Passengers'} value={v.passengers_count ?? '-'} />
                   <Row label={isAr ? 'سنة الفحص' : 'Inspection Year'} value={v.inspection_year ?? '-'} />
