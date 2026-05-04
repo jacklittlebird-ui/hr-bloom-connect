@@ -553,6 +553,12 @@ export const VehicleRegistry = () => {
                         <div className="flex gap-1">
                           <Tooltip>
                             <TooltipTrigger asChild>
+                              <Button size="icon" variant="ghost" onClick={() => setViewTarget(v)} aria-label={isAr ? 'عرض' : 'View'}><Eye className="w-4 h-4" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isAr ? 'عرض' : 'View'}</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <Button size="icon" variant="ghost" onClick={() => handleEdit(v)} aria-label={isAr ? 'تعديل' : 'Edit'}><Edit className="w-4 h-4" /></Button>
                             </TooltipTrigger>
                             <TooltipContent>{isAr ? 'تعديل' : 'Edit'}</TooltipContent>
