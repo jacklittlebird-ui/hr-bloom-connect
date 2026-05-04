@@ -375,12 +375,12 @@ export const VehicleRegistry = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                {renderField(isAr ? 'الموديل' : 'Model', "model" ? ", """ : ", "text"" required ? ", true" : "")}
-                {renderField(isAr ? 'سنة الصنع' : 'Year', "year" type="number" ? ", " type="number""" : ", "text"" required ? ", true" : "")}
-                {renderField(isAr ? 'اللون' : 'Color', "color" ? ", """ : ", "text"" ? ", true" : "")}
-                {renderField(isAr ? 'رقم اللوحة' : 'Plate Number', "plate_number" ? ", """ : ", "text"" required ? ", true" : "")}
-                {renderField(isAr ? 'رقم الموتور' : 'Engine Number', "engine_number" ? ", """ : ", "text"" ? ", true" : "")}
-                {renderField(isAr ? 'رقم الشاسيه' : 'Chassis Number', "chassis_number" ? ", """ : ", "text"" ? ", true" : "")}
+                {renderField(isAr ? 'الموديل' : 'Model', 'model', 'text', true)}
+                {renderField(isAr ? 'سنة الصنع' : 'Year', 'year', 'number', true)}
+                {renderField(isAr ? 'اللون' : 'Color', 'color', 'text')}
+                {renderField(isAr ? 'رقم اللوحة' : 'Plate Number', 'plate_number', 'text', true)}
+                {renderField(isAr ? 'رقم الموتور' : 'Engine Number', 'engine_number', 'text')}
+                {renderField(isAr ? 'رقم الشاسيه' : 'Chassis Number', 'chassis_number', 'text')}
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? 'المحطة' : 'Station'}</Label>
                   <StationCombobox
