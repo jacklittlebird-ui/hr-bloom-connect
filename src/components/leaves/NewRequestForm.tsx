@@ -94,6 +94,12 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
       return;
     }
 
+    // Marriage leave: max 8 days, no balance deduction
+    if (leaveType === 'marriage' && calculateDays() > 8) {
+      toast({ title: t('leaves.form.error'), description: isRTL ? 'إجازة الزواج بحد أقصى 8 أيام' : 'Marriage leave is limited to a maximum of 8 days', variant: 'destructive' });
+      return;
+    }
+
     // Sick leave warning
     if (leaveType === 'sick') {
       toast({ title: isRTL ? 'تنبيه' : 'Warning', description: isRTL ? 'بدون إرسال تقرير طبي معتمد من التأمين الصحي فلن تُقبل الإجازة المرضية' : 'Sick leave will not be accepted without an approved medical report from health insurance' });
