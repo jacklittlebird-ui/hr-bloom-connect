@@ -171,6 +171,10 @@ export const VehicleRegistry = () => {
       transport_license_start: v.transport_license_start || '', transport_license_end: v.transport_license_end || '',
       insured_driver_name: v.insured_driver_name || '', insurance_number: v.insurance_number || '',
       notes: v.notes || '', status: v.status, station_id: v.station_id,
+      engine_capacity_liters: v.engine_capacity_liters ?? '',
+      cylinders_count: v.cylinders_count ?? '',
+      passengers_count: v.passengers_count ?? '',
+      inspection_year: v.inspection_year ?? '',
     });
     setDialogOpen(true);
   };
