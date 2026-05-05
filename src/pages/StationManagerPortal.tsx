@@ -1615,6 +1615,11 @@ const StationManagerPortal = () => {
           </TabsContent>
 
           {/* Violations Tab */}
+          {/* Uniforms Tab */}
+          <TabsContent value="uniforms">
+            <StationUniformsTab stationEmployees={stationEmployees as any} />
+          </TabsContent>
+
           <TabsContent value="violations">
             <Card>
               <CardHeader className="space-y-3">
