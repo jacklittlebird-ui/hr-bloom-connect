@@ -41,14 +41,12 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    employee_id: '',
-    typeIdx: '0',
-    quantity: 1,
-    unit_price: 0,
-    delivery_date: new Date().toISOString().split('T')[0],
-    notes: '',
-  });
+  const [employeeId, setEmployeeId] = useState('');
+  const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().split('T')[0]);
+  const [notes, setNotes] = useState('');
+  const [items, setItems] = useState<Array<{ typeIdx: string; quantity: number; unit_price: number }>>([
+    { typeIdx: '0', quantity: 1, unit_price: 0 },
+  ]);
 
   const empIds = useMemo(() => stationEmployees.map((e) => e.id), [stationEmployees]);
 
