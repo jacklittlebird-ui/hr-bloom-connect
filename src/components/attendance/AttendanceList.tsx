@@ -294,7 +294,7 @@ export const AttendanceList = () => {
     { headerAr: 'الحالة', headerEn: 'Status', key: 'status' },
   ];
 
-  const getExportData = () => records.map(r => ({
+  const mapRecordForExport = (r: AttendanceRecord) => ({
     date: r.date,
     employeeCode: r.employeeCode || employeeCodeMap[r.employeeId] || '-',
     employeeNameAr: r.employeeNameAr,
@@ -304,7 +304,115 @@ export const AttendanceList = () => {
     checkOut: r.checkOut || '-',
     workTime: formatWorkTime(r.workHours, r.workMinutes),
     status: `${getStatusText(r.status)} / ${getStatusTextEn(r.status)}`,
-  }));
+  });
+
+  const getExportData = () => records.map(mapRecordForExport);
+
+  // Fetch ALL matching records (across pages) for export — includes imported
+  // and bulk-uploaded records. Bypasses PAGE_SIZE pagination using .range
+  // batches of 1000 (Supabase max).
+  const fetchAllForExport = async (): Promise<AttendanceRecord[]> => {
+    const all: AttendanceRecord[] = [];
+    const BATCH = 1000;
+    let from = 0;
+
+    // Resolve filtered employee IDs once (station/dept filter)
+    let filteredEmpIds: string[] | null = null;
+    if (selectedStation !== 'all' || selectedDept !== 'all') {
+      filteredEmpIds = Object.keys(employeeStationMap).filter(empId => {
+        if (selectedStation !== 'all' && employeeStationMap[empId] !== selectedStation) return false;
+        if (selectedDept !== 'all' && employeeDeptMap[empId] !== selectedDept) return false;
+        return true;
+      });
+      if (filteredEmpIds.length === 0) return [];
+    }
+
+    while (true) {
+      let q = supabase
+        .from('attendance_records')
+        .select('*, employees!inner(employee_code, name_en, name_ar, department_id, station_id, departments(name_ar))')
+        .gte('date', dateFrom)
+        .lte('date', dateTo)
+        .order('date', { ascending: false })
+        .order('check_in', { ascending: false, nullsFirst: false })
+        .range(from, from + BATCH - 1);
+
+      if (statusFilter !== 'all') q = q.eq('status', statusFilter);
+      if (filteredEmpIds) q = q.in('employee_id', filteredEmpIds);
+      if (searchTerm.trim()) {
+        q = q.or(
+          `name_en.ilike.%${searchTerm}%,name_ar.ilike.%${searchTerm}%,employee_code.ilike.%${searchTerm}%`,
+          { referencedTable: 'employees' },
+        );
+      }
+
+      const { data, error } = await q;
+      if (error || !data) break;
+
+      data.forEach(r => {
+        const ci = formatTime(r.check_in);
+        const co = formatTime(r.check_out);
+        const wt = calculateWorkTime(ci, co);
+        const hasDbHours = (r.work_hours != null && r.work_hours > 0) || (r.work_minutes != null && r.work_minutes > 0);
+        let finalHours: number;
+        let finalMinutes: number;
+        if (hasDbHours) {
+          const dbM = r.work_minutes ?? 0;
+          const totalMins = dbM > 0 ? Math.round(dbM) : Math.round((r.work_hours ?? 0) * 60);
+          finalHours = Math.floor(totalMins / 60);
+          finalMinutes = totalMins % 60;
+        } else {
+          finalHours = wt.hours;
+          finalMinutes = wt.minutes;
+        }
+        all.push({
+          id: r.id,
+          employeeId: r.employee_id,
+          employeeCode: (r.employees as any)?.employee_code || '',
+          employeeName: (r.employees as any)?.name_en || '',
+          employeeNameAr: (r.employees as any)?.name_ar || '',
+          department: (r.employees as any)?.departments?.name_ar || '',
+          date: r.date,
+          checkIn: ci,
+          checkOut: co,
+          status: r.status,
+          workHours: finalHours,
+          workMinutes: finalMinutes,
+          overtime: Math.max(0, finalHours - 8),
+          notes: r.notes || undefined,
+        });
+      });
+
+      if (data.length < BATCH) break;
+      from += BATCH;
+    }
+    return all;
+  };
+
+  const [exporting, setExporting] = useState(false);
+
+  const runFullExport = async (
+    exporter: (rows: ReturnType<typeof mapRecordForExport>[]) => void,
+  ) => {
+    try {
+      setExporting(true);
+      const all = await fetchAllForExport();
+      if (all.length === 0) {
+        toast.warning(ar ? 'لا توجد بيانات للتصدير' : 'No data to export');
+        return;
+      }
+      exporter(all.map(mapRecordForExport));
+      toast.success(
+        ar
+          ? `تم تصدير ${all.length} سجل بنجاح`
+          : `Exported ${all.length} records successfully`,
+      );
+    } catch (e: any) {
+      toast.error(ar ? 'تعذر التصدير' : 'Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const reportTitle = {
     ar: `سجل الحضور والانصراف - ${dateFrom} إلى ${dateTo}`,
@@ -312,9 +420,18 @@ export const AttendanceList = () => {
   };
 
   const onPrint = () => handlePrint(ar ? reportTitle.ar : reportTitle.en);
-  const onPDF = () => exportBilingualPDF({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
-  const onWord = () => exportBilingualWord({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
-  const onExcel = () => exportBilingualCSV({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: getExportData(), columns: exportColumns, fileName: 'attendance_records' });
+  const onPDF = () =>
+    runFullExport(rows =>
+      exportBilingualPDF({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: rows, columns: exportColumns, fileName: 'attendance_records' }),
+    );
+  const onWord = () =>
+    runFullExport(rows =>
+      exportBilingualWord({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: rows, columns: exportColumns, fileName: 'attendance_records' }),
+    );
+  const onExcel = () =>
+    runFullExport(rows =>
+      exportBilingualCSV({ titleAr: reportTitle.ar, titleEn: reportTitle.en, data: rows, columns: exportColumns, fileName: 'attendance_records' }),
+    );
 
   return (
     <Card>
