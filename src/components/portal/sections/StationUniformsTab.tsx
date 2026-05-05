@@ -77,24 +77,40 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
     return e ? (ar ? e.nameAr : e.nameEn) : '-';
   };
 
-  const reset = () => setForm({ employee_id: '', typeIdx: '0', quantity: 1, unit_price: 0, delivery_date: new Date().toISOString().split('T')[0], notes: '' });
+  const reset = () => {
+    setEmployeeId('');
+    setDeliveryDate(new Date().toISOString().split('T')[0]);
+    setNotes('');
+    setItems([{ typeIdx: '0', quantity: 1, unit_price: 0 }]);
+  };
+
+  const updateItem = (idx: number, patch: Partial<{ typeIdx: string; quantity: number; unit_price: number }>) => {
+    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+  };
+  const addItem = () => setItems((prev) => [...prev, { typeIdx: '0', quantity: 1, unit_price: 0 }]);
+  const removeItem = (idx: number) => setItems((prev) => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev);
+
+  const grandTotal = items.reduce((sum, it) => sum + it.quantity * it.unit_price, 0);
 
   const submit = async () => {
-    if (!form.employee_id) {
+    if (!employeeId) {
       toast({ title: t('اختر موظفاً', 'Select an employee'), variant: 'destructive' });
       return;
     }
     setSubmitting(true);
-    const type = UNIFORM_TYPES[parseInt(form.typeIdx)];
-    const { error } = await supabase.from('uniforms').insert({
-      employee_id: form.employee_id,
-      type_ar: type.ar,
-      type_en: type.en,
-      quantity: form.quantity,
-      unit_price: form.unit_price,
-      delivery_date: form.delivery_date,
-      notes: form.notes || null,
-    } as any);
+    const payload = items.map((it) => {
+      const type = UNIFORM_TYPES[parseInt(it.typeIdx)];
+      return {
+        employee_id: employeeId,
+        type_ar: type.ar,
+        type_en: type.en,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+        delivery_date: deliveryDate,
+        notes: notes || null,
+      };
+    });
+    const { error } = await supabase.from('uniforms').insert(payload as any);
     setSubmitting(false);
     if (error) {
       toast({ title: t('تعذر الحفظ', 'Save failed'), description: error.message, variant: 'destructive' });
@@ -105,6 +121,7 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
     reset();
     fetchRows();
   };
+
 
   const remove = async (id: number) => {
     if (!confirm(t('تأكيد الحذف؟', 'Confirm delete?'))) return;
