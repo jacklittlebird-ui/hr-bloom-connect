@@ -68,6 +68,7 @@ const Reports = () => {
     { id: 'training', label: t('reports.tabs.training') },
     { id: 'trainingDebt', label: ar ? 'ديون التدريب' : 'Training Debts' },
     { id: 'uniforms', label: ar ? 'اليونيفورم' : 'Uniforms' },
+    { id: 'permits', label: ar ? 'التصاريح' : 'Permits' },
   ];
 
   return (
