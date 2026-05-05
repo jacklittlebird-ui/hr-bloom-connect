@@ -160,6 +160,8 @@ export const PermitReports = () => {
                 </div>
                 <div className="row"><div className="field"><span className="label">عنوان السكن: </span>{[emp.address, emp.city, emp.governorate].filter(Boolean).join(' - ')}</div></div>
 
+                <div style={{ fontWeight: 700, marginTop: 8 }}>منطقة الإرتياد المطلوبة</div>
+
                 <table>
                   <thead>
                     <tr><th colSpan={2}>طبيعة المهمة التي تقتضي دخول منطقة الإرتياد المطلوبة على وجه الدقة</th></tr>
