@@ -10,7 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, RefreshCw, Shirt } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Plus, Trash2, RefreshCw, Shirt, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { UNIFORM_TYPES, getDepreciationPercent, getCurrentValue } from '@/contexts/UniformDataContext';
 
@@ -42,6 +45,7 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [employeeId, setEmployeeId] = useState('');
+  const [empPickerOpen, setEmpPickerOpen] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<Array<{ typeIdx: string; quantity: number; unit_price: number }>>([
@@ -217,14 +221,51 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>{t('الموظف', 'Employee')}</Label>
-                <Select value={employeeId} onValueChange={setEmployeeId}>
-                  <SelectTrigger><SelectValue placeholder={t('اختر موظفاً', 'Select employee')} /></SelectTrigger>
-                  <SelectContent>
-                    {stationEmployees.map((e) => (
-                      <SelectItem key={e.id} value={e.id}>{ar ? e.nameAr : e.nameEn}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={empPickerOpen} onOpenChange={setEmpPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {employeeId
+                        ? (() => {
+                            const e = stationEmployees.find((x) => x.id === employeeId);
+                            return e ? (ar ? e.nameAr : e.nameEn) : t('اختر موظفاً', 'Select employee');
+                          })()
+                        : t('اختر موظفاً', 'Select employee')}
+                      <ChevronsUpDown className="ms-2 h-4 w-4 opacity-50 shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command
+                      filter={(value, search) => {
+                        if (value.toLowerCase().includes(search.toLowerCase())) return 1;
+                        return 0;
+                      }}
+                    >
+                      <CommandInput placeholder={t('ابحث بالاسم...', 'Search by name...')} />
+                      <CommandList>
+                        <CommandEmpty>{t('لا توجد نتائج', 'No results')}</CommandEmpty>
+                        <CommandGroup>
+                          {stationEmployees.map((e) => {
+                            const label = `${e.nameAr} ${e.nameEn} ${e.employeeId || ''}`;
+                            return (
+                              <CommandItem
+                                key={e.id}
+                                value={label}
+                                onSelect={() => {
+                                  setEmployeeId(e.id);
+                                  setEmpPickerOpen(false);
+                                }}
+                              >
+                                <Check className={cn('me-2 h-4 w-4', employeeId === e.id ? 'opacity-100' : 'opacity-0')} />
+                                <span>{ar ? e.nameAr : e.nameEn}</span>
+                                {e.employeeId && <span className="ms-2 text-xs text-muted-foreground">({e.employeeId})</span>}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label>{t('تاريخ التسليم', 'Delivery Date')}</Label>
