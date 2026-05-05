@@ -51,19 +51,21 @@ export const PermitReports = () => {
     if (!w) return;
     w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>نموذج 1 تصاريح</title>
       <style>
-        @page { size: A4; margin: 14mm; }
+        @page { size: A4; margin: 12mm; }
         body { font-family: 'Baloo Bhaijaan 2', 'Arial', sans-serif; color: #000; }
-        .permit-form { font-size: 13px; line-height: 1.9; }
-        .permit-form h1, .permit-form h2 { text-align:center; margin: 4px 0; }
-        .permit-form .row { display:flex; justify-content:space-between; gap:24px; margin: 6px 0; }
-        .permit-form .field { flex:1; border-bottom: 1px dotted #000; padding: 2px 4px; min-height: 24px; }
+        .permit-form { font-size: 12px; line-height: 1.7; }
+        .permit-form h1, .permit-form h2 { text-align:center; margin: 2px 0; font-size: 13px; }
+        .permit-form .row { display:flex; justify-content:space-between; gap:16px; margin: 4px 0; }
+        .permit-form .field { flex:1; border-bottom: 1px dotted #000; padding: 1px 4px; min-height: 20px; }
         .permit-form .label { font-weight: 700; }
-        .permit-form table { width:100%; border-collapse: collapse; margin-top: 8px; }
-        .permit-form th, .permit-form td { border: 1px solid #000; padding: 6px 8px; text-align: right; }
-        .permit-form .photo { width: 120px; height: 150px; border: 1px solid #000; object-fit: cover; }
-        .permit-form .photo-box { width: 120px; height: 150px; border: 1px solid #000; display:flex; align-items:center; justify-content:center; font-size: 11px; color:#666; text-align:center; }
-        .permit-form .header { display:flex; justify-content:space-between; align-items:flex-start; }
-        .permit-form ul { padding-right: 18px; }
+        .permit-form table { width:100%; border-collapse: collapse; margin-top: 6px; }
+        .permit-form th, .permit-form td { border: 1px solid #000; padding: 4px 6px; text-align: right; font-size: 12px; }
+        .permit-form .photo { width: 80px; height: 100px; border: 1px solid #000; object-fit: cover; }
+        .permit-form .photo-box { width: 80px; height: 100px; border: 1px solid #000; display:flex; align-items:center; justify-content:center; font-size: 10px; color:#666; text-align:center; }
+        .permit-form .header { display:flex; justify-content:space-between; align-items:flex-start; gap: 12px; }
+        .permit-form .header-center { flex:1; text-align:center; }
+        .permit-form ul { padding-right: 18px; margin: 4px 0; }
+        .permit-form ul li { font-size: 11px; }
       </style></head><body>${html}</body></html>`);
     w.document.close();
     w.focus();
@@ -102,20 +104,20 @@ export const PermitReports = () => {
         <Card>
           <CardContent className="p-6">
             <div ref={printRef} dir="rtl">
-              <div className="permit-form" style={{ fontFamily: "'Baloo Bhaijaan 2', Arial, sans-serif", color: '#000', fontSize: 13, lineHeight: 1.9 }}>
-                <div className="header">
-                  <div style={{ fontWeight: 700 }}>
+              <div className="permit-form" style={{ fontFamily: "'Baloo Bhaijaan 2', Arial, sans-serif", color: '#000', fontSize: 12, lineHeight: 1.7 }}>
+                <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                  <div style={{ fontWeight: 700, fontSize: 11 }}>
                     نموذج رقم "1" تصاريح<br />
                     الرقم المسلسل بالكشف ( )
                   </div>
-                  <div style={{ textAlign: 'center', fontWeight: 700 }}>
+                  <div style={{ flex: 1, textAlign: 'center', fontWeight: 700 }}>
                     وزارة الداخلية<br />
                     الإدارة العامة لشرطة ميناء القاهرة الجوي
                   </div>
                   {emp.avatar ? (
-                    <img className="photo" src={emp.avatar} alt={emp.nameAr} />
+                    <img src={emp.avatar} alt={emp.nameAr} style={{ width: 80, height: 100, border: '1px solid #000', objectFit: 'cover' }} />
                   ) : (
-                    <div className="photo-box">صورة 4×6</div>
+                    <div style={{ width: 80, height: 100, border: '1px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#666', textAlign: 'center' }}>صورة 4×6</div>
                   )}
                 </div>
 
