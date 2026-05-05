@@ -209,53 +209,81 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
       </CardContent>
 
       <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); setOpen(v); }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('تسجيل يونيفورم جديد', 'Register New Uniform')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>{t('الموظف', 'Employee')}</Label>
-              <Select value={form.employee_id} onValueChange={(v) => setForm({ ...form, employee_id: v })}>
-                <SelectTrigger><SelectValue placeholder={t('اختر موظفاً', 'Select employee')} /></SelectTrigger>
-                <SelectContent>
-                  {stationEmployees.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>{ar ? e.nameAr : e.nameEn}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('الصنف', 'Item')}</Label>
-              <Select value={form.typeIdx} onValueChange={(v) => setForm({ ...form, typeIdx: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {UNIFORM_TYPES.map((u, i) => (
-                    <SelectItem key={i} value={String(i)}>{ar ? u.ar : u.en}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>{t('الكمية', 'Quantity')}</Label>
-                <Input type="number" min={1} value={form.quantity} onChange={(e) => setForm({ ...form, quantity: parseInt(e.target.value) || 1 })} />
+                <Label>{t('الموظف', 'Employee')}</Label>
+                <Select value={employeeId} onValueChange={setEmployeeId}>
+                  <SelectTrigger><SelectValue placeholder={t('اختر موظفاً', 'Select employee')} /></SelectTrigger>
+                  <SelectContent>
+                    {stationEmployees.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>{ar ? e.nameAr : e.nameEn}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
-                <Label>{t('سعر الوحدة', 'Unit Price')}</Label>
-                <Input type="number" min={0} value={form.unit_price} onChange={(e) => setForm({ ...form, unit_price: parseFloat(e.target.value) || 0 })} />
+                <Label>{t('تاريخ التسليم', 'Delivery Date')}</Label>
+                <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
               </div>
             </div>
+
             <div className="space-y-2">
-              <Label>{t('تاريخ التسليم', 'Delivery Date')}</Label>
-              <Input type="date" value={form.delivery_date} onChange={(e) => setForm({ ...form, delivery_date: e.target.value })} />
+              <div className="flex items-center justify-between">
+                <Label>{t('الأصناف', 'Items')}</Label>
+                <Button type="button" size="sm" variant="outline" onClick={addItem}>
+                  <Plus className="w-4 h-4 me-1" />
+                  {t('إضافة صنف', 'Add Item')}
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {items.map((it, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-end p-2 border rounded-md">
+                    <div className="col-span-12 md:col-span-5 space-y-1">
+                      <Label className="text-xs">{t('الصنف', 'Item')}</Label>
+                      <Select value={it.typeIdx} onValueChange={(v) => updateItem(idx, { typeIdx: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {UNIFORM_TYPES.map((u, i) => (
+                            <SelectItem key={i} value={String(i)}>{ar ? u.ar : u.en}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-4 md:col-span-2 space-y-1">
+                      <Label className="text-xs">{t('الكمية', 'Qty')}</Label>
+                      <Input type="number" min={1} value={it.quantity} onChange={(e) => updateItem(idx, { quantity: parseInt(e.target.value) || 1 })} />
+                    </div>
+                    <div className="col-span-4 md:col-span-2 space-y-1">
+                      <Label className="text-xs">{t('سعر الوحدة', 'Unit Price')}</Label>
+                      <Input type="number" min={0} value={it.unit_price} onChange={(e) => updateItem(idx, { unit_price: parseFloat(e.target.value) || 0 })} />
+                    </div>
+                    <div className="col-span-3 md:col-span-2 space-y-1">
+                      <Label className="text-xs">{t('الإجمالي', 'Total')}</Label>
+                      <div className="h-10 flex items-center px-2 rounded-md bg-muted text-sm font-semibold">
+                        {(it.quantity * it.unit_price).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      <Button type="button" size="sm" variant="ghost" onClick={() => removeItem(idx)} disabled={items.length === 1}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
+
             <div className="space-y-2">
               <Label>{t('ملاحظات', 'Notes')}</Label>
-              <Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+              <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
             <div className="text-sm text-muted-foreground">
-              {t('الإجمالي', 'Total')}: <span className="font-bold text-foreground">{(form.quantity * form.unit_price).toLocaleString()}</span>
+              {t('الإجمالي الكلي', 'Grand Total')}: <span className="font-bold text-foreground">{grandTotal.toLocaleString()}</span>
             </div>
           </div>
           <DialogFooter>
