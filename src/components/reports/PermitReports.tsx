@@ -104,20 +104,20 @@ export const PermitReports = () => {
         <Card>
           <CardContent className="p-6">
             <div ref={printRef} dir="rtl">
-              <div className="permit-form" style={{ fontFamily: "'Baloo Bhaijaan 2', Arial, sans-serif", color: '#000', fontSize: 13, lineHeight: 1.9 }}>
-                <div className="header">
-                  <div style={{ fontWeight: 700 }}>
+              <div className="permit-form" style={{ fontFamily: "'Baloo Bhaijaan 2', Arial, sans-serif", color: '#000', fontSize: 12, lineHeight: 1.7 }}>
+                <div className="header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                  <div style={{ fontWeight: 700, fontSize: 11 }}>
                     نموذج رقم "1" تصاريح<br />
                     الرقم المسلسل بالكشف ( )
                   </div>
-                  <div style={{ textAlign: 'center', fontWeight: 700 }}>
+                  <div style={{ flex: 1, textAlign: 'center', fontWeight: 700 }}>
                     وزارة الداخلية<br />
                     الإدارة العامة لشرطة ميناء القاهرة الجوي
                   </div>
                   {emp.avatar ? (
-                    <img className="photo" src={emp.avatar} alt={emp.nameAr} />
+                    <img src={emp.avatar} alt={emp.nameAr} style={{ width: 80, height: 100, border: '1px solid #000', objectFit: 'cover' }} />
                   ) : (
-                    <div className="photo-box">صورة 4×6</div>
+                    <div style={{ width: 80, height: 100, border: '1px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#666', textAlign: 'center' }}>صورة 4×6</div>
                   )}
                 </div>
 
