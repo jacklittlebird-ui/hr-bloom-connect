@@ -442,21 +442,21 @@ export const AttendanceList = () => {
             {ar ? 'سجل الحضور والانصراف' : 'Attendance Records'}
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onPrint} className="gap-1.5">
+            <Button variant="outline" size="sm" onClick={onPrint} disabled={exporting} className="gap-1.5">
               <Printer className="w-4 h-4" />
               {ar ? 'طباعة' : 'Print'}
             </Button>
-            <Button variant="outline" size="sm" onClick={onPDF} className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5">
+            <Button variant="outline" size="sm" onClick={onPDF} disabled={exporting} className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5">
               <FileText className="w-4 h-4" />
               PDF
             </Button>
-            <Button variant="outline" size="sm" onClick={onWord} className="gap-1.5 text-blue-600 border-blue-600/30 hover:bg-blue-600/5">
+            <Button variant="outline" size="sm" onClick={onWord} disabled={exporting} className="gap-1.5 text-blue-600 border-blue-600/30 hover:bg-blue-600/5">
               <FileType className="w-4 h-4" />
               Word
             </Button>
-            <Button variant="outline" size="sm" onClick={onExcel} className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5">
+            <Button variant="outline" size="sm" onClick={onExcel} disabled={exporting} className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5">
               <FileSpreadsheet className="w-4 h-4" />
-              Excel
+              {exporting ? (ar ? 'جاري التصدير...' : 'Exporting...') : 'Excel'}
             </Button>
           </div>
         </div>
