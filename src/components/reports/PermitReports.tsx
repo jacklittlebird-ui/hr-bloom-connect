@@ -176,11 +176,13 @@ export const PermitReports = () => {
                 </p>
                 <div style={{ textAlign: 'center', fontWeight: 700 }}>وتفضلوا بقبول فائق الإحترام،،،</div>
 
-                <div style={{ marginTop: 24 }}>
-                  <div>(المدير المسؤول)</div>
-                  <div style={{ marginTop: 6 }}><span className="label">الإسم: </span>چاك اسحق عبدالمسيح مسيح</div>
-                  <div style={{ marginTop: 6 }}><span className="label">التوقيع:</span></div>
-                  <div style={{ marginTop: 24 }}>(ختم جهة العمل)</div>
+                <div style={{ marginTop: 24, textAlign: 'left', direction: 'rtl' }}>
+                  <div style={{ display: 'inline-block', textAlign: 'right' }}>
+                    <div>(المدير المسؤول)</div>
+                    <div style={{ marginTop: 6 }}><span className="label">الإسم: </span>چاك اسحق عبدالمسيح مسيح</div>
+                    <div style={{ marginTop: 6 }}><span className="label">التوقيع:</span></div>
+                    <div style={{ marginTop: 24 }}>(ختم جهة العمل)</div>
+                  </div>
                 </div>
               </div>
             </div>
