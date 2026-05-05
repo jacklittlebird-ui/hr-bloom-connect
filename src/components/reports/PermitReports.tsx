@@ -159,7 +159,6 @@ export const PermitReports = () => {
                   <div className="field"><span className="label">محمول: </span>{emp.mobile || emp.phone || ''}</div>
                 </div>
                 <div className="row"><div className="field"><span className="label">عنوان السكن: </span>{[emp.address, emp.city, emp.governorate].filter(Boolean).join(' - ')}</div></div>
-                <div className="row"><div className="field"><span className="label">منطقة الإرتياد المطلوبة: </span>{emp.stationName || ''}</div></div>
 
                 <table>
                   <thead>
