@@ -83,11 +83,24 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
     return e ? (ar ? e.nameAr : e.nameEn) : '-';
   };
 
+  const [editingId, setEditingId] = useState<number | null>(null);
+
   const reset = () => {
+    setEditingId(null);
     setEmployeeId('');
     setDeliveryDate(new Date().toISOString().split('T')[0]);
     setNotes('');
     setItems([{ typeIdx: '0', quantity: 1, unit_price: 0 }]);
+  };
+
+  const startEdit = (r: UniformRow) => {
+    const idx = UNIFORM_TYPES.findIndex((u) => u.ar === r.type_ar || u.en === r.type_en);
+    setEditingId(r.id);
+    setEmployeeId(r.employee_id);
+    setDeliveryDate(r.delivery_date);
+    setNotes(r.notes || '');
+    setItems([{ typeIdx: String(idx >= 0 ? idx : 0), quantity: r.quantity, unit_price: r.unit_price }]);
+    setOpen(true);
   };
 
   const updateItem = (idx: number, patch: Partial<{ typeIdx: string; quantity: number; unit_price: number }>) => {
@@ -104,6 +117,32 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
       return;
     }
     setSubmitting(true);
+    if (editingId != null) {
+      const it = items[0];
+      const type = UNIFORM_TYPES[parseInt(it.typeIdx)];
+      const { error } = await supabase
+        .from('uniforms')
+        .update({
+          employee_id: employeeId,
+          type_ar: type.ar,
+          type_en: type.en,
+          quantity: it.quantity,
+          unit_price: it.unit_price,
+          delivery_date: deliveryDate,
+          notes: notes || null,
+        } as any)
+        .eq('id', editingId as any);
+      setSubmitting(false);
+      if (error) {
+        toast({ title: t('تعذر الحفظ', 'Save failed'), description: error.message, variant: 'destructive' });
+        return;
+      }
+      toast({ title: t('تم تحديث اليونيفورم', 'Uniform updated') });
+      setOpen(false);
+      reset();
+      fetchRows();
+      return;
+    }
     const payload = items.map((it) => {
       const type = UNIFORM_TYPES[parseInt(it.typeIdx)];
       return {
