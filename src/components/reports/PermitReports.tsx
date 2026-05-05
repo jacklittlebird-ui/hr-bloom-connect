@@ -121,13 +121,6 @@ export const PermitReports = () => {
                   )}
                 </div>
 
-                <ul style={{ marginTop: 8 }}>
-                  <li>تحرر الإستمارة من أصل وصورتين.</li>
-                  <li>ترفق بالإستمارة عدد 1 صورة فوتوغرافية 4×6.</li>
-                  <li>صورة البطاقة (الشخصية/العائلية) أو جواز السفر.</li>
-                  <li>صورة عقد العمل والتأمينات الإجتماعية بالنسبة للقطاع الخاص.</li>
-                </ul>
-
                 <h2 style={{ marginTop: 14 }}>طلب استخراج/تجديد تصريح جمركي مستديم/مؤقت</h2>
                 <h2>لدخول الدائرة الجمركية بميناء القاهرة الجوي</h2>
 
@@ -166,7 +159,6 @@ export const PermitReports = () => {
                   <div className="field"><span className="label">محمول: </span>{emp.mobile || emp.phone || ''}</div>
                 </div>
                 <div className="row"><div className="field"><span className="label">عنوان السكن: </span>{[emp.address, emp.city, emp.governorate].filter(Boolean).join(' - ')}</div></div>
-                <div className="row"><div className="field"><span className="label">منطقة الإرتياد المطلوبة: </span>{emp.stationName || ''}</div></div>
 
                 <table>
                   <thead>
@@ -184,11 +176,13 @@ export const PermitReports = () => {
                 </p>
                 <div style={{ textAlign: 'center', fontWeight: 700 }}>وتفضلوا بقبول فائق الإحترام،،،</div>
 
-                <div style={{ marginTop: 24 }}>
-                  <div>(المدير المسؤول)</div>
-                  <div style={{ marginTop: 6 }}><span className="label">الإسم: </span>چاك اسحق عبدالمسيح مسيح</div>
-                  <div style={{ marginTop: 6 }}><span className="label">التوقيع:</span></div>
-                  <div style={{ marginTop: 24 }}>(ختم جهة العمل)</div>
+                <div style={{ marginTop: 24, textAlign: 'left', direction: 'rtl' }}>
+                  <div style={{ display: 'inline-block', textAlign: 'right' }}>
+                    <div>(المدير المسؤول)</div>
+                    <div style={{ marginTop: 6 }}><span className="label">الإسم: </span>چاك اسحق عبدالمسيح مسيح</div>
+                    <div style={{ marginTop: 6 }}><span className="label">التوقيع:</span></div>
+                    <div style={{ marginTop: 24 }}>(ختم جهة العمل)</div>
+                  </div>
                 </div>
               </div>
             </div>
