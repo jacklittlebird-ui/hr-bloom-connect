@@ -24,11 +24,12 @@ import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt } from 'lucide-react';
 import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
 import type { LeaveRequest } from '@/types/leaves';
 import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
 import { StationWorkHours } from '@/components/portal/sections/StationWorkHours';
+import { StationUniformsTab } from '@/components/portal/sections/StationUniformsTab';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -1024,7 +1025,7 @@ const StationManagerPortal = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
-          <TabsList className={cn("inline-grid", user?.role === 'station_hr' ? 'grid-cols-5' : 'grid-cols-7')} dir="rtl">
+          <TabsList className={cn("inline-grid", user?.role === 'station_hr' ? 'grid-cols-6' : 'grid-cols-8')} dir="rtl">
             <TabsTrigger value="employees" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>
             <TabsTrigger value="attendance" className="gap-1 md:gap-1.5 text-xs md:text-sm"><CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الحضور', 'Attendance')}</span></TabsTrigger>
             <TabsTrigger value="leaveCalendar" className="gap-1 md:gap-1.5 text-xs md:text-sm"><CalendarIcon className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('تقويم الإجازات', 'Leave Calendar')}</span></TabsTrigger>
@@ -1035,6 +1036,7 @@ const StationManagerPortal = () => {
             {user?.role !== 'station_hr' && (
               <TabsTrigger value="evaluations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Star className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقييمات', 'Evaluations')}</span></TabsTrigger>
             )}
+            <TabsTrigger value="uniforms" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Shirt className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('اليونيفورم', 'Uniforms')}</span></TabsTrigger>
             <TabsTrigger value="violations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('المخالفات', 'Violations')}</span></TabsTrigger>
           </TabsList>
 
@@ -1613,6 +1615,11 @@ const StationManagerPortal = () => {
           </TabsContent>
 
           {/* Violations Tab */}
+          {/* Uniforms Tab */}
+          <TabsContent value="uniforms">
+            <StationUniformsTab stationEmployees={stationEmployees as any} />
+          </TabsContent>
+
           <TabsContent value="violations">
             <Card>
               <CardHeader className="space-y-3">
