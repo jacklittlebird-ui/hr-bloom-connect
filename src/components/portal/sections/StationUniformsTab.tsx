@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Plus, Trash2, RefreshCw, Shirt, Check, ChevronsUpDown } from 'lucide-react';
+import { Plus, Trash2, RefreshCw, Shirt, Check, ChevronsUpDown, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { UNIFORM_TYPES, getDepreciationPercent, getCurrentValue } from '@/contexts/UniformDataContext';
@@ -38,7 +38,9 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const t = (a: string, e: string) => (ar ? a : e);
-  const canEdit = user?.role === 'station_hr' || user?.role === 'admin' || user?.role === 'hr';
+  const isAdmin = user?.role === 'admin' || user?.role === 'hr';
+  const canEdit = user?.role === 'station_hr' || isAdmin;
+  const canDelete = isAdmin;
 
   const [rows, setRows] = useState<UniformRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -81,11 +83,24 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
     return e ? (ar ? e.nameAr : e.nameEn) : '-';
   };
 
+  const [editingId, setEditingId] = useState<number | null>(null);
+
   const reset = () => {
+    setEditingId(null);
     setEmployeeId('');
     setDeliveryDate(new Date().toISOString().split('T')[0]);
     setNotes('');
     setItems([{ typeIdx: '0', quantity: 1, unit_price: 0 }]);
+  };
+
+  const startEdit = (r: UniformRow) => {
+    const idx = UNIFORM_TYPES.findIndex((u) => u.ar === r.type_ar || u.en === r.type_en);
+    setEditingId(r.id);
+    setEmployeeId(r.employee_id);
+    setDeliveryDate(r.delivery_date);
+    setNotes(r.notes || '');
+    setItems([{ typeIdx: String(idx >= 0 ? idx : 0), quantity: r.quantity, unit_price: r.unit_price }]);
+    setOpen(true);
   };
 
   const updateItem = (idx: number, patch: Partial<{ typeIdx: string; quantity: number; unit_price: number }>) => {
@@ -102,6 +117,32 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
       return;
     }
     setSubmitting(true);
+    if (editingId != null) {
+      const it = items[0];
+      const type = UNIFORM_TYPES[parseInt(it.typeIdx)];
+      const { error } = await supabase
+        .from('uniforms')
+        .update({
+          employee_id: employeeId,
+          type_ar: type.ar,
+          type_en: type.en,
+          quantity: it.quantity,
+          unit_price: it.unit_price,
+          delivery_date: deliveryDate,
+          notes: notes || null,
+        } as any)
+        .eq('id', editingId as any);
+      setSubmitting(false);
+      if (error) {
+        toast({ title: t('تعذر الحفظ', 'Save failed'), description: error.message, variant: 'destructive' });
+        return;
+      }
+      toast({ title: t('تم تحديث اليونيفورم', 'Uniform updated') });
+      setOpen(false);
+      reset();
+      fetchRows();
+      return;
+    }
     const payload = items.map((it) => {
       const type = UNIFORM_TYPES[parseInt(it.typeIdx)];
       return {
@@ -198,9 +239,16 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
                       </TableCell>
                       {canEdit && (
                         <TableCell>
-                          <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => startEdit(r)} title={t('تعديل', 'Edit')}>
+                              <Pencil className="w-4 h-4 text-primary" />
+                            </Button>
+                            {canDelete && (
+                              <Button size="sm" variant="ghost" onClick={() => remove(r.id)} title={t('حذف', 'Delete')}>
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       )}
                     </TableRow>
@@ -215,7 +263,7 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
       <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); setOpen(v); }}>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t('تسجيل يونيفورم جديد', 'Register New Uniform')}</DialogTitle>
+            <DialogTitle>{editingId != null ? t('تعديل اليونيفورم', 'Edit Uniform') : t('تسجيل يونيفورم جديد', 'Register New Uniform')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
