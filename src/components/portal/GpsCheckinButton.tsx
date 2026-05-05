@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { getOrCreateDeviceId, getDeviceMeta } from '@/lib/device';
 import { performCheckin } from '@/lib/attendanceQueue';
 import { getFreshPosition, freshGeoErrorMessage } from '@/lib/freshGeolocation';
-import { Navigation, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Navigation, Loader2, CheckCircle, XCircle, WifiOff, RefreshCw } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,13 +24,86 @@ interface Props {
   ar?: boolean;
 }
 
+type Status = 'idle' | 'loading' | 'verifying' | 'success' | 'error' | 'offline';
+
 export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: Props) => {
-  const { session, user } = useAuth();
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const { session } = useAuth();
+  const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const onUp = () => setIsOnline(true);
+    const onDown = () => setIsOnline(false);
+    window.addEventListener('online', onUp);
+    window.addEventListener('offline', onDown);
+    return () => {
+      window.removeEventListener('online', onUp);
+      window.removeEventListener('offline', onDown);
+    };
+  }, []);
+
+  /**
+   * Re-query the database to PROVE the operation was actually persisted on the
+   * server (not just a cached/stale response). Returns the matching record's
+   * timestamp on success, or null if no record was found within the window.
+   */
+  const verifyOnServer = async (
+    employeeUserId: string,
+    expectedRecordedAt: string,
+  ): Promise<string | null> => {
+    try {
+      // Resolve employee_id from user_roles
+      const { data: roleRow } = await supabase
+        .from('user_roles')
+        .select('employee_id')
+        .eq('user_id', employeeUserId)
+        .eq('role', 'employee')
+        .maybeSingle();
+
+      const employeeId = roleRow?.employee_id;
+      if (!employeeId) return null;
+
+      const expectedTs = new Date(expectedRecordedAt).getTime();
+      const todayStr = new Date(expectedRecordedAt).toISOString().split('T')[0];
+
+      const { data: rec } = await supabase
+        .from('attendance_records')
+        .select('id, date, check_in, check_out')
+        .eq('employee_id', employeeId)
+        .eq('date', todayStr)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!rec) return null;
+
+      const stamp = eventType === 'check_in' ? rec.check_in : rec.check_out;
+      if (!stamp) return null;
+
+      // Accept if within 5 minutes of expected (clock skew tolerance)
+      if (Math.abs(new Date(stamp).getTime() - expectedTs) > 5 * 60_000) return null;
+
+      return stamp;
+    } catch {
+      return null;
+    }
+  };
 
   const submitAttendance = async () => {
+    if (!navigator.onLine) {
+      setStatus('offline');
+      setMessage(
+        ar
+          ? '⚠️ لا يوجد اتصال بالإنترنت. يرجى التأكد من الاتصال ثم إعادة المحاولة.'
+          : '⚠️ No internet connection. Please reconnect and retry.'
+      );
+      return;
+    }
+
     setStatus('loading');
     setMessage('');
 
@@ -67,14 +141,20 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
 
       if (!result.ok) {
         setStatus('error');
-        // Special-case NO_OPEN_RECORD: the user pressed "check out" without
-        // ever checking in (or after already checking out). Replace the
-        // generic error with a clear, actionable instruction in Arabic.
         if (eventType === 'check_out' && result.error_code === 'NO_OPEN_RECORD') {
           setMessage(
             ar
               ? '⚠️ لا يوجد تسجيل حضور مفتوح. يرجى الضغط على زر "تسجيل حضور (GPS)" أولاً قبل تسجيل الانصراف.'
               : '⚠️ No open check-in found. Please press "Check In (GPS)" first before checking out.'
+          );
+          return;
+        }
+        if (result.error_code === 'NETWORK_ERROR') {
+          setStatus('offline');
+          setMessage(
+            ar
+              ? '⚠️ تعذّر الوصول للخادم. لم يتم حفظ العملية. يرجى إعادة المحاولة.'
+              : '⚠️ Could not reach the server. Operation was NOT saved. Please retry.'
           );
           return;
         }
@@ -85,33 +165,60 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         return;
       }
 
-      // NOTE: We intentionally DO NOT block the user with a "verify/refresh"
-      // error when the backend returns deduplicated && !verified for check_out.
-      // The backend (gps-checkin) is the source of truth and has already
-      // accepted the request — showing a confusing "refresh the page" message
-      // creates the false impression that nothing was saved and pushes the
-      // user to retry, which is exactly what we want to avoid. Treat any ok
-      // response as success.
-      // Format the actual recorded time (HH:MM, 24h, Cairo) returned by the
-      // backend so the user sees the exact timestamp saved in the database.
-      const recordedDate = result.recorded_at ? new Date(result.recorded_at) : new Date();
+      // Server returned ok — but BEFORE we display success, we re-query the DB
+      // to PROVE the row was actually persisted. This protects against stale
+      // service-worker responses or any cached "success" that doesn't reflect
+      // real server state.
+      if (!result.recorded_at) {
+        setStatus('error');
+        setMessage(
+          ar
+            ? '⚠️ لم يصل تأكيد فعلي من الخادم. يرجى إعادة المحاولة.'
+            : '⚠️ No confirmation received from the server. Please retry.'
+        );
+        return;
+      }
+
+      setStatus('verifying');
+      setMessage(ar ? 'جارٍ التحقق من الحفظ على الخادم...' : 'Verifying with server...');
+
+      const verifiedTs = await verifyOnServer(session.user.id, result.recorded_at);
+
+      if (!verifiedTs) {
+        setStatus('error');
+        setMessage(
+          ar
+            ? '⚠️ لم يتم العثور على السجل في قاعدة البيانات. لم تكتمل العملية — يرجى إعادة المحاولة.'
+            : '⚠️ Record not found on server. Operation incomplete — please retry.'
+        );
+        return;
+      }
+
       const timeStr = new Intl.DateTimeFormat('en-GB', {
         timeZone: 'Africa/Cairo',
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
-      }).format(recordedDate);
+      }).format(new Date(verifiedTs));
 
       setStatus('success');
       setMessage(
         eventType === 'check_in'
-          ? ar ? `تم تسجيل الحضور بنجاح ✔ — الوقت: ${timeStr}` : `Check-in recorded ✔ — Time: ${timeStr}`
-          : result.deduplicated
-            ? ar ? `تم تأكيد الانصراف من الطلب السابق ✔ — الوقت: ${timeStr}` : `Previous check-out confirmed ✔ — Time: ${timeStr}`
-            : ar ? `تم تسجيل الانصراف بنجاح ✔ — الوقت: ${timeStr}` : `Check-out recorded ✔ — Time: ${timeStr}`
+          ? ar ? `تم تسجيل الحضور وتأكيده من الخادم ✔ — الوقت: ${timeStr}` : `Check-in confirmed by server ✔ — Time: ${timeStr}`
+          : ar ? `تم تسجيل الانصراف وتأكيده من الخادم ✔ — الوقت: ${timeStr}` : `Check-out confirmed by server ✔ — Time: ${timeStr}`
       );
       onSuccess?.();
     } catch (e: any) {
+      // Distinguish network failures from other errors
+      if (!navigator.onLine || e?.name === 'TypeError') {
+        setStatus('offline');
+        setMessage(
+          ar
+            ? '⚠️ تعذّر الاتصال بالخادم. لم يتم حفظ العملية. يرجى إعادة المحاولة.'
+            : '⚠️ Could not reach the server. Operation was NOT saved. Please retry.'
+        );
+        return;
+      }
       setStatus('error');
       if (e.code === 1) {
         setMessage(ar ? 'يرجى السماح بالوصول للموقع' : 'Please allow location access');
@@ -130,9 +237,10 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
       setConfirmOpen(true);
       return;
     }
-
     await submitAttendance();
   };
+
+  const isBusy = status === 'loading' || status === 'verifying';
 
   return (
     <div className="space-y-2 w-full">
@@ -157,22 +265,32 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         </AlertDialogContent>
       </AlertDialog>
 
+      {!isOnline && status !== 'offline' && (
+        <div className="flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
+          <WifiOff className="h-4 w-4" />
+          <span>{ar ? 'لا يوجد اتصال بالإنترنت' : 'You are offline'}</span>
+        </div>
+      )}
+
       <Button
         onClick={handleClick}
-        disabled={disabled || status === 'loading'}
+        disabled={disabled || isBusy}
         className="w-full max-w-[320px] mx-auto"
         size="lg"
         variant={eventType === 'check_out' ? 'outline' : 'default'}
       >
-        {status === 'loading' ? (
+        {isBusy ? (
           <Loader2 className="h-5 w-5 me-2 animate-spin" />
         ) : (
           <Navigation className="h-5 w-5 me-2" />
         )}
-        {eventType === 'check_in'
-          ? ar ? 'تسجيل حضور (GPS)' : 'Check In (GPS)'
-          : ar ? 'تسجيل انصراف (GPS)' : 'Check Out (GPS)'}
+        {status === 'verifying'
+          ? ar ? 'جارٍ التحقق من الخادم...' : 'Verifying with server...'
+          : eventType === 'check_in'
+            ? ar ? 'تسجيل حضور (GPS)' : 'Check In (GPS)'
+            : ar ? 'تسجيل انصراف (GPS)' : 'Check Out (GPS)'}
       </Button>
+
       {status === 'success' && (
         <div className="flex items-center justify-center gap-2 text-success">
           <CheckCircle className="h-5 w-5" />
@@ -180,9 +298,39 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         </div>
       )}
       {status === 'error' && (
-        <div className="flex items-center justify-center gap-2 text-destructive">
-          <XCircle className="h-5 w-5" />
-          <span className="font-semibold text-sm">{message}</span>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center gap-2 text-destructive">
+            <XCircle className="h-5 w-5" />
+            <span className="font-semibold text-sm whitespace-pre-wrap break-words">{message}</span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void submitAttendance()}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {ar ? 'إعادة المحاولة' : 'Retry'}
+          </Button>
+        </div>
+      )}
+      {status === 'offline' && (
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400">
+            <WifiOff className="h-5 w-5" />
+            <span className="font-semibold text-sm whitespace-pre-wrap break-words">{message}</span>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void submitAttendance()}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {ar ? 'إعادة المحاولة' : 'Retry'}
+          </Button>
         </div>
       )}
     </div>
