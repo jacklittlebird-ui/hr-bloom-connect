@@ -157,6 +157,7 @@ const Reports = () => {
         </TabsContent>
         <TabsContent value="trainingDebt"><TrainingDebtReport key={`td-${refreshKey}`} /></TabsContent>
         <TabsContent value="uniforms"><UniformReport key={`un-${refreshKey}`} /></TabsContent>
+        <TabsContent value="permits"><PermitReports key={`pr-${refreshKey}`} /></TabsContent>
       </Tabs>
     </DashboardLayout>
   );
