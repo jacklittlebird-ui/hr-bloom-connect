@@ -38,7 +38,9 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const t = (a: string, e: string) => (ar ? a : e);
-  const canEdit = user?.role === 'station_hr' || user?.role === 'admin' || user?.role === 'hr';
+  const isAdmin = user?.role === 'admin' || user?.role === 'hr';
+  const canEdit = user?.role === 'station_hr' || isAdmin;
+  const canDelete = isAdmin;
 
   const [rows, setRows] = useState<UniformRow[]>([]);
   const [loading, setLoading] = useState(false);
