@@ -263,7 +263,7 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
       <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); setOpen(v); }}>
         <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t('تسجيل يونيفورم جديد', 'Register New Uniform')}</DialogTitle>
+            <DialogTitle>{editingId != null ? t('تعديل اليونيفورم', 'Edit Uniform') : t('تسجيل يونيفورم جديد', 'Register New Uniform')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
