@@ -45,6 +45,7 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [employeeId, setEmployeeId] = useState('');
+  const [empPickerOpen, setEmpPickerOpen] = useState(false);
   const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<Array<{ typeIdx: string; quantity: number; unit_price: number }>>([
