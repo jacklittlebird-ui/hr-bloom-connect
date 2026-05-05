@@ -13,6 +13,7 @@ import { PerformanceReports } from '@/components/reports/PerformanceReports';
 import { TrainingReports } from '@/components/reports/TrainingReports';
 import { TrainingDebtReport } from '@/components/reports/TrainingDebtReport';
 import { UniformReport } from '@/components/reports/UniformReport';
+import { PermitReports } from '@/components/reports/PermitReports';
 import { TrainingQualificationReport } from '@/components/reports/TrainingQualificationReport';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -67,6 +68,7 @@ const Reports = () => {
     { id: 'training', label: t('reports.tabs.training') },
     { id: 'trainingDebt', label: ar ? 'ديون التدريب' : 'Training Debts' },
     { id: 'uniforms', label: ar ? 'اليونيفورم' : 'Uniforms' },
+    { id: 'permits', label: ar ? 'التصاريح' : 'Permits' },
   ];
 
   return (
@@ -155,6 +157,7 @@ const Reports = () => {
         </TabsContent>
         <TabsContent value="trainingDebt"><TrainingDebtReport key={`td-${refreshKey}`} /></TabsContent>
         <TabsContent value="uniforms"><UniformReport key={`un-${refreshKey}`} /></TabsContent>
+        <TabsContent value="permits"><PermitReports key={`pr-${refreshKey}`} /></TabsContent>
       </Tabs>
     </DashboardLayout>
   );
