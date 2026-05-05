@@ -13,6 +13,7 @@ import { PerformanceReports } from '@/components/reports/PerformanceReports';
 import { TrainingReports } from '@/components/reports/TrainingReports';
 import { TrainingDebtReport } from '@/components/reports/TrainingDebtReport';
 import { UniformReport } from '@/components/reports/UniformReport';
+import { PermitReports } from '@/components/reports/PermitReports';
 import { TrainingQualificationReport } from '@/components/reports/TrainingQualificationReport';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
