@@ -20,6 +20,7 @@ export const UNIFORM_TYPES = [
   { ar: 'قميص لبني', en: 'Light Blue Shirt' },
   { ar: 'بنطلون كحلي', en: 'Navy Pants' },
   { ar: 'جاكيت بدلة كحلي', en: 'Navy Suit Jacket' },
+  { ar: 'بدلة كحلي', en: 'Navy Suit' },
   { ar: 'بلوفر', en: 'Pullover' },
   { ar: 'كرافت', en: 'Tie' },
   { ar: 'إيشارب', en: 'Scarf' },
