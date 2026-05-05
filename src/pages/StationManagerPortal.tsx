@@ -29,6 +29,7 @@ import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
 import type { LeaveRequest } from '@/types/leaves';
 import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
 import { StationWorkHours } from '@/components/portal/sections/StationWorkHours';
+import { StationUniformsTab } from '@/components/portal/sections/StationUniformsTab';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
