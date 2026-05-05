@@ -239,9 +239,16 @@ export const StationUniformsTab = ({ stationEmployees }: Props) => {
                       </TableCell>
                       {canEdit && (
                         <TableCell>
-                          <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => startEdit(r)} title={t('تعديل', 'Edit')}>
+                              <Pencil className="w-4 h-4 text-primary" />
+                            </Button>
+                            {canDelete && (
+                              <Button size="sm" variant="ghost" onClick={() => remove(r.id)} title={t('حذف', 'Delete')}>
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       )}
                     </TableRow>
