@@ -82,7 +82,48 @@ const Uniforms = () => {
   };
 
   const activeEmployees = useMemo(() => employees.filter(e => e.status === 'active'), [employees]);
-  const { paginatedItems: paginatedUniforms, currentPage: uniPage, totalPages: uniTotalPages, totalItems: uniTotalItems, startIndex: uniStart, endIndex: uniEnd, setCurrentPage: setUniPage } = usePagination(uniforms, 20);
+
+  // Advanced filters for uniforms list
+  const [filterSearch, setFilterSearch] = useState('');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterStation, setFilterStation] = useState<string>('all');
+  const [filterDepreciation, setFilterDepreciation] = useState<string>('all');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+
+  const filteredUniforms = useMemo(() => {
+    const q = filterSearch.trim().toLowerCase();
+    return uniforms.filter(u => {
+      const emp = employees.find(e => e.id === u.employeeId);
+      if (q) {
+        const hay = `${emp?.employeeId || ''} ${emp?.nameAr || ''} ${emp?.nameEn || ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (filterType !== 'all') {
+        const ut = UNIFORM_TYPES[parseInt(filterType)];
+        if (!ut || (u.typeAr !== ut.ar && u.typeEn !== ut.en)) return false;
+      }
+      if (filterStation !== 'all') {
+        if ((emp?.stationLocation || '') !== filterStation) return false;
+      }
+      if (filterDepreciation !== 'all') {
+        const dep = getDepreciationPercent(u.deliveryDate);
+        if (filterDepreciation === 'new' && dep < 100) return false;
+        if (filterDepreciation === 'mid' && (dep === 100 || dep === 0)) return false;
+        if (filterDepreciation === 'expired' && dep !== 0) return false;
+      }
+      if (filterDateFrom && u.deliveryDate < filterDateFrom) return false;
+      if (filterDateTo && u.deliveryDate > filterDateTo) return false;
+      return true;
+    });
+  }, [uniforms, employees, filterSearch, filterType, filterStation, filterDepreciation, filterDateFrom, filterDateTo]);
+
+  const resetFilters = () => {
+    setFilterSearch(''); setFilterType('all'); setFilterStation('all');
+    setFilterDepreciation('all'); setFilterDateFrom(''); setFilterDateTo('');
+  };
+
+  const { paginatedItems: paginatedUniforms, currentPage: uniPage, totalPages: uniTotalPages, totalItems: uniTotalItems, startIndex: uniStart, endIndex: uniEnd, setCurrentPage: setUniPage } = usePagination(filteredUniforms, 20);
   const selectedEmployee = activeEmployees.find(e => e.id === employeeUUID);
 
   const addRow = () => setItems(prev => [...prev, { typeIndex: '', quantity: 1, unitPrice: 0 }]);
