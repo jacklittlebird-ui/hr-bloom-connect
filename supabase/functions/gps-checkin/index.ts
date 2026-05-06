@@ -590,30 +590,6 @@ Deno.serve(async (req) => {
           );
         }
 
-        // GUARD: prevent accidental new check-in immediately after a recent check-out.
-        // If the employee just checked out within the last 30 minutes, refuse a
-        // new check-in to prevent "in & out same time" phantom records caused by
-        // mistakenly tapping check-in after a successful check-out.
-        const { data: recentClosedRec } = await supabaseAdmin
-          .from("attendance_records")
-          .select("id, check_out")
-          .eq("employee_id", employeeId)
-          .not("check_out", "is", null)
-          .order("check_out", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (recentClosedRec?.check_out) {
-          const sinceCheckoutMs = Date.now() - new Date(recentClosedRec.check_out).getTime();
-          if (sinceCheckoutMs >= 0 && sinceCheckoutMs < 30 * 60_000) {
-            const remainingMin = Math.ceil((30 * 60_000 - sinceCheckoutMs) / 60_000);
-            throw Object.assign(
-              new Error(`لقد سجّلت انصرافاً مؤخراً. لا يمكن تسجيل حضور جديد قبل مرور 30 دقيقة (المتبقي ${remainingMin} دقيقة) / You just checked out. New check-in is blocked for 30 minutes (${remainingMin} min remaining).`),
-              { statusCode: 409, errorCode: "RECENT_CHECKOUT_COOLDOWN", retryable: false },
-            );
-          }
-        }
-
         // Allow new check-in even if there are closed records for today
         const isLate = !isFlexible && localHour >= 9;
         const insertPayload = {
@@ -691,20 +667,20 @@ Deno.serve(async (req) => {
           }));
         }
 
-        // Enforce minimum 60 SECONDS between check-in and check-out
+        // Enforce minimum 2 MINUTES between check-in and check-out
         // (prevents accidental instant-checkout from double clicks / retries)
         if (openRecord.check_in) {
           const checkInTime = new Date(openRecord.check_in).getTime();
           const elapsedSeconds = (Date.now() - checkInTime) / 1000;
-          if (elapsedSeconds < 60) {
-            const remaining = Math.ceil(60 - elapsedSeconds);
+          if (elapsedSeconds < 120) {
+            const remaining = Math.ceil(120 - elapsedSeconds);
             await auditCheckout(supabaseAdmin, userId, employeeId, "failure", {
               channel: "gps",
               error_code: "MINIMUM_WORK_DURATION",
               remaining_seconds: remaining,
               retryable: false,
             }, openRecord.id);
-            return Promise.reject(Object.assign(new Error(`لا يمكن تسجيل الانصراف قبل مرور دقيقة من الحضور. المتبقي: ${remaining} ثانية / Cannot check out within 60 seconds of check-in. Remaining: ${remaining}s`), {
+            return Promise.reject(Object.assign(new Error(`لا يمكن تسجيل الانصراف قبل مرور دقيقتين من الحضور. المتبقي: ${remaining} ثانية / Cannot check out within 2 minutes of check-in. Remaining: ${remaining}s`), {
               statusCode: 400,
               errorCode: "MINIMUM_WORK_DURATION",
               retryable: false,
