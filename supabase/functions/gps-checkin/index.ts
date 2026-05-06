@@ -590,6 +590,30 @@ Deno.serve(async (req) => {
           );
         }
 
+        // GUARD: prevent accidental new check-in immediately after a recent check-out.
+        // If the employee just checked out within the last 30 minutes, refuse a
+        // new check-in to prevent "in & out same time" phantom records caused by
+        // mistakenly tapping check-in after a successful check-out.
+        const { data: recentClosedRec } = await supabaseAdmin
+          .from("attendance_records")
+          .select("id, check_out")
+          .eq("employee_id", employeeId)
+          .not("check_out", "is", null)
+          .order("check_out", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (recentClosedRec?.check_out) {
+          const sinceCheckoutMs = Date.now() - new Date(recentClosedRec.check_out).getTime();
+          if (sinceCheckoutMs >= 0 && sinceCheckoutMs < 30 * 60_000) {
+            const remainingMin = Math.ceil((30 * 60_000 - sinceCheckoutMs) / 60_000);
+            throw Object.assign(
+              new Error(`لقد سجّلت انصرافاً مؤخراً. لا يمكن تسجيل حضور جديد قبل مرور 30 دقيقة (المتبقي ${remainingMin} دقيقة) / You just checked out. New check-in is blocked for 30 minutes (${remainingMin} min remaining).`),
+              { statusCode: 409, errorCode: "RECENT_CHECKOUT_COOLDOWN", retryable: false },
+            );
+          }
+        }
+
         // Allow new check-in even if there are closed records for today
         const isLate = !isFlexible && localHour >= 9;
         const insertPayload = {
