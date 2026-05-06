@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
       if (event_type === "check_out") {
         const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
         if (verification.verified) {
-          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed", recorded_at: verification.latestRecord?.check_out ?? null }, 200);
         }
         // Previous attempt failed without leaving the record open.
         // Free the stale lock immediately so the user can retry now.
@@ -391,14 +391,14 @@ Deno.serve(async (req) => {
       const todayLocal2 = new Date().toISOString().split("T")[0];
       const { data: todayOpen2 } = await supabaseAdmin
         .from("attendance_records")
-        .select("id")
+        .select("id, check_in")
         .eq("employee_id", employeeId)
         .eq("date", todayLocal2)
         .not("check_in", "is", null)
         .limit(1)
         .maybeSingle();
       if (todayOpen2) {
-        return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }, 200);
+        return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock", recorded_at: todayOpen2.check_in ?? null }, 200);
       }
       // Stale lock from a failed prior attempt — release it and continue
       // processing this request normally instead of returning a fake success.
