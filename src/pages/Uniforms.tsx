@@ -494,6 +494,68 @@ const Uniforms = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Advanced Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4 p-4 rounded-lg border bg-muted/30">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'بحث (رقم/اسم الموظف)' : 'Search (ID/Name)'}</Label>
+                    <Input value={filterSearch} onChange={e => { setFilterSearch(e.target.value); setUniPage(1); }} placeholder={language === 'ar' ? 'ابحث...' : 'Search...'} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'نوع الصنف' : 'Item Type'}</Label>
+                    <Select value={filterType} onValueChange={v => { setFilterType(v); setUniPage(1); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                        {UNIFORM_TYPES.map((ut, i) => (
+                          <SelectItem key={i} value={String(i)}>{language === 'ar' ? ut.ar : ut.en}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'المحطة' : 'Station'}</Label>
+                    <Select value={filterStation} onValueChange={v => { setFilterStation(v); setUniPage(1); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-popover z-50 max-h-72">
+                        <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                        {stationLocations.map(s => (
+                          <SelectItem key={s.value} value={s.value}>{language === 'ar' ? s.labelAr : s.labelEn}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'حالة الاستهلاك' : 'Depreciation Status'}</Label>
+                    <Select value={filterDepreciation} onValueChange={v => { setFilterDepreciation(v); setUniPage(1); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                        <SelectItem value="new">{language === 'ar' ? 'جديد (100%)' : 'New (100%)'}</SelectItem>
+                        <SelectItem value="mid">{language === 'ar' ? 'مستهلك جزئياً' : 'Partially Depreciated'}</SelectItem>
+                        <SelectItem value="expired">{language === 'ar' ? 'منتهي (0%)' : 'Expired (0%)'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'من تاريخ' : 'From Date'}</Label>
+                    <Input type="date" value={filterDateFrom} onChange={e => { setFilterDateFrom(e.target.value); setUniPage(1); }} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'إلى تاريخ' : 'To Date'}</Label>
+                    <Input type="date" value={filterDateTo} onChange={e => { setFilterDateTo(e.target.value); setUniPage(1); }} />
+                  </div>
+                  <div className="md:col-span-2 lg:col-span-3 flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {language === 'ar'
+                        ? `النتائج: ${filteredUniforms.length} من ${uniforms.length}`
+                        : `Showing ${filteredUniforms.length} of ${uniforms.length}`}
+                    </span>
+                    <Button variant="outline" size="sm" onClick={() => { resetFilters(); setUniPage(1); }} className="gap-1.5">
+                      <RefreshCw className="w-4 h-4" />
+                      {language === 'ar' ? 'إعادة تعيين الفلاتر' : 'Reset Filters'}
+                    </Button>
+                  </div>
+                </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
