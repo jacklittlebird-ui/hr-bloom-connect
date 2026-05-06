@@ -82,7 +82,48 @@ const Uniforms = () => {
   };
 
   const activeEmployees = useMemo(() => employees.filter(e => e.status === 'active'), [employees]);
-  const { paginatedItems: paginatedUniforms, currentPage: uniPage, totalPages: uniTotalPages, totalItems: uniTotalItems, startIndex: uniStart, endIndex: uniEnd, setCurrentPage: setUniPage } = usePagination(uniforms, 20);
+
+  // Advanced filters for uniforms list
+  const [filterSearch, setFilterSearch] = useState('');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterStation, setFilterStation] = useState<string>('all');
+  const [filterDepreciation, setFilterDepreciation] = useState<string>('all');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+
+  const filteredUniforms = useMemo(() => {
+    const q = filterSearch.trim().toLowerCase();
+    return uniforms.filter(u => {
+      const emp = employees.find(e => e.id === u.employeeId);
+      if (q) {
+        const hay = `${emp?.employeeId || ''} ${emp?.nameAr || ''} ${emp?.nameEn || ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (filterType !== 'all') {
+        const ut = UNIFORM_TYPES[parseInt(filterType)];
+        if (!ut || (u.typeAr !== ut.ar && u.typeEn !== ut.en)) return false;
+      }
+      if (filterStation !== 'all') {
+        if ((emp?.stationLocation || '') !== filterStation) return false;
+      }
+      if (filterDepreciation !== 'all') {
+        const dep = getDepreciationPercent(u.deliveryDate);
+        if (filterDepreciation === 'new' && dep < 100) return false;
+        if (filterDepreciation === 'mid' && (dep === 100 || dep === 0)) return false;
+        if (filterDepreciation === 'expired' && dep !== 0) return false;
+      }
+      if (filterDateFrom && u.deliveryDate < filterDateFrom) return false;
+      if (filterDateTo && u.deliveryDate > filterDateTo) return false;
+      return true;
+    });
+  }, [uniforms, employees, filterSearch, filterType, filterStation, filterDepreciation, filterDateFrom, filterDateTo]);
+
+  const resetFilters = () => {
+    setFilterSearch(''); setFilterType('all'); setFilterStation('all');
+    setFilterDepreciation('all'); setFilterDateFrom(''); setFilterDateTo('');
+  };
+
+  const { paginatedItems: paginatedUniforms, currentPage: uniPage, totalPages: uniTotalPages, totalItems: uniTotalItems, startIndex: uniStart, endIndex: uniEnd, setCurrentPage: setUniPage } = usePagination(filteredUniforms, 20);
   const selectedEmployee = activeEmployees.find(e => e.id === employeeUUID);
 
   const addRow = () => setItems(prev => [...prev, { typeIndex: '', quantity: 1, unitPrice: 0 }]);
@@ -453,6 +494,68 @@ const Uniforms = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Advanced Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4 p-4 rounded-lg border bg-muted/30">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'بحث (رقم/اسم الموظف)' : 'Search (ID/Name)'}</Label>
+                    <Input value={filterSearch} onChange={e => { setFilterSearch(e.target.value); setUniPage(1); }} placeholder={language === 'ar' ? 'ابحث...' : 'Search...'} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'نوع الصنف' : 'Item Type'}</Label>
+                    <Select value={filterType} onValueChange={v => { setFilterType(v); setUniPage(1); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                        {UNIFORM_TYPES.map((ut, i) => (
+                          <SelectItem key={i} value={String(i)}>{language === 'ar' ? ut.ar : ut.en}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'المحطة' : 'Station'}</Label>
+                    <Select value={filterStation} onValueChange={v => { setFilterStation(v); setUniPage(1); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-popover z-50 max-h-72">
+                        <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                        {stationLocations.map(s => (
+                          <SelectItem key={s.value} value={s.value}>{language === 'ar' ? s.labelAr : s.labelEn}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'حالة الاستهلاك' : 'Depreciation Status'}</Label>
+                    <Select value={filterDepreciation} onValueChange={v => { setFilterDepreciation(v); setUniPage(1); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-popover z-50">
+                        <SelectItem value="all">{language === 'ar' ? 'الكل' : 'All'}</SelectItem>
+                        <SelectItem value="new">{language === 'ar' ? 'جديد (100%)' : 'New (100%)'}</SelectItem>
+                        <SelectItem value="mid">{language === 'ar' ? 'مستهلك جزئياً' : 'Partially Depreciated'}</SelectItem>
+                        <SelectItem value="expired">{language === 'ar' ? 'منتهي (0%)' : 'Expired (0%)'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'من تاريخ' : 'From Date'}</Label>
+                    <Input type="date" value={filterDateFrom} onChange={e => { setFilterDateFrom(e.target.value); setUniPage(1); }} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{language === 'ar' ? 'إلى تاريخ' : 'To Date'}</Label>
+                    <Input type="date" value={filterDateTo} onChange={e => { setFilterDateTo(e.target.value); setUniPage(1); }} />
+                  </div>
+                  <div className="md:col-span-2 lg:col-span-3 flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {language === 'ar'
+                        ? `النتائج: ${filteredUniforms.length} من ${uniforms.length}`
+                        : `Showing ${filteredUniforms.length} of ${uniforms.length}`}
+                    </span>
+                    <Button variant="outline" size="sm" onClick={() => { resetFilters(); setUniPage(1); }} className="gap-1.5">
+                      <RefreshCw className="w-4 h-4" />
+                      {language === 'ar' ? 'إعادة تعيين الفلاتر' : 'Reset Filters'}
+                    </Button>
+                  </div>
+                </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -469,7 +572,7 @@ const Uniforms = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {uniforms.length === 0 ? (
+                    {filteredUniforms.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                           {language === 'ar' ? 'لا توجد بيانات' : 'No data'}
