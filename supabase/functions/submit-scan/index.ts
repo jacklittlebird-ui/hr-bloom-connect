@@ -466,6 +466,29 @@ Deno.serve(async (req) => {
             }), { status: 409, headers: { ...corsHeaders, "content-type": "application/json" } });
           }
         } else {
+          // GUARD: prevent accidental new check-in immediately after a recent check-out
+          // (cooldown 30 min) — fixes "in & out same time" phantom records.
+          const { data: recentClosedRec } = await admin
+            .from("attendance_records")
+            .select("id, check_out")
+            .eq("employee_id", empId)
+            .not("check_out", "is", null)
+            .order("check_out", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (recentClosedRec?.check_out) {
+            const sinceCheckoutMs = Date.now() - new Date(recentClosedRec.check_out).getTime();
+            if (sinceCheckoutMs >= 0 && sinceCheckoutMs < 30 * 60_000) {
+              const remainingMin = Math.ceil((30 * 60_000 - sinceCheckoutMs) / 60_000);
+              return new Response(JSON.stringify({
+                error: `لقد سجّلت انصرافاً مؤخراً. لا يمكن تسجيل حضور جديد قبل مرور 30 دقيقة (المتبقي ${remainingMin} دقيقة) / You just checked out. New check-in is blocked for 30 minutes (${remainingMin} min remaining).`,
+                error_code: "RECENT_CHECKOUT_COOLDOWN",
+                retryable: false,
+              }), { status: 409, headers: { ...corsHeaders, "content-type": "application/json" } });
+            }
+          }
+
           // No open record — create a new one
           const isLate = !isFlexible && localHour >= 9;
           const { error: insertErr } = await admin.from("attendance_records").insert({
