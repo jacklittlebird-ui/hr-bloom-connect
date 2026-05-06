@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
       if (event_type === "check_out") {
         const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
         if (verification.verified) {
-          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed", recorded_at: verification.latestRecord?.check_out ?? null }, 200);
         }
         // Previous attempt did NOT produce a half-written row → the user
         // can safely retry right now. Clear dedup so this very request
@@ -293,14 +293,14 @@ Deno.serve(async (req) => {
         const todayLocal = new Date().toISOString().split("T")[0];
         const { data: todayOpen } = await supabaseAdmin
           .from("attendance_records")
-          .select("id")
+          .select("id, check_in")
           .eq("employee_id", employeeId)
           .eq("date", todayLocal)
           .not("check_in", "is", null)
           .limit(1)
           .maybeSingle();
         if (todayOpen) {
-          return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
+          return json({ ok: true, event_type, deduplicated: true, verified: true, recorded_at: todayOpen.check_in ?? null }, 200);
         }
         // No real row — clear dedup and continue processing this request.
         clearDedup(userId, event_type);
@@ -326,7 +326,15 @@ Deno.serve(async (req) => {
         // No real row from a prior success — allow retry
         clearDedup(userId, event_type);
       } else {
-        return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts" }, 429);
+        const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
+        if (verification.verified) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed", recorded_at: verification.latestRecord?.check_out ?? null }, 200);
+        }
+        if (!verification.hasOpenRecord) {
+          clearDedup(userId, event_type);
+        } else {
+          return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts", retryable: true }, 429);
+        }
       }
     }
 
