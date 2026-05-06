@@ -42,6 +42,10 @@ export function recordDedup(key: string): void {
   recentRequests.set(key, Date.now());
 }
 
+export function clearDedup(key: string): void {
+  recentRequests.delete(key);
+}
+
 // ─── Queue System ───────────────────────────────────────────────────────────
 
 type QueueItem = {
@@ -229,10 +233,17 @@ export async function performCheckin(params: CheckinParams): Promise<CheckinResu
     });
 
     trackCheckinEnd(startTime, result.ok !== false);
+    // CRITICAL: if the server reported failure (or signalled retryable), free
+    // the local dedup window so the user can press the button again
+    // immediately instead of being told "duplicate request - please wait".
+    if (result.ok === false || result.retryable) {
+      clearDedup(dedupKey);
+    }
     return result;
   } catch (e: any) {
     trackCheckinEnd(startTime, false);
-
+    // Network / unexpected error → allow immediate retry.
+    clearDedup(dedupKey);
     return {
       ok: false,
       error: e.message,
@@ -240,4 +251,10 @@ export async function performCheckin(params: CheckinParams): Promise<CheckinResu
       retryable: shouldRetry,
     };
   }
+}
+
+// Exposed so the UI can clear the local dedup window after a verifyOnServer
+// mismatch (server may have failed silently — let the user retry now).
+export function clearCheckinDedup(userId: string, eventType: 'check_in' | 'check_out'): void {
+  clearDedup(`${userId}:${eventType}`);
 }

@@ -1117,6 +1117,45 @@ export type Database = {
           },
         ]
       }
+      gps_verification_logs: {
+        Row: {
+          created_at: string
+          employee_id: string | null
+          event_type: string
+          expected_recorded_at: string | null
+          found_recorded_at: string | null
+          id: string
+          matched_record_date: string | null
+          outcome: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id?: string | null
+          event_type: string
+          expected_recorded_at?: string | null
+          found_recorded_at?: string | null
+          id?: string
+          matched_record_date?: string | null
+          outcome: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string | null
+          event_type?: string
+          expected_recorded_at?: string | null
+          found_recorded_at?: string | null
+          id?: string
+          matched_record_date?: string | null
+          outcome?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       leave_balances: {
         Row: {
           annual_total: number

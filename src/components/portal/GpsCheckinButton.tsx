@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { getOrCreateDeviceId, getDeviceMeta } from '@/lib/device';
-import { performCheckin } from '@/lib/attendanceQueue';
+import { performCheckin, clearCheckinDedup } from '@/lib/attendanceQueue';
 import { getFreshPosition, freshGeoErrorMessage } from '@/lib/freshGeolocation';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation, Loader2, CheckCircle, XCircle, WifiOff, RefreshCw } from 'lucide-react';
@@ -48,15 +48,26 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
 
   /**
    * Re-query the database to PROVE the operation was actually persisted on the
-   * server (not just a cached/stale response). Returns the matching record's
-   * timestamp on success, or null if no record was found within the window.
+   * server (not just a cached/stale response).
+   *
+   * NIGHT-SHIFT SAFE: a check-out done after midnight is stored under the
+   * check-in's date, NOT today's date. We therefore never filter by date —
+   * we look at the most recent records regardless of date and match by
+   * timestamp within a 5-minute tolerance.
+   *
+   * Every attempt is recorded in `gps_verification_logs` for the audit page.
    */
   const verifyOnServer = async (
     employeeUserId: string,
     expectedRecordedAt: string,
-  ): Promise<string | null> => {
+  ): Promise<{ matchedAt: string | null; matchedDate: string | null; reason: string }> => {
+    let employeeId: string | null = null;
+    let outcome: 'matched' | 'not_found' | 'error' = 'error';
+    let matchedAt: string | null = null;
+    let matchedDate: string | null = null;
+    let reason = '';
+
     try {
-      // Resolve employee_id from user_roles
       const { data: roleRow } = await supabase
         .from('user_roles')
         .select('employee_id')
@@ -64,37 +75,61 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         .eq('role', 'employee')
         .maybeSingle();
 
-      const employeeId = roleRow?.employee_id;
-      if (!employeeId) return null;
+      employeeId = roleRow?.employee_id ?? null;
+      if (!employeeId) {
+        reason = 'employee_not_resolved';
+      } else {
+        const expectedTs = new Date(expectedRecordedAt).getTime();
 
-      const expectedTs = new Date(expectedRecordedAt).getTime();
+        // Pull the 3 most recent records (any date) — covers night shifts
+        // crossing midnight where check_out belongs to yesterday's record.
+        const { data: recs, error } = await supabase
+          .from('attendance_records')
+          .select('id, date, check_in, check_out')
+          .eq('employee_id', employeeId)
+          .order('created_at', { ascending: false })
+          .limit(5);
 
-      // Do NOT filter by date — night shifts that cross midnight are stored
-      // under the check-in date, so a check-out done after midnight would
-      // not be found by today's date. Instead, fetch the most recent records
-      // and look for a matching timestamp.
-      const { data: recs } = await supabase
-        .from('attendance_records')
-        .select('id, date, check_in, check_out')
-        .eq('employee_id', employeeId)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (!recs || recs.length === 0) return null;
-
-      // Accept if any of the recent records has the matching stamp within
-      // 5 minutes of the expected timestamp (clock skew tolerance).
-      for (const rec of recs) {
-        const stamp = eventType === 'check_in' ? rec.check_in : rec.check_out;
-        if (!stamp) continue;
-        if (Math.abs(new Date(stamp).getTime() - expectedTs) <= 5 * 60_000) {
-          return stamp;
+        if (error) {
+          reason = `query_error:${error.message}`;
+        } else if (!recs || recs.length === 0) {
+          outcome = 'not_found';
+          reason = 'no_recent_records';
+        } else {
+          for (const rec of recs) {
+            const stamp = eventType === 'check_in' ? rec.check_in : rec.check_out;
+            if (!stamp) continue;
+            if (Math.abs(new Date(stamp).getTime() - expectedTs) <= 5 * 60_000) {
+              matchedAt = stamp;
+              matchedDate = rec.date;
+              outcome = 'matched';
+              reason = 'within_5min_window';
+              break;
+            }
+          }
+          if (!matchedAt) {
+            outcome = 'not_found';
+            reason = 'no_timestamp_within_window';
+          }
         }
       }
-      return null;
-    } catch {
-      return null;
+    } catch (e: any) {
+      reason = `exception:${e?.message ?? 'unknown'}`;
     }
+
+    // Fire-and-forget audit insert (never blocks the user)
+    void supabase.from('gps_verification_logs').insert({
+      user_id: employeeUserId,
+      employee_id: employeeId,
+      event_type: eventType,
+      expected_recorded_at: expectedRecordedAt,
+      found_recorded_at: matchedAt,
+      matched_record_date: matchedDate,
+      outcome,
+      reason,
+    });
+
+    return { matchedAt, matchedDate, reason };
   };
 
   const submitAttendance = async () => {
@@ -145,25 +180,66 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
 
       if (!result.ok) {
         setStatus('error');
-        if (eventType === 'check_out' && result.error_code === 'NO_OPEN_RECORD') {
+        const code = result.error_code;
+        if (eventType === 'check_out' && code === 'NO_OPEN_RECORD') {
           setMessage(
             ar
-              ? '⚠️ لا يوجد تسجيل حضور مفتوح. يرجى الضغط على زر "تسجيل حضور (GPS)" أولاً قبل تسجيل الانصراف.'
-              : '⚠️ No open check-in found. Please press "Check In (GPS)" first before checking out.'
+              ? '⚠️ لا يوجد تسجيل حضور مفتوح.\nالخطوة التالية: اضغط "تسجيل حضور (GPS)" أولاً، ثم سجّل الانصراف.'
+              : '⚠️ No open check-in found.\nNext step: press "Check In (GPS)" first, then check out.'
           );
           return;
         }
-        if (result.error_code === 'NETWORK_ERROR') {
+        if (code === 'OPEN_RECORD_EXISTS') {
+          setMessage(
+            ar
+              ? '⚠️ يوجد سجل حضور مفتوح من يوم سابق.\nالخطوة التالية: سجّل الانصراف أولاً قبل تسجيل حضور جديد.'
+              : '⚠️ You have an open check-in from a previous day.\nNext step: check out first, then check in again.'
+          );
+          return;
+        }
+        if (code === 'MINIMUM_WORK_DURATION') {
+          setMessage(
+            ar
+              ? `⚠️ ${result.error}\nالخطوة التالية: انتظر حتى تكتمل دقيقة من تسجيل الحضور ثم أعد المحاولة.`
+              : `⚠️ ${result.error}\nNext step: wait until 60s after check-in, then retry.`
+          );
+          return;
+        }
+        if (code === 'CHECKOUT_SAVE_FAILED') {
+          setMessage(
+            ar
+              ? '⚠️ تم العثور على سجل حضور مفتوح لكن فشل حفظ الانصراف.\nالخطوة التالية: أعد المحاولة فوراً — لن يحدث ازدواج.'
+              : '⚠️ Open record found but check-out save failed.\nNext step: retry immediately — no duplicate will be created.'
+          );
+          return;
+        }
+        if (result.reason === 'in_flight' || result.reason === 'concurrent_lock') {
+          setMessage(
+            ar
+              ? '⚠️ الطلب السابق ما زال قيد التحقق على الخادم.\nالخطوة التالية: انتظر 10 ثوانٍ ثم أعد المحاولة.'
+              : '⚠️ Previous request is still being verified by the server.\nNext step: wait 10s and retry.'
+          );
+          return;
+        }
+        if (result.reason === 'previous_failed') {
+          setMessage(
+            ar
+              ? '⚠️ لم يكتمل الطلب السابق.\nالخطوة التالية: اضغط الزر مرة أخرى الآن — تم فتح القفل تلقائياً.'
+              : '⚠️ Previous attempt did not complete.\nNext step: press the button again now — the lock was released.'
+          );
+          return;
+        }
+        if (code === 'NETWORK_ERROR') {
           setStatus('offline');
           setMessage(
             ar
-              ? '⚠️ تعذّر الوصول للخادم. لم يتم حفظ العملية. يرجى إعادة المحاولة.'
-              : '⚠️ Could not reach the server. Operation was NOT saved. Please retry.'
+              ? '⚠️ تعذّر الوصول للخادم. لم يتم حفظ العملية.\nالخطوة التالية: تأكد من الإنترنت وأعد المحاولة.'
+              : '⚠️ Could not reach the server. Operation was NOT saved.\nNext step: check internet and retry.'
           );
           return;
         }
-        const retryHint = result.retryable && eventType === 'check_out'
-          ? ar ? ' يمكنك إعادة المحاولة فوراً.' : ' You can retry immediately.'
+        const retryHint = result.retryable
+          ? ar ? '\nيمكنك إعادة المحاولة فوراً.' : '\nYou can retry immediately.'
           : '';
         setMessage(`${result.error || 'Unknown error'}${retryHint}`);
         return;
@@ -177,8 +253,8 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         setStatus('error');
         setMessage(
           ar
-            ? '⚠️ لم يصل تأكيد فعلي من الخادم. يرجى إعادة المحاولة.'
-            : '⚠️ No confirmation received from the server. Please retry.'
+            ? '⚠️ لم يصل تأكيد فعلي من الخادم.\nالخطوة التالية: أعد المحاولة الآن.'
+            : '⚠️ No confirmation received from the server.\nNext step: retry now.'
         );
         return;
       }
@@ -186,14 +262,21 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
       setStatus('verifying');
       setMessage(ar ? 'جارٍ التحقق من الحفظ على الخادم...' : 'Verifying with server...');
 
-      const verifiedTs = await verifyOnServer(session.user.id, result.recorded_at);
+      const { matchedAt: verifiedTs, reason: verifyReason } = await verifyOnServer(
+        session.user.id,
+        result.recorded_at,
+      );
 
       if (!verifiedTs) {
+        // Free local dedup so the user can press the button again immediately
+        // — the server claimed success but the row was not found within the
+        // tolerance window, so a real retry must NOT be blocked as duplicate.
+        clearCheckinDedup(session.user.id, eventType);
         setStatus('error');
         setMessage(
           ar
-            ? '⚠️ لم يتم العثور على السجل في قاعدة البيانات. لم تكتمل العملية — يرجى إعادة المحاولة.'
-            : '⚠️ Record not found on server. Operation incomplete — please retry.'
+            ? `⚠️ لم يتم العثور على السجل في قاعدة البيانات (${verifyReason}).\nالخطوة التالية: اضغط "إعادة المحاولة" — لن يحدث ازدواج.`
+            : `⚠️ Record not found on server (${verifyReason}).\nNext step: press "Retry" — no duplicate will be created.`
         );
         return;
       }
