@@ -634,6 +634,27 @@ Deno.serve(async (req) => {
         console.log("[gps-checkin] checkout lookup:", { employeeId, openRecord, findErr });
 
         if (!openRecord) {
+          // If the previous checkout was actually saved but the client did not
+          // receive/confirm it, a retry after the local/server dedup windows can
+          // land here. Acknowledge a recent completed checkout instead of
+          // showing a false "no open record" error.
+          const { data: recentClosed } = await supabaseAdmin
+            .from("attendance_records")
+            .select("id, check_out")
+            .eq("employee_id", employeeId)
+            .not("check_out", "is", null)
+            .order("check_out", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (recentClosed?.check_out) {
+            const checkoutAgeMs = Date.now() - new Date(recentClosed.check_out).getTime();
+            if (checkoutAgeMs >= 0 && checkoutAgeMs <= 12 * 60 * 60_000) {
+              recordedAtSaved = recentClosed.check_out;
+              return;
+            }
+          }
+
           await auditCheckout(supabaseAdmin, userId, employeeId, "failure", {
             channel: "gps",
             error_code: "NO_OPEN_RECORD",
