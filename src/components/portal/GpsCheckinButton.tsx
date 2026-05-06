@@ -100,7 +100,7 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
           for (const rec of recs) {
             const stamp = eventType === 'check_in' ? rec.check_in : rec.check_out;
             if (!stamp) continue;
-            if (Math.abs(new Date(stamp).getTime() - expectedTs) <= 5 * 60_000) {
+            if (Math.abs(new Date(stamp).getTime() - expectedTs) <= toleranceMs) {
               matchedAt = stamp;
               matchedDate = rec.date;
               outcome = 'matched';
