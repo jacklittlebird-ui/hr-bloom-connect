@@ -195,10 +195,8 @@ export const PayrollProcessing = () => {
     setPenaltyValue(0);
   };
 
-  const handleSelectEmployee = (empId: string) => {
-    setSelectedEmployee(empId);
-    handleReset();
-    const existing = getPayrollEntry(empId, selectedMonth, selectedYear);
+  const loadEntryIntoForm = useCallback((empId: string, month: string, year: string) => {
+    const existing = getPayrollEntry(empId, month, year);
     if (existing) {
       setLivingAllowance(existing.livingAllowance);
       setOvertimePay(existing.overtimePay);
@@ -208,10 +206,29 @@ export const PayrollProcessing = () => {
       setPenaltyType(existing.penaltyType);
       setPenaltyValue(existing.penaltyType === 'days' ? normalizeQuarterInput(existing.penaltyValue) : existing.penaltyValue);
     } else {
-      const sr = getSalaryRecord(empId, selectedYear);
+      setLivingAllowance(0);
+      setOvertimePay(0);
+      setBonusType('amount');
+      setBonusValue(0);
+      setLeaveDays(0);
+      setPenaltyType('amount');
+      setPenaltyValue(0);
+      const sr = getSalaryRecord(empId, year);
       if (sr) setLivingAllowance(sr.livingAllowance);
     }
+  }, [getPayrollEntry, getSalaryRecord]);
+
+  const handleSelectEmployee = (empId: string) => {
+    setSelectedEmployee(empId);
+    loadEntryIntoForm(empId, selectedMonth, selectedYear);
   };
+
+  // Reload form data when month/year/employee changes so previously saved values appear
+  useEffect(() => {
+    if (selectedEmployee) {
+      loadEntryIntoForm(selectedEmployee, selectedMonth, selectedYear);
+    }
+  }, [selectedEmployee, selectedMonth, selectedYear, loadEntryIntoForm]);
 
   const buildPayrollEntry = (empId: string): ProcessedPayroll | null => {
     const sr = getSalaryRecord(empId, selectedYear);
