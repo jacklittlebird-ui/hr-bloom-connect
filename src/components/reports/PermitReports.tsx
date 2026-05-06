@@ -112,7 +112,8 @@ export const PermitReports = () => {
                   </div>
                   <div style={{ flex: 1, textAlign: 'center', fontWeight: 700 }}>
                     وزارة الداخلية<br />
-                    الإدارة العامة لشرطة ميناء القاهرة الجوي
+                    الإدارة العامة لشرطة ميناء القاهرة الجوي<br />
+                    إدارة التصاريح الجمركية
                   </div>
                   {emp.avatar ? (
                     <img src={emp.avatar} alt={emp.nameAr} style={{ width: 80, height: 100, border: '1px solid #000', objectFit: 'cover' }} />
