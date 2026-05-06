@@ -572,7 +572,7 @@ const Uniforms = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {uniforms.length === 0 ? (
+                    {filteredUniforms.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                           {language === 'ar' ? 'لا توجد بيانات' : 'No data'}
