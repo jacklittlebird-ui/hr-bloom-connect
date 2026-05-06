@@ -13,11 +13,52 @@ const QrScanner = ({ onScan }: QrScannerProps) => {
 
   useEffect(() => {
     let mounted = true;
+    const requestCameraPermission = async (): Promise<boolean> => {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setError("متصفحك لا يدعم الوصول للكاميرا. استخدم Chrome أو Safari الحديث.");
+          return false;
+        }
+        // Force an explicit permission prompt before initializing the QR scanner.
+        // Some devices (especially iOS Safari & in-app browsers) silently fail
+        // when html5-qrcode opens the camera without a prior getUserMedia call.
+        let stream: MediaStream | null = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: "environment" } },
+            audio: false,
+          });
+        } catch {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
+        // Immediately release the stream so html5-qrcode can take over.
+        stream.getTracks().forEach((t) => t.stop());
+        return true;
+      } catch (err: any) {
+        const name = err?.name || "";
+        if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+          setError("تم رفض إذن الكاميرا. يرجى السماح بالوصول للكاميرا من إعدادات المتصفح وإعادة المحاولة.");
+        } else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+          setError("لم يتم العثور على كاميرا في هذا الجهاز.");
+        } else if (name === "NotReadableError" || name === "TrackStartError") {
+          setError("الكاميرا مستخدمة من تطبيق آخر. أغلق التطبيقات الأخرى وحاول مجدداً.");
+        } else if (name === "OverconstrainedError") {
+          setError("إعدادات الكاميرا غير مدعومة على هذا الجهاز.");
+        } else {
+          setError(err?.message || "تعذر الوصول للكاميرا. تأكد من السماح بالإذن.");
+        }
+        return false;
+      }
+    };
+
     const startScanner = async () => {
       try {
         if (!mounted) return;
+        // Force-request camera permission FIRST so the OS prompt appears reliably.
+        const granted = await requestCameraPermission();
+        if (!mounted || !granted) return;
         // Small delay to ensure any previous camera stream is fully released
-        await new Promise((r) => setTimeout(r, 150));
+        await new Promise((r) => setTimeout(r, 250));
         if (!mounted) return;
         const scanner = new Html5Qrcode("qr-reader", /* verbose */ false);
         scannerRef.current = scanner;
