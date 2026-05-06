@@ -60,6 +60,7 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
   const verifyOnServer = async (
     employeeUserId: string,
     expectedRecordedAt: string,
+    toleranceMs: number = 5 * 60_000,
   ): Promise<{ matchedAt: string | null; matchedDate: string | null; reason: string }> => {
     let employeeId: string | null = null;
     let outcome: 'matched' | 'not_found' | 'error' = 'error';
