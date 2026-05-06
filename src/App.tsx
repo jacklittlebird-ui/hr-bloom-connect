@@ -46,6 +46,7 @@ const AttendanceKiosk = React.lazy(() => import("./pages/AttendanceKiosk"));
 const AttendanceAdmin = React.lazy(() => import("./pages/AttendanceAdmin"));
 const NotificationsPage = React.lazy(() => import("./pages/Notifications"));
 const AuditLogsPage = React.lazy(() => import("./pages/AuditLogs"));
+const GpsVerificationLogs = React.lazy(() => import("./pages/GpsVerificationLogs"));
 const Vehicles = React.lazy(() => import("./pages/Vehicles"));
 const PropertyTaxes = React.lazy(() => import("./pages/PropertyTaxes"));
 
