@@ -139,7 +139,7 @@ export const PermitReports = () => {
                 <div className="row"><div className="field"><span className="label">الإسم رباعي: </span>{emp.nameAr}</div></div>
                 <div className="row">
                   <div className="field"><span className="label">الجنسية: </span>{emp.nationality || ''}</div>
-                  <div className="field"><span className="label">الديانة: </span>{emp.religion || ''}</div>
+                  <div className="field"><span className="label">الديانة: </span>{({ Muslim: 'مسلم', Christian: 'مسيحي', Other: 'أخرى', muslim: 'مسلم', christian: 'مسيحي', other: 'أخرى' } as Record<string, string>)[emp.religion as string] || emp.religion || ''}</div>
                 </div>
                 <div className="row"><div className="field"><span className="label">الوظيفة: </span>{emp.jobTitleAr || emp.jobTitle || ''}</div></div>
                 <div className="row">
