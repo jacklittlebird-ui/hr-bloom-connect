@@ -42,6 +42,10 @@ export function recordDedup(key: string): void {
   recentRequests.set(key, Date.now());
 }
 
+export function clearDedup(key: string): void {
+  recentRequests.delete(key);
+}
+
 // ─── Queue System ───────────────────────────────────────────────────────────
 
 type QueueItem = {
