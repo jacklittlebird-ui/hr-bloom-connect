@@ -68,26 +68,30 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
       if (!employeeId) return null;
 
       const expectedTs = new Date(expectedRecordedAt).getTime();
-      const todayStr = new Date(expectedRecordedAt).toISOString().split('T')[0];
 
-      const { data: rec } = await supabase
+      // Do NOT filter by date — night shifts that cross midnight are stored
+      // under the check-in date, so a check-out done after midnight would
+      // not be found by today's date. Instead, fetch the most recent records
+      // and look for a matching timestamp.
+      const { data: recs } = await supabase
         .from('attendance_records')
         .select('id, date, check_in, check_out')
         .eq('employee_id', employeeId)
-        .eq('date', todayStr)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(3);
 
-      if (!rec) return null;
+      if (!recs || recs.length === 0) return null;
 
-      const stamp = eventType === 'check_in' ? rec.check_in : rec.check_out;
-      if (!stamp) return null;
-
-      // Accept if within 5 minutes of expected (clock skew tolerance)
-      if (Math.abs(new Date(stamp).getTime() - expectedTs) > 5 * 60_000) return null;
-
-      return stamp;
+      // Accept if any of the recent records has the matching stamp within
+      // 5 minutes of the expected timestamp (clock skew tolerance).
+      for (const rec of recs) {
+        const stamp = eventType === 'check_in' ? rec.check_in : rec.check_out;
+        if (!stamp) continue;
+        if (Math.abs(new Date(stamp).getTime() - expectedTs) <= 5 * 60_000) {
+          return stamp;
+        }
+      }
+      return null;
     } catch {
       return null;
     }
