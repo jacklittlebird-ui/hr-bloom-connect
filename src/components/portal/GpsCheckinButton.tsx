@@ -249,22 +249,18 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
       // to PROVE the row was actually persisted. This protects against stale
       // service-worker responses or any cached "success" that doesn't reflect
       // real server state.
-      if (!result.recorded_at) {
-        setStatus('error');
-        setMessage(
-          ar
-            ? '⚠️ لم يصل تأكيد فعلي من الخادم.\nالخطوة التالية: أعد المحاولة الآن.'
-            : '⚠️ No confirmation received from the server.\nNext step: retry now.'
-        );
-        return;
-      }
+      // FALLBACK: if recorded_at is missing (e.g. body stripped by SW / cache),
+      // verify by looking for the most recent matching event in the last 2 min.
+      const expectedTs = result.recorded_at || new Date().toISOString();
+      const toleranceMs = result.recorded_at ? 5 * 60_000 : 2 * 60_000;
 
       setStatus('verifying');
       setMessage(ar ? 'جارٍ التحقق من الحفظ على الخادم...' : 'Verifying with server...');
 
       const { matchedAt: verifiedTs, reason: verifyReason } = await verifyOnServer(
         session.user.id,
-        result.recorded_at,
+        expectedTs,
+        toleranceMs,
       );
 
       if (!verifiedTs) {
