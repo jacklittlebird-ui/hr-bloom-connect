@@ -667,20 +667,20 @@ Deno.serve(async (req) => {
           }));
         }
 
-        // Enforce minimum 60 SECONDS between check-in and check-out
+        // Enforce minimum 2 MINUTES between check-in and check-out
         // (prevents accidental instant-checkout from double clicks / retries)
         if (openRecord.check_in) {
           const checkInTime = new Date(openRecord.check_in).getTime();
           const elapsedSeconds = (Date.now() - checkInTime) / 1000;
-          if (elapsedSeconds < 60) {
-            const remaining = Math.ceil(60 - elapsedSeconds);
+          if (elapsedSeconds < 120) {
+            const remaining = Math.ceil(120 - elapsedSeconds);
             await auditCheckout(supabaseAdmin, userId, employeeId, "failure", {
               channel: "gps",
               error_code: "MINIMUM_WORK_DURATION",
               remaining_seconds: remaining,
               retryable: false,
             }, openRecord.id);
-            return Promise.reject(Object.assign(new Error(`لا يمكن تسجيل الانصراف قبل مرور دقيقة من الحضور. المتبقي: ${remaining} ثانية / Cannot check out within 60 seconds of check-in. Remaining: ${remaining}s`), {
+            return Promise.reject(Object.assign(new Error(`لا يمكن تسجيل الانصراف قبل مرور دقيقتين من الحضور. المتبقي: ${remaining} ثانية / Cannot check out within 2 minutes of check-in. Remaining: ${remaining}s`), {
               statusCode: 400,
               errorCode: "MINIMUM_WORK_DURATION",
               retryable: false,
