@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
       if (event_type === "check_out") {
         const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
         if (verification.verified) {
-          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed", recorded_at: verification.latestRecord?.check_out ?? null }, 200);
         }
         // Previous attempt did NOT produce a half-written row → the user
         // can safely retry right now. Clear dedup so this very request
@@ -293,14 +293,14 @@ Deno.serve(async (req) => {
         const todayLocal = new Date().toISOString().split("T")[0];
         const { data: todayOpen } = await supabaseAdmin
           .from("attendance_records")
-          .select("id")
+          .select("id, check_in")
           .eq("employee_id", employeeId)
           .eq("date", todayLocal)
           .not("check_in", "is", null)
           .limit(1)
           .maybeSingle();
         if (todayOpen) {
-          return json({ ok: true, event_type, deduplicated: true, verified: true }, 200);
+          return json({ ok: true, event_type, deduplicated: true, verified: true, recorded_at: todayOpen.check_in ?? null }, 200);
         }
         // No real row — clear dedup and continue processing this request.
         clearDedup(userId, event_type);
@@ -326,7 +326,15 @@ Deno.serve(async (req) => {
         // No real row from a prior success — allow retry
         clearDedup(userId, event_type);
       } else {
-        return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts" }, 429);
+        const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
+        if (verification.verified) {
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed", recorded_at: verification.latestRecord?.check_out ?? null }, 200);
+        }
+        if (!verification.hasOpenRecord) {
+          clearDedup(userId, event_type);
+        } else {
+          return json({ error: "يرجى الانتظار دقيقة واحدة / Please wait 1 minute between attempts", retryable: true }, 429);
+        }
       }
     }
 
@@ -350,7 +358,7 @@ Deno.serve(async (req) => {
       if (event_type === "check_out") {
         const verification = await getCheckoutVerificationState(supabaseAdmin, employeeId);
         if (verification.verified) {
-          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed" }, 200);
+          return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "already_processed", recorded_at: verification.latestRecord?.check_out ?? null }, 200);
         }
         // Previous attempt failed without leaving the record open.
         // Free the stale lock immediately so the user can retry now.
@@ -383,14 +391,14 @@ Deno.serve(async (req) => {
       const todayLocal2 = new Date().toISOString().split("T")[0];
       const { data: todayOpen2 } = await supabaseAdmin
         .from("attendance_records")
-        .select("id")
+        .select("id, check_in")
         .eq("employee_id", employeeId)
         .eq("date", todayLocal2)
         .not("check_in", "is", null)
         .limit(1)
         .maybeSingle();
       if (todayOpen2) {
-        return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock" }, 200);
+        return json({ ok: true, event_type, deduplicated: true, verified: true, reason: "concurrent_lock", recorded_at: todayOpen2.check_in ?? null }, 200);
       }
       // Stale lock from a failed prior attempt — release it and continue
       // processing this request normally instead of returning a fake success.
@@ -626,6 +634,27 @@ Deno.serve(async (req) => {
         console.log("[gps-checkin] checkout lookup:", { employeeId, openRecord, findErr });
 
         if (!openRecord) {
+          // If the previous checkout was actually saved but the client did not
+          // receive/confirm it, a retry after the local/server dedup windows can
+          // land here. Acknowledge a recent completed checkout instead of
+          // showing a false "no open record" error.
+          const { data: recentClosed } = await supabaseAdmin
+            .from("attendance_records")
+            .select("id, check_out")
+            .eq("employee_id", employeeId)
+            .not("check_out", "is", null)
+            .order("check_out", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (recentClosed?.check_out) {
+            const checkoutAgeMs = Date.now() - new Date(recentClosed.check_out).getTime();
+            if (checkoutAgeMs >= 0 && checkoutAgeMs <= 12 * 60 * 60_000) {
+              recordedAtSaved = recentClosed.check_out;
+              return;
+            }
+          }
+
           await auditCheckout(supabaseAdmin, userId, employeeId, "failure", {
             channel: "gps",
             error_code: "NO_OPEN_RECORD",
