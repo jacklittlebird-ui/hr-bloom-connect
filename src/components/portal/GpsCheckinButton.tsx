@@ -180,25 +180,66 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
 
       if (!result.ok) {
         setStatus('error');
-        if (eventType === 'check_out' && result.error_code === 'NO_OPEN_RECORD') {
+        const code = result.error_code;
+        if (eventType === 'check_out' && code === 'NO_OPEN_RECORD') {
           setMessage(
             ar
-              ? '⚠️ لا يوجد تسجيل حضور مفتوح. يرجى الضغط على زر "تسجيل حضور (GPS)" أولاً قبل تسجيل الانصراف.'
-              : '⚠️ No open check-in found. Please press "Check In (GPS)" first before checking out.'
+              ? '⚠️ لا يوجد تسجيل حضور مفتوح.\nالخطوة التالية: اضغط "تسجيل حضور (GPS)" أولاً، ثم سجّل الانصراف.'
+              : '⚠️ No open check-in found.\nNext step: press "Check In (GPS)" first, then check out.'
           );
           return;
         }
-        if (result.error_code === 'NETWORK_ERROR') {
+        if (code === 'OPEN_RECORD_EXISTS') {
+          setMessage(
+            ar
+              ? '⚠️ يوجد سجل حضور مفتوح من يوم سابق.\nالخطوة التالية: سجّل الانصراف أولاً قبل تسجيل حضور جديد.'
+              : '⚠️ You have an open check-in from a previous day.\nNext step: check out first, then check in again.'
+          );
+          return;
+        }
+        if (code === 'MINIMUM_WORK_DURATION') {
+          setMessage(
+            ar
+              ? `⚠️ ${result.error}\nالخطوة التالية: انتظر حتى تكتمل دقيقة من تسجيل الحضور ثم أعد المحاولة.`
+              : `⚠️ ${result.error}\nNext step: wait until 60s after check-in, then retry.`
+          );
+          return;
+        }
+        if (code === 'CHECKOUT_SAVE_FAILED') {
+          setMessage(
+            ar
+              ? '⚠️ تم العثور على سجل حضور مفتوح لكن فشل حفظ الانصراف.\nالخطوة التالية: أعد المحاولة فوراً — لن يحدث ازدواج.'
+              : '⚠️ Open record found but check-out save failed.\nNext step: retry immediately — no duplicate will be created.'
+          );
+          return;
+        }
+        if (result.reason === 'in_flight' || result.reason === 'concurrent_lock') {
+          setMessage(
+            ar
+              ? '⚠️ الطلب السابق ما زال قيد التحقق على الخادم.\nالخطوة التالية: انتظر 10 ثوانٍ ثم أعد المحاولة.'
+              : '⚠️ Previous request is still being verified by the server.\nNext step: wait 10s and retry.'
+          );
+          return;
+        }
+        if (result.reason === 'previous_failed') {
+          setMessage(
+            ar
+              ? '⚠️ لم يكتمل الطلب السابق.\nالخطوة التالية: اضغط الزر مرة أخرى الآن — تم فتح القفل تلقائياً.'
+              : '⚠️ Previous attempt did not complete.\nNext step: press the button again now — the lock was released.'
+          );
+          return;
+        }
+        if (code === 'NETWORK_ERROR') {
           setStatus('offline');
           setMessage(
             ar
-              ? '⚠️ تعذّر الوصول للخادم. لم يتم حفظ العملية. يرجى إعادة المحاولة.'
-              : '⚠️ Could not reach the server. Operation was NOT saved. Please retry.'
+              ? '⚠️ تعذّر الوصول للخادم. لم يتم حفظ العملية.\nالخطوة التالية: تأكد من الإنترنت وأعد المحاولة.'
+              : '⚠️ Could not reach the server. Operation was NOT saved.\nNext step: check internet and retry.'
           );
           return;
         }
-        const retryHint = result.retryable && eventType === 'check_out'
-          ? ar ? ' يمكنك إعادة المحاولة فوراً.' : ' You can retry immediately.'
+        const retryHint = result.retryable
+          ? ar ? '\nيمكنك إعادة المحاولة فوراً.' : '\nYou can retry immediately.'
           : '';
         setMessage(`${result.error || 'Unknown error'}${retryHint}`);
         return;
@@ -212,8 +253,8 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         setStatus('error');
         setMessage(
           ar
-            ? '⚠️ لم يصل تأكيد فعلي من الخادم. يرجى إعادة المحاولة.'
-            : '⚠️ No confirmation received from the server. Please retry.'
+            ? '⚠️ لم يصل تأكيد فعلي من الخادم.\nالخطوة التالية: أعد المحاولة الآن.'
+            : '⚠️ No confirmation received from the server.\nNext step: retry now.'
         );
         return;
       }
@@ -221,14 +262,21 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
       setStatus('verifying');
       setMessage(ar ? 'جارٍ التحقق من الحفظ على الخادم...' : 'Verifying with server...');
 
-      const verifiedTs = await verifyOnServer(session.user.id, result.recorded_at);
+      const { matchedAt: verifiedTs, reason: verifyReason } = await verifyOnServer(
+        session.user.id,
+        result.recorded_at,
+      );
 
       if (!verifiedTs) {
+        // Free local dedup so the user can press the button again immediately
+        // — the server claimed success but the row was not found within the
+        // tolerance window, so a real retry must NOT be blocked as duplicate.
+        clearCheckinDedup(session.user.id, eventType);
         setStatus('error');
         setMessage(
           ar
-            ? '⚠️ لم يتم العثور على السجل في قاعدة البيانات. لم تكتمل العملية — يرجى إعادة المحاولة.'
-            : '⚠️ Record not found on server. Operation incomplete — please retry.'
+            ? `⚠️ لم يتم العثور على السجل في قاعدة البيانات (${verifyReason}).\nالخطوة التالية: اضغط "إعادة المحاولة" — لن يحدث ازدواج.`
+            : `⚠️ Record not found on server (${verifyReason}).\nNext step: press "Retry" — no duplicate will be created.`
         );
         return;
       }
