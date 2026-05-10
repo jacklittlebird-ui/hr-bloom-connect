@@ -98,6 +98,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const [bulkSearchName, setBulkSearchName] = useState('');
   const [bulkSaving, setBulkSaving] = useState(false);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
+  const [deleteRecordId, setDeleteRecordId] = useState<string | null>(null);
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
   const [newRecord, setNewRecord] = useState({
     courseId: '', startDate: '', endDate: '', result: 'pending' as 'passed' | 'failed' | 'pending', score: '', provider: '', location: '', hasCert: false, hasCr: false, hasSs: false, hasCb: false, plannedDate: '', cost: '',
