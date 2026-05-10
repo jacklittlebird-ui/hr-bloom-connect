@@ -280,6 +280,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     await supabase.from('training_records').delete().eq('id', id);
     setTrainingRecords(prev => prev.filter(r => r.id !== id));
     toast({ title: ar ? 'تم الحذف' : 'Deleted' });
+    setDeleteRecordId(null);
   };
 
   const handleEditRecord = (record: TrainingRecord) => {
