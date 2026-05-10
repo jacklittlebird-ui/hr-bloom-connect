@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { QrCode, Navigation, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { EmployeeCheckinOverrides } from './EmployeeCheckinOverrides';
 
 interface Station {
   id: string;
@@ -112,6 +113,7 @@ export const StationCheckinSettings = () => {
           );
         })}
       </div>
+      <EmployeeCheckinOverrides />
     </div>
   );
 };
