@@ -116,7 +116,7 @@ const Leaves = () => {
     };
 
     // Leave requests
-    const { data: leaves } = await supabase.from('leave_requests').select('*').order('created_at', { ascending: false });
+    const leaves = await fetchAllRows<any>((from, to) => supabase.from('leave_requests').select('*').order('created_at', { ascending: false }).range(from, to));
     setLeaveRequests((leaves || []).map(l => {
       const info = getEmpInfo(l.employee_id);
       return {
@@ -132,7 +132,7 @@ const Leaves = () => {
     }));
 
     // Permission requests
-    const { data: perms } = await supabase.from('permission_requests').select('*').order('created_at', { ascending: false });
+    const perms = await fetchAllRows<any>((from, to) => supabase.from('permission_requests').select('*').order('created_at', { ascending: false }).range(from, to));
     setPermissionRequests((perms || []).map(p => {
       const info = getEmpInfo(p.employee_id);
       return {
@@ -155,7 +155,7 @@ const Leaves = () => {
     }));
 
     // Mission requests
-    const { data: missions } = await supabase.from('missions').select('*').order('created_at', { ascending: false });
+    const missions = await fetchAllRows<any>((from, to) => supabase.from('missions').select('*').order('created_at', { ascending: false }).range(from, to));
     setMissionRequests((missions || []).map(m => {
       const info = getEmpInfo(m.employee_id);
       return {
@@ -170,7 +170,7 @@ const Leaves = () => {
     }));
 
     // Overtime requests
-    const { data: ot } = await supabase.from('overtime_requests').select('*').order('created_at', { ascending: false });
+    const ot = await fetchAllRows<any>((from, to) => supabase.from('overtime_requests').select('*').order('created_at', { ascending: false }).range(from, to));
     setOvertimeRequests((ot || []).map(o => {
       const info = getEmpInfo(o.employee_id);
       return {
