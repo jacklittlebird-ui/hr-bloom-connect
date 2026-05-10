@@ -170,7 +170,7 @@ const Leaves = () => {
     }));
 
     // Overtime requests
-    const { data: ot } = await supabase.from('overtime_requests').select('*').order('created_at', { ascending: false });
+    const ot = await fetchAllRows<any>((from, to) => supabase.from('overtime_requests').select('*').order('created_at', { ascending: false }).range(from, to));
     setOvertimeRequests((ot || []).map(o => {
       const info = getEmpInfo(o.employee_id);
       return {
