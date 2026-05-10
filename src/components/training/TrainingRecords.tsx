@@ -579,7 +579,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                               <Star className={cn("h-3.5 w-3.5", record.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditRecord(record)}><Edit2 className="h-3 w-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(record.id)}><X className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setDeleteRecordId(record.id)}><X className="h-4 w-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
