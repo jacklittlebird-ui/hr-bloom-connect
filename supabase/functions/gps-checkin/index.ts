@@ -409,7 +409,7 @@ Deno.serve(async (req) => {
     // Get station
     const { data: emp } = await supabaseAdmin
       .from("employees")
-      .select("station_id, stations(id, checkin_method, timezone)")
+      .select("station_id, checkin_method_override, stations(id, checkin_method, timezone)")
       .eq("id", employeeId)
       .limit(1)
       .single();
@@ -420,9 +420,10 @@ Deno.serve(async (req) => {
     }
 
     const station = emp.stations as any;
-    if (station && station.checkin_method !== "gps" && station.checkin_method !== "both") {
+    const effectiveMethod = (emp as any)?.checkin_method_override || station?.checkin_method || "qr";
+    if (effectiveMethod !== "gps" && effectiveMethod !== "both") {
       await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
-      return json({ error: "GPS check-in not enabled for this station" }, 403);
+      return json({ error: "GPS check-in not enabled for this employee" }, 403);
     }
 
     // Anti-fraud: each device can only be used by ONE user per day
