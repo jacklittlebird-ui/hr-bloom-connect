@@ -155,7 +155,7 @@ const Leaves = () => {
     }));
 
     // Mission requests
-    const { data: missions } = await supabase.from('missions').select('*').order('created_at', { ascending: false });
+    const missions = await fetchAllRows<any>((from, to) => supabase.from('missions').select('*').order('created_at', { ascending: false }).range(from, to));
     setMissionRequests((missions || []).map(m => {
       const info = getEmpInfo(m.employee_id);
       return {
