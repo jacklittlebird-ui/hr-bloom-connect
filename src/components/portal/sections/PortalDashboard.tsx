@@ -197,19 +197,26 @@ export const PortalDashboard = () => {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = now.toISOString().split('T')[0];
     (async () => {
-      const { data } = await supabase
+       const { data } = await supabase
         .from('attendance_records')
-        .select('status, is_late, work_hours, work_minutes')
+        .select('status, is_late, work_hours, work_minutes, check_in, check_out, notes')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
         .gte('date', startDate)
         .lte('date', endDate);
       if (data) {
         let present = 0, late = 0, absent = 0, totalMins = 0;
-        data.forEach(r => {
-          if (['present', 'late', 'early-leave', 'mission'].includes(r.status)) present++;
+        data.forEach((r: any) => {
+          const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
+          if (['present', 'late', 'early-leave', 'mission', 'auto-closed'].includes(r.status) || isAutoClosed || r.check_in) present++;
           if (r.is_late) late++;
           if (r.status === 'absent') absent++;
-          totalMins += (r.work_minutes || 0);
+          let mins = 0;
+          if (!isAutoClosed && r.check_in && r.check_out) {
+            const diff = (new Date(r.check_out).getTime() - new Date(r.check_in).getTime()) / 60000;
+            if (diff > 0) mins = Math.round(diff);
+          }
+          if (mins <= 0) mins = r.work_minutes || (r.work_hours ? Math.round(Number(r.work_hours) * 60) : 0);
+          totalMins += mins;
         });
         setMonthlyStats({ present, late, absent, totalHours: Math.floor(totalMins / 60), totalMinutes: totalMins % 60, overtime: 0 });
       }
