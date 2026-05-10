@@ -33,21 +33,22 @@ export const TrainingAcknowledgmentModal = ({ onAllAcknowledged }: { onAllAcknow
     if (!employeeId) return;
     const fetch = async () => {
       setLoading(true);
-      // Get training records with cost > 0
-      const { data: records } = await supabase
+      // Get training records with cost (or total_cost) > 0 — include pending too
+      const { data: allRecords } = await supabase
         .from('training_records')
         .select('*, training_courses(name_ar, name_en, validity_years)')
-        .eq('employee_id', employeeId)
-        .gt('total_cost', 0);
+        .eq('employee_id', employeeId);
 
-      if (!records || records.length === 0) {
+      const records = (allRecords || []).filter((r: any) => (Number(r.total_cost) || 0) > 0 || (Number(r.cost) || 0) > 0);
+
+      if (records.length === 0) {
         setPending([]);
         setLoading(false);
         onAllAcknowledged();
         return;
       }
 
-      // Filter by expiry (planned_date + 1 month)
+      // Filter by expiry (planned_date + 1 month) — keep pending records (no planned_date or future)
       const now = new Date();
       const activeRecords = records.filter((r: any) => {
         if (!r.planned_date) return true;
