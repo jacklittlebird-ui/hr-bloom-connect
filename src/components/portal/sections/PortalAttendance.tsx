@@ -94,7 +94,20 @@ export const PortalAttendance = () => {
         const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
         const ci = formatTime(r.check_in);
         const co = isAutoClosed ? null : formatTime(r.check_out);
-        const totalMins = isAutoClosed ? 0 : (r.work_minutes || (r.work_hours ? Math.round(r.work_hours * 60) : 0));
+
+        // Prefer computing minutes directly from check_in -> check_out timestamps
+        // so we don't undercount when work_minutes/work_hours are stale or 0.
+        let totalMins = 0;
+        if (!isAutoClosed) {
+          if (r.check_in && r.check_out) {
+            const diff = (new Date(r.check_out).getTime() - new Date(r.check_in).getTime()) / 60000;
+            totalMins = diff > 0 ? Math.round(diff) : 0;
+          }
+          if (totalMins <= 0) {
+            totalMins = r.work_minutes || (r.work_hours ? Math.round(Number(r.work_hours) * 60) : 0);
+          }
+        }
+
         let status: string;
         if (holiday) status = 'official-holiday';
         else if (isAutoClosed) status = 'auto-closed';
@@ -139,7 +152,7 @@ export const PortalAttendance = () => {
   const stats = useMemo(() => {
     let present = 0, late = 0, absent = 0, totalMinutes = 0;
     filteredRecords.forEach(r => {
-      if (r.status === 'present' || r.status === 'late') present++;
+      if (r.status === 'present' || r.status === 'late' || r.status === 'auto-closed') present++;
       if (r.status === 'late') late++;
       if (r.status === 'absent') absent++;
       totalMinutes += (r.workHours * 60) + r.workMinutes;
@@ -147,8 +160,27 @@ export const PortalAttendance = () => {
     return { present, late, absent, totalHours: Math.floor(totalMinutes / 60), totalMinutes: totalMinutes % 60 };
   }, [filteredRecords]);
 
-  const totalActualMinutes = stats.totalHours * 60 + stats.totalMinutes;
-  const rate = totalActualMinutes > 0 ? ((totalActualMinutes / (192 * 60)) * 100).toFixed(1) : '0';
+  // Working days in range = all dates between dateFrom..dateTo excluding Fridays/Saturdays and official holidays
+  const workingDaysInRange = useMemo(() => {
+    if (!dateFrom || !dateTo) return 0;
+    const start = new Date(dateFrom);
+    const end = new Date(dateTo);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0;
+    const holidayDates = new Set(filteredRecords.filter(r => r.status === 'official-holiday').map(r => r.date));
+    let count = 0;
+    const cur = new Date(start);
+    while (cur <= end) {
+      const day = cur.getDay(); // 0=Sun..6=Sat
+      const iso = cur.toISOString().split('T')[0];
+      if (day !== 5 && day !== 6 && !holidayDates.has(iso)) count++;
+      cur.setDate(cur.getDate() + 1);
+    }
+    return count;
+  }, [dateFrom, dateTo, filteredRecords]);
+
+  const rate = workingDaysInRange > 0
+    ? Math.min(100, (stats.present / workingDaysInRange) * 100).toFixed(1)
+    : '0';
 
   const statusBadge = (r: PortalAttendanceRecord) => {
     const s = r.status;
