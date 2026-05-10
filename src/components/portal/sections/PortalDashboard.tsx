@@ -45,7 +45,7 @@ export const PortalDashboard = () => {
   const ar = language === 'ar';
   const { session, loading: authLoading } = useAuth();
   const { getEmployeePayroll, refreshPayroll } = usePayrollData();
-  const { records, getMonthlyStats, refresh: refreshAttendance } = useAttendanceData();
+  const { records, refresh: refreshAttendance } = useAttendanceData();
   const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, getOvertimeDays, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
   useEffect(() => { ensureLeaves(); }, [ensureLeaves]);
 
@@ -197,19 +197,28 @@ export const PortalDashboard = () => {
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = now.toISOString().split('T')[0];
     (async () => {
-       const { data } = await supabase
+       const { data, error } = await supabase
         .from('attendance_records')
-        .select('status, is_late, work_hours, work_minutes, check_in, check_out, notes')
+        .select('id, date, status, is_late, work_hours, work_minutes, check_in, check_out, notes')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
         .gte('date', startDate)
-        .lte('date', endDate);
+        .lte('date', endDate)
+        .order('date', { ascending: true });
+      if (error) {
+        console.warn('[PortalDashboard] monthly attendance stats failed:', error);
+        return;
+      }
       if (data) {
-        let present = 0, late = 0, absent = 0, totalMins = 0;
+        const presentDates = new Set<string>();
+        let late = 0, absent = 0, totalMins = 0;
         data.forEach((r: any) => {
-          const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
-          if (['present', 'late', 'early-leave', 'mission', 'auto-closed'].includes(r.status) || isAutoClosed || r.check_in) present++;
+          const status = String(r.status || '').toLowerCase().replace(/_/g, '-');
+          const notes = String(r.notes || '').toLowerCase().replace(/_/g, '-');
+          const isAutoClosed = status === 'auto-closed' || notes.includes('auto-closed');
+          const isPresentDay = !!r.check_in || isAutoClosed || ['present', 'late', 'early-leave', 'mission'].includes(status);
+          if (isPresentDay && r.date) presentDates.add(r.date);
           if (r.is_late) late++;
-          if (r.status === 'absent') absent++;
+          if (status === 'absent') absent++;
           let mins = 0;
           if (!isAutoClosed && r.check_in && r.check_out) {
             const diff = (new Date(r.check_out).getTime() - new Date(r.check_in).getTime()) / 60000;
@@ -218,7 +227,7 @@ export const PortalDashboard = () => {
           if (mins <= 0) mins = r.work_minutes || (r.work_hours ? Math.round(Number(r.work_hours) * 60) : 0);
           totalMins += mins;
         });
-        setMonthlyStats({ present, late, absent, totalHours: Math.floor(totalMins / 60), totalMinutes: totalMins % 60, overtime: 0 });
+        setMonthlyStats({ present: presentDates.size, late, absent, totalHours: Math.floor(totalMins / 60), totalMinutes: totalMins % 60, overtime: 0 });
       }
     })();
   }, [PORTAL_EMPLOYEE_ID]);
