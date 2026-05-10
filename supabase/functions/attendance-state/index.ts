@@ -41,13 +41,14 @@ Deno.serve(async (req) => {
 
     const { data: emp } = await supabaseAdmin
       .from("employees")
-      .select("id, station_id, stations(id, checkin_method, timezone)")
+      .select("id, station_id, checkin_method_override, stations(id, checkin_method, timezone)")
       .eq("id", role.employee_id)
       .limit(1)
       .single();
 
     const station = emp?.stations as { checkin_method?: string; timezone?: string } | null;
     const timezone = station?.timezone || "Africa/Cairo";
+    const effectiveMethod = (emp as any)?.checkin_method_override || station?.checkin_method || "qr";
     const now = new Date();
     const localTimeStr = now.toLocaleString("en-US", { timeZone: timezone });
     const localDate = new Date(localTimeStr);
