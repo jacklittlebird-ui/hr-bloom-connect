@@ -116,7 +116,7 @@ const Leaves = () => {
     };
 
     // Leave requests
-    const { data: leaves } = await supabase.from('leave_requests').select('*').order('created_at', { ascending: false });
+    const leaves = await fetchAllRows<any>((from, to) => supabase.from('leave_requests').select('*').order('created_at', { ascending: false }).range(from, to));
     setLeaveRequests((leaves || []).map(l => {
       const info = getEmpInfo(l.employee_id);
       return {
