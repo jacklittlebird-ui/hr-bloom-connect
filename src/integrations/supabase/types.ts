@@ -850,6 +850,7 @@ export type Database = {
           birth_date: string | null
           birth_governorate: string | null
           birth_place: string | null
+          checkin_method_override: string | null
           children_count: number | null
           city: string | null
           contract_type: string | null
@@ -939,6 +940,7 @@ export type Database = {
           birth_date?: string | null
           birth_governorate?: string | null
           birth_place?: string | null
+          checkin_method_override?: string | null
           children_count?: number | null
           city?: string | null
           contract_type?: string | null
@@ -1028,6 +1030,7 @@ export type Database = {
           birth_date?: string | null
           birth_governorate?: string | null
           birth_place?: string | null
+          checkin_method_override?: string | null
           children_count?: number | null
           city?: string | null
           contract_type?: string | null
