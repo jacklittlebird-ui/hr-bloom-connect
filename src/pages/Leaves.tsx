@@ -132,7 +132,7 @@ const Leaves = () => {
     }));
 
     // Permission requests
-    const { data: perms } = await supabase.from('permission_requests').select('*').order('created_at', { ascending: false });
+    const perms = await fetchAllRows<any>((from, to) => supabase.from('permission_requests').select('*').order('created_at', { ascending: false }).range(from, to));
     setPermissionRequests((perms || []).map(p => {
       const info = getEmpInfo(p.employee_id);
       return {
