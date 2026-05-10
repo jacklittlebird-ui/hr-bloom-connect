@@ -849,6 +849,23 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteRecordId} onOpenChange={(o) => !o && setDeleteRecordId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{ar ? 'تأكيد الحذف' : 'Confirm Delete'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {ar ? 'هل أنت متأكد من حذف هذه الدورة التدريبية؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to delete this training record? This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteRecordId && handleDeleteRecord(deleteRecordId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {ar ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
