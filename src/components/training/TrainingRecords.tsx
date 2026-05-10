@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Search, Plus, X, Calendar, Edit2, Star, Users, ChevronsUpDown, Check } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -97,6 +98,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const [bulkSearchName, setBulkSearchName] = useState('');
   const [bulkSaving, setBulkSaving] = useState(false);
   const [trainingRecords, setTrainingRecords] = useState<TrainingRecord[]>([]);
+  const [deleteRecordId, setDeleteRecordId] = useState<string | null>(null);
   const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
   const [newRecord, setNewRecord] = useState({
     courseId: '', startDate: '', endDate: '', result: 'pending' as 'passed' | 'failed' | 'pending', score: '', provider: '', location: '', hasCert: false, hasCr: false, hasSs: false, hasCb: false, plannedDate: '', cost: '',
@@ -278,6 +280,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     await supabase.from('training_records').delete().eq('id', id);
     setTrainingRecords(prev => prev.filter(r => r.id !== id));
     toast({ title: ar ? 'تم الحذف' : 'Deleted' });
+    setDeleteRecordId(null);
   };
 
   const handleEditRecord = (record: TrainingRecord) => {
@@ -576,7 +579,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                               <Star className={cn("h-3.5 w-3.5", record.isFavorite ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground")} />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditRecord(record)}><Edit2 className="h-3 w-3" /></Button>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteRecord(record.id)}><X className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setDeleteRecordId(record.id)}><X className="h-4 w-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -846,6 +849,23 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteRecordId} onOpenChange={(o) => !o && setDeleteRecordId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{ar ? 'تأكيد الحذف' : 'Confirm Delete'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {ar ? 'هل أنت متأكد من حذف هذه الدورة التدريبية؟ لا يمكن التراجع عن هذا الإجراء.' : 'Are you sure you want to delete this training record? This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => deleteRecordId && handleDeleteRecord(deleteRecordId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {ar ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
