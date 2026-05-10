@@ -113,6 +113,7 @@ export const StationCheckinSettings = () => {
           );
         })}
       </div>
+      <EmployeeCheckinOverrides />
     </div>
   );
 };
