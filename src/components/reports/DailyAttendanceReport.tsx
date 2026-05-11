@@ -272,6 +272,10 @@ export const DailyAttendanceReport = () => {
     hours: number;
     matchesStatus: boolean; // does this cell match the active status filter?
     kind: 'present' | 'late' | 'absent' | 'none';
+    leave?: LeaveRow | null;
+    mission?: MissionRow | null;
+    permission?: PermissionRow | null;
+    overtime?: OvertimeRow | null;
   };
 
   // Map: employee_id -> date -> record
@@ -285,12 +289,63 @@ export const DailyAttendanceReport = () => {
     return m;
   }, [records]);
 
+  // Index leaves by employee -> date (expand date ranges)
+  const leaveIndex = useMemo(() => {
+    const m = new Map<string, Map<string, LeaveRow>>();
+    leaves.forEach(lv => {
+      const start = new Date(lv.start_date + 'T00:00:00');
+      const end = new Date(lv.end_date + 'T00:00:00');
+      let inner = m.get(lv.employee_id);
+      if (!inner) { inner = new Map(); m.set(lv.employee_id, inner); }
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        inner.set(toIsoDate(d), lv);
+      }
+    });
+    return m;
+  }, [leaves]);
+
+  const missionIndex = useMemo(() => {
+    const m = new Map<string, Map<string, MissionRow>>();
+    missions.forEach(ms => {
+      let inner = m.get(ms.employee_id);
+      if (!inner) { inner = new Map(); m.set(ms.employee_id, inner); }
+      inner.set(ms.date, ms);
+    });
+    return m;
+  }, [missions]);
+
+  const permissionIndex = useMemo(() => {
+    const m = new Map<string, Map<string, PermissionRow>>();
+    permissions.forEach(pr => {
+      let inner = m.get(pr.employee_id);
+      if (!inner) { inner = new Map(); m.set(pr.employee_id, inner); }
+      inner.set(pr.date, pr);
+    });
+    return m;
+  }, [permissions]);
+
+  const overtimeIndex = useMemo(() => {
+    const m = new Map<string, Map<string, OvertimeRow>>();
+    overtimes.forEach(ot => {
+      let inner = m.get(ot.employee_id);
+      if (!inner) { inner = new Map(); m.set(ot.employee_id, inner); }
+      // Aggregate hours if multiple types same day
+      const prev = inner.get(ot.date);
+      if (prev) {
+        inner.set(ot.date, { ...prev, hours: Number(prev.hours || 0) + Number(ot.hours || 0) });
+      } else {
+        inner.set(ot.date, ot);
+      }
+    });
+    return m;
+  }, [overtimes]);
+
   type EmpRow = {
     employee: EmployeeRow;
     department: DepartmentRow | null;
     station: StationRow | null;
     cells: DayCell[];
-    totals: { present: number; late: number; absent: number; hours: number; matched: number };
+    totals: { present: number; late: number; absent: number; hours: number; matched: number; leaves: number; missions: number; permissions: number; overtimeHours: number };
   };
 
   // Visible (pivoted) employee rows. We always render the full date range as columns;
@@ -301,9 +356,18 @@ export const DailyAttendanceReport = () => {
     employees.forEach(emp => {
       if (!visibleEmpIds.has(emp.id)) return;
       const inner = recordIndex.get(emp.id);
+      const lvInner = leaveIndex.get(emp.id);
+      const msInner = missionIndex.get(emp.id);
+      const prInner = permissionIndex.get(emp.id);
+      const otInner = overtimeIndex.get(emp.id);
       let present = 0, late = 0, absent = 0, hours = 0, matched = 0;
+      let leavesCount = 0, missionsCount = 0, permissionsCount = 0, overtimeHours = 0;
       const cells: DayCell[] = dateRange.map(d => {
         const rec = inner?.get(d) || null;
+        const leave = lvInner?.get(d) || null;
+        const mission = msInner?.get(d) || null;
+        const permission = prInner?.get(d) || null;
+        const overtime = otInner?.get(d) || null;
         let kind: DayCell['kind'] = 'none';
         let h = 0;
         if (rec) {
@@ -314,16 +378,20 @@ export const DailyAttendanceReport = () => {
         }
         const matchesStatus =
           globalStatusFilter === 'all'
-            ? kind !== 'none'
+            ? kind !== 'none' || !!leave || !!mission || !!permission || !!overtime
             : kind === globalStatusFilter;
         if (kind === 'present') present++;
         else if (kind === 'late') late++;
         else if (kind === 'absent') absent++;
+        if (leave) leavesCount++;
+        if (mission) missionsCount++;
+        if (permission) permissionsCount++;
+        if (overtime) overtimeHours += Number(overtime.hours || 0);
         if (matchesStatus) {
           matched++;
           if (kind === 'present' || kind === 'late') hours += h;
         }
-        return { record: rec, hours: h, matchesStatus, kind };
+        return { record: rec, hours: h, matchesStatus, kind, leave, mission, permission, overtime };
       });
       // If a status filter is active, hide employees with zero matching days.
       if (globalStatusFilter !== 'all' && matched === 0) return;
@@ -332,7 +400,7 @@ export const DailyAttendanceReport = () => {
         department: emp.department_id ? (deptMap.get(emp.department_id) || null) : null,
         station: emp.station_id ? (stationMap.get(emp.station_id) || null) : null,
         cells,
-        totals: { present, late, absent, hours, matched },
+        totals: { present, late, absent, hours, matched, leaves: leavesCount, missions: missionsCount, permissions: permissionsCount, overtimeHours },
       });
     });
     // Sort by station then employee code
