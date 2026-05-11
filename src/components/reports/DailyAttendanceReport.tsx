@@ -434,6 +434,7 @@ export const DailyAttendanceReport = () => {
   // Totals after status filter (uses per-row totals so they reflect the filter).
   const totals = useMemo(() => {
     let totalHours = 0, present = 0, late = 0, absent = 0, matched = 0;
+    let leavesCount = 0, missionsCount = 0, permissionsCount = 0, overtimeHours = 0;
     const stSet = new Set<string>();
     empRows.forEach(r => {
       if (r.station) stSet.add(r.station.id);
@@ -442,12 +443,20 @@ export const DailyAttendanceReport = () => {
       late += r.totals.late;
       absent += r.totals.absent;
       matched += r.totals.matched;
+      leavesCount += r.totals.leaves;
+      missionsCount += r.totals.missions;
+      permissionsCount += r.totals.permissions;
+      overtimeHours += r.totals.overtimeHours;
     });
     return {
       totalHours, present, late, absent,
       employeesCount: empRows.length,
       stationsCount: stSet.size,
       rows: matched,
+      leaves: leavesCount,
+      missions: missionsCount,
+      permissions: permissionsCount,
+      overtimeHours,
     };
   }, [empRows]);
 
