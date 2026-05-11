@@ -1418,10 +1418,13 @@ const SalaryReports = () => {
 
                       const linkAeroTotals = createMonthlyTotals();
                       const linkCargoTotals = createMonthlyTotals();
-                      renderStationEntries(aeroEntries, linkAeroTotals);
-                      pushGrandRow('link-aero', ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', linkAeroTotals);
-                      renderStationEntries(cargoEntries, linkCargoTotals);
-                      pushGrandRow('link-cargo', ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', linkCargoTotals);
+                      if (stationCompanyTab === 'aero') {
+                        renderStationEntries(aeroEntries, linkAeroTotals);
+                        pushGrandRow('link-aero', ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', linkAeroTotals);
+                      } else {
+                        renderStationEntries(cargoEntries, linkCargoTotals);
+                        pushGrandRow('link-cargo', ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', linkCargoTotals);
+                      }
 
                       return rows;
                     })()}
