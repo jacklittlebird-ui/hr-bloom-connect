@@ -877,7 +877,7 @@ const SalaryReports = () => {
     { header: ar ? 'إجمالي مساهمات ص.ع' : 'Total Employer', key: 'totalEmployer' },
   ];
 
-  const getStationExportData = () => {
+  const getStationExportData = (companyTab?: 'aero' | 'cargo') => {
     const stationGroups = new Map<string, typeof monthlyByStation>();
     monthlyByStation.forEach(row => {
       if (!stationGroups.has(row.stationKey)) stationGroups.set(row.stationKey, []);
@@ -903,13 +903,17 @@ const SalaryReports = () => {
       });
     };
 
-    renderEntries(aeroEntries, linkAeroTotals);
-    linkAeroTotals.totalEmployer = linkAeroTotals.employerInsurance + linkAeroTotals.healthInsurance + linkAeroTotals.incomeTax;
-    if (linkAeroTotals.count > 0) result.push(linkAeroTotals);
+    if (companyTab !== 'cargo') {
+      renderEntries(aeroEntries, linkAeroTotals);
+      linkAeroTotals.totalEmployer = linkAeroTotals.employerInsurance + linkAeroTotals.healthInsurance + linkAeroTotals.incomeTax;
+      if (linkAeroTotals.count > 0) result.push(linkAeroTotals);
+    }
 
-    renderEntries(cargoEntries, linkCargoTotals);
-    linkCargoTotals.totalEmployer = linkCargoTotals.employerInsurance + linkCargoTotals.healthInsurance + linkCargoTotals.incomeTax;
-    if (linkCargoTotals.count > 0) result.push(linkCargoTotals);
+    if (companyTab !== 'aero') {
+      renderEntries(cargoEntries, linkCargoTotals);
+      linkCargoTotals.totalEmployer = linkCargoTotals.employerInsurance + linkCargoTotals.healthInsurance + linkCargoTotals.incomeTax;
+      if (linkCargoTotals.count > 0) result.push(linkCargoTotals);
+    }
 
     return result;
   };
