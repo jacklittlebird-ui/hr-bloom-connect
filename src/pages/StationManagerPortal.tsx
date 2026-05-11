@@ -121,7 +121,29 @@ const StationManagerPortal = () => {
   useScrollRestoration(mainRef);
   const t = (ar: string, en: string) => language === 'ar' ? ar : en;
   const ar = language === 'ar';
-  const [activeTab, setActiveTab] = useState('employees');
+  // Role-based tab access — each manager role only sees its allowed tabs
+  const allowedTabs = useMemo<string[]>(() => {
+    switch (user?.role) {
+      case 'station_manager':
+      case 'area_manager':
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations'];
+      case 'station_hr':
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations'];
+      case 'department_manager':
+        return ['employees', 'attendance', 'leaveCalendar', 'approvals', 'evaluations', 'violations'];
+      default:
+        return ['employees'];
+    }
+  }, [user?.role]);
+  const canSee = useCallback((tab: string) => allowedTabs.includes(tab), [allowedTabs]);
+
+  const [activeTab, setActiveTab] = useState(allowedTabs[0] || 'employees');
+  // Guard: if user role changes or active tab not allowed, snap to first allowed
+  useEffect(() => {
+    if (!allowedTabs.includes(activeTab)) {
+      setActiveTab(allowedTabs[0] || 'employees');
+    }
+  }, [allowedTabs, activeTab]);
 
   // Violations from Supabase (lazy-loaded)
   const [violations, setViolations] = useState<Violation[]>([]);
