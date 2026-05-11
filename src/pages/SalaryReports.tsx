@@ -1240,16 +1240,17 @@ const SalaryReports = () => {
           <Card>
             <CardHeader>
               <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
-                <CardTitle>{ar ? 'تفصيل شهري بالمحطة' : 'Monthly Detail by Station'}</CardTitle>
+                <CardTitle>{ar ? `تقرير إجمالي بالمحطات - ${selectedMonth !== 'all' ? monthNamesAr[parseInt(selectedMonth) - 1] : 'كل السنة'} ${selectedYear}` : `Stations Total Report - ${selectedMonth !== 'all' ? monthNamesEn[parseInt(selectedMonth) - 1] : 'Full Year'} ${selectedYear}`}</CardTitle>
                 <div className={cn("flex gap-2 flex-wrap", isRTL && "flex-row-reverse")}>
                   <Button variant="outline" size="sm" onClick={handlePrintMonthlyByStation}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة بالمحطة' : 'Print by Station'}</Button>
                   <Button variant="outline" size="sm" onClick={handlePrintMonthlySummary}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة ملخص شهري' : 'Print Monthly Summary'}</Button>
-                  <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: ar ? 'تفصيل شهري بالمحطة' : 'Monthly by Station', data: getStationExportData(), columns: getStationExportColumns(), fileName: 'monthly_by_station' })}><Download className="w-4 h-4 mr-1" />PDF</Button>
+                  <Button variant="outline" size="sm" onClick={() => { const mLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year'); exportToPDF({ title: ar ? `تقرير إجمالي بالمحطات - ${mLbl} ${selectedYear}` : `Stations Total Report - ${mLbl} ${selectedYear}`, data: getStationExportData(), columns: getStationExportColumns(), fileName: 'monthly_by_station' }); }}><Download className="w-4 h-4 mr-1" />PDF</Button>
                   <Button variant="outline" size="sm" onClick={async () => {
                     if (monthlyByStation.length === 0) { toast.error(ar ? 'لا توجد بيانات للتصدير' : 'No data to export'); return; }
                     try {
+                      const mLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year');
                       await exportMonthlyByStationExcel({
-                        title: ar ? `تفصيل شهري بالمحطة - ${selectedYear}` : `Monthly Detail by Station - ${selectedYear}`,
+                        title: ar ? `تقرير إجمالي بالمحطات - ${mLbl} ${selectedYear}` : `Stations Total Report - ${mLbl} ${selectedYear}`,
                         ar,
                         rows: monthlyByStation,
                         kpis: getExcelKpis(),
