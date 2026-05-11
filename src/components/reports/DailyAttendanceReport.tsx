@@ -894,7 +894,79 @@ export const DailyAttendanceReport = () => {
                             ? (ar ? `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('ar-EG', { weekday: 'long' })} — عطلة` : `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' })} — Off`)
                             : undefined;
                           const baseCell = cn('border p-1 text-center font-mono whitespace-nowrap', weekendBorder);
+
+                          // Build small badges for permission/overtime/mission/leave overlays
+                          const overlayBadges: JSX.Element[] = [];
+                          if (c.leave) {
+                            const lbl = ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type);
+                            overlayBadges.push(
+                              <span key="lv" className="inline-flex items-center gap-0.5 px-1 rounded bg-sky-100 text-sky-800 text-[9px] font-semibold" title={ar ? 'إجازة' : 'Leave'}>
+                                <Plane className="w-2.5 h-2.5" aria-hidden />{lbl}
+                              </span>
+                            );
+                          }
+                          if (c.mission) {
+                            overlayBadges.push(
+                              <span key="ms" className="inline-flex items-center gap-0.5 px-1 rounded bg-purple-100 text-purple-800 text-[9px] font-semibold" title={ar ? 'مأمورية' : 'Mission'}>
+                                <Briefcase className="w-2.5 h-2.5" aria-hidden />{ar ? 'مأمورية' : 'Mission'} {c.mission.hours || 0}{ar ? 'س' : 'h'}
+                              </span>
+                            );
+                          }
+                          if (c.permission) {
+                            overlayBadges.push(
+                              <span key="pr" className="inline-flex items-center gap-0.5 px-1 rounded bg-cyan-100 text-cyan-800 text-[9px] font-semibold" title={ar ? 'إذن' : 'Permission'}>
+                                <FileClock className="w-2.5 h-2.5" aria-hidden />{ar ? 'إذن' : 'Perm'} {c.permission.hours || 0}{ar ? 'س' : 'h'}
+                              </span>
+                            );
+                          }
+                          if (c.overtime) {
+                            overlayBadges.push(
+                              <span key="ot" className="inline-flex items-center gap-0.5 px-1 rounded bg-orange-100 text-orange-800 text-[9px] font-semibold" title={ar ? 'إضافي' : 'Overtime'}>
+                                <Timer className="w-2.5 h-2.5" aria-hidden />+{c.overtime.hours || 0}{ar ? 'س' : 'h'}
+                              </span>
+                            );
+                          }
+                          const overlayRow = overlayBadges.length > 0 ? (
+                            <div className="flex flex-wrap items-center justify-center gap-0.5 mt-0.5">{overlayBadges}</div>
+                          ) : null;
+
                           if (c.kind === 'none') {
+                            // No attendance record. If we have a leave/mission/etc., show that prominently.
+                            if (c.leave) {
+                              const lbl = ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type);
+                              return (
+                                <Fragment key={ci}>
+                                  <td colSpan={3} className={cn(baseCell, 'bg-sky-100 text-sky-800 font-semibold')} title={ar ? 'إجازة معتمدة' : 'Approved Leave'}>
+                                    <span className="inline-flex items-center justify-center gap-1">
+                                      <Plane className="w-3.5 h-3.5" aria-hidden />
+                                      {ar ? 'إجازة' : 'Leave'} — {lbl}
+                                    </span>
+                                  </td>
+                                </Fragment>
+                              );
+                            }
+                            if (c.mission) {
+                              return (
+                                <Fragment key={ci}>
+                                  <td colSpan={3} className={cn(baseCell, 'bg-purple-100 text-purple-800 font-semibold')} title={ar ? 'مأمورية' : 'Mission'}>
+                                    <span className="inline-flex items-center justify-center gap-1">
+                                      <Briefcase className="w-3.5 h-3.5" aria-hidden />
+                                      {ar ? 'مأمورية' : 'Mission'} ({c.mission.hours || 0}{ar ? 'س' : 'h'})
+                                    </span>
+                                  </td>
+                                </Fragment>
+                              );
+                            }
+                            // Permission/overtime without attendance record — render overlay row only.
+                            if (overlayBadges.length > 0) {
+                              return (
+                                <Fragment key={ci}>
+                                  <td colSpan={3} className={cn(baseCell, 'bg-muted/20')}>
+                                    <div className="flex flex-wrap items-center justify-center gap-0.5">{overlayBadges}</div>
+                                  </td>
+                                </Fragment>
+                              );
+                            }
                             return (
                               <Fragment key={ci}>
                                 <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')} title={offTitle}>{isOff && isFri ? '🕌' : '—'}</td>
@@ -911,6 +983,7 @@ export const DailyAttendanceReport = () => {
                                     <XCircle className="w-3.5 h-3.5" aria-hidden />
                                     {ar ? 'غائب' : 'Absent'}
                                   </span>
+                                  {overlayRow}
                                 </td>
                               </Fragment>
                             );
@@ -938,7 +1011,10 @@ export const DailyAttendanceReport = () => {
                                   <span>{formatTimeCairo(c.record!.check_out)}</span>
                                 </span>
                               </td>
-                              <td className={cn(baseCell, bg, dimCls, 'tabular-nums font-semibold')}>{fmtHours(c.hours)}</td>
+                              <td className={cn(baseCell, bg, dimCls, 'tabular-nums font-semibold')}>
+                                {fmtHours(c.hours)}
+                                {overlayRow}
+                              </td>
                             </Fragment>
                           );
                         })}
