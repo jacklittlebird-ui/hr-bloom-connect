@@ -127,14 +127,41 @@ const SalaryReports = () => {
   const uniqueEmps = new Set(filtered.map(e => e.employeeId)).size;
   const avgSalary = uniqueEmps > 0 ? Math.round(totalNet / uniqueEmps) : 0;
 
-  const stats = [
-    { label: ar ? 'إجمالي الصافي' : 'Total Net', value: totalNet.toLocaleString(), icon: Wallet, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: totalGross.toLocaleString(), icon: Banknote, color: 'text-green-600', bg: 'bg-green-100' },
-    { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: totalDeductions.toLocaleString(), icon: TrendingDown, color: 'text-destructive', bg: 'bg-destructive/10' },
-    { label: ar ? 'مساهمات الشركة' : 'Company Cost', value: totalEmployer.toLocaleString(), icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avgSalary.toLocaleString(), icon: Banknote, color: 'text-amber-600', bg: 'bg-amber-100' },
-    { label: ar ? 'عدد الموظفين' : 'Employees', value: String(uniqueEmps), icon: Building2, color: 'text-purple-600', bg: 'bg-purple-100' },
-  ];
+  const computeStats = (entries: typeof filtered) => {
+    const tNet = entries.reduce((s, e) => s + e.netSalary, 0);
+    const tGross = entries.reduce((s, e) => s + e.gross, 0);
+    const tDed = entries.reduce((s, e) => s + e.totalDeductions, 0);
+    const tEmp = entries.reduce((s, e) => s + e.employerSocialInsurance + e.healthInsurance + e.incomeTax, 0);
+    const emps = new Set(entries.map(e => e.employeeId)).size;
+    const avg = emps > 0 ? Math.round(tNet / emps) : 0;
+    return [
+      { label: ar ? 'إجمالي الصافي' : 'Total Net', value: tNet.toLocaleString(), icon: Wallet, color: 'text-primary', bg: 'bg-primary/10' },
+      { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: tGross.toLocaleString(), icon: Banknote, color: 'text-green-600', bg: 'bg-green-100' },
+      { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: tDed.toLocaleString(), icon: TrendingDown, color: 'text-destructive', bg: 'bg-destructive/10' },
+      { label: ar ? 'مساهمات الشركة' : 'Company Cost', value: tEmp.toLocaleString(), icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-100' },
+      { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avg.toLocaleString(), icon: Banknote, color: 'text-amber-600', bg: 'bg-amber-100' },
+      { label: ar ? 'عدد الموظفين' : 'Employees', value: String(emps), icon: Building2, color: 'text-purple-600', bg: 'bg-purple-100' },
+    ];
+  };
+  const stats = computeStats(filtered);
+  const aeroFiltered = useMemo(() => filtered.filter(e => !isLinkCargo(e.stationLocation)), [filtered]);
+  const cargoFiltered = useMemo(() => filtered.filter(e => isLinkCargo(e.stationLocation)), [filtered]);
+  const aeroStats = useMemo(() => computeStats(aeroFiltered), [aeroFiltered, ar]);
+  const cargoStats = useMemo(() => computeStats(cargoFiltered), [cargoFiltered, ar]);
+
+  const renderStatsGrid = (s: ReturnType<typeof computeStats>) => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      {s.map((stat, i) => (
+        <Card key={i}><CardContent className="p-4">
+          <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+            <div className={cn("p-2 rounded-lg", stat.bg)}><stat.icon className={cn("w-5 h-5", stat.color)} /></div>
+            <div><p className="text-xs text-muted-foreground">{stat.label}</p><p className="text-lg font-bold">{stat.value}</p></div>
+          </div>
+        </CardContent></Card>
+      ))}
+    </div>
+  );
+
 
   // By station
   const stationData = useMemo(() => {
