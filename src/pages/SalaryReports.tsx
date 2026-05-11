@@ -537,7 +537,7 @@ const SalaryReports = () => {
 
     // Build pages - each station on a separate page (Link Aero stations first, then Link Cargo)
     let pages = '';
-    const sortedDetailedEntries = Array.from(detailedByStation.entries()).sort(([a], [b]) => Number(isLinkCargo(a)) - Number(isLinkCargo(b)));
+    const sortedDetailedEntries = Array.from(filteredByStation.entries()).sort(([a], [b]) => Number(isLinkCargo(a)) - Number(isLinkCargo(b)));
     sortedDetailedEntries.forEach(([stKey, records]) => {
       const stName = getStationLabel(stKey);
       const stTotals = calcStationTotals(records);
