@@ -212,7 +212,8 @@ const SalaryReports = () => {
 
   // Group monthlyByStation by station for printing
   const handlePrintMonthlyByStation = useCallback(() => {
-    const title = ar ? `تفصيل شهري بالمحطة - ${selectedYear}` : `Monthly Detail by Station - ${selectedYear}`;
+    const monthLabel = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year');
+    const title = ar ? `تقرير إجمالي بالمحطات - ${monthLabel} ${selectedYear}` : `Stations Total Report - ${monthLabel} ${selectedYear}`;
     const stationGroups = new Map<string, typeof monthlyByStation>();
     monthlyByStation.forEach(row => {
       if (!stationGroups.has(row.stationKey)) stationGroups.set(row.stationKey, []);
