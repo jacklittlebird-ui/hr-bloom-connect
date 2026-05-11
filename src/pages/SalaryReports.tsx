@@ -20,6 +20,10 @@ import { toast } from 'sonner';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16', '#e11d48', '#0ea5e9', '#a855f7'];
 
+// Link Cargo is treated as a separate company (not just a station)
+const LINK_CARGO_KEYS = ['capital', 'lkcargo_alex'];
+const isLinkCargo = (k?: string) => !!k && LINK_CARGO_KEYS.includes(k);
+
 const SalaryReports = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
