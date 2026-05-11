@@ -666,54 +666,76 @@ const SalaryReports = () => {
 
   const getDetailExportDataFull = () => {
     const result: Record<string, unknown>[] = [];
-    const grandTotals = calcStationTotals(detailedSortedRecords);
-    detailedByStation.forEach((records, stKey) => {
-      const stTotals = calcStationTotals(records);
-      records.forEach(e => {
-        result.push({
-          id: e.employeeCode || e.employeeId,
-          name: ar ? e.employeeName : e.employeeNameEn,
-          dept: e.department,
-          station: getStationLabel(e.stationLocation),
-          basic: e.basicSalary, transport: e.transportAllowance, incentives: e.incentives,
-          stationAllow: e.stationAllowance, mobileAllow: e.mobileAllowance, living: e.livingAllowance,
-          overtime: e.overtimePay, bonus: e.bonusAmount, gross: e.gross,
-          insurance: e.employeeInsurance, loans: e.loanPayment, advances: e.advanceAmount,
-          mobileBill: e.mobileBill, leaveDed: e.leaveDeduction, penalty: e.penaltyAmount,
-          totalDed: e.totalDeductions, net: e.netSalary,
-          empIns: e.employerSocialInsurance, health: e.healthInsurance, tax: e.incomeTax,
-          totalEmployer: e.employerSocialInsurance + e.healthInsurance + e.incomeTax,
-        });
-      });
-      // Station subtotal row
+
+    const buildEmployeeRow = (e: ProcessedPayroll) => ({
+      id: e.employeeCode || e.employeeId,
+      name: ar ? e.employeeName : e.employeeNameEn,
+      dept: e.department,
+      station: getStationLabel(e.stationLocation),
+      stationKey: e.stationLocation,
+      basic: e.basicSalary, transport: e.transportAllowance, incentives: e.incentives,
+      stationAllow: e.stationAllowance, mobileAllow: e.mobileAllowance, living: e.livingAllowance,
+      overtime: e.overtimePay, bonus: e.bonusAmount, gross: e.gross,
+      insurance: e.employeeInsurance, loans: e.loanPayment, advances: e.advanceAmount,
+      mobileBill: e.mobileBill, leaveDed: e.leaveDeduction, penalty: e.penaltyAmount,
+      totalDed: e.totalDeductions, net: e.netSalary,
+      empIns: e.employerSocialInsurance, health: e.healthInsurance, tax: e.incomeTax,
+      totalEmployer: e.employerSocialInsurance + e.healthInsurance + e.incomeTax,
+    });
+
+    const buildTotalsRow = (label: string, t: ReturnType<typeof calcStationTotals>, kind: 'subtotal' | 'grand') => ({
+      id: '', name: label, dept: `(${t.count})`, station: '', stationKey: '',
+      basic: t.basic, transport: t.transport, incentives: t.incentives,
+      stationAllow: t.stationAllow, mobileAllow: t.mobileAllow, living: t.living,
+      overtime: t.overtime, bonus: t.bonus, gross: t.gross,
+      insurance: t.insurance, loans: t.loans, advances: t.advances,
+      mobileBill: t.mobileBill, leaveDed: t.leaveDed, penalty: t.penalty,
+      totalDed: t.totalDed, net: t.net,
+      empIns: t.empIns, health: t.health, tax: t.tax,
+      totalEmployer: t.empIns + t.health + t.tax,
+      kind,
+    });
+
+    const renderGroup = (entries: Array<[string, ProcessedPayroll[]]>, groupLabel: string) => {
+      if (entries.length === 0) return;
+      // Group banner row
       result.push({
-        id: '', name: ar ? `إجمالي ${getStationLabel(stKey)}` : `${getStationLabel(stKey)} Total`,
-        dept: `(${stTotals.count})`, station: '',
-        basic: stTotals.basic, transport: stTotals.transport, incentives: stTotals.incentives,
-        stationAllow: stTotals.stationAllow, mobileAllow: stTotals.mobileAllow, living: stTotals.living,
-        overtime: stTotals.overtime, bonus: stTotals.bonus, gross: stTotals.gross,
-        insurance: stTotals.insurance, loans: stTotals.loans, advances: stTotals.advances,
-        mobileBill: stTotals.mobileBill, leaveDed: stTotals.leaveDed, penalty: stTotals.penalty,
-        totalDed: stTotals.totalDed, net: stTotals.net,
-        empIns: stTotals.empIns, health: stTotals.health, tax: stTotals.tax,
-        totalEmployer: stTotals.empIns + stTotals.health + stTotals.tax,
-        kind: 'subtotal',
+        id: '', name: groupLabel, dept: '', station: '', stationKey: '',
+        basic: 0, transport: 0, incentives: 0, stationAllow: 0, mobileAllow: 0, living: 0,
+        overtime: 0, bonus: 0, gross: 0, insurance: 0, loans: 0, advances: 0,
+        mobileBill: 0, leaveDed: 0, penalty: 0, totalDed: 0, net: 0,
+        empIns: 0, health: 0, tax: 0, totalEmployer: 0,
+        kind: 'banner',
       });
-    });
-    // Grand total
-    result.push({
-      id: '', name: ar ? 'الإجمالي العام' : 'Grand Total',
-      dept: `(${grandTotals.count})`, station: '',
-      basic: grandTotals.basic, transport: grandTotals.transport, incentives: grandTotals.incentives,
-      stationAllow: grandTotals.stationAllow, mobileAllow: grandTotals.mobileAllow, living: grandTotals.living,
-      overtime: grandTotals.overtime, bonus: grandTotals.bonus, gross: grandTotals.gross,
-      insurance: grandTotals.insurance, loans: grandTotals.loans, advances: grandTotals.advances,
-      mobileBill: grandTotals.mobileBill, leaveDed: grandTotals.leaveDed, penalty: grandTotals.penalty,
-      totalDed: grandTotals.totalDed, net: grandTotals.net,
-      empIns: grandTotals.empIns, health: grandTotals.health, tax: grandTotals.tax,
-      totalEmployer: grandTotals.empIns + grandTotals.health + grandTotals.tax,
-      kind: 'grand',
-    });
+      const allRecords: ProcessedPayroll[] = [];
+      entries.forEach(([stKey, records]) => {
+        const stTotals = calcStationTotals(records);
+        records.forEach(e => result.push(buildEmployeeRow(e)));
+        result.push(buildTotalsRow(ar ? `إجمالي ${getStationLabel(stKey)}` : `${getStationLabel(stKey)} Total`, stTotals, 'subtotal'));
+        allRecords.push(...records);
+      });
+      const groupTotals = calcStationTotals(allRecords);
+      result.push(buildTotalsRow(ar ? `إجمالي ${groupLabel}` : `${groupLabel} Grand Total`, groupTotals, 'grand'));
+    };
+
+    const allEntries = Array.from(detailedByStation.entries());
+    const mainEntries = allEntries.filter(([k]) => !isLinkCargo(k));
+    const lkEntries = allEntries.filter(([k]) => isLinkCargo(k));
+
+    if (lkEntries.length > 0) {
+      renderGroup(mainEntries, ar ? 'الشركة الرئيسية' : 'Main Company');
+      renderGroup(lkEntries, ar ? 'لينك كارجو' : 'Link Cargo');
+    } else {
+      // No split needed — keep original flat layout with single grand total
+      const grandTotals = calcStationTotals(detailedSortedRecords);
+      mainEntries.forEach(([stKey, records]) => {
+        const stTotals = calcStationTotals(records);
+        records.forEach(e => result.push(buildEmployeeRow(e)));
+        result.push(buildTotalsRow(ar ? `إجمالي ${getStationLabel(stKey)}` : `${getStationLabel(stKey)} Total`, stTotals, 'subtotal'));
+      });
+      result.push(buildTotalsRow(ar ? 'الإجمالي العام' : 'Grand Total', grandTotals, 'grand'));
+    }
+
     return result;
   };
 
