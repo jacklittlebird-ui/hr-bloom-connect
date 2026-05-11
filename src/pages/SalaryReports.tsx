@@ -58,6 +58,8 @@ const SalaryReports = () => {
   const [station, setStation] = useState('all');
   const [department, setDepartment] = useState('all');
   const [activeTab, setActiveTab] = useState('overview');
+  const [empCompanyTab, setEmpCompanyTab] = useState<'aero' | 'cargo'>('aero');
+  const [stationCompanyTab, setStationCompanyTab] = useState<'aero' | 'cargo'>('aero');
 
   // Always fetch fresh data on mount
   useEffect(() => {
