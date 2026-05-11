@@ -1107,10 +1107,10 @@ const SalaryReports = () => {
           <Card>
             <CardHeader>
               <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
-                <CardTitle>{ar ? 'بيانات الموظفين التفصيلية' : 'Employee Detailed Data'}</CardTitle>
+                <CardTitle>{ar ? `بيانات الموظفين التفصيلية - ${selectedMonth !== 'all' ? monthNamesAr[parseInt(selectedMonth) - 1] : 'كل السنة'} ${selectedYear}` : `Employee Detailed Data - ${selectedMonth !== 'all' ? monthNamesEn[parseInt(selectedMonth) - 1] : 'Full Year'} ${selectedYear}`}</CardTitle>
                 <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
                   <Button variant="outline" size="sm" onClick={handlePrintMonthlyDetail}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
-                  <Button variant="outline" size="sm" onClick={async () => { try { await exportEmployeeDetailExcel({ title: ar ? 'تفصيل الموظفين' : 'Employee Detail', ar, rows: getDetailExportDataFull() as unknown as EDRow[], kpis: getExcelKpis(), fileName: 'employee_detail' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
+                  <Button variant="outline" size="sm" onClick={async () => { try { const monthLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year'); await exportEmployeeDetailExcel({ title: ar ? `تفصيل الموظفين - ${monthLbl} ${selectedYear}` : `Employee Detail - ${monthLbl} ${selectedYear}`, ar, rows: getDetailExportDataFull() as unknown as EDRow[], kpis: getExcelKpis(), fileName: 'employee_detail' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
                 </div>
               </div>
             </CardHeader>
