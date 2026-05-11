@@ -26,8 +26,8 @@ export interface EDRow {
   health: number;
   tax: number;
   totalEmployer: number;
-  // Marker rows: kind === 'subtotal' | 'grand' | undefined (employee row)
-  kind?: 'subtotal' | 'grand';
+  // Marker rows: kind === 'subtotal' | 'grand' | 'banner' | undefined (employee row)
+  kind?: 'subtotal' | 'grand' | 'banner';
 }
 
 export type EDKpiColor = 'primary' | 'green' | 'red' | 'blue' | 'amber' | 'purple';
