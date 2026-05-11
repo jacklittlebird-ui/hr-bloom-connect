@@ -798,18 +798,26 @@ const SalaryReports = () => {
     const mainEntries = allEntries.filter(([k]) => !isLinkCargo(k));
     const lkEntries = allEntries.filter(([k]) => isLinkCargo(k));
 
-    if (lkEntries.length > 0) {
-      renderGroup(mainEntries, ar ? 'لينك إيرو' : 'Link Aero');
-      renderGroup(lkEntries, ar ? 'لينك كارجو' : 'Link Cargo');
-    } else {
-      // No split needed — keep original flat layout with single grand total
-      const grandTotals = calcStationTotals(detailedSortedRecords);
-      mainEntries.forEach(([stKey, records]) => {
+    const renderFlat = (entries: typeof allEntries) => {
+      const allRecs = entries.flatMap(([, r]) => r);
+      const grandTotals = calcStationTotals(allRecs);
+      entries.forEach(([stKey, records]) => {
         const stTotals = calcStationTotals(records);
         records.forEach(e => result.push(buildEmployeeRow(e)));
         result.push(buildTotalsRow(ar ? `إجمالي ${getStationLabel(stKey)}` : `${getStationLabel(stKey)} Total`, stTotals, 'subtotal'));
       });
       result.push(buildTotalsRow(ar ? 'الإجمالي العام' : 'Grand Total', grandTotals, 'grand'));
+    };
+
+    if (companyTab === 'aero') {
+      renderFlat(mainEntries);
+    } else if (companyTab === 'cargo') {
+      renderFlat(lkEntries);
+    } else if (lkEntries.length > 0) {
+      renderGroup(mainEntries, ar ? 'لينك إيرو' : 'Link Aero');
+      renderGroup(lkEntries, ar ? 'لينك كارجو' : 'Link Cargo');
+    } else {
+      renderFlat(mainEntries);
     }
 
     return result;
