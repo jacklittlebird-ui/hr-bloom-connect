@@ -38,6 +38,9 @@ export interface MBSInput {
   rows: MBSRow[];
   kpis?: MBSKpi[];
   fileName?: string;
+  secondaryStationKeys?: string[];
+  mainGroupLabel?: string;
+  secondaryGroupLabel?: string;
 }
 
 const C = {
