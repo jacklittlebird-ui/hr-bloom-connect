@@ -15,6 +15,7 @@ import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
 import { initialDepartments } from '@/data/departments';
 import { exportMonthlyByStationExcel } from '@/lib/monthlyByStationExcel';
+import { exportEmployeeDetailExcel, type EDRow } from '@/lib/employeeDetailExcel';
 import { toast } from 'sonner';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16', '#e11d48', '#0ea5e9', '#a855f7'];
