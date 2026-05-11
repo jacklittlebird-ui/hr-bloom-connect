@@ -411,7 +411,7 @@ export const DailyAttendanceReport = () => {
       return a.employee.employee_code.localeCompare(b.employee.employee_code);
     });
     return rows;
-  }, [employees, visibleEmpIds, recordIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar]);
+  }, [employees, visibleEmpIds, recordIndex, leaveIndex, missionIndex, permissionIndex, overtimeIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar]);
 
   // Counters (status badges) — across all visible employees and days, regardless of filter.
   const counters = useMemo(() => {
