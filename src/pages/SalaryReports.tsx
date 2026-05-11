@@ -602,15 +602,24 @@ const SalaryReports = () => {
     setTimeout(() => w.print(), 600);
   }, [activeMonths, ar, selectedYear]);
 
-  // KPI cards for Excel export
-  const getExcelKpis = (): EDKpi[] => [
-    { label: ar ? 'إجمالي الصافي' : 'Total Net', value: totalNet.toLocaleString(), color: 'primary' },
-    { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: totalGross.toLocaleString(), color: 'green' },
-    { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: totalDeductions.toLocaleString(), color: 'red' },
-    { label: ar ? 'مساهمات الشركة' : 'Company Cost', value: totalEmployer.toLocaleString(), color: 'blue' },
-    { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avgSalary.toLocaleString(), color: 'amber' },
-    { label: ar ? 'عدد الموظفين' : 'Employees', value: String(uniqueEmps), color: 'purple' },
-  ];
+  // KPI cards for Excel export — split into Main Company vs Link Cargo
+  const getExcelKpis = (): EDKpi[] => {
+    const lk = filtered.filter(e => isLinkCargo(e.stationLocation));
+    const mn = filtered.filter(e => !isLinkCargo(e.stationLocation));
+    const sum = (arr: typeof filtered, fn: (e: typeof filtered[number]) => number) => arr.reduce((s, e) => s + fn(e), 0);
+    const mNet = sum(mn, e => e.netSalary), mGross = sum(mn, e => e.gross), mEmps = new Set(mn.map(e => e.employeeId)).size;
+    const lNet = sum(lk, e => e.netSalary), lGross = sum(lk, e => e.gross), lEmps = new Set(lk.map(e => e.employeeId)).size;
+    const mainLbl = ar ? 'الرئيسية' : 'Main';
+    const lkLbl = ar ? 'لينك كارجو' : 'Link Cargo';
+    return [
+      { label: `${ar ? 'صافي' : 'Net'} - ${mainLbl}`, value: mNet.toLocaleString(), color: 'primary' },
+      { label: `${ar ? 'إجمالي' : 'Gross'} - ${mainLbl}`, value: mGross.toLocaleString(), color: 'green' },
+      { label: `${ar ? 'موظفي' : 'Emps'} - ${mainLbl}`, value: String(mEmps), color: 'blue' },
+      { label: `${ar ? 'صافي' : 'Net'} - ${lkLbl}`, value: lNet.toLocaleString(), color: 'purple' },
+      { label: `${ar ? 'إجمالي' : 'Gross'} - ${lkLbl}`, value: lGross.toLocaleString(), color: 'amber' },
+      { label: `${ar ? 'موظفي' : 'Emps'} - ${lkLbl}`, value: String(lEmps), color: 'red' },
+    ];
+  };
 
   // Export helpers
   const getDetailExportData = () => detailedSortedRecords.map(e => ({
