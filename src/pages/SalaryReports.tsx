@@ -487,9 +487,10 @@ const SalaryReports = () => {
         <td style="font-weight:bold;color:#1e40af">${(t.empIns + t.health + t.tax).toLocaleString()}</td>
       </tr>`;
 
-    // Build pages - each station on a separate page
+    // Build pages - each station on a separate page (Link Aero stations first, then Link Cargo)
     let pages = '';
-    detailedByStation.forEach((records, stKey) => {
+    const sortedDetailedEntries = Array.from(detailedByStation.entries()).sort(([a], [b]) => Number(isLinkCargo(a)) - Number(isLinkCargo(b)));
+    sortedDetailedEntries.forEach(([stKey, records]) => {
       const stName = getStationLabel(stKey);
       const stTotals = calcStationTotals(records);
       const trs = records.map(buildEmployeeRow).join('');
@@ -501,30 +502,36 @@ const SalaryReports = () => {
       </div>`;
     });
 
-    // Grand total page
+    // Grand total page - Link Aero stations + grand, then Link Cargo stations + grand
+    const buildStSummaryRow = (stKey: string, records: ProcessedPayroll[]) => {
+      const stTotals = calcStationTotals(records);
+      return `<tr>
+        <td colspan="4" style="font-weight:600">${getStationLabel(stKey)} (${stTotals.count})</td>
+        <td>${stTotals.basic.toLocaleString()}</td><td>${stTotals.transport.toLocaleString()}</td><td>${stTotals.incentives.toLocaleString()}</td>
+        <td>${stTotals.stationAllow.toLocaleString()}</td><td>${stTotals.mobileAllow.toLocaleString()}</td><td>${stTotals.living.toLocaleString()}</td>
+        <td>${stTotals.overtime.toLocaleString()}</td><td>${stTotals.bonus.toLocaleString()}</td>
+        <td style="font-weight:bold;background:#f0fdf4">${stTotals.gross.toLocaleString()}</td>
+        <td>${stTotals.insurance.toLocaleString()}</td><td>${stTotals.loans.toLocaleString()}</td><td>${stTotals.advances.toLocaleString()}</td>
+        <td>${stTotals.mobileBill.toLocaleString()}</td><td>${stTotals.leaveDed.toLocaleString()}</td><td>${stTotals.penalty.toLocaleString()}</td>
+        <td style="color:#dc2626">${stTotals.totalDed.toLocaleString()}</td>
+        <td style="font-weight:bold;background:#eff6ff">${stTotals.net.toLocaleString()}</td>
+        <td>${stTotals.empIns.toLocaleString()}</td><td>${stTotals.health.toLocaleString()}</td><td>${stTotals.tax.toLocaleString()}</td>
+        <td style="font-weight:bold;color:#1e40af">${(stTotals.empIns + stTotals.health + stTotals.tax).toLocaleString()}</td>
+      </tr>`;
+    };
+    const aeroStEntries = sortedDetailedEntries.filter(([k]) => !isLinkCargo(k));
+    const cargoStEntries = sortedDetailedEntries.filter(([k]) => isLinkCargo(k));
+    const aeroStRows = aeroStEntries.map(([k, r]) => buildStSummaryRow(k, r)).join('');
+    const cargoStRows = cargoStEntries.map(([k, r]) => buildStSummaryRow(k, r)).join('');
+    const aeroGrandRow = linkAeroDetailTotals.count > 0 ? buildTotalRow(ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', linkAeroDetailTotals, 'background:#d1fae5') : '';
+    const cargoGrandRow = linkCargoDetailTotals.count > 0 ? buildTotalRow(ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', linkCargoDetailTotals, 'background:#d1fae5') : '';
     const grandTotalPage = `<div class="station-page">
       <h2 style="background:#059669">${ar ? 'الإجمالي العام لجميع المحطات' : 'Grand Total - All Stations'}</h2>
       <table><thead><tr>${headerLabels.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>
-      ${Array.from(detailedByStation.entries()).map(([stKey, records]) => {
-        const stTotals = calcStationTotals(records);
-        return `<tr>
-          <td colspan="4" style="font-weight:600">${getStationLabel(stKey)} (${stTotals.count})</td>
-          <td>${stTotals.basic.toLocaleString()}</td><td>${stTotals.transport.toLocaleString()}</td><td>${stTotals.incentives.toLocaleString()}</td>
-          <td>${stTotals.stationAllow.toLocaleString()}</td><td>${stTotals.mobileAllow.toLocaleString()}</td><td>${stTotals.living.toLocaleString()}</td>
-          <td>${stTotals.overtime.toLocaleString()}</td><td>${stTotals.bonus.toLocaleString()}</td>
-          <td style="font-weight:bold;background:#f0fdf4">${stTotals.gross.toLocaleString()}</td>
-          <td>${stTotals.insurance.toLocaleString()}</td><td>${stTotals.loans.toLocaleString()}</td><td>${stTotals.advances.toLocaleString()}</td>
-          <td>${stTotals.mobileBill.toLocaleString()}</td><td>${stTotals.leaveDed.toLocaleString()}</td><td>${stTotals.penalty.toLocaleString()}</td>
-          <td style="color:#dc2626">${stTotals.totalDed.toLocaleString()}</td>
-          <td style="font-weight:bold;background:#eff6ff">${stTotals.net.toLocaleString()}</td>
-          <td>${stTotals.empIns.toLocaleString()}</td><td>${stTotals.health.toLocaleString()}</td><td>${stTotals.tax.toLocaleString()}</td>
-          <td style="font-weight:bold;color:#1e40af">${(stTotals.empIns + stTotals.health + stTotals.tax).toLocaleString()}</td>
-        </tr>`;
-      }).join('')}
-      ${[
-        { label: ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', totals: linkAeroDetailTotals },
-        { label: ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', totals: linkCargoDetailTotals },
-      ].filter(item => item.totals.count > 0).map(item => buildTotalRow(item.label, item.totals, 'background:#d1fae5')).join('')}
+      ${aeroStRows}
+      ${aeroGrandRow}
+      ${cargoStRows}
+      ${cargoGrandRow}
       </tbody></table>
     </div>`;
 
