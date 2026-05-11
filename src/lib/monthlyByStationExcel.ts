@@ -24,10 +24,19 @@ export interface MBSRow {
   incomeTax: number;
 }
 
+export type MBSKpiColor = 'primary' | 'green' | 'red' | 'blue' | 'amber' | 'purple';
+
+export interface MBSKpi {
+  label: string;
+  value: string | number;
+  color: MBSKpiColor;
+}
+
 export interface MBSInput {
   title: string;
   ar: boolean;
   rows: MBSRow[];
+  kpis?: MBSKpi[];
   fileName?: string;
 }
 
@@ -65,13 +74,14 @@ const fill = (cell: ExcelJS.Cell, argb: string) => {
 const num = (n: number) => Number(n || 0);
 
 export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void> {
-  const { title, ar, rows, fileName } = input;
+  const { title, ar, rows, kpis, fileName } = input;
   const wb = new ExcelJS.Workbook();
   wb.creator = 'HR System';
   wb.created = new Date();
 
+  const hasKpis = !!(kpis && kpis.length);
   const ws = wb.addWorksheet(ar ? 'تفصيل شهري بالمحطة' : 'Monthly by Station', {
-    views: [{ rightToLeft: ar, state: 'frozen', ySplit: 4 }],
+    views: [{ rightToLeft: ar, state: 'frozen', ySplit: hasKpis ? 7 : 4 }],
     pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } },
   });
 
@@ -101,8 +111,55 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   // spacer
   ws.getRow(3).height = 6;
 
-  // Header row (row 4)
-  const headerRow = ws.getRow(4);
+  let headerRowIdx = 4;
+
+  // KPI cards
+  if (hasKpis) {
+    const kpiPalette: Record<MBSKpiColor, { bg: string; text: string }> = {
+      primary: { bg: 'FFDBEAFE', text: 'FF1E40AF' },
+      green:   { bg: 'FFDCFCE7', text: 'FF15803D' },
+      red:     { bg: 'FFFEE2E2', text: 'FFB91C1C' },
+      blue:    { bg: 'FFDBEAFE', text: 'FF1D4ED8' },
+      amber:   { bg: 'FFFEF3C7', text: 'FFB45309' },
+      purple:  { bg: 'FFEDE9FE', text: 'FF6D28D9' },
+    };
+    const n = Math.min(kpis!.length, 6);
+    const base = Math.floor(colCount / n);
+    const extra = colCount - base * n;
+    const widths: number[] = Array.from({ length: n }, (_, i) => base + (i < extra ? 1 : 0));
+
+    ws.getRow(4).height = 20;
+    ws.getRow(5).height = 28;
+
+    let cur = 1;
+    for (let i = 0; i < n; i++) {
+      const w = widths[i];
+      const start = cur;
+      const end = cur + w - 1;
+      const k = kpis![i];
+      const pal = kpiPalette[k.color];
+      ws.mergeCells(4, start, 4, end);
+      ws.mergeCells(5, start, 5, end);
+      const lc = ws.getCell(4, start);
+      lc.value = k.label;
+      lc.font = { name: 'Calibri', size: 10, bold: true, color: { argb: pal.text } };
+      lc.alignment = { horizontal: 'center', vertical: 'middle' };
+      fill(lc, pal.bg);
+      setBorder(lc);
+      const vc = ws.getCell(5, start);
+      vc.value = k.value;
+      vc.font = { name: 'Calibri', size: 14, bold: true, color: { argb: pal.text } };
+      vc.alignment = { horizontal: 'center', vertical: 'middle' };
+      fill(vc, pal.bg);
+      setBorder(vc);
+      cur = end + 1;
+    }
+    ws.getRow(6).height = 6;
+    headerRowIdx = 7;
+  }
+
+  // Header row
+  const headerRow = ws.getRow(headerRowIdx);
   headers.forEach((h, i) => {
     const cell = headerRow.getCell(i + 1);
     cell.value = h;
@@ -122,7 +179,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
 
   const grand = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
 
-  let rowIdx = 5;
+  let rowIdx = headerRowIdx + 1;
   let zebra = false;
 
   groups.forEach((stRows, stKey) => {

@@ -1149,6 +1149,7 @@ const SalaryReports = () => {
                         title: ar ? `تفصيل شهري بالمحطة - ${selectedYear}` : `Monthly Detail by Station - ${selectedYear}`,
                         ar,
                         rows: monthlyByStation,
+                        kpis: getExcelKpis(),
                         fileName: `monthly_by_station_${selectedYear}`,
                       });
                       toast.success(ar ? 'تم تصدير الملف' : 'Exported');
