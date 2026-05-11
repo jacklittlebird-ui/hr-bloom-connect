@@ -96,6 +96,10 @@ export const DailyAttendanceReport = () => {
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [records, setRecords] = useState<AttendanceRow[]>([]);
+  const [leaves, setLeaves] = useState<LeaveRow[]>([]);
+  const [missions, setMissions] = useState<MissionRow[]>([]);
+  const [permissions, setPermissions] = useState<PermissionRow[]>([]);
+  const [overtimes, setOvertimes] = useState<OvertimeRow[]>([]);
 
   // Load stations + departments once
   useEffect(() => {
