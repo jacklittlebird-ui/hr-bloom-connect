@@ -223,7 +223,8 @@ const SalaryReports = () => {
       : ['Month','Count','Basic','Trans.','Incent.','St.All.','Mob.All.','Living','OT','Bonus','Gross','Ins.','Loans','Adv.','Bill','Leave','Pen.','Tot.Ded','Net','Emp.Ins','Health','Tax','Total Employer'];
 
     let pages = '';
-    stationGroups.forEach((rows, stKey) => {
+    const sortedStationGroupEntries = Array.from(stationGroups.entries()).sort(([a], [b]) => Number(isLinkCargo(a)) - Number(isLinkCargo(b)));
+    sortedStationGroupEntries.forEach(([stKey, rows]) => {
       const stName = getStationLabel(stKey);
       const totals = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
       rows.forEach(r => { Object.keys(totals).forEach(k => { (totals as any)[k] += (r as any)[k]; }); });
