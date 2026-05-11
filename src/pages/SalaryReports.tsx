@@ -341,7 +341,7 @@ const SalaryReports = () => {
 
     // Compute overall totals for summary cards
     const overallTotals = { count: 0, basic: 0, gross: 0, totalDeductions: 0, net: 0, empIns: 0, health: 0, tax: 0 };
-    monthlyByStation.forEach(r => {
+    filteredMBS.forEach(r => {
       overallTotals.count += r.count;
       overallTotals.basic += r.basic;
       overallTotals.gross += r.gross;
