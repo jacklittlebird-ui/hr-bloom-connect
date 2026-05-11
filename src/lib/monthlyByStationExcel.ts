@@ -82,7 +82,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   const hasKpis = !!(kpis && kpis.length);
   const ws = wb.addWorksheet(ar ? 'تفصيل شهري بالمحطة' : 'Monthly by Station', {
     views: [{ rightToLeft: ar, state: 'frozen', ySplit: hasKpis ? 7 : 4 }],
-    pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } },
+    pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.15, right: 0.15, top: 0.2, bottom: 0.2, header: 0.1, footer: 0.1 } },
   });
 
   const headers = ar
@@ -96,7 +96,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   ws.mergeCells(1, 1, 1, colCount);
   const titleCell = ws.getCell(1, 1);
   titleCell.value = title;
-  titleCell.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.font = { name: 'Baloo Bhaijaan 2', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
   fill(titleCell, C.titleBg);
   titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
   ws.getRow(1).height = 26;
@@ -105,7 +105,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   ws.mergeCells(2, 1, 2, colCount);
   const dateCell = ws.getCell(2, 1);
   dateCell.value = new Date().toLocaleDateString(ar ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  dateCell.font = { name: 'Calibri', size: 10, color: { argb: 'FF6B7280' } };
+  dateCell.font = { name: 'Baloo Bhaijaan 2', size: 10, color: { argb: 'FF6B7280' } };
   dateCell.alignment = { horizontal: 'center' };
 
   // spacer
@@ -142,13 +142,13 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
       ws.mergeCells(5, start, 5, end);
       const lc = ws.getCell(4, start);
       lc.value = k.label;
-      lc.font = { name: 'Calibri', size: 10, bold: true, color: { argb: pal.text } };
+      lc.font = { name: 'Baloo Bhaijaan 2', size: 10, bold: true, color: { argb: pal.text } };
       lc.alignment = { horizontal: 'center', vertical: 'middle' };
       fill(lc, pal.bg);
       setBorder(lc);
       const vc = ws.getCell(5, start);
       vc.value = k.value;
-      vc.font = { name: 'Calibri', size: 14, bold: true, color: { argb: pal.text } };
+      vc.font = { name: 'Baloo Bhaijaan 2', size: 14, bold: true, color: { argb: pal.text } };
       vc.alignment = { horizontal: 'center', vertical: 'middle' };
       fill(vc, pal.bg);
       setBorder(vc);
@@ -163,7 +163,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   headers.forEach((h, i) => {
     const cell = headerRow.getCell(i + 1);
     cell.value = h;
-    cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: C.headerText } };
+    cell.font = { name: 'Baloo Bhaijaan 2', size: 10, bold: true, color: { argb: C.headerText } };
     fill(cell, C.headerBg);
     cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     setBorder(cell);
@@ -202,7 +202,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
       vals.forEach((v, ci) => {
         const cell = row.getCell(ci + 1);
         cell.value = v;
-        cell.font = { name: 'Calibri', size: 10 };
+        cell.font = { name: 'Baloo Bhaijaan 2', size: 10 };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
         setBorder(cell);
         if (typeof v === 'number') cell.numFmt = '#,##0';
@@ -242,7 +242,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
     subVals.forEach((v, i) => { subRow.getCell(3 + i).value = v; });
     for (let c = 1; c <= colCount; c++) {
       const cell = subRow.getCell(c);
-      cell.font = { name: 'Calibri', size: 10, bold: true };
+      cell.font = { name: 'Baloo Bhaijaan 2', size: 10, bold: true };
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       setBorder(cell);
       fill(cell, C.subtotalBg);
@@ -265,7 +265,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   gVals.forEach((v, i) => { gRow.getCell(3 + i).value = v; });
   for (let c = 1; c <= colCount; c++) {
     const cell = gRow.getCell(c);
-    cell.font = { name: 'Calibri', size: 11, bold: true };
+    cell.font = { name: 'Baloo Bhaijaan 2', size: 11, bold: true };
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
     setBorder(cell);
     fill(cell, C.grandBg);
