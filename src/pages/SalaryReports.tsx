@@ -836,7 +836,8 @@ const SalaryReports = () => {
       stationGroups.get(row.stationKey)!.push(row);
     });
     const result: any[] = [];
-    const grandTotals: any = { stationName: ar ? 'الإجمالي العام' : 'Grand Total', month: '', count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0, totalEmployer: 0 };
+    const linkAeroTotals: any = { stationName: ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', month: '', ...createMonthlyTotals(), totalEmployer: 0 };
+    const linkCargoTotals: any = { stationName: ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', month: '', ...createMonthlyTotals(), totalEmployer: 0 };
     stationGroups.forEach((rows, stKey) => {
       const stTotals: any = { stationName: ar ? `إجمالي ${rows[0].stationName}` : `${rows[0].stationName} Total`, month: '', count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0, totalEmployer: 0 };
       rows.forEach(r => {
@@ -845,10 +846,13 @@ const SalaryReports = () => {
       });
       stTotals.totalEmployer = stTotals.employerInsurance + stTotals.healthInsurance + stTotals.incomeTax;
       result.push(stTotals);
-      ['count','basic','transport','incentives','stationAllowance','mobileAllowance','livingAllowance','overtimePay','bonuses','gross','insurance','loans','totalDeductions','net','employerInsurance','healthInsurance','incomeTax'].forEach(k => { grandTotals[k] += stTotals[k]; });
+      const companyTotals = isLinkCargo(stKey) ? linkCargoTotals : linkAeroTotals;
+      monthlyTotalKeys.forEach(k => { companyTotals[k] += stTotals[k]; });
     });
-    grandTotals.totalEmployer = grandTotals.employerInsurance + grandTotals.healthInsurance + grandTotals.incomeTax;
-    result.push(grandTotals);
+    [linkAeroTotals, linkCargoTotals].forEach(t => {
+      t.totalEmployer = t.employerInsurance + t.healthInsurance + t.incomeTax;
+      if (t.count > 0) result.push(t);
+    });
     return result;
   };
 
