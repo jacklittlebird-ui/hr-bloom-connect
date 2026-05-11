@@ -30,10 +30,19 @@ export interface EDRow {
   kind?: 'subtotal' | 'grand';
 }
 
+export type EDKpiColor = 'primary' | 'green' | 'red' | 'blue' | 'amber' | 'purple';
+
+export interface EDKpi {
+  label: string;
+  value: string | number;
+  color: EDKpiColor;
+}
+
 export interface EDInput {
   title: string;
   ar: boolean;
   rows: EDRow[];
+  kpis?: EDKpi[];
   fileName?: string;
 }
 
