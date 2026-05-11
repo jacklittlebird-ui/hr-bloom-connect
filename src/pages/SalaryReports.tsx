@@ -24,6 +24,29 @@ const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 const LINK_CARGO_KEYS = ['capital', 'lkcargo_alex'];
 const isLinkCargo = (k?: string) => !!k && LINK_CARGO_KEYS.includes(k);
 
+type MonthlyStationTotals = {
+  count: number; basic: number; transport: number; incentives: number; stationAllowance: number;
+  mobileAllowance: number; livingAllowance: number; overtimePay: number; bonuses: number; gross: number;
+  insurance: number; loans: number; totalDeductions: number; net: number;
+  employerInsurance: number; healthInsurance: number; incomeTax: number;
+};
+
+const monthlyTotalKeys: (keyof MonthlyStationTotals)[] = [
+  'count', 'basic', 'transport', 'incentives', 'stationAllowance', 'mobileAllowance', 'livingAllowance',
+  'overtimePay', 'bonuses', 'gross', 'insurance', 'loans', 'totalDeductions', 'net',
+  'employerInsurance', 'healthInsurance', 'incomeTax',
+];
+
+const createMonthlyTotals = (): MonthlyStationTotals => ({
+  count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0,
+  livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0,
+  totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0,
+});
+
+const addMonthlyTotals = (target: MonthlyStationTotals, source: Partial<MonthlyStationTotals>) => {
+  monthlyTotalKeys.forEach(k => { target[k] += Number(source[k] || 0); });
+};
+
 const SalaryReports = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
@@ -237,13 +260,15 @@ const SalaryReports = () => {
     // Grand total table at the end
     const grandTotals = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
     monthlyByStation.forEach(r => { Object.keys(grandTotals).forEach(k => { (grandTotals as any)[k] += (r as any)[k]; }); });
-    const grandTotalPage = `<div class="station-page"><h2 style="background:#059669">${ar ? 'الإجمالي العام لجميع المحطات' : 'Grand Total - All Stations'}</h2>
-      <table><thead><tr>${headerLabels.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>
-      ${Array.from(stationGroups.entries()).map(([stKey, rows]) => {
-        const st = getStationLabel(stKey);
-        const t = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
-        rows.forEach(r => { Object.keys(t).forEach(k => { (t as any)[k] += (r as any)[k]; }); });
-        return `<tr>
+    const linkAeroGrandTotals = { ...grandTotals };
+    const linkCargoGrandTotals = { ...grandTotals };
+    Object.keys(linkAeroGrandTotals).forEach(k => { (linkAeroGrandTotals as any)[k] = 0; (linkCargoGrandTotals as any)[k] = 0; });
+    const stationSummaryRows = Array.from(stationGroups.entries()).map(([stKey, rows]) => {
+      const st = getStationLabel(stKey);
+      const t = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
+      rows.forEach(r => { Object.keys(t).forEach(k => { (t as any)[k] += (r as any)[k]; }); });
+      Object.keys(t).forEach(k => { ((isLinkCargo(stKey) ? linkCargoGrandTotals : linkAeroGrandTotals) as any)[k] += (t as any)[k]; });
+      return `<tr>
           <td style="font-weight:600">${st}</td><td>${t.count}</td>
           <td>${t.basic.toLocaleString()}</td><td>${t.transport.toLocaleString()}</td><td>${t.incentives.toLocaleString()}</td>
           <td>${t.stationAllowance.toLocaleString()}</td><td>${t.mobileAllowance.toLocaleString()}</td><td>${t.livingAllowance.toLocaleString()}</td>
@@ -256,20 +281,25 @@ const SalaryReports = () => {
           <td>${t.employerInsurance.toLocaleString()}</td><td>${t.healthInsurance.toLocaleString()}</td><td>${t.incomeTax.toLocaleString()}</td>
           <td style="font-weight:bold;color:#1e40af">${(t.employerInsurance + t.healthInsurance + t.incomeTax).toLocaleString()}</td>
         </tr>`;
-      }).join('')}
-      <tr style="font-weight:bold;background:#d1fae5;font-size:11px">
-        <td>${ar ? 'الإجمالي العام' : 'Grand Total'}</td><td>${grandTotals.count}</td>
-        <td>${grandTotals.basic.toLocaleString()}</td><td>${grandTotals.transport.toLocaleString()}</td><td>${grandTotals.incentives.toLocaleString()}</td>
-        <td>${grandTotals.stationAllowance.toLocaleString()}</td><td>${grandTotals.mobileAllowance.toLocaleString()}</td><td>${grandTotals.livingAllowance.toLocaleString()}</td>
-        <td>${grandTotals.overtimePay.toLocaleString()}</td><td>${grandTotals.bonuses.toLocaleString()}</td>
-        <td style="background:#bbf7d0">${grandTotals.gross.toLocaleString()}</td>
-        <td>${grandTotals.insurance.toLocaleString()}</td><td>${grandTotals.loans.toLocaleString()}</td><td>${grandTotals.advances.toLocaleString()}</td>
-        <td>${grandTotals.mobileBill.toLocaleString()}</td><td>${grandTotals.leaveDeduction.toLocaleString()}</td><td>${grandTotals.penalty.toLocaleString()}</td>
-        <td style="color:#dc2626">${grandTotals.totalDeductions.toLocaleString()}</td>
-        <td style="background:#93c5fd">${grandTotals.net.toLocaleString()}</td>
-        <td>${grandTotals.employerInsurance.toLocaleString()}</td><td>${grandTotals.healthInsurance.toLocaleString()}</td><td>${grandTotals.incomeTax.toLocaleString()}</td>
-        <td style="font-weight:bold;color:#1e40af">${(grandTotals.employerInsurance + grandTotals.healthInsurance + grandTotals.incomeTax).toLocaleString()}</td>
-      </tr>
+    }).join('');
+    const buildCompanyGrandRow = (label: string, t: typeof grandTotals) => t.count > 0 ? `<tr style="font-weight:bold;background:#d1fae5;font-size:11px">
+        <td>${label}</td><td>${t.count}</td>
+        <td>${t.basic.toLocaleString()}</td><td>${t.transport.toLocaleString()}</td><td>${t.incentives.toLocaleString()}</td>
+        <td>${t.stationAllowance.toLocaleString()}</td><td>${t.mobileAllowance.toLocaleString()}</td><td>${t.livingAllowance.toLocaleString()}</td>
+        <td>${t.overtimePay.toLocaleString()}</td><td>${t.bonuses.toLocaleString()}</td>
+        <td style="background:#bbf7d0">${t.gross.toLocaleString()}</td>
+        <td>${t.insurance.toLocaleString()}</td><td>${t.loans.toLocaleString()}</td><td>${t.advances.toLocaleString()}</td>
+        <td>${t.mobileBill.toLocaleString()}</td><td>${t.leaveDeduction.toLocaleString()}</td><td>${t.penalty.toLocaleString()}</td>
+        <td style="color:#dc2626">${t.totalDeductions.toLocaleString()}</td>
+        <td style="background:#93c5fd">${t.net.toLocaleString()}</td>
+        <td>${t.employerInsurance.toLocaleString()}</td><td>${t.healthInsurance.toLocaleString()}</td><td>${t.incomeTax.toLocaleString()}</td>
+        <td style="font-weight:bold;color:#1e40af">${(t.employerInsurance + t.healthInsurance + t.incomeTax).toLocaleString()}</td>
+      </tr>` : '';
+    const grandTotalPage = `<div class="station-page"><h2 style="background:#059669">${ar ? 'الإجمالي العام لجميع المحطات' : 'Grand Total - All Stations'}</h2>
+      <table><thead><tr>${headerLabels.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>
+      ${stationSummaryRows}
+      ${buildCompanyGrandRow(ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', linkAeroGrandTotals)}
+      ${buildCompanyGrandRow(ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', linkCargoGrandTotals)}
       </tbody></table></div>`;
 
     // Compute overall totals for summary cards
@@ -403,6 +433,9 @@ const SalaryReports = () => {
       : `Detailed Payroll Report - ${selectedMonth !== 'all' ? monthNamesEn[parseInt(selectedMonth) - 1] : 'Year'} ${selectedYear}`;
 
     const grandTotals = calcStationTotals(detailedSortedRecords);
+    const allDetailEntries = Array.from(detailedByStation.entries());
+    const linkAeroDetailTotals = calcStationTotals(allDetailEntries.filter(([k]) => !isLinkCargo(k)).flatMap(([, records]) => records));
+    const linkCargoDetailTotals = calcStationTotals(allDetailEntries.filter(([k]) => isLinkCargo(k)).flatMap(([, records]) => records));
 
     const headerLabels = ar
       ? ['الكود','الاسم','القسم','المحطة','الأساسي','مواصلات','حوافز','بدل محطة','بدل محمول','بدل معيشة','أجر إضافي','مكافآت','الإجمالي','تأمينات','قروض','سلف','فاتورة محمول','خصم إجازات','جزاءات','إجمالي الخصومات','الصافي','تأمينات الشركة','تأمين صحي','ضريبة دخل','إجمالي مساهمات الشركة']
@@ -486,7 +519,10 @@ const SalaryReports = () => {
           <td style="font-weight:bold;color:#1e40af">${(stTotals.empIns + stTotals.health + stTotals.tax).toLocaleString()}</td>
         </tr>`;
       }).join('')}
-      ${buildTotalRow(ar ? 'الإجمالي العام' : 'Grand Total', grandTotals, 'background:#d1fae5')}
+      ${[
+        { label: ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', totals: linkAeroDetailTotals },
+        { label: ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', totals: linkCargoDetailTotals },
+      ].filter(item => item.totals.count > 0).map(item => buildTotalRow(item.label, item.totals, 'background:#d1fae5')).join('')}
       </tbody></table>
     </div>`;
 
@@ -800,7 +836,8 @@ const SalaryReports = () => {
       stationGroups.get(row.stationKey)!.push(row);
     });
     const result: any[] = [];
-    const grandTotals: any = { stationName: ar ? 'الإجمالي العام' : 'Grand Total', month: '', count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0, totalEmployer: 0 };
+    const linkAeroTotals: any = { stationName: ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', month: '', ...createMonthlyTotals(), totalEmployer: 0 };
+    const linkCargoTotals: any = { stationName: ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', month: '', ...createMonthlyTotals(), totalEmployer: 0 };
     stationGroups.forEach((rows, stKey) => {
       const stTotals: any = { stationName: ar ? `إجمالي ${rows[0].stationName}` : `${rows[0].stationName} Total`, month: '', count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0, totalEmployer: 0 };
       rows.forEach(r => {
@@ -809,10 +846,13 @@ const SalaryReports = () => {
       });
       stTotals.totalEmployer = stTotals.employerInsurance + stTotals.healthInsurance + stTotals.incomeTax;
       result.push(stTotals);
-      ['count','basic','transport','incentives','stationAllowance','mobileAllowance','livingAllowance','overtimePay','bonuses','gross','insurance','loans','totalDeductions','net','employerInsurance','healthInsurance','incomeTax'].forEach(k => { grandTotals[k] += stTotals[k]; });
+      const companyTotals = isLinkCargo(stKey) ? linkCargoTotals : linkAeroTotals;
+      monthlyTotalKeys.forEach(k => { companyTotals[k] += stTotals[k]; });
     });
-    grandTotals.totalEmployer = grandTotals.employerInsurance + grandTotals.healthInsurance + grandTotals.incomeTax;
-    result.push(grandTotals);
+    [linkAeroTotals, linkCargoTotals].forEach(t => {
+      t.totalEmployer = t.employerInsurance + t.healthInsurance + t.incomeTax;
+      if (t.count > 0) result.push(t);
+    });
     return result;
   };
 
@@ -1067,7 +1107,13 @@ const SalaryReports = () => {
                   <TableBody>
                     {(() => {
                       const rows: React.ReactNode[] = [];
-                      const grandTotals = calcStationTotals(detailedSortedRecords);
+                      const allStationEntries = Array.from(detailedByStation.entries());
+                      const mainRecords = allStationEntries.filter(([k]) => !isLinkCargo(k)).flatMap(([, records]) => records);
+                      const cargoRecords = allStationEntries.filter(([k]) => isLinkCargo(k)).flatMap(([, records]) => records);
+                      const companyTotals = [
+                        { key: 'link-aero', label: ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', totals: calcStationTotals(mainRecords) },
+                        { key: 'link-cargo', label: ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', totals: calcStationTotals(cargoRecords) },
+                      ].filter(item => item.totals.count > 0);
                       detailedByStation.forEach((records, stKey) => {
                         const stTotals = calcStationTotals(records);
                         const stName = getStationLabel(stKey);
@@ -1135,29 +1181,29 @@ const SalaryReports = () => {
                           </TableRow>
                         );
                       });
-                      // Grand total
-                      rows.push(
-                        <TableRow key="grand-total" className="bg-primary/10 font-bold text-base border-t-4 border-primary">
-                          <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{ar ? 'الإجمالي العام' : 'Grand Total'} ({grandTotals.count})</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.basic.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.transport.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.incentives.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.stationAllow.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.mobileAllow.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.living.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.overtime.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.bonus.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-green-700", isRTL && "text-right")}>{grandTotals.gross.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.insurance.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.loans.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-destructive", isRTL && "text-right")}>{grandTotals.totalDed.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-blue-700", isRTL && "text-right")}>{grandTotals.net.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.empIns.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.health.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.tax.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(grandTotals.empIns + grandTotals.health + grandTotals.tax).toLocaleString()}</TableCell>
+                      // Company grand totals
+                      companyTotals.forEach(({ key, label, totals }) => rows.push(
+                        <TableRow key={`grand-total-${key}`} className="bg-primary/10 font-bold text-base border-t-4 border-primary">
+                          <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{label} ({totals.count})</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.basic.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.transport.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.incentives.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.stationAllow.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.mobileAllow.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.living.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.overtime.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.bonus.toLocaleString()}</TableCell>
+                          <TableCell className={cn("text-green-700", isRTL && "text-right")}>{totals.gross.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.insurance.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.loans.toLocaleString()}</TableCell>
+                          <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.totalDed.toLocaleString()}</TableCell>
+                          <TableCell className={cn("text-blue-700", isRTL && "text-right")}>{totals.net.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.empIns.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.health.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.tax.toLocaleString()}</TableCell>
+                          <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(totals.empIns + totals.health + totals.tax).toLocaleString()}</TableCell>
                         </TableRow>
-                      );
+                      ));
                       return rows;
                     })()}
                   </TableBody>
@@ -1213,7 +1259,8 @@ const SalaryReports = () => {
                         if (!stationGroups.has(row.stationKey)) stationGroups.set(row.stationKey, []);
                         stationGroups.get(row.stationKey)!.push(row);
                       });
-                      const grandTotals = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
+                      const linkAeroTotals = createMonthlyTotals();
+                      const linkCargoTotals = createMonthlyTotals();
                       const rows: React.ReactNode[] = [];
 
                       stationGroups.forEach((stRows, stKey) => {
@@ -1253,7 +1300,7 @@ const SalaryReports = () => {
                           );
                         });
                         // Station subtotal row
-                        Object.keys(grandTotals).forEach(k => { (grandTotals as any)[k] += (stTotals as any)[k]; });
+                        addMonthlyTotals(isLinkCargo(stKey) ? linkCargoTotals : linkAeroTotals, stTotals);
                         rows.push(
                           <TableRow key={`${stKey}-total`} className="bg-muted/60 font-bold border-b-2 border-primary/20">
                             <TableCell className={cn(isRTL && "text-right")} colSpan={2}>{ar ? `إجمالي ${stRows[0].stationName}` : `${stRows[0].stationName} Total`}</TableCell>
@@ -1279,30 +1326,33 @@ const SalaryReports = () => {
                         );
                       });
 
-                      // Grand total row
-                      rows.push(
-                        <TableRow key="grand-total" className="bg-primary/10 font-bold text-base border-t-4 border-primary">
-                          <TableCell className={cn(isRTL && "text-right")} colSpan={2}>{ar ? 'الإجمالي العام' : 'Grand Total'}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.count}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.basic.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.transport.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.incentives.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.stationAllowance.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.mobileAllowance.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.livingAllowance.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.overtimePay.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.bonuses.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.gross.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.insurance.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.loans.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-destructive", isRTL && "text-right")}>{grandTotals.totalDeductions.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.net.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.employerInsurance.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.healthInsurance.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{grandTotals.incomeTax.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(grandTotals.employerInsurance + grandTotals.healthInsurance + grandTotals.incomeTax).toLocaleString()}</TableCell>
+                      // Company grand total rows
+                      [
+                        { key: 'link-aero', label: ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', totals: linkAeroTotals },
+                        { key: 'link-cargo', label: ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', totals: linkCargoTotals },
+                      ].filter(item => item.totals.count > 0).forEach(({ key, label, totals }) => rows.push(
+                        <TableRow key={`grand-total-${key}`} className="bg-primary/10 font-bold text-base border-t-4 border-primary">
+                          <TableCell className={cn(isRTL && "text-right")} colSpan={2}>{label}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.count}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.basic.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.transport.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.incentives.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.stationAllowance.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.mobileAllowance.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.livingAllowance.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.overtimePay.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.bonuses.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.gross.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.insurance.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.loans.toLocaleString()}</TableCell>
+                          <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.totalDeductions.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.net.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.employerInsurance.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.healthInsurance.toLocaleString()}</TableCell>
+                          <TableCell className={cn(isRTL && "text-right")}>{totals.incomeTax.toLocaleString()}</TableCell>
+                          <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(totals.employerInsurance + totals.healthInsurance + totals.incomeTax).toLocaleString()}</TableCell>
                         </TableRow>
-                      );
+                      ));
 
                       return rows;
                     })()}
