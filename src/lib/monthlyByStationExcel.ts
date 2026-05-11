@@ -284,7 +284,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
 
     // Group grand total
     const gLabel = groupLabel
-      ? (ar ? `إجمالي ${groupLabel}` : `${groupLabel} Grand Total`)
+      ? (ar ? `إجمالي عام ${groupLabel}` : `${groupLabel} Grand Total`)
       : (ar ? 'الإجمالي العام' : 'Grand Total');
     renderTotalRow(gLabel, groupTotals, true);
   };
