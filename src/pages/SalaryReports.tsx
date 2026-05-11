@@ -598,6 +598,16 @@ const SalaryReports = () => {
     setTimeout(() => w.print(), 600);
   }, [activeMonths, ar, selectedYear]);
 
+  // KPI cards for Excel export
+  const getExcelKpis = (): EDKpi[] => [
+    { label: ar ? 'إجمالي الصافي' : 'Total Net', value: totalNet.toLocaleString(), color: 'primary' },
+    { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: totalGross.toLocaleString(), color: 'green' },
+    { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: totalDeductions.toLocaleString(), color: 'red' },
+    { label: ar ? 'مساهمات الشركة' : 'Company Cost', value: totalEmployer.toLocaleString(), color: 'blue' },
+    { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avgSalary.toLocaleString(), color: 'amber' },
+    { label: ar ? 'عدد الموظفين' : 'Employees', value: String(uniqueEmps), color: 'purple' },
+  ];
+
   // Export helpers
   const getDetailExportData = () => detailedSortedRecords.map(e => ({
     id: e.employeeCode || e.employeeId,
