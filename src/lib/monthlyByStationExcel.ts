@@ -179,7 +179,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
 
   const grand = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
 
-  let rowIdx = 5;
+  let rowIdx = headerRowIdx + 1;
   let zebra = false;
 
   groups.forEach((stRows, stKey) => {
