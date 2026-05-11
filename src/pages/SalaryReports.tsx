@@ -602,7 +602,7 @@ const SalaryReports = () => {
     setTimeout(() => w.print(), 600);
   }, [activeMonths, ar, selectedYear]);
 
-  // KPI cards for Excel export — split into Main Company vs Link Cargo
+  // KPI cards for Excel export — split into Link Aero vs Link Cargo
   const getExcelKpis = (): EDKpi[] => {
     const lk = filtered.filter(e => isLinkCargo(e.stationLocation));
     const mn = filtered.filter(e => !isLinkCargo(e.stationLocation));
@@ -723,7 +723,7 @@ const SalaryReports = () => {
     const lkEntries = allEntries.filter(([k]) => isLinkCargo(k));
 
     if (lkEntries.length > 0) {
-      renderGroup(mainEntries, ar ? 'الشركة الرئيسية' : 'Main Company');
+      renderGroup(mainEntries, ar ? 'لينك إيرو' : 'Link Aero');
       renderGroup(lkEntries, ar ? 'لينك كارجو' : 'Link Cargo');
     } else {
       // No split needed — keep original flat layout with single grand total
@@ -1186,7 +1186,7 @@ const SalaryReports = () => {
                         rows: monthlyByStation,
                         kpis: getExcelKpis(),
                         secondaryStationKeys: LINK_CARGO_KEYS,
-                        mainGroupLabel: ar ? 'الشركة الرئيسية' : 'Main Company',
+                        mainGroupLabel: ar ? 'لينك إيرو' : 'Link Aero',
                         secondaryGroupLabel: ar ? 'لينك كارجو' : 'Link Cargo',
                         fileName: `monthly_by_station_${selectedYear}`,
                       });
