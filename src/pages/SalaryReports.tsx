@@ -260,13 +260,15 @@ const SalaryReports = () => {
     // Grand total table at the end
     const grandTotals = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
     monthlyByStation.forEach(r => { Object.keys(grandTotals).forEach(k => { (grandTotals as any)[k] += (r as any)[k]; }); });
-    const grandTotalPage = `<div class="station-page"><h2 style="background:#059669">${ar ? 'الإجمالي العام لجميع المحطات' : 'Grand Total - All Stations'}</h2>
-      <table><thead><tr>${headerLabels.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>
-      ${Array.from(stationGroups.entries()).map(([stKey, rows]) => {
-        const st = getStationLabel(stKey);
-        const t = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
-        rows.forEach(r => { Object.keys(t).forEach(k => { (t as any)[k] += (r as any)[k]; }); });
-        return `<tr>
+    const linkAeroGrandTotals = { ...grandTotals };
+    const linkCargoGrandTotals = { ...grandTotals };
+    Object.keys(linkAeroGrandTotals).forEach(k => { (linkAeroGrandTotals as any)[k] = 0; (linkCargoGrandTotals as any)[k] = 0; });
+    const stationSummaryRows = Array.from(stationGroups.entries()).map(([stKey, rows]) => {
+      const st = getStationLabel(stKey);
+      const t = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
+      rows.forEach(r => { Object.keys(t).forEach(k => { (t as any)[k] += (r as any)[k]; }); });
+      Object.keys(t).forEach(k => { ((isLinkCargo(stKey) ? linkCargoGrandTotals : linkAeroGrandTotals) as any)[k] += (t as any)[k]; });
+      return `<tr>
           <td style="font-weight:600">${st}</td><td>${t.count}</td>
           <td>${t.basic.toLocaleString()}</td><td>${t.transport.toLocaleString()}</td><td>${t.incentives.toLocaleString()}</td>
           <td>${t.stationAllowance.toLocaleString()}</td><td>${t.mobileAllowance.toLocaleString()}</td><td>${t.livingAllowance.toLocaleString()}</td>
@@ -279,20 +281,25 @@ const SalaryReports = () => {
           <td>${t.employerInsurance.toLocaleString()}</td><td>${t.healthInsurance.toLocaleString()}</td><td>${t.incomeTax.toLocaleString()}</td>
           <td style="font-weight:bold;color:#1e40af">${(t.employerInsurance + t.healthInsurance + t.incomeTax).toLocaleString()}</td>
         </tr>`;
-      }).join('')}
-      <tr style="font-weight:bold;background:#d1fae5;font-size:11px">
-        <td>${ar ? 'الإجمالي العام' : 'Grand Total'}</td><td>${grandTotals.count}</td>
-        <td>${grandTotals.basic.toLocaleString()}</td><td>${grandTotals.transport.toLocaleString()}</td><td>${grandTotals.incentives.toLocaleString()}</td>
-        <td>${grandTotals.stationAllowance.toLocaleString()}</td><td>${grandTotals.mobileAllowance.toLocaleString()}</td><td>${grandTotals.livingAllowance.toLocaleString()}</td>
-        <td>${grandTotals.overtimePay.toLocaleString()}</td><td>${grandTotals.bonuses.toLocaleString()}</td>
-        <td style="background:#bbf7d0">${grandTotals.gross.toLocaleString()}</td>
-        <td>${grandTotals.insurance.toLocaleString()}</td><td>${grandTotals.loans.toLocaleString()}</td><td>${grandTotals.advances.toLocaleString()}</td>
-        <td>${grandTotals.mobileBill.toLocaleString()}</td><td>${grandTotals.leaveDeduction.toLocaleString()}</td><td>${grandTotals.penalty.toLocaleString()}</td>
-        <td style="color:#dc2626">${grandTotals.totalDeductions.toLocaleString()}</td>
-        <td style="background:#93c5fd">${grandTotals.net.toLocaleString()}</td>
-        <td>${grandTotals.employerInsurance.toLocaleString()}</td><td>${grandTotals.healthInsurance.toLocaleString()}</td><td>${grandTotals.incomeTax.toLocaleString()}</td>
-        <td style="font-weight:bold;color:#1e40af">${(grandTotals.employerInsurance + grandTotals.healthInsurance + grandTotals.incomeTax).toLocaleString()}</td>
-      </tr>
+    }).join('');
+    const buildCompanyGrandRow = (label: string, t: typeof grandTotals) => t.count > 0 ? `<tr style="font-weight:bold;background:#d1fae5;font-size:11px">
+        <td>${label}</td><td>${t.count}</td>
+        <td>${t.basic.toLocaleString()}</td><td>${t.transport.toLocaleString()}</td><td>${t.incentives.toLocaleString()}</td>
+        <td>${t.stationAllowance.toLocaleString()}</td><td>${t.mobileAllowance.toLocaleString()}</td><td>${t.livingAllowance.toLocaleString()}</td>
+        <td>${t.overtimePay.toLocaleString()}</td><td>${t.bonuses.toLocaleString()}</td>
+        <td style="background:#bbf7d0">${t.gross.toLocaleString()}</td>
+        <td>${t.insurance.toLocaleString()}</td><td>${t.loans.toLocaleString()}</td><td>${t.advances.toLocaleString()}</td>
+        <td>${t.mobileBill.toLocaleString()}</td><td>${t.leaveDeduction.toLocaleString()}</td><td>${t.penalty.toLocaleString()}</td>
+        <td style="color:#dc2626">${t.totalDeductions.toLocaleString()}</td>
+        <td style="background:#93c5fd">${t.net.toLocaleString()}</td>
+        <td>${t.employerInsurance.toLocaleString()}</td><td>${t.healthInsurance.toLocaleString()}</td><td>${t.incomeTax.toLocaleString()}</td>
+        <td style="font-weight:bold;color:#1e40af">${(t.employerInsurance + t.healthInsurance + t.incomeTax).toLocaleString()}</td>
+      </tr>` : '';
+    const grandTotalPage = `<div class="station-page"><h2 style="background:#059669">${ar ? 'الإجمالي العام لجميع المحطات' : 'Grand Total - All Stations'}</h2>
+      <table><thead><tr>${headerLabels.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>
+      ${stationSummaryRows}
+      ${buildCompanyGrandRow(ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', linkAeroGrandTotals)}
+      ${buildCompanyGrandRow(ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', linkCargoGrandTotals)}
       </tbody></table></div>`;
 
     // Compute overall totals for summary cards
