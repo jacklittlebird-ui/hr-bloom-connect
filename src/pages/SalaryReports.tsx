@@ -1005,7 +1005,7 @@ const SalaryReports = () => {
                 <CardTitle>{ar ? 'بيانات الموظفين التفصيلية' : 'Employee Detailed Data'}</CardTitle>
                 <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
                   <Button variant="outline" size="sm" onClick={handlePrintMonthlyDetail}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
-                  <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: ar ? 'تفصيل الموظفين' : 'Employee Detail', data: getDetailExportDataFull(), columns: getDetailColumns(), fileName: 'employee_detail' })}><FileText className="w-4 h-4 mr-1" />Excel</Button>
+                  <Button variant="outline" size="sm" onClick={async () => { try { await exportEmployeeDetailExcel({ title: ar ? 'تفصيل الموظفين' : 'Employee Detail', ar, rows: getDetailExportDataFull() as unknown as EDRow[], fileName: 'employee_detail' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
                 </div>
               </div>
             </CardHeader>
