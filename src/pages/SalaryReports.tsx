@@ -240,7 +240,7 @@ const SalaryReports = () => {
   }, [payrollEntries, selectedYear, selectedMonth, department, monthNames, ar]);
 
   // Group monthlyByStation by station for printing
-  const handlePrintMonthlyByStation = useCallback(() => {
+  const handlePrintMonthlyByStation = useCallback((companyTab?: 'aero' | 'cargo') => {
     const monthLabel = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year');
     const title = ar ? `تقرير إجمالي بالمحطات - ${monthLabel} ${selectedYear}` : `Stations Total Report - ${monthLabel} ${selectedYear}`;
     const stationGroups = new Map<string, typeof monthlyByStation>();
