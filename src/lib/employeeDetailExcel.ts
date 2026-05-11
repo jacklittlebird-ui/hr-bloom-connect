@@ -180,6 +180,10 @@ export async function exportEmployeeDetailExcel(input: EDInput): Promise<void> {
   });
   headerRow.height = 32;
 
+  // Repeat title + header rows on every printed page
+  ws.pageSetup.printTitlesRow = `1:${headerRowIdx}`;
+  ws.headerFooter = { oddHeader: `&C&"Baloo Bhaijaan 2,Bold"&12${title}`, oddFooter: '&C&P / &N' };
+
   // Numeric column markers
   const grossCol = 13;
   const totDedCol = 20;
