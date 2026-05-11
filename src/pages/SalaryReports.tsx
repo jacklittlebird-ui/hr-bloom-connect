@@ -257,13 +257,10 @@ const SalaryReports = () => {
         <table><thead><tr>${headerLabels.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${trs}${totalRow}</tbody></table></div>`;
     });
 
-    // Grand total table at the end
-    const grandTotals = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
-    monthlyByStation.forEach(r => { Object.keys(grandTotals).forEach(k => { (grandTotals as any)[k] += (r as any)[k]; }); });
-    const linkAeroGrandTotals = { ...grandTotals };
-    const linkCargoGrandTotals = { ...grandTotals };
-    Object.keys(linkAeroGrandTotals).forEach(k => { (linkAeroGrandTotals as any)[k] = 0; (linkCargoGrandTotals as any)[k] = 0; });
-    const stationSummaryRows = Array.from(stationGroups.entries()).map(([stKey, rows]) => {
+    // Grand total table at the end - split by company
+    const linkAeroGrandTotals = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
+    const linkCargoGrandTotals = { ...linkAeroGrandTotals };
+    const buildStationSummaryRow = (stKey: string, rows: typeof monthlyByStation) => {
       const st = getStationLabel(stKey);
       const t = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, mobileBill: 0, leaveDeduction: 0, penalty: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
       rows.forEach(r => { Object.keys(t).forEach(k => { (t as any)[k] += (r as any)[k]; }); });
@@ -281,8 +278,11 @@ const SalaryReports = () => {
           <td>${t.employerInsurance.toLocaleString()}</td><td>${t.healthInsurance.toLocaleString()}</td><td>${t.incomeTax.toLocaleString()}</td>
           <td style="font-weight:bold;color:#1e40af">${(t.employerInsurance + t.healthInsurance + t.incomeTax).toLocaleString()}</td>
         </tr>`;
-    }).join('');
-    const buildCompanyGrandRow = (label: string, t: typeof grandTotals) => t.count > 0 ? `<tr style="font-weight:bold;background:#d1fae5;font-size:11px">
+    };
+    const allStationGroupEntries = Array.from(stationGroups.entries());
+    const aeroSummaryRows = allStationGroupEntries.filter(([k]) => !isLinkCargo(k)).map(([k, r]) => buildStationSummaryRow(k, r)).join('');
+    const cargoSummaryRows = allStationGroupEntries.filter(([k]) => isLinkCargo(k)).map(([k, r]) => buildStationSummaryRow(k, r)).join('');
+    const buildCompanyGrandRow = (label: string, t: typeof linkAeroGrandTotals) => t.count > 0 ? `<tr style="font-weight:bold;background:#d1fae5;font-size:11px">
         <td>${label}</td><td>${t.count}</td>
         <td>${t.basic.toLocaleString()}</td><td>${t.transport.toLocaleString()}</td><td>${t.incentives.toLocaleString()}</td>
         <td>${t.stationAllowance.toLocaleString()}</td><td>${t.mobileAllowance.toLocaleString()}</td><td>${t.livingAllowance.toLocaleString()}</td>
@@ -297,8 +297,9 @@ const SalaryReports = () => {
       </tr>` : '';
     const grandTotalPage = `<div class="station-page"><h2 style="background:#059669">${ar ? 'الإجمالي العام لجميع المحطات' : 'Grand Total - All Stations'}</h2>
       <table><thead><tr>${headerLabels.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>
-      ${stationSummaryRows}
+      ${aeroSummaryRows}
       ${buildCompanyGrandRow(ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', linkAeroGrandTotals)}
+      ${cargoSummaryRows}
       ${buildCompanyGrandRow(ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', linkCargoGrandTotals)}
       </tbody></table></div>`;
 
