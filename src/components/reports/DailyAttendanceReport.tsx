@@ -462,6 +462,10 @@ export const DailyAttendanceReport = () => {
       present: r.totals.present,
       late: r.totals.late,
       absent: r.totals.absent,
+      leaves: r.totals.leaves,
+      missions: r.totals.missions,
+      permissions: r.totals.permissions,
+      overtime_hours: fmtHours(r.totals.overtimeHours),
       total_hours: fmtHours(r.totals.hours),
     };
     r.cells.forEach((c, i) => {
@@ -469,10 +473,16 @@ export const DailyAttendanceReport = () => {
       row[`${dateKey}__in`] = formatTimeCairo(c.record?.check_in ?? null);
       row[`${dateKey}__out`] = formatTimeCairo(c.record?.check_out ?? null);
       row[`${dateKey}__hours`] = c.kind === 'none' ? '' : fmtHours(c.hours);
-      row[`${dateKey}__status`] = c.kind === 'present' ? (ar ? 'حاضر' : 'P')
+      const extras: string[] = [];
+      if (c.leave) extras.push((ar ? 'إجازة ' : 'Leave ') + (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)));
+      if (c.mission) extras.push(ar ? `مأمورية (${c.mission.hours || 0}س)` : `Mission (${c.mission.hours || 0}h)`);
+      if (c.permission) extras.push(ar ? `إذن (${c.permission.hours || 0}س)` : `Permission (${c.permission.hours || 0}h)`);
+      if (c.overtime) extras.push(ar ? `إضافي (${c.overtime.hours || 0}س)` : `Overtime (${c.overtime.hours || 0}h)`);
+      const baseStatus = c.kind === 'present' ? (ar ? 'حاضر' : 'P')
         : c.kind === 'late' ? (ar ? 'متأخر' : 'L')
         : c.kind === 'absent' ? (ar ? 'غائب' : 'A')
-        : '—';
+        : (extras.length ? '' : '—');
+      row[`${dateKey}__status`] = [baseStatus, ...extras].filter(Boolean).join(' / ');
     });
     return row;
   });
@@ -486,6 +496,10 @@ export const DailyAttendanceReport = () => {
     { header: ar ? 'حاضر' : 'Present', key: 'present' },
     { header: ar ? 'متأخر' : 'Late', key: 'late' },
     { header: ar ? 'غائب' : 'Absent', key: 'absent' },
+    { header: ar ? 'إجازات' : 'Leaves', key: 'leaves' },
+    { header: ar ? 'مأموريات' : 'Missions', key: 'missions' },
+    { header: ar ? 'أذونات' : 'Permissions', key: 'permissions' },
+    { header: ar ? 'ساعات إضافي' : 'Overtime Hrs', key: 'overtime_hours' },
     { header: ar ? 'إجمالي الساعات' : 'Total Hours', key: 'total_hours' },
     ...dateRange.flatMap(d => {
       const short = format(new Date(d + 'T00:00:00'), 'dd/MM');
