@@ -256,17 +256,29 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
     r.cells.forEach((cell, i) => {
       const colStart = baseCols + 1 + i * 3;
       // Determine background by status / leave / off
+      // Leave/Mission take precedence over an "absent" attendance row so the
+      // approved leave/mission is always visible in Excel (matches on-screen behavior).
       let bg = rowTint || C.white;
       let textColor = 'FF111827';
       let labelOverride: string | null = null;
-      if (cell.kind === 'present') { bg = C.present; textColor = C.presentText; }
+      const hasAttn = cell.kind === 'present' || cell.kind === 'late';
+
+      if (cell.leave && !hasAttn) {
+        bg = C.leave; textColor = C.leaveText;
+        labelOverride = (ar ? 'إجازة' : 'Leave') + ` — ${cell.leave}`;
+      } else if (cell.mission && !hasAttn) {
+        bg = C.mission; textColor = C.missionText;
+        labelOverride = (ar ? 'مأمورية' : 'Mission') + (cell.mission ? ` — ${cell.mission}` : '');
+      } else if (cell.kind === 'present') { bg = C.present; textColor = C.presentText; }
       else if (cell.kind === 'late') { bg = C.late; textColor = C.lateText; }
       else if (cell.kind === 'absent') { bg = C.absent; textColor = C.absentText; }
-      else if (cell.leave) { bg = C.leave; textColor = C.leaveText; labelOverride = (ar ? 'إجازة' : 'Leave') + (cell.leave ? ` — ${cell.leave}` : ''); }
-      else if (cell.mission) { bg = C.mission; textColor = C.missionText; labelOverride = (ar ? 'مأمورية' : 'Mission'); }
-      else if (cell.permission) { bg = C.permission; textColor = C.permissionText; labelOverride = (ar ? 'إذن' : 'Permission'); }
-      else if (cell.overtime) { bg = C.overtime; textColor = C.overtimeText; labelOverride = (ar ? 'إضافي' : 'Overtime'); }
-      else if (cell.isOff) { bg = C.offCell; textColor = 'FF92400E'; }
+      else if (cell.permission) {
+        bg = C.permission; textColor = C.permissionText;
+        labelOverride = (ar ? 'إذن' : 'Permission') + ` — ${cell.permission}`;
+      } else if (cell.overtime) {
+        bg = C.overtime; textColor = C.overtimeText;
+        labelOverride = (ar ? 'إضافي' : 'Overtime') + ` — ${cell.overtime}`;
+      } else if (cell.isOff) { bg = C.offCell; textColor = 'FF92400E'; }
 
       const cellsTriple: ExcelJS.Cell[] = [
         ws.getCell(rowNum, colStart),
@@ -274,7 +286,7 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
         ws.getCell(rowNum, colStart + 2),
       ];
 
-      if (labelOverride && cell.kind === 'none') {
+      if (labelOverride && !hasAttn) {
         // Merge across the 3 sub-cells to show a single status label
         ws.mergeCells(rowNum, colStart, rowNum, colStart + 2);
         const m = cellsTriple[0];
@@ -289,12 +301,26 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
         }
         m.border = b;
       } else {
-        cellsTriple[0].value = cell.in;
-        cellsTriple[1].value = cell.out;
-        cellsTriple[2].value = cell.hours || '';
+        // Build small overlay tag (leave/mission/permission/overtime) shown
+        // visibly under the times when the day also has an attendance record.
+        const tags: string[] = [];
+        if (cell.leave) tags.push((ar ? 'إجازة: ' : 'L: ') + cell.leave);
+        if (cell.mission) tags.push((ar ? 'مأمورية: ' : 'M: ') + cell.mission);
+        if (cell.permission) tags.push((ar ? 'إذن: ' : 'P: ') + cell.permission);
+        if (cell.overtime) tags.push((ar ? 'إضافي: ' : 'OT: ') + cell.overtime);
+        const tagLine = tags.join(' • ');
+
+        const inVal = cell.in || '';
+        const outVal = cell.out || '';
+        const hrsVal = cell.hours || '';
+
+        cellsTriple[0].value = tagLine && !inVal ? tagLine : inVal;
+        cellsTriple[1].value = outVal;
+        cellsTriple[2].value = hrsVal;
+
         cellsTriple.forEach((cc, j) => {
           cc.font = { color: { argb: textColor }, name: 'Consolas', size: 10, bold: cell.kind !== 'none' && j === 2 };
-          cc.alignment = { horizontal: 'center', vertical: 'middle' };
+          cc.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
           cc.fill = fillSolid(bg);
           const b: Partial<ExcelJS.Borders> = { ...thinAll };
           if (cell.isOff && j === 0) b.left = { style: 'medium', color: { argb: C.offBar } };
@@ -302,7 +328,14 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
           cc.border = b;
         });
 
-        // Append overlay note (leave/mission/permission/overtime) into the Hrs cell as comment
+        // When attendance + overlay coexist, show the tag visibly in the Hrs cell on a 2nd line
+        if (tagLine && hasAttn) {
+          cellsTriple[2].value = `${hrsVal}\n${tagLine}`;
+          cellsTriple[2].font = { color: { argb: textColor }, name: 'Consolas', size: 9, bold: true };
+          ws.getRow(rowNum).height = Math.max(ws.getRow(rowNum).height || 22, 30);
+        }
+
+        // Always also attach as a comment for full detail
         const extras: string[] = [];
         if (cell.leave) extras.push((ar ? 'إجازة: ' : 'Leave: ') + cell.leave);
         if (cell.mission) extras.push((ar ? 'مأمورية: ' : 'Mission: ') + cell.mission);
