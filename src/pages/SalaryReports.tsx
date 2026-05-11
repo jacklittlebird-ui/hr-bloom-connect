@@ -825,7 +825,7 @@ const SalaryReports = () => {
             <div className={cn("flex gap-2 flex-wrap", isRTL && "flex-row-reverse")}>
               <Button variant="outline" size="sm" onClick={handlePrintMonthlyDetail}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة تفصيلي' : 'Print Detail'}</Button>
               <Button variant="outline" size="sm" onClick={handlePrintMonthlySummary}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة ملخص' : 'Print Summary'}</Button>
-              <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: ar ? 'تقرير الرواتب' : 'Salary Report', data: getDetailExportDataFull(), columns: getDetailColumns() })}><FileText className="w-4 h-4 mr-1" />Excel</Button>
+              <Button variant="outline" size="sm" onClick={async () => { try { await exportEmployeeDetailExcel({ title: ar ? 'تقرير الرواتب' : 'Salary Report', ar, rows: getDetailExportDataFull() as unknown as EDRow[], fileName: 'salary_report' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
               <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: ar ? 'تقرير الرواتب' : 'Salary Report', data: getDetailExportDataFull(), columns: getDetailColumns() })}><Download className="w-4 h-4 mr-1" />PDF</Button>
             </div>
           </div>
