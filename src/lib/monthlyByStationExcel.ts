@@ -184,105 +184,120 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
     groups.get(r.stationKey)!.push(r);
   });
 
-  const grand = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
+  const secondaryKeys = new Set(input.secondaryStationKeys || []);
+  const mainGroups = new Map<string, MBSRow[]>();
+  const secondaryGroups = new Map<string, MBSRow[]>();
+  groups.forEach((v, k) => { (secondaryKeys.has(k) ? secondaryGroups : mainGroups).set(k, v); });
 
   let rowIdx = headerRowIdx + 1;
   let zebra = false;
 
-  groups.forEach((stRows, stKey) => {
-    const st = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
+  const emptyTotals = () => ({ count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 });
 
-    stRows.forEach((r, i) => {
-      const row = ws.getRow(rowIdx++);
-      const vals = [
-        i === 0 ? r.stationName : '',
-        r.month, num(r.count),
-        num(r.basic), num(r.transport), num(r.incentives),
-        num(r.stationAllowance), num(r.mobileAllowance), num(r.livingAllowance),
-        num(r.overtimePay), num(r.bonuses),
-        num(r.gross),
-        num(r.insurance), num(r.loans),
-        num(r.totalDeductions), num(r.net),
-        num(r.employerInsurance), num(r.healthInsurance), num(r.incomeTax),
-        num(r.employerInsurance + r.healthInsurance + r.incomeTax),
-      ];
-      vals.forEach((v, ci) => {
-        const cell = row.getCell(ci + 1);
-        cell.value = v;
-        cell.font = { name: 'Baloo Bhaijaan 2', size: 10 };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        setBorder(cell);
-        if (typeof v === 'number') cell.numFmt = '#,##0';
-        if (zebra) fill(cell, C.zebra);
-        // column-specific color
-        if (ci === 11) { // Gross
-          fill(cell, C.grossBg);
-          cell.font = { ...cell.font, bold: true };
-        } else if (ci === 14) { // Total Deductions
-          cell.font = { ...cell.font, color: { argb: C.destructive } };
-        } else if (ci === 15) { // Net
-          fill(cell, C.netBg);
-          cell.font = { ...cell.font, bold: true };
-        } else if (ci === 19) { // Total Employer
-          cell.font = { ...cell.font, bold: true, color: { argb: C.blueBold } };
-        }
-        if (ci === 0) cell.font = { ...cell.font, bold: true };
-      });
-      zebra = !zebra;
-
-      st.count += r.count; st.basic += r.basic; st.transport += r.transport;
-      st.incentives += r.incentives; st.stationAllowance += r.stationAllowance;
-      st.mobileAllowance += r.mobileAllowance; st.livingAllowance += r.livingAllowance;
-      st.overtimePay += r.overtimePay; st.bonuses += r.bonuses; st.gross += r.gross;
-      st.insurance += r.insurance; st.loans += r.loans;
-      st.totalDeductions += r.totalDeductions; st.net += r.net;
-      st.employerInsurance += r.employerInsurance; st.healthInsurance += r.healthInsurance;
-      st.incomeTax += r.incomeTax;
-    });
-
-    // Subtotal row
-    const subRow = ws.getRow(rowIdx++);
+  const renderTotalRow = (label: string, totals: ReturnType<typeof emptyTotals>, isGrand: boolean) => {
+    const tRow = ws.getRow(rowIdx++);
     ws.mergeCells(rowIdx - 1, 1, rowIdx - 1, 2);
-    const labelCell = subRow.getCell(1);
-    labelCell.value = ar ? `إجمالي ${stRows[0].stationName}` : `${stRows[0].stationName} Total`;
-    const subVals = [st.count, st.basic, st.transport, st.incentives, st.stationAllowance, st.mobileAllowance, st.livingAllowance, st.overtimePay, st.bonuses, st.gross, st.insurance, st.loans, st.totalDeductions, st.net, st.employerInsurance, st.healthInsurance, st.incomeTax, st.employerInsurance + st.healthInsurance + st.incomeTax];
-    subVals.forEach((v, i) => { subRow.getCell(3 + i).value = v; });
+    tRow.getCell(1).value = label;
+    const vals = [totals.count, totals.basic, totals.transport, totals.incentives, totals.stationAllowance, totals.mobileAllowance, totals.livingAllowance, totals.overtimePay, totals.bonuses, totals.gross, totals.insurance, totals.loans, totals.totalDeductions, totals.net, totals.employerInsurance, totals.healthInsurance, totals.incomeTax, totals.employerInsurance + totals.healthInsurance + totals.incomeTax];
+    vals.forEach((v, i) => { tRow.getCell(3 + i).value = v; });
     for (let c = 1; c <= colCount; c++) {
-      const cell = subRow.getCell(c);
-      cell.font = { name: 'Baloo Bhaijaan 2', size: 10, bold: true };
+      const cell = tRow.getCell(c);
+      cell.font = { name: 'Baloo Bhaijaan 2', size: isGrand ? 11 : 10, bold: true };
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       setBorder(cell);
-      fill(cell, C.subtotalBg);
+      fill(cell, isGrand ? C.grandBg : C.subtotalBg);
       if (typeof cell.value === 'number') cell.numFmt = '#,##0';
-      if (c === 12) fill(cell, C.grossSubBg);
+      if (c === 12) fill(cell, isGrand ? C.grandGrossBg : C.grossSubBg);
       else if (c === 15) cell.font = { ...cell.font, color: { argb: C.destructive } };
-      else if (c === 16) fill(cell, C.netSubBg);
+      else if (c === 16) fill(cell, isGrand ? C.grandNetBg : C.netSubBg);
       else if (c === 20) cell.font = { ...cell.font, color: { argb: C.blueBold } };
     }
+    if (isGrand) tRow.height = 22;
     zebra = false;
+  };
 
-    Object.keys(grand).forEach(k => { (grand as any)[k] += (st as any)[k]; });
-  });
+  const renderGroup = (groupMap: Map<string, MBSRow[]>, groupLabel?: string) => {
+    if (groupMap.size === 0) return;
 
-  // Grand total row
-  const gRow = ws.getRow(rowIdx++);
-  ws.mergeCells(rowIdx - 1, 1, rowIdx - 1, 2);
-  gRow.getCell(1).value = ar ? 'الإجمالي العام' : 'Grand Total';
-  const gVals = [grand.count, grand.basic, grand.transport, grand.incentives, grand.stationAllowance, grand.mobileAllowance, grand.livingAllowance, grand.overtimePay, grand.bonuses, grand.gross, grand.insurance, grand.loans, grand.totalDeductions, grand.net, grand.employerInsurance, grand.healthInsurance, grand.incomeTax, grand.employerInsurance + grand.healthInsurance + grand.incomeTax];
-  gVals.forEach((v, i) => { gRow.getCell(3 + i).value = v; });
-  for (let c = 1; c <= colCount; c++) {
-    const cell = gRow.getCell(c);
-    cell.font = { name: 'Baloo Bhaijaan 2', size: 11, bold: true };
-    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-    setBorder(cell);
-    fill(cell, C.grandBg);
-    if (typeof cell.value === 'number') cell.numFmt = '#,##0';
-    if (c === 12) fill(cell, C.grandGrossBg);
-    else if (c === 15) cell.font = { ...cell.font, color: { argb: C.destructive } };
-    else if (c === 16) fill(cell, C.grandNetBg);
-    else if (c === 20) cell.font = { ...cell.font, color: { argb: C.blueBold } };
+    // Group banner
+    if (groupLabel) {
+      const bRow = ws.getRow(rowIdx++);
+      ws.mergeCells(rowIdx - 1, 1, rowIdx - 1, colCount);
+      const bc = bRow.getCell(1);
+      bc.value = groupLabel;
+      bc.font = { name: 'Baloo Bhaijaan 2', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+      fill(bc, C.titleBg);
+      bc.alignment = { horizontal: 'center', vertical: 'middle' };
+      setBorder(bc);
+      bRow.height = 22;
+      zebra = false;
+    }
+
+    const groupTotals = emptyTotals();
+
+    groupMap.forEach((stRows) => {
+      const st = emptyTotals();
+
+      stRows.forEach((r, i) => {
+        const row = ws.getRow(rowIdx++);
+        const vals = [
+          i === 0 ? r.stationName : '',
+          r.month, num(r.count),
+          num(r.basic), num(r.transport), num(r.incentives),
+          num(r.stationAllowance), num(r.mobileAllowance), num(r.livingAllowance),
+          num(r.overtimePay), num(r.bonuses),
+          num(r.gross),
+          num(r.insurance), num(r.loans),
+          num(r.totalDeductions), num(r.net),
+          num(r.employerInsurance), num(r.healthInsurance), num(r.incomeTax),
+          num(r.employerInsurance + r.healthInsurance + r.incomeTax),
+        ];
+        vals.forEach((v, ci) => {
+          const cell = row.getCell(ci + 1);
+          cell.value = v;
+          cell.font = { name: 'Baloo Bhaijaan 2', size: 10 };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          setBorder(cell);
+          if (typeof v === 'number') cell.numFmt = '#,##0';
+          if (zebra) fill(cell, C.zebra);
+          if (ci === 11) { fill(cell, C.grossBg); cell.font = { ...cell.font, bold: true }; }
+          else if (ci === 14) { cell.font = { ...cell.font, color: { argb: C.destructive } }; }
+          else if (ci === 15) { fill(cell, C.netBg); cell.font = { ...cell.font, bold: true }; }
+          else if (ci === 19) { cell.font = { ...cell.font, bold: true, color: { argb: C.blueBold } }; }
+          if (ci === 0) cell.font = { ...cell.font, bold: true };
+        });
+        zebra = !zebra;
+
+        st.count += r.count; st.basic += r.basic; st.transport += r.transport;
+        st.incentives += r.incentives; st.stationAllowance += r.stationAllowance;
+        st.mobileAllowance += r.mobileAllowance; st.livingAllowance += r.livingAllowance;
+        st.overtimePay += r.overtimePay; st.bonuses += r.bonuses; st.gross += r.gross;
+        st.insurance += r.insurance; st.loans += r.loans;
+        st.totalDeductions += r.totalDeductions; st.net += r.net;
+        st.employerInsurance += r.employerInsurance; st.healthInsurance += r.healthInsurance;
+        st.incomeTax += r.incomeTax;
+      });
+
+      renderTotalRow(ar ? `إجمالي ${stRows[0].stationName}` : `${stRows[0].stationName} Total`, st, false);
+      Object.keys(groupTotals).forEach(k => { (groupTotals as any)[k] += (st as any)[k]; });
+    });
+
+    // Group grand total
+    const gLabel = groupLabel
+      ? (ar ? `إجمالي ${groupLabel}` : `${groupLabel} Grand Total`)
+      : (ar ? 'الإجمالي العام' : 'Grand Total');
+    renderTotalRow(gLabel, groupTotals, true);
+  };
+
+  const hasSplit = secondaryGroups.size > 0;
+  if (hasSplit) {
+    renderGroup(mainGroups, input.mainGroupLabel || (ar ? 'الشركة الرئيسية' : 'Main Company'));
+    // spacer
+    ws.getRow(rowIdx++).height = 8;
+    renderGroup(secondaryGroups, input.secondaryGroupLabel || (ar ? 'لينك كارجو' : 'Link Cargo'));
+  } else {
+    renderGroup(mainGroups);
   }
-  gRow.height = 22;
 
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
