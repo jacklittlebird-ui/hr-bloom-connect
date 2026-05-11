@@ -170,6 +170,10 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   });
   headerRow.height = 32;
 
+  // Repeat title + header rows on every printed page
+  ws.pageSetup.printTitlesRow = `1:${headerRowIdx}`;
+  ws.headerFooter = { oddHeader: `&C&"Baloo Bhaijaan 2,Bold"&12${title}`, oddFooter: '&C&P / &N' };
+
   // Group rows by station
   const groups = new Map<string, MBSRow[]>();
   rows.forEach(r => {
