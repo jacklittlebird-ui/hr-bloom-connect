@@ -1108,16 +1108,12 @@ const SalaryReports = () => {
                     {(() => {
                       const rows: React.ReactNode[] = [];
                       const allStationEntries = Array.from(detailedByStation.entries());
-                      const mainRecords = allStationEntries.filter(([k]) => !isLinkCargo(k)).flatMap(([, records]) => records);
-                      const cargoRecords = allStationEntries.filter(([k]) => isLinkCargo(k)).flatMap(([, records]) => records);
-                      const companyTotals = [
-                        { key: 'link-aero', label: ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', totals: calcStationTotals(mainRecords) },
-                        { key: 'link-cargo', label: ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', totals: calcStationTotals(cargoRecords) },
-                      ].filter(item => item.totals.count > 0);
-                      detailedByStation.forEach((records, stKey) => {
+                      const aeroEntries = allStationEntries.filter(([k]) => !isLinkCargo(k));
+                      const cargoEntries = allStationEntries.filter(([k]) => isLinkCargo(k));
+
+                      const renderStationBlock = (stKey: string, records: typeof allStationEntries[number][1]) => {
                         const stTotals = calcStationTotals(records);
                         const stName = getStationLabel(stKey);
-                        // Station header
                         rows.push(
                           <TableRow key={`hdr-${stKey}`} className="bg-primary/10 border-t-2 border-primary/30">
                             <TableCell colSpan={22} className={cn("font-bold text-base", isRTL && "text-right")}>
@@ -1128,7 +1124,6 @@ const SalaryReports = () => {
                             </TableCell>
                           </TableRow>
                         );
-                        // Employee rows
                         records.forEach((e, i) => {
                           rows.push(
                             <TableRow key={`${stKey}-${i}`}>
@@ -1157,7 +1152,6 @@ const SalaryReports = () => {
                             </TableRow>
                           );
                         });
-                        // Station subtotal row
                         rows.push(
                           <TableRow key={`sub-${stKey}`} className="bg-muted/60 font-bold border-b-2 border-primary/20">
                             <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{ar ? `إجمالي ${stName}` : `${stName} Total`} ({stTotals.count})</TableCell>
@@ -1180,30 +1174,38 @@ const SalaryReports = () => {
                             <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(stTotals.empIns + stTotals.health + stTotals.tax).toLocaleString()}</TableCell>
                           </TableRow>
                         );
-                      });
-                      // Company grand totals
-                      companyTotals.forEach(({ key, label, totals }) => rows.push(
-                        <TableRow key={`grand-total-${key}`} className="bg-primary/10 font-bold text-base border-t-4 border-primary">
-                          <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{label} ({totals.count})</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.basic.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.transport.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.incentives.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.stationAllow.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.mobileAllow.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.living.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.overtime.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.bonus.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-green-700", isRTL && "text-right")}>{totals.gross.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.insurance.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.loans.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.totalDed.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-blue-700", isRTL && "text-right")}>{totals.net.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.empIns.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.health.toLocaleString()}</TableCell>
-                          <TableCell className={cn(isRTL && "text-right")}>{totals.tax.toLocaleString()}</TableCell>
-                          <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(totals.empIns + totals.health + totals.tax).toLocaleString()}</TableCell>
-                        </TableRow>
-                      ));
+                      };
+
+                      const pushGrandRow = (key: string, label: string, totals: ReturnType<typeof calcStationTotals>) => {
+                        if (totals.count === 0) return;
+                        rows.push(
+                          <TableRow key={`grand-total-${key}`} className="bg-primary/10 font-bold text-base border-t-4 border-primary">
+                            <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{label} ({totals.count})</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.basic.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.transport.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.incentives.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.stationAllow.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.mobileAllow.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.living.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.overtime.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.bonus.toLocaleString()}</TableCell>
+                            <TableCell className={cn("text-green-700", isRTL && "text-right")}>{totals.gross.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.insurance.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.loans.toLocaleString()}</TableCell>
+                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.totalDed.toLocaleString()}</TableCell>
+                            <TableCell className={cn("text-blue-700", isRTL && "text-right")}>{totals.net.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.empIns.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.health.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.tax.toLocaleString()}</TableCell>
+                            <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(totals.empIns + totals.health + totals.tax).toLocaleString()}</TableCell>
+                          </TableRow>
+                        );
+                      };
+
+                      aeroEntries.forEach(([stKey, records]) => renderStationBlock(stKey, records));
+                      pushGrandRow('link-aero', ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', calcStationTotals(aeroEntries.flatMap(([, r]) => r)));
+                      cargoEntries.forEach(([stKey, records]) => renderStationBlock(stKey, records));
+                      pushGrandRow('link-cargo', ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', calcStationTotals(cargoEntries.flatMap(([, r]) => r)));
                       return rows;
                     })()}
                   </TableBody>
