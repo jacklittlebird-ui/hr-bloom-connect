@@ -433,6 +433,9 @@ const SalaryReports = () => {
       : `Detailed Payroll Report - ${selectedMonth !== 'all' ? monthNamesEn[parseInt(selectedMonth) - 1] : 'Year'} ${selectedYear}`;
 
     const grandTotals = calcStationTotals(detailedSortedRecords);
+    const allDetailEntries = Array.from(detailedByStation.entries());
+    const linkAeroDetailTotals = calcStationTotals(allDetailEntries.filter(([k]) => !isLinkCargo(k)).flatMap(([, records]) => records));
+    const linkCargoDetailTotals = calcStationTotals(allDetailEntries.filter(([k]) => isLinkCargo(k)).flatMap(([, records]) => records));
 
     const headerLabels = ar
       ? ['الكود','الاسم','القسم','المحطة','الأساسي','مواصلات','حوافز','بدل محطة','بدل محمول','بدل معيشة','أجر إضافي','مكافآت','الإجمالي','تأمينات','قروض','سلف','فاتورة محمول','خصم إجازات','جزاءات','إجمالي الخصومات','الصافي','تأمينات الشركة','تأمين صحي','ضريبة دخل','إجمالي مساهمات الشركة']
@@ -516,7 +519,10 @@ const SalaryReports = () => {
           <td style="font-weight:bold;color:#1e40af">${(stTotals.empIns + stTotals.health + stTotals.tax).toLocaleString()}</td>
         </tr>`;
       }).join('')}
-      ${buildTotalRow(ar ? 'الإجمالي العام' : 'Grand Total', grandTotals, 'background:#d1fae5')}
+      ${[
+        { label: ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', totals: linkAeroDetailTotals },
+        { label: ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', totals: linkCargoDetailTotals },
+      ].filter(item => item.totals.count > 0).map(item => buildTotalRow(item.label, item.totals, 'background:#d1fae5')).join('')}
       </tbody></table>
     </div>`;
 
