@@ -1304,22 +1304,21 @@ const SalaryReports = () => {
               <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
                 <CardTitle>{ar ? `تقرير إجمالي بالمحطات - ${selectedMonth !== 'all' ? monthNamesAr[parseInt(selectedMonth) - 1] : 'كل السنة'} ${selectedYear}` : `Stations Total Report - ${selectedMonth !== 'all' ? monthNamesEn[parseInt(selectedMonth) - 1] : 'Full Year'} ${selectedYear}`}</CardTitle>
                 <div className={cn("flex gap-2 flex-wrap", isRTL && "flex-row-reverse")}>
-                  <Button variant="outline" size="sm" onClick={handlePrintMonthlyByStation}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة بالمحطة' : 'Print by Station'}</Button>
+                  <Button variant="outline" size="sm" onClick={() => handlePrintMonthlyByStation(stationCompanyTab)}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة بالمحطة' : 'Print by Station'}</Button>
                   <Button variant="outline" size="sm" onClick={handlePrintMonthlySummary}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة ملخص شهري' : 'Print Monthly Summary'}</Button>
-                  <Button variant="outline" size="sm" onClick={() => { const mLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year'); exportToPDF({ title: ar ? `تقرير إجمالي بالمحطات - ${mLbl} ${selectedYear}` : `Stations Total Report - ${mLbl} ${selectedYear}`, data: getStationExportData(), columns: getStationExportColumns(), fileName: 'monthly_by_station' }); }}><Download className="w-4 h-4 mr-1" />PDF</Button>
+                  <Button variant="outline" size="sm" onClick={() => { const mLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year'); const cLbl = stationCompanyTab === 'aero' ? (ar ? 'لينك إيرو' : 'Link Aero') : (ar ? 'لينك كارجو' : 'Link Cargo'); exportToPDF({ title: ar ? `تقرير إجمالي بالمحطات - ${cLbl} - ${mLbl} ${selectedYear}` : `Stations Total Report - ${cLbl} - ${mLbl} ${selectedYear}`, data: getStationExportData(stationCompanyTab), columns: getStationExportColumns(), fileName: `monthly_by_station_${stationCompanyTab}` }); }}><Download className="w-4 h-4 mr-1" />PDF</Button>
                   <Button variant="outline" size="sm" onClick={async () => {
-                    if (monthlyByStation.length === 0) { toast.error(ar ? 'لا توجد بيانات للتصدير' : 'No data to export'); return; }
+                    const filteredRows = monthlyByStation.filter(r => stationCompanyTab === 'cargo' ? isLinkCargo(r.stationKey) : !isLinkCargo(r.stationKey));
+                    if (filteredRows.length === 0) { toast.error(ar ? 'لا توجد بيانات للتصدير' : 'No data to export'); return; }
                     try {
                       const mLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year');
+                      const cLbl = stationCompanyTab === 'aero' ? (ar ? 'لينك إيرو' : 'Link Aero') : (ar ? 'لينك كارجو' : 'Link Cargo');
                       await exportMonthlyByStationExcel({
-                        title: ar ? `تقرير إجمالي بالمحطات - ${mLbl} ${selectedYear}` : `Stations Total Report - ${mLbl} ${selectedYear}`,
+                        title: ar ? `تقرير إجمالي بالمحطات - ${cLbl} - ${mLbl} ${selectedYear}` : `Stations Total Report - ${cLbl} - ${mLbl} ${selectedYear}`,
                         ar,
-                        rows: monthlyByStation,
-                        kpis: getExcelKpis(),
-                        secondaryStationKeys: LINK_CARGO_KEYS,
-                        mainGroupLabel: ar ? 'لينك إيرو' : 'Link Aero',
-                        secondaryGroupLabel: ar ? 'لينك كارجو' : 'Link Cargo',
-                        fileName: `monthly_by_station_${selectedYear}`,
+                        rows: filteredRows,
+                        kpis: getExcelKpis(stationCompanyTab),
+                        fileName: `monthly_by_station_${stationCompanyTab}_${selectedYear}`,
                       });
                       toast.success(ar ? 'تم تصدير الملف' : 'Exported');
                     } catch (e) { console.error(e); toast.error(ar ? 'فشل التصدير' : 'Export failed'); }
