@@ -1135,7 +1135,14 @@ const SalaryReports = () => {
               </div>
             </CardHeader>
             <CardContent className="overflow-auto">
-              {filtered.length === 0 ? (
+              <Tabs value={empCompanyTab} onValueChange={(v) => setEmpCompanyTab(v as 'aero' | 'cargo')} className="w-full mb-4" dir={isRTL ? 'rtl' : 'ltr'}>
+                <TabsList className="grid grid-cols-2 w-full max-w-md mb-4">
+                  <TabsTrigger value="aero">{ar ? 'لينك إيرو' : 'Link Aero'}</TabsTrigger>
+                  <TabsTrigger value="cargo">{ar ? 'لينك كارجو' : 'Link Cargo'}</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              {renderStatsGrid(empCompanyTab === 'aero' ? aeroStats : cargoStats)}
+              {(empCompanyTab === 'aero' ? aeroFiltered : cargoFiltered).length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">{ar ? 'لا توجد بيانات للفترة المحددة' : 'No data for selected period'}</div>
               ) : (
                 <Table>
