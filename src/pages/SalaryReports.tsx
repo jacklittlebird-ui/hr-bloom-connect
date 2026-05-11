@@ -20,6 +20,10 @@ import { toast } from 'sonner';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16', '#e11d48', '#0ea5e9', '#a855f7'];
 
+// Link Cargo is treated as a separate company (not just a station)
+const LINK_CARGO_KEYS = ['capital', 'lkcargo_alex'];
+const isLinkCargo = (k?: string) => !!k && LINK_CARGO_KEYS.includes(k);
+
 const SalaryReports = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
@@ -598,15 +602,24 @@ const SalaryReports = () => {
     setTimeout(() => w.print(), 600);
   }, [activeMonths, ar, selectedYear]);
 
-  // KPI cards for Excel export
-  const getExcelKpis = (): EDKpi[] => [
-    { label: ar ? 'إجمالي الصافي' : 'Total Net', value: totalNet.toLocaleString(), color: 'primary' },
-    { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: totalGross.toLocaleString(), color: 'green' },
-    { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: totalDeductions.toLocaleString(), color: 'red' },
-    { label: ar ? 'مساهمات الشركة' : 'Company Cost', value: totalEmployer.toLocaleString(), color: 'blue' },
-    { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avgSalary.toLocaleString(), color: 'amber' },
-    { label: ar ? 'عدد الموظفين' : 'Employees', value: String(uniqueEmps), color: 'purple' },
-  ];
+  // KPI cards for Excel export — split into Main Company vs Link Cargo
+  const getExcelKpis = (): EDKpi[] => {
+    const lk = filtered.filter(e => isLinkCargo(e.stationLocation));
+    const mn = filtered.filter(e => !isLinkCargo(e.stationLocation));
+    const sum = (arr: typeof filtered, fn: (e: typeof filtered[number]) => number) => arr.reduce((s, e) => s + fn(e), 0);
+    const mNet = sum(mn, e => e.netSalary), mGross = sum(mn, e => e.gross), mEmps = new Set(mn.map(e => e.employeeId)).size;
+    const lNet = sum(lk, e => e.netSalary), lGross = sum(lk, e => e.gross), lEmps = new Set(lk.map(e => e.employeeId)).size;
+    const mainLbl = ar ? 'الرئيسية' : 'Main';
+    const lkLbl = ar ? 'لينك كارجو' : 'Link Cargo';
+    return [
+      { label: `${ar ? 'صافي' : 'Net'} - ${mainLbl}`, value: mNet.toLocaleString(), color: 'primary' },
+      { label: `${ar ? 'إجمالي' : 'Gross'} - ${mainLbl}`, value: mGross.toLocaleString(), color: 'green' },
+      { label: `${ar ? 'موظفي' : 'Emps'} - ${mainLbl}`, value: String(mEmps), color: 'blue' },
+      { label: `${ar ? 'صافي' : 'Net'} - ${lkLbl}`, value: lNet.toLocaleString(), color: 'purple' },
+      { label: `${ar ? 'إجمالي' : 'Gross'} - ${lkLbl}`, value: lGross.toLocaleString(), color: 'amber' },
+      { label: `${ar ? 'موظفي' : 'Emps'} - ${lkLbl}`, value: String(lEmps), color: 'red' },
+    ];
+  };
 
   // Export helpers
   const getDetailExportData = () => detailedSortedRecords.map(e => ({
@@ -653,54 +666,76 @@ const SalaryReports = () => {
 
   const getDetailExportDataFull = () => {
     const result: Record<string, unknown>[] = [];
-    const grandTotals = calcStationTotals(detailedSortedRecords);
-    detailedByStation.forEach((records, stKey) => {
-      const stTotals = calcStationTotals(records);
-      records.forEach(e => {
-        result.push({
-          id: e.employeeCode || e.employeeId,
-          name: ar ? e.employeeName : e.employeeNameEn,
-          dept: e.department,
-          station: getStationLabel(e.stationLocation),
-          basic: e.basicSalary, transport: e.transportAllowance, incentives: e.incentives,
-          stationAllow: e.stationAllowance, mobileAllow: e.mobileAllowance, living: e.livingAllowance,
-          overtime: e.overtimePay, bonus: e.bonusAmount, gross: e.gross,
-          insurance: e.employeeInsurance, loans: e.loanPayment, advances: e.advanceAmount,
-          mobileBill: e.mobileBill, leaveDed: e.leaveDeduction, penalty: e.penaltyAmount,
-          totalDed: e.totalDeductions, net: e.netSalary,
-          empIns: e.employerSocialInsurance, health: e.healthInsurance, tax: e.incomeTax,
-          totalEmployer: e.employerSocialInsurance + e.healthInsurance + e.incomeTax,
-        });
-      });
-      // Station subtotal row
+
+    const buildEmployeeRow = (e: ProcessedPayroll) => ({
+      id: e.employeeCode || e.employeeId,
+      name: ar ? e.employeeName : e.employeeNameEn,
+      dept: e.department,
+      station: getStationLabel(e.stationLocation),
+      stationKey: e.stationLocation,
+      basic: e.basicSalary, transport: e.transportAllowance, incentives: e.incentives,
+      stationAllow: e.stationAllowance, mobileAllow: e.mobileAllowance, living: e.livingAllowance,
+      overtime: e.overtimePay, bonus: e.bonusAmount, gross: e.gross,
+      insurance: e.employeeInsurance, loans: e.loanPayment, advances: e.advanceAmount,
+      mobileBill: e.mobileBill, leaveDed: e.leaveDeduction, penalty: e.penaltyAmount,
+      totalDed: e.totalDeductions, net: e.netSalary,
+      empIns: e.employerSocialInsurance, health: e.healthInsurance, tax: e.incomeTax,
+      totalEmployer: e.employerSocialInsurance + e.healthInsurance + e.incomeTax,
+    });
+
+    const buildTotalsRow = (label: string, t: ReturnType<typeof calcStationTotals>, kind: 'subtotal' | 'grand') => ({
+      id: '', name: label, dept: `(${t.count})`, station: '', stationKey: '',
+      basic: t.basic, transport: t.transport, incentives: t.incentives,
+      stationAllow: t.stationAllow, mobileAllow: t.mobileAllow, living: t.living,
+      overtime: t.overtime, bonus: t.bonus, gross: t.gross,
+      insurance: t.insurance, loans: t.loans, advances: t.advances,
+      mobileBill: t.mobileBill, leaveDed: t.leaveDed, penalty: t.penalty,
+      totalDed: t.totalDed, net: t.net,
+      empIns: t.empIns, health: t.health, tax: t.tax,
+      totalEmployer: t.empIns + t.health + t.tax,
+      kind,
+    });
+
+    const renderGroup = (entries: Array<[string, ProcessedPayroll[]]>, groupLabel: string) => {
+      if (entries.length === 0) return;
+      // Group banner row
       result.push({
-        id: '', name: ar ? `إجمالي ${getStationLabel(stKey)}` : `${getStationLabel(stKey)} Total`,
-        dept: `(${stTotals.count})`, station: '',
-        basic: stTotals.basic, transport: stTotals.transport, incentives: stTotals.incentives,
-        stationAllow: stTotals.stationAllow, mobileAllow: stTotals.mobileAllow, living: stTotals.living,
-        overtime: stTotals.overtime, bonus: stTotals.bonus, gross: stTotals.gross,
-        insurance: stTotals.insurance, loans: stTotals.loans, advances: stTotals.advances,
-        mobileBill: stTotals.mobileBill, leaveDed: stTotals.leaveDed, penalty: stTotals.penalty,
-        totalDed: stTotals.totalDed, net: stTotals.net,
-        empIns: stTotals.empIns, health: stTotals.health, tax: stTotals.tax,
-        totalEmployer: stTotals.empIns + stTotals.health + stTotals.tax,
-        kind: 'subtotal',
+        id: '', name: groupLabel, dept: '', station: '', stationKey: '',
+        basic: 0, transport: 0, incentives: 0, stationAllow: 0, mobileAllow: 0, living: 0,
+        overtime: 0, bonus: 0, gross: 0, insurance: 0, loans: 0, advances: 0,
+        mobileBill: 0, leaveDed: 0, penalty: 0, totalDed: 0, net: 0,
+        empIns: 0, health: 0, tax: 0, totalEmployer: 0,
+        kind: 'banner',
       });
-    });
-    // Grand total
-    result.push({
-      id: '', name: ar ? 'الإجمالي العام' : 'Grand Total',
-      dept: `(${grandTotals.count})`, station: '',
-      basic: grandTotals.basic, transport: grandTotals.transport, incentives: grandTotals.incentives,
-      stationAllow: grandTotals.stationAllow, mobileAllow: grandTotals.mobileAllow, living: grandTotals.living,
-      overtime: grandTotals.overtime, bonus: grandTotals.bonus, gross: grandTotals.gross,
-      insurance: grandTotals.insurance, loans: grandTotals.loans, advances: grandTotals.advances,
-      mobileBill: grandTotals.mobileBill, leaveDed: grandTotals.leaveDed, penalty: grandTotals.penalty,
-      totalDed: grandTotals.totalDed, net: grandTotals.net,
-      empIns: grandTotals.empIns, health: grandTotals.health, tax: grandTotals.tax,
-      totalEmployer: grandTotals.empIns + grandTotals.health + grandTotals.tax,
-      kind: 'grand',
-    });
+      const allRecords: ProcessedPayroll[] = [];
+      entries.forEach(([stKey, records]) => {
+        const stTotals = calcStationTotals(records);
+        records.forEach(e => result.push(buildEmployeeRow(e)));
+        result.push(buildTotalsRow(ar ? `إجمالي ${getStationLabel(stKey)}` : `${getStationLabel(stKey)} Total`, stTotals, 'subtotal'));
+        allRecords.push(...records);
+      });
+      const groupTotals = calcStationTotals(allRecords);
+      result.push(buildTotalsRow(ar ? `إجمالي ${groupLabel}` : `${groupLabel} Grand Total`, groupTotals, 'grand'));
+    };
+
+    const allEntries = Array.from(detailedByStation.entries());
+    const mainEntries = allEntries.filter(([k]) => !isLinkCargo(k));
+    const lkEntries = allEntries.filter(([k]) => isLinkCargo(k));
+
+    if (lkEntries.length > 0) {
+      renderGroup(mainEntries, ar ? 'الشركة الرئيسية' : 'Main Company');
+      renderGroup(lkEntries, ar ? 'لينك كارجو' : 'Link Cargo');
+    } else {
+      // No split needed — keep original flat layout with single grand total
+      const grandTotals = calcStationTotals(detailedSortedRecords);
+      mainEntries.forEach(([stKey, records]) => {
+        const stTotals = calcStationTotals(records);
+        records.forEach(e => result.push(buildEmployeeRow(e)));
+        result.push(buildTotalsRow(ar ? `إجمالي ${getStationLabel(stKey)}` : `${getStationLabel(stKey)} Total`, stTotals, 'subtotal'));
+      });
+      result.push(buildTotalsRow(ar ? 'الإجمالي العام' : 'Grand Total', grandTotals, 'grand'));
+    }
+
     return result;
   };
 
@@ -1150,6 +1185,9 @@ const SalaryReports = () => {
                         ar,
                         rows: monthlyByStation,
                         kpis: getExcelKpis(),
+                        secondaryStationKeys: LINK_CARGO_KEYS,
+                        mainGroupLabel: ar ? 'الشركة الرئيسية' : 'Main Company',
+                        secondaryGroupLabel: ar ? 'لينك كارجو' : 'Link Cargo',
                         fileName: `monthly_by_station_${selectedYear}`,
                       });
                       toast.success(ar ? 'تم تصدير الملف' : 'Exported');

@@ -26,8 +26,8 @@ export interface EDRow {
   health: number;
   tax: number;
   totalEmployer: number;
-  // Marker rows: kind === 'subtotal' | 'grand' | undefined (employee row)
-  kind?: 'subtotal' | 'grand';
+  // Marker rows: kind === 'subtotal' | 'grand' | 'banner' | undefined (employee row)
+  kind?: 'subtotal' | 'grand' | 'banner';
 }
 
 export type EDKpiColor = 'primary' | 'green' | 'red' | 'blue' | 'amber' | 'purple';
@@ -196,11 +196,26 @@ export async function exportEmployeeDetailExcel(input: EDInput): Promise<void> {
   rows.forEach(r => {
     const isSub = r.kind === 'subtotal';
     const isGrand = r.kind === 'grand';
+    const isBanner = r.kind === 'banner';
     const isTotal = isSub || isGrand;
 
-    if (isTotal) zebra = false;
+    if (isTotal || isBanner) zebra = false;
 
     const row = ws.getRow(rowIdx++);
+
+    // Banner row: merged title across all columns
+    if (isBanner) {
+      ws.mergeCells(rowIdx - 1, 1, rowIdx - 1, colCount);
+      const bc = row.getCell(1);
+      bc.value = r.name;
+      bc.font = { name: 'Baloo Bhaijaan 2', size: 12, bold: true, color: { argb: 'FFFFFFFF' } };
+      fill(bc, C.titleBg);
+      bc.alignment = { horizontal: 'center', vertical: 'middle' };
+      setBorder(bc);
+      row.height = 22;
+      return;
+    }
+
     const vals: (string | number)[] = [
       r.id, r.name, r.dept, r.station,
       r.basic, r.transport, r.incentives,
