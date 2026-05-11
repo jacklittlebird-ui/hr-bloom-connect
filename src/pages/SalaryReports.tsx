@@ -673,6 +673,7 @@ const SalaryReports = () => {
         totalDed: stTotals.totalDed, net: stTotals.net,
         empIns: stTotals.empIns, health: stTotals.health, tax: stTotals.tax,
         totalEmployer: stTotals.empIns + stTotals.health + stTotals.tax,
+        kind: 'subtotal',
       });
     });
     // Grand total
@@ -687,6 +688,7 @@ const SalaryReports = () => {
       totalDed: grandTotals.totalDed, net: grandTotals.net,
       empIns: grandTotals.empIns, health: grandTotals.health, tax: grandTotals.tax,
       totalEmployer: grandTotals.empIns + grandTotals.health + grandTotals.tax,
+      kind: 'grand',
     });
     return result;
   };
