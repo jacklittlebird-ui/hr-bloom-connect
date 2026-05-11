@@ -24,10 +24,19 @@ export interface MBSRow {
   incomeTax: number;
 }
 
+export type MBSKpiColor = 'primary' | 'green' | 'red' | 'blue' | 'amber' | 'purple';
+
+export interface MBSKpi {
+  label: string;
+  value: string | number;
+  color: MBSKpiColor;
+}
+
 export interface MBSInput {
   title: string;
   ar: boolean;
   rows: MBSRow[];
+  kpis?: MBSKpi[];
   fileName?: string;
 }
 
