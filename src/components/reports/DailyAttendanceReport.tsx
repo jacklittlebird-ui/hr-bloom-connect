@@ -36,8 +36,15 @@ interface AttendanceRow {
   status: string;
   is_late: boolean | null;
 }
+interface LeaveRow { employee_id: string; leave_type: string; start_date: string; end_date: string; }
+interface MissionRow { employee_id: string; date: string; mission_type: string; hours: number | null; }
+interface PermissionRow { employee_id: string; date: string; hours: number | null; permission_type: string; start_time: string | null; end_time: string | null; }
+interface OvertimeRow { employee_id: string; date: string; hours: number; overtime_type: string; }
 
 type DayFilter = 'all' | 'present' | 'late' | 'absent';
+
+const LEAVE_LABEL_AR: Record<string, string> = { annual: 'سنوية', sick: 'مرضية', casual: 'عارضة', unpaid: 'بدون أجر', marriage: 'زواج' };
+const LEAVE_LABEL_EN: Record<string, string> = { annual: 'Annual', sick: 'Sick', casual: 'Casual', unpaid: 'Unpaid', marriage: 'Marriage' };
 
 const PIN_KEY = 'attendanceReport.pinSummary';
 
