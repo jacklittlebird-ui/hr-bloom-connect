@@ -715,7 +715,7 @@ const SalaryReports = () => {
         allRecords.push(...records);
       });
       const groupTotals = calcStationTotals(allRecords);
-      result.push(buildTotalsRow(ar ? `إجمالي ${groupLabel}` : `${groupLabel} Grand Total`, groupTotals, 'grand'));
+      result.push(buildTotalsRow(ar ? `إجمالي عام ${groupLabel}` : `${groupLabel} Grand Total`, groupTotals, 'grand'));
     };
 
     const allEntries = Array.from(detailedByStation.entries());
