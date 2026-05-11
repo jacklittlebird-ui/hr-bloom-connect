@@ -15,7 +15,7 @@ import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
 import { initialDepartments } from '@/data/departments';
 import { exportMonthlyByStationExcel } from '@/lib/monthlyByStationExcel';
-import { exportEmployeeDetailExcel, type EDRow } from '@/lib/employeeDetailExcel';
+import { exportEmployeeDetailExcel, type EDRow, type EDKpi } from '@/lib/employeeDetailExcel';
 import { toast } from 'sonner';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16', '#e11d48', '#0ea5e9', '#a855f7'];
@@ -598,6 +598,16 @@ const SalaryReports = () => {
     setTimeout(() => w.print(), 600);
   }, [activeMonths, ar, selectedYear]);
 
+  // KPI cards for Excel export
+  const getExcelKpis = (): EDKpi[] => [
+    { label: ar ? 'إجمالي الصافي' : 'Total Net', value: totalNet.toLocaleString(), color: 'primary' },
+    { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: totalGross.toLocaleString(), color: 'green' },
+    { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: totalDeductions.toLocaleString(), color: 'red' },
+    { label: ar ? 'مساهمات الشركة' : 'Company Cost', value: totalEmployer.toLocaleString(), color: 'blue' },
+    { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avgSalary.toLocaleString(), color: 'amber' },
+    { label: ar ? 'عدد الموظفين' : 'Employees', value: String(uniqueEmps), color: 'purple' },
+  ];
+
   // Export helpers
   const getDetailExportData = () => detailedSortedRecords.map(e => ({
     id: e.employeeCode || e.employeeId,
@@ -825,7 +835,7 @@ const SalaryReports = () => {
             <div className={cn("flex gap-2 flex-wrap", isRTL && "flex-row-reverse")}>
               <Button variant="outline" size="sm" onClick={handlePrintMonthlyDetail}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة تفصيلي' : 'Print Detail'}</Button>
               <Button variant="outline" size="sm" onClick={handlePrintMonthlySummary}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة ملخص' : 'Print Summary'}</Button>
-              <Button variant="outline" size="sm" onClick={async () => { try { await exportEmployeeDetailExcel({ title: ar ? 'تقرير الرواتب' : 'Salary Report', ar, rows: getDetailExportDataFull() as unknown as EDRow[], fileName: 'salary_report' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
+              <Button variant="outline" size="sm" onClick={async () => { try { await exportEmployeeDetailExcel({ title: ar ? 'تقرير الرواتب' : 'Salary Report', ar, rows: getDetailExportDataFull() as unknown as EDRow[], kpis: getExcelKpis(), fileName: 'salary_report' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
               <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: ar ? 'تقرير الرواتب' : 'Salary Report', data: getDetailExportDataFull(), columns: getDetailColumns() })}><Download className="w-4 h-4 mr-1" />PDF</Button>
             </div>
           </div>
@@ -1005,7 +1015,7 @@ const SalaryReports = () => {
                 <CardTitle>{ar ? 'بيانات الموظفين التفصيلية' : 'Employee Detailed Data'}</CardTitle>
                 <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
                   <Button variant="outline" size="sm" onClick={handlePrintMonthlyDetail}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
-                  <Button variant="outline" size="sm" onClick={async () => { try { await exportEmployeeDetailExcel({ title: ar ? 'تفصيل الموظفين' : 'Employee Detail', ar, rows: getDetailExportDataFull() as unknown as EDRow[], fileName: 'employee_detail' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
+                  <Button variant="outline" size="sm" onClick={async () => { try { await exportEmployeeDetailExcel({ title: ar ? 'تفصيل الموظفين' : 'Employee Detail', ar, rows: getDetailExportDataFull() as unknown as EDRow[], kpis: getExcelKpis(), fileName: 'employee_detail' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
                 </div>
               </div>
             </CardHeader>
