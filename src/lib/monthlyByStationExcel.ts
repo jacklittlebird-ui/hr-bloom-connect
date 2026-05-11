@@ -291,7 +291,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
 
   const hasSplit = secondaryGroups.size > 0;
   if (hasSplit) {
-    renderGroup(mainGroups, input.mainGroupLabel || (ar ? 'الشركة الرئيسية' : 'Main Company'));
+    renderGroup(mainGroups, input.mainGroupLabel || (ar ? 'لينك إيرو' : 'Link Aero'));
     // spacer
     ws.getRow(rowIdx++).height = 8;
     renderGroup(secondaryGroups, input.secondaryGroupLabel || (ar ? 'لينك كارجو' : 'Link Cargo'));
