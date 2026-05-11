@@ -847,21 +847,31 @@ const SalaryReports = () => {
     const result: any[] = [];
     const linkAeroTotals: any = { stationName: ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', month: '', ...createMonthlyTotals(), totalEmployer: 0 };
     const linkCargoTotals: any = { stationName: ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', month: '', ...createMonthlyTotals(), totalEmployer: 0 };
-    stationGroups.forEach((rows, stKey) => {
-      const stTotals: any = { stationName: ar ? `إجمالي ${rows[0].stationName}` : `${rows[0].stationName} Total`, month: '', count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0, totalEmployer: 0 };
-      rows.forEach(r => {
-        result.push({ ...r, totalEmployer: r.employerInsurance + r.healthInsurance + r.incomeTax });
-        ['count','basic','transport','incentives','stationAllowance','mobileAllowance','livingAllowance','overtimePay','bonuses','gross','insurance','loans','totalDeductions','net','employerInsurance','healthInsurance','incomeTax'].forEach(k => { stTotals[k] += (r as any)[k]; });
+    const allEntries = Array.from(stationGroups.entries());
+    const aeroEntries = allEntries.filter(([k]) => !isLinkCargo(k));
+    const cargoEntries = allEntries.filter(([k]) => isLinkCargo(k));
+
+    const renderEntries = (entries: typeof allEntries, companyTotals: any) => {
+      entries.forEach(([, rows]) => {
+        const stTotals: any = { stationName: ar ? `إجمالي ${rows[0].stationName}` : `${rows[0].stationName} Total`, month: '', count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0, totalEmployer: 0 };
+        rows.forEach(r => {
+          result.push({ ...r, totalEmployer: r.employerInsurance + r.healthInsurance + r.incomeTax });
+          ['count','basic','transport','incentives','stationAllowance','mobileAllowance','livingAllowance','overtimePay','bonuses','gross','insurance','loans','totalDeductions','net','employerInsurance','healthInsurance','incomeTax'].forEach(k => { stTotals[k] += (r as any)[k]; });
+        });
+        stTotals.totalEmployer = stTotals.employerInsurance + stTotals.healthInsurance + stTotals.incomeTax;
+        result.push(stTotals);
+        monthlyTotalKeys.forEach(k => { companyTotals[k] += stTotals[k]; });
       });
-      stTotals.totalEmployer = stTotals.employerInsurance + stTotals.healthInsurance + stTotals.incomeTax;
-      result.push(stTotals);
-      const companyTotals = isLinkCargo(stKey) ? linkCargoTotals : linkAeroTotals;
-      monthlyTotalKeys.forEach(k => { companyTotals[k] += stTotals[k]; });
-    });
-    [linkAeroTotals, linkCargoTotals].forEach(t => {
-      t.totalEmployer = t.employerInsurance + t.healthInsurance + t.incomeTax;
-      if (t.count > 0) result.push(t);
-    });
+    };
+
+    renderEntries(aeroEntries, linkAeroTotals);
+    linkAeroTotals.totalEmployer = linkAeroTotals.employerInsurance + linkAeroTotals.healthInsurance + linkAeroTotals.incomeTax;
+    if (linkAeroTotals.count > 0) result.push(linkAeroTotals);
+
+    renderEntries(cargoEntries, linkCargoTotals);
+    linkCargoTotals.totalEmployer = linkCargoTotals.employerInsurance + linkCargoTotals.healthInsurance + linkCargoTotals.incomeTax;
+    if (linkCargoTotals.count > 0) result.push(linkCargoTotals);
+
     return result;
   };
 
