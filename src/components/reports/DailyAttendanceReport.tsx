@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 import { WordPreviewDialog } from '@/components/reports/WordPreviewDialog';
 import { toast } from '@/hooks/use-toast';
+import { exportDailyAttendanceExcel } from '@/lib/dailyAttendanceExcel';
 
 interface StationRow { id: string; name_ar: string; name_en: string; weekend_days?: number[] | null; }
 interface EmployeeRow { id: string; employee_code: string; name_ar: string; name_en: string; station_id: string | null; department_id: string | null; }
