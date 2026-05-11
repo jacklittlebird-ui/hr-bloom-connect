@@ -609,7 +609,7 @@ const SalaryReports = () => {
     const sum = (arr: typeof filtered, fn: (e: typeof filtered[number]) => number) => arr.reduce((s, e) => s + fn(e), 0);
     const mNet = sum(mn, e => e.netSalary), mGross = sum(mn, e => e.gross), mEmps = new Set(mn.map(e => e.employeeId)).size;
     const lNet = sum(lk, e => e.netSalary), lGross = sum(lk, e => e.gross), lEmps = new Set(lk.map(e => e.employeeId)).size;
-    const mainLbl = ar ? 'الرئيسية' : 'Main';
+    const mainLbl = ar ? 'لينك إيرو' : 'Link Aero';
     const lkLbl = ar ? 'لينك كارجو' : 'Link Cargo';
     return [
       { label: `${ar ? 'صافي' : 'Net'} - ${mainLbl}`, value: mNet.toLocaleString(), color: 'primary' },
