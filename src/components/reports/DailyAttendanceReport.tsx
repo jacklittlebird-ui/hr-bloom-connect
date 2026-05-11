@@ -716,12 +716,16 @@ export const DailyAttendanceReport = () => {
 
       <div ref={reportRef} className="space-y-6">
         {/* Header summary */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <SummaryStat icon={Building2} label={ar ? 'عدد المحطات' : 'Stations'} value={totals.stationsCount} color="text-blue-600" bg="bg-blue-100" />
           <SummaryStat icon={Users} label={ar ? 'إجمالي الموظفين' : 'Employees'} value={totals.employeesCount} color="text-indigo-600" bg="bg-indigo-100" />
           <SummaryStat icon={Clock} label={ar ? 'إجمالي ساعات العمل' : 'Total Work Hours'} value={fmtHours(totals.totalHours)} color="text-emerald-600" bg="bg-emerald-100" />
           <SummaryStat icon={CalendarDays} label={ar ? 'أيام الحضور' : 'Present Days'} value={totals.present} color="text-green-600" bg="bg-green-100" />
           <SummaryStat icon={CalendarDays} label={ar ? 'أيام الغياب' : 'Absent Days'} value={totals.absent} color="text-red-600" bg="bg-red-100" />
+          <SummaryStat icon={Plane} label={ar ? 'أيام الإجازات' : 'Leave Days'} value={totals.leaves} color="text-sky-600" bg="bg-sky-100" />
+          <SummaryStat icon={Briefcase} label={ar ? 'المأموريات' : 'Missions'} value={totals.missions} color="text-purple-600" bg="bg-purple-100" />
+          <SummaryStat icon={FileClock} label={ar ? 'الأذونات' : 'Permissions'} value={totals.permissions} color="text-cyan-600" bg="bg-cyan-100" />
+          <SummaryStat icon={Timer} label={ar ? 'ساعات إضافي' : 'Overtime Hours'} value={fmtHours(totals.overtimeHours)} color="text-orange-600" bg="bg-orange-100" />
         </div>
 
         {loading && (
