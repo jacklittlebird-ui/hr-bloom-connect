@@ -612,8 +612,8 @@ const SalaryReports = () => {
         <div class="summary-card"><div class="val">${grandTotals.totalDed.toLocaleString()}</div><div class="lbl">${ar ? 'إجمالي الخصومات' : 'Total Deductions'}</div></div>
         <div class="summary-card"><div class="val">${grandTotals.net.toLocaleString()}</div><div class="lbl">${ar ? 'إجمالي الصافي' : 'Total Net'}</div></div>
         <div class="summary-card"><div class="val">${(grandTotals.empIns + grandTotals.health + grandTotals.tax).toLocaleString()}</div><div class="lbl">${ar ? 'مساهمات الشركة' : 'Company Cost'}</div></div>
-        <div class="summary-card"><div class="val">${detailedSortedRecords.length}</div><div class="lbl">${ar ? 'عدد السجلات' : 'Records'}</div></div>
-        <div class="summary-card"><div class="val">${detailedByStation.size}</div><div class="lbl">${ar ? 'عدد المحطات' : 'Stations'}</div></div>
+        <div class="summary-card"><div class="val">${filteredRecords.length}</div><div class="lbl">${ar ? 'عدد السجلات' : 'Records'}</div></div>
+        <div class="summary-card"><div class="val">${filteredByStation.size}</div><div class="lbl">${ar ? 'عدد المحطات' : 'Stations'}</div></div>
       </div>
       ${pages}
       ${grandTotalPage}
