@@ -242,9 +242,14 @@ const SalaryReports = () => {
   // Group monthlyByStation by station for printing
   const handlePrintMonthlyByStation = useCallback((companyTab?: 'aero' | 'cargo') => {
     const monthLabel = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year');
-    const title = ar ? `تقرير إجمالي بالمحطات - ${monthLabel} ${selectedYear}` : `Stations Total Report - ${monthLabel} ${selectedYear}`;
+    const companyLabel = companyTab === 'aero' ? (ar ? 'لينك إيرو' : 'Link Aero') : companyTab === 'cargo' ? (ar ? 'لينك كارجو' : 'Link Cargo') : '';
+    const titleBase = ar ? `تقرير إجمالي بالمحطات - ${monthLabel} ${selectedYear}` : `Stations Total Report - ${monthLabel} ${selectedYear}`;
+    const title = companyLabel ? `${titleBase} - ${companyLabel}` : titleBase;
+    const filteredMBS = companyTab
+      ? monthlyByStation.filter(r => companyTab === 'cargo' ? isLinkCargo(r.stationKey) : !isLinkCargo(r.stationKey))
+      : monthlyByStation;
     const stationGroups = new Map<string, typeof monthlyByStation>();
-    monthlyByStation.forEach(row => {
+    filteredMBS.forEach(row => {
       if (!stationGroups.has(row.stationKey)) stationGroups.set(row.stationKey, []);
       stationGroups.get(row.stationKey)!.push(row);
     });
