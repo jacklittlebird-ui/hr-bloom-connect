@@ -740,7 +740,7 @@ const SalaryReports = () => {
     { header: ar ? 'إجمالي مساهمات ص.ع' : 'Total Employer', key: 'totalEmployer' },
   ];
 
-  const getDetailExportDataFull = () => {
+  const getDetailExportDataFull = (companyTab?: 'aero' | 'cargo') => {
     const result: Record<string, unknown>[] = [];
 
     const buildEmployeeRow = (e: ProcessedPayroll) => ({
