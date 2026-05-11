@@ -677,22 +677,23 @@ const SalaryReports = () => {
     setTimeout(() => w.print(), 600);
   }, [activeMonths, ar, selectedYear]);
 
-  // KPI cards for Excel export — split into Link Aero vs Link Cargo
-  const getExcelKpis = (): EDKpi[] => {
-    const lk = filtered.filter(e => isLinkCargo(e.stationLocation));
-    const mn = filtered.filter(e => !isLinkCargo(e.stationLocation));
-    const sum = (arr: typeof filtered, fn: (e: typeof filtered[number]) => number) => arr.reduce((s, e) => s + fn(e), 0);
-    const mNet = sum(mn, e => e.netSalary), mGross = sum(mn, e => e.gross), mEmps = new Set(mn.map(e => e.employeeId)).size;
-    const lNet = sum(lk, e => e.netSalary), lGross = sum(lk, e => e.gross), lEmps = new Set(lk.map(e => e.employeeId)).size;
-    const mainLbl = ar ? 'لينك إيرو' : 'Link Aero';
-    const lkLbl = ar ? 'لينك كارجو' : 'Link Cargo';
+  // KPI cards for Excel export — filtered by selected company
+  const getExcelKpis = (companyTab?: 'aero' | 'cargo'): EDKpi[] => {
+    const entries = companyTab === 'aero' ? aeroFiltered : companyTab === 'cargo' ? cargoFiltered : filtered;
+    const sum = (fn: (e: typeof filtered[number]) => number) => entries.reduce((s, e) => s + fn(e), 0);
+    const tNet = sum(e => e.netSalary);
+    const tGross = sum(e => e.gross);
+    const tDed = sum(e => e.totalDeductions);
+    const tEmp = sum(e => e.employerSocialInsurance + e.healthInsurance + e.incomeTax);
+    const emps = new Set(entries.map(e => e.employeeId)).size;
+    const avg = emps > 0 ? Math.round(tNet / emps) : 0;
     return [
-      { label: `${ar ? 'صافي' : 'Net'} - ${mainLbl}`, value: mNet.toLocaleString(), color: 'primary' },
-      { label: `${ar ? 'إجمالي' : 'Gross'} - ${mainLbl}`, value: mGross.toLocaleString(), color: 'green' },
-      { label: `${ar ? 'موظفي' : 'Emps'} - ${mainLbl}`, value: String(mEmps), color: 'blue' },
-      { label: `${ar ? 'صافي' : 'Net'} - ${lkLbl}`, value: lNet.toLocaleString(), color: 'purple' },
-      { label: `${ar ? 'إجمالي' : 'Gross'} - ${lkLbl}`, value: lGross.toLocaleString(), color: 'amber' },
-      { label: `${ar ? 'موظفي' : 'Emps'} - ${lkLbl}`, value: String(lEmps), color: 'red' },
+      { label: ar ? 'إجمالي الصافي' : 'Total Net', value: tNet.toLocaleString(), color: 'primary' },
+      { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: tGross.toLocaleString(), color: 'green' },
+      { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: tDed.toLocaleString(), color: 'red' },
+      { label: ar ? 'مساهمات الشركة' : 'Company Cost', value: tEmp.toLocaleString(), color: 'blue' },
+      { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avg.toLocaleString(), color: 'amber' },
+      { label: ar ? 'عدد الموظفين' : 'Employees', value: String(emps), color: 'purple' },
     ];
   };
 
