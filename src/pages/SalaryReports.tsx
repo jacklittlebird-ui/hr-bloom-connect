@@ -965,16 +965,7 @@ const SalaryReports = () => {
       </Card>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-        {stats.map((stat, i) => (
-          <Card key={i}><CardContent className="p-4">
-            <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-              <div className={cn("p-2 rounded-lg", stat.bg)}><stat.icon className={cn("w-5 h-5", stat.color)} /></div>
-              <div><p className="text-xs text-muted-foreground">{stat.label}</p><p className="text-lg font-bold">{stat.value}</p></div>
-            </div>
-          </CardContent></Card>
-        ))}
-      </div>
+      {renderStatsGrid(stats)}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
         <TabsList className="w-full justify-start mb-6 flex-wrap h-auto gap-1 bg-muted/50 p-1">
