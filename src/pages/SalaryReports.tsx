@@ -240,11 +240,16 @@ const SalaryReports = () => {
   }, [payrollEntries, selectedYear, selectedMonth, department, monthNames, ar]);
 
   // Group monthlyByStation by station for printing
-  const handlePrintMonthlyByStation = useCallback(() => {
+  const handlePrintMonthlyByStation = useCallback((companyTab?: 'aero' | 'cargo') => {
     const monthLabel = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year');
-    const title = ar ? `تقرير إجمالي بالمحطات - ${monthLabel} ${selectedYear}` : `Stations Total Report - ${monthLabel} ${selectedYear}`;
+    const companyLabel = companyTab === 'aero' ? (ar ? 'لينك إيرو' : 'Link Aero') : companyTab === 'cargo' ? (ar ? 'لينك كارجو' : 'Link Cargo') : '';
+    const titleBase = ar ? `تقرير إجمالي بالمحطات - ${monthLabel} ${selectedYear}` : `Stations Total Report - ${monthLabel} ${selectedYear}`;
+    const title = companyLabel ? `${titleBase} - ${companyLabel}` : titleBase;
+    const filteredMBS = companyTab
+      ? monthlyByStation.filter(r => companyTab === 'cargo' ? isLinkCargo(r.stationKey) : !isLinkCargo(r.stationKey))
+      : monthlyByStation;
     const stationGroups = new Map<string, typeof monthlyByStation>();
-    monthlyByStation.forEach(row => {
+    filteredMBS.forEach(row => {
       if (!stationGroups.has(row.stationKey)) stationGroups.set(row.stationKey, []);
       stationGroups.get(row.stationKey)!.push(row);
     });
@@ -336,7 +341,7 @@ const SalaryReports = () => {
 
     // Compute overall totals for summary cards
     const overallTotals = { count: 0, basic: 0, gross: 0, totalDeductions: 0, net: 0, empIns: 0, health: 0, tax: 0 };
-    monthlyByStation.forEach(r => {
+    filteredMBS.forEach(r => {
       overallTotals.count += r.count;
       overallTotals.basic += r.basic;
       overallTotals.gross += r.gross;
@@ -459,13 +464,26 @@ const SalaryReports = () => {
   });
 
   // Print detailed monthly report
-  const handlePrintMonthlyDetail = useCallback(() => {
-    const title = ar
-      ? `تقرير مسير الرواتب التفصيلي - ${selectedMonth !== 'all' ? monthNamesAr[parseInt(selectedMonth) - 1] : 'السنة'} ${selectedYear}`
-      : `Detailed Payroll Report - ${selectedMonth !== 'all' ? monthNamesEn[parseInt(selectedMonth) - 1] : 'Year'} ${selectedYear}`;
+  const handlePrintMonthlyDetail = useCallback((companyTab?: 'aero' | 'cargo') => {
+    const monthLabel = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'السنة' : 'Year');
+    const companyLabel = companyTab === 'aero' ? (ar ? 'لينك إيرو' : 'Link Aero') : companyTab === 'cargo' ? (ar ? 'لينك كارجو' : 'Link Cargo') : '';
+    const titleBase = ar
+      ? `تقرير مسير الرواتب التفصيلي - ${monthLabel} ${selectedYear}`
+      : `Detailed Payroll Report - ${monthLabel} ${selectedYear}`;
+    const title = companyLabel ? `${titleBase} - ${companyLabel}` : titleBase;
 
-    const grandTotals = calcStationTotals(detailedSortedRecords);
-    const allDetailEntries = Array.from(detailedByStation.entries());
+    const filteredRecords = companyTab
+      ? detailedSortedRecords.filter(r => companyTab === 'cargo' ? isLinkCargo(r.stationLocation) : !isLinkCargo(r.stationLocation))
+      : detailedSortedRecords;
+    const filteredByStation = new Map<string, ProcessedPayroll[]>();
+    filteredRecords.forEach(r => {
+      const key = r.stationLocation || '__none__';
+      if (!filteredByStation.has(key)) filteredByStation.set(key, []);
+      filteredByStation.get(key)!.push(r);
+    });
+
+    const grandTotals = calcStationTotals(filteredRecords);
+    const allDetailEntries = Array.from(filteredByStation.entries());
     const linkAeroDetailTotals = calcStationTotals(allDetailEntries.filter(([k]) => !isLinkCargo(k)).flatMap(([, records]) => records));
     const linkCargoDetailTotals = calcStationTotals(allDetailEntries.filter(([k]) => isLinkCargo(k)).flatMap(([, records]) => records));
 
@@ -519,7 +537,7 @@ const SalaryReports = () => {
 
     // Build pages - each station on a separate page (Link Aero stations first, then Link Cargo)
     let pages = '';
-    const sortedDetailedEntries = Array.from(detailedByStation.entries()).sort(([a], [b]) => Number(isLinkCargo(a)) - Number(isLinkCargo(b)));
+    const sortedDetailedEntries = Array.from(filteredByStation.entries()).sort(([a], [b]) => Number(isLinkCargo(a)) - Number(isLinkCargo(b)));
     sortedDetailedEntries.forEach(([stKey, records]) => {
       const stName = getStationLabel(stKey);
       const stTotals = calcStationTotals(records);
@@ -594,8 +612,8 @@ const SalaryReports = () => {
         <div class="summary-card"><div class="val">${grandTotals.totalDed.toLocaleString()}</div><div class="lbl">${ar ? 'إجمالي الخصومات' : 'Total Deductions'}</div></div>
         <div class="summary-card"><div class="val">${grandTotals.net.toLocaleString()}</div><div class="lbl">${ar ? 'إجمالي الصافي' : 'Total Net'}</div></div>
         <div class="summary-card"><div class="val">${(grandTotals.empIns + grandTotals.health + grandTotals.tax).toLocaleString()}</div><div class="lbl">${ar ? 'مساهمات الشركة' : 'Company Cost'}</div></div>
-        <div class="summary-card"><div class="val">${detailedSortedRecords.length}</div><div class="lbl">${ar ? 'عدد السجلات' : 'Records'}</div></div>
-        <div class="summary-card"><div class="val">${detailedByStation.size}</div><div class="lbl">${ar ? 'عدد المحطات' : 'Stations'}</div></div>
+        <div class="summary-card"><div class="val">${filteredRecords.length}</div><div class="lbl">${ar ? 'عدد السجلات' : 'Records'}</div></div>
+        <div class="summary-card"><div class="val">${filteredByStation.size}</div><div class="lbl">${ar ? 'عدد المحطات' : 'Stations'}</div></div>
       </div>
       ${pages}
       ${grandTotalPage}
@@ -677,22 +695,23 @@ const SalaryReports = () => {
     setTimeout(() => w.print(), 600);
   }, [activeMonths, ar, selectedYear]);
 
-  // KPI cards for Excel export — split into Link Aero vs Link Cargo
-  const getExcelKpis = (): EDKpi[] => {
-    const lk = filtered.filter(e => isLinkCargo(e.stationLocation));
-    const mn = filtered.filter(e => !isLinkCargo(e.stationLocation));
-    const sum = (arr: typeof filtered, fn: (e: typeof filtered[number]) => number) => arr.reduce((s, e) => s + fn(e), 0);
-    const mNet = sum(mn, e => e.netSalary), mGross = sum(mn, e => e.gross), mEmps = new Set(mn.map(e => e.employeeId)).size;
-    const lNet = sum(lk, e => e.netSalary), lGross = sum(lk, e => e.gross), lEmps = new Set(lk.map(e => e.employeeId)).size;
-    const mainLbl = ar ? 'لينك إيرو' : 'Link Aero';
-    const lkLbl = ar ? 'لينك كارجو' : 'Link Cargo';
+  // KPI cards for Excel export — filtered by selected company
+  const getExcelKpis = (companyTab?: 'aero' | 'cargo'): EDKpi[] => {
+    const entries = companyTab === 'aero' ? aeroFiltered : companyTab === 'cargo' ? cargoFiltered : filtered;
+    const sum = (fn: (e: typeof filtered[number]) => number) => entries.reduce((s, e) => s + fn(e), 0);
+    const tNet = sum(e => e.netSalary);
+    const tGross = sum(e => e.gross);
+    const tDed = sum(e => e.totalDeductions);
+    const tEmp = sum(e => e.employerSocialInsurance + e.healthInsurance + e.incomeTax);
+    const emps = new Set(entries.map(e => e.employeeId)).size;
+    const avg = emps > 0 ? Math.round(tNet / emps) : 0;
     return [
-      { label: `${ar ? 'صافي' : 'Net'} - ${mainLbl}`, value: mNet.toLocaleString(), color: 'primary' },
-      { label: `${ar ? 'إجمالي' : 'Gross'} - ${mainLbl}`, value: mGross.toLocaleString(), color: 'green' },
-      { label: `${ar ? 'موظفي' : 'Emps'} - ${mainLbl}`, value: String(mEmps), color: 'blue' },
-      { label: `${ar ? 'صافي' : 'Net'} - ${lkLbl}`, value: lNet.toLocaleString(), color: 'purple' },
-      { label: `${ar ? 'إجمالي' : 'Gross'} - ${lkLbl}`, value: lGross.toLocaleString(), color: 'amber' },
-      { label: `${ar ? 'موظفي' : 'Emps'} - ${lkLbl}`, value: String(lEmps), color: 'red' },
+      { label: ar ? 'إجمالي الصافي' : 'Total Net', value: tNet.toLocaleString(), color: 'primary' },
+      { label: ar ? 'إجمالي الإجمالي' : 'Total Gross', value: tGross.toLocaleString(), color: 'green' },
+      { label: ar ? 'إجمالي الخصومات' : 'Total Deductions', value: tDed.toLocaleString(), color: 'red' },
+      { label: ar ? 'مساهمات الشركة' : 'Company Cost', value: tEmp.toLocaleString(), color: 'blue' },
+      { label: ar ? 'متوسط الراتب' : 'Avg Salary', value: avg.toLocaleString(), color: 'amber' },
+      { label: ar ? 'عدد الموظفين' : 'Employees', value: String(emps), color: 'purple' },
     ];
   };
 
@@ -739,7 +758,7 @@ const SalaryReports = () => {
     { header: ar ? 'إجمالي مساهمات ص.ع' : 'Total Employer', key: 'totalEmployer' },
   ];
 
-  const getDetailExportDataFull = () => {
+  const getDetailExportDataFull = (companyTab?: 'aero' | 'cargo') => {
     const result: Record<string, unknown>[] = [];
 
     const buildEmployeeRow = (e: ProcessedPayroll) => ({
@@ -797,18 +816,26 @@ const SalaryReports = () => {
     const mainEntries = allEntries.filter(([k]) => !isLinkCargo(k));
     const lkEntries = allEntries.filter(([k]) => isLinkCargo(k));
 
-    if (lkEntries.length > 0) {
-      renderGroup(mainEntries, ar ? 'لينك إيرو' : 'Link Aero');
-      renderGroup(lkEntries, ar ? 'لينك كارجو' : 'Link Cargo');
-    } else {
-      // No split needed — keep original flat layout with single grand total
-      const grandTotals = calcStationTotals(detailedSortedRecords);
-      mainEntries.forEach(([stKey, records]) => {
+    const renderFlat = (entries: typeof allEntries) => {
+      const allRecs = entries.flatMap(([, r]) => r);
+      const grandTotals = calcStationTotals(allRecs);
+      entries.forEach(([stKey, records]) => {
         const stTotals = calcStationTotals(records);
         records.forEach(e => result.push(buildEmployeeRow(e)));
         result.push(buildTotalsRow(ar ? `إجمالي ${getStationLabel(stKey)}` : `${getStationLabel(stKey)} Total`, stTotals, 'subtotal'));
       });
       result.push(buildTotalsRow(ar ? 'الإجمالي العام' : 'Grand Total', grandTotals, 'grand'));
+    };
+
+    if (companyTab === 'aero') {
+      renderFlat(mainEntries);
+    } else if (companyTab === 'cargo') {
+      renderFlat(lkEntries);
+    } else if (lkEntries.length > 0) {
+      renderGroup(mainEntries, ar ? 'لينك إيرو' : 'Link Aero');
+      renderGroup(lkEntries, ar ? 'لينك كارجو' : 'Link Cargo');
+    } else {
+      renderFlat(mainEntries);
     }
 
     return result;
@@ -868,7 +895,7 @@ const SalaryReports = () => {
     { header: ar ? 'إجمالي مساهمات ص.ع' : 'Total Employer', key: 'totalEmployer' },
   ];
 
-  const getStationExportData = () => {
+  const getStationExportData = (companyTab?: 'aero' | 'cargo') => {
     const stationGroups = new Map<string, typeof monthlyByStation>();
     monthlyByStation.forEach(row => {
       if (!stationGroups.has(row.stationKey)) stationGroups.set(row.stationKey, []);
@@ -894,13 +921,17 @@ const SalaryReports = () => {
       });
     };
 
-    renderEntries(aeroEntries, linkAeroTotals);
-    linkAeroTotals.totalEmployer = linkAeroTotals.employerInsurance + linkAeroTotals.healthInsurance + linkAeroTotals.incomeTax;
-    if (linkAeroTotals.count > 0) result.push(linkAeroTotals);
+    if (companyTab !== 'cargo') {
+      renderEntries(aeroEntries, linkAeroTotals);
+      linkAeroTotals.totalEmployer = linkAeroTotals.employerInsurance + linkAeroTotals.healthInsurance + linkAeroTotals.incomeTax;
+      if (linkAeroTotals.count > 0) result.push(linkAeroTotals);
+    }
 
-    renderEntries(cargoEntries, linkCargoTotals);
-    linkCargoTotals.totalEmployer = linkCargoTotals.employerInsurance + linkCargoTotals.healthInsurance + linkCargoTotals.incomeTax;
-    if (linkCargoTotals.count > 0) result.push(linkCargoTotals);
+    if (companyTab !== 'aero') {
+      renderEntries(cargoEntries, linkCargoTotals);
+      linkCargoTotals.totalEmployer = linkCargoTotals.employerInsurance + linkCargoTotals.healthInsurance + linkCargoTotals.incomeTax;
+      if (linkCargoTotals.count > 0) result.push(linkCargoTotals);
+    }
 
     return result;
   };
@@ -957,7 +988,7 @@ const SalaryReports = () => {
               </Select>
             </div>
             <div className={cn("flex gap-2 flex-wrap", isRTL && "flex-row-reverse")}>
-              <Button variant="outline" size="sm" onClick={handlePrintMonthlyDetail}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة تفصيلي' : 'Print Detail'}</Button>
+              <Button variant="outline" size="sm" onClick={() => handlePrintMonthlyDetail()}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة تفصيلي' : 'Print Detail'}</Button>
               <Button variant="outline" size="sm" onClick={handlePrintMonthlySummary}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة ملخص' : 'Print Summary'}</Button>
               <Button variant="outline" size="sm" onClick={async () => { try { await exportEmployeeDetailExcel({ title: ar ? 'تقرير الرواتب' : 'Salary Report', ar, rows: getDetailExportDataFull() as unknown as EDRow[], kpis: getExcelKpis(), fileName: 'salary_report' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
               <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: ar ? 'تقرير الرواتب' : 'Salary Report', data: getDetailExportDataFull(), columns: getDetailColumns() })}><Download className="w-4 h-4 mr-1" />PDF</Button>
@@ -1129,8 +1160,8 @@ const SalaryReports = () => {
               <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
                 <CardTitle>{ar ? `بيانات الموظفين التفصيلية - ${selectedMonth !== 'all' ? monthNamesAr[parseInt(selectedMonth) - 1] : 'كل السنة'} ${selectedYear}` : `Employee Detailed Data - ${selectedMonth !== 'all' ? monthNamesEn[parseInt(selectedMonth) - 1] : 'Full Year'} ${selectedYear}`}</CardTitle>
                 <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
-                  <Button variant="outline" size="sm" onClick={handlePrintMonthlyDetail}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
-                  <Button variant="outline" size="sm" onClick={async () => { try { const monthLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year'); await exportEmployeeDetailExcel({ title: ar ? `تفصيل الموظفين - ${monthLbl} ${selectedYear}` : `Employee Detail - ${monthLbl} ${selectedYear}`, ar, rows: getDetailExportDataFull() as unknown as EDRow[], kpis: getExcelKpis(), fileName: 'employee_detail' }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
+                  <Button variant="outline" size="sm" onClick={() => handlePrintMonthlyDetail(empCompanyTab)}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة' : 'Print'}</Button>
+                  <Button variant="outline" size="sm" onClick={async () => { try { const monthLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year'); const compLbl = empCompanyTab === 'aero' ? (ar ? 'لينك إيرو' : 'Link Aero') : (ar ? 'لينك كارجو' : 'Link Cargo'); await exportEmployeeDetailExcel({ title: ar ? `تفصيل الموظفين - ${compLbl} - ${monthLbl} ${selectedYear}` : `Employee Detail - ${compLbl} - ${monthLbl} ${selectedYear}`, ar, rows: getDetailExportDataFull(empCompanyTab) as unknown as EDRow[], kpis: getExcelKpis(empCompanyTab), fileName: `employee_detail_${empCompanyTab}` }); } catch (e) { toast.error(ar ? 'فشل التصدير' : 'Export failed'); } }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
                 </div>
               </div>
             </CardHeader>
@@ -1273,22 +1304,21 @@ const SalaryReports = () => {
               <div className={cn("flex justify-between items-center", isRTL && "flex-row-reverse")}>
                 <CardTitle>{ar ? `تقرير إجمالي بالمحطات - ${selectedMonth !== 'all' ? monthNamesAr[parseInt(selectedMonth) - 1] : 'كل السنة'} ${selectedYear}` : `Stations Total Report - ${selectedMonth !== 'all' ? monthNamesEn[parseInt(selectedMonth) - 1] : 'Full Year'} ${selectedYear}`}</CardTitle>
                 <div className={cn("flex gap-2 flex-wrap", isRTL && "flex-row-reverse")}>
-                  <Button variant="outline" size="sm" onClick={handlePrintMonthlyByStation}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة بالمحطة' : 'Print by Station'}</Button>
+                  <Button variant="outline" size="sm" onClick={() => handlePrintMonthlyByStation(stationCompanyTab)}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة بالمحطة' : 'Print by Station'}</Button>
                   <Button variant="outline" size="sm" onClick={handlePrintMonthlySummary}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة ملخص شهري' : 'Print Monthly Summary'}</Button>
-                  <Button variant="outline" size="sm" onClick={() => { const mLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year'); exportToPDF({ title: ar ? `تقرير إجمالي بالمحطات - ${mLbl} ${selectedYear}` : `Stations Total Report - ${mLbl} ${selectedYear}`, data: getStationExportData(), columns: getStationExportColumns(), fileName: 'monthly_by_station' }); }}><Download className="w-4 h-4 mr-1" />PDF</Button>
+                  <Button variant="outline" size="sm" onClick={() => { const mLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year'); const cLbl = stationCompanyTab === 'aero' ? (ar ? 'لينك إيرو' : 'Link Aero') : (ar ? 'لينك كارجو' : 'Link Cargo'); exportToPDF({ title: ar ? `تقرير إجمالي بالمحطات - ${cLbl} - ${mLbl} ${selectedYear}` : `Stations Total Report - ${cLbl} - ${mLbl} ${selectedYear}`, data: getStationExportData(stationCompanyTab), columns: getStationExportColumns(), fileName: `monthly_by_station_${stationCompanyTab}` }); }}><Download className="w-4 h-4 mr-1" />PDF</Button>
                   <Button variant="outline" size="sm" onClick={async () => {
-                    if (monthlyByStation.length === 0) { toast.error(ar ? 'لا توجد بيانات للتصدير' : 'No data to export'); return; }
+                    const filteredRows = monthlyByStation.filter(r => stationCompanyTab === 'cargo' ? isLinkCargo(r.stationKey) : !isLinkCargo(r.stationKey));
+                    if (filteredRows.length === 0) { toast.error(ar ? 'لا توجد بيانات للتصدير' : 'No data to export'); return; }
                     try {
                       const mLbl = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'كل السنة' : 'Full Year');
+                      const cLbl = stationCompanyTab === 'aero' ? (ar ? 'لينك إيرو' : 'Link Aero') : (ar ? 'لينك كارجو' : 'Link Cargo');
                       await exportMonthlyByStationExcel({
-                        title: ar ? `تقرير إجمالي بالمحطات - ${mLbl} ${selectedYear}` : `Stations Total Report - ${mLbl} ${selectedYear}`,
+                        title: ar ? `تقرير إجمالي بالمحطات - ${cLbl} - ${mLbl} ${selectedYear}` : `Stations Total Report - ${cLbl} - ${mLbl} ${selectedYear}`,
                         ar,
-                        rows: monthlyByStation,
-                        kpis: getExcelKpis(),
-                        secondaryStationKeys: LINK_CARGO_KEYS,
-                        mainGroupLabel: ar ? 'لينك إيرو' : 'Link Aero',
-                        secondaryGroupLabel: ar ? 'لينك كارجو' : 'Link Cargo',
-                        fileName: `monthly_by_station_${selectedYear}`,
+                        rows: filteredRows,
+                        kpis: getExcelKpis(stationCompanyTab),
+                        fileName: `monthly_by_station_${stationCompanyTab}_${selectedYear}`,
                       });
                       toast.success(ar ? 'تم تصدير الملف' : 'Exported');
                     } catch (e) { console.error(e); toast.error(ar ? 'فشل التصدير' : 'Export failed'); }
