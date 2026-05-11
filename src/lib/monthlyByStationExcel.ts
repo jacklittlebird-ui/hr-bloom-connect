@@ -74,13 +74,14 @@ const fill = (cell: ExcelJS.Cell, argb: string) => {
 const num = (n: number) => Number(n || 0);
 
 export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void> {
-  const { title, ar, rows, fileName } = input;
+  const { title, ar, rows, kpis, fileName } = input;
   const wb = new ExcelJS.Workbook();
   wb.creator = 'HR System';
   wb.created = new Date();
 
+  const hasKpis = !!(kpis && kpis.length);
   const ws = wb.addWorksheet(ar ? 'تفصيل شهري بالمحطة' : 'Monthly by Station', {
-    views: [{ rightToLeft: ar, state: 'frozen', ySplit: 4 }],
+    views: [{ rightToLeft: ar, state: 'frozen', ySplit: hasKpis ? 7 : 4 }],
     pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } },
   });
 
