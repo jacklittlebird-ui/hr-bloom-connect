@@ -1129,7 +1129,18 @@ const SalaryReports = () => {
                   <Button variant="outline" size="sm" onClick={handlePrintMonthlyByStation}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة بالمحطة' : 'Print by Station'}</Button>
                   <Button variant="outline" size="sm" onClick={handlePrintMonthlySummary}><Printer className="w-4 h-4 mr-1" />{ar ? 'طباعة ملخص شهري' : 'Print Monthly Summary'}</Button>
                   <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: ar ? 'تفصيل شهري بالمحطة' : 'Monthly by Station', data: getStationExportData(), columns: getStationExportColumns(), fileName: 'monthly_by_station' })}><Download className="w-4 h-4 mr-1" />PDF</Button>
-                  <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: ar ? 'تفصيل شهري بالمحطة' : 'Monthly by Station', data: getStationExportData(), columns: getStationExportColumns(), fileName: 'monthly_by_station' })}><FileText className="w-4 h-4 mr-1" />Excel</Button>
+                  <Button variant="outline" size="sm" onClick={async () => {
+                    if (monthlyByStation.length === 0) { toast.error(ar ? 'لا توجد بيانات للتصدير' : 'No data to export'); return; }
+                    try {
+                      await exportMonthlyByStationExcel({
+                        title: ar ? `تفصيل شهري بالمحطة - ${selectedYear}` : `Monthly Detail by Station - ${selectedYear}`,
+                        ar,
+                        rows: monthlyByStation,
+                        fileName: `monthly_by_station_${selectedYear}`,
+                      });
+                      toast.success(ar ? 'تم تصدير الملف' : 'Exported');
+                    } catch (e) { console.error(e); toast.error(ar ? 'فشل التصدير' : 'Export failed'); }
+                  }}><FileText className="w-4 h-4 mr-1" />Excel</Button>
                 </div>
               </div>
             </CardHeader>
