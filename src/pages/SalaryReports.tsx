@@ -464,13 +464,26 @@ const SalaryReports = () => {
   });
 
   // Print detailed monthly report
-  const handlePrintMonthlyDetail = useCallback(() => {
-    const title = ar
-      ? `تقرير مسير الرواتب التفصيلي - ${selectedMonth !== 'all' ? monthNamesAr[parseInt(selectedMonth) - 1] : 'السنة'} ${selectedYear}`
-      : `Detailed Payroll Report - ${selectedMonth !== 'all' ? monthNamesEn[parseInt(selectedMonth) - 1] : 'Year'} ${selectedYear}`;
+  const handlePrintMonthlyDetail = useCallback((companyTab?: 'aero' | 'cargo') => {
+    const monthLabel = selectedMonth !== 'all' ? (ar ? monthNamesAr : monthNamesEn)[parseInt(selectedMonth) - 1] : (ar ? 'السنة' : 'Year');
+    const companyLabel = companyTab === 'aero' ? (ar ? 'لينك إيرو' : 'Link Aero') : companyTab === 'cargo' ? (ar ? 'لينك كارجو' : 'Link Cargo') : '';
+    const titleBase = ar
+      ? `تقرير مسير الرواتب التفصيلي - ${monthLabel} ${selectedYear}`
+      : `Detailed Payroll Report - ${monthLabel} ${selectedYear}`;
+    const title = companyLabel ? `${titleBase} - ${companyLabel}` : titleBase;
 
-    const grandTotals = calcStationTotals(detailedSortedRecords);
-    const allDetailEntries = Array.from(detailedByStation.entries());
+    const filteredRecords = companyTab
+      ? detailedSortedRecords.filter(r => companyTab === 'cargo' ? isLinkCargo(r.stationLocation) : !isLinkCargo(r.stationLocation))
+      : detailedSortedRecords;
+    const filteredByStation = new Map<string, ProcessedPayroll[]>();
+    filteredRecords.forEach(r => {
+      const key = r.stationLocation || '__none__';
+      if (!filteredByStation.has(key)) filteredByStation.set(key, []);
+      filteredByStation.get(key)!.push(r);
+    });
+
+    const grandTotals = calcStationTotals(filteredRecords);
+    const allDetailEntries = Array.from(filteredByStation.entries());
     const linkAeroDetailTotals = calcStationTotals(allDetailEntries.filter(([k]) => !isLinkCargo(k)).flatMap(([, records]) => records));
     const linkCargoDetailTotals = calcStationTotals(allDetailEntries.filter(([k]) => isLinkCargo(k)).flatMap(([, records]) => records));
 
