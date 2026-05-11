@@ -149,6 +149,34 @@ export const DailyAttendanceReport = () => {
           if (rows.length < pageSize) break;
         }
         setRecords(recs);
+
+        // Fetch approved leaves overlapping the range, missions, permissions, overtime
+        const [lvRes, msRes, prRes, otRes] = await Promise.all([
+          supabase.from('leave_requests')
+            .select('employee_id,leave_type,start_date,end_date,status')
+            .eq('status', 'approved')
+            .lte('start_date', endDate)
+            .gte('end_date', startDate),
+          supabase.from('missions')
+            .select('employee_id,date,mission_type,hours,status')
+            .eq('status', 'approved')
+            .gte('date', startDate)
+            .lte('date', endDate),
+          supabase.from('permission_requests')
+            .select('employee_id,date,hours,permission_type,start_time,end_time,status')
+            .eq('status', 'approved')
+            .gte('date', startDate)
+            .lte('date', endDate),
+          supabase.from('overtime_requests')
+            .select('employee_id,date,hours,overtime_type,status')
+            .eq('status', 'approved')
+            .gte('date', startDate)
+            .lte('date', endDate),
+        ]);
+        setLeaves((lvRes.data as LeaveRow[]) || []);
+        setMissions((msRes.data as MissionRow[]) || []);
+        setPermissions((prRes.data as PermissionRow[]) || []);
+        setOvertimes((otRes.data as OvertimeRow[]) || []);
       } catch (e) {
         console.error('[DailyAttendanceReport] load error', e);
         toast({ title: ar ? 'تعذر تحميل البيانات' : 'Failed to load data', variant: 'destructive' });
