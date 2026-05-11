@@ -15,6 +15,7 @@ import {
   Download, Printer, FileText, Building2, Users, Clock,
   CalendarDays, Search, X, CalendarIcon,
   LogIn, LogOut, CheckCircle2, AlertTriangle, XCircle,
+  Plane, Briefcase, Timer, FileClock,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,8 +36,15 @@ interface AttendanceRow {
   status: string;
   is_late: boolean | null;
 }
+interface LeaveRow { employee_id: string; leave_type: string; start_date: string; end_date: string; }
+interface MissionRow { employee_id: string; date: string; mission_type: string; hours: number | null; }
+interface PermissionRow { employee_id: string; date: string; hours: number | null; permission_type: string; start_time: string | null; end_time: string | null; }
+interface OvertimeRow { employee_id: string; date: string; hours: number; overtime_type: string; }
 
 type DayFilter = 'all' | 'present' | 'late' | 'absent';
+
+const LEAVE_LABEL_AR: Record<string, string> = { annual: 'سنوية', sick: 'مرضية', casual: 'عارضة', unpaid: 'بدون أجر', marriage: 'زواج' };
+const LEAVE_LABEL_EN: Record<string, string> = { annual: 'Annual', sick: 'Sick', casual: 'Casual', unpaid: 'Unpaid', marriage: 'Marriage' };
 
 const PIN_KEY = 'attendanceReport.pinSummary';
 
@@ -88,6 +96,10 @@ export const DailyAttendanceReport = () => {
   const [departments, setDepartments] = useState<DepartmentRow[]>([]);
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [records, setRecords] = useState<AttendanceRow[]>([]);
+  const [leaves, setLeaves] = useState<LeaveRow[]>([]);
+  const [missions, setMissions] = useState<MissionRow[]>([]);
+  const [permissions, setPermissions] = useState<PermissionRow[]>([]);
+  const [overtimes, setOvertimes] = useState<OvertimeRow[]>([]);
 
   // Load stations + departments once
   useEffect(() => {
@@ -137,6 +149,34 @@ export const DailyAttendanceReport = () => {
           if (rows.length < pageSize) break;
         }
         setRecords(recs);
+
+        // Fetch approved leaves overlapping the range, missions, permissions, overtime
+        const [lvRes, msRes, prRes, otRes] = await Promise.all([
+          supabase.from('leave_requests')
+            .select('employee_id,leave_type,start_date,end_date,status')
+            .eq('status', 'approved')
+            .lte('start_date', endDate)
+            .gte('end_date', startDate),
+          supabase.from('missions')
+            .select('employee_id,date,mission_type,hours,status')
+            .eq('status', 'approved')
+            .gte('date', startDate)
+            .lte('date', endDate),
+          supabase.from('permission_requests')
+            .select('employee_id,date,hours,permission_type,start_time,end_time,status')
+            .eq('status', 'approved')
+            .gte('date', startDate)
+            .lte('date', endDate),
+          supabase.from('overtime_requests')
+            .select('employee_id,date,hours,overtime_type,status')
+            .eq('status', 'approved')
+            .gte('date', startDate)
+            .lte('date', endDate),
+        ]);
+        setLeaves((lvRes.data as LeaveRow[]) || []);
+        setMissions((msRes.data as MissionRow[]) || []);
+        setPermissions((prRes.data as PermissionRow[]) || []);
+        setOvertimes((otRes.data as OvertimeRow[]) || []);
       } catch (e) {
         console.error('[DailyAttendanceReport] load error', e);
         toast({ title: ar ? 'تعذر تحميل البيانات' : 'Failed to load data', variant: 'destructive' });
@@ -232,6 +272,10 @@ export const DailyAttendanceReport = () => {
     hours: number;
     matchesStatus: boolean; // does this cell match the active status filter?
     kind: 'present' | 'late' | 'absent' | 'none';
+    leave?: LeaveRow | null;
+    mission?: MissionRow | null;
+    permission?: PermissionRow | null;
+    overtime?: OvertimeRow | null;
   };
 
   // Map: employee_id -> date -> record
@@ -245,12 +289,63 @@ export const DailyAttendanceReport = () => {
     return m;
   }, [records]);
 
+  // Index leaves by employee -> date (expand date ranges)
+  const leaveIndex = useMemo(() => {
+    const m = new Map<string, Map<string, LeaveRow>>();
+    leaves.forEach(lv => {
+      const start = new Date(lv.start_date + 'T00:00:00');
+      const end = new Date(lv.end_date + 'T00:00:00');
+      let inner = m.get(lv.employee_id);
+      if (!inner) { inner = new Map(); m.set(lv.employee_id, inner); }
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        inner.set(toIsoDate(d), lv);
+      }
+    });
+    return m;
+  }, [leaves]);
+
+  const missionIndex = useMemo(() => {
+    const m = new Map<string, Map<string, MissionRow>>();
+    missions.forEach(ms => {
+      let inner = m.get(ms.employee_id);
+      if (!inner) { inner = new Map(); m.set(ms.employee_id, inner); }
+      inner.set(ms.date, ms);
+    });
+    return m;
+  }, [missions]);
+
+  const permissionIndex = useMemo(() => {
+    const m = new Map<string, Map<string, PermissionRow>>();
+    permissions.forEach(pr => {
+      let inner = m.get(pr.employee_id);
+      if (!inner) { inner = new Map(); m.set(pr.employee_id, inner); }
+      inner.set(pr.date, pr);
+    });
+    return m;
+  }, [permissions]);
+
+  const overtimeIndex = useMemo(() => {
+    const m = new Map<string, Map<string, OvertimeRow>>();
+    overtimes.forEach(ot => {
+      let inner = m.get(ot.employee_id);
+      if (!inner) { inner = new Map(); m.set(ot.employee_id, inner); }
+      // Aggregate hours if multiple types same day
+      const prev = inner.get(ot.date);
+      if (prev) {
+        inner.set(ot.date, { ...prev, hours: Number(prev.hours || 0) + Number(ot.hours || 0) });
+      } else {
+        inner.set(ot.date, ot);
+      }
+    });
+    return m;
+  }, [overtimes]);
+
   type EmpRow = {
     employee: EmployeeRow;
     department: DepartmentRow | null;
     station: StationRow | null;
     cells: DayCell[];
-    totals: { present: number; late: number; absent: number; hours: number; matched: number };
+    totals: { present: number; late: number; absent: number; hours: number; matched: number; leaves: number; missions: number; permissions: number; overtimeHours: number };
   };
 
   // Visible (pivoted) employee rows. We always render the full date range as columns;
@@ -261,9 +356,18 @@ export const DailyAttendanceReport = () => {
     employees.forEach(emp => {
       if (!visibleEmpIds.has(emp.id)) return;
       const inner = recordIndex.get(emp.id);
+      const lvInner = leaveIndex.get(emp.id);
+      const msInner = missionIndex.get(emp.id);
+      const prInner = permissionIndex.get(emp.id);
+      const otInner = overtimeIndex.get(emp.id);
       let present = 0, late = 0, absent = 0, hours = 0, matched = 0;
+      let leavesCount = 0, missionsCount = 0, permissionsCount = 0, overtimeHours = 0;
       const cells: DayCell[] = dateRange.map(d => {
         const rec = inner?.get(d) || null;
+        const leave = lvInner?.get(d) || null;
+        const mission = msInner?.get(d) || null;
+        const permission = prInner?.get(d) || null;
+        const overtime = otInner?.get(d) || null;
         let kind: DayCell['kind'] = 'none';
         let h = 0;
         if (rec) {
@@ -274,16 +378,20 @@ export const DailyAttendanceReport = () => {
         }
         const matchesStatus =
           globalStatusFilter === 'all'
-            ? kind !== 'none'
+            ? kind !== 'none' || !!leave || !!mission || !!permission || !!overtime
             : kind === globalStatusFilter;
         if (kind === 'present') present++;
         else if (kind === 'late') late++;
         else if (kind === 'absent') absent++;
+        if (leave) leavesCount++;
+        if (mission) missionsCount++;
+        if (permission) permissionsCount++;
+        if (overtime) overtimeHours += Number(overtime.hours || 0);
         if (matchesStatus) {
           matched++;
           if (kind === 'present' || kind === 'late') hours += h;
         }
-        return { record: rec, hours: h, matchesStatus, kind };
+        return { record: rec, hours: h, matchesStatus, kind, leave, mission, permission, overtime };
       });
       // If a status filter is active, hide employees with zero matching days.
       if (globalStatusFilter !== 'all' && matched === 0) return;
@@ -292,7 +400,7 @@ export const DailyAttendanceReport = () => {
         department: emp.department_id ? (deptMap.get(emp.department_id) || null) : null,
         station: emp.station_id ? (stationMap.get(emp.station_id) || null) : null,
         cells,
-        totals: { present, late, absent, hours, matched },
+        totals: { present, late, absent, hours, matched, leaves: leavesCount, missions: missionsCount, permissions: permissionsCount, overtimeHours },
       });
     });
     // Sort by station then employee code
@@ -303,7 +411,7 @@ export const DailyAttendanceReport = () => {
       return a.employee.employee_code.localeCompare(b.employee.employee_code);
     });
     return rows;
-  }, [employees, visibleEmpIds, recordIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar]);
+  }, [employees, visibleEmpIds, recordIndex, leaveIndex, missionIndex, permissionIndex, overtimeIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar]);
 
   // Counters (status badges) — across all visible employees and days, regardless of filter.
   const counters = useMemo(() => {
@@ -326,6 +434,7 @@ export const DailyAttendanceReport = () => {
   // Totals after status filter (uses per-row totals so they reflect the filter).
   const totals = useMemo(() => {
     let totalHours = 0, present = 0, late = 0, absent = 0, matched = 0;
+    let leavesCount = 0, missionsCount = 0, permissionsCount = 0, overtimeHours = 0;
     const stSet = new Set<string>();
     empRows.forEach(r => {
       if (r.station) stSet.add(r.station.id);
@@ -334,12 +443,20 @@ export const DailyAttendanceReport = () => {
       late += r.totals.late;
       absent += r.totals.absent;
       matched += r.totals.matched;
+      leavesCount += r.totals.leaves;
+      missionsCount += r.totals.missions;
+      permissionsCount += r.totals.permissions;
+      overtimeHours += r.totals.overtimeHours;
     });
     return {
       totalHours, present, late, absent,
       employeesCount: empRows.length,
       stationsCount: stSet.size,
       rows: matched,
+      leaves: leavesCount,
+      missions: missionsCount,
+      permissions: permissionsCount,
+      overtimeHours,
     };
   }, [empRows]);
 
@@ -354,6 +471,10 @@ export const DailyAttendanceReport = () => {
       present: r.totals.present,
       late: r.totals.late,
       absent: r.totals.absent,
+      leaves: r.totals.leaves,
+      missions: r.totals.missions,
+      permissions: r.totals.permissions,
+      overtime_hours: fmtHours(r.totals.overtimeHours),
       total_hours: fmtHours(r.totals.hours),
     };
     r.cells.forEach((c, i) => {
@@ -361,10 +482,16 @@ export const DailyAttendanceReport = () => {
       row[`${dateKey}__in`] = formatTimeCairo(c.record?.check_in ?? null);
       row[`${dateKey}__out`] = formatTimeCairo(c.record?.check_out ?? null);
       row[`${dateKey}__hours`] = c.kind === 'none' ? '' : fmtHours(c.hours);
-      row[`${dateKey}__status`] = c.kind === 'present' ? (ar ? 'حاضر' : 'P')
+      const extras: string[] = [];
+      if (c.leave) extras.push((ar ? 'إجازة ' : 'Leave ') + (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)));
+      if (c.mission) extras.push(ar ? `مأمورية (${c.mission.hours || 0}س)` : `Mission (${c.mission.hours || 0}h)`);
+      if (c.permission) extras.push(ar ? `إذن (${c.permission.hours || 0}س)` : `Permission (${c.permission.hours || 0}h)`);
+      if (c.overtime) extras.push(ar ? `إضافي (${c.overtime.hours || 0}س)` : `Overtime (${c.overtime.hours || 0}h)`);
+      const baseStatus = c.kind === 'present' ? (ar ? 'حاضر' : 'P')
         : c.kind === 'late' ? (ar ? 'متأخر' : 'L')
         : c.kind === 'absent' ? (ar ? 'غائب' : 'A')
-        : '—';
+        : (extras.length ? '' : '—');
+      row[`${dateKey}__status`] = [baseStatus, ...extras].filter(Boolean).join(' / ');
     });
     return row;
   });
@@ -378,6 +505,10 @@ export const DailyAttendanceReport = () => {
     { header: ar ? 'حاضر' : 'Present', key: 'present' },
     { header: ar ? 'متأخر' : 'Late', key: 'late' },
     { header: ar ? 'غائب' : 'Absent', key: 'absent' },
+    { header: ar ? 'إجازات' : 'Leaves', key: 'leaves' },
+    { header: ar ? 'مأموريات' : 'Missions', key: 'missions' },
+    { header: ar ? 'أذونات' : 'Permissions', key: 'permissions' },
+    { header: ar ? 'ساعات إضافي' : 'Overtime Hrs', key: 'overtime_hours' },
     { header: ar ? 'إجمالي الساعات' : 'Total Hours', key: 'total_hours' },
     ...dateRange.flatMap(d => {
       const short = format(new Date(d + 'T00:00:00'), 'dd/MM');
@@ -585,12 +716,16 @@ export const DailyAttendanceReport = () => {
 
       <div ref={reportRef} className="space-y-6">
         {/* Header summary */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           <SummaryStat icon={Building2} label={ar ? 'عدد المحطات' : 'Stations'} value={totals.stationsCount} color="text-blue-600" bg="bg-blue-100" />
           <SummaryStat icon={Users} label={ar ? 'إجمالي الموظفين' : 'Employees'} value={totals.employeesCount} color="text-indigo-600" bg="bg-indigo-100" />
           <SummaryStat icon={Clock} label={ar ? 'إجمالي ساعات العمل' : 'Total Work Hours'} value={fmtHours(totals.totalHours)} color="text-emerald-600" bg="bg-emerald-100" />
           <SummaryStat icon={CalendarDays} label={ar ? 'أيام الحضور' : 'Present Days'} value={totals.present} color="text-green-600" bg="bg-green-100" />
           <SummaryStat icon={CalendarDays} label={ar ? 'أيام الغياب' : 'Absent Days'} value={totals.absent} color="text-red-600" bg="bg-red-100" />
+          <SummaryStat icon={Plane} label={ar ? 'أيام الإجازات' : 'Leave Days'} value={totals.leaves} color="text-sky-600" bg="bg-sky-100" />
+          <SummaryStat icon={Briefcase} label={ar ? 'المأموريات' : 'Missions'} value={totals.missions} color="text-purple-600" bg="bg-purple-100" />
+          <SummaryStat icon={FileClock} label={ar ? 'الأذونات' : 'Permissions'} value={totals.permissions} color="text-cyan-600" bg="bg-cyan-100" />
+          <SummaryStat icon={Timer} label={ar ? 'ساعات إضافي' : 'Overtime Hours'} value={fmtHours(totals.overtimeHours)} color="text-orange-600" bg="bg-orange-100" />
         </div>
 
         {loading && (
@@ -641,6 +776,23 @@ export const DailyAttendanceReport = () => {
                 <span className="inline-flex items-center gap-1 text-muted-foreground">
                   <span className="text-muted-foreground/60">—</span>
                   {ar ? 'لا يوجد سجل' : 'No record'}
+                </span>
+                <span className="mx-1 text-muted-foreground">|</span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-sky-50">
+                  <Plane className="w-3.5 h-3.5 text-sky-600" aria-hidden />
+                  <span className="text-sky-700 font-medium">{ar ? 'إجازة' : 'Leave'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-purple-50">
+                  <Briefcase className="w-3.5 h-3.5 text-purple-600" aria-hidden />
+                  <span className="text-purple-700 font-medium">{ar ? 'مأمورية' : 'Mission'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-cyan-50">
+                  <FileClock className="w-3.5 h-3.5 text-cyan-600" aria-hidden />
+                  <span className="text-cyan-700 font-medium">{ar ? 'إذن' : 'Permission'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-orange-50">
+                  <Timer className="w-3.5 h-3.5 text-orange-600" aria-hidden />
+                  <span className="text-orange-700 font-medium">{ar ? 'إضافي' : 'Overtime'}</span>
                 </span>
               </div>
               <div className={cn('overflow-auto bg-background', pinSummary && 'max-h-[640px]')}>
@@ -759,7 +911,79 @@ export const DailyAttendanceReport = () => {
                             ? (ar ? `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('ar-EG', { weekday: 'long' })} — عطلة` : `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' })} — Off`)
                             : undefined;
                           const baseCell = cn('border p-1 text-center font-mono whitespace-nowrap', weekendBorder);
+
+                          // Build small badges for permission/overtime/mission/leave overlays
+                          const overlayBadges: JSX.Element[] = [];
+                          if (c.leave) {
+                            const lbl = ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type);
+                            overlayBadges.push(
+                              <span key="lv" className="inline-flex items-center gap-0.5 px-1 rounded bg-sky-100 text-sky-800 text-[9px] font-semibold" title={ar ? 'إجازة' : 'Leave'}>
+                                <Plane className="w-2.5 h-2.5" aria-hidden />{lbl}
+                              </span>
+                            );
+                          }
+                          if (c.mission) {
+                            overlayBadges.push(
+                              <span key="ms" className="inline-flex items-center gap-0.5 px-1 rounded bg-purple-100 text-purple-800 text-[9px] font-semibold" title={ar ? 'مأمورية' : 'Mission'}>
+                                <Briefcase className="w-2.5 h-2.5" aria-hidden />{ar ? 'مأمورية' : 'Mission'} {c.mission.hours || 0}{ar ? 'س' : 'h'}
+                              </span>
+                            );
+                          }
+                          if (c.permission) {
+                            overlayBadges.push(
+                              <span key="pr" className="inline-flex items-center gap-0.5 px-1 rounded bg-cyan-100 text-cyan-800 text-[9px] font-semibold" title={ar ? 'إذن' : 'Permission'}>
+                                <FileClock className="w-2.5 h-2.5" aria-hidden />{ar ? 'إذن' : 'Perm'} {c.permission.hours || 0}{ar ? 'س' : 'h'}
+                              </span>
+                            );
+                          }
+                          if (c.overtime) {
+                            overlayBadges.push(
+                              <span key="ot" className="inline-flex items-center gap-0.5 px-1 rounded bg-orange-100 text-orange-800 text-[9px] font-semibold" title={ar ? 'إضافي' : 'Overtime'}>
+                                <Timer className="w-2.5 h-2.5" aria-hidden />+{c.overtime.hours || 0}{ar ? 'س' : 'h'}
+                              </span>
+                            );
+                          }
+                          const overlayRow = overlayBadges.length > 0 ? (
+                            <div className="flex flex-wrap items-center justify-center gap-0.5 mt-0.5">{overlayBadges}</div>
+                          ) : null;
+
                           if (c.kind === 'none') {
+                            // No attendance record. If we have a leave/mission/etc., show that prominently.
+                            if (c.leave) {
+                              const lbl = ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type);
+                              return (
+                                <Fragment key={ci}>
+                                  <td colSpan={3} className={cn(baseCell, 'bg-sky-100 text-sky-800 font-semibold')} title={ar ? 'إجازة معتمدة' : 'Approved Leave'}>
+                                    <span className="inline-flex items-center justify-center gap-1">
+                                      <Plane className="w-3.5 h-3.5" aria-hidden />
+                                      {ar ? 'إجازة' : 'Leave'} — {lbl}
+                                    </span>
+                                  </td>
+                                </Fragment>
+                              );
+                            }
+                            if (c.mission) {
+                              return (
+                                <Fragment key={ci}>
+                                  <td colSpan={3} className={cn(baseCell, 'bg-purple-100 text-purple-800 font-semibold')} title={ar ? 'مأمورية' : 'Mission'}>
+                                    <span className="inline-flex items-center justify-center gap-1">
+                                      <Briefcase className="w-3.5 h-3.5" aria-hidden />
+                                      {ar ? 'مأمورية' : 'Mission'} ({c.mission.hours || 0}{ar ? 'س' : 'h'})
+                                    </span>
+                                  </td>
+                                </Fragment>
+                              );
+                            }
+                            // Permission/overtime without attendance record — render overlay row only.
+                            if (overlayBadges.length > 0) {
+                              return (
+                                <Fragment key={ci}>
+                                  <td colSpan={3} className={cn(baseCell, 'bg-muted/20')}>
+                                    <div className="flex flex-wrap items-center justify-center gap-0.5">{overlayBadges}</div>
+                                  </td>
+                                </Fragment>
+                              );
+                            }
                             return (
                               <Fragment key={ci}>
                                 <td className={cn(baseCell, weekendBg, 'text-muted-foreground/40')} title={offTitle}>{isOff && isFri ? '🕌' : '—'}</td>
@@ -776,6 +1000,7 @@ export const DailyAttendanceReport = () => {
                                     <XCircle className="w-3.5 h-3.5" aria-hidden />
                                     {ar ? 'غائب' : 'Absent'}
                                   </span>
+                                  {overlayRow}
                                 </td>
                               </Fragment>
                             );
@@ -803,7 +1028,10 @@ export const DailyAttendanceReport = () => {
                                   <span>{formatTimeCairo(c.record!.check_out)}</span>
                                 </span>
                               </td>
-                              <td className={cn(baseCell, bg, dimCls, 'tabular-nums font-semibold')}>{fmtHours(c.hours)}</td>
+                              <td className={cn(baseCell, bg, dimCls, 'tabular-nums font-semibold')}>
+                                {fmtHours(c.hours)}
+                                {overlayRow}
+                              </td>
                             </Fragment>
                           );
                         })}
