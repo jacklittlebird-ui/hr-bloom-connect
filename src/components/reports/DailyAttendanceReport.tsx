@@ -777,6 +777,23 @@ export const DailyAttendanceReport = () => {
                   <span className="text-muted-foreground/60">—</span>
                   {ar ? 'لا يوجد سجل' : 'No record'}
                 </span>
+                <span className="mx-1 text-muted-foreground">|</span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-sky-50">
+                  <Plane className="w-3.5 h-3.5 text-sky-600" aria-hidden />
+                  <span className="text-sky-700 font-medium">{ar ? 'إجازة' : 'Leave'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-purple-50">
+                  <Briefcase className="w-3.5 h-3.5 text-purple-600" aria-hidden />
+                  <span className="text-purple-700 font-medium">{ar ? 'مأمورية' : 'Mission'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-cyan-50">
+                  <FileClock className="w-3.5 h-3.5 text-cyan-600" aria-hidden />
+                  <span className="text-cyan-700 font-medium">{ar ? 'إذن' : 'Permission'}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-orange-50">
+                  <Timer className="w-3.5 h-3.5 text-orange-600" aria-hidden />
+                  <span className="text-orange-700 font-medium">{ar ? 'إضافي' : 'Overtime'}</span>
+                </span>
               </div>
               <div className={cn('overflow-auto bg-background', pinSummary && 'max-h-[640px]')}>
                 <table className="text-xs border-collapse" style={{ minWidth: '100%' }}>
