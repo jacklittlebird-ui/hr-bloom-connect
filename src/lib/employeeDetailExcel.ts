@@ -85,7 +85,7 @@ export async function exportEmployeeDetailExcel(input: EDInput): Promise<void> {
 
   const ws = wb.addWorksheet(ar ? 'تفصيل الموظفين' : 'Employee Detail', {
     views: [{ rightToLeft: ar, state: 'frozen', ySplit: kpis && kpis.length ? 7 : 4 }],
-    pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.15, right: 0.15, top: 0.2, bottom: 0.2, header: 0.1, footer: 0.1 } },
+    pageSetup: { orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true, margins: { left: 0.15, right: 0.15, top: 0.2, bottom: 0.2, header: 0.1, footer: 0.1 } },
   });
 
   const headers = ar
