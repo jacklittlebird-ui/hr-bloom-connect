@@ -1249,10 +1249,14 @@ const SalaryReports = () => {
                         );
                       };
 
-                      aeroEntries.forEach(([stKey, records]) => renderStationBlock(stKey, records));
-                      pushGrandRow('link-aero', ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', calcStationTotals(aeroEntries.flatMap(([, r]) => r)));
-                      cargoEntries.forEach(([stKey, records]) => renderStationBlock(stKey, records));
-                      pushGrandRow('link-cargo', ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', calcStationTotals(cargoEntries.flatMap(([, r]) => r)));
+                      if (empCompanyTab === 'aero') {
+                        aeroEntries.forEach(([stKey, records]) => renderStationBlock(stKey, records));
+                        pushGrandRow('link-aero', ar ? 'إجمالي عام لينك إيرو' : 'Link Aero Grand Total', calcStationTotals(aeroEntries.flatMap(([, r]) => r)));
+                      } else {
+                        cargoEntries.forEach(([stKey, records]) => renderStationBlock(stKey, records));
+                        pushGrandRow('link-cargo', ar ? 'إجمالي عام لينك كارجو' : 'Link Cargo Grand Total', calcStationTotals(cargoEntries.flatMap(([, r]) => r)));
+                      }
+                      return rows;
                       return rows;
                     })()}
                   </TableBody>
