@@ -1185,6 +1185,9 @@ const SalaryReports = () => {
                         ar,
                         rows: monthlyByStation,
                         kpis: getExcelKpis(),
+                        secondaryStationKeys: LINK_CARGO_KEYS,
+                        mainGroupLabel: ar ? 'الشركة الرئيسية' : 'Main Company',
+                        secondaryGroupLabel: ar ? 'لينك كارجو' : 'Link Cargo',
                         fileName: `monthly_by_station_${selectedYear}`,
                       });
                       toast.success(ar ? 'تم تصدير الملف' : 'Exported');
