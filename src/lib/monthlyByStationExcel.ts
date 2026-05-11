@@ -111,8 +111,55 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   // spacer
   ws.getRow(3).height = 6;
 
-  // Header row (row 4)
-  const headerRow = ws.getRow(4);
+  let headerRowIdx = 4;
+
+  // KPI cards
+  if (hasKpis) {
+    const kpiPalette: Record<MBSKpiColor, { bg: string; text: string }> = {
+      primary: { bg: 'FFDBEAFE', text: 'FF1E40AF' },
+      green:   { bg: 'FFDCFCE7', text: 'FF15803D' },
+      red:     { bg: 'FFFEE2E2', text: 'FFB91C1C' },
+      blue:    { bg: 'FFDBEAFE', text: 'FF1D4ED8' },
+      amber:   { bg: 'FFFEF3C7', text: 'FFB45309' },
+      purple:  { bg: 'FFEDE9FE', text: 'FF6D28D9' },
+    };
+    const n = Math.min(kpis!.length, 6);
+    const base = Math.floor(colCount / n);
+    const extra = colCount - base * n;
+    const widths: number[] = Array.from({ length: n }, (_, i) => base + (i < extra ? 1 : 0));
+
+    ws.getRow(4).height = 20;
+    ws.getRow(5).height = 28;
+
+    let cur = 1;
+    for (let i = 0; i < n; i++) {
+      const w = widths[i];
+      const start = cur;
+      const end = cur + w - 1;
+      const k = kpis![i];
+      const pal = kpiPalette[k.color];
+      ws.mergeCells(4, start, 4, end);
+      ws.mergeCells(5, start, 5, end);
+      const lc = ws.getCell(4, start);
+      lc.value = k.label;
+      lc.font = { name: 'Calibri', size: 10, bold: true, color: { argb: pal.text } };
+      lc.alignment = { horizontal: 'center', vertical: 'middle' };
+      fill(lc, pal.bg);
+      setBorder(lc);
+      const vc = ws.getCell(5, start);
+      vc.value = k.value;
+      vc.font = { name: 'Calibri', size: 14, bold: true, color: { argb: pal.text } };
+      vc.alignment = { horizontal: 'center', vertical: 'middle' };
+      fill(vc, pal.bg);
+      setBorder(vc);
+      cur = end + 1;
+    }
+    ws.getRow(6).height = 6;
+    headerRowIdx = 7;
+  }
+
+  // Header row
+  const headerRow = ws.getRow(headerRowIdx);
   headers.forEach((h, i) => {
     const cell = headerRow.getCell(i + 1);
     cell.value = h;
