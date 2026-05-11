@@ -22,6 +22,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 import { WordPreviewDialog } from '@/components/reports/WordPreviewDialog';
 import { toast } from '@/hooks/use-toast';
+import { exportDailyAttendanceExcel } from '@/lib/dailyAttendanceExcel';
 
 interface StationRow { id: string; name_ar: string; name_en: string; weekend_days?: number[] | null; }
 interface EmployeeRow { id: string; employee_code: string; name_ar: string; name_en: string; station_id: string | null; department_id: string | null; }
@@ -695,7 +696,54 @@ export const DailyAttendanceReport = () => {
               <Button variant="outline" size="sm" onClick={() => exportToPDF({ title: reportTitle, data: buildExportRows(), columns: exportColumns })}>
                 <Download className="w-4 h-4 mr-2" />PDF
               </Button>
-              <Button variant="outline" size="sm" onClick={() => exportToCSV({ title: reportTitle, data: buildExportRows(), columns: exportColumns })}>
+              <Button variant="outline" size="sm" onClick={() => {
+                exportDailyAttendanceExcel({
+                  title: reportTitle,
+                  ar,
+                  dateRange,
+                  isHeaderWeekend: (dow: number) => isHeaderWeekend(dow),
+                  fileName: ar ? 'تقرير_الحضور_التفصيلي' : 'daily_attendance_detailed',
+                  totals: {
+                    stationsCount: totals.stationsCount,
+                    employeesCount: totals.employeesCount,
+                    totalHours: fmtHours(totals.totalHours),
+                    present: totals.present,
+                    late: totals.late,
+                    absent: totals.absent,
+                    leaves: totals.leaves,
+                    missions: totals.missions,
+                    permissions: totals.permissions,
+                    overtimeHours: fmtHours(totals.overtimeHours),
+                  },
+                  rows: empRows.map((r, idx) => ({
+                    idx: idx + 1,
+                    code: r.employee.employee_code,
+                    name: ar ? r.employee.name_ar : r.employee.name_en,
+                    station: r.station ? (ar ? r.station.name_ar : r.station.name_en) : '—',
+                    department: r.department ? (ar ? r.department.name_ar : r.department.name_en) : '—',
+                    present: r.totals.present,
+                    late: r.totals.late,
+                    absent: r.totals.absent,
+                    hours: fmtHours(r.totals.hours),
+                    cells: r.cells.map((c, ci) => {
+                      const dow = new Date(dateRange[ci] + 'T00:00:00').getDay();
+                      const isOff = isEmpWeekend(r.station?.id || null, dow);
+                      const leaveLbl = c.leave ? (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)) : null;
+                      return {
+                        in: formatTimeCairo(c.record?.check_in ?? null),
+                        out: formatTimeCairo(c.record?.check_out ?? null),
+                        hours: c.kind === 'none' ? '' : fmtHours(c.hours),
+                        kind: c.kind,
+                        isOff,
+                        leave: leaveLbl,
+                        mission: c.mission ? (ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`) : null,
+                        permission: c.permission ? (ar ? `${c.permission.hours || 0}س` : `${c.permission.hours || 0}h`) : null,
+                        overtime: c.overtime ? (ar ? `${c.overtime.hours || 0}س` : `${c.overtime.hours || 0}h`) : null,
+                      };
+                    }),
+                  })),
+                });
+              }}>
                 <FileText className="w-4 h-4 mr-2" />Excel
               </Button>
               <Button variant="outline" size="sm" onClick={async () => {
