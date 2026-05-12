@@ -43,11 +43,13 @@ interface LoanDataContextType {
   getEmployeeActiveLoans: (employeeId: string) => Loan[];
   getEmployeeMonthlyLoanPayment: (employeeId: string) => number;
   getEmployeeAdvanceForMonth: (employeeId: string, month: string) => number;
-  addLoan: (loan: Omit<Loan, 'id' | 'paidInstallments' | 'paidAmount' | 'remainingAmount' | 'monthlyPayment'> & { monthlyPayment?: number }) => Promise<void>;
+  addLoan: (loan: Omit<Loan, 'id' | 'paidInstallments' | 'paidAmount' | 'remainingAmount' | 'monthlyPayment' | 'archived'> & { monthlyPayment?: number; archived?: boolean }) => Promise<void>;
   updateLoan: (id: string, updates: Partial<Loan>) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
   recordLoanPayment: (loanId: string) => Promise<void>;
   reverseLoanPayment: (loanId: string) => Promise<void>;
+  archiveLoan: (id: string) => Promise<void>;
+  unarchiveLoan: (id: string) => Promise<void>;
   addAdvance: (advance: Omit<Advance, 'id'>) => Promise<void>;
   updateAdvance: (id: string, updates: Partial<Advance>) => Promise<void>;
   deleteAdvance: (id: string) => Promise<void>;
