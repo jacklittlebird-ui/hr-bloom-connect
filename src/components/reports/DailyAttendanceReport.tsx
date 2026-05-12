@@ -404,12 +404,14 @@ export const DailyAttendanceReport = () => {
         totals: { present, late, absent, hours, matched, leaves: leavesCount, missions: missionsCount, permissions: permissionsCount, overtimeHours },
       });
     });
-    // Sort by station then employee code
+    // Sort by station then employee name (alphabetical)
     rows.sort((a, b) => {
       const sa = a.station ? (ar ? a.station.name_ar : a.station.name_en) : 'zzz';
       const sb = b.station ? (ar ? b.station.name_ar : b.station.name_en) : 'zzz';
       if (sa !== sb) return sa.localeCompare(sb, 'ar');
-      return a.employee.employee_code.localeCompare(b.employee.employee_code);
+      const na = ar ? a.employee.name_ar : a.employee.name_en;
+      const nb = ar ? b.employee.name_ar : b.employee.name_en;
+      return (na || '').localeCompare(nb || '', 'ar');
     });
     return rows;
   }, [employees, visibleEmpIds, recordIndex, leaveIndex, missionIndex, permissionIndex, overtimeIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar]);
