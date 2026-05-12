@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { EmployeeSelector } from './EmployeeSelector';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NewRequestFormProps {
   onSubmitLeave: (data: any) => void;
