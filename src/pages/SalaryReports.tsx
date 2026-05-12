@@ -941,7 +941,7 @@ const SalaryReports = () => {
     { id: 'stations', label: ar ? 'حسب المحطة' : 'By Station' },
     { id: 'departments', label: ar ? 'حسب القسم' : 'By Department' },
     { id: 'monthly-station', label: ar ? 'تقرير إجمالي بالمحطات' : 'Stations Total Report' },
-    { id: 'employee-detail', label: ar ? 'تفصيل الموظفين' : 'Employee Detail' },
+    { id: 'employee-detail', label: ar ? 'تفصيل رواتب الموظفين' : 'Employee Salary Detail' },
     { id: 'allowances', label: ar ? 'تحليل البدلات والخصومات' : 'Allowances & Deductions' },
   ];
 
@@ -1210,46 +1210,46 @@ const SalaryReports = () => {
                               <TableCell className={cn("text-xs", isRTL && "text-right")}>{e.department}</TableCell>
                               <TableCell className={cn("text-xs", isRTL && "text-right")}>{stName}</TableCell>
                               <TableCell className={cn(isRTL && "text-right")}>{monthNames[parseInt(e.month) - 1]}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.basicSalary.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.transportAllowance.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.incentives.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.stationAllowance.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.mobileAllowance.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.livingAllowance.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.overtimePay.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.bonusAmount.toLocaleString()}</TableCell>
-                              <TableCell className={cn("font-bold text-green-700", isRTL && "text-right")}>{e.gross.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.employeeInsurance.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.loanPayment.toLocaleString()}</TableCell>
-                              <TableCell className={cn("text-destructive", isRTL && "text-right")}>{e.totalDeductions.toLocaleString()}</TableCell>
-                              <TableCell className={cn("font-bold text-blue-700", isRTL && "text-right")}>{e.netSalary.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.employerSocialInsurance.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.healthInsurance.toLocaleString()}</TableCell>
-                              <TableCell className={cn(isRTL && "text-right")}>{e.incomeTax.toLocaleString()}</TableCell>
-                              <TableCell className={cn("font-bold text-blue-600", isRTL && "text-right")}>{(e.employerSocialInsurance + e.healthInsurance + e.incomeTax).toLocaleString()}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.basicSalary.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.transportAllowance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.incentives.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.stationAllowance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.mobileAllowance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.livingAllowance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.overtimePay.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.bonusAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn("font-bold text-green-700", isRTL && "text-right")}>{e.gross.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.employeeInsurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.loanPayment.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn("text-destructive", isRTL && "text-right")}>{e.totalDeductions.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn("font-bold text-blue-700", isRTL && "text-right")}>{e.netSalary.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.employerSocialInsurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.healthInsurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.incomeTax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn("font-bold text-blue-600", isRTL && "text-right")}>{(e.employerSocialInsurance + e.healthInsurance + e.incomeTax).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                             </TableRow>
                           );
                         });
                         rows.push(
                           <TableRow key={`sub-${stKey}`} className="bg-muted/60 font-bold border-b-2 border-primary/20">
                             <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{ar ? `إجمالي ${stName}` : `${stName} Total`} ({stTotals.count})</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.basic.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.transport.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.incentives.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.stationAllow.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.mobileAllow.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.living.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.overtime.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.bonus.toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-green-700", isRTL && "text-right")}>{stTotals.gross.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.insurance.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.loans.toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{stTotals.totalDed.toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-blue-700", isRTL && "text-right")}>{stTotals.net.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.empIns.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.health.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.tax.toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(stTotals.empIns + stTotals.health + stTotals.tax).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.basic.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.transport.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.incentives.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.stationAllow.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.mobileAllow.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.living.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.overtime.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.bonus.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-green-700", isRTL && "text-right")}>{stTotals.gross.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.insurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.loans.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{stTotals.totalDed.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-blue-700", isRTL && "text-right")}>{stTotals.net.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.empIns.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.health.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{stTotals.tax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(stTotals.empIns + stTotals.health + stTotals.tax).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                           </TableRow>
                         );
                       };
@@ -1259,23 +1259,23 @@ const SalaryReports = () => {
                         rows.push(
                           <TableRow key={`grand-total-${key}`} className="bg-primary/10 font-bold text-base border-t-4 border-primary">
                             <TableCell colSpan={5} className={cn(isRTL && "text-right")}>{label} ({totals.count})</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.basic.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.transport.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.incentives.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.stationAllow.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.mobileAllow.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.living.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.overtime.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.bonus.toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-green-700", isRTL && "text-right")}>{totals.gross.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.insurance.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.loans.toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.totalDed.toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-blue-700", isRTL && "text-right")}>{totals.net.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.empIns.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.health.toLocaleString()}</TableCell>
-                            <TableCell className={cn(isRTL && "text-right")}>{totals.tax.toLocaleString()}</TableCell>
-                            <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(totals.empIns + totals.health + totals.tax).toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.basic.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.transport.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.incentives.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.stationAllow.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.mobileAllow.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.living.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.overtime.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.bonus.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-green-700", isRTL && "text-right")}>{totals.gross.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.insurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.loans.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.totalDed.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-blue-700", isRTL && "text-right")}>{totals.net.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.empIns.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.health.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.tax.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-blue-600", isRTL && "text-right")}>{(totals.empIns + totals.health + totals.tax).toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                           </TableRow>
                         );
                       };
