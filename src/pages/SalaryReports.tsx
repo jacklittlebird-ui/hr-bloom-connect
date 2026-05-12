@@ -887,6 +887,7 @@ const SalaryReports = () => {
     { header: ar ? 'الإجمالي' : 'Gross', key: 'gross' },
     { header: ar ? 'تأمينات' : 'Ins.', key: 'insurance' },
     { header: ar ? 'قروض' : 'Loans', key: 'loans' },
+    { header: ar ? 'سلف' : 'Advances', key: 'advances' },
     { header: ar ? 'إجمالي خصومات' : 'Tot.Ded', key: 'totalDeductions' },
     { header: ar ? 'الصافي' : 'Net', key: 'net' },
     { header: ar ? 'تأمينات الشركة' : 'Emp. Ins.', key: 'employerInsurance' },
@@ -910,10 +911,10 @@ const SalaryReports = () => {
 
     const renderEntries = (entries: typeof allEntries, companyTotals: any) => {
       entries.forEach(([, rows]) => {
-        const stTotals: any = { stationName: ar ? `إجمالي ${rows[0].stationName}` : `${rows[0].stationName} Total`, month: '', count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0, totalEmployer: 0 };
+        const stTotals: any = { stationName: ar ? `إجمالي ${rows[0].stationName}` : `${rows[0].stationName} Total`, month: '', count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0, totalEmployer: 0 };
         rows.forEach(r => {
           result.push({ ...r, totalEmployer: r.employerInsurance + r.healthInsurance + r.incomeTax });
-          ['count','basic','transport','incentives','stationAllowance','mobileAllowance','livingAllowance','overtimePay','bonuses','gross','insurance','loans','totalDeductions','net','employerInsurance','healthInsurance','incomeTax'].forEach(k => { stTotals[k] += (r as any)[k]; });
+          ['count','basic','transport','incentives','stationAllowance','mobileAllowance','livingAllowance','overtimePay','bonuses','gross','insurance','loans','advances','totalDeductions','net','employerInsurance','healthInsurance','incomeTax'].forEach(k => { stTotals[k] += (r as any)[k]; });
         });
         stTotals.totalEmployer = stTotals.employerInsurance + stTotals.healthInsurance + stTotals.incomeTax;
         result.push(stTotals);
