@@ -17,6 +17,7 @@ export interface MBSRow {
   gross: number;
   insurance: number;
   loans: number;
+  advances: number;
   totalDeductions: number;
   net: number;
   employerInsurance: number;
@@ -89,8 +90,8 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   });
 
   const headers = ar
-    ? ['المحطة','الشهر','العدد','الأساسي','مواصلات','حوافز','بدل محطة','بدل محمول','بدل معيشة','أجر إضافي','مكافآت','الإجمالي','تأمينات','قروض','إجمالي خصومات','الصافي','تأمينات ص.ع','صحي','ضريبة','إجمالي مساهمات ص.ع']
-    : ['Station','Month','Count','Basic','Trans.','Incent.','St.All.','Mob.','Living','OT','Bonus','Gross','Ins.','Loans','Tot.Ded','Net','Emp.Ins','Health','Tax','Total Employer'];
+    ? ['المحطة','الشهر','العدد','الأساسي','مواصلات','حوافز','بدل محطة','بدل محمول','بدل معيشة','أجر إضافي','مكافآت','الإجمالي','تأمينات','قروض','سلف','إجمالي خصومات','الصافي','تأمينات ص.ع','صحي','ضريبة','إجمالي مساهمات ص.ع']
+    : ['Station','Month','Count','Basic','Trans.','Incent.','St.All.','Mob.','Living','OT','Bonus','Gross','Ins.','Loans','Advances','Tot.Ded','Net','Emp.Ins','Health','Tax','Total Employer'];
 
   const colCount = headers.length;
   ws.columns = headers.map((_, i) => ({ width: i === 0 ? 22 : i === 1 ? 12 : 13 }));
@@ -192,7 +193,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   let rowIdx = headerRowIdx + 1;
   let zebra = false;
 
-  const emptyTotals = () => ({ count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 });
+  const emptyTotals = () => ({ count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 });
 
   const renderTotalRow = (label: string, totals: ReturnType<typeof emptyTotals>, isGrand: boolean) => {
     const tRow = ws.getRow(rowIdx++);
