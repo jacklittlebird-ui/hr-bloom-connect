@@ -84,20 +84,24 @@ export const PortalLeaves = () => {
   // Check balances for availability
   const annualBalance = balances.find(b => b.typeEn === 'Annual');
   const casualBalance = balances.find(b => b.typeEn === 'Casual');
+  const sickBalance = balances.find(b => b.typeEn === 'Sick');
   const hasAnnualBalance = (annualBalance?.remaining ?? 0) > 0;
   const hasCasualBalance = (casualBalance?.remaining ?? 0) > 0;
+  const hasSickBalance = (sickBalance?.remaining ?? 0) > 0;
 
   // Filter available leave types based on balance
   const availableLeaveTypes = useMemo(() => {
-    if (!hasAnnualBalance && !hasCasualBalance) {
-      return leaveTypes.filter(t => t.value === 'unpaid');
-    }
-    return leaveTypes.filter(t => {
+    const filtered = leaveTypes.filter(t => {
       if (t.value === 'annual') return hasAnnualBalance;
       if (t.value === 'casual') return hasCasualBalance;
+      if (t.value === 'sick') return hasSickBalance;
       return true;
     });
-  }, [hasAnnualBalance, hasCasualBalance]);
+    if (!hasAnnualBalance && !hasCasualBalance && !hasSickBalance) {
+      return leaveTypes.filter(t => t.value === 'unpaid' || t.value === 'marriage');
+    }
+    return filtered;
+  }, [hasAnnualBalance, hasCasualBalance, hasSickBalance]);
 
   const permTypes = [
     { value: 'late_arrival', ar: 'تأخير صباحًا', en: 'Late Arrival' },
@@ -136,8 +140,17 @@ export const PortalLeaves = () => {
       return;
     }
 
-    // Sick leave: show warning about medical report
+    // Sick leave: must have sufficient balance
     if (leaveType === 'sick') {
+      const remaining = sickBalance?.remaining ?? 0;
+      if (remaining <= 0 || calculateDays() > remaining) {
+        toast.error(
+          ar
+            ? 'لا يمكن تقديم طلب إجازة مرضية: رصيد الإجازات المرضية غير كافٍ. يرجى التواصل مع إدارة الموارد البشرية.'
+            : 'Cannot submit sick leave: insufficient sick leave balance. Please contact HR.'
+        );
+        return;
+      }
       toast.warning(
         ar ? 'تنبيه: بدون إرسال تقرير طبي معتمد من التأمين الصحي فلن تُقبل الإجازة المرضية' 
            : 'Warning: Sick leave will not be accepted without an approved medical report from health insurance',
