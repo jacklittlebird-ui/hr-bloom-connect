@@ -80,6 +80,7 @@ export const NewRequestForm = ({ onSubmitLeave, onSubmitPermission, onSubmitMiss
 const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
   const { t, isRTL } = useLanguage();
   const { employees: allEmployees } = useEmployeeData();
+  const { user } = useAuth();
   const [employeeId, setEmployeeId] = useState('');
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
@@ -89,7 +90,9 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
 
   const calculateDays = () => (startDate && endDate ? differenceInDays(endDate, startDate) + 1 : 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const isPrivilegedUser = user?.role === 'admin' || (user?.email || '').toLowerCase() === 'hr@linkagency.com';
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!employeeId || !startDate || !endDate || !leaveType || !reason) {
       toast({ title: t('leaves.form.error'), description: t('leaves.form.fillAllFields'), variant: 'destructive' });
@@ -100,6 +103,30 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
     if (leaveType === 'marriage' && calculateDays() > 8) {
       toast({ title: t('leaves.form.error'), description: isRTL ? 'إجازة الزواج بحد أقصى 8 أيام' : 'Marriage leave is limited to a maximum of 8 days', variant: 'destructive' });
       return;
+    }
+
+    // Sick leave: must have sufficient balance unless user is admin or hr@linkagency.com
+    if (leaveType === 'sick' && !isPrivilegedUser) {
+      const emp = allEmployees.find((e: any) => e.employeeId === employeeId);
+      const empUuid = (emp as any)?.id || employeeId;
+      const year = new Date().getFullYear();
+      const { data: lb } = await supabase
+        .from('leave_balances')
+        .select('sick_total, sick_used')
+        .eq('employee_id', empUuid)
+        .eq('year', year)
+        .maybeSingle();
+      const remaining = lb ? Number(lb.sick_total || 0) - Number(lb.sick_used || 0) : 0;
+      if (remaining <= 0 || calculateDays() > remaining) {
+        toast({
+          title: t('leaves.form.error'),
+          description: isRTL
+            ? 'لا يمكن تسجيل إجازة مرضية تتجاوز الرصيد المتاح. يجب أن يقوم بإدخالها مدير النظام أو حساب hr@linkagency.com فقط.'
+            : 'Cannot register sick leave exceeding available balance. Only admin or hr@linkagency.com can do this.',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     // Sick leave warning
