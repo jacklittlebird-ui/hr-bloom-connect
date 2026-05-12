@@ -20,6 +20,7 @@ export interface Loan {
   status: 'active' | 'completed' | 'pending';
   notes: string;
   calculationMethod: 'auto' | 'manual';
+  archived: boolean;
 }
 
 export interface Advance {
@@ -42,11 +43,13 @@ interface LoanDataContextType {
   getEmployeeActiveLoans: (employeeId: string) => Loan[];
   getEmployeeMonthlyLoanPayment: (employeeId: string) => number;
   getEmployeeAdvanceForMonth: (employeeId: string, month: string) => number;
-  addLoan: (loan: Omit<Loan, 'id' | 'paidInstallments' | 'paidAmount' | 'remainingAmount' | 'monthlyPayment'> & { monthlyPayment?: number }) => Promise<void>;
+  addLoan: (loan: Omit<Loan, 'id' | 'paidInstallments' | 'paidAmount' | 'remainingAmount' | 'monthlyPayment' | 'archived'> & { monthlyPayment?: number; archived?: boolean }) => Promise<void>;
   updateLoan: (id: string, updates: Partial<Loan>) => Promise<void>;
   deleteLoan: (id: string) => Promise<void>;
   recordLoanPayment: (loanId: string) => Promise<void>;
   reverseLoanPayment: (loanId: string) => Promise<void>;
+  archiveLoan: (id: string) => Promise<void>;
+  unarchiveLoan: (id: string) => Promise<void>;
   addAdvance: (advance: Omit<Advance, 'id'>) => Promise<void>;
   updateAdvance: (id: string, updates: Partial<Advance>) => Promise<void>;
   deleteAdvance: (id: string) => Promise<void>;
@@ -57,8 +60,8 @@ interface LoanDataContextType {
 const LoanDataContext = createContext<LoanDataContextType | undefined>(undefined);
 
 // Specific columns instead of SELECT *
-const LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, employees(name_ar, stations(code))';
-const EMPLOYEE_LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason';
+const LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, archived, employees(name_ar, stations(code))';
+const EMPLOYEE_LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, archived';
 const ADVANCE_COLS = 'id, employee_id, amount, created_at, deduction_month, status, reason, employees(name_ar, stations(code))';
 const EMPLOYEE_ADVANCE_COLS = 'id, employee_id, amount, created_at, deduction_month, status, reason';
 
@@ -95,6 +98,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       status: l.status as Loan['status'],
       notes: l.reason || '',
       calculationMethod: 'auto' as const,
+      archived: !!l.archived,
     })));
   }, [isEmployee, scopedEmployeeId]);
 
@@ -170,6 +174,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (updates.notes !== undefined) dbUpdates.reason = updates.notes;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.employeeId !== undefined) dbUpdates.employee_id = updates.employeeId;
+    if ((updates as any).archived !== undefined) dbUpdates.archived = (updates as any).archived;
 
     const { error } = await supabase.from('loans').update(dbUpdates).eq('id', id);
     if (error) throw error;
@@ -263,14 +268,26 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     await fetchAdvances();
   }, [fetchAdvances]);
 
+  const archiveLoan = useCallback(async (id: string) => {
+    const { error } = await supabase.from('loans').update({ archived: true }).eq('id', id);
+    if (error) throw error;
+    await fetchLoans();
+  }, [fetchLoans]);
+
+  const unarchiveLoan = useCallback(async (id: string) => {
+    const { error } = await supabase.from('loans').update({ archived: false }).eq('id', id);
+    if (error) throw error;
+    await fetchLoans();
+  }, [fetchLoans]);
+
   const getEmployeeActiveLoans = useCallback((employeeId: string) => {
     if (!hasFetched.current) ensureLoaded();
-    return loans.filter(l => l.employeeId === employeeId && l.status === 'active');
+    return loans.filter(l => l.employeeId === employeeId && l.status === 'active' && !l.archived);
   }, [loans, ensureLoaded]);
 
   const getEmployeeMonthlyLoanPayment = useCallback((employeeId: string) => {
     if (!hasFetched.current) ensureLoaded();
-    return loans.filter(l => l.employeeId === employeeId && l.status === 'active').reduce((sum, l) => sum + l.monthlyPayment, 0);
+    return loans.filter(l => l.employeeId === employeeId && l.status === 'active' && !l.archived).reduce((sum, l) => sum + l.monthlyPayment, 0);
   }, [loans, ensureLoaded]);
 
   const getEmployeeAdvanceForMonth = useCallback((employeeId: string, month: string) => {
@@ -283,6 +300,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       loans, advances, setLoans, setAdvances,
       getEmployeeActiveLoans, getEmployeeMonthlyLoanPayment, getEmployeeAdvanceForMonth,
       addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment,
+      archiveLoan, unarchiveLoan,
       addAdvance, updateAdvance, deleteAdvance, refreshData, ensureLoaded,
     }}>
       {children}

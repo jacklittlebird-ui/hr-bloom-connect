@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List, RefreshCw, Undo2, Loader2 } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Banknote, Users, Clock, CheckCircle, Printer, FileText, FileSpreadsheet, CreditCard, List, RefreshCw, Undo2, Loader2, Archive, ArchiveRestore } from 'lucide-react';
 import { InstallmentScheduleDialog } from './InstallmentScheduleDialog';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,12 +31,13 @@ const getMonthName = (dateStr: string, lang: string) => {
   return `${monthName} ${year}`;
 };
 
-export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
+export const LoansList = ({ refreshKey = 0, mode = 'active' }: { refreshKey?: number; mode?: 'active' | 'archived' } = {}) => {
   const { t, isRTL, language } = useLanguage();
   const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
-  const { loans, addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment, refreshData, ensureLoaded } = useLoanData();
+  const { loans: allLoans, addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment, archiveLoan, unarchiveLoan, refreshData, ensureLoaded } = useLoanData();
   const { employees } = useEmployeeData();
   const activeEmployees = employees.filter(e => e.status === 'active');
+  const loans = useMemo(() => allLoans.filter(l => mode === 'archived' ? l.archived : !l.archived), [allLoans, mode]);
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
   useEffect(() => { if (refreshKey > 0) refreshData(); }, [refreshKey, refreshData]);
@@ -518,9 +519,19 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
                           {actioningId === loan.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />}{isRTL ? 'تراجع' : 'Undo'}
                         </Button>
                       )}
-                      {loan.status === 'active' && loan.remainingAmount > 0 && (
+                      {loan.status === 'active' && loan.remainingAmount > 0 && !loan.archived && (
                         <Button size="sm" variant="outline" className="text-xs gap-1 text-blue-600" onClick={() => openRescheduleDialog(loan)}>
                           <RefreshCw className="h-3 w-3" />{isRTL ? 'إعادة جدولة' : 'Reschedule'}
+                        </Button>
+                      )}
+                      {mode === 'active' && loan.status === 'completed' && (
+                        <Button size="sm" variant="outline" className="text-xs gap-1 text-amber-600" onClick={async () => { try { await archiveLoan(loan.id); toast({ title: isRTL ? 'تم الأرشفة' : 'Archived' }); } catch (e: any) { toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' }); } }}>
+                          <Archive className="h-3 w-3" />{isRTL ? 'أرشفة' : 'Archive'}
+                        </Button>
+                      )}
+                      {mode === 'archived' && (
+                        <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={async () => { try { await unarchiveLoan(loan.id); toast({ title: isRTL ? 'تم الاستعادة' : 'Restored' }); } catch (e: any) { toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' }); } }}>
+                          <ArchiveRestore className="h-3 w-3" />{isRTL ? 'استعادة' : 'Restore'}
                         </Button>
                       )}
                       <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => openEditDialog(loan)}>
