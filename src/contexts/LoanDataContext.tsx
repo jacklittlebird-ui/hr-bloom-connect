@@ -174,8 +174,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (updates.notes !== undefined) dbUpdates.reason = updates.notes;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.employeeId !== undefined) dbUpdates.employee_id = updates.employeeId;
-
-    const { error } = await supabase.from('loans').update(dbUpdates).eq('id', id);
+    if ((updates as any).archived !== undefined) dbUpdates.archived = (updates as any).archived;
     if (error) throw error;
     
     await fetchLoans();
