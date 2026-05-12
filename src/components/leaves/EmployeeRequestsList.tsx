@@ -18,6 +18,7 @@ interface EmployeeRequestItem {
   employeeName: string;
   employeeNameAr: string;
   employeeCode: string;
+  station?: string;
   typeAr: string;
   typeEn: string;
   reason: string | null;
