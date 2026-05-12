@@ -43,6 +43,8 @@ const Index = () => {
     performanceReviews: 0,
     activeLoans: 0,
     absentToday: 0,
+    maleActive: 0,
+    femaleActive: 0,
   });
 
   const fetchStats = async () => {
