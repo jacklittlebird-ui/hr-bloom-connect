@@ -206,7 +206,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       setBorder(cell);
       fill(cell, isGrand ? C.grandBg : C.subtotalBg);
-      if (typeof cell.value === 'number') cell.numFmt = '#,##0';
+      if (typeof cell.value === 'number') cell.numFmt = '#,##0.##;(#,##0.##);-';
       if (c === 12) fill(cell, isGrand ? C.grandGrossBg : C.grossSubBg);
       else if (c === 15) cell.font = { ...cell.font, color: { argb: C.destructive } };
       else if (c === 16) fill(cell, isGrand ? C.grandNetBg : C.netSubBg);
@@ -258,7 +258,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
           cell.font = { name: 'Baloo Bhaijaan 2', size: 10 };
           cell.alignment = { horizontal: 'center', vertical: 'middle' };
           setBorder(cell);
-          if (typeof v === 'number') cell.numFmt = '#,##0';
+          if (typeof v === 'number') cell.numFmt = '#,##0.##;(#,##0.##);-';
           if (zebra) fill(cell, C.zebra);
           if (ci === 11) { fill(cell, C.grossBg); cell.font = { ...cell.font, bold: true }; }
           else if (ci === 14) { cell.font = { ...cell.font, color: { argb: C.destructive } }; }
