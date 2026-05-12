@@ -769,6 +769,7 @@ export const DailyAttendanceReport = () => {
           <SummaryStat icon={Users} label={ar ? 'إجمالي الموظفين' : 'Employees'} value={totals.employeesCount} color="text-indigo-600" bg="bg-indigo-100" />
           <SummaryStat icon={Clock} label={ar ? 'إجمالي ساعات العمل' : 'Total Work Hours'} value={fmtHours(totals.totalHours)} color="text-emerald-600" bg="bg-emerald-100" />
           <SummaryStat icon={CalendarDays} label={ar ? 'أيام الحضور' : 'Present Days'} value={totals.present} color="text-green-600" bg="bg-green-100" />
+          <SummaryStat icon={AlertTriangle} label={ar ? 'أيام التأخير' : 'Late Days'} value={totals.late} color="text-amber-600" bg="bg-amber-100" />
           <SummaryStat icon={CalendarDays} label={ar ? 'أيام الغياب' : 'Absent Days'} value={totals.absent} color="text-red-600" bg="bg-red-100" />
           <SummaryStat icon={Plane} label={ar ? 'أيام الإجازات' : 'Leave Days'} value={totals.leaves} color="text-sky-600" bg="bg-sky-100" />
           <SummaryStat icon={Briefcase} label={ar ? 'المأموريات' : 'Missions'} value={totals.missions} color="text-purple-600" bg="bg-purple-100" />
