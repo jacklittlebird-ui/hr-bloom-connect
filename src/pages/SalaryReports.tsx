@@ -1179,7 +1179,7 @@ const SalaryReports = () => {
               ) : (
                 <Table>
                   <TableHeader><TableRow>
-                    {[ar?'الكود':'ID', ar?'الاسم':'Name', ar?'القسم':'Dept', ar?'المحطة':'Station', ar?'الشهر':'Month', ar?'الأساسي':'Basic', ar?'مواصلات':'Trans.', ar?'حوافز':'Incent.', ar?'بدل محطة':'St.All.', ar?'بدل محمول':'Mob.All.', ar?'بدل معيشة':'Living', ar?'أجر إضافي':'OT', ar?'مكافآت':'Bonus', ar?'الإجمالي':'Gross', ar?'تأمينات':'Ins.', ar?'قروض':'Loans', ar?'خصومات':'Tot.Ded', ar?'الصافي':'Net', ar?'تأمينات ص.ع':'Emp.Ins', ar?'صحي':'Health', ar?'ضريبة':'Tax', ar?'إجمالي مساهمات ص.ع':'Total Employer'].map((h, i) => (
+                    {[ar?'الكود':'ID', ar?'الاسم':'Name', ar?'القسم':'Dept', ar?'المحطة':'Station', ar?'الشهر':'Month', ar?'الأساسي':'Basic', ar?'مواصلات':'Trans.', ar?'حوافز':'Incent.', ar?'بدل محطة':'St.All.', ar?'بدل محمول':'Mob.All.', ar?'بدل معيشة':'Living', ar?'أجر إضافي':'OT', ar?'مكافآت':'Bonus', ar?'الإجمالي':'Gross', ar?'تأمينات':'Ins.', ar?'قروض':'Loans', ar?'سلف':'Advances', ar?'خصومات':'Tot.Ded', ar?'الصافي':'Net', ar?'تأمينات ص.ع':'Emp.Ins', ar?'صحي':'Health', ar?'ضريبة':'Tax', ar?'إجمالي مساهمات ص.ع':'Total Employer'].map((h, i) => (
                       <TableHead key={i} className={cn("whitespace-nowrap text-xs", isRTL && "text-right")}>{h}</TableHead>
                     ))}
                   </TableRow></TableHeader>
@@ -1195,7 +1195,7 @@ const SalaryReports = () => {
                         const stName = getStationLabel(stKey);
                         rows.push(
                           <TableRow key={`hdr-${stKey}`} className="bg-primary/10 border-t-2 border-primary/30">
-                            <TableCell colSpan={22} className={cn("font-bold text-base", isRTL && "text-right")}>
+                            <TableCell colSpan={23} className={cn("font-bold text-base", isRTL && "text-right")}>
                               <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
                                 <MapPin className="w-4 h-4" />
                                 {stName} ({records.length})
@@ -1222,6 +1222,7 @@ const SalaryReports = () => {
                               <TableCell className={cn("font-bold text-green-700", isRTL && "text-right")}>{e.gross.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn(isRTL && "text-right")}>{e.employeeInsurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn(isRTL && "text-right")}>{e.loanPayment.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.advanceAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn("text-destructive", isRTL && "text-right")}>{e.totalDeductions.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn("font-bold text-blue-700", isRTL && "text-right")}>{e.netSalary.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn(isRTL && "text-right")}>{e.employerSocialInsurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
