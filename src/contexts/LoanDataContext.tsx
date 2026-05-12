@@ -20,6 +20,7 @@ export interface Loan {
   status: 'active' | 'completed' | 'pending';
   notes: string;
   calculationMethod: 'auto' | 'manual';
+  archived: boolean;
 }
 
 export interface Advance {
