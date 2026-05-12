@@ -63,8 +63,8 @@ const Index = () => {
       supabase.from('planned_courses').select('id', { count: 'exact', head: true }).in('status', ['planned', 'in_progress']),
       supabase.from('performance_reviews').select('id', { count: 'exact', head: true }).eq('year', currentYear),
       supabase.from('loans').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active').eq('gender', 'ذكر'),
-      supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active').eq('gender', 'أنثى'),
+      supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active').in('gender', ['ذكر', 'male', 'Male']),
+      supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active').in('gender', ['أنثى', 'انثى', 'انثي', 'أنثي', 'female', 'Female']),
     ]);
 
     const totalEmps = totalEmpRes.count || 0;
