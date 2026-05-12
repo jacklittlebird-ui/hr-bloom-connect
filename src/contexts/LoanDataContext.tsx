@@ -287,7 +287,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const getEmployeeMonthlyLoanPayment = useCallback((employeeId: string) => {
     if (!hasFetched.current) ensureLoaded();
-    return loans.filter(l => l.employeeId === employeeId && l.status === 'active').reduce((sum, l) => sum + l.monthlyPayment, 0);
+    return loans.filter(l => l.employeeId === employeeId && l.status === 'active' && !l.archived).reduce((sum, l) => sum + l.monthlyPayment, 0);
   }, [loans, ensureLoaded]);
 
   const getEmployeeAdvanceForMonth = useCallback((employeeId: string, month: string) => {
