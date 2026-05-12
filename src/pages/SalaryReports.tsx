@@ -1221,6 +1221,7 @@ const SalaryReports = () => {
                               <TableCell className={cn("font-bold text-green-700", isRTL && "text-right")}>{e.gross.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn(isRTL && "text-right")}>{e.employeeInsurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn(isRTL && "text-right")}>{e.loanPayment.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                              <TableCell className={cn(isRTL && "text-right")}>{e.advanceAmount.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn("text-destructive", isRTL && "text-right")}>{e.totalDeductions.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn("font-bold text-blue-700", isRTL && "text-right")}>{e.netSalary.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                               <TableCell className={cn(isRTL && "text-right")}>{e.employerSocialInsurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
