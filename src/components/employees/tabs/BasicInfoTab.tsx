@@ -216,8 +216,8 @@ export const BasicInfoTab = ({ employee, onUpdate, readOnly }: BasicInfoTabProps
               <SelectValue placeholder={t('employees.select')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="male">{t('employees.gender.male')}</SelectItem>
-              <SelectItem value="female">{t('employees.gender.female')}</SelectItem>
+              <SelectItem value="ذكر">{t('employees.gender.male')}</SelectItem>
+              <SelectItem value="أنثى">{t('employees.gender.female')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
