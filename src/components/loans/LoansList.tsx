@@ -519,9 +519,19 @@ export const LoansList = ({ refreshKey = 0, mode = 'active' }: { refreshKey?: nu
                           {actioningId === loan.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Undo2 className="h-3 w-3" />}{isRTL ? 'تراجع' : 'Undo'}
                         </Button>
                       )}
-                      {loan.status === 'active' && loan.remainingAmount > 0 && (
+                      {loan.status === 'active' && loan.remainingAmount > 0 && !loan.archived && (
                         <Button size="sm" variant="outline" className="text-xs gap-1 text-blue-600" onClick={() => openRescheduleDialog(loan)}>
                           <RefreshCw className="h-3 w-3" />{isRTL ? 'إعادة جدولة' : 'Reschedule'}
+                        </Button>
+                      )}
+                      {mode === 'active' && loan.status === 'completed' && (
+                        <Button size="sm" variant="outline" className="text-xs gap-1 text-amber-600" onClick={async () => { try { await archiveLoan(loan.id); toast({ title: isRTL ? 'تم الأرشفة' : 'Archived' }); } catch (e: any) { toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' }); } }}>
+                          <Archive className="h-3 w-3" />{isRTL ? 'أرشفة' : 'Archive'}
+                        </Button>
+                      )}
+                      {mode === 'archived' && (
+                        <Button size="sm" variant="outline" className="text-xs gap-1 text-green-600" onClick={async () => { try { await unarchiveLoan(loan.id); toast({ title: isRTL ? 'تم الاستعادة' : 'Restored' }); } catch (e: any) { toast({ title: isRTL ? 'خطأ' : 'Error', description: e?.message, variant: 'destructive' }); } }}>
+                          <ArchiveRestore className="h-3 w-3" />{isRTL ? 'استعادة' : 'Restore'}
                         </Button>
                       )}
                       <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => openEditDialog(loan)}>
