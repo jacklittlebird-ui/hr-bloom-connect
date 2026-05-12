@@ -122,6 +122,7 @@ export const EmployeeRequestsList = ({ requests, onRefresh }: Props) => {
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{ar ? r.employeeNameAr : r.employeeName}</TableCell>
                   <TableCell>{r.employeeCode}</TableCell>
+                  <TableCell>{r.station || '-'}</TableCell>
                   <TableCell>{ar ? r.typeAr : r.typeEn}</TableCell>
                   <TableCell className="max-w-[300px] whitespace-normal break-words">{r.reason || '-'}</TableCell>
                   <TableCell>{formatDate(r.date)}</TableCell>
