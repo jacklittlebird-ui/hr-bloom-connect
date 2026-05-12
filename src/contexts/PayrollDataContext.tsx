@@ -174,9 +174,9 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         ? fetchAllBatches<{ employee_id: string; amount: number | null; due_date: string }>(async (from, to) => {
             let query = supabase
               .from('loan_installments')
-              .select('employee_id, amount, due_date')
+              .select('employee_id, amount, due_date, status')
               .in('due_date', dueDates)
-              .eq('status', 'pending')
+              .in('status', ['pending', 'paid'])
               .range(from, to);
 
             if (isEmployee && scopedEmployeeId) {
