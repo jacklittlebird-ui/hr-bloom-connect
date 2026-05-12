@@ -98,6 +98,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       status: l.status as Loan['status'],
       notes: l.reason || '',
       calculationMethod: 'auto' as const,
+      archived: !!l.archived,
     })));
   }, [isEmployee, scopedEmployeeId]);
 
