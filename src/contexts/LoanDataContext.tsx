@@ -268,9 +268,21 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     await fetchAdvances();
   }, [fetchAdvances]);
 
+  const archiveLoan = useCallback(async (id: string) => {
+    const { error } = await supabase.from('loans').update({ archived: true }).eq('id', id);
+    if (error) throw error;
+    await fetchLoans();
+  }, [fetchLoans]);
+
+  const unarchiveLoan = useCallback(async (id: string) => {
+    const { error } = await supabase.from('loans').update({ archived: false }).eq('id', id);
+    if (error) throw error;
+    await fetchLoans();
+  }, [fetchLoans]);
+
   const getEmployeeActiveLoans = useCallback((employeeId: string) => {
     if (!hasFetched.current) ensureLoaded();
-    return loans.filter(l => l.employeeId === employeeId && l.status === 'active');
+    return loans.filter(l => l.employeeId === employeeId && l.status === 'active' && !l.archived);
   }, [loans, ensureLoaded]);
 
   const getEmployeeMonthlyLoanPayment = useCallback((employeeId: string) => {
