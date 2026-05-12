@@ -53,7 +53,7 @@ const Index = () => {
     const currentYear = new Date().getFullYear().toString();
 
     // Use head:true count queries — zero rows transferred, only count header
-    const [totalEmpRes, activeEmpRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes] = await Promise.all([
+    const [totalEmpRes, activeEmpRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes, maleRes, femaleRes] = await Promise.all([
       supabase.from('employees').select('id', { count: 'exact', head: true }),
       supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('departments').select('id', { count: 'exact', head: true }).eq('is_active', true),
@@ -63,6 +63,8 @@ const Index = () => {
       supabase.from('planned_courses').select('id', { count: 'exact', head: true }).in('status', ['planned', 'in_progress']),
       supabase.from('performance_reviews').select('id', { count: 'exact', head: true }).eq('year', currentYear),
       supabase.from('loans').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active').eq('gender', 'ذكر'),
+      supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active').eq('gender', 'أنثى'),
     ]);
 
     const totalEmps = totalEmpRes.count || 0;
@@ -80,6 +82,8 @@ const Index = () => {
       performanceReviews: perfRes.count || 0,
       activeLoans: loanRes.count || 0,
       absentToday: Math.max(0, totalActive - todayAtt),
+      maleActive: maleRes.count || 0,
+      femaleActive: femaleRes.count || 0,
     });
     setLoading(false);
   };
