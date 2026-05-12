@@ -286,7 +286,7 @@ const Employees = () => {
 
   const genderLabel = (v?: string) => {
     if (!v) return '-';
-    const map: Record<string, string> = { male: ar ? 'ذكر' : 'Male', female: ar ? 'أنثى' : 'Female' };
+    const map: Record<string, string> = { male: ar ? 'ذكر' : 'Male', female: ar ? 'أنثى' : 'Female', 'ذكر': ar ? 'ذكر' : 'Male', 'أنثى': ar ? 'أنثى' : 'Female', 'انثي': ar ? 'أنثى' : 'Female', 'أنثي': ar ? 'أنثى' : 'Female' };
     return map[v] || v;
   };
   const religionLabel = (v?: string) => {
@@ -858,7 +858,7 @@ const Employees = () => {
       });
 
       // Reverse label maps for localized values from export
-      const genderRevMap: Record<string, string> = { 'ذكر': 'male', 'male': 'male', 'أنثى': 'female', 'female': 'female' };
+      const genderRevMap: Record<string, string> = { 'ذكر': 'ذكر', 'male': 'ذكر', 'Male': 'ذكر', 'أنثى': 'أنثى', 'انثي': 'أنثى', 'أنثي': 'أنثى', 'female': 'أنثى', 'Female': 'أنثى' };
       const religionRevMap: Record<string, string> = { 'مسلم': 'muslim', 'muslim': 'muslim', 'مسيحي': 'christian', 'christian': 'christian' };
       const maritalRevMap: Record<string, string> = { 'أعزب': 'single', 'single': 'single', 'متزوج': 'married', 'married': 'married', 'مطلق': 'divorced', 'divorced': 'divorced', 'أرمل': 'widowed', 'widowed': 'widowed' };
       const militaryRevMap: Record<string, string> = { 'أدى الخدمة': 'completed', 'completed': 'completed', 'معفى': 'exempt', 'exempt': 'exempt', 'مؤجل': 'postponed', 'postponed': 'postponed', 'لا ينطبق': 'not-applicable', 'n/a': 'not-applicable' };
