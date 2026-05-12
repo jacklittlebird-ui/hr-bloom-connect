@@ -286,7 +286,7 @@ const Employees = () => {
 
   const genderLabel = (v?: string) => {
     if (!v) return '-';
-    const map: Record<string, string> = { male: ar ? 'ذكر' : 'Male', female: ar ? 'أنثى' : 'Female' };
+    const map: Record<string, string> = { male: ar ? 'ذكر' : 'Male', female: ar ? 'أنثى' : 'Female', 'ذكر': ar ? 'ذكر' : 'Male', 'أنثى': ar ? 'أنثى' : 'Female', 'انثي': ar ? 'أنثى' : 'Female', 'أنثي': ar ? 'أنثى' : 'Female' };
     return map[v] || v;
   };
   const religionLabel = (v?: string) => {
