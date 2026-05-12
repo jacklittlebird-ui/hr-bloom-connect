@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, UserCheck, Building2, CalendarCheck, FileText, Monitor,
-  GraduationCap, Star, UserX, Banknote, RefreshCw, BarChart3
+  GraduationCap, Star, UserX, Banknote, RefreshCw, BarChart3, User, UserCircle2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,6 +43,8 @@ const Index = () => {
     performanceReviews: 0,
     activeLoans: 0,
     absentToday: 0,
+    maleActive: 0,
+    femaleActive: 0,
   });
 
   const fetchStats = async () => {
@@ -51,7 +53,7 @@ const Index = () => {
     const currentYear = new Date().getFullYear().toString();
 
     // Use head:true count queries — zero rows transferred, only count header
-    const [totalEmpRes, activeEmpRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes] = await Promise.all([
+    const [totalEmpRes, activeEmpRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes, maleRes, femaleRes] = await Promise.all([
       supabase.from('employees').select('id', { count: 'exact', head: true }),
       supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('departments').select('id', { count: 'exact', head: true }).eq('is_active', true),
@@ -61,6 +63,8 @@ const Index = () => {
       supabase.from('planned_courses').select('id', { count: 'exact', head: true }).in('status', ['planned', 'in_progress']),
       supabase.from('performance_reviews').select('id', { count: 'exact', head: true }).eq('year', currentYear),
       supabase.from('loans').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active').eq('gender', 'ذكر'),
+      supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active').eq('gender', 'أنثى'),
     ]);
 
     const totalEmps = totalEmpRes.count || 0;
@@ -78,6 +82,8 @@ const Index = () => {
       performanceReviews: perfRes.count || 0,
       activeLoans: loanRes.count || 0,
       absentToday: Math.max(0, totalActive - todayAtt),
+      maleActive: maleRes.count || 0,
+      femaleActive: femaleRes.count || 0,
     });
     setLoading(false);
   };
@@ -94,6 +100,8 @@ const Index = () => {
   ];
 
   const extraStats = [
+    { label: ar ? 'ذكور (نشطين)' : 'Male (Active)', value: dashStats.maleActive, icon: User, variant: 'blue' as const },
+    { label: ar ? 'إناث (نشطات)' : 'Female (Active)', value: dashStats.femaleActive, icon: UserCircle2, variant: 'pink' as const },
     { label: ar ? 'دورات تدريبية نشطة' : 'Active Courses', value: dashStats.activeCourses, icon: GraduationCap, variant: 'green' as const },
     { label: ar ? 'تقييمات الأداء' : 'Performance Reviews', value: dashStats.performanceReviews, icon: Star, variant: 'yellow' as const },
     { label: ar ? 'سلف نشطة' : 'Active Loans', value: dashStats.activeLoans, icon: Banknote, variant: 'coral' as const },
