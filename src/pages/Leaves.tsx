@@ -265,6 +265,7 @@ const Leaves = () => {
         id: r.id, employeeId: r.employee_id,
         employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
         employeeCode: e?.employee_code || '',
+        station: info.station,
         typeAr: r.type_ar, typeEn: r.type_en,
         reason: r.reason, date: r.date, status: r.status,
       };
