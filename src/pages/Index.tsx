@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, UserCheck, Building2, CalendarCheck, FileText, Monitor,
-  GraduationCap, Star, UserX, Banknote, RefreshCw, BarChart3
+  GraduationCap, Star, UserX, Banknote, RefreshCw, BarChart3, User, UserCircle2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
