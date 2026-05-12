@@ -100,6 +100,8 @@ const Index = () => {
   ];
 
   const extraStats = [
+    { label: ar ? 'ذكور (نشطين)' : 'Male (Active)', value: dashStats.maleActive, icon: User, variant: 'blue' as const },
+    { label: ar ? 'إناث (نشطات)' : 'Female (Active)', value: dashStats.femaleActive, icon: UserCircle2, variant: 'pink' as const },
     { label: ar ? 'دورات تدريبية نشطة' : 'Active Courses', value: dashStats.activeCourses, icon: GraduationCap, variant: 'green' as const },
     { label: ar ? 'تقييمات الأداء' : 'Performance Reviews', value: dashStats.performanceReviews, icon: Star, variant: 'yellow' as const },
     { label: ar ? 'سلف نشطة' : 'Active Loans', value: dashStats.activeLoans, icon: Banknote, variant: 'coral' as const },
