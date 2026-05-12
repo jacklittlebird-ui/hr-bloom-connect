@@ -140,8 +140,17 @@ export const PortalLeaves = () => {
       return;
     }
 
-    // Sick leave: show warning about medical report
+    // Sick leave: must have sufficient balance
     if (leaveType === 'sick') {
+      const remaining = sickBalance?.remaining ?? 0;
+      if (remaining <= 0 || calculateDays() > remaining) {
+        toast.error(
+          ar
+            ? 'لا يمكن تقديم طلب إجازة مرضية: رصيد الإجازات المرضية غير كافٍ. يرجى التواصل مع إدارة الموارد البشرية.'
+            : 'Cannot submit sick leave: insufficient sick leave balance. Please contact HR.'
+        );
+        return;
+      }
       toast.warning(
         ar ? 'تنبيه: بدون إرسال تقرير طبي معتمد من التأمين الصحي فلن تُقبل الإجازة المرضية' 
            : 'Warning: Sick leave will not be accepted without an approved medical report from health insurance',
