@@ -243,23 +243,26 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     });
 
     return entries.map((entry) => {
-      const periodKey = `${entry.employeeId}-${entry.year}-${entry.month}`;
-      const liveLoanPayment = loanInstallmentMap.get(periodKey);
-      // Prefer live installment data for active/current loans so edits and replacements
-      // appear immediately in payroll reports, but fall back to stored history when the
-      // loan has since been completed or no live installment exists anymore.
-      const loanPayment = liveLoanPayment ?? entry.loanPayment;
-      const advanceAmount = advanceMap.get(periodKey) ?? 0;
-      const mobileBill = mobileBillMap.get(periodKey) ?? 0;
-      const totalDeductions = entry.employeeInsurance + loanPayment + advanceAmount + mobileBill + entry.leaveDeduction + entry.penaltyAmount;
-
+      // الرواتب المعتمدة/المحفوظة لا يجب أن تتأثر بأي تعديل لاحق على
+      // القروض أو السلف أو فواتير الموبايل. نستخدم القيم المحفوظة وقت
+      // اعتماد الراتب كما هي.
       return {
         ...entry,
-        loanPayment,
-        advanceAmount,
-        mobileBill,
-        totalDeductions,
-        netSalary: entry.gross - totalDeductions,
+        totalDeductions:
+          entry.employeeInsurance +
+          entry.loanPayment +
+          entry.advanceAmount +
+          entry.mobileBill +
+          entry.leaveDeduction +
+          entry.penaltyAmount,
+        netSalary:
+          entry.gross -
+          (entry.employeeInsurance +
+            entry.loanPayment +
+            entry.advanceAmount +
+            entry.mobileBill +
+            entry.leaveDeduction +
+            entry.penaltyAmount),
       };
     });
   }, [isEmployee, scopedEmployeeId]);
