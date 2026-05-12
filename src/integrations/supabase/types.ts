@@ -1337,7 +1337,6 @@ export type Database = {
       loans: {
         Row: {
           amount: number
-          archived: boolean
           created_at: string
           employee_id: string
           id: string
@@ -1351,7 +1350,6 @@ export type Database = {
         }
         Insert: {
           amount: number
-          archived?: boolean
           created_at?: string
           employee_id: string
           id?: string
@@ -1365,7 +1363,6 @@ export type Database = {
         }
         Update: {
           amount?: number
-          archived?: boolean
           created_at?: string
           employee_id?: string
           id?: string

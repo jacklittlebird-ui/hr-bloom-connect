@@ -63,19 +63,17 @@ const Loans = () => {
         )}
 
         <Tabs defaultValue="loans" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6" dir="rtl">
+          <TabsList className="grid w-full grid-cols-5 mb-6" dir="rtl">
             <TabsTrigger value="loans">{t('loans.tabs.loans')}</TabsTrigger>
             <TabsTrigger value="advances">{t('loans.tabs.advances')}</TabsTrigger>
             <TabsTrigger value="installments">{t('loans.tabs.installments')}</TabsTrigger>
-            <TabsTrigger value="archived">{isRTL ? 'الأرشيف' : 'Archived'}</TabsTrigger>
             <TabsTrigger value="reports">{t('loans.tabs.reports')}</TabsTrigger>
             <TabsTrigger value="settings">{t('loans.tabs.settings')}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="loans"><LoansList refreshKey={refreshKey} mode="active" /></TabsContent>
+          <TabsContent value="loans"><LoansList refreshKey={refreshKey} /></TabsContent>
           <TabsContent value="advances"><AdvancesList refreshKey={refreshKey} /></TabsContent>
           <TabsContent value="installments"><InstallmentsList refreshKey={refreshKey} /></TabsContent>
-          <TabsContent value="archived"><LoansList refreshKey={refreshKey} mode="archived" /></TabsContent>
           <TabsContent value="reports"><LoanReports /></TabsContent>
           <TabsContent value="settings"><LoanSettings /></TabsContent>
         </Tabs>
