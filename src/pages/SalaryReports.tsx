@@ -27,19 +27,19 @@ const isLinkCargo = (k?: string) => !!k && LINK_CARGO_KEYS.includes(k);
 type MonthlyStationTotals = {
   count: number; basic: number; transport: number; incentives: number; stationAllowance: number;
   mobileAllowance: number; livingAllowance: number; overtimePay: number; bonuses: number; gross: number;
-  insurance: number; loans: number; totalDeductions: number; net: number;
+  insurance: number; loans: number; advances: number; totalDeductions: number; net: number;
   employerInsurance: number; healthInsurance: number; incomeTax: number;
 };
 
 const monthlyTotalKeys: (keyof MonthlyStationTotals)[] = [
   'count', 'basic', 'transport', 'incentives', 'stationAllowance', 'mobileAllowance', 'livingAllowance',
-  'overtimePay', 'bonuses', 'gross', 'insurance', 'loans', 'totalDeductions', 'net',
+  'overtimePay', 'bonuses', 'gross', 'insurance', 'loans', 'advances', 'totalDeductions', 'net',
   'employerInsurance', 'healthInsurance', 'incomeTax',
 ];
 
 const createMonthlyTotals = (): MonthlyStationTotals => ({
   count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0,
-  livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0,
+  livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0,
   totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0,
 });
 
