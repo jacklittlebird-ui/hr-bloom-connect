@@ -17,6 +17,7 @@ export interface MBSRow {
   gross: number;
   insurance: number;
   loans: number;
+  advances: number;
   totalDeductions: number;
   net: number;
   employerInsurance: number;
@@ -89,8 +90,8 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   });
 
   const headers = ar
-    ? ['المحطة','الشهر','العدد','الأساسي','مواصلات','حوافز','بدل محطة','بدل محمول','بدل معيشة','أجر إضافي','مكافآت','الإجمالي','تأمينات','قروض','إجمالي خصومات','الصافي','تأمينات ص.ع','صحي','ضريبة','إجمالي مساهمات ص.ع']
-    : ['Station','Month','Count','Basic','Trans.','Incent.','St.All.','Mob.','Living','OT','Bonus','Gross','Ins.','Loans','Tot.Ded','Net','Emp.Ins','Health','Tax','Total Employer'];
+    ? ['المحطة','الشهر','العدد','الأساسي','مواصلات','حوافز','بدل محطة','بدل محمول','بدل معيشة','أجر إضافي','مكافآت','الإجمالي','تأمينات','قروض','سلف','إجمالي خصومات','الصافي','تأمينات ص.ع','صحي','ضريبة','إجمالي مساهمات ص.ع']
+    : ['Station','Month','Count','Basic','Trans.','Incent.','St.All.','Mob.','Living','OT','Bonus','Gross','Ins.','Loans','Advances','Tot.Ded','Net','Emp.Ins','Health','Tax','Total Employer'];
 
   const colCount = headers.length;
   ws.columns = headers.map((_, i) => ({ width: i === 0 ? 22 : i === 1 ? 12 : 13 }));
@@ -192,13 +193,13 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   let rowIdx = headerRowIdx + 1;
   let zebra = false;
 
-  const emptyTotals = () => ({ count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 });
+  const emptyTotals = () => ({ count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 });
 
   const renderTotalRow = (label: string, totals: ReturnType<typeof emptyTotals>, isGrand: boolean) => {
     const tRow = ws.getRow(rowIdx++);
     ws.mergeCells(rowIdx - 1, 1, rowIdx - 1, 2);
     tRow.getCell(1).value = label;
-    const vals = [totals.count, totals.basic, totals.transport, totals.incentives, totals.stationAllowance, totals.mobileAllowance, totals.livingAllowance, totals.overtimePay, totals.bonuses, totals.gross, totals.insurance, totals.loans, totals.totalDeductions, totals.net, totals.employerInsurance, totals.healthInsurance, totals.incomeTax, totals.employerInsurance + totals.healthInsurance + totals.incomeTax];
+    const vals = [totals.count, totals.basic, totals.transport, totals.incentives, totals.stationAllowance, totals.mobileAllowance, totals.livingAllowance, totals.overtimePay, totals.bonuses, totals.gross, totals.insurance, totals.loans, totals.advances, totals.totalDeductions, totals.net, totals.employerInsurance, totals.healthInsurance, totals.incomeTax, totals.employerInsurance + totals.healthInsurance + totals.incomeTax];
     vals.forEach((v, i) => { tRow.getCell(3 + i).value = v; });
     for (let c = 1; c <= colCount; c++) {
       const cell = tRow.getCell(c);
@@ -208,9 +209,9 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
       fill(cell, isGrand ? C.grandBg : C.subtotalBg);
       if (typeof cell.value === 'number') cell.numFmt = '#,##0.##;(#,##0.##);-';
       if (c === 12) fill(cell, isGrand ? C.grandGrossBg : C.grossSubBg);
-      else if (c === 15) cell.font = { ...cell.font, color: { argb: C.destructive } };
-      else if (c === 16) fill(cell, isGrand ? C.grandNetBg : C.netSubBg);
-      else if (c === 20) cell.font = { ...cell.font, color: { argb: C.blueBold } };
+      else if (c === 16) cell.font = { ...cell.font, color: { argb: C.destructive } };
+      else if (c === 17) fill(cell, isGrand ? C.grandNetBg : C.netSubBg);
+      else if (c === 21) cell.font = { ...cell.font, color: { argb: C.blueBold } };
     }
     if (isGrand) tRow.height = 22;
     zebra = false;
@@ -247,7 +248,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
           num(r.stationAllowance), num(r.mobileAllowance), num(r.livingAllowance),
           num(r.overtimePay), num(r.bonuses),
           num(r.gross),
-          num(r.insurance), num(r.loans),
+          num(r.insurance), num(r.loans), num(r.advances),
           num(r.totalDeductions), num(r.net),
           num(r.employerInsurance), num(r.healthInsurance), num(r.incomeTax),
           num(r.employerInsurance + r.healthInsurance + r.incomeTax),
@@ -261,9 +262,9 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
           if (typeof v === 'number') cell.numFmt = '#,##0.##;(#,##0.##);-';
           if (zebra) fill(cell, C.zebra);
           if (ci === 11) { fill(cell, C.grossBg); cell.font = { ...cell.font, bold: true }; }
-          else if (ci === 14) { cell.font = { ...cell.font, color: { argb: C.destructive } }; }
-          else if (ci === 15) { fill(cell, C.netBg); cell.font = { ...cell.font, bold: true }; }
-          else if (ci === 19) { cell.font = { ...cell.font, bold: true, color: { argb: C.blueBold } }; }
+          else if (ci === 15) { cell.font = { ...cell.font, color: { argb: C.destructive } }; }
+          else if (ci === 16) { fill(cell, C.netBg); cell.font = { ...cell.font, bold: true }; }
+          else if (ci === 20) { cell.font = { ...cell.font, bold: true, color: { argb: C.blueBold } }; }
           if (ci === 0) cell.font = { ...cell.font, bold: true };
         });
         zebra = !zebra;
@@ -272,7 +273,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
         st.incentives += r.incentives; st.stationAllowance += r.stationAllowance;
         st.mobileAllowance += r.mobileAllowance; st.livingAllowance += r.livingAllowance;
         st.overtimePay += r.overtimePay; st.bonuses += r.bonuses; st.gross += r.gross;
-        st.insurance += r.insurance; st.loans += r.loans;
+        st.insurance += r.insurance; st.loans += r.loans; st.advances += r.advances;
         st.totalDeductions += r.totalDeductions; st.net += r.net;
         st.employerInsurance += r.employerInsurance; st.healthInsurance += r.healthInsurance;
         st.incomeTax += r.incomeTax;
