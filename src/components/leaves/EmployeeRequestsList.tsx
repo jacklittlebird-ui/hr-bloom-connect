@@ -109,6 +109,7 @@ export const EmployeeRequestsList = ({ requests, onRefresh }: Props) => {
               <TableRow>
                 <TableHead>{ar ? 'الموظف' : 'Employee'}</TableHead>
                 <TableHead>{ar ? 'الكود' : 'Code'}</TableHead>
+                <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead>{ar ? 'النوع' : 'Type'}</TableHead>
                 <TableHead>{ar ? 'السبب' : 'Reason'}</TableHead>
                 <TableHead>{ar ? 'التاريخ' : 'Date'}</TableHead>
