@@ -1178,7 +1178,7 @@ const SalaryReports = () => {
               ) : (
                 <Table>
                   <TableHeader><TableRow>
-                    {[ar?'الكود':'ID', ar?'الاسم':'Name', ar?'القسم':'Dept', ar?'المحطة':'Station', ar?'الشهر':'Month', ar?'الأساسي':'Basic', ar?'مواصلات':'Trans.', ar?'حوافز':'Incent.', ar?'بدل محطة':'St.All.', ar?'بدل محمول':'Mob.All.', ar?'بدل معيشة':'Living', ar?'أجر إضافي':'OT', ar?'مكافآت':'Bonus', ar?'الإجمالي':'Gross', ar?'تأمينات':'Ins.', ar?'قروض':'Loans', ar?'خصومات':'Tot.Ded', ar?'الصافي':'Net', ar?'تأمينات ص.ع':'Emp.Ins', ar?'صحي':'Health', ar?'ضريبة':'Tax', ar?'إجمالي مساهمات ص.ع':'Total Employer'].map((h, i) => (
+                    {[ar?'الكود':'ID', ar?'الاسم':'Name', ar?'القسم':'Dept', ar?'المحطة':'Station', ar?'الشهر':'Month', ar?'الأساسي':'Basic', ar?'مواصلات':'Trans.', ar?'حوافز':'Incent.', ar?'بدل محطة':'St.All.', ar?'بدل محمول':'Mob.All.', ar?'بدل معيشة':'Living', ar?'أجر إضافي':'OT', ar?'مكافآت':'Bonus', ar?'الإجمالي':'Gross', ar?'تأمينات':'Ins.', ar?'قروض':'Loans', ar?'سلف':'Adv.', ar?'خصومات':'Tot.Ded', ar?'الصافي':'Net', ar?'تأمينات ص.ع':'Emp.Ins', ar?'صحي':'Health', ar?'ضريبة':'Tax', ar?'إجمالي مساهمات ص.ع':'Total Employer'].map((h, i) => (
                       <TableHead key={i} className={cn("whitespace-nowrap text-xs", isRTL && "text-right")}>{h}</TableHead>
                     ))}
                   </TableRow></TableHeader>
