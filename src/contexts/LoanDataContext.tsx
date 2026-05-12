@@ -300,6 +300,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       loans, advances, setLoans, setAdvances,
       getEmployeeActiveLoans, getEmployeeMonthlyLoanPayment, getEmployeeAdvanceForMonth,
       addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment,
+      archiveLoan, unarchiveLoan,
       addAdvance, updateAdvance, deleteAdvance, refreshData, ensureLoaded,
     }}>
       {children}
