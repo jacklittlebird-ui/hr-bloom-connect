@@ -18,6 +18,7 @@ interface EmployeeRequestItem {
   employeeName: string;
   employeeNameAr: string;
   employeeCode: string;
+  station?: string;
   typeAr: string;
   typeEn: string;
   reason: string | null;
@@ -108,6 +109,7 @@ export const EmployeeRequestsList = ({ requests, onRefresh }: Props) => {
               <TableRow>
                 <TableHead>{ar ? 'الموظف' : 'Employee'}</TableHead>
                 <TableHead>{ar ? 'الكود' : 'Code'}</TableHead>
+                <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead>{ar ? 'النوع' : 'Type'}</TableHead>
                 <TableHead>{ar ? 'السبب' : 'Reason'}</TableHead>
                 <TableHead>{ar ? 'التاريخ' : 'Date'}</TableHead>
@@ -120,6 +122,7 @@ export const EmployeeRequestsList = ({ requests, onRefresh }: Props) => {
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{ar ? r.employeeNameAr : r.employeeName}</TableCell>
                   <TableCell>{r.employeeCode}</TableCell>
+                  <TableCell>{r.station || '-'}</TableCell>
                   <TableCell>{ar ? r.typeAr : r.typeEn}</TableCell>
                   <TableCell className="max-w-[300px] whitespace-normal break-words">{r.reason || '-'}</TableCell>
                   <TableCell>{formatDate(r.date)}</TableCell>
@@ -149,7 +152,7 @@ export const EmployeeRequestsList = ({ requests, onRefresh }: Props) => {
               ))}
               {requests.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     {ar ? 'لا توجد طلبات' : 'No requests'}
                   </TableCell>
                 </TableRow>
