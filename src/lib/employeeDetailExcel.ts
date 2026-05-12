@@ -233,7 +233,7 @@ export async function exportEmployeeDetailExcel(input: EDInput): Promise<void> {
       cell.font = { name: 'Baloo Bhaijaan 2', size: 10, bold: isTotal };
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       setBorder(cell);
-      if (typeof v === 'number') cell.numFmt = '#,##0';
+      if (typeof v === 'number') cell.numFmt = '#,##0.##;(#,##0.##);-';
 
       if (isGrand) {
         fill(cell, C.grandBg);

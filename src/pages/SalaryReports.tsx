@@ -941,7 +941,7 @@ const SalaryReports = () => {
     { id: 'stations', label: ar ? 'حسب المحطة' : 'By Station' },
     { id: 'departments', label: ar ? 'حسب القسم' : 'By Department' },
     { id: 'monthly-station', label: ar ? 'تقرير إجمالي بالمحطات' : 'Stations Total Report' },
-    { id: 'employee-detail', label: ar ? 'تفصيل الموظفين' : 'Employee Detail' },
+    { id: 'employee-detail', label: ar ? 'تفصيل رواتب الموظفين' : 'Employee Salary Detail' },
     { id: 'allowances', label: ar ? 'تحليل البدلات والخصومات' : 'Allowances & Deductions' },
   ];
 
