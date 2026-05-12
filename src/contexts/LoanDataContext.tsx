@@ -60,8 +60,8 @@ interface LoanDataContextType {
 const LoanDataContext = createContext<LoanDataContextType | undefined>(undefined);
 
 // Specific columns instead of SELECT *
-const LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, employees(name_ar, stations(code))';
-const EMPLOYEE_LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason';
+const LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, archived, employees(name_ar, stations(code))';
+const EMPLOYEE_LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, archived';
 const ADVANCE_COLS = 'id, employee_id, amount, created_at, deduction_month, status, reason, employees(name_ar, stations(code))';
 const EMPLOYEE_ADVANCE_COLS = 'id, employee_id, amount, created_at, deduction_month, status, reason';
 
