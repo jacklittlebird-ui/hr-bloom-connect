@@ -152,7 +152,7 @@ export const EmployeeRequestsList = ({ requests, onRefresh }: Props) => {
               ))}
               {requests.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     {ar ? 'لا توجد طلبات' : 'No requests'}
                   </TableCell>
                 </TableRow>
