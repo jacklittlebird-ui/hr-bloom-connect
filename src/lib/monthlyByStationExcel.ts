@@ -193,13 +193,13 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
   let rowIdx = headerRowIdx + 1;
   let zebra = false;
 
-  const emptyTotals = () => ({ count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 });
+  const emptyTotals = () => ({ count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, advances: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 });
 
   const renderTotalRow = (label: string, totals: ReturnType<typeof emptyTotals>, isGrand: boolean) => {
     const tRow = ws.getRow(rowIdx++);
     ws.mergeCells(rowIdx - 1, 1, rowIdx - 1, 2);
     tRow.getCell(1).value = label;
-    const vals = [totals.count, totals.basic, totals.transport, totals.incentives, totals.stationAllowance, totals.mobileAllowance, totals.livingAllowance, totals.overtimePay, totals.bonuses, totals.gross, totals.insurance, totals.loans, totals.totalDeductions, totals.net, totals.employerInsurance, totals.healthInsurance, totals.incomeTax, totals.employerInsurance + totals.healthInsurance + totals.incomeTax];
+    const vals = [totals.count, totals.basic, totals.transport, totals.incentives, totals.stationAllowance, totals.mobileAllowance, totals.livingAllowance, totals.overtimePay, totals.bonuses, totals.gross, totals.insurance, totals.loans, totals.advances, totals.totalDeductions, totals.net, totals.employerInsurance, totals.healthInsurance, totals.incomeTax, totals.employerInsurance + totals.healthInsurance + totals.incomeTax];
     vals.forEach((v, i) => { tRow.getCell(3 + i).value = v; });
     for (let c = 1; c <= colCount; c++) {
       const cell = tRow.getCell(c);
@@ -209,9 +209,9 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
       fill(cell, isGrand ? C.grandBg : C.subtotalBg);
       if (typeof cell.value === 'number') cell.numFmt = '#,##0.##;(#,##0.##);-';
       if (c === 12) fill(cell, isGrand ? C.grandGrossBg : C.grossSubBg);
-      else if (c === 15) cell.font = { ...cell.font, color: { argb: C.destructive } };
-      else if (c === 16) fill(cell, isGrand ? C.grandNetBg : C.netSubBg);
-      else if (c === 20) cell.font = { ...cell.font, color: { argb: C.blueBold } };
+      else if (c === 16) cell.font = { ...cell.font, color: { argb: C.destructive } };
+      else if (c === 17) fill(cell, isGrand ? C.grandNetBg : C.netSubBg);
+      else if (c === 21) cell.font = { ...cell.font, color: { argb: C.blueBold } };
     }
     if (isGrand) tRow.height = 22;
     zebra = false;
