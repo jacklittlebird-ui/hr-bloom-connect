@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Printer, FileSpreadsheet, RotateCcw, Wallet, HandCoins, Sigma } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { usePayrollData } from '@/contexts/PayrollDataContext';
 import { exportLoansToXLSX, printLoansReport } from '@/lib/loansExport';
 import { toast } from '@/hooks/use-toast';
 
@@ -45,18 +46,16 @@ type EntityFilter = 'all' | 'aero' | 'cargo';
 
 export const LoanDeductionsReport = () => {
   const { isRTL } = useLanguage();
+  const { payrollEntries, refreshPayroll } = usePayrollData();
   const [year, setYear] = useState<string>(String(currentYear));
   const [stationId, setStationId] = useState<string>('all');
   const [entity, setEntity] = useState<EntityFilter>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
-  const [stations, setStations] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
-  const [installments, setInstallments] = useState<any[]>([]);
-  const [advances, setAdvances] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<Record<string, { name_ar: string; name_en: string; employee_code: string; station_id: string | null }>>({});
+  const [stations, setStations] = useState<{ id: string; code: string; name_ar: string; name_en: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.from('stations').select('id,name_ar,name_en').then(({ data }) => {
+    supabase.from('stations').select('id,code,name_ar,name_en').then(({ data }) => {
       if (data) setStations(data as any);
     });
   }, []);
@@ -65,76 +64,7 @@ export const LoanDeductionsReport = () => {
     const load = async () => {
       setLoading(true);
       try {
-        // Source of truth = payroll_entries (what was actually deducted in payroll).
-        // Falls back to capturing any extra paid loan installments / deducted advances
-        // that aren't represented in payroll yet, so nothing is missed.
-        const yStart = `${year}-01-01`;
-        const yEnd = `${Number(year) + 1}-01-01`;
-
-        // Mirror exactly the same logic as PayrollDataContext.hydratePayrollEntries:
-        // - For each (employee, year-month) that has a payroll_entries row,
-        //   pull live loan_installments (pending+paid) and advances (approved+deducted)
-        //   for that month. This guarantees totals match the payroll report exactly.
-        const [payRes, instRes, advRes] = await Promise.all([
-          supabase.from('payroll_entries')
-            .select('employee_id, month, year')
-            .eq('year', year),
-          supabase.from('loan_installments')
-            .select('employee_id, amount, due_date, status')
-            .in('status', ['pending', 'paid'])
-            .gte('due_date', `${year}-01-01`)
-            .lt('due_date', `${Number(year) + 1}-01-01`),
-          supabase.from('advances')
-            .select('id, employee_id, amount, deduction_month, status, reason')
-            .in('status', ['approved', 'deducted'])
-            .gte('deduction_month', `${year}-01`)
-            .lte('deduction_month', `${year}-12`),
-        ]);
-
-        if (payRes.error) throw payRes.error;
-        if (instRes.error) throw instRes.error;
-        if (advRes.error) throw advRes.error;
-
-        // Build set of valid (employee_id|YYYY-MM) keys from payroll
-        const payrollKeys = new Set<string>();
-        (payRes.data || []).forEach((p: any) => {
-          payrollKeys.add(`${p.employee_id}|${p.year}-${String(p.month).padStart(2, '0')}`);
-        });
-
-        // Filter installments: only those whose due-month has a payroll entry for that employee
-        const inst = (instRes.data || []).filter((r: any) => {
-          const m = String(r.due_date).slice(0, 7);
-          return payrollKeys.has(`${r.employee_id}|${m}`);
-        });
-
-        // Filter advances similarly
-        const adv = (advRes.data || []).filter((r: any) => {
-          return payrollKeys.has(`${r.employee_id}|${r.deduction_month}`);
-        });
-
-        const empIds = Array.from(new Set([
-          ...inst.map((r: any) => r.employee_id),
-          ...adv.map((r: any) => r.employee_id),
-        ].filter(Boolean)));
-
-        const empMap: typeof employees = {};
-        if (empIds.length > 0) {
-          // chunk
-          for (let i = 0; i < empIds.length; i += 200) {
-            const chunk = empIds.slice(i, i + 200);
-            const { data } = await supabase
-              .from('employees')
-              .select('id, name_ar, name_en, employee_code, station_id')
-              .in('id', chunk);
-            (data || []).forEach((e: any) => {
-              empMap[e.id] = { name_ar: e.name_ar, name_en: e.name_en, employee_code: e.employee_code, station_id: e.station_id };
-            });
-          }
-        }
-
-        setInstallments(inst);
-        setAdvances(adv);
-        setEmployees(empMap);
+        await refreshPayroll();
       } catch (e: any) {
         console.error(e);
         toast({ title: isRTL ? 'فشل تحميل البيانات' : 'Failed to load data', description: e?.message, variant: 'destructive' });
@@ -143,7 +73,7 @@ export const LoanDeductionsReport = () => {
       }
     };
     load();
-  }, [year, isRTL]);
+  }, [year, isRTL, refreshPayroll]);
 
   const stationsById = useMemo(() => {
     const m = new Map<string, { id: string; name_ar: string; name_en: string }>();
