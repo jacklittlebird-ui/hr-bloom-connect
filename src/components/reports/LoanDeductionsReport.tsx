@@ -120,10 +120,25 @@ export const LoanDeductionsReport = () => {
     load();
   }, [year, isRTL]);
 
+  const stationsById = useMemo(() => {
+    const m = new Map<string, { id: string; name_ar: string; name_en: string }>();
+    stations.forEach(s => m.set(s.id, s));
+    return m;
+  }, [stations]);
+
+  const matchesEntity = (sid: string | null | undefined) => {
+    if (entity === 'all') return true;
+    const s = sid ? stationsById.get(sid) : null;
+    const cargo = isCargoStation(s?.name_ar);
+    return entity === 'cargo' ? cargo : !cargo;
+  };
+
   const filterByStation = (employeeId: string | null) => {
+    const sid = employeeId ? employees[employeeId]?.station_id ?? null : null;
+    if (!matchesEntity(sid)) return false;
     if (stationId === 'all') return true;
     if (!employeeId) return false;
-    return employees[employeeId]?.station_id === stationId;
+    return sid === stationId;
   };
 
   const monthlyRows: Row[] = useMemo(() => {
