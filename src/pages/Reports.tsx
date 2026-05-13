@@ -15,6 +15,7 @@ import { TrainingDebtReport } from '@/components/reports/TrainingDebtReport';
 import { UniformReport } from '@/components/reports/UniformReport';
 import { PermitReports } from '@/components/reports/PermitReports';
 import { TrainingQualificationReport } from '@/components/reports/TrainingQualificationReport';
+import { LoanDeductionsReport } from '@/components/reports/LoanDeductionsReport';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw, Loader2 } from 'lucide-react';
@@ -64,6 +65,7 @@ const Reports = () => {
     { id: 'attendance', label: t('reports.tabs.attendance') },
     { id: 'leaves', label: t('reports.tabs.leaves') },
     { id: 'salaries', label: t('reports.tabs.salaries') },
+    { id: 'loanDeductions', label: ar ? 'خصومات القروض والسلف' : 'Loan & Advance Deductions' },
     { id: 'performance', label: t('reports.tabs.performance') },
     { id: 'training', label: t('reports.tabs.training') },
     { id: 'trainingDebt', label: ar ? 'ديون التدريب' : 'Training Debts' },
@@ -136,6 +138,7 @@ const Reports = () => {
         </TabsContent>
         <TabsContent value="leaves"><LeaveReports key={`lv-${refreshKey}`} /></TabsContent>
         <TabsContent value="salaries"><SalaryReports key={`sl-${refreshKey}`} /></TabsContent>
+        <TabsContent value="loanDeductions"><LoanDeductionsReport key={`ld-${refreshKey}`} /></TabsContent>
         <TabsContent value="performance"><PerformanceReports key={`pf-${refreshKey}`} /></TabsContent>
         <TabsContent value="training">
           <Tabs value={trainingSubTab} onValueChange={setTrainingSubTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
