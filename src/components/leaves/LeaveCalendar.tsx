@@ -44,6 +44,15 @@ export const LeaveCalendar = ({ requests }: LeaveCalendarProps) => {
     return colors[type] || 'bg-primary';
   };
 
+  const getStatusBadge = (status: LeaveRequest['status']) => {
+    const cfg: Record<string, { cls: string; symbol: string }> = {
+      approved: { cls: 'bg-emerald-600/90 text-white', symbol: '✓' },
+      pending: { cls: 'bg-amber-500/90 text-white', symbol: '⏳' },
+      rejected: { cls: 'bg-rose-600/90 text-white', symbol: '✕' },
+    };
+    return cfg[status] || cfg.pending;
+  };
+
   const weekDays = language === 'ar' 
     ? ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -146,21 +155,24 @@ export const LeaveCalendar = ({ requests }: LeaveCalendarProps) => {
                     {format(day, 'd')}
                   </div>
                   <div className="space-y-1">
-                    {leavesForDay.slice(0, 2).map((leave, leaveIndex) => (
-                      <div
-                        key={leaveIndex}
-                        className={cn(
-                          "text-xs p-1 rounded text-white truncate",
-                          getLeaveTypeColor(leave.leaveType)
-                        )}
-                        title={`${language === 'ar' ? leave.employeeNameAr : leave.employeeName} - ${t(`leaves.types.${leave.leaveType}`)}`}
-                      >
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          {language === 'ar' ? leave.employeeNameAr : leave.employeeName}
-                        </span>
-                      </div>
-                    ))}
+                    {leavesForDay.slice(0, 2).map((leave, leaveIndex) => {
+                      const sb = getStatusBadge(leave.status);
+                      return (
+                        <div
+                          key={leaveIndex}
+                          className={cn(
+                            "text-xs p-1 rounded text-white truncate flex items-center gap-1",
+                            getLeaveTypeColor(leave.leaveType),
+                            leave.status === 'rejected' && 'opacity-70 line-through'
+                          )}
+                          title={`${language === 'ar' ? leave.employeeNameAr : leave.employeeName} - ${t(`leaves.types.${leave.leaveType}`)} - ${t(`leaves.status.${leave.status}`)}`}
+                        >
+                          <User className="w-3 h-3 shrink-0" />
+                          <span className="truncate flex-1">{language === 'ar' ? leave.employeeNameAr : leave.employeeName}</span>
+                          <span className={cn("px-1 rounded text-[10px] leading-none py-0.5 shrink-0", sb.cls)}>{sb.symbol}</span>
+                        </div>
+                      );
+                    })}
                     {leavesForDay.length > 2 && (
                       <button
                         onClick={() => setExpandedDay(day)}
@@ -195,11 +207,15 @@ export const LeaveCalendar = ({ requests }: LeaveCalendarProps) => {
                 <div className="space-y-2">
                   {allLeaves.map((leave, i) => {
                     const cfg = { icon: User, color: getLeaveTypeColor(leave.leaveType) };
+                    const sb = getStatusBadge(leave.status);
                     return (
-                      <div key={i} className={cn("text-sm p-2 rounded text-white", cfg.color)}>
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
+                      <div key={i} className={cn("text-sm p-2 rounded text-white flex items-center gap-2", cfg.color, leave.status === 'rejected' && 'opacity-80')}>
+                        <User className="w-3 h-3 shrink-0" />
+                        <span className={cn("flex-1", leave.status === 'rejected' && 'line-through')}>
                           {language === 'ar' ? leave.employeeNameAr : leave.employeeName} — {t(`leaves.types.${leave.leaveType}`)}
+                        </span>
+                        <span className={cn("px-1.5 py-0.5 rounded text-[11px] leading-none shrink-0", sb.cls)}>
+                          {sb.symbol} {t(`leaves.status.${leave.status}`)}
                         </span>
                       </div>
                     );
