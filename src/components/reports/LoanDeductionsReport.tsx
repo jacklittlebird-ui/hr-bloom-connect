@@ -71,35 +71,45 @@ export const LoanDeductionsReport = () => {
         const yStart = `${year}-01-01`;
         const yEnd = `${Number(year) + 1}-01-01`;
 
-        // Source of truth: payroll_entries ONLY, so totals match the payroll report exactly.
-        const payRes = await supabase.from('payroll_entries')
-          .select('id, employee_id, month, year, loan_payment, advance_amount')
-          .eq('year', year);
+        // Mirror exactly the same logic as PayrollDataContext.hydratePayrollEntries:
+        // - For each (employee, year-month) that has a payroll_entries row,
+        //   pull live loan_installments (pending+paid) and advances (approved+deducted)
+        //   for that month. This guarantees totals match the payroll report exactly.
+        const [payRes, instRes, advRes] = await Promise.all([
+          supabase.from('payroll_entries')
+            .select('employee_id, month, year')
+            .eq('year', year),
+          supabase.from('loan_installments')
+            .select('employee_id, amount, due_date, status')
+            .in('status', ['pending', 'paid'])
+            .gte('due_date', `${year}-01-01`)
+            .lt('due_date', `${Number(year) + 1}-01-01`),
+          supabase.from('advances')
+            .select('id, employee_id, amount, deduction_month, status, reason')
+            .in('status', ['approved', 'deducted'])
+            .gte('deduction_month', `${year}-01`)
+            .lte('deduction_month', `${year}-12`),
+        ]);
 
         if (payRes.error) throw payRes.error;
+        if (instRes.error) throw instRes.error;
+        if (advRes.error) throw advRes.error;
 
-        const payroll = payRes.data || [];
-
-        // Build per-employee per-month payroll buckets
-        const payByKey = new Map<string, { loan: number; advance: number }>();
-        payroll.forEach((p: any) => {
-          const k = `${p.employee_id}|${p.year}-${String(p.month).padStart(2, '0')}`;
-          const cur = payByKey.get(k) || { loan: 0, advance: 0 };
-          cur.loan += Number(p.loan_payment) || 0;
-          cur.advance += Number(p.advance_amount) || 0;
-          payByKey.set(k, cur);
+        // Build set of valid (employee_id|YYYY-MM) keys from payroll
+        const payrollKeys = new Set<string>();
+        (payRes.data || []).forEach((p: any) => {
+          payrollKeys.add(`${p.employee_id}|${p.year}-${String(p.month).padStart(2, '0')}`);
         });
 
-        const inst: any[] = [];
-        const adv: any[] = [];
-        payByKey.forEach((v, k) => {
-          const [empId, ym] = k.split('|');
-          if (v.loan > 0) {
-            inst.push({ id: `pay-l-${k}`, employee_id: empId, amount: v.loan, due_date: `${ym}-01`, status: 'paid', __fromPayroll: true });
-          }
-          if (v.advance > 0) {
-            adv.push({ id: `pay-a-${k}`, employee_id: empId, amount: v.advance, deduction_month: ym, status: 'deducted', reason: '', __fromPayroll: true });
-          }
+        // Filter installments: only those whose due-month has a payroll entry for that employee
+        const inst = (instRes.data || []).filter((r: any) => {
+          const m = String(r.due_date).slice(0, 7);
+          return payrollKeys.has(`${r.employee_id}|${m}`);
+        });
+
+        // Filter advances similarly
+        const adv = (advRes.data || []).filter((r: any) => {
+          return payrollKeys.has(`${r.employee_id}|${r.deduction_month}`);
         });
 
         const empIds = Array.from(new Set([
