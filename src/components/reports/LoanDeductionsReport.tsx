@@ -65,10 +65,16 @@ export const LoanDeductionsReport = () => {
     const load = async () => {
       setLoading(true);
       try {
+        // Source of truth = payroll_entries (what was actually deducted in payroll).
+        // Falls back to capturing any extra paid loan installments / deducted advances
+        // that aren't represented in payroll yet, so nothing is missed.
         const yStart = `${year}-01-01`;
         const yEnd = `${Number(year) + 1}-01-01`;
 
-        const [instRes, advRes] = await Promise.all([
+        const [payRes, instRes, advRes] = await Promise.all([
+          supabase.from('payroll_entries')
+            .select('id, employee_id, month, year, loan_payment, advance_amount')
+            .eq('year', year),
           supabase.from('loan_installments')
             .select('id, employee_id, amount, due_date, status, paid_at, loan_id')
             .eq('status', 'paid')
@@ -76,16 +82,59 @@ export const LoanDeductionsReport = () => {
             .lt('due_date', yEnd),
           supabase.from('advances')
             .select('id, employee_id, amount, deduction_month, status, reason')
-            .eq('status', 'deducted')
+            .in('status', ['deducted', 'approved'])
             .gte('deduction_month', `${year}-01`)
             .lte('deduction_month', `${year}-12`),
         ]);
 
+        if (payRes.error) throw payRes.error;
         if (instRes.error) throw instRes.error;
         if (advRes.error) throw advRes.error;
 
-        const inst = instRes.data || [];
-        const adv = advRes.data || [];
+        const payroll = payRes.data || [];
+        const instAll = instRes.data || [];
+        const advAll = advRes.data || [];
+
+        // Build per-employee per-month payroll buckets
+        const payByKey = new Map<string, { loan: number; advance: number }>();
+        payroll.forEach((p: any) => {
+          const k = `${p.employee_id}|${p.year}-${String(p.month).padStart(2, '0')}`;
+          const cur = payByKey.get(k) || { loan: 0, advance: 0 };
+          cur.loan += Number(p.loan_payment) || 0;
+          cur.advance += Number(p.advance_amount) || 0;
+          payByKey.set(k, cur);
+        });
+
+        // Convert payroll buckets into "synthetic" installment + advance rows
+        const inst: any[] = [];
+        const adv: any[] = [];
+        const consumedLoanKeys = new Set<string>();
+        const consumedAdvKeys = new Set<string>();
+
+        payByKey.forEach((v, k) => {
+          const [empId, ym] = k.split('|');
+          if (v.loan > 0) {
+            inst.push({ id: `pay-l-${k}`, employee_id: empId, amount: v.loan, due_date: `${ym}-01`, status: 'paid', __fromPayroll: true });
+            consumedLoanKeys.add(k);
+          }
+          if (v.advance > 0) {
+            adv.push({ id: `pay-a-${k}`, employee_id: empId, amount: v.advance, deduction_month: ym, status: 'deducted', reason: '', __fromPayroll: true });
+            consumedAdvKeys.add(k);
+          }
+        });
+
+        // Add any paid installments NOT covered by a payroll entry that month
+        instAll.forEach((r: any) => {
+          const m = String(r.due_date).slice(0, 7);
+          const k = `${r.employee_id}|${m}`;
+          if (!consumedLoanKeys.has(k)) inst.push(r);
+        });
+        // Add any explicitly-deducted advances NOT covered by payroll that month
+        advAll.forEach((r: any) => {
+          if (r.status !== 'deducted') return;
+          const k = `${r.employee_id}|${r.deduction_month}`;
+          if (!consumedAdvKeys.has(k)) adv.push(r);
+        });
 
         const empIds = Array.from(new Set([
           ...inst.map((r: any) => r.employee_id),
