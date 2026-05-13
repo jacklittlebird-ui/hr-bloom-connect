@@ -38,10 +38,16 @@ const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 6 }, (_, i) => String(currentYear - 2 + i));
 
+// Link Cargo = stations whose Arabic name contains "كارجو"
+const isCargoStation = (name_ar?: string) => !!name_ar && name_ar.includes('كارجو');
+
+type EntityFilter = 'all' | 'aero' | 'cargo';
+
 export const LoanDeductionsReport = () => {
   const { isRTL } = useLanguage();
   const [year, setYear] = useState<string>(String(currentYear));
   const [stationId, setStationId] = useState<string>('all');
+  const [entity, setEntity] = useState<EntityFilter>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [stations, setStations] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
   const [installments, setInstallments] = useState<any[]>([]);
@@ -114,10 +120,25 @@ export const LoanDeductionsReport = () => {
     load();
   }, [year, isRTL]);
 
+  const stationsById = useMemo(() => {
+    const m = new Map<string, { id: string; name_ar: string; name_en: string }>();
+    stations.forEach(s => m.set(s.id, s));
+    return m;
+  }, [stations]);
+
+  const matchesEntity = (sid: string | null | undefined) => {
+    if (entity === 'all') return true;
+    const s = sid ? stationsById.get(sid) : null;
+    const cargo = isCargoStation(s?.name_ar);
+    return entity === 'cargo' ? cargo : !cargo;
+  };
+
   const filterByStation = (employeeId: string | null) => {
+    const sid = employeeId ? employees[employeeId]?.station_id ?? null : null;
+    if (!matchesEntity(sid)) return false;
     if (stationId === 'all') return true;
     if (!employeeId) return false;
-    return employees[employeeId]?.station_id === stationId;
+    return sid === stationId;
   };
 
   const monthlyRows: Row[] = useMemo(() => {
@@ -148,7 +169,7 @@ export const LoanDeductionsReport = () => {
     });
     rows.forEach(r => { r.total = r.loansAmount + r.advancesAmount; });
     return rows;
-  }, [installments, advances, employees, stationId, year, isRTL]);
+  }, [installments, advances, employees, stationId, entity, stationsById, year, isRTL]);
 
   const totals = useMemo(() => {
     const t = monthlyRows.reduce((s, r) => ({
@@ -201,9 +222,14 @@ export const LoanDeductionsReport = () => {
     return out.sort((a, b) => a.employeeName.localeCompare(b.employeeName, isRTL ? 'ar' : 'en'));
   }, [selectedMonth, installments, advances, employees, stationId, isRTL, stations]);
 
+  const entityLabel = entity === 'aero'
+    ? (isRTL ? ' - لينك إيرو' : ' - Link Aero')
+    : entity === 'cargo'
+      ? (isRTL ? ' - لينك كارجو' : ' - Link Cargo')
+      : '';
   const reportTitle = isRTL
-    ? `تقرير خصومات القروض والسلف لعام ${year}`
-    : `Loans & Advances Deductions Report ${year}`;
+    ? `تقرير خصومات القروض والسلف لعام ${year}${entityLabel}`
+    : `Loans & Advances Deductions Report ${year}${entityLabel}`;
 
   const monthlyColumns = [
     { header: isRTL ? 'الشهر' : 'Month', key: 'monthLabel' },
@@ -268,8 +294,23 @@ export const LoanDeductionsReport = () => {
   const reset = () => {
     setYear(String(currentYear));
     setStationId('all');
+    setEntity('all');
     setSelectedMonth('all');
   };
+
+  // When entity changes, reset station if no longer in scope
+  useEffect(() => {
+    if (stationId === 'all') return;
+    const s = stationsById.get(stationId);
+    const cargo = isCargoStation(s?.name_ar);
+    if (entity === 'cargo' && !cargo) setStationId('all');
+    if (entity === 'aero' && cargo) setStationId('all');
+  }, [entity, stationId, stationsById]);
+
+  const visibleStations = useMemo(() => {
+    if (entity === 'all') return stations;
+    return stations.filter(s => entity === 'cargo' ? isCargoStation(s.name_ar) : !isCargoStation(s.name_ar));
+  }, [stations, entity]);
 
   return (
     <div className="space-y-6">
@@ -283,7 +324,7 @@ export const LoanDeductionsReport = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="space-y-2">
               <Label>{isRTL ? 'السنة' : 'Year'}</Label>
               <Select value={year} onValueChange={setYear}>
@@ -294,12 +335,23 @@ export const LoanDeductionsReport = () => {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>{isRTL ? 'الكيان' : 'Entity'}</Label>
+              <Select value={entity} onValueChange={(v) => setEntity(v as EntityFilter)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{isRTL ? 'الكل (إيرو + كارجو)' : 'All (Aero + Cargo)'}</SelectItem>
+                  <SelectItem value="aero">{isRTL ? 'لينك إيرو' : 'Link Aero'}</SelectItem>
+                  <SelectItem value="cargo">{isRTL ? 'لينك كارجو' : 'Link Cargo'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>{isRTL ? 'المحطة' : 'Station'}</Label>
               <Select value={stationId} onValueChange={setStationId}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{isRTL ? 'جميع المحطات' : 'All Stations'}</SelectItem>
-                  {stations.map(s => (
+                  {visibleStations.map(s => (
                     <SelectItem key={s.id} value={s.id}>{isRTL ? s.name_ar : s.name_en}</SelectItem>
                   ))}
                 </SelectContent>
