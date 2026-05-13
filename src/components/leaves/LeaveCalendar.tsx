@@ -44,6 +44,15 @@ export const LeaveCalendar = ({ requests }: LeaveCalendarProps) => {
     return colors[type] || 'bg-primary';
   };
 
+  const getStatusBadge = (status: LeaveRequest['status']) => {
+    const cfg: Record<string, { cls: string; symbol: string }> = {
+      approved: { cls: 'bg-emerald-600/90 text-white', symbol: '✓' },
+      pending: { cls: 'bg-amber-500/90 text-white', symbol: '⏳' },
+      rejected: { cls: 'bg-rose-600/90 text-white', symbol: '✕' },
+    };
+    return cfg[status] || cfg.pending;
+  };
+
   const weekDays = language === 'ar' 
     ? ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
     : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
