@@ -207,11 +207,15 @@ export const LeaveCalendar = ({ requests }: LeaveCalendarProps) => {
                 <div className="space-y-2">
                   {allLeaves.map((leave, i) => {
                     const cfg = { icon: User, color: getLeaveTypeColor(leave.leaveType) };
+                    const sb = getStatusBadge(leave.status);
                     return (
-                      <div key={i} className={cn("text-sm p-2 rounded text-white", cfg.color)}>
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
+                      <div key={i} className={cn("text-sm p-2 rounded text-white flex items-center gap-2", cfg.color, leave.status === 'rejected' && 'opacity-80')}>
+                        <User className="w-3 h-3 shrink-0" />
+                        <span className={cn("flex-1", leave.status === 'rejected' && 'line-through')}>
                           {language === 'ar' ? leave.employeeNameAr : leave.employeeName} — {t(`leaves.types.${leave.leaveType}`)}
+                        </span>
+                        <span className={cn("px-1.5 py-0.5 rounded text-[11px] leading-none shrink-0", sb.cls)}>
+                          {sb.symbol} {t(`leaves.status.${leave.status}`)}
                         </span>
                       </div>
                     );
