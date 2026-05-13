@@ -20,6 +20,7 @@ import { InstallmentScheduleDialog } from './InstallmentScheduleDialog';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { stationLocations } from '@/data/stationLocations';
+import { exportLoansToXLSX, printLoansReport, LoanExportColumn, LoanSummaryCard } from '@/lib/loansExport';
 import { useReportExport } from '@/hooks/useReportExport';
 import { markLoanInstallmentsPaidForPeriod } from '@/lib/loanPayments';
 
