@@ -17,6 +17,7 @@ export interface MBSRow {
   gross: number;
   insurance: number;
   loans: number;
+  advances: number;
   totalDeductions: number;
   net: number;
   employerInsurance: number;
