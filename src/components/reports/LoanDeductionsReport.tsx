@@ -71,29 +71,14 @@ export const LoanDeductionsReport = () => {
         const yStart = `${year}-01-01`;
         const yEnd = `${Number(year) + 1}-01-01`;
 
-        const [payRes, instRes, advRes] = await Promise.all([
-          supabase.from('payroll_entries')
-            .select('id, employee_id, month, year, loan_payment, advance_amount')
-            .eq('year', year),
-          supabase.from('loan_installments')
-            .select('id, employee_id, amount, due_date, status, paid_at, loan_id')
-            .eq('status', 'paid')
-            .gte('due_date', yStart)
-            .lt('due_date', yEnd),
-          supabase.from('advances')
-            .select('id, employee_id, amount, deduction_month, status, reason')
-            .in('status', ['deducted', 'approved'])
-            .gte('deduction_month', `${year}-01`)
-            .lte('deduction_month', `${year}-12`),
-        ]);
+        // Source of truth: payroll_entries ONLY, so totals match the payroll report exactly.
+        const payRes = await supabase.from('payroll_entries')
+          .select('id, employee_id, month, year, loan_payment, advance_amount')
+          .eq('year', year);
 
         if (payRes.error) throw payRes.error;
-        if (instRes.error) throw instRes.error;
-        if (advRes.error) throw advRes.error;
 
         const payroll = payRes.data || [];
-        const instAll = instRes.data || [];
-        const advAll = advRes.data || [];
 
         // Build per-employee per-month payroll buckets
         const payByKey = new Map<string, { loan: number; advance: number }>();
@@ -105,35 +90,16 @@ export const LoanDeductionsReport = () => {
           payByKey.set(k, cur);
         });
 
-        // Convert payroll buckets into "synthetic" installment + advance rows
         const inst: any[] = [];
         const adv: any[] = [];
-        const consumedLoanKeys = new Set<string>();
-        const consumedAdvKeys = new Set<string>();
-
         payByKey.forEach((v, k) => {
           const [empId, ym] = k.split('|');
           if (v.loan > 0) {
             inst.push({ id: `pay-l-${k}`, employee_id: empId, amount: v.loan, due_date: `${ym}-01`, status: 'paid', __fromPayroll: true });
-            consumedLoanKeys.add(k);
           }
           if (v.advance > 0) {
             adv.push({ id: `pay-a-${k}`, employee_id: empId, amount: v.advance, deduction_month: ym, status: 'deducted', reason: '', __fromPayroll: true });
-            consumedAdvKeys.add(k);
           }
-        });
-
-        // Add any paid installments NOT covered by a payroll entry that month
-        instAll.forEach((r: any) => {
-          const m = String(r.due_date).slice(0, 7);
-          const k = `${r.employee_id}|${m}`;
-          if (!consumedLoanKeys.has(k)) inst.push(r);
-        });
-        // Add any explicitly-deducted advances NOT covered by payroll that month
-        advAll.forEach((r: any) => {
-          if (r.status !== 'deducted') return;
-          const k = `${r.employee_id}|${r.deduction_month}`;
-          if (!consumedAdvKeys.has(k)) adv.push(r);
         });
 
         const empIds = Array.from(new Set([
