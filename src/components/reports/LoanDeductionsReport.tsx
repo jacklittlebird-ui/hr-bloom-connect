@@ -290,11 +290,11 @@ export const LoanDeductionsReport = () => {
   // When entity changes, reset station if no longer in scope
   useEffect(() => {
     if (stationId === 'all') return;
-    const s = stationsById.get(stationId);
+    const s = stationsByCode.get(stationId);
     const cargo = isCargoStation(s?.name_ar);
     if (entity === 'cargo' && !cargo) setStationId('all');
     if (entity === 'aero' && cargo) setStationId('all');
-  }, [entity, stationId, stationsById]);
+  }, [entity, stationId, stationsByCode]);
 
   const visibleStations = useMemo(() => {
     if (entity === 'all') return stations;
@@ -341,7 +341,7 @@ export const LoanDeductionsReport = () => {
                 <SelectContent>
                   <SelectItem value="all">{isRTL ? 'جميع المحطات' : 'All Stations'}</SelectItem>
                   {visibleStations.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{isRTL ? s.name_ar : s.name_en}</SelectItem>
+                    <SelectItem key={s.id} value={s.code}>{isRTL ? s.name_ar : s.name_en}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
