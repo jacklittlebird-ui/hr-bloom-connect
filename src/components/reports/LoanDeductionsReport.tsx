@@ -298,9 +298,19 @@ export const LoanDeductionsReport = () => {
     { label: isRTL ? 'عدد العمليات' : 'Operations', value: (totals.loansCount + totals.advancesCount).toLocaleString() },
   ];
 
+  const employeeYearlyColumns = [
+    { header: isRTL ? 'كود الموظف' : 'Code', key: 'employeeCode' },
+    { header: isRTL ? 'اسم الموظف' : 'Employee', key: 'employeeName' },
+    { header: isRTL ? 'المحطة' : 'Station', key: 'station' },
+    { header: isRTL ? 'إجمالي القروض' : 'Loans Total', key: 'loansAmount', numeric: true },
+    { header: isRTL ? 'إجمالي السلف' : 'Advances Total', key: 'advancesAmount', numeric: true },
+    { header: isRTL ? 'الإجمالي' : 'Total', key: 'total', numeric: true },
+  ];
+
   const isDetail = selectedMonth !== 'all';
-  const exportData = isDetail ? detailRows : monthlyRows;
-  const exportColumns = isDetail ? detailColumns : monthlyColumns;
+  const useEmployeeYearly = !isDetail && (entity !== 'all' || stationId !== 'all');
+  const exportData = isDetail ? detailRows : (useEmployeeYearly ? employeeYearlyRows : monthlyRows);
+  const exportColumns = isDetail ? detailColumns : (useEmployeeYearly ? employeeYearlyColumns : monthlyColumns);
   const exportTitle = isDetail
     ? `${reportTitle} — ${isRTL ? MONTHS_AR[Number(selectedMonth)] : MONTHS_EN[Number(selectedMonth)]}`
     : reportTitle;
