@@ -20,6 +20,7 @@ interface EmployeeDataContextType {
   addEmployee: (employee: Employee) => void;
   refreshEmployees: () => Promise<void>;
   ensureFullEmployee: (id: string) => Promise<Employee | undefined>;
+  fetchFullEmployeesByIds: (ids: string[]) => Promise<Employee[]>;
 }
 
 const EmployeeDataContext = createContext<EmployeeDataContextType | undefined>(undefined);
