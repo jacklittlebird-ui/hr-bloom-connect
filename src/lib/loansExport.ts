@@ -19,7 +19,7 @@ const todayStamp = () => {
 
 /* ===================== Excel (.xlsx) ===================== */
 
-export function exportLoansToXLSX(opts: {
+export async function exportLoansToXLSX(opts: {
   title: string;
   data: Record<string, unknown>[];
   columns: LoanExportColumn[];
@@ -30,118 +30,168 @@ export function exportLoansToXLSX(opts: {
   const { title, data, columns, summaryCards = [], isRTL = true, fileName } = opts;
   const colCount = columns.length;
 
-  // Build sheet rows: title, date, blank, summary, blank, headers, body
-  const rows: any[][] = [];
-  rows.push([title, ...Array(colCount - 1).fill('')]);
-  const now = new Date();
-  const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
-  rows.push([dateStr, ...Array(colCount - 1).fill('')]);
-  rows.push(Array(colCount).fill(''));
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'HR System';
+  wb.created = new Date();
 
-  if (summaryCards.length > 0) {
-    rows.push(summaryCards.map(c => c.label).concat(Array(Math.max(0, colCount - summaryCards.length)).fill('')));
-    rows.push(summaryCards.map(c => c.value).concat(Array(Math.max(0, colCount - summaryCards.length)).fill('')));
-    rows.push(Array(colCount).fill(''));
-  }
-
-  const headerRowIndex = rows.length;
-  rows.push(columns.map(c => c.header));
-  data.forEach(r => {
-    rows.push(columns.map(c => {
-      const v = r[c.key];
-      if (c.numeric && typeof v === 'number') return v;
-      if (c.numeric && typeof v === 'string' && v !== '' && !isNaN(Number(v))) return Number(v);
-      return v ?? '';
-    }));
+  const ws = wb.addWorksheet(isRTL ? 'القروض' : 'Loans', {
+    views: [{ rightToLeft: isRTL, state: 'frozen', ySplit: 0 }],
+    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.3, right: 0.3, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 } },
   });
-
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!views'] = [{ RTL: isRTL }];
 
   // Column widths
-  ws['!cols'] = columns.map(c => ({ wch: Math.max(14, Math.min(36, c.header.length + 6)) }));
+  ws.columns = columns.map(c => ({
+    width: Math.max(14, Math.min(32, (c.header.length + 6))),
+  }));
 
-  // Merge title + date across all columns
-  ws['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: colCount - 1 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: colCount - 1 } },
-  ];
+  const lastColLetter = ws.getColumn(colCount).letter;
 
-  // Style title
-  const titleAddr = XLSX.utils.encode_cell({ r: 0, c: 0 });
-  if (ws[titleAddr]) {
-    ws[titleAddr].s = {
-      font: { bold: true, sz: 16, color: { rgb: 'FFFFFF' } },
-      fill: { fgColor: { rgb: '1E40AF' } },
-      alignment: { horizontal: 'center', vertical: 'center' },
-    };
-  }
-  const dateAddr = XLSX.utils.encode_cell({ r: 1, c: 0 });
-  if (ws[dateAddr]) {
-    ws[dateAddr].s = { font: { italic: true, sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'center' } };
-  }
+  // Row 1: Title
+  ws.mergeCells(`A1:${lastColLetter}1`);
+  const titleCell = ws.getCell('A1');
+  titleCell.value = title;
+  titleCell.font = { name: 'Calibri', bold: true, size: 18, color: { argb: 'FFFFFFFF' } };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(1).height = 32;
 
-  // Style header row
-  for (let c = 0; c < colCount; c++) {
-    const addr = XLSX.utils.encode_cell({ r: headerRowIndex, c });
-    if (ws[addr]) {
-      ws[addr].s = {
-        font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
-        fill: { fgColor: { rgb: '1E40AF' } },
-        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-        border: {
-          top: { style: 'thin', color: { rgb: '1E3A8A' } },
-          bottom: { style: 'thin', color: { rgb: '1E3A8A' } },
-          left: { style: 'thin', color: { rgb: '1E3A8A' } },
-          right: { style: 'thin', color: { rgb: '1E3A8A' } },
-        },
-      };
-    }
-  }
+  // Row 2: Date
+  ws.mergeCells(`A2:${lastColLetter}2`);
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+  const dateCell = ws.getCell('A2');
+  dateCell.value = isRTL ? `تاريخ التقرير: ${dateStr}` : `Report date: ${dateStr}`;
+  dateCell.font = { italic: true, size: 11, color: { argb: 'FF475569' } };
+  dateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } };
+  dateCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(2).height = 20;
 
-  // Numeric format + alternating row backgrounds for body
-  const bodyStart = headerRowIndex + 1;
-  data.forEach((_, ri) => {
-    const rowIdx = bodyStart + ri;
-    const bg = ri % 2 === 0 ? 'FFFFFF' : 'F1F5F9';
-    columns.forEach((col, ci) => {
-      const addr = XLSX.utils.encode_cell({ r: rowIdx, c: ci });
-      if (!ws[addr]) return;
-      ws[addr].s = {
-        alignment: { horizontal: col.numeric ? 'right' : 'center', vertical: 'center' },
-        fill: { fgColor: { rgb: bg } },
-        border: {
-          top: { style: 'thin', color: { rgb: 'CBD5E1' } },
-          bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
-          left: { style: 'thin', color: { rgb: 'CBD5E1' } },
-          right: { style: 'thin', color: { rgb: 'CBD5E1' } },
-        },
-      };
-      if (col.numeric && typeof ws[addr].v === 'number') {
-        ws[addr].t = 'n';
-        ws[addr].z = '#,##0.00';
-      }
+  // Blank row
+  ws.addRow([]);
+  let cursor = 3;
+
+  // Summary cards (one row of labels, one row of values)
+  if (summaryCards.length > 0) {
+    cursor++;
+    const labelRowIdx = cursor;
+    const valueRowIdx = cursor + 1;
+    const labelRow = ws.getRow(labelRowIdx);
+    const valueRow = ws.getRow(valueRowIdx);
+    summaryCards.forEach((card, i) => {
+      labelRow.getCell(i + 1).value = card.label;
+      labelRow.getCell(i + 1).font = { size: 10, color: { argb: 'FF64748B' }, bold: true };
+      labelRow.getCell(i + 1).alignment = { horizontal: 'center', vertical: 'middle' };
+      labelRow.getCell(i + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+      labelRow.getCell(i + 1).border = { top: { style: 'thin', color: { argb: 'FFCBD5E1' } }, left: { style: 'thin', color: { argb: 'FFCBD5E1' } }, right: { style: 'thin', color: { argb: 'FFCBD5E1' } } };
+
+      valueRow.getCell(i + 1).value = card.value;
+      valueRow.getCell(i + 1).font = { size: 14, color: { argb: 'FF1E40AF' }, bold: true };
+      valueRow.getCell(i + 1).alignment = { horizontal: 'center', vertical: 'middle' };
+      valueRow.getCell(i + 1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+      valueRow.getCell(i + 1).border = { bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } }, left: { style: 'thin', color: { argb: 'FFCBD5E1' } }, right: { style: 'thin', color: { argb: 'FFCBD5E1' } } };
     });
+    labelRow.height = 18;
+    valueRow.height = 22;
+    cursor += 2;
+    ws.addRow([]);
+    cursor++;
+  }
+
+  // Header row
+  const headerRowIdx = cursor + 1;
+  const headerRow = ws.getRow(headerRowIdx);
+  columns.forEach((col, i) => {
+    const cell = headerRow.getCell(i + 1);
+    cell.value = col.header;
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E40AF' } };
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF1E3A8A' } },
+      bottom: { style: 'thin', color: { argb: 'FF1E3A8A' } },
+      left: { style: 'thin', color: { argb: 'FF1E3A8A' } },
+      right: { style: 'thin', color: { argb: 'FF1E3A8A' } },
+    };
+  });
+  headerRow.height = 28;
+
+  // Data rows
+  data.forEach((row, ri) => {
+    const dataRow = ws.getRow(headerRowIdx + 1 + ri);
+    columns.forEach((col, ci) => {
+      const cell = dataRow.getCell(ci + 1);
+      const v = row[col.key];
+      if (col.numeric) {
+        const n = typeof v === 'number' ? v : (v === '' || v == null || isNaN(Number(v)) ? null : Number(v));
+        cell.value = n;
+        cell.numFmt = '#,##0.00';
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+      } else {
+        cell.value = v == null ? '' : String(v);
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      }
+      cell.font = { size: 10, color: { argb: 'FF1F2937' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: ri % 2 === 0 ? 'FFFFFFFF' : 'FFF1F5F9' } };
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      };
+    });
+    dataRow.height = 22;
   });
 
-  // Summary cards styling
-  if (summaryCards.length > 0) {
-    const labelRow = 3;
-    const valueRow = 4;
-    summaryCards.forEach((_, i) => {
-      const lAddr = XLSX.utils.encode_cell({ r: labelRow, c: i });
-      const vAddr = XLSX.utils.encode_cell({ r: valueRow, c: i });
-      if (ws[lAddr]) ws[lAddr].s = { font: { sz: 10, color: { rgb: '6B7280' } }, alignment: { horizontal: 'center' }, fill: { fgColor: { rgb: 'F8FAFC' } } };
-      if (ws[vAddr]) ws[vAddr].s = { font: { bold: true, sz: 13, color: { rgb: '1E40AF' } }, alignment: { horizontal: 'center' }, fill: { fgColor: { rgb: 'F8FAFC' } } };
+  // Totals row for numeric columns
+  if (data.length > 0) {
+    const totalRowIdx = headerRowIdx + 1 + data.length;
+    const totalRow = ws.getRow(totalRowIdx);
+    columns.forEach((col, ci) => {
+      const cell = totalRow.getCell(ci + 1);
+      if (ci === 0) {
+        cell.value = isRTL ? 'الإجمالي' : 'Total';
+      } else if (col.numeric) {
+        const sum = data.reduce((s, r) => {
+          const v = r[col.key];
+          const n = typeof v === 'number' ? v : Number(v);
+          return s + (isNaN(n) ? 0 : n);
+        }, 0);
+        cell.value = sum;
+        cell.numFmt = '#,##0.00';
+      } else {
+        cell.value = '';
+      }
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+      cell.alignment = { horizontal: col.numeric ? 'right' : 'center', vertical: 'middle' };
+      cell.border = {
+        top: { style: 'medium', color: { argb: 'FF1E40AF' } },
+        bottom: { style: 'medium', color: { argb: 'FF1E40AF' } },
+        left: { style: 'thin', color: { argb: 'FF334155' } },
+        right: { style: 'thin', color: { argb: 'FF334155' } },
+      };
     });
+    totalRow.height = 26;
   }
 
   // Freeze header row
-  ws['!freeze'] = { xSplit: 0, ySplit: headerRowIndex + 1 } as any;
+  ws.views = [{ rightToLeft: isRTL, state: 'frozen', xSplit: 0, ySplit: headerRowIdx }];
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, (fileName || 'Loans').slice(0, 31));
-  XLSX.writeFile(wb, `${fileName || 'loans'}_${todayStamp()}.xlsx`);
+  // Auto-filter on the data table
+  ws.autoFilter = {
+    from: { row: headerRowIdx, column: 1 },
+    to: { row: headerRowIdx + data.length, column: colCount },
+  };
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${fileName || 'loans'}_${todayStamp()}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
 }
 
 /* ===================== Print (new window) ===================== */
