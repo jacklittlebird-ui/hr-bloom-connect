@@ -38,10 +38,16 @@ const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 6 }, (_, i) => String(currentYear - 2 + i));
 
+// Link Cargo = stations whose Arabic name contains "كارجو"
+const isCargoStation = (name_ar?: string) => !!name_ar && name_ar.includes('كارجو');
+
+type EntityFilter = 'all' | 'aero' | 'cargo';
+
 export const LoanDeductionsReport = () => {
   const { isRTL } = useLanguage();
   const [year, setYear] = useState<string>(String(currentYear));
   const [stationId, setStationId] = useState<string>('all');
+  const [entity, setEntity] = useState<EntityFilter>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [stations, setStations] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
   const [installments, setInstallments] = useState<any[]>([]);
