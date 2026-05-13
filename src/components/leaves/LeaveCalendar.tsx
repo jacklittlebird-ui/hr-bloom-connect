@@ -155,21 +155,24 @@ export const LeaveCalendar = ({ requests }: LeaveCalendarProps) => {
                     {format(day, 'd')}
                   </div>
                   <div className="space-y-1">
-                    {leavesForDay.slice(0, 2).map((leave, leaveIndex) => (
-                      <div
-                        key={leaveIndex}
-                        className={cn(
-                          "text-xs p-1 rounded text-white truncate",
-                          getLeaveTypeColor(leave.leaveType)
-                        )}
-                        title={`${language === 'ar' ? leave.employeeNameAr : leave.employeeName} - ${t(`leaves.types.${leave.leaveType}`)}`}
-                      >
-                        <span className="flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          {language === 'ar' ? leave.employeeNameAr : leave.employeeName}
-                        </span>
-                      </div>
-                    ))}
+                    {leavesForDay.slice(0, 2).map((leave, leaveIndex) => {
+                      const sb = getStatusBadge(leave.status);
+                      return (
+                        <div
+                          key={leaveIndex}
+                          className={cn(
+                            "text-xs p-1 rounded text-white truncate flex items-center gap-1",
+                            getLeaveTypeColor(leave.leaveType),
+                            leave.status === 'rejected' && 'opacity-70 line-through'
+                          )}
+                          title={`${language === 'ar' ? leave.employeeNameAr : leave.employeeName} - ${t(`leaves.types.${leave.leaveType}`)} - ${t(`leaves.status.${leave.status}`)}`}
+                        >
+                          <User className="w-3 h-3 shrink-0" />
+                          <span className="truncate flex-1">{language === 'ar' ? leave.employeeNameAr : leave.employeeName}</span>
+                          <span className={cn("px-1 rounded text-[10px] leading-none py-0.5 shrink-0", sb.cls)}>{sb.symbol}</span>
+                        </div>
+                      );
+                    })}
                     {leavesForDay.length > 2 && (
                       <button
                         onClick={() => setExpandedDay(day)}
