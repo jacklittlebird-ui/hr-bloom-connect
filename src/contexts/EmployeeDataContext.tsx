@@ -444,7 +444,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [addNotification]);
 
   return (
-    <EmployeeDataContext.Provider value={{ employees, loading, getEmployee, getEmployeeById, updateEmployee, addEmployee, refreshEmployees: fetchEmployees, ensureFullEmployee }}>
+    <EmployeeDataContext.Provider value={{ employees, loading, getEmployee, getEmployeeById, updateEmployee, addEmployee, refreshEmployees: fetchEmployees, ensureFullEmployee, fetchFullEmployeesByIds }}>
       {children}
     </EmployeeDataContext.Provider>
   );
