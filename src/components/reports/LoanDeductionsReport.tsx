@@ -219,8 +219,51 @@ export const LoanDeductionsReport = () => {
         reference: r.reason || '',
       });
     });
-    return out.sort((a, b) => a.employeeName.localeCompare(b.employeeName, isRTL ? 'ar' : 'en'));
-  }, [selectedMonth, installments, advances, employees, stationId, isRTL, stations]);
+    const locale = isRTL ? 'ar' : 'en';
+    return out.sort((a, b) => {
+      const s = a.station.localeCompare(b.station, locale);
+      if (s !== 0) return s;
+      return a.employeeName.localeCompare(b.employeeName, locale);
+    });
+  }, [selectedMonth, installments, advances, employees, stationId, entity, stationsById, isRTL, stations]);
+
+  // Per-employee yearly aggregate (used when no specific month is selected)
+  const employeeYearlyRows = useMemo(() => {
+    type Agg = { employeeCode: string; employeeName: string; station: string; loansAmount: number; advancesAmount: number; total: number };
+    const map = new Map<string, Agg>();
+    const ensure = (empId: string) => {
+      if (!map.has(empId)) {
+        const e = employees[empId];
+        map.set(empId, {
+          employeeCode: e?.employee_code || '-',
+          employeeName: e ? (isRTL ? e.name_ar : e.name_en) : '-',
+          station: stationName(e?.station_id || null),
+          loansAmount: 0,
+          advancesAmount: 0,
+          total: 0,
+        });
+      }
+      return map.get(empId)!;
+    };
+    installments.forEach((r: any) => {
+      if (!filterByStation(r.employee_id)) return;
+      if (!r.employee_id) return;
+      ensure(r.employee_id).loansAmount += Number(r.amount) || 0;
+    });
+    advances.forEach((r: any) => {
+      if (!filterByStation(r.employee_id)) return;
+      if (!r.employee_id) return;
+      ensure(r.employee_id).advancesAmount += Number(r.amount) || 0;
+    });
+    const locale = isRTL ? 'ar' : 'en';
+    const arr = Array.from(map.values()).map(a => ({ ...a, total: a.loansAmount + a.advancesAmount }));
+    arr.sort((a, b) => {
+      const s = a.station.localeCompare(b.station, locale);
+      if (s !== 0) return s;
+      return a.employeeName.localeCompare(b.employeeName, locale);
+    });
+    return arr;
+  }, [installments, advances, employees, stationId, entity, stationsById, isRTL, stations]);
 
   const entityLabel = entity === 'aero'
     ? (isRTL ? ' - لينك إيرو' : ' - Link Aero')
