@@ -492,9 +492,9 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
               </Select>
               <Input type="date" value={dateFromFilter} onChange={e => setDateFromFilter(e.target.value)} className="w-36" aria-label={isRTL ? 'من' : 'From'} />
               <Input type="date" value={dateToFilter} onChange={e => setDateToFilter(e.target.value)} className="w-36" aria-label={isRTL ? 'إلى' : 'To'} />
-              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)} aria-label="Print"><Printer className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })} aria-label="PDF"><FileText className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'loans' })} aria-label="CSV"><FileSpreadsheet className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={handlePrintLoans} aria-label={isRTL ? 'طباعة' : 'Print'} title={isRTL ? 'طباعة' : 'Print'}><Printer className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: pdfExportData, columns: exportColumns, fileName: 'loans' })} aria-label="PDF" title="PDF"><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={handleExportExcel} aria-label="Excel" title="Excel"><FileSpreadsheet className="h-4 w-4" /></Button>
               <Button variant="secondary" onClick={() => { setBulkPayMonth(''); setShowBulkPayDialog(true); }}>
                 <CheckCircle className="h-4 w-4 mr-1" />{isRTL ? 'دفعة جماعية' : 'Bulk Payment'}
               </Button>
