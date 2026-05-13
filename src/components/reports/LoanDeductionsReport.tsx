@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Printer, FileSpreadsheet, RotateCcw, Wallet, HandCoins, Sigma } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { usePayrollData } from '@/contexts/PayrollDataContext';
 import { exportLoansToXLSX, printLoansReport } from '@/lib/loansExport';
 import { toast } from '@/hooks/use-toast';
 
@@ -45,18 +46,16 @@ type EntityFilter = 'all' | 'aero' | 'cargo';
 
 export const LoanDeductionsReport = () => {
   const { isRTL } = useLanguage();
+  const { payrollEntries, refreshPayroll } = usePayrollData();
   const [year, setYear] = useState<string>(String(currentYear));
   const [stationId, setStationId] = useState<string>('all');
   const [entity, setEntity] = useState<EntityFilter>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
-  const [stations, setStations] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
-  const [installments, setInstallments] = useState<any[]>([]);
-  const [advances, setAdvances] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<Record<string, { name_ar: string; name_en: string; employee_code: string; station_id: string | null }>>({});
+  const [stations, setStations] = useState<{ id: string; code: string; name_ar: string; name_en: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    supabase.from('stations').select('id,name_ar,name_en').then(({ data }) => {
+    supabase.from('stations').select('id,code,name_ar,name_en').then(({ data }) => {
       if (data) setStations(data as any);
     });
   }, []);
@@ -65,76 +64,7 @@ export const LoanDeductionsReport = () => {
     const load = async () => {
       setLoading(true);
       try {
-        // Source of truth = payroll_entries (what was actually deducted in payroll).
-        // Falls back to capturing any extra paid loan installments / deducted advances
-        // that aren't represented in payroll yet, so nothing is missed.
-        const yStart = `${year}-01-01`;
-        const yEnd = `${Number(year) + 1}-01-01`;
-
-        // Mirror exactly the same logic as PayrollDataContext.hydratePayrollEntries:
-        // - For each (employee, year-month) that has a payroll_entries row,
-        //   pull live loan_installments (pending+paid) and advances (approved+deducted)
-        //   for that month. This guarantees totals match the payroll report exactly.
-        const [payRes, instRes, advRes] = await Promise.all([
-          supabase.from('payroll_entries')
-            .select('employee_id, month, year')
-            .eq('year', year),
-          supabase.from('loan_installments')
-            .select('employee_id, amount, due_date, status')
-            .in('status', ['pending', 'paid'])
-            .gte('due_date', `${year}-01-01`)
-            .lt('due_date', `${Number(year) + 1}-01-01`),
-          supabase.from('advances')
-            .select('id, employee_id, amount, deduction_month, status, reason')
-            .in('status', ['approved', 'deducted'])
-            .gte('deduction_month', `${year}-01`)
-            .lte('deduction_month', `${year}-12`),
-        ]);
-
-        if (payRes.error) throw payRes.error;
-        if (instRes.error) throw instRes.error;
-        if (advRes.error) throw advRes.error;
-
-        // Build set of valid (employee_id|YYYY-MM) keys from payroll
-        const payrollKeys = new Set<string>();
-        (payRes.data || []).forEach((p: any) => {
-          payrollKeys.add(`${p.employee_id}|${p.year}-${String(p.month).padStart(2, '0')}`);
-        });
-
-        // Filter installments: only those whose due-month has a payroll entry for that employee
-        const inst = (instRes.data || []).filter((r: any) => {
-          const m = String(r.due_date).slice(0, 7);
-          return payrollKeys.has(`${r.employee_id}|${m}`);
-        });
-
-        // Filter advances similarly
-        const adv = (advRes.data || []).filter((r: any) => {
-          return payrollKeys.has(`${r.employee_id}|${r.deduction_month}`);
-        });
-
-        const empIds = Array.from(new Set([
-          ...inst.map((r: any) => r.employee_id),
-          ...adv.map((r: any) => r.employee_id),
-        ].filter(Boolean)));
-
-        const empMap: typeof employees = {};
-        if (empIds.length > 0) {
-          // chunk
-          for (let i = 0; i < empIds.length; i += 200) {
-            const chunk = empIds.slice(i, i + 200);
-            const { data } = await supabase
-              .from('employees')
-              .select('id, name_ar, name_en, employee_code, station_id')
-              .in('id', chunk);
-            (data || []).forEach((e: any) => {
-              empMap[e.id] = { name_ar: e.name_ar, name_en: e.name_en, employee_code: e.employee_code, station_id: e.station_id };
-            });
-          }
-        }
-
-        setInstallments(inst);
-        setAdvances(adv);
-        setEmployees(empMap);
+        await refreshPayroll();
       } catch (e: any) {
         console.error(e);
         toast({ title: isRTL ? 'فشل تحميل البيانات' : 'Failed to load data', description: e?.message, variant: 'destructive' });
@@ -143,28 +73,27 @@ export const LoanDeductionsReport = () => {
       }
     };
     load();
-  }, [year, isRTL]);
+  }, [year, isRTL, refreshPayroll]);
 
-  const stationsById = useMemo(() => {
-    const m = new Map<string, { id: string; name_ar: string; name_en: string }>();
-    stations.forEach(s => m.set(s.id, s));
+  const stationsByCode = useMemo(() => {
+    const m = new Map<string, { id: string; code: string; name_ar: string; name_en: string }>();
+    stations.forEach(s => m.set(s.code, s));
     return m;
   }, [stations]);
 
-  const matchesEntity = (sid: string | null | undefined) => {
+  const matchesEntity = (stationCode: string | null | undefined) => {
     if (entity === 'all') return true;
-    const s = sid ? stationsById.get(sid) : null;
+    const s = stationCode ? stationsByCode.get(stationCode) : null;
     const cargo = isCargoStation(s?.name_ar);
     return entity === 'cargo' ? cargo : !cargo;
   };
 
-  const filterByStation = (employeeId: string | null) => {
-    const sid = employeeId ? employees[employeeId]?.station_id ?? null : null;
-    if (!matchesEntity(sid)) return false;
+  const filteredPayrollEntries = useMemo(() => payrollEntries.filter(entry => {
+    if (entry.year !== year) return false;
+    if (!matchesEntity(entry.stationLocation)) return false;
     if (stationId === 'all') return true;
-    if (!employeeId) return false;
-    return sid === stationId;
-  };
+    return entry.stationLocation === stationId;
+  }), [payrollEntries, year, entity, stationId, stationsByCode]);
 
   const monthlyRows: Row[] = useMemo(() => {
     const rows: Row[] = MONTHS_AR.map((m, i) => ({
@@ -178,23 +107,18 @@ export const LoanDeductionsReport = () => {
       total: 0,
     }));
 
-    installments.forEach((r: any) => {
-      if (!filterByStation(r.employee_id)) return;
-      const d = new Date(r.due_date);
-      const i = d.getMonth();
-      rows[i].loansAmount += Number(r.amount) || 0;
-      rows[i].loansCount += 1;
-    });
-    advances.forEach((r: any) => {
-      if (!filterByStation(r.employee_id)) return;
-      const m = String(r.deduction_month).slice(5, 7);
-      const i = Math.max(0, Math.min(11, Number(m) - 1));
-      rows[i].advancesAmount += Number(r.amount) || 0;
-      rows[i].advancesCount += 1;
+    filteredPayrollEntries.forEach((entry) => {
+      const i = Math.max(0, Math.min(11, Number(entry.month) - 1));
+      const loanPayment = Number(entry.loanPayment) || 0;
+      const advanceAmount = Number(entry.advanceAmount) || 0;
+      rows[i].loansAmount += loanPayment;
+      rows[i].advancesAmount += advanceAmount;
+      if (loanPayment > 0) rows[i].loansCount += 1;
+      if (advanceAmount > 0) rows[i].advancesCount += 1;
     });
     rows.forEach(r => { r.total = r.loansAmount + r.advancesAmount; });
     return rows;
-  }, [installments, advances, employees, stationId, entity, stationsById, year, isRTL]);
+  }, [filteredPayrollEntries, year, isRTL]);
 
   const totals = useMemo(() => {
     const t = monthlyRows.reduce((s, r) => ({
@@ -207,42 +131,36 @@ export const LoanDeductionsReport = () => {
     return t;
   }, [monthlyRows]);
 
-  const stationName = (id: string | null) => {
-    if (!id) return '-';
-    const s = stations.find(x => x.id === id);
-    if (!s) return '-';
+  const stationName = (code: string | null) => {
+    if (!code) return '-';
+    const s = stationsByCode.get(code);
+    if (!s) return code;
     return isRTL ? s.name_ar : s.name_en;
   };
 
   const detailRows: DetailRow[] = useMemo(() => {
     if (selectedMonth === 'all') return [];
-    const idx = Number(selectedMonth);
     const out: DetailRow[] = [];
-    installments.forEach((r: any) => {
-      if (!filterByStation(r.employee_id)) return;
-      if (new Date(r.due_date).getMonth() !== idx) return;
-      const e = employees[r.employee_id];
-      out.push({
-        employeeName: e ? (isRTL ? e.name_ar : e.name_en) : '-',
-        employeeCode: e?.employee_code || '-',
-        station: stationName(e?.station_id || null),
-        type: isRTL ? 'قسط قرض' : 'Loan Installment',
-        amount: Number(r.amount) || 0,
-      });
-    });
-    advances.forEach((r: any) => {
-      if (!filterByStation(r.employee_id)) return;
-      const i = Math.max(0, Math.min(11, Number(String(r.deduction_month).slice(5, 7)) - 1));
-      if (i !== idx) return;
-      const e = employees[r.employee_id];
-      out.push({
-        employeeName: e ? (isRTL ? e.name_ar : e.name_en) : '-',
-        employeeCode: e?.employee_code || '-',
-        station: stationName(e?.station_id || null),
-        type: isRTL ? 'سلفة' : 'Advance',
-        amount: Number(r.amount) || 0,
-        reference: r.reason || '',
-      });
+    const month = String(Number(selectedMonth) + 1).padStart(2, '0');
+    filteredPayrollEntries.filter(entry => entry.month === month).forEach((entry) => {
+      if ((Number(entry.loanPayment) || 0) > 0) {
+        out.push({
+          employeeName: isRTL ? entry.employeeName : entry.employeeNameEn || entry.employeeName,
+          employeeCode: entry.employeeCode || '-',
+          station: stationName(entry.stationLocation),
+          type: isRTL ? 'قسط قرض' : 'Loan Installment',
+          amount: Number(entry.loanPayment) || 0,
+        });
+      }
+      if ((Number(entry.advanceAmount) || 0) > 0) {
+        out.push({
+          employeeName: isRTL ? entry.employeeName : entry.employeeNameEn || entry.employeeName,
+          employeeCode: entry.employeeCode || '-',
+          station: stationName(entry.stationLocation),
+          type: isRTL ? 'سلفة' : 'Advance',
+          amount: Number(entry.advanceAmount) || 0,
+        });
+      }
     });
     const locale = isRTL ? 'ar' : 'en';
     return out.sort((a, b) => {
@@ -250,45 +168,38 @@ export const LoanDeductionsReport = () => {
       if (s !== 0) return s;
       return a.employeeName.localeCompare(b.employeeName, locale);
     });
-  }, [selectedMonth, installments, advances, employees, stationId, entity, stationsById, isRTL, stations]);
+  }, [selectedMonth, filteredPayrollEntries, isRTL, stationsByCode]);
 
   // Per-employee yearly aggregate (used when no specific month is selected)
   const employeeYearlyRows = useMemo(() => {
     type Agg = { employeeCode: string; employeeName: string; station: string; loansAmount: number; advancesAmount: number; total: number };
     const map = new Map<string, Agg>();
-    const ensure = (empId: string) => {
-      if (!map.has(empId)) {
-        const e = employees[empId];
-        map.set(empId, {
-          employeeCode: e?.employee_code || '-',
-          employeeName: e ? (isRTL ? e.name_ar : e.name_en) : '-',
-          station: stationName(e?.station_id || null),
+    filteredPayrollEntries.forEach((entry) => {
+      if (!map.has(entry.employeeId)) {
+        map.set(entry.employeeId, {
+          employeeCode: entry.employeeCode || '-',
+          employeeName: isRTL ? entry.employeeName : entry.employeeNameEn || entry.employeeName,
+          station: stationName(entry.stationLocation),
           loansAmount: 0,
           advancesAmount: 0,
           total: 0,
         });
       }
-      return map.get(empId)!;
-    };
-    installments.forEach((r: any) => {
-      if (!filterByStation(r.employee_id)) return;
-      if (!r.employee_id) return;
-      ensure(r.employee_id).loansAmount += Number(r.amount) || 0;
-    });
-    advances.forEach((r: any) => {
-      if (!filterByStation(r.employee_id)) return;
-      if (!r.employee_id) return;
-      ensure(r.employee_id).advancesAmount += Number(r.amount) || 0;
+      const agg = map.get(entry.employeeId)!;
+      agg.loansAmount += Number(entry.loanPayment) || 0;
+      agg.advancesAmount += Number(entry.advanceAmount) || 0;
     });
     const locale = isRTL ? 'ar' : 'en';
-    const arr = Array.from(map.values()).map(a => ({ ...a, total: a.loansAmount + a.advancesAmount }));
+    const arr = Array.from(map.values())
+      .map(a => ({ ...a, total: a.loansAmount + a.advancesAmount }))
+      .filter(a => a.total > 0);
     arr.sort((a, b) => {
       const s = a.station.localeCompare(b.station, locale);
       if (s !== 0) return s;
       return a.employeeName.localeCompare(b.employeeName, locale);
     });
     return arr;
-  }, [installments, advances, employees, stationId, entity, stationsById, isRTL, stations]);
+  }, [filteredPayrollEntries, isRTL, stationsByCode]);
 
   const entityLabel = entity === 'aero'
     ? (isRTL ? ' - لينك إيرو' : ' - Link Aero')
@@ -379,11 +290,11 @@ export const LoanDeductionsReport = () => {
   // When entity changes, reset station if no longer in scope
   useEffect(() => {
     if (stationId === 'all') return;
-    const s = stationsById.get(stationId);
+    const s = stationsByCode.get(stationId);
     const cargo = isCargoStation(s?.name_ar);
     if (entity === 'cargo' && !cargo) setStationId('all');
     if (entity === 'aero' && cargo) setStationId('all');
-  }, [entity, stationId, stationsById]);
+  }, [entity, stationId, stationsByCode]);
 
   const visibleStations = useMemo(() => {
     if (entity === 'all') return stations;
@@ -430,7 +341,7 @@ export const LoanDeductionsReport = () => {
                 <SelectContent>
                   <SelectItem value="all">{isRTL ? 'جميع المحطات' : 'All Stations'}</SelectItem>
                   {visibleStations.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{isRTL ? s.name_ar : s.name_en}</SelectItem>
+                    <SelectItem key={s.id} value={s.code}>{isRTL ? s.name_ar : s.name_en}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
