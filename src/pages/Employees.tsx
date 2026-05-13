@@ -310,7 +310,7 @@ const Employees = () => {
     return map[v] || v;
   };
 
-  const getExportData = () => filteredEmployees.map(e => ({
+  const mapForExport = (rows: typeof filteredEmployees) => rows.map(e => ({
     employeeId: e.employeeId,
     nameAr: e.nameAr,
     nameEn: e.nameEn,
