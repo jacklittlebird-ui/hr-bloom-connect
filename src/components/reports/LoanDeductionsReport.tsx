@@ -354,7 +354,7 @@ export const LoanDeductionsReport = () => {
       title: exportTitle,
       data: exportData as any,
       columns: exportColumns,
-      summaryCards,
+      summaryCards: [],
       isRTL,
     });
   };
