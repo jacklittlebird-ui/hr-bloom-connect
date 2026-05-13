@@ -169,7 +169,7 @@ export const LoanDeductionsReport = () => {
     });
     rows.forEach(r => { r.total = r.loansAmount + r.advancesAmount; });
     return rows;
-  }, [installments, advances, employees, stationId, year, isRTL]);
+  }, [installments, advances, employees, stationId, entity, stationsById, year, isRTL]);
 
   const totals = useMemo(() => {
     const t = monthlyRows.reduce((s, r) => ({
@@ -289,8 +289,23 @@ export const LoanDeductionsReport = () => {
   const reset = () => {
     setYear(String(currentYear));
     setStationId('all');
+    setEntity('all');
     setSelectedMonth('all');
   };
+
+  // When entity changes, reset station if no longer in scope
+  useEffect(() => {
+    if (stationId === 'all') return;
+    const s = stationsById.get(stationId);
+    const cargo = isCargoStation(s?.name_ar);
+    if (entity === 'cargo' && !cargo) setStationId('all');
+    if (entity === 'aero' && cargo) setStationId('all');
+  }, [entity, stationId, stationsById]);
+
+  const visibleStations = useMemo(() => {
+    if (entity === 'all') return stations;
+    return stations.filter(s => entity === 'cargo' ? isCargoStation(s.name_ar) : !isCargoStation(s.name_ar));
+  }, [stations, entity]);
 
   return (
     <div className="space-y-6">
@@ -304,7 +319,7 @@ export const LoanDeductionsReport = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="space-y-2">
               <Label>{isRTL ? 'السنة' : 'Year'}</Label>
               <Select value={year} onValueChange={setYear}>
@@ -315,12 +330,23 @@ export const LoanDeductionsReport = () => {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>{isRTL ? 'الكيان' : 'Entity'}</Label>
+              <Select value={entity} onValueChange={(v) => setEntity(v as EntityFilter)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{isRTL ? 'الكل (إيرو + كارجو)' : 'All (Aero + Cargo)'}</SelectItem>
+                  <SelectItem value="aero">{isRTL ? 'لينك إيرو' : 'Link Aero'}</SelectItem>
+                  <SelectItem value="cargo">{isRTL ? 'لينك كارجو' : 'Link Cargo'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>{isRTL ? 'المحطة' : 'Station'}</Label>
               <Select value={stationId} onValueChange={setStationId}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{isRTL ? 'جميع المحطات' : 'All Stations'}</SelectItem>
-                  {stations.map(s => (
+                  {visibleStations.map(s => (
                     <SelectItem key={s.id} value={s.id}>{isRTL ? s.name_ar : s.name_en}</SelectItem>
                   ))}
                 </SelectContent>
