@@ -374,24 +374,66 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
     return s ? (isRTL ? s.labelAr : s.labelEn) : station || '-';
   };
 
-  const exportColumns = [
+  const exportColumns: LoanExportColumn[] = [
     { header: isRTL ? 'الموظف' : 'Employee', key: 'employeeName' },
     { header: isRTL ? 'المحطة' : 'Station', key: 'stationLabel' },
-    { header: isRTL ? 'إجمالي القرض' : 'Total', key: 'amount' },
-    { header: isRTL ? 'القسط الشهري' : 'Monthly', key: 'monthlyPayment' },
-    { header: isRTL ? 'عدد الأقساط' : 'Installments', key: 'installments' },
-    { header: isRTL ? 'المدفوع' : 'Paid', key: 'paidAmount' },
-    { header: isRTL ? 'المتبقي' : 'Remaining', key: 'remainingAmount' },
+    { header: isRTL ? 'إجمالي القرض' : 'Total Loan', key: 'amount', numeric: true },
+    { header: isRTL ? 'القسط الشهري' : 'Monthly', key: 'monthlyPayment', numeric: true },
+    { header: isRTL ? 'عدد الأقساط' : 'Installments', key: 'installments', numeric: true },
+    { header: isRTL ? 'المسدد' : 'Paid Count', key: 'paidInstallments', numeric: true },
+    { header: isRTL ? 'المبلغ المدفوع' : 'Paid Amount', key: 'paidAmount', numeric: true },
+    { header: isRTL ? 'المتبقي' : 'Remaining', key: 'remainingAmount', numeric: true },
+    { header: isRTL ? 'تاريخ البدء' : 'Start Date', key: 'startDateLabel' },
     { header: isRTL ? 'الحالة' : 'Status', key: 'status' },
   ];
   const exportData = filteredLoans
-    .map(l => ({ ...l, stationLabel: getStationLabel(l.employeeId), status: isRTL ? statusLabels[l.status].ar : statusLabels[l.status].en }))
+    .map(l => ({
+      ...l,
+      stationLabel: getStationLabel(l.employeeId),
+      startDateLabel: getMonthName(l.startDate, language),
+      status: isRTL ? statusLabels[l.status].ar : statusLabels[l.status].en,
+    }))
     .sort((a, b) => {
       const stationCompare = a.stationLabel.localeCompare(b.stationLabel, isRTL ? 'ar' : 'en');
       if (stationCompare !== 0) return stationCompare;
       return a.employeeName.localeCompare(b.employeeName, isRTL ? 'ar' : 'en');
     });
   const exportTitle = isRTL ? 'تقرير القروض' : 'Loans Report';
+
+  const exportSummary: LoanSummaryCard[] = [
+    { label: isRTL ? 'عدد القروض' : 'Total Loans', value: filteredLoans.length },
+    { label: isRTL ? 'النشطة' : 'Active', value: filteredLoans.filter(l => l.status === 'active').length },
+    { label: isRTL ? 'إجمالي القيمة' : 'Total Value', value: filteredLoans.reduce((s, l) => s + l.amount, 0).toLocaleString() },
+    { label: isRTL ? 'المسدد' : 'Paid', value: filteredLoans.reduce((s, l) => s + l.paidAmount, 0).toLocaleString() },
+    { label: isRTL ? 'المتبقي' : 'Remaining', value: filteredLoans.reduce((s, l) => s + l.remainingAmount, 0).toLocaleString() },
+  ];
+
+  const handlePrintLoans = () => {
+    if (exportData.length === 0) {
+      toast({ title: isRTL ? 'لا توجد بيانات للطباعة' : 'No data to print', variant: 'destructive' });
+      return;
+    }
+    printLoansReport({ title: exportTitle, data: exportData, columns: exportColumns, summaryCards: exportSummary, isRTL });
+  };
+
+  const handleExportExcel = () => {
+    if (exportData.length === 0) {
+      toast({ title: isRTL ? 'لا توجد بيانات للتصدير' : 'No data to export', variant: 'destructive' });
+      return;
+    }
+    exportLoansToXLSX({ title: exportTitle, data: exportData, columns: exportColumns, summaryCards: exportSummary, isRTL, fileName: 'loans' });
+    toast({ title: isRTL ? 'تم التصدير' : 'Exported', description: isRTL ? `تم تصدير ${exportData.length} سجل` : `Exported ${exportData.length} records` });
+  };
+
+  // Format numeric values for PDF (PDF uses html-to-canvas; embed pre-formatted strings)
+  const pdfExportData = exportData.map(r => ({
+    ...r,
+    amount: (r.amount as number).toLocaleString(),
+    monthlyPayment: (r.monthlyPayment as number).toLocaleString(),
+    paidAmount: (r.paidAmount as number).toLocaleString(),
+    remainingAmount: (r.remainingAmount as number).toLocaleString(),
+  }));
+
 
   return (
     <div className="space-y-6">
