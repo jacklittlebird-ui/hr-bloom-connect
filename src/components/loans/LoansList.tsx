@@ -416,12 +416,12 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
     printLoansReport({ title: exportTitle, data: exportData, columns: exportColumns, summaryCards: exportSummary, isRTL });
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (exportData.length === 0) {
       toast({ title: isRTL ? 'لا توجد بيانات للتصدير' : 'No data to export', variant: 'destructive' });
       return;
     }
-    exportLoansToXLSX({ title: exportTitle, data: exportData, columns: exportColumns, summaryCards: exportSummary, isRTL, fileName: 'loans' });
+    await exportLoansToXLSX({ title: exportTitle, data: exportData, columns: exportColumns, summaryCards: exportSummary, isRTL, fileName: 'loans' });
     toast({ title: isRTL ? 'تم التصدير' : 'Exported', description: isRTL ? `تم تصدير ${exportData.length} سجل` : `Exported ${exportData.length} records` });
   };
 
