@@ -20,6 +20,7 @@ import { InstallmentScheduleDialog } from './InstallmentScheduleDialog';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { stationLocations } from '@/data/stationLocations';
+import { exportLoansToXLSX, printLoansReport, LoanExportColumn, LoanSummaryCard } from '@/lib/loansExport';
 import { useReportExport } from '@/hooks/useReportExport';
 import { markLoanInstallmentsPaidForPeriod } from '@/lib/loanPayments';
 
@@ -33,7 +34,7 @@ const getMonthName = (dateStr: string, lang: string) => {
 
 export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
   const { t, isRTL, language } = useLanguage();
-  const { handlePrint, exportToPDF, exportToCSV } = useReportExport();
+  const { exportToPDF } = useReportExport();
   const { loans, addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment, refreshData, ensureLoaded } = useLoanData();
   const { employees } = useEmployeeData();
   const activeEmployees = employees.filter(e => e.status === 'active');
@@ -373,24 +374,66 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
     return s ? (isRTL ? s.labelAr : s.labelEn) : station || '-';
   };
 
-  const exportColumns = [
+  const exportColumns: LoanExportColumn[] = [
     { header: isRTL ? 'الموظف' : 'Employee', key: 'employeeName' },
     { header: isRTL ? 'المحطة' : 'Station', key: 'stationLabel' },
-    { header: isRTL ? 'إجمالي القرض' : 'Total', key: 'amount' },
-    { header: isRTL ? 'القسط الشهري' : 'Monthly', key: 'monthlyPayment' },
-    { header: isRTL ? 'عدد الأقساط' : 'Installments', key: 'installments' },
-    { header: isRTL ? 'المدفوع' : 'Paid', key: 'paidAmount' },
-    { header: isRTL ? 'المتبقي' : 'Remaining', key: 'remainingAmount' },
+    { header: isRTL ? 'إجمالي القرض' : 'Total Loan', key: 'amount', numeric: true },
+    { header: isRTL ? 'القسط الشهري' : 'Monthly', key: 'monthlyPayment', numeric: true },
+    { header: isRTL ? 'عدد الأقساط' : 'Installments', key: 'installments', numeric: true },
+    { header: isRTL ? 'المسدد' : 'Paid Count', key: 'paidInstallments', numeric: true },
+    { header: isRTL ? 'المبلغ المدفوع' : 'Paid Amount', key: 'paidAmount', numeric: true },
+    { header: isRTL ? 'المتبقي' : 'Remaining', key: 'remainingAmount', numeric: true },
+    { header: isRTL ? 'تاريخ البدء' : 'Start Date', key: 'startDateLabel' },
     { header: isRTL ? 'الحالة' : 'Status', key: 'status' },
   ];
   const exportData = filteredLoans
-    .map(l => ({ ...l, stationLabel: getStationLabel(l.employeeId), status: isRTL ? statusLabels[l.status].ar : statusLabels[l.status].en }))
+    .map(l => ({
+      ...l,
+      stationLabel: getStationLabel(l.employeeId),
+      startDateLabel: getMonthName(l.startDate, language),
+      status: isRTL ? statusLabels[l.status].ar : statusLabels[l.status].en,
+    }))
     .sort((a, b) => {
       const stationCompare = a.stationLabel.localeCompare(b.stationLabel, isRTL ? 'ar' : 'en');
       if (stationCompare !== 0) return stationCompare;
       return a.employeeName.localeCompare(b.employeeName, isRTL ? 'ar' : 'en');
     });
   const exportTitle = isRTL ? 'تقرير القروض' : 'Loans Report';
+
+  const exportSummary: LoanSummaryCard[] = [
+    { label: isRTL ? 'عدد القروض' : 'Total Loans', value: filteredLoans.length },
+    { label: isRTL ? 'النشطة' : 'Active', value: filteredLoans.filter(l => l.status === 'active').length },
+    { label: isRTL ? 'إجمالي القيمة' : 'Total Value', value: filteredLoans.reduce((s, l) => s + l.amount, 0).toLocaleString() },
+    { label: isRTL ? 'المسدد' : 'Paid', value: filteredLoans.reduce((s, l) => s + l.paidAmount, 0).toLocaleString() },
+    { label: isRTL ? 'المتبقي' : 'Remaining', value: filteredLoans.reduce((s, l) => s + l.remainingAmount, 0).toLocaleString() },
+  ];
+
+  const handlePrintLoans = () => {
+    if (exportData.length === 0) {
+      toast({ title: isRTL ? 'لا توجد بيانات للطباعة' : 'No data to print', variant: 'destructive' });
+      return;
+    }
+    printLoansReport({ title: exportTitle, data: exportData, columns: exportColumns, summaryCards: exportSummary, isRTL });
+  };
+
+  const handleExportExcel = () => {
+    if (exportData.length === 0) {
+      toast({ title: isRTL ? 'لا توجد بيانات للتصدير' : 'No data to export', variant: 'destructive' });
+      return;
+    }
+    exportLoansToXLSX({ title: exportTitle, data: exportData, columns: exportColumns, summaryCards: exportSummary, isRTL, fileName: 'loans' });
+    toast({ title: isRTL ? 'تم التصدير' : 'Exported', description: isRTL ? `تم تصدير ${exportData.length} سجل` : `Exported ${exportData.length} records` });
+  };
+
+  // Format numeric values for PDF (PDF uses html-to-canvas; embed pre-formatted strings)
+  const pdfExportData = exportData.map(r => ({
+    ...r,
+    amount: (r.amount as number).toLocaleString(),
+    monthlyPayment: (r.monthlyPayment as number).toLocaleString(),
+    paidAmount: (r.paidAmount as number).toLocaleString(),
+    remainingAmount: (r.remainingAmount as number).toLocaleString(),
+  }));
+
 
   return (
     <div className="space-y-6">
@@ -449,9 +492,9 @@ export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
               </Select>
               <Input type="date" value={dateFromFilter} onChange={e => setDateFromFilter(e.target.value)} className="w-36" aria-label={isRTL ? 'من' : 'From'} />
               <Input type="date" value={dateToFilter} onChange={e => setDateToFilter(e.target.value)} className="w-36" aria-label={isRTL ? 'إلى' : 'To'} />
-              <Button variant="outline" size="icon" onClick={() => handlePrint(exportTitle)} aria-label="Print"><Printer className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: exportData, columns: exportColumns })} aria-label="PDF"><FileText className="h-4 w-4" /></Button>
-              <Button variant="outline" size="icon" onClick={() => exportToCSV({ title: exportTitle, data: exportData, columns: exportColumns, fileName: 'loans' })} aria-label="CSV"><FileSpreadsheet className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={handlePrintLoans} aria-label={isRTL ? 'طباعة' : 'Print'} title={isRTL ? 'طباعة' : 'Print'}><Printer className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={() => exportToPDF({ title: exportTitle, data: pdfExportData, columns: exportColumns, fileName: 'loans' })} aria-label="PDF" title="PDF"><FileText className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={handleExportExcel} aria-label="Excel" title="Excel"><FileSpreadsheet className="h-4 w-4" /></Button>
               <Button variant="secondary" onClick={() => { setBulkPayMonth(''); setShowBulkPayDialog(true); }}>
                 <CheckCircle className="h-4 w-4 mr-1" />{isRTL ? 'دفعة جماعية' : 'Bulk Payment'}
               </Button>
