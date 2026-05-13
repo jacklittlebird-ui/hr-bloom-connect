@@ -20,6 +20,7 @@ interface EmployeeDataContextType {
   addEmployee: (employee: Employee) => void;
   refreshEmployees: () => Promise<void>;
   ensureFullEmployee: (id: string) => Promise<Employee | undefined>;
+  fetchFullEmployeesByIds: (ids: string[]) => Promise<Employee[]>;
 }
 
 const EmployeeDataContext = createContext<EmployeeDataContextType | undefined>(undefined);
@@ -367,6 +368,34 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return fullEmployee;
   }, [employees]);
 
+  // Fetch full employee rows for a list of IDs (chunked to avoid URL length limits)
+  const fetchFullEmployeesByIds = useCallback(async (ids: string[]): Promise<Employee[]> => {
+    if (!ids.length) return [];
+    const CHUNK = 200;
+    const results: Employee[] = [];
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK);
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+        .in('id', chunk);
+      if (error) { console.error('fetchFullEmployeesByIds error:', error); continue; }
+      (data || []).forEach((row: any) => {
+        fullLoadedIds.current.add(row.id);
+        results.push(mapRow(row));
+      });
+    }
+    // Update state cache so subsequent reads are fast
+    if (results.length) {
+      setEmployees(prev => {
+        const map = new Map(prev.map(e => [e.id, e]));
+        results.forEach(r => map.set(r.id, r));
+        return Array.from(map.values());
+      });
+    }
+    return results;
+  }, []);
+
   const getEmployee = useCallback((id: string) => {
     return employees.find(e => e.id === id);
   }, [employees]);
@@ -415,7 +444,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [addNotification]);
 
   return (
-    <EmployeeDataContext.Provider value={{ employees, loading, getEmployee, getEmployeeById, updateEmployee, addEmployee, refreshEmployees: fetchEmployees, ensureFullEmployee }}>
+    <EmployeeDataContext.Provider value={{ employees, loading, getEmployee, getEmployeeById, updateEmployee, addEmployee, refreshEmployees: fetchEmployees, ensureFullEmployee, fetchFullEmployeesByIds }}>
       {children}
     </EmployeeDataContext.Provider>
   );

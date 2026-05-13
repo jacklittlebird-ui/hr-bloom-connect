@@ -19,7 +19,7 @@ type FilterStatus = 'all' | 'active' | 'inactive' | 'suspended';
 
 const Employees = () => {
   const { t, isRTL } = useLanguage();
-  const { employees, refreshEmployees, loading } = useEmployeeData();
+  const { employees, refreshEmployees, loading, fetchFullEmployeesByIds } = useEmployeeData();
   const { reportRef, handlePrint, exportBilingualCSV, exportToPDF, exportToWord } = useReportExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('all');
@@ -310,7 +310,7 @@ const Employees = () => {
     return map[v] || v;
   };
 
-  const getExportData = () => filteredEmployees.map(e => ({
+  const mapForExport = (rows: typeof filteredEmployees) => rows.map(e => ({
     employeeId: e.employeeId,
     nameAr: e.nameAr,
     nameEn: e.nameEn,
@@ -400,11 +400,23 @@ const Employees = () => {
     attachments: e.attachments || '-',
   }));
 
+  const getExportData = () => mapForExport(filteredEmployees);
+
+  // Fetch full data (all columns) for filtered employees, then map for export
+  const getFullExportData = async () => {
+    const ids = filteredEmployees.map(e => e.id);
+    const fullRows = await fetchFullEmployeesByIds(ids);
+    const fullMap = new Map(fullRows.map(r => [r.id, r]));
+    // Preserve current filtered order; fall back to list row if full fetch fails
+    const merged = filteredEmployees.map(e => ({ ...e, ...(fullMap.get(e.id) || {}) }));
+    return mapForExport(merged);
+  };
+
   const reportTitle = ar ? 'تقرير الموظفين' : 'Employee Report';
 
   // Grouped Excel export (.xlsx) with section headers per tab
-  const handleExportAll = () => {
-    const data = getExportData();
+  const handleExportAll = async () => {
+    const data = await getFullExportData();
     if (!data.length) {
       toast({ title: ar ? 'لا توجد بيانات للتصدير' : 'No data to export', variant: 'destructive' });
       return;
@@ -1074,8 +1086,8 @@ const Employees = () => {
               <Button variant="secondary" size="sm" className="gap-2" onClick={() => setShowAddDialog(true)}><Plus className="w-4 h-4" />{ar ? 'إضافة موظف' : 'Add Employee'}</Button>
               <Button variant="outline" size="icon" onClick={() => refreshEmployees()} aria-label={ar ? 'تحديث' : 'Refresh'}><RefreshCw className="w-4 h-4" /></Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handlePrintFull} title={ar ? 'طباعة كل السجلات المعروضة' : 'Print all filtered records'}><Printer className="w-4 h-4" />{ar ? 'طباعة' : 'Print'}</Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToPDF({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير PDF لكل السجلات المفلترة' : 'Export all filtered as PDF'}><Download className="w-4 h-4" />PDF</Button>
-              <Button variant="secondary" size="sm" className="gap-2" onClick={() => exportToWord({ title: reportTitle, data: getExportData(), columns: exportColumns })} title={ar ? 'تصدير Word لكل السجلات المفلترة' : 'Export all filtered as Word'}><FileType className="w-4 h-4" />Word</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={async () => exportToPDF({ title: reportTitle, data: await getFullExportData(), columns: exportColumns })} title={ar ? 'تصدير PDF لكل السجلات المفلترة' : 'Export all filtered as PDF'}><Download className="w-4 h-4" />PDF</Button>
+              <Button variant="secondary" size="sm" className="gap-2" onClick={async () => exportToWord({ title: reportTitle, data: await getFullExportData(), columns: exportColumns })} title={ar ? 'تصدير Word لكل السجلات المفلترة' : 'Export all filtered as Word'}><FileType className="w-4 h-4" />Word</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportAll} title={ar ? 'تصدير Excel كامل بكل البيانات المفلترة' : 'Export full Excel with all filtered data'}><FileText className="w-4 h-4" />Excel</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={downloadTemplate}><Download className="w-4 h-4" />{ar ? 'قالب الاستيراد' : 'Template'}</Button>
               <Button variant="secondary" size="sm" className="gap-2" onClick={handleImportClick} disabled={importing}>
