@@ -400,11 +400,23 @@ const Employees = () => {
     attachments: e.attachments || '-',
   }));
 
+  const getExportData = () => mapForExport(filteredEmployees);
+
+  // Fetch full data (all columns) for filtered employees, then map for export
+  const getFullExportData = async () => {
+    const ids = filteredEmployees.map(e => e.id);
+    const fullRows = await fetchFullEmployeesByIds(ids);
+    const fullMap = new Map(fullRows.map(r => [r.id, r]));
+    // Preserve current filtered order; fall back to list row if full fetch fails
+    const merged = filteredEmployees.map(e => ({ ...e, ...(fullMap.get(e.id) || {}) }));
+    return mapForExport(merged);
+  };
+
   const reportTitle = ar ? 'تقرير الموظفين' : 'Employee Report';
 
   // Grouped Excel export (.xlsx) with section headers per tab
-  const handleExportAll = () => {
-    const data = getExportData();
+  const handleExportAll = async () => {
+    const data = await getFullExportData();
     if (!data.length) {
       toast({ title: ar ? 'لا توجد بيانات للتصدير' : 'No data to export', variant: 'destructive' });
       return;
