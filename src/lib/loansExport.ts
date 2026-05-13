@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 
 export interface LoanExportColumn {
   header: string;
