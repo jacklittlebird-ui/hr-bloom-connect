@@ -222,9 +222,14 @@ export const LoanDeductionsReport = () => {
     return out.sort((a, b) => a.employeeName.localeCompare(b.employeeName, isRTL ? 'ar' : 'en'));
   }, [selectedMonth, installments, advances, employees, stationId, isRTL, stations]);
 
+  const entityLabel = entity === 'aero'
+    ? (isRTL ? ' - لينك إيرو' : ' - Link Aero')
+    : entity === 'cargo'
+      ? (isRTL ? ' - لينك كارجو' : ' - Link Cargo')
+      : '';
   const reportTitle = isRTL
-    ? `تقرير خصومات القروض والسلف لعام ${year}`
-    : `Loans & Advances Deductions Report ${year}`;
+    ? `تقرير خصومات القروض والسلف لعام ${year}${entityLabel}`
+    : `Loans & Advances Deductions Report ${year}${entityLabel}`;
 
   const monthlyColumns = [
     { header: isRTL ? 'الشهر' : 'Month', key: 'monthLabel' },
