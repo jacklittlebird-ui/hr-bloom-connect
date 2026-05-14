@@ -4,6 +4,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { cn } from '@/lib/utils';
 import { CalendarDays, Clock } from 'lucide-react';
+import { getWelcomeBgSrc, DEFAULT_WELCOME_BG } from '@/lib/welcomeBackgrounds';
+
+function readWelcomeBg(): string {
+  const ds = document.documentElement.dataset.welcomeBg;
+  if (ds) return ds;
+  try {
+    const cfg = JSON.parse(localStorage.getItem('hr_site_config') || '{}');
+    if (cfg.welcomeBg) return cfg.welcomeBg;
+  } catch {}
+  return DEFAULT_WELCOME_BG;
+}
 
 export const PortalWelcomeBanner = () => {
   const { language } = useLanguage();
@@ -18,10 +29,21 @@ export const PortalWelcomeBanner = () => {
     : (employee?.nameEn || user?.name || '');
 
   const [now, setNow] = useState(new Date());
+  const [bgId, setBgId] = useState<string>(() => readWelcomeBg());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => setBgId(readWelcomeBg());
+    window.addEventListener('hr-welcome-bg-changed', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('hr-welcome-bg-changed', refresh);
+      window.removeEventListener('storage', refresh);
+    };
   }, []);
 
   const hour = now.getHours();
@@ -49,13 +71,26 @@ export const PortalWelcomeBanner = () => {
     <div
       className={cn(
         "relative overflow-hidden rounded-2xl mb-6",
-        "bg-gradient-to-br from-primary via-primary/85 to-primary/60",
         "shadow-xl shadow-primary/20"
       )}
     >
+      {/* Background image */}
+      <img
+        src={getWelcomeBgSrc(bgId)}
+        alt=""
+        loading="lazy"
+        width={1536}
+        height={512}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Color overlay for readability */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/70 via-primary/45 to-primary/25" />
+
+      {/* Animated decorative elements */}
       <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-primary-foreground/8 blur-3xl animate-pulse" />
       <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-primary-foreground/5 blur-2xl" />
 
+      {/* Geometric pattern overlay */}
       <div className="absolute inset-0 opacity-[0.04]" style={{
         backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
         backgroundSize: '24px 24px'
