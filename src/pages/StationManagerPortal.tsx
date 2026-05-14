@@ -1933,12 +1933,12 @@ const StationManagerPortal = () => {
                         {stationEmployees.map(emp => (
                           <CommandItem
                             key={emp.id}
-                            value={`${emp.nameAr} ${emp.nameEn} ${emp.employeeCode || ''}`}
+                            value={`${emp.nameAr} ${emp.nameEn} ${emp.employeeId || ''}`}
                             onSelect={() => { setViolForm(p => ({ ...p, employeeId: emp.id })); setViolEmpPickerOpen(false); }}
                           >
                             <Check className={cn('me-2 h-4 w-4', violForm.employeeId === emp.id ? 'opacity-100' : 'opacity-0')} />
                             <span className="truncate">{ar ? emp.nameAr : emp.nameEn}</span>
-                            {emp.employeeCode && <span className="ms-auto text-xs text-muted-foreground font-mono">{emp.employeeCode}</span>}
+                            {emp.employeeId && <span className="ms-auto text-xs text-muted-foreground font-mono">{emp.employeeId}</span>}
                           </CommandItem>
                         ))}
                       </CommandGroup>
