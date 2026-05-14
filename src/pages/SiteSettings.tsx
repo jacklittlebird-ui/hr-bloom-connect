@@ -610,7 +610,7 @@ const SiteSettings = () => {
                   {/* Welcome banner background */}
                   <div className="md:col-span-2">
                     <Label className="mb-3 block">{isAr ? 'خلفية بطاقة الترحيب' : 'Welcome Card Background'}</Label>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {WELCOME_BG_OPTIONS.map(opt => {
                         const active = (config.welcomeBg || 'misty') === opt.id;
                         return (
