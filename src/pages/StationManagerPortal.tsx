@@ -181,6 +181,7 @@ const StationManagerPortal = () => {
   // Violation dialog state
   const [violDialog, setViolDialog] = useState(false);
   const [violForm, setViolForm] = useState({ employeeId: '', type: 'absence', description: '', penalty: '', date: new Date().toISOString().split('T')[0] });
+  const [violEmpPickerOpen, setViolEmpPickerOpen] = useState(false);
 
   // Edit evaluation dialog state
   const [editEvalDialog, setEditEvalDialog] = useState(false);
