@@ -17,6 +17,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,7 +26,7 @@ import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt } from 'lucide-react';
 import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
 import type { LeaveRequest } from '@/types/leaves';
 import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
@@ -179,6 +181,7 @@ const StationManagerPortal = () => {
   // Violation dialog state
   const [violDialog, setViolDialog] = useState(false);
   const [violForm, setViolForm] = useState({ employeeId: '', type: 'absence', description: '', penalty: '', date: new Date().toISOString().split('T')[0] });
+  const [violEmpPickerOpen, setViolEmpPickerOpen] = useState(false);
 
   // Edit evaluation dialog state
   const [editEvalDialog, setEditEvalDialog] = useState(false);
@@ -1909,10 +1912,40 @@ const StationManagerPortal = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>{t('الموظف', 'Employee')}</Label>
-              <Select value={violForm.employeeId} onValueChange={v => setViolForm(p => ({ ...p, employeeId: v }))}>
-                <SelectTrigger><SelectValue placeholder={t('اختر موظفاً', 'Select employee')} /></SelectTrigger>
-                <SelectContent>{stationEmployees.map(emp => <SelectItem key={emp.id} value={emp.id}>{ar ? emp.nameAr : emp.nameEn}</SelectItem>)}</SelectContent>
-              </Select>
+              <Popover open={violEmpPickerOpen} onOpenChange={setViolEmpPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" role="combobox" aria-expanded={violEmpPickerOpen} className="w-full h-10 justify-between font-normal">
+                    <span className="truncate">
+                      {(() => {
+                        const sel = stationEmployees.find(e => e.id === violForm.employeeId);
+                        return sel ? (ar ? sel.nameAr : sel.nameEn) : t('اختر موظفاً', 'Select employee');
+                      })()}
+                    </span>
+                    <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder={t('بحث بالاسم أو الكود...', 'Search by name or code...')} />
+                    <CommandList>
+                      <CommandEmpty>{t('لا توجد نتائج', 'No results')}</CommandEmpty>
+                      <CommandGroup>
+                        {stationEmployees.map(emp => (
+                          <CommandItem
+                            key={emp.id}
+                            value={`${emp.nameAr} ${emp.nameEn} ${emp.employeeId || ''}`}
+                            onSelect={() => { setViolForm(p => ({ ...p, employeeId: emp.id })); setViolEmpPickerOpen(false); }}
+                          >
+                            <Check className={cn('me-2 h-4 w-4', violForm.employeeId === emp.id ? 'opacity-100' : 'opacity-0')} />
+                            <span className="truncate">{ar ? emp.nameAr : emp.nameEn}</span>
+                            {emp.employeeId && <span className="ms-auto text-xs text-muted-foreground font-mono">{emp.employeeId}</span>}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>{t('التاريخ', 'Date')}</Label>
