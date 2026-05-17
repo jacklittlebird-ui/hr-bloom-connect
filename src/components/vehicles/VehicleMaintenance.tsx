@@ -484,6 +484,118 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
             <Button size="sm" onClick={() => exportWord(true)} variant="outline" className="border-blue-700 text-blue-700 hover:bg-blue-50">
               <FileType2 className="w-4 h-4 me-1" />{isAr ? 'Word (صفحات)' : 'Word (paged)'}
             </Button>
+            <Dialog open={bulkOpen} onOpenChange={(o) => { setBulkOpen(o); if (!o) { setBulkSelected(new Set()); setBulkSearch(''); } }}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                  <Layers className="w-4 h-4 me-1" />{isAr ? 'صيانة مجمّعة' : 'Bulk Maintenance'}
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl" dir={isRTL ? 'rtl' : 'ltr'}>
+                <DialogHeader>
+                  <DialogTitle>{isAr ? 'إضافة صيانة لعدة سيارات' : 'Add Maintenance for Multiple Vehicles'}</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">{isAr ? 'اختر السيارات' : 'Select vehicles'} <Badge variant="outline" className="ms-1">{bulkSelected.size}</Badge></Label>
+                    <div className="relative">
+                      <Search className="absolute top-2.5 start-3 w-4 h-4 text-muted-foreground" />
+                      <Input placeholder={isAr ? 'بحث...' : 'Search...'} value={bulkSearch} onChange={(e) => setBulkSearch(e.target.value)} className="ps-9 h-9" />
+                    </div>
+                    <div className={cn('flex items-center gap-2 text-xs', isRTL && 'flex-row-reverse')}>
+                      <Button type="button" size="sm" variant="ghost" className="h-7" onClick={() => {
+                        const txt = bulkSearch.trim().toLowerCase();
+                        const ids = vehicles
+                          .filter((v) => !txt || [v.vehicle_code, v.brand, v.model, v.plate_number].some((f) => f?.toLowerCase().includes(txt)))
+                          .map((v) => v.id);
+                        setBulkSelected(new Set(ids));
+                      }}>{isAr ? 'تحديد الكل' : 'Select all'}</Button>
+                      <Button type="button" size="sm" variant="ghost" className="h-7" onClick={() => setBulkSelected(new Set())}>{isAr ? 'مسح' : 'Clear'}</Button>
+                    </div>
+                    <ScrollArea className="h-64 rounded-md border">
+                      <div className="p-2 space-y-1">
+                        {vehicles
+                          .filter((v) => {
+                            const txt = bulkSearch.trim().toLowerCase();
+                            if (!txt) return true;
+                            return [v.vehicle_code, v.brand, v.model, v.plate_number].some((f) => f?.toLowerCase().includes(txt));
+                          })
+                          .map((v) => {
+                            const checked = bulkSelected.has(v.id);
+                            return (
+                              <label key={v.id} className={cn('flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer', isRTL && 'flex-row-reverse text-end')}>
+                                <Checkbox checked={checked} onCheckedChange={(c) => {
+                                  setBulkSelected((prev) => { const n = new Set(prev); c ? n.add(v.id) : n.delete(v.id); return n; });
+                                }} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium truncate">{v.brand} {v.model} <span className="font-mono text-xs text-muted-foreground">· {v.plate_number}</span></div>
+                                  <div className="text-xs text-muted-foreground truncate">{v.vehicle_code} · {stationName(v.station_id)}</div>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        {vehicles.length === 0 && <div className="text-center text-xs text-muted-foreground py-6">{isAr ? 'لا توجد سيارات' : 'No vehicles'}</div>}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs">{isAr ? 'نوع الصيانة' : 'Type'} <span className="text-destructive">*</span></Label>
+                      <Select value={bulkForm.maintenance_type} onValueChange={(v) => setBulkForm((p) => ({ ...p, maintenance_type: v }))}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {TYPES.map((t) => (<SelectItem key={t.value} value={t.value}>{isAr ? t.ar : t.en}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">{isAr ? 'التاريخ' : 'Date'}</Label>
+                        <Input type="date" value={bulkForm.maintenance_date} onChange={(e) => setBulkForm((p) => ({ ...p, maintenance_date: e.target.value }))} className="h-9" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">{isAr ? 'الصيانة القادمة' : 'Next due'}</Label>
+                        <Input type="date" value={bulkForm.next_maintenance_date} onChange={(e) => setBulkForm((p) => ({ ...p, next_maintenance_date: e.target.value }))} className="h-9" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">{isAr ? 'التكلفة لكل سيارة' : 'Cost per vehicle'}</Label>
+                        <Input type="number" value={bulkForm.cost} onChange={(e) => setBulkForm((p) => ({ ...p, cost: Number(e.target.value) }))} className="h-9" />
+                      </div>
+                      <div>
+                        <Label className="text-xs">{isAr ? 'الحالة' : 'Status'}</Label>
+                        <Select value={bulkForm.status} onValueChange={(v) => setBulkForm((p) => ({ ...p, status: v }))}>
+                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</SelectItem>
+                            <SelectItem value="in_progress">{isAr ? 'قيد التنفيذ' : 'In Progress'}</SelectItem>
+                            <SelectItem value="completed">{isAr ? 'مكتمل' : 'Completed'}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">{isAr ? 'مقدم الخدمة' : 'Provider'}</Label>
+                      <Input value={bulkForm.provider} onChange={(e) => setBulkForm((p) => ({ ...p, provider: e.target.value }))} className="h-9" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">{isAr ? 'الوصف' : 'Description'}</Label>
+                      <Input value={bulkForm.description} onChange={(e) => setBulkForm((p) => ({ ...p, description: e.target.value }))} className="h-9" />
+                    </div>
+                    <div className="text-xs text-muted-foreground bg-muted/40 rounded p-2">
+                      {isAr ? 'سيتم إنشاء سجل صيانة لكل سيارة محددة بنفس البيانات.' : 'A maintenance record will be created for each selected vehicle with the same data.'}
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkSaving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+                      <Button onClick={handleBulkSave} disabled={bulkSaving || bulkSelected.size === 0} aria-busy={bulkSaving}>
+                        {bulkSaving && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
+                        {isAr ? `إنشاء (${bulkSelected.size})` : `Create (${bulkSelected.size})`}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 me-1" />{isAr ? 'إضافة صيانة' : 'Add Maintenance'}</Button>
