@@ -472,16 +472,16 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                 <FilterX className="w-4 h-4 me-1" />{isAr ? 'إعادة ضبط' : 'Reset'}
               </Button>
             )}
-            <Button size="sm" variant="outline" onClick={exportCsv}>
-              <Download className="w-4 h-4 me-1" />{isAr ? 'CSV' : 'CSV'}
+            <Button size="sm" variant="outline" onClick={exportCsv} disabled={filtered.length === 0}>
+              <Download className="w-4 h-4 me-1" />CSV ({filtered.length})
             </Button>
-            <Button size="sm" onClick={exportPdf} className="bg-primary text-primary-foreground">
-              <FileDown className="w-4 h-4 me-1" />{isAr ? 'تصدير PDF' : 'PDF'}
+            <Button size="sm" onClick={exportPdf} disabled={filtered.length === 0} className="bg-primary text-primary-foreground">
+              <FileDown className="w-4 h-4 me-1" />PDF ({filtered.length})
             </Button>
-            <Button size="sm" onClick={() => exportWord(false)} className="bg-blue-700 hover:bg-blue-800 text-white">
-              <FileType2 className="w-4 h-4 me-1" />{isAr ? 'تصدير Word' : 'Word'}
+            <Button size="sm" onClick={() => exportWord(false)} disabled={filtered.length === 0} className="bg-blue-700 hover:bg-blue-800 text-white">
+              <FileType2 className="w-4 h-4 me-1" />Word ({filtered.length})
             </Button>
-            <Button size="sm" onClick={() => exportWord(true)} variant="outline" className="border-blue-700 text-blue-700 hover:bg-blue-50">
+            <Button size="sm" onClick={() => exportWord(true)} disabled={filtered.length === 0} variant="outline" className="border-blue-700 text-blue-700 hover:bg-blue-50">
               <FileType2 className="w-4 h-4 me-1" />{isAr ? 'Word (صفحات)' : 'Word (paged)'}
             </Button>
             <Dialog open={bulkOpen} onOpenChange={(o) => { setBulkOpen(o); if (!o) { setBulkSelected(new Set()); setBulkSearch(''); } }}>
