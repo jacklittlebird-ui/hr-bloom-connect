@@ -34,7 +34,7 @@ export const FleetByStation = ({ allowedStationIds }: { allowedStationIds?: stri
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [maint, setMaint] = useState<MaintRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = usePersistedState<string>('hr_vehicles_fleet_search', '');
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
