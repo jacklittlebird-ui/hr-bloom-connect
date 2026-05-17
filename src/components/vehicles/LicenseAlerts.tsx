@@ -45,8 +45,9 @@ const LICENSES: { key: keyof Vehicle; ar: string; en: string }[] = [
   { key: 'transport_license_end', ar: 'ترخيص النقل البري', en: 'Transport License' },
 ];
 
-export const LicenseAlerts = () => {
+export const LicenseAlerts = ({ allowedStationIds }: { allowedStationIds?: string[] | null } = {}) => {
   const { language, isRTL } = useLanguage();
+  const scopeIds = allowedStationIds && allowedStationIds.length ? new Set(allowedStationIds) : null;
   const isAr = language === 'ar';
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [stations, setStations] = useState<StationOption[]>([]);
