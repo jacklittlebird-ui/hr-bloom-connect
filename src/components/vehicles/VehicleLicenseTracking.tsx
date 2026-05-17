@@ -13,6 +13,7 @@ import { StationCombobox, StationOption } from './StationCombobox';
 import { exportVehiclePdf } from '@/lib/vehiclePdfExport';
 import { exportVehicleWord } from '@/lib/vehicleWordExport';
 import { toast } from 'sonner';
+import { usePersistedState } from '@/hooks/usePersistedState';
 
 interface Vehicle {
   id: string;
@@ -53,10 +54,10 @@ export const VehicleLicenseTracking = ({ allowedStationIds }: { allowedStationId
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [stations, setStations] = useState<StationOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<LicenseType>('all');
-  const [stationFilter, setStationFilter] = useState<string | null>(null);
-  const [statusBucket, setStatusBucket] = useState<'all' | 'expired' | 'soon' | 'valid'>('all');
+  const [search, setSearch] = usePersistedState<string>('hr_vehicles_lic_search', '');
+  const [filter, setFilter] = usePersistedState<LicenseType>('hr_vehicles_lic_type', 'all');
+  const [stationFilter, setStationFilter] = usePersistedState<string | null>('hr_vehicles_lic_station', null);
+  const [statusBucket, setStatusBucket] = usePersistedState<'all' | 'expired' | 'soon' | 'valid'>('hr_vehicles_lic_bucket', 'all');
 
   useEffect(() => {
     const fetchAll = async (showLoader = true) => {

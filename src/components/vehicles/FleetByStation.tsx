@@ -7,9 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  Building2, Car, AlertTriangle, CheckCircle, Wrench, ChevronDown, Search, Download, MapPin,
+  Building2, Car, AlertTriangle, CheckCircle, Wrench, ChevronDown, Search, Download, MapPin, FileDown, FileSpreadsheet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePersistedState } from '@/hooks/usePersistedState';
+import { exportVehiclePdf } from '@/lib/vehiclePdfExport';
+import { exportToXLSX } from '@/lib/leavesExport';
+import { toast } from 'sonner';
 
 interface Station { id: string; name_ar: string; name_en: string; code: string | null; }
 interface Vehicle {
@@ -30,7 +34,7 @@ export const FleetByStation = ({ allowedStationIds }: { allowedStationIds?: stri
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [maint, setMaint] = useState<MaintRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = usePersistedState<string>('hr_vehicles_fleet_search', '');
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -122,18 +126,36 @@ export const FleetByStation = ({ allowedStationIds }: { allowedStationIds?: stri
   const expandAll = () => setOpenIds(new Set([...stations.map((s) => s.id), 'unassigned']));
   const collapseAll = () => setOpenIds(new Set());
 
-  const exportCsv = () => {
-    const rows = [
-      [isAr ? 'المحطة' : 'Station', isAr ? 'كود السيارة' : 'Code', isAr ? 'الماركة' : 'Brand', isAr ? 'الموديل' : 'Model', isAr ? 'اللوحة' : 'Plate', isAr ? 'سنة' : 'Year', isAr ? 'الحالة' : 'Status', isAr ? 'نهاية الترخيص' : 'License End'],
-    ];
+  // Build flat list of currently-filtered rows (across all stations) for export
+  const exportRows = useMemo(() => {
+    const list: Array<{ station: string; v: Vehicle }> = [];
     [...stations, { id: 'unassigned', name_ar: 'غير مخصص', name_en: 'Unassigned', code: '' } as Station].forEach((s) => {
-      const list = grouped.get(s.id) || [];
-      list.forEach((v) => {
-        rows.push([
-          isAr ? s.name_ar : s.name_en,
-          v.vehicle_code, v.brand, v.model, v.plate_number, String(v.year), v.status, v.license_end_date || '',
-        ]);
-      });
+      const arr = grouped.get(s.id as any) || [];
+      arr.forEach((v) => list.push({ station: isAr ? s.name_ar : s.name_en, v }));
+    });
+    return list;
+  }, [grouped, stations, isAr]);
+
+  const exportCsv = () => {
+    if (exportRows.length === 0) { toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export'); return; }
+    const rows = [[
+      isAr ? 'المحطة' : 'Station',
+      isAr ? 'كود السيارة' : 'Code',
+      isAr ? 'الماركة' : 'Brand',
+      isAr ? 'الموديل' : 'Model',
+      isAr ? 'اللوحة' : 'Plate',
+      isAr ? 'سنة' : 'Year',
+      isAr ? 'الحالة' : 'Status',
+      isAr ? 'السائق' : 'Driver',
+      isAr ? 'نهاية الترخيص' : 'License End',
+      isAr ? 'نهاية الستائر' : 'Curtains End',
+      isAr ? 'نهاية النقل' : 'Transport End',
+    ]];
+    exportRows.forEach(({ station, v }) => {
+      rows.push([
+        station, v.vehicle_code, v.brand, v.model, v.plate_number, String(v.year), v.status,
+        v.insured_driver_name || '', v.license_end_date || '', v.curtains_license_end || '', v.transport_license_end || '',
+      ]);
     });
     const csv = '\uFEFF' + rows.map((r) => r.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -141,6 +163,72 @@ export const FleetByStation = ({ allowedStationIds }: { allowedStationIds?: stri
     const a = document.createElement('a');
     a.href = url; a.download = `fleet_by_station_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click(); URL.revokeObjectURL(url);
+  };
+
+  const exportXlsx = () => {
+    if (exportRows.length === 0) { toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export'); return; }
+    const columns = [
+      { header: isAr ? 'المحطة' : 'Station', accessor: (r: { station: string; v: Vehicle }) => r.station },
+      { header: isAr ? 'كود السيارة' : 'Code', accessor: (r: any) => r.v.vehicle_code },
+      { header: isAr ? 'الماركة' : 'Brand', accessor: (r: any) => r.v.brand },
+      { header: isAr ? 'الموديل' : 'Model', accessor: (r: any) => r.v.model },
+      { header: isAr ? 'اللوحة' : 'Plate', accessor: (r: any) => r.v.plate_number },
+      { header: isAr ? 'سنة' : 'Year', accessor: (r: any) => r.v.year },
+      { header: isAr ? 'الحالة' : 'Status', accessor: (r: any) => r.v.status },
+      { header: isAr ? 'السائق' : 'Driver', accessor: (r: any) => r.v.insured_driver_name || '' },
+      { header: isAr ? 'نهاية الترخيص' : 'License End', accessor: (r: any) => r.v.license_end_date || '' },
+      { header: isAr ? 'نهاية الستائر' : 'Curtains End', accessor: (r: any) => r.v.curtains_license_end || '' },
+      { header: isAr ? 'نهاية النقل' : 'Transport End', accessor: (r: any) => r.v.transport_license_end || '' },
+    ];
+    exportToXLSX(exportRows, columns as any, 'fleet_by_station', isAr ? 'الأسطول' : 'Fleet', {
+      title: isAr ? 'تقرير سيارات لكل محطة' : 'Fleet by Station Report',
+      isRTL: true,
+    });
+  };
+
+  const exportPdf = async () => {
+    if (exportRows.length === 0) { toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export'); return; }
+    try {
+      await exportVehiclePdf({
+        titleAr: 'تقرير سيارات لكل محطة',
+        subtitleAr: 'كشف تفصيلي بالسيارات حسب المحطات وفقاً للفلاتر النشطة',
+        meta: [
+          { label: 'عدد المحطات', value: String(stations.length) },
+          { label: 'إجمالي السيارات', value: String(exportRows.length) },
+          { label: 'بحث', value: search || '—' },
+        ],
+        columns: [
+          { header: 'م', key: 'idx' },
+          { header: 'المحطة', key: 'station' },
+          { header: 'الكود', key: 'code' },
+          { header: 'السيارة', key: 'vehicle' },
+          { header: 'اللوحة', key: 'plate' },
+          { header: 'سنة', key: 'year' },
+          { header: 'السائق', key: 'driver' },
+          { header: 'نهاية الترخيص', key: 'lic' },
+          { header: 'نهاية الستائر', key: 'cur' },
+          { header: 'نهاية النقل', key: 'tr' },
+        ],
+        rows: exportRows.map(({ station, v }, i) => ({
+          idx: i + 1,
+          station,
+          code: v.vehicle_code,
+          vehicle: `${v.brand} ${v.model}`,
+          plate: v.plate_number,
+          year: v.year,
+          driver: v.insured_driver_name || '—',
+          lic: v.license_end_date || '—',
+          cur: v.curtains_license_end || '—',
+          tr: v.transport_license_end || '—',
+        })),
+        signatureLabels: ['مدير الأسطول', 'مدير المحطة', 'الإدارة المالية'],
+        orientation: 'landscape',
+        fileName: `fleet_by_station_${new Date().toISOString().slice(0, 10)}.pdf`,
+      });
+      toast.success(isAr ? 'تم تصدير PDF بنجاح' : 'PDF exported');
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'فشل التصدير' : 'Export failed'));
+    }
   };
 
   if (loading) {
@@ -205,7 +293,9 @@ export const FleetByStation = ({ allowedStationIds }: { allowedStationIds?: stri
             </div>
             <Button variant="outline" size="sm" onClick={expandAll}>{isAr ? 'فتح الكل' : 'Expand All'}</Button>
             <Button variant="outline" size="sm" onClick={collapseAll}>{isAr ? 'طي الكل' : 'Collapse All'}</Button>
-            <Button size="sm" variant="outline" onClick={exportCsv}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
+            <Button size="sm" variant="outline" onClick={exportCsv} disabled={exportRows.length === 0}><Download className="w-4 h-4 me-1" />CSV ({exportRows.length})</Button>
+            <Button size="sm" variant="outline" onClick={exportXlsx} disabled={exportRows.length === 0} className="border-green-700 text-green-700 hover:bg-green-50"><FileSpreadsheet className="w-4 h-4 me-1" />Excel ({exportRows.length})</Button>
+            <Button size="sm" onClick={exportPdf} disabled={exportRows.length === 0} className="bg-primary text-primary-foreground"><FileDown className="w-4 h-4 me-1" />PDF ({exportRows.length})</Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-2">

@@ -18,6 +18,7 @@ import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Cr
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
+import { usePersistedState } from '@/hooks/usePersistedState';
 
 interface Vehicle {
   id: string;
@@ -67,14 +68,14 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [stations, setStations] = useState<StationOption[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [stationFilter, setStationFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [search, setSearch] = usePersistedState<string>('hr_vehicles_reg_search', '');
+  const [stationFilter, setStationFilter] = usePersistedState<string | null>('hr_vehicles_reg_station', null);
+  const [statusFilter, setStatusFilter] = usePersistedState<string>('hr_vehicles_reg_status', 'all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [focusedId, setFocusedId] = useState<string | null>(null);
-  const [alertFilter, setAlertFilter] = useState<'all' | 'expired' | 'soon'>('all');
+  const [alertFilter, setAlertFilter] = usePersistedState<'all' | 'expired' | 'soon'>('hr_vehicles_reg_alert', 'all');
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
   const [deleting, setDeleting] = useState(false);
