@@ -46,8 +46,9 @@ const getStatusInfo = (days: number | null, isAr: boolean) => {
   return { label: isAr ? 'ساري' : 'Valid', color: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300', icon: CheckCircle };
 };
 
-export const VehicleLicenseTracking = () => {
+export const VehicleLicenseTracking = ({ allowedStationIds }: { allowedStationIds?: string[] | null } = {}) => {
   const { language, isRTL } = useLanguage();
+  const scopeIds = allowedStationIds && allowedStationIds.length ? new Set(allowedStationIds) : null;
   const isAr = language === 'ar';
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [stations, setStations] = useState<StationOption[]>([]);
