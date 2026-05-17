@@ -46,7 +46,7 @@ export function ExportButton<T>({ rows, columns, filenameBase, title, disabled }
         <DropdownMenuItem onClick={guard(() => exportToCSV(rows, columns, filenameBase))}>
           <FileText className="w-4 h-4 mr-2" /> CSV
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={guard(() => exportToXLSX(rows, columns, filenameBase, title || filenameBase))}>
+        <DropdownMenuItem onClick={guard(() => exportToXLSX(rows, columns, filenameBase, title || filenameBase, { title, isRTL, userName: user?.name }))}>
           <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel (.xlsx)
         </DropdownMenuItem>
         <DropdownMenuItem onClick={guard(() => exportToPDF(rows, columns, filenameBase, { title, isRTL, userName: user?.name }))}>
