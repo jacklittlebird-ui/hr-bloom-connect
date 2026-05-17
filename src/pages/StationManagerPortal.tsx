@@ -1081,6 +1081,9 @@ const StationManagerPortal = () => {
             {canSee('violations') && (
               <TabsTrigger value="violations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('المخالفات', 'Violations')}</span></TabsTrigger>
             )}
+            {canSee('vehicles') && (
+              <TabsTrigger value="vehicles" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Car className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('السيارات', 'Vehicles')}</span></TabsTrigger>
+            )}
           </TabsList>
 
           {/* Employees Tab */}
