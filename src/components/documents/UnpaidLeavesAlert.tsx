@@ -9,6 +9,8 @@ import { PaginationControls } from '@/components/ui/pagination-controls';
 import { usePagination } from '@/hooks/usePagination';
 import { Search, Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ExportButton } from '@/components/leaves/ExportButton';
+import type { ExportColumn } from '@/lib/leavesExport';
 
 interface UnpaidLeaveRow {
   id: string;
@@ -180,6 +182,21 @@ export const UnpaidLeavesAlert = () => {
           <label className="text-xs text-muted-foreground">{ar ? 'إلى تاريخ' : 'To'}</label>
           <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="w-44" />
         </div>
+        <ExportButton
+          rows={filtered}
+          columns={[
+            { header: ar ? 'كود الموظف' : 'Employee Code', accessor: r => r.employee_code },
+            { header: ar ? 'اسم الموظف' : 'Employee Name', accessor: r => ar ? r.employee_name_ar : r.employee_name_en },
+            { header: ar ? 'المحطة' : 'Station', accessor: r => r.station_name || '-' },
+            { header: ar ? 'القسم' : 'Department', accessor: r => r.department_name || '-' },
+            { header: ar ? 'من تاريخ' : 'From Date', accessor: r => formatDate(r.start_date) },
+            { header: ar ? 'إلى تاريخ' : 'To Date', accessor: r => formatDate(r.end_date) },
+            { header: ar ? 'أيام الخصم' : 'Deduction Days', accessor: r => r.days },
+            { header: ar ? 'السبب' : 'Reason', accessor: r => r.reason || '-' },
+          ] as ExportColumn<UnpaidLeaveRow>[]}
+          filenameBase={ar ? 'الإجازات_بدون_راتب' : 'unpaid_leaves'}
+          title={ar ? 'تقرير الإجازات بدون راتب' : 'Unpaid Leaves Report'}
+        />
       </div>
 
       <Card>

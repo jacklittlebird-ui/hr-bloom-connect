@@ -9,6 +9,8 @@ import { PaginationControls } from '@/components/ui/pagination-controls';
 import { usePagination } from '@/hooks/usePagination';
 import { Search, MinusCircle, AlertCircle, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ExportButton } from '@/components/leaves/ExportButton';
+import type { ExportColumn } from '@/lib/leavesExport';
 
 interface ViolationRow {
   id: string;
@@ -198,6 +200,23 @@ export const PenaltyDeductionsAlert = () => {
           <label className="text-xs text-muted-foreground">{ar ? 'إلى تاريخ' : 'To'}</label>
           <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="h-10 w-44" />
         </div>
+        <ExportButton
+          rows={filtered}
+          columns={[
+            { header: ar ? 'كود الموظف' : 'Employee Code', accessor: r => r.employee_code },
+            { header: ar ? 'اسم الموظف' : 'Employee Name', accessor: r => ar ? r.employee_name_ar : r.employee_name_en },
+            { header: ar ? 'المحطة' : 'Station', accessor: r => r.station_name || '-' },
+            { header: ar ? 'القسم' : 'Department', accessor: r => r.department_name || '-' },
+            { header: ar ? 'التاريخ' : 'Date', accessor: r => formatDate(r.date) },
+            { header: ar ? 'النوع' : 'Type', accessor: r => r.type },
+            { header: ar ? 'الوصف' : 'Description', accessor: r => r.description || '-' },
+            { header: ar ? 'الجزاء' : 'Penalty', accessor: r => r.penalty || '-' },
+            { header: ar ? 'سُجلت بواسطة' : 'Registered By', accessor: r => r.created_by_name || '-' },
+            { header: ar ? 'الحالة' : 'Status', accessor: r => statusBadge(r.status, ar).label },
+          ] as ExportColumn<ViolationRow>[]}
+          filenameBase={ar ? 'الخصومات_والجزاءات' : 'penalties_deductions'}
+          title={ar ? 'تقرير الخصومات والجزاءات' : 'Penalties & Deductions Report'}
+        />
       </div>
 
       <Card>
