@@ -293,7 +293,9 @@ export const FleetByStation = ({ allowedStationIds }: { allowedStationIds?: stri
             </div>
             <Button variant="outline" size="sm" onClick={expandAll}>{isAr ? 'فتح الكل' : 'Expand All'}</Button>
             <Button variant="outline" size="sm" onClick={collapseAll}>{isAr ? 'طي الكل' : 'Collapse All'}</Button>
-            <Button size="sm" variant="outline" onClick={exportCsv}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
+            <Button size="sm" variant="outline" onClick={exportCsv} disabled={exportRows.length === 0}><Download className="w-4 h-4 me-1" />CSV ({exportRows.length})</Button>
+            <Button size="sm" variant="outline" onClick={exportXlsx} disabled={exportRows.length === 0} className="border-green-700 text-green-700 hover:bg-green-50"><FileSpreadsheet className="w-4 h-4 me-1" />Excel ({exportRows.length})</Button>
+            <Button size="sm" onClick={exportPdf} disabled={exportRows.length === 0} className="bg-primary text-primary-foreground"><FileDown className="w-4 h-4 me-1" />PDF ({exportRows.length})</Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
