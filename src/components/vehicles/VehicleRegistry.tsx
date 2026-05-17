@@ -407,6 +407,7 @@ export const VehicleRegistry = () => {
                       <SelectItem value="Toyota">{isAr ? 'تويوتا' : 'Toyota'}</SelectItem>
                       <SelectItem value="King Long">{isAr ? 'كينج لونج' : 'King Long'}</SelectItem>
                       <SelectItem value="Suzuki">{isAr ? 'سوزوكي' : 'Suzuki'}</SelectItem>
+                      <SelectItem value="Mitsubishi">{isAr ? 'متسوبيشي' : 'Mitsubishi'}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
