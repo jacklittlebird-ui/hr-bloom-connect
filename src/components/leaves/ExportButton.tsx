@@ -1,4 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Download, FileSpreadsheet, FileText, FileDown } from 'lucide-react';
@@ -15,7 +16,9 @@ interface ExportButtonProps<T> {
 
 export function ExportButton<T>({ rows, columns, filenameBase, title, disabled }: ExportButtonProps<T>) {
   const { language, isRTL } = useLanguage();
+  const { user } = useAuth();
   const ar = language === 'ar';
+  const count = rows?.length || 0;
 
   const guard = (action: () => void) => () => {
     if (!rows || rows.length === 0) {
@@ -36,7 +39,7 @@ export function ExportButton<T>({ rows, columns, filenameBase, title, disabled }
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" disabled={disabled} className="gap-1.5">
           <Download className="w-4 h-4" />
-          <span>{ar ? 'تصدير' : 'Export'}</span>
+          <span>{ar ? `تصدير (${count})` : `Export (${count})`}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={isRTL ? 'start' : 'end'}>
@@ -46,7 +49,7 @@ export function ExportButton<T>({ rows, columns, filenameBase, title, disabled }
         <DropdownMenuItem onClick={guard(() => exportToXLSX(rows, columns, filenameBase, title || filenameBase))}>
           <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel (.xlsx)
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={guard(() => exportToPDF(rows, columns, filenameBase, { title, isRTL }))}>
+        <DropdownMenuItem onClick={guard(() => exportToPDF(rows, columns, filenameBase, { title, isRTL, userName: user?.name }))}>
           <FileDown className="w-4 h-4 mr-2" /> PDF
         </DropdownMenuItem>
       </DropdownMenuContent>
