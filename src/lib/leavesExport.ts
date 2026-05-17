@@ -63,31 +63,61 @@ export function exportToPDF<T>(
   rows: T[],
   columns: ExportColumn<T>[],
   filenameBase: string,
-  opts?: { title?: string; isRTL?: boolean; orientation?: 'p' | 'l' },
+  opts?: { title?: string; isRTL?: boolean; orientation?: 'p' | 'l'; userName?: string },
 ) {
   const orientation = opts?.orientation || 'l';
   const doc = new jsPDF({ orientation, unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const isRTL = !!opts?.isRTL;
+
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const generatedAt = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const metaLeft = isRTL ? `تاريخ التوليد: ${generatedAt}` : `Generated: ${generatedAt}`;
+  const metaRight = opts?.userName
+    ? (isRTL ? `المستخدم: ${opts.userName}` : `User: ${opts.userName}`)
+    : '';
+  const rowsLabel = isRTL ? `عدد السجلات: ${rows.length}` : `Records: ${rows.length}`;
 
   if (opts?.title) {
     doc.setFontSize(14);
-    doc.text(opts.title, opts.isRTL ? pageWidth - 40 : 40, 36, { align: opts.isRTL ? 'right' : 'left' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(opts.title, isRTL ? pageWidth - 40 : 40, 36, { align: isRTL ? 'right' : 'left' });
   }
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(metaLeft, 40, 54);
+  if (metaRight) doc.text(metaRight, pageWidth - 40, 54, { align: 'right' });
+  doc.text(rowsLabel, isRTL ? pageWidth - 40 : 40, 68, { align: isRTL ? 'right' : 'left' });
+  doc.setDrawColor(200);
+  doc.line(40, 76, pageWidth - 40, 76);
 
   // For RTL render columns reversed so reading direction matches the UI
-  const orderedCols = opts?.isRTL ? [...columns].reverse() : columns;
+  const orderedCols = isRTL ? [...columns].reverse() : columns;
   const head = [orderedCols.map(c => c.header)];
   const body = rows.map(r => orderedCols.map(c => sanitize(c.accessor(r))));
 
   autoTable(doc, {
     head,
     body,
-    startY: opts?.title ? 50 : 30,
-    styles: { font: 'helvetica', fontSize: 9, cellPadding: 4, halign: opts?.isRTL ? 'right' : 'left' },
-    headStyles: { fillColor: [37, 99, 235], textColor: 255, halign: opts?.isRTL ? 'right' : 'left' },
+    startY: 86,
+    styles: { font: 'helvetica', fontSize: 9, cellPadding: 4, halign: isRTL ? 'right' : 'left' },
+    headStyles: { fillColor: [37, 99, 235], textColor: 255, halign: isRTL ? 'right' : 'left' },
     alternateRowStyles: { fillColor: [243, 244, 246] },
-    margin: { top: 50, left: 30, right: 30 },
+    margin: { top: 86, left: 30, right: 30, bottom: 40 },
   });
+
+  // Add page numbers after table is rendered (so total count is final)
+  const totalPages = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+    const footer = isRTL ? `صفحة ${i} من ${totalPages}` : `Page ${i} of ${totalPages}`;
+    doc.text(footer, pageWidth / 2, pageHeight - 20, { align: 'center' });
+    doc.setTextColor(0);
+  }
 
   doc.save(`${filenameBase}_${todayStamp()}.pdf`);
 }
