@@ -60,8 +60,9 @@ const emptyForm = {
   inspection_year: '' as string | number,
 };
 
-export const VehicleRegistry = () => {
+export const VehicleRegistry = ({ allowedStationIds }: { allowedStationIds?: string[] | null } = {}) => {
   const { language, isRTL } = useLanguage();
+  const scopeIds = allowedStationIds && allowedStationIds.length ? new Set(allowedStationIds) : null;
   const isAr = language === 'ar';
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [stations, setStations] = useState<StationOption[]>([]);
