@@ -1817,7 +1817,7 @@ const StationManagerPortal = () => {
                       </VTabsList>
                       <VTabsContent value="by-station"><FleetByStation allowedStationIds={allowedIds} /></VTabsContent>
                       <VTabsContent value="alerts"><LicenseAlerts allowedStationIds={allowedIds} /></VTabsContent>
-                      <VTabsContent value="registry"><VehicleRegistry allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="registry"><VehicleRegistry allowedStationIds={allowedIds} readOnly /></VTabsContent>
                       <VTabsContent value="licenses"><VehicleLicenseTracking allowedStationIds={allowedIds} /></VTabsContent>
                       <VTabsContent value="maintenance"><VehicleMaintenance allowedStationIds={allowedIds} /></VTabsContent>
                     </VTabs>
