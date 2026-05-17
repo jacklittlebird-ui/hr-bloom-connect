@@ -26,12 +26,19 @@ import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car } from 'lucide-react';
 import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
 import type { LeaveRequest } from '@/types/leaves';
 import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
 import { StationWorkHours } from '@/components/portal/sections/StationWorkHours';
 import { StationUniformsTab } from '@/components/portal/sections/StationUniformsTab';
+import { Tabs as VTabs, TabsContent as VTabsContent, TabsList as VTabsList, TabsTrigger as VTabsTrigger } from '@/components/ui/tabs';
+
+import { FleetByStation } from '@/components/vehicles/FleetByStation';
+import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
+import { VehicleRegistry } from '@/components/vehicles/VehicleRegistry';
+import { VehicleLicenseTracking } from '@/components/vehicles/VehicleLicenseTracking';
+import { VehicleMaintenance } from '@/components/vehicles/VehicleMaintenance';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -128,9 +135,9 @@ const StationManagerPortal = () => {
     switch (user?.role) {
       case 'station_manager':
       case 'area_manager':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations'];
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations', 'vehicles'];
       case 'station_hr':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations'];
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles'];
       case 'department_manager':
         return ['employees', 'attendance', 'leaveCalendar', 'approvals', 'evaluations', 'violations'];
       default:
@@ -1075,6 +1082,9 @@ const StationManagerPortal = () => {
             {canSee('violations') && (
               <TabsTrigger value="violations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('المخالفات', 'Violations')}</span></TabsTrigger>
             )}
+            {canSee('vehicles') && (
+              <TabsTrigger value="vehicles" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Car className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('السيارات', 'Vehicles')}</span></TabsTrigger>
+            )}
           </TabsList>
 
           {/* Employees Tab */}
@@ -1783,6 +1793,39 @@ const StationManagerPortal = () => {
               <StationLeaveCalendar stationEmployees={stationEmployees} language={language} />
             </TabsContent>
           )}
+
+          {/* Vehicles Tab */}
+          {activeTab === 'vehicles' && canSee('vehicles') && (() => {
+            const allowedIds = (user?.stationIds && user.stationIds.length)
+              ? user.stationIds
+              : (user?.stationId ? [user.stationId] : []);
+            return (
+              <TabsContent value="vehicles">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Car className="h-5 w-5 text-primary" />{t('إدارة السيارات', 'Fleet Management')}</CardTitle>
+                    <CardDescription>{t('سيارات محطتك فقط', 'Your station vehicles only')}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <VTabs defaultValue="by-station" className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+                      <VTabsList className="w-full justify-start mb-4 flex-wrap h-auto gap-1 bg-muted/50 p-1">
+                        <VTabsTrigger value="by-station" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('سيارات لكل محطة', 'Vehicles per Station')}</VTabsTrigger>
+                        <VTabsTrigger value="alerts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('تنبيهات التراخيص', 'License Alerts')}</VTabsTrigger>
+                        <VTabsTrigger value="registry" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('سجل السيارات', 'Vehicle Registry')}</VTabsTrigger>
+                        <VTabsTrigger value="licenses" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('متابعة التراخيص', 'License Tracking')}</VTabsTrigger>
+                        <VTabsTrigger value="maintenance" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('الصيانة', 'Maintenance')}</VTabsTrigger>
+                      </VTabsList>
+                      <VTabsContent value="by-station"><FleetByStation allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="alerts"><LicenseAlerts allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="registry"><VehicleRegistry allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="licenses"><VehicleLicenseTracking allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="maintenance"><VehicleMaintenance allowedStationIds={allowedIds} /></VTabsContent>
+                    </VTabs>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            );
+          })()}
         </Tabs>
         </div>
       </main>

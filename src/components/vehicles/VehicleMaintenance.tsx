@@ -53,8 +53,9 @@ const TYPES = [
 
 const daysLeft = (d: string | null) => d ? Math.ceil((new Date(d).getTime() - Date.now()) / 86400000) : null;
 
-export const VehicleMaintenance = () => {
+export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: string[] | null } = {}) => {
   const { language, isRTL } = useLanguage();
+  const scopeIds = allowedStationIds && allowedStationIds.length ? new Set(allowedStationIds) : null;
   const isAr = language === 'ar';
   const [records, setRecords] = useState<MaintenanceRecord[]>([]);
   const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
@@ -88,9 +89,11 @@ export const VehicleMaintenance = () => {
       supabase.from('vehicles').select('id, vehicle_code, brand, model, plate_number, station_id').order('vehicle_code'),
       supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar'),
     ]);
-    if (mData) setRecords(mData as unknown as MaintenanceRecord[]);
-    if (vData) setVehicles(vData as unknown as VehicleOption[]);
-    if (sData) setStations(sData as StationOption[]);
+    const filteredVehicles = scopeIds ? (vData as any[] || []).filter((x) => x.station_id && scopeIds.has(x.station_id)) : (vData || []);
+    const allowedVehicleIds = scopeIds ? new Set(filteredVehicles.map((v: any) => v.id)) : null;
+    if (mData) setRecords((allowedVehicleIds ? (mData as any[]).filter((r) => allowedVehicleIds.has(r.vehicle_id)) : mData) as unknown as MaintenanceRecord[]);
+    setVehicles(filteredVehicles as unknown as VehicleOption[]);
+    if (sData) setStations((scopeIds ? (sData as StationOption[]).filter((x) => scopeIds.has(x.id)) : (sData as StationOption[])));
     if (showLoader) setLoading(false);
   };
 

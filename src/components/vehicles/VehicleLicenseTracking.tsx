@@ -46,8 +46,9 @@ const getStatusInfo = (days: number | null, isAr: boolean) => {
   return { label: isAr ? 'ساري' : 'Valid', color: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300', icon: CheckCircle };
 };
 
-export const VehicleLicenseTracking = () => {
+export const VehicleLicenseTracking = ({ allowedStationIds }: { allowedStationIds?: string[] | null } = {}) => {
   const { language, isRTL } = useLanguage();
+  const scopeIds = allowedStationIds && allowedStationIds.length ? new Set(allowedStationIds) : null;
   const isAr = language === 'ar';
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [stations, setStations] = useState<StationOption[]>([]);
@@ -64,8 +65,8 @@ export const VehicleLicenseTracking = () => {
         supabase.from('vehicles').select('id, vehicle_code, brand, model, plate_number, station_id, license_start_date, license_end_date, curtains_license_start, curtains_license_end, transport_license_start, transport_license_end, status').order('vehicle_code'),
         supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar'),
       ]);
-      if (v) setVehicles(v as unknown as Vehicle[]);
-      if (s) setStations(s as StationOption[]);
+      if (v) setVehicles((scopeIds ? (v as any[]).filter((x) => x.station_id && scopeIds.has(x.station_id)) : v) as unknown as Vehicle[]);
+      if (s) setStations((scopeIds ? (s as StationOption[]).filter((x) => scopeIds.has(x.id)) : (s as StationOption[])));
       if (showLoader) setLoading(false);
     };
     fetchAll(true);
