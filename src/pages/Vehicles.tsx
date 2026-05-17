@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,8 @@ import { toast } from 'sonner';
 const Vehicles = () => {
   const { language, isRTL } = useLanguage();
   const isAr = language === 'ar';
+  const { user } = useAuth();
+  const registryReadOnly = user?.role === 'hr';
   const [activeTab, setActiveTab] = useState('by-station');
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -85,7 +88,7 @@ const Vehicles = () => {
 
         <TabsContent value="by-station"><FleetByStation key={`fbs-${refreshKey}`} /></TabsContent>
         <TabsContent value="alerts"><LicenseAlerts key={`la-${refreshKey}`} /></TabsContent>
-        <TabsContent value="registry"><VehicleRegistry key={`vr-${refreshKey}`} /></TabsContent>
+        <TabsContent value="registry"><VehicleRegistry key={`vr-${refreshKey}`} readOnly={registryReadOnly} /></TabsContent>
         <TabsContent value="licenses"><VehicleLicenseTracking key={`vl-${refreshKey}`} /></TabsContent>
         <TabsContent value="maintenance"><VehicleMaintenance key={`vm-${refreshKey}`} /></TabsContent>
       </Tabs>
