@@ -20,13 +20,13 @@ export function ExportButton<T>({ rows, columns, filenameBase, title, disabled }
   const ar = language === 'ar';
   const count = rows?.length || 0;
 
-  const guard = (action: () => void) => () => {
+  const guard = (action: () => void | Promise<void>) => async () => {
     if (!rows || rows.length === 0) {
       toast.error(ar ? 'لا توجد بيانات للتصدير' : 'No data to export');
       return;
     }
     try {
-      action();
+      await action();
       toast.success(ar ? `تم تصدير ${rows.length} سجل` : `Exported ${rows.length} record(s)`);
     } catch (e) {
       toast.error(ar ? 'فشل التصدير' : 'Export failed');
