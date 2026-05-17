@@ -7,9 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
-  Building2, Car, AlertTriangle, CheckCircle, Wrench, ChevronDown, Search, Download, MapPin,
+  Building2, Car, AlertTriangle, CheckCircle, Wrench, ChevronDown, Search, Download, MapPin, FileDown, FileSpreadsheet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePersistedState } from '@/hooks/usePersistedState';
+import { exportVehiclePdf } from '@/lib/vehiclePdfExport';
+import { exportToXLSX } from '@/lib/leavesExport';
+import { toast } from 'sonner';
 
 interface Station { id: string; name_ar: string; name_en: string; code: string | null; }
 interface Vehicle {
