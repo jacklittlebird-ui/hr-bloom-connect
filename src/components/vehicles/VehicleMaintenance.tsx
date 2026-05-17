@@ -71,10 +71,18 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [toDate, setToDate] = usePersistedState<string>('hr_vehicles_maint_to', '');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
-  const [bulkSearch, setBulkSearch] = useState('');
+  const [bulkVehicleId, setBulkVehicleId] = useState<string>('');
   const [bulkSaving, setBulkSaving] = useState(false);
-  const [bulkForm, setBulkForm] = useState({
+  type BulkRow = {
+    maintenance_type: string;
+    maintenance_date: string;
+    next_maintenance_date: string;
+    cost: number;
+    provider: string;
+    status: string;
+    description: string;
+  };
+  const newBulkRow = (): BulkRow => ({
     maintenance_type: 'periodic',
     maintenance_date: new Date().toISOString().split('T')[0],
     next_maintenance_date: '',
@@ -83,6 +91,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     status: 'completed',
     description: '',
   });
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>([newBulkRow()]);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MaintenanceRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -178,37 +187,43 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   };
 
   const handleBulkSave = async () => {
-    if (bulkSelected.size === 0) {
-      toast.error(isAr ? 'يرجى اختيار سيارة واحدة على الأقل' : 'Select at least one vehicle');
+    if (!bulkVehicleId) {
+      toast.error(isAr ? 'يرجى اختيار سيارة' : 'Please select a vehicle');
       return;
     }
-    if (!bulkForm.maintenance_type || !bulkForm.maintenance_date) {
-      toast.error(isAr ? 'النوع والتاريخ مطلوبان' : 'Type and date required');
+    if (bulkRows.length === 0) {
+      toast.error(isAr ? 'أضف نوع صيانة واحد على الأقل' : 'Add at least one maintenance entry');
       return;
     }
-    if (bulkForm.next_maintenance_date && bulkForm.next_maintenance_date < bulkForm.maintenance_date) {
-      toast.error(isAr ? 'تاريخ الصيانة القادمة قبل تاريخ الصيانة' : 'Next date is before maintenance date');
-      return;
+    for (const [i, row] of bulkRows.entries()) {
+      if (!row.maintenance_type || !row.maintenance_date) {
+        toast.error(isAr ? `الصف ${i + 1}: النوع والتاريخ مطلوبان` : `Row ${i + 1}: type and date required`);
+        return;
+      }
+      if (row.next_maintenance_date && row.next_maintenance_date < row.maintenance_date) {
+        toast.error(isAr ? `الصف ${i + 1}: تاريخ الصيانة القادمة قبل تاريخ الصيانة` : `Row ${i + 1}: next date before maintenance date`);
+        return;
+      }
     }
     setBulkSaving(true);
     try {
-      const payload = Array.from(bulkSelected).map((vid) => ({
-        vehicle_id: vid,
-        maintenance_type: bulkForm.maintenance_type,
-        description: bulkForm.description || null,
-        cost: Number(bulkForm.cost) || 0,
-        maintenance_date: bulkForm.maintenance_date,
-        next_maintenance_date: bulkForm.next_maintenance_date || null,
-        provider: bulkForm.provider || null,
-        status: bulkForm.status,
+      const payload = bulkRows.map((row) => ({
+        vehicle_id: bulkVehicleId,
+        maintenance_type: row.maintenance_type,
+        description: row.description || null,
+        cost: Number(row.cost) || 0,
+        maintenance_date: row.maintenance_date,
+        next_maintenance_date: row.next_maintenance_date || null,
+        provider: row.provider || null,
+        status: row.status,
         notes: null,
       }));
       const { error } = await supabase.from('vehicle_maintenance').insert(payload as any);
       if (error) { toast.error(error.message); return; }
       toast.success(isAr ? `تم إنشاء ${payload.length} سجل صيانة` : `Created ${payload.length} records`);
       setBulkOpen(false);
-      setBulkSelected(new Set());
-      setBulkSearch('');
+      setBulkVehicleId('');
+      setBulkRows([newBulkRow()]);
       fetchData();
     } finally {
       setBulkSaving(false);
@@ -484,114 +499,110 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
             <Button size="sm" onClick={() => exportWord(true)} disabled={filtered.length === 0} variant="outline" className="border-blue-700 text-blue-700 hover:bg-blue-50">
               <FileType2 className="w-4 h-4 me-1" />{isAr ? 'Word (صفحات)' : 'Word (paged)'}
             </Button>
-            <Dialog open={bulkOpen} onOpenChange={(o) => { setBulkOpen(o); if (!o) { setBulkSelected(new Set()); setBulkSearch(''); } }}>
+            <Dialog open={bulkOpen} onOpenChange={(o) => { setBulkOpen(o); if (!o) { setBulkVehicleId(''); setBulkRows([newBulkRow()]); } }}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="outline" className="border-primary text-primary hover:bg-primary/10">
                   <Layers className="w-4 h-4 me-1" />{isAr ? 'صيانة مجمّعة' : 'Bulk Maintenance'}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl" dir={isRTL ? 'rtl' : 'ltr'}>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
                 <DialogHeader>
-                  <DialogTitle>{isAr ? 'إضافة صيانة لعدة سيارات' : 'Add Maintenance for Multiple Vehicles'}</DialogTitle>
+                  <DialogTitle>{isAr ? 'إضافة عدة أنواع صيانة لسيارة واحدة' : 'Add Multiple Maintenance Types for One Vehicle'}</DialogTitle>
                 </DialogHeader>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">{isAr ? 'اختر السيارات' : 'Select vehicles'} <Badge variant="outline" className="ms-1">{bulkSelected.size}</Badge></Label>
-                    <div className="relative">
-                      <Search className="absolute top-2.5 start-3 w-4 h-4 text-muted-foreground" />
-                      <Input placeholder={isAr ? 'بحث...' : 'Search...'} value={bulkSearch} onChange={(e) => setBulkSearch(e.target.value)} className="ps-9 h-9" />
-                    </div>
-                    <div className={cn('flex items-center gap-2 text-xs', isRTL && 'flex-row-reverse')}>
-                      <Button type="button" size="sm" variant="ghost" className="h-7" onClick={() => {
-                        const txt = bulkSearch.trim().toLowerCase();
-                        const ids = vehicles
-                          .filter((v) => !txt || [v.vehicle_code, v.brand, v.model, v.plate_number].some((f) => f?.toLowerCase().includes(txt)))
-                          .map((v) => v.id);
-                        setBulkSelected(new Set(ids));
-                      }}>{isAr ? 'تحديد الكل' : 'Select all'}</Button>
-                      <Button type="button" size="sm" variant="ghost" className="h-7" onClick={() => setBulkSelected(new Set())}>{isAr ? 'مسح' : 'Clear'}</Button>
-                    </div>
-                    <ScrollArea className="h-64 rounded-md border">
-                      <div className="p-2 space-y-1">
-                        {vehicles
-                          .filter((v) => {
-                            const txt = bulkSearch.trim().toLowerCase();
-                            if (!txt) return true;
-                            return [v.vehicle_code, v.brand, v.model, v.plate_number].some((f) => f?.toLowerCase().includes(txt));
-                          })
-                          .map((v) => {
-                            const checked = bulkSelected.has(v.id);
-                            return (
-                              <label key={v.id} className={cn('flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer', isRTL && 'flex-row-reverse text-end')}>
-                                <Checkbox checked={checked} onCheckedChange={(c) => {
-                                  setBulkSelected((prev) => { const n = new Set(prev); c ? n.add(v.id) : n.delete(v.id); return n; });
-                                }} />
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-medium truncate">{v.brand} {v.model} <span className="font-mono text-xs text-muted-foreground">· {v.plate_number}</span></div>
-                                  <div className="text-xs text-muted-foreground truncate">{v.vehicle_code} · {stationName(v.station_id)}</div>
-                                </div>
-                              </label>
-                            );
-                          })}
-                        {vehicles.length === 0 && <div className="text-center text-xs text-muted-foreground py-6">{isAr ? 'لا توجد سيارات' : 'No vehicles'}</div>}
-                      </div>
-                    </ScrollArea>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <Label className="text-xs">{isAr ? 'السيارة' : 'Vehicle'} <span className="text-destructive">*</span></Label>
+                    <Select value={bulkVehicleId} onValueChange={setBulkVehicleId}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder={isAr ? 'اختر سيارة' : 'Select vehicle'} /></SelectTrigger>
+                      <SelectContent>
+                        {vehicles.map((v) => (
+                          <SelectItem key={v.id} value={v.id}>
+                            {v.brand} {v.model} · {v.plate_number} · {v.vehicle_code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-3">
-                    <div>
-                      <Label className="text-xs">{isAr ? 'نوع الصيانة' : 'Type'} <span className="text-destructive">*</span></Label>
-                      <Select value={bulkForm.maintenance_type} onValueChange={(v) => setBulkForm((p) => ({ ...p, maintenance_type: v }))}>
-                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {TYPES.map((t) => (<SelectItem key={t.value} value={t.value}>{isAr ? t.ar : t.en}</SelectItem>))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs">{isAr ? 'التاريخ' : 'Date'}</Label>
-                        <Input type="date" value={bulkForm.maintenance_date} onChange={(e) => setBulkForm((p) => ({ ...p, maintenance_date: e.target.value }))} className="h-9" />
-                      </div>
-                      <div>
-                        <Label className="text-xs">{isAr ? 'الصيانة القادمة' : 'Next due'}</Label>
-                        <Input type="date" value={bulkForm.next_maintenance_date} onChange={(e) => setBulkForm((p) => ({ ...p, next_maintenance_date: e.target.value }))} className="h-9" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-xs">{isAr ? 'التكلفة لكل سيارة' : 'Cost per vehicle'}</Label>
-                        <Input type="number" value={bulkForm.cost} onChange={(e) => setBulkForm((p) => ({ ...p, cost: Number(e.target.value) }))} className="h-9" />
-                      </div>
-                      <div>
-                        <Label className="text-xs">{isAr ? 'الحالة' : 'Status'}</Label>
-                        <Select value={bulkForm.status} onValueChange={(v) => setBulkForm((p) => ({ ...p, status: v }))}>
-                          <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</SelectItem>
-                            <SelectItem value="in_progress">{isAr ? 'قيد التنفيذ' : 'In Progress'}</SelectItem>
-                            <SelectItem value="completed">{isAr ? 'مكتمل' : 'Completed'}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs">{isAr ? 'مقدم الخدمة' : 'Provider'}</Label>
-                      <Input value={bulkForm.provider} onChange={(e) => setBulkForm((p) => ({ ...p, provider: e.target.value }))} className="h-9" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">{isAr ? 'الوصف' : 'Description'}</Label>
-                      <Input value={bulkForm.description} onChange={(e) => setBulkForm((p) => ({ ...p, description: e.target.value }))} className="h-9" />
-                    </div>
-                    <div className="text-xs text-muted-foreground bg-muted/40 rounded p-2">
-                      {isAr ? 'سيتم إنشاء سجل صيانة لكل سيارة محددة بنفس البيانات.' : 'A maintenance record will be created for each selected vehicle with the same data.'}
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkSaving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
-                      <Button onClick={handleBulkSave} disabled={bulkSaving || bulkSelected.size === 0} aria-busy={bulkSaving}>
-                        {bulkSaving && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
-                        {isAr ? `إنشاء (${bulkSelected.size})` : `Create (${bulkSelected.size})`}
+
+                  <div className="space-y-2">
+                    <div className={cn('flex items-center justify-between', isRTL && 'flex-row-reverse')}>
+                      <Label className="text-xs">{isAr ? 'أنواع الصيانة' : 'Maintenance entries'} <Badge variant="outline" className="ms-1">{bulkRows.length}</Badge></Label>
+                      <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => setBulkRows((rs) => [...rs, newBulkRow()])}>
+                        <Plus className="w-3.5 h-3.5 me-1" />{isAr ? 'إضافة نوع' : 'Add entry'}
                       </Button>
                     </div>
+
+                    <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                      {bulkRows.map((row, idx) => {
+                        const update = (patch: Partial<BulkRow>) => setBulkRows((rs) => rs.map((r, i) => i === idx ? { ...r, ...patch } : r));
+                        return (
+                          <div key={idx} className="border rounded-md p-3 bg-muted/20 space-y-2 relative">
+                            <div className={cn('flex items-center justify-between', isRTL && 'flex-row-reverse')}>
+                              <Badge variant="secondary" className="text-xs">#{idx + 1}</Badge>
+                              {bulkRows.length > 1 && (
+                                <Button type="button" size="sm" variant="ghost" className="h-7 text-destructive hover:text-destructive"
+                                  onClick={() => setBulkRows((rs) => rs.filter((_, i) => i !== idx))}>
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs">{isAr ? 'نوع الصيانة' : 'Type'} <span className="text-destructive">*</span></Label>
+                                <Select value={row.maintenance_type} onValueChange={(v) => update({ maintenance_type: v })}>
+                                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {TYPES.map((t) => (<SelectItem key={t.value} value={t.value}>{isAr ? t.ar : t.en}</SelectItem>))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label className="text-xs">{isAr ? 'الحالة' : 'Status'}</Label>
+                                <Select value={row.status} onValueChange={(v) => update({ status: v })}>
+                                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">{isAr ? 'قيد الانتظار' : 'Pending'}</SelectItem>
+                                    <SelectItem value="in_progress">{isAr ? 'قيد التنفيذ' : 'In Progress'}</SelectItem>
+                                    <SelectItem value="completed">{isAr ? 'مكتمل' : 'Completed'}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label className="text-xs">{isAr ? 'التاريخ' : 'Date'}</Label>
+                                <Input type="date" value={row.maintenance_date} onChange={(e) => update({ maintenance_date: e.target.value })} className="h-9" />
+                              </div>
+                              <div>
+                                <Label className="text-xs">{isAr ? 'الصيانة القادمة' : 'Next due'}</Label>
+                                <Input type="date" value={row.next_maintenance_date} onChange={(e) => update({ next_maintenance_date: e.target.value })} className="h-9" />
+                              </div>
+                              <div>
+                                <Label className="text-xs">{isAr ? 'التكلفة' : 'Cost'}</Label>
+                                <Input type="number" value={row.cost} onChange={(e) => update({ cost: Number(e.target.value) })} className="h-9" />
+                              </div>
+                              <div>
+                                <Label className="text-xs">{isAr ? 'مقدم الخدمة' : 'Provider'}</Label>
+                                <Input value={row.provider} onChange={(e) => update({ provider: e.target.value })} className="h-9" />
+                              </div>
+                              <div className="md:col-span-2">
+                                <Label className="text-xs">{isAr ? 'الوصف' : 'Description'}</Label>
+                                <Input value={row.description} onChange={(e) => update({ description: e.target.value })} className="h-9" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground bg-muted/40 rounded p-2">
+                    {isAr ? 'سيتم إنشاء سجل منفصل لكل نوع صيانة مضاف لنفس السيارة.' : 'A separate record will be created for each entry on the same vehicle.'}
+                  </div>
+                  <div className={cn('flex justify-end gap-2', isRTL && 'flex-row-reverse')}>
+                    <Button variant="outline" onClick={() => setBulkOpen(false)} disabled={bulkSaving}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+                    <Button onClick={handleBulkSave} disabled={bulkSaving || !bulkVehicleId || bulkRows.length === 0} aria-busy={bulkSaving}>
+                      {bulkSaving && <Loader2 className="w-4 h-4 me-1 animate-spin" />}
+                      {isAr ? `حفظ (${bulkRows.length})` : `Save (${bulkRows.length})`}
+                    </Button>
                   </div>
                 </div>
               </DialogContent>
