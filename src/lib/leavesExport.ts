@@ -42,24 +42,59 @@ export function exportToCSV<T>(rows: T[], columns: ExportColumn<T>[], filenameBa
   triggerDownload(blob, `${filenameBase}_${todayStamp()}.csv`);
 }
 
-/** Excel .xlsx via SheetJS with RTL view, frozen header, autofilter, sized columns */
-export function exportToXLSX<T>(rows: T[], columns: ExportColumn<T>[], filenameBase: string, sheetName = 'Sheet1') {
+/** Excel .xlsx via SheetJS with RTL view, header banner, frozen header, autofilter */
+export function exportToXLSX<T>(
+  rows: T[],
+  columns: ExportColumn<T>[],
+  filenameBase: string,
+  sheetName = 'Sheet1',
+  opts?: { title?: string; isRTL?: boolean; userName?: string },
+) {
+  const isRTL = !!opts?.isRTL;
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const generatedAt = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
   const headerRow = columns.map(c => c.header);
   const dataRows = rows.map(r => columns.map(c => {
     const v = c.accessor(r);
     if (typeof v === 'number') return v;
     const s = sanitize(v);
-    // Try to detect numeric strings to keep them as numbers
     if (s !== '' && /^-?\d+(\.\d+)?$/.test(s)) return Number(s);
     return s;
   }));
-  const aoa: (string | number)[][] = [headerRow, ...dataRows];
+
+  // Banner rows above the table (title + meta)
+  const colCount = columns.length;
+  const blankRow = Array(colCount).fill('');
+  const titleRow = [opts?.title || '', ...Array(colCount - 1).fill('')];
+  const metaParts = [
+    `${isRTL ? 'تاريخ التوليد' : 'Generated'}: ${generatedAt}`,
+    `${isRTL ? 'عدد السجلات' : 'Records'}: ${rows.length}`,
+    opts?.userName ? `${isRTL ? 'المستخدم' : 'User'}: ${opts.userName}` : '',
+  ].filter(Boolean).join('   |   ');
+  const metaRow = [metaParts, ...Array(colCount - 1).fill('')];
+
+  const aoa: (string | number)[][] = [
+    titleRow,
+    metaRow,
+    blankRow,
+    headerRow,
+    ...dataRows,
+  ];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-  // RTL view + freeze header row
-  ws['!views'] = [{ RTL: true, state: 'frozen', ySplit: 1 }];
+  // Merge banner across all columns
+  const lastColLetter = XLSX.utils.encode_col(colCount - 1);
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: colCount - 1 } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: colCount - 1 } },
+  ];
 
-  // Column widths based on max content length per column
+  // RTL view + freeze on header row (row index 4 → ySplit=4)
+  ws['!views'] = [{ RTL: isRTL, state: 'frozen', ySplit: 4 }];
+
+  // Column widths based on max content
   ws['!cols'] = columns.map((c, idx) => {
     let maxLen = c.header.length;
     for (const row of dataRows) {
@@ -70,19 +105,52 @@ export function exportToXLSX<T>(rows: T[], columns: ExportColumn<T>[], filenameB
     return { wch: Math.max(12, Math.min(45, maxLen + 4)) };
   });
 
-  // Autofilter on the whole table
-  const lastCol = XLSX.utils.encode_col(columns.length - 1);
-  ws['!autofilter'] = { ref: `A1:${lastCol}${dataRows.length + 1}` };
+  // Row heights for banner
+  ws['!rows'] = [{ hpt: 26 }, { hpt: 18 }, { hpt: 8 }, { hpt: 22 }];
 
-  // Bold header (works in environments that read s.font; ignored by community edition rendering)
-  for (let c = 0; c < columns.length; c++) {
-    const cellRef = XLSX.utils.encode_cell({ r: 0, c });
-    if (ws[cellRef]) {
-      (ws[cellRef] as any).s = {
-        font: { bold: true, color: { rgb: 'FFFFFF' } },
-        fill: { fgColor: { rgb: '2563EB' } },
-        alignment: { horizontal: 'center', vertical: 'center' },
-      };
+  // Autofilter on the data table (starts at row 4 = A4)
+  ws['!autofilter'] = { ref: `A4:${lastColLetter}${dataRows.length + 4}` };
+
+  // Styles (applied where the renderer supports it)
+  const setStyle = (ref: string, s: any) => { if (ws[ref]) (ws[ref] as any).s = s; };
+  setStyle('A1', {
+    font: { bold: true, sz: 16, color: { rgb: '1E3A8A' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  });
+  setStyle('A2', {
+    font: { sz: 10, color: { rgb: '475569' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  });
+  for (let c = 0; c < colCount; c++) {
+    const ref = XLSX.utils.encode_cell({ r: 3, c });
+    setStyle(ref, {
+      font: { bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '2563EB' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: {
+        top: { style: 'thin', color: { rgb: '1D4ED8' } },
+        bottom: { style: 'thin', color: { rgb: '1D4ED8' } },
+        left: { style: 'thin', color: { rgb: '1D4ED8' } },
+        right: { style: 'thin', color: { rgb: '1D4ED8' } },
+      },
+    });
+  }
+  // Light borders + alternating row tint on data rows
+  for (let r = 0; r < dataRows.length; r++) {
+    const rowIdx = 4 + r;
+    const bg = r % 2 === 0 ? 'FFFFFF' : 'F8FAFC';
+    for (let c = 0; c < colCount; c++) {
+      const ref = XLSX.utils.encode_cell({ r: rowIdx, c });
+      setStyle(ref, {
+        fill: { fgColor: { rgb: bg } },
+        alignment: { horizontal: isRTL ? 'right' : 'left', vertical: 'center' },
+        border: {
+          top: { style: 'thin', color: { rgb: 'E2E8F0' } },
+          bottom: { style: 'thin', color: { rgb: 'E2E8F0' } },
+          left: { style: 'thin', color: { rgb: 'E2E8F0' } },
+          right: { style: 'thin', color: { rgb: 'E2E8F0' } },
+        },
+      });
     }
   }
 
