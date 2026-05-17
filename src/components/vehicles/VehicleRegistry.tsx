@@ -60,7 +60,7 @@ const emptyForm = {
   inspection_year: '' as string | number,
 };
 
-export const VehicleRegistry = ({ allowedStationIds }: { allowedStationIds?: string[] | null } = {}) => {
+export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allowedStationIds?: string[] | null; readOnly?: boolean } = {}) => {
   const { language, isRTL } = useLanguage();
   const scopeIds = allowedStationIds && allowedStationIds.length ? new Set(allowedStationIds) : null;
   const isAr = language === 'ar';
@@ -387,6 +387,7 @@ export const VehicleRegistry = ({ allowedStationIds }: { allowedStationIds?: str
             </Button>
           )}
           <Button size="sm" variant="outline" onClick={exportCsv} aria-label={isAr ? 'تصدير CSV' : 'Export CSV'}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
+          {!readOnly && (
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="w-4 h-4 me-1" />{isAr ? 'إضافة سيارة' : 'Add Vehicle'}</Button>
@@ -467,6 +468,7 @@ export const VehicleRegistry = ({ allowedStationIds }: { allowedStationIds?: str
               </div>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -559,6 +561,7 @@ export const VehicleRegistry = ({ allowedStationIds }: { allowedStationIds?: str
                             </TooltipTrigger>
                             <TooltipContent>{isAr ? 'عرض' : 'View'}</TooltipContent>
                           </Tooltip>
+                          {!readOnly && (<>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button size="icon" variant="ghost" onClick={() => handleEdit(v)} aria-label={isAr ? 'تعديل' : 'Edit'}><Edit className="w-4 h-4" /></Button>
@@ -571,6 +574,7 @@ export const VehicleRegistry = ({ allowedStationIds }: { allowedStationIds?: str
                             </TooltipTrigger>
                             <TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent>
                           </Tooltip>
+                          </>)}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -598,8 +602,10 @@ export const VehicleRegistry = ({ allowedStationIds }: { allowedStationIds?: str
                   </div>
                   <div className={cn('flex gap-1 mt-2 justify-end', isRTL && 'justify-start')}>
                     <Button size="sm" variant="ghost" onClick={() => setViewTarget(v)} aria-label={isAr ? 'عرض' : 'View'}><Eye className="w-4 h-4 me-1" />{isAr ? 'عرض' : 'View'}</Button>
+                    {!readOnly && (<>
                     <Button size="sm" variant="ghost" onClick={() => handleEdit(v)} aria-label={isAr ? 'تعديل' : 'Edit'}><Edit className="w-4 h-4 me-1" />{isAr ? 'تعديل' : 'Edit'}</Button>
                     <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(v)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
+                    </>)}
                   </div>
                 </div>
               ))}
