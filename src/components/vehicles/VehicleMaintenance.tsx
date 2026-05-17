@@ -187,37 +187,43 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   };
 
   const handleBulkSave = async () => {
-    if (bulkSelected.size === 0) {
-      toast.error(isAr ? 'يرجى اختيار سيارة واحدة على الأقل' : 'Select at least one vehicle');
+    if (!bulkVehicleId) {
+      toast.error(isAr ? 'يرجى اختيار سيارة' : 'Please select a vehicle');
       return;
     }
-    if (!bulkForm.maintenance_type || !bulkForm.maintenance_date) {
-      toast.error(isAr ? 'النوع والتاريخ مطلوبان' : 'Type and date required');
+    if (bulkRows.length === 0) {
+      toast.error(isAr ? 'أضف نوع صيانة واحد على الأقل' : 'Add at least one maintenance entry');
       return;
     }
-    if (bulkForm.next_maintenance_date && bulkForm.next_maintenance_date < bulkForm.maintenance_date) {
-      toast.error(isAr ? 'تاريخ الصيانة القادمة قبل تاريخ الصيانة' : 'Next date is before maintenance date');
-      return;
+    for (const [i, row] of bulkRows.entries()) {
+      if (!row.maintenance_type || !row.maintenance_date) {
+        toast.error(isAr ? `الصف ${i + 1}: النوع والتاريخ مطلوبان` : `Row ${i + 1}: type and date required`);
+        return;
+      }
+      if (row.next_maintenance_date && row.next_maintenance_date < row.maintenance_date) {
+        toast.error(isAr ? `الصف ${i + 1}: تاريخ الصيانة القادمة قبل تاريخ الصيانة` : `Row ${i + 1}: next date before maintenance date`);
+        return;
+      }
     }
     setBulkSaving(true);
     try {
-      const payload = Array.from(bulkSelected).map((vid) => ({
-        vehicle_id: vid,
-        maintenance_type: bulkForm.maintenance_type,
-        description: bulkForm.description || null,
-        cost: Number(bulkForm.cost) || 0,
-        maintenance_date: bulkForm.maintenance_date,
-        next_maintenance_date: bulkForm.next_maintenance_date || null,
-        provider: bulkForm.provider || null,
-        status: bulkForm.status,
+      const payload = bulkRows.map((row) => ({
+        vehicle_id: bulkVehicleId,
+        maintenance_type: row.maintenance_type,
+        description: row.description || null,
+        cost: Number(row.cost) || 0,
+        maintenance_date: row.maintenance_date,
+        next_maintenance_date: row.next_maintenance_date || null,
+        provider: row.provider || null,
+        status: row.status,
         notes: null,
       }));
       const { error } = await supabase.from('vehicle_maintenance').insert(payload as any);
       if (error) { toast.error(error.message); return; }
       toast.success(isAr ? `تم إنشاء ${payload.length} سجل صيانة` : `Created ${payload.length} records`);
       setBulkOpen(false);
-      setBulkSelected(new Set());
-      setBulkSearch('');
+      setBulkVehicleId('');
+      setBulkRows([newBulkRow()]);
       fetchData();
     } finally {
       setBulkSaving(false);
