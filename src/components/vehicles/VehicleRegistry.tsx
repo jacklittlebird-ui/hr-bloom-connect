@@ -133,8 +133,8 @@ export const VehicleRegistry = () => {
       toast.error(isAr ? 'عدد الركاب غير صحيح (1 - 100)' : 'Invalid passengers count (1 - 100)');
       return;
     }
-    if (form.inspection_year !== '' && (!Number.isInteger(Number(form.inspection_year)) || Number(form.inspection_year) < 1990 || Number(form.inspection_year) > currentYear + 1)) {
-      toast.error(isAr ? `سنة الفحص غير صحيحة (1990 - ${currentYear + 1})` : `Invalid inspection year (1990 - ${currentYear + 1})`);
+    if (form.inspection_year !== '' && (!Number.isInteger(Number(form.inspection_year)) || Number(form.inspection_year) < 2026)) {
+      toast.error(isAr ? 'سنة الفحص غير صحيحة (2026 فما فوق)' : 'Invalid inspection year (2026 or later)');
       return;
     }
     setSaving(true);
