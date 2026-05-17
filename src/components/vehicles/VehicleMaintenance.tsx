@@ -71,10 +71,18 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [toDate, setToDate] = usePersistedState<string>('hr_vehicles_maint_to', '');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
-  const [bulkSearch, setBulkSearch] = useState('');
+  const [bulkVehicleId, setBulkVehicleId] = useState<string>('');
   const [bulkSaving, setBulkSaving] = useState(false);
-  const [bulkForm, setBulkForm] = useState({
+  type BulkRow = {
+    maintenance_type: string;
+    maintenance_date: string;
+    next_maintenance_date: string;
+    cost: number;
+    provider: string;
+    status: string;
+    description: string;
+  };
+  const newBulkRow = (): BulkRow => ({
     maintenance_type: 'periodic',
     maintenance_date: new Date().toISOString().split('T')[0],
     next_maintenance_date: '',
@@ -83,6 +91,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     status: 'completed',
     description: '',
   });
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>([newBulkRow()]);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MaintenanceRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
