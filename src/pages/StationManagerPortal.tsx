@@ -134,9 +134,9 @@ const StationManagerPortal = () => {
     switch (user?.role) {
       case 'station_manager':
       case 'area_manager':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations'];
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations', 'vehicles'];
       case 'station_hr':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations'];
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles'];
       case 'department_manager':
         return ['employees', 'attendance', 'leaveCalendar', 'approvals', 'evaluations', 'violations'];
       default:
