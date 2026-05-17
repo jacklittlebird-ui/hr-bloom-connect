@@ -13,6 +13,7 @@ import { StationCombobox, StationOption } from './StationCombobox';
 import { exportVehiclePdf } from '@/lib/vehiclePdfExport';
 import { exportVehicleWord } from '@/lib/vehicleWordExport';
 import { toast } from 'sonner';
+import { usePersistedState } from '@/hooks/usePersistedState';
 
 interface Vehicle {
   id: string;
