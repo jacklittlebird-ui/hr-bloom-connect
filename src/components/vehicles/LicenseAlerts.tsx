@@ -75,8 +75,8 @@ export const LicenseAlerts = ({ allowedStationIds }: { allowedStationIds?: strin
         .order('vehicle_code'),
       supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar'),
     ]);
-    if (v) setVehicles(v as unknown as Vehicle[]);
-    if (s) setStations(s as StationOption[]);
+    if (v) setVehicles((scopeIds ? (v as any[]).filter((x) => x.station_id && scopeIds.has(x.station_id)) : v) as unknown as Vehicle[]);
+    if (s) setStations((scopeIds ? (s as StationOption[]).filter((x) => scopeIds.has(x.id)) : (s as StationOption[])));
     if (showLoader) setLoading(false);
   };
 
