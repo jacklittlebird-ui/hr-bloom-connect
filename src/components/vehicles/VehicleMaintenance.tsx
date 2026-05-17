@@ -177,6 +177,44 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     }
   };
 
+  const handleBulkSave = async () => {
+    if (bulkSelected.size === 0) {
+      toast.error(isAr ? 'يرجى اختيار سيارة واحدة على الأقل' : 'Select at least one vehicle');
+      return;
+    }
+    if (!bulkForm.maintenance_type || !bulkForm.maintenance_date) {
+      toast.error(isAr ? 'النوع والتاريخ مطلوبان' : 'Type and date required');
+      return;
+    }
+    if (bulkForm.next_maintenance_date && bulkForm.next_maintenance_date < bulkForm.maintenance_date) {
+      toast.error(isAr ? 'تاريخ الصيانة القادمة قبل تاريخ الصيانة' : 'Next date is before maintenance date');
+      return;
+    }
+    setBulkSaving(true);
+    try {
+      const payload = Array.from(bulkSelected).map((vid) => ({
+        vehicle_id: vid,
+        maintenance_type: bulkForm.maintenance_type,
+        description: bulkForm.description || null,
+        cost: Number(bulkForm.cost) || 0,
+        maintenance_date: bulkForm.maintenance_date,
+        next_maintenance_date: bulkForm.next_maintenance_date || null,
+        provider: bulkForm.provider || null,
+        status: bulkForm.status,
+        notes: null,
+      }));
+      const { error } = await supabase.from('vehicle_maintenance').insert(payload as any);
+      if (error) { toast.error(error.message); return; }
+      toast.success(isAr ? `تم إنشاء ${payload.length} سجل صيانة` : `Created ${payload.length} records`);
+      setBulkOpen(false);
+      setBulkSelected(new Set());
+      setBulkSearch('');
+      fetchData();
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   const typeLabel = (t: string) => {
     const found = TYPES.find((x) => x.value === t);
     return found ? (isAr ? found.ar : found.en) : t;
