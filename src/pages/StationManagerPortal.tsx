@@ -32,7 +32,7 @@ import type { LeaveRequest } from '@/types/leaves';
 import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
 import { StationWorkHours } from '@/components/portal/sections/StationWorkHours';
 import { StationUniformsTab } from '@/components/portal/sections/StationUniformsTab';
-import { Tabs as VTabs, TabsContent as VTabsContent, TabsList as VTabsList, TabsTrigger as VTabsTrigger } from '@/components/ui/tabs';
+
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
 import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
 import { VehicleRegistry } from '@/components/vehicles/VehicleRegistry';
