@@ -41,8 +41,8 @@ export const FleetByStation = ({ allowedStationIds }: { allowedStationIds?: stri
         supabase.from('vehicles').select('id, vehicle_code, brand, model, year, plate_number, status, station_id, license_end_date, curtains_license_end, transport_license_end, insured_driver_name'),
         supabase.from('vehicle_maintenance').select('vehicle_id, cost, next_maintenance_date, maintenance_date'),
       ]);
-      if (s) setStations(s as Station[]);
-      if (v) setVehicles(v as unknown as Vehicle[]);
+      if (s) setStations((scopeIds ? (s as Station[]).filter((x) => scopeIds.has(x.id)) : (s as Station[])));
+      if (v) setVehicles((scopeIds ? (v as any[]).filter((x) => x.station_id && scopeIds.has(x.station_id)) : v) as unknown as Vehicle[]);
       if (m) setMaint(m as unknown as MaintRow[]);
       if (showLoader) setLoading(false);
     };
