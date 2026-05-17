@@ -1792,6 +1792,39 @@ const StationManagerPortal = () => {
               <StationLeaveCalendar stationEmployees={stationEmployees} language={language} />
             </TabsContent>
           )}
+
+          {/* Vehicles Tab */}
+          {activeTab === 'vehicles' && canSee('vehicles') && (() => {
+            const allowedIds = (user?.stationIds && user.stationIds.length)
+              ? user.stationIds
+              : (user?.stationId ? [user.stationId] : []);
+            return (
+              <TabsContent value="vehicles">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Car className="h-5 w-5 text-primary" />{t('إدارة السيارات', 'Fleet Management')}</CardTitle>
+                    <CardDescription>{t('سيارات محطتك فقط', 'Your station vehicles only')}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <VTabs defaultValue="by-station" className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+                      <VTabsList className="w-full justify-start mb-4 flex-wrap h-auto gap-1 bg-muted/50 p-1">
+                        <VTabsTrigger value="by-station" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('سيارات لكل محطة', 'Vehicles per Station')}</VTabsTrigger>
+                        <VTabsTrigger value="alerts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('تنبيهات التراخيص', 'License Alerts')}</VTabsTrigger>
+                        <VTabsTrigger value="registry" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('سجل السيارات', 'Vehicle Registry')}</VTabsTrigger>
+                        <VTabsTrigger value="licenses" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('متابعة التراخيص', 'License Tracking')}</VTabsTrigger>
+                        <VTabsTrigger value="maintenance" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('الصيانة', 'Maintenance')}</VTabsTrigger>
+                      </VTabsList>
+                      <VTabsContent value="by-station"><FleetByStation allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="alerts"><LicenseAlerts allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="registry"><VehicleRegistry allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="licenses"><VehicleLicenseTracking allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="maintenance"><VehicleMaintenance allowedStationIds={allowedIds} /></VTabsContent>
+                    </VTabs>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            );
+          })()}
         </Tabs>
         </div>
       </main>
