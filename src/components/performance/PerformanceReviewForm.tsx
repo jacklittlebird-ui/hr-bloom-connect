@@ -58,6 +58,70 @@ export const PerformanceReviewForm = () => {
   const [managerComments, setManagerComments] = useState('');
   const [saving, setSaving] = useState<null | 'draft' | 'submitted' | 'approved'>(null);
 
+  // Quarter context: deductions + monthly work hours
+  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; deductions: number; leaveDeduction: number; penaltyAmount: number; loanPayment: number; advanceAmount: number; mobileBill: number; }[]>([]);
+  const [quarterLoading, setQuarterLoading] = useState(false);
+
+  const quarterMonths = useMemo(() => {
+    if (!selectedQuarter) return [] as string[];
+    const map: Record<string, string[]> = { Q1: ['01','02','03'], Q2: ['04','05','06'], Q3: ['07','08','09'], Q4: ['10','11','12'] };
+    return map[selectedQuarter] || [];
+  }, [selectedQuarter]);
+
+  useEffect(() => {
+    if (!selectedEmployee || !selectedYear || quarterMonths.length === 0) {
+      setQuarterMonthly([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setQuarterLoading(true);
+      try {
+        const startDate = `${selectedYear}-${quarterMonths[0]}-01`;
+        const lastMonth = quarterMonths[quarterMonths.length - 1];
+        const lastDay = new Date(parseInt(selectedYear), parseInt(lastMonth), 0).getDate();
+        const endDate = `${selectedYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+
+        const [payrollRes, attRes] = await Promise.all([
+          supabase.from('payroll_entries')
+            .select('month, total_deductions, leave_deduction, penalty_amount, loan_payment, advance_amount, mobile_bill')
+            .eq('employee_id', selectedEmployee).eq('year', selectedYear).in('month', quarterMonths),
+          supabase.from('attendance_records')
+            .select('date, work_hours')
+            .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate),
+        ]);
+        if (cancelled) return;
+        const hoursByMonth: Record<string, number> = {};
+        (attRes.data || []).forEach((r: any) => {
+          const m = (r.date as string).slice(5, 7);
+          hoursByMonth[m] = (hoursByMonth[m] || 0) + Number(r.work_hours || 0);
+        });
+        const payrollByMonth: Record<string, any> = {};
+        (payrollRes.data || []).forEach((p: any) => { payrollByMonth[p.month] = p; });
+        setQuarterMonthly(quarterMonths.map(m => ({
+          month: m,
+          hours: Math.round((hoursByMonth[m] || 0) * 10) / 10,
+          deductions: Number(payrollByMonth[m]?.total_deductions || 0),
+          leaveDeduction: Number(payrollByMonth[m]?.leave_deduction || 0),
+          penaltyAmount: Number(payrollByMonth[m]?.penalty_amount || 0),
+          loanPayment: Number(payrollByMonth[m]?.loan_payment || 0),
+          advanceAmount: Number(payrollByMonth[m]?.advance_amount || 0),
+          mobileBill: Number(payrollByMonth[m]?.mobile_bill || 0),
+        })));
+      } finally {
+        if (!cancelled) setQuarterLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedEmployee, selectedYear, quarterMonths]);
+
+  const monthLabel = (m: string) => {
+    const ar_m = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    const en_m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const idx = parseInt(m) - 1;
+    return ar ? ar_m[idx] : en_m[idx];
+  };
+
   // Find existing review for selected employee+quarter+year
   const existingReview = useMemo(() => {
     if (!selectedEmployee || !selectedQuarter || !selectedYear) return null;
