@@ -74,6 +74,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [vehicleFilter, setVehicleFilter] = usePersistedState<string>('hr_vehicles_maint_vehicle', 'all');
   const [fromDate, setFromDate] = usePersistedState<string>('hr_vehicles_maint_from', '');
   const [toDate, setToDate] = usePersistedState<string>('hr_vehicles_maint_to', '');
+  const [sortOrder, setSortOrder] = usePersistedState<'desc' | 'asc'>('hr_vehicles_maint_sort', 'desc');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkVehicleId, setBulkVehicleId] = useState<string>('');
