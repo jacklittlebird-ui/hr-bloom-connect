@@ -89,6 +89,34 @@ export const PortalAttendance = () => {
       });
       const holidayByDate = new Map(matchingHolidays.map((h: any) => [h.holiday_date, h]));
 
+      // Fetch approved leaves & missions in range — they count as "covered" days, not absences
+      const [leavesRes, missionsRes] = await Promise.all([
+        supabase
+          .from('leave_requests')
+          .select('start_date, end_date, status')
+          .eq('employee_id', PORTAL_EMPLOYEE_ID)
+          .eq('status', 'approved')
+          .lte('start_date', dateTo)
+          .gte('end_date', dateFrom),
+        supabase
+          .from('missions')
+          .select('date, status')
+          .eq('employee_id', PORTAL_EMPLOYEE_ID)
+          .eq('status', 'approved')
+          .gte('date', dateFrom)
+          .lte('date', dateTo),
+      ]);
+      const leaveDates = new Set<string>();
+      (leavesRes.data || []).forEach((l: any) => {
+        const s = new Date(l.start_date + 'T00:00:00');
+        const e = new Date(l.end_date + 'T00:00:00');
+        for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+          leaveDates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+        }
+      });
+      const missionDates = new Set<string>((missionsRes.data || []).map((m: any) => m.date));
+      (window as any).__portalCoveredDates = { leaveDates, missionDates };
+
       const attLogs: PortalAttendanceRecord[] = (attRes.data || []).map(r => {
         const holiday = holidayByDate.get(r.date) as any;
         const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
