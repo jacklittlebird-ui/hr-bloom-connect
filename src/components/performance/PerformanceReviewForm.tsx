@@ -451,7 +451,72 @@ export const PerformanceReviewForm = () => {
         </CardContent>
       </Card>
 
-      {/* Performance Criteria */}
+      {/* Quarter context: hours per month + deductions */}
+      {selectedEmployee && selectedYear && selectedQuarter && (
+        <Card>
+          <CardHeader>
+            <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Clock className="w-5 h-5 text-primary" />
+              {ar ? `بيانات الربع ${selectedQuarter} - ${selectedYear}` : `Quarter ${selectedQuarter} - ${selectedYear} Data`}
+            </CardTitle>
+            <CardDescription>
+              {ar ? 'ساعات العمل الفعلية والخصومات لكل شهر من أشهر الربع' : 'Actual work hours and deductions per month of the quarter'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {quarterLoading ? (
+              <div className="flex items-center justify-center py-6 text-muted-foreground gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {ar ? 'جاري التحميل...' : 'Loading...'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {quarterMonthly.map(m => (
+                  <div key={m.month} className="rounded-lg border border-border/60 p-4 space-y-3 bg-muted/20">
+                    <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+                      <span className="font-semibold">{monthLabel(m.month)}</span>
+                      <Badge variant="outline" className="bg-primary/5 border-primary/30 text-primary">{m.month}/{selectedYear}</Badge>
+                    </div>
+                    <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                      <Clock className="w-4 h-4 text-stat-blue" />
+                      <span className="text-muted-foreground">{ar ? 'ساعات العمل:' : 'Work hours:'}</span>
+                      <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
+                    </div>
+                    <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                      <MinusCircle className="w-4 h-4 text-destructive" />
+                      <span className="text-muted-foreground">{ar ? 'إجمالي الخصومات:' : 'Total deductions:'}</span>
+                      <span className="font-bold text-destructive ms-auto">{m.deductions.toLocaleString()} {ar ? 'ج.م' : 'EGP'}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border/40">
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'جزاءات' : 'Penalties'}</span><span>{m.penaltyAmount.toLocaleString()}</span></div>
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'إجازات' : 'Leaves'}</span><span>{m.leaveDeduction.toLocaleString()}</span></div>
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'قروض' : 'Loans'}</span><span>{m.loanPayment.toLocaleString()}</span></div>
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'سلف' : 'Advances'}</span><span>{m.advanceAmount.toLocaleString()}</span></div>
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'فاتورة موبايل' : 'Mobile bill'}</span><span>{m.mobileBill.toLocaleString()}</span></div>
+                    </div>
+                  </div>
+                ))}
+                {quarterMonthly.length === 0 && (
+                  <div className="col-span-full text-center text-sm text-muted-foreground py-6">
+                    {ar ? 'لا توجد بيانات' : 'No data available'}
+                  </div>
+                )}
+              </div>
+            )}
+            {quarterMonthly.length > 0 && !quarterLoading && (
+              <div className={cn("mt-4 flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm", isRTL && "flex-row-reverse")}>
+                <span className="font-semibold">{ar ? 'إجمالي الربع' : 'Quarter Total'}</span>
+                <div className={cn("flex items-center gap-6", isRTL && "flex-row-reverse")}>
+                  <span><span className="text-muted-foreground me-1">{ar ? 'ساعات:' : 'Hours:'}</span><span className="font-bold text-stat-blue">{quarterMonthly.reduce((s, m) => s + m.hours, 0).toFixed(1)}</span></span>
+                  <span><span className="text-muted-foreground me-1">{ar ? 'خصومات:' : 'Deductions:'}</span><span className="font-bold text-destructive">{quarterMonthly.reduce((s, m) => s + m.deductions, 0).toLocaleString()}</span></span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+
       <Card>
         <CardHeader>
           <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
