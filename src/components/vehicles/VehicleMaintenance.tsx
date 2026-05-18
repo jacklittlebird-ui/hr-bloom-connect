@@ -147,8 +147,10 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
       toast.error(isAr ? 'التكلفة لا يمكن أن تكون سالبة' : 'Cost cannot be negative');
       return;
     }
-    if (form.next_maintenance_date && form.next_maintenance_date < form.maintenance_date) {
-      toast.error(isAr ? 'تاريخ الصيانة القادمة قبل تاريخ الصيانة' : 'Next date is before maintenance date');
+    const nextOdo = form.next_maintenance_odometer ? Number(form.next_maintenance_odometer) : null;
+    const curOdo = form.odometer_reading ? Number(form.odometer_reading) : null;
+    if (nextOdo !== null && curOdo !== null && nextOdo < curOdo) {
+      toast.error(isAr ? 'قراءة العداد القادمة يجب أن تكون أكبر من القراءة الحالية' : 'Next odometer must be greater than current odometer');
       return;
     }
     setSaving(true);
@@ -159,8 +161,9 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         description: form.description || null,
         cost: Number(form.cost) || 0,
         maintenance_date: form.maintenance_date,
-        next_maintenance_date: form.next_maintenance_date || null,
-        odometer_reading: form.odometer_reading ? Number(form.odometer_reading) : null,
+        next_maintenance_date: null,
+        next_maintenance_odometer: nextOdo,
+        odometer_reading: curOdo,
         provider: form.provider || null,
         notes: form.notes || null,
         status: 'completed',
@@ -169,7 +172,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
       if (error) { toast.error(error.message); return; }
       toast.success(isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added');
       setDialogOpen(false);
-      setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_date: '', odometer_reading: '', provider: '', notes: '' });
+      setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '' });
       fetchData();
     } finally {
       setSaving(false);
