@@ -192,11 +192,13 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         notes: form.notes || null,
         status: 'completed',
       };
-      const { error } = await supabase.from('vehicle_maintenance').insert(payload as any);
+      const { error } = editingId
+        ? await supabase.from('vehicle_maintenance').update(payload as any).eq('id', editingId)
+        : await supabase.from('vehicle_maintenance').insert(payload as any);
       if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added');
+      toast.success(editingId ? (isAr ? 'تم تحديث سجل الصيانة' : 'Maintenance record updated') : (isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added'));
       setDialogOpen(false);
-      setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '' });
+      resetForm();
       fetchData();
     } finally {
       setSaving(false);
