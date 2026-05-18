@@ -101,11 +101,33 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MaintenanceRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'periodic', description: '',
     cost: 0, maintenance_date: new Date().toISOString().split('T')[0],
     next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '',
   });
+
+  const openEdit = (r: MaintenanceRecord) => {
+    setEditingId(r.id);
+    setForm({
+      vehicle_id: r.vehicle_id,
+      maintenance_type: r.maintenance_type,
+      description: r.description || '',
+      cost: r.cost || 0,
+      maintenance_date: r.maintenance_date,
+      next_maintenance_odometer: r.next_maintenance_odometer != null ? String(r.next_maintenance_odometer) : '',
+      odometer_reading: r.odometer_reading != null ? String(r.odometer_reading) : '',
+      provider: r.provider || '',
+      notes: r.notes || '',
+    });
+    setDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '' });
+  };
 
   const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || vehicleFilter !== 'all' || !!fromDate || !!toDate || sortOrder !== 'desc';
   const resetFilters = () => {
