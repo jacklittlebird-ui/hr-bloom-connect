@@ -733,7 +733,8 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                   <TableBody>
                     {filtered.map((r) => {
                       const v = vehicleMap[r.vehicle_id];
-                      const dl = daysLeft(r.next_maintenance_date);
+                      const latest = latestOdoByVehicle[r.vehicle_id];
+                      const remaining = (r.next_maintenance_odometer != null && latest != null) ? (r.next_maintenance_odometer - latest) : null;
                       return (
                         <TableRow key={r.id}>
                           <TableCell>
@@ -751,13 +752,15 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                           <TableCell>{r.odometer_reading?.toLocaleString() || '-'}</TableCell>
                           <TableCell>{r.provider || '-'}</TableCell>
                           <TableCell>
-                            {r.next_maintenance_date ? (
+                            {r.next_maintenance_odometer != null ? (
                               <div className="flex items-center gap-1">
-                                <span className="text-xs">{r.next_maintenance_date}</span>
-                                {dl !== null && dl >= 0 && dl <= 30 && (
-                                  <Badge className={cn('text-xs', dl <= 7 ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300')}>{dl}{isAr ? 'ي' : 'd'}</Badge>
+                                <span className="text-xs">{r.next_maintenance_odometer.toLocaleString()} {isAr ? 'كم' : 'km'}</span>
+                                {remaining !== null && remaining <= 0 && (
+                                  <Badge className="text-xs bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">{isAr ? 'مستحقة' : 'due'}</Badge>
                                 )}
-                                {dl !== null && dl < 0 && <Badge className="text-xs bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">{isAr ? 'متأخر' : 'overdue'}</Badge>}
+                                {remaining !== null && remaining > 0 && remaining <= UPCOMING_KM_THRESHOLD && (
+                                  <Badge className={cn('text-xs', remaining <= 200 ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300')}>{remaining.toLocaleString()}{isAr ? 'كم' : 'km'}</Badge>
+                                )}
                               </div>
                             ) : '-'}
                           </TableCell>
