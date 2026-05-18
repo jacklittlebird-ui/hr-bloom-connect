@@ -872,12 +872,20 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                             ) : '-'}
                           </TableCell>
                           <TableCell>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
-                              </TooltipTrigger>
-                              <TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent>
-                            </Tooltip>
+                            <div className="flex items-center gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" onClick={() => openEdit(r)} aria-label={isAr ? 'تعديل' : 'Edit'}><Pencil className="w-4 h-4" /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isAr ? 'تعديل' : 'Edit'}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent>
+                              </Tooltip>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
