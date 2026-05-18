@@ -107,9 +107,9 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '',
   });
 
-  const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || vehicleFilter !== 'all' || !!fromDate || !!toDate;
+  const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || vehicleFilter !== 'all' || !!fromDate || !!toDate || sortOrder !== 'desc';
   const resetFilters = () => {
-    setSearch(''); setStationFilter(null); setTypeFilter('all'); setVehicleFilter('all'); setFromDate(''); setToDate('');
+    setSearch(''); setStationFilter(null); setTypeFilter('all'); setVehicleFilter('all'); setFromDate(''); setToDate(''); setSortOrder('desc');
     toast.success(isAr ? 'تم إعادة ضبط الفلاتر' : 'Filters reset');
   };
 
