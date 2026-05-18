@@ -544,6 +544,16 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
             </Select>
             <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 w-36" title={isAr ? 'من تاريخ' : 'From date'} />
             <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9 w-36" title={isAr ? 'إلى تاريخ' : 'To date'} />
+            <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as 'desc' | 'asc')}>
+              <SelectTrigger className="w-40 h-9" title={isAr ? 'الفرز حسب التاريخ' : 'Sort by date'}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">{isAr ? 'الأحدث أولاً' : 'Newest first'}</SelectItem>
+                <SelectItem value="asc">{isAr ? 'الأقدم أولاً' : 'Oldest first'}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Badge variant="secondary" className="h-9 px-3 flex items-center text-xs">
+              {isAr ? `${filtered.length} نتيجة` : `${filtered.length} matches`}
+            </Badge>
             {filtersActive && (
               <Button size="sm" variant="ghost" onClick={resetFilters} aria-label={isAr ? 'إعادة ضبط الفلاتر' : 'Reset filters'}>
                 <FilterX className="w-4 h-4 me-1" />{isAr ? 'إعادة ضبط' : 'Reset'}
