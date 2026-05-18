@@ -71,6 +71,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [search, setSearch] = usePersistedState<string>('hr_vehicles_maint_search', '');
   const [stationFilter, setStationFilter] = usePersistedState<string | null>('hr_vehicles_maint_station', null);
   const [typeFilter, setTypeFilter] = usePersistedState<string>('hr_vehicles_maint_type', 'all');
+  const [vehicleFilter, setVehicleFilter] = usePersistedState<string>('hr_vehicles_maint_vehicle', 'all');
   const [fromDate, setFromDate] = usePersistedState<string>('hr_vehicles_maint_from', '');
   const [toDate, setToDate] = usePersistedState<string>('hr_vehicles_maint_to', '');
   const [dialogOpen, setDialogOpen] = useState(false);
