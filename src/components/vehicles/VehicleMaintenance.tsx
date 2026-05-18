@@ -668,8 +668,9 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">{isAr ? 'الصيانة القادمة' : 'Next Maintenance'}</Label>
-                    <Input type="date" value={form.next_maintenance_date} onChange={(e) => setForm((p) => ({ ...p, next_maintenance_date: e.target.value }))} className="h-9" />
+                    <Label className="text-xs">{isAr ? 'قراءة العداد للصيانة القادمة (كم)' : 'Next Maintenance Odometer (km)'}</Label>
+                    <Input type="number" min={0} placeholder={isAr ? 'مثال: 50000' : 'e.g. 50000'} value={form.next_maintenance_odometer} onChange={(e) => setForm((p) => ({ ...p, next_maintenance_odometer: e.target.value }))} className="h-9" />
+                    <p className="text-[10px] text-muted-foreground mt-1">{isAr ? 'سيظهر تنبيه عندما تقترب قراءة العداد من هذه القيمة' : 'Alert will trigger when odometer approaches this reading'}</p>
                   </div>
                   <div>
                     <Label className="text-xs">{isAr ? 'الوصف' : 'Description'}</Label>
