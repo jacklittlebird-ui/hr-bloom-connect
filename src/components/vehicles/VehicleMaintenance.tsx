@@ -783,7 +783,8 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
               <div className="md:hidden space-y-2">
                 {filtered.map((r) => {
                   const v = vehicleMap[r.vehicle_id];
-                  const dl = daysLeft(r.next_maintenance_date);
+                  const latest = latestOdoByVehicle[r.vehicle_id];
+                  const remaining = (r.next_maintenance_odometer != null && latest != null) ? (r.next_maintenance_odometer - latest) : null;
                   return (
                     <div key={r.id} className="border rounded-lg p-3 bg-card">
                       <div className={cn('flex items-start justify-between gap-2', isRTL && 'flex-row-reverse')}>
@@ -798,11 +799,14 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                         <div><span className="text-muted-foreground">{isAr ? 'التاريخ:' : 'Date:'}</span> {r.maintenance_date}</div>
                         <div><span className="text-muted-foreground">{isAr ? 'التكلفة:' : 'Cost:'}</span> {r.cost?.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</div>
                         {r.provider && <div className="col-span-2"><span className="text-muted-foreground">{isAr ? 'مقدم:' : 'Provider:'}</span> {r.provider}</div>}
-                        {r.next_maintenance_date && (
-                          <div className="col-span-2 flex items-center gap-1">
-                            <span className="text-muted-foreground">{isAr ? 'القادمة:' : 'Next:'}</span> {r.next_maintenance_date}
-                            {dl !== null && dl >= 0 && dl <= 30 && (
-                              <Badge className={cn('text-xs', dl <= 7 ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800')}>{dl}{isAr ? 'ي' : 'd'}</Badge>
+                        {r.next_maintenance_odometer != null && (
+                          <div className="col-span-2 flex items-center gap-1 flex-wrap">
+                            <span className="text-muted-foreground">{isAr ? 'العداد القادم:' : 'Next odo:'}</span> {r.next_maintenance_odometer.toLocaleString()} {isAr ? 'كم' : 'km'}
+                            {remaining !== null && remaining <= 0 && (
+                              <Badge className="text-xs bg-red-100 text-red-800">{isAr ? 'مستحقة' : 'due'}</Badge>
+                            )}
+                            {remaining !== null && remaining > 0 && remaining <= UPCOMING_KM_THRESHOLD && (
+                              <Badge className={cn('text-xs', remaining <= 200 ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800')}>{remaining.toLocaleString()}{isAr ? 'كم' : 'km'}</Badge>
                             )}
                           </div>
                         )}
