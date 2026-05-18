@@ -801,6 +801,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                         <div><span className="text-muted-foreground">{isAr ? 'التاريخ:' : 'Date:'}</span> {r.maintenance_date}</div>
                         <div><span className="text-muted-foreground">{isAr ? 'التكلفة:' : 'Cost:'}</span> {r.cost?.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</div>
                         {r.provider && <div className="col-span-2"><span className="text-muted-foreground">{isAr ? 'مقدم:' : 'Provider:'}</span> {r.provider}</div>}
+                        {r.description && <div className="col-span-2"><span className="text-muted-foreground">{isAr ? 'الوصف:' : 'Desc:'}</span> {r.description}</div>}
                         {r.next_maintenance_odometer != null && (
                           <div className="col-span-2 flex items-center gap-1 flex-wrap">
                             <span className="text-muted-foreground">{isAr ? 'العداد القادم:' : 'Next odo:'}</span> {r.next_maintenance_odometer.toLocaleString()} {isAr ? 'كم' : 'km'}
