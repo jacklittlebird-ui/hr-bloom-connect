@@ -251,11 +251,12 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
       .some((f) => f?.toLowerCase().includes(txt));
     const stMatch = !stationFilter || v?.station_id === stationFilter;
     const typeMatch = typeFilter === 'all' || r.maintenance_type === typeFilter;
+    const vehMatch = vehicleFilter === 'all' || r.vehicle_id === vehicleFilter;
     let dateMatch = true;
     if (fromDate && r.maintenance_date < fromDate) dateMatch = false;
     if (toDate && r.maintenance_date > toDate) dateMatch = false;
-    return txtMatch && stMatch && typeMatch && dateMatch;
-  }), [records, vehicleMap, search, stationFilter, typeFilter, fromDate, toDate]);
+    return txtMatch && stMatch && typeMatch && vehMatch && dateMatch;
+  }), [records, vehicleMap, search, stationFilter, typeFilter, vehicleFilter, fromDate, toDate]);
 
   const filteredVehiclesForStation = useMemo(() => {
     if (!stationFilter) return vehicles;
