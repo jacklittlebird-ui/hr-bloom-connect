@@ -471,6 +471,43 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         </Card>
       </div>
 
+      {/* Filter results summary */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            {isAr ? 'ملخص نتائج الفلاتر' : 'Filter Results Summary'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border rounded-md p-3 bg-muted/30">
+              <p className="text-xs text-muted-foreground">{isAr ? 'إجمالي السجلات' : 'Total Records'}</p>
+              <p className="text-2xl font-bold">{filtered.length}</p>
+            </div>
+            <div className="border rounded-md p-3 bg-muted/30">
+              <p className="text-xs text-muted-foreground">{isAr ? 'إجمالي التكاليف' : 'Total Costs'}</p>
+              <p className="text-2xl font-bold">{totalCost.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">{isAr ? 'ج.م' : 'EGP'}</span></p>
+            </div>
+            <div className="border rounded-md p-3 bg-muted/30">
+              <p className="text-xs text-muted-foreground mb-2">{isAr ? 'أعلى المحطات' : 'Top Stations'}</p>
+              {topStations.length === 0 ? (
+                <p className="text-sm text-muted-foreground">—</p>
+              ) : (
+                <ul className="space-y-1">
+                  {topStations.map((s) => (
+                    <li key={s.id} className="flex items-center justify-between text-xs gap-2">
+                      <span className="truncate">{s.id === '__unassigned__' ? (isAr ? 'غير مخصص' : 'Unassigned') : stationName(s.id)}</span>
+                      <Badge variant="secondary" className="text-xs">{s.count}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Upcoming maintenance alerts */}
       {upcoming.length > 0 && (
         <Card className="border-orange-200">
