@@ -74,6 +74,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [vehicleFilter, setVehicleFilter] = usePersistedState<string>('hr_vehicles_maint_vehicle', 'all');
   const [fromDate, setFromDate] = usePersistedState<string>('hr_vehicles_maint_from', '');
   const [toDate, setToDate] = usePersistedState<string>('hr_vehicles_maint_to', '');
+  const [sortOrder, setSortOrder] = usePersistedState<'desc' | 'asc'>('hr_vehicles_maint_sort', 'desc');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkVehicleId, setBulkVehicleId] = useState<string>('');
@@ -106,9 +107,9 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '',
   });
 
-  const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || vehicleFilter !== 'all' || !!fromDate || !!toDate;
+  const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || vehicleFilter !== 'all' || !!fromDate || !!toDate || sortOrder !== 'desc';
   const resetFilters = () => {
-    setSearch(''); setStationFilter(null); setTypeFilter('all'); setVehicleFilter('all'); setFromDate(''); setToDate('');
+    setSearch(''); setStationFilter(null); setTypeFilter('all'); setVehicleFilter('all'); setFromDate(''); setToDate(''); setSortOrder('desc');
     toast.success(isAr ? 'تم إعادة ضبط الفلاتر' : 'Filters reset');
   };
 
@@ -244,19 +245,24 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     return found ? (isAr ? found.ar : found.en) : t;
   };
 
-  const filtered = useMemo(() => records.filter((r) => {
-    const v = vehicleMap[r.vehicle_id];
-    const txt = search.trim().toLowerCase();
-    const txtMatch = !txt || [v?.vehicle_code, v?.brand, v?.plate_number, r.maintenance_type, r.provider]
-      .some((f) => f?.toLowerCase().includes(txt));
-    const stMatch = !stationFilter || v?.station_id === stationFilter;
-    const typeMatch = typeFilter === 'all' || r.maintenance_type === typeFilter;
-    const vehMatch = vehicleFilter === 'all' || r.vehicle_id === vehicleFilter;
-    let dateMatch = true;
-    if (fromDate && r.maintenance_date < fromDate) dateMatch = false;
-    if (toDate && r.maintenance_date > toDate) dateMatch = false;
-    return txtMatch && stMatch && typeMatch && vehMatch && dateMatch;
-  }), [records, vehicleMap, search, stationFilter, typeFilter, vehicleFilter, fromDate, toDate]);
+  const filtered = useMemo(() => {
+    const list = records.filter((r) => {
+      const v = vehicleMap[r.vehicle_id];
+      const txt = search.trim().toLowerCase();
+      const txtMatch = !txt || [v?.vehicle_code, v?.brand, v?.model, v?.plate_number, r.maintenance_type, r.provider, r.description]
+        .some((f) => f?.toLowerCase().includes(txt));
+      const stMatch = !stationFilter || v?.station_id === stationFilter;
+      const typeMatch = typeFilter === 'all' || r.maintenance_type === typeFilter;
+      const vehMatch = vehicleFilter === 'all' || r.vehicle_id === vehicleFilter;
+      let dateMatch = true;
+      if (fromDate && r.maintenance_date < fromDate) dateMatch = false;
+      if (toDate && r.maintenance_date > toDate) dateMatch = false;
+      return txtMatch && stMatch && typeMatch && vehMatch && dateMatch;
+    });
+    return list.sort((a, b) => sortOrder === 'desc'
+      ? b.maintenance_date.localeCompare(a.maintenance_date)
+      : a.maintenance_date.localeCompare(b.maintenance_date));
+  }, [records, vehicleMap, search, stationFilter, typeFilter, vehicleFilter, fromDate, toDate, sortOrder]);
 
   const filteredVehiclesForStation = useMemo(() => {
     if (!stationFilter) return vehicles;
@@ -294,6 +300,21 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
 
   const totalCost = filtered.reduce((s, r) => s + (r.cost || 0), 0);
   const stationCountInScope = stationFilter ? filteredVehiclesForStation.length : vehicles.length;
+
+  const topStations = useMemo(() => {
+    const agg: Record<string, { count: number; cost: number }> = {};
+    filtered.forEach((r) => {
+      const v = vehicleMap[r.vehicle_id];
+      const key = v?.station_id || '__unassigned__';
+      if (!agg[key]) agg[key] = { count: 0, cost: 0 };
+      agg[key].count += 1;
+      agg[key].cost += r.cost || 0;
+    });
+    return Object.entries(agg)
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [filtered, vehicleMap]);
 
   const stationName = (id: string | null | undefined) => {
     if (!id) return isAr ? 'غير مخصص' : 'Unassigned';
@@ -450,6 +471,43 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         </Card>
       </div>
 
+      {/* Filter results summary */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            {isAr ? 'ملخص نتائج الفلاتر' : 'Filter Results Summary'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border rounded-md p-3 bg-muted/30">
+              <p className="text-xs text-muted-foreground">{isAr ? 'إجمالي السجلات' : 'Total Records'}</p>
+              <p className="text-2xl font-bold">{filtered.length}</p>
+            </div>
+            <div className="border rounded-md p-3 bg-muted/30">
+              <p className="text-xs text-muted-foreground">{isAr ? 'إجمالي التكاليف' : 'Total Costs'}</p>
+              <p className="text-2xl font-bold">{totalCost.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">{isAr ? 'ج.م' : 'EGP'}</span></p>
+            </div>
+            <div className="border rounded-md p-3 bg-muted/30">
+              <p className="text-xs text-muted-foreground mb-2">{isAr ? 'أعلى المحطات' : 'Top Stations'}</p>
+              {topStations.length === 0 ? (
+                <p className="text-sm text-muted-foreground">—</p>
+              ) : (
+                <ul className="space-y-1">
+                  {topStations.map((s) => (
+                    <li key={s.id} className="flex items-center justify-between text-xs gap-2">
+                      <span className="truncate">{s.id === '__unassigned__' ? (isAr ? 'غير مخصص' : 'Unassigned') : stationName(s.id)}</span>
+                      <Badge variant="secondary" className="text-xs">{s.count}</Badge>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Upcoming maintenance alerts */}
       {upcoming.length > 0 && (
         <Card className="border-orange-200">
@@ -523,6 +581,16 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
             </Select>
             <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 w-36" title={isAr ? 'من تاريخ' : 'From date'} />
             <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-9 w-36" title={isAr ? 'إلى تاريخ' : 'To date'} />
+            <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as 'desc' | 'asc')}>
+              <SelectTrigger className="w-40 h-9" title={isAr ? 'الفرز حسب التاريخ' : 'Sort by date'}><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">{isAr ? 'الأحدث أولاً' : 'Newest first'}</SelectItem>
+                <SelectItem value="asc">{isAr ? 'الأقدم أولاً' : 'Oldest first'}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Badge variant="secondary" className="h-9 px-3 flex items-center text-xs">
+              {isAr ? `${filtered.length} نتيجة` : `${filtered.length} matches`}
+            </Badge>
             {filtersActive && (
               <Button size="sm" variant="ghost" onClick={resetFilters} aria-label={isAr ? 'إعادة ضبط الفلاتر' : 'Reset filters'}>
                 <FilterX className="w-4 h-4 me-1" />{isAr ? 'إعادة ضبط' : 'Reset'}
