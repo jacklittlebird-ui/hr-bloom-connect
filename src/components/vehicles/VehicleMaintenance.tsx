@@ -353,7 +353,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         { header: 'العداد', key: 'odo' },
         { header: 'مقدم الخدمة', key: 'provider' },
         { header: 'التكلفة (ج.م)', key: 'cost' },
-        { header: 'الصيانة القادمة', key: 'next' },
+        { header: 'العداد القادم (كم)', key: 'next' },
       ],
       rows: filtered.map((r, i) => {
         const v = vehicleMap[r.vehicle_id];
