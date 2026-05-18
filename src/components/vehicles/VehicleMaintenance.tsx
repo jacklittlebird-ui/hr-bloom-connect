@@ -32,11 +32,15 @@ interface MaintenanceRecord {
   cost: number;
   maintenance_date: string;
   next_maintenance_date: string | null;
+  next_maintenance_odometer: number | null;
   odometer_reading: number | null;
   provider: string | null;
   status: string;
   notes: string | null;
 }
+
+// Threshold in km - "upcoming" when remaining distance to next maintenance is <= this
+const UPCOMING_KM_THRESHOLD = 1000;
 
 interface VehicleOption {
   id: string; vehicle_code: string; brand: string; model: string; plate_number: string; station_id: string | null;
