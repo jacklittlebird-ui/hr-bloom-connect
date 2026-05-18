@@ -2920,6 +2920,7 @@ export type Database = {
           maintenance_date: string
           maintenance_type: string
           next_maintenance_date: string | null
+          next_maintenance_odometer: number | null
           notes: string | null
           odometer_reading: number | null
           provider: string | null
@@ -2934,6 +2935,7 @@ export type Database = {
           maintenance_date?: string
           maintenance_type: string
           next_maintenance_date?: string | null
+          next_maintenance_odometer?: number | null
           notes?: string | null
           odometer_reading?: number | null
           provider?: string | null
@@ -2948,6 +2950,7 @@ export type Database = {
           maintenance_date?: string
           maintenance_type?: string
           next_maintenance_date?: string | null
+          next_maintenance_odometer?: number | null
           notes?: string | null
           odometer_reading?: number | null
           provider?: string | null
