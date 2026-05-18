@@ -442,7 +442,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
             <AlertCircle className="w-7 h-7 text-orange-600" />
             <div>
               <p className="text-xl font-bold text-orange-700 dark:text-orange-400">{upcoming.length}</p>
-              <p className="text-xs text-orange-600 dark:text-orange-400">{isAr ? 'صيانة قادمة (30 يوم)' : 'Upcoming (30d)'}</p>
+              <p className="text-xs text-orange-600 dark:text-orange-400">{isAr ? `صيانة قادمة (${UPCOMING_KM_THRESHOLD} كم)` : `Upcoming (${UPCOMING_KM_THRESHOLD} km)`}</p>
             </div>
           </CardContent>
         </Card>
