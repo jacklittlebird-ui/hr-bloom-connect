@@ -740,13 +740,13 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                 </div>
               </DialogContent>
             </Dialog>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 me-1" />{isAr ? 'إضافة صيانة' : 'Add Maintenance'}</Button>
               </DialogTrigger>
               <DialogContent className="max-w-lg" dir={isRTL ? 'rtl' : 'ltr'}>
                 <DialogHeader>
-                  <DialogTitle>{isAr ? 'إضافة سجل صيانة' : 'Add Maintenance Record'}</DialogTitle>
+                  <DialogTitle>{editingId ? (isAr ? 'تعديل سجل صيانة' : 'Edit Maintenance Record') : (isAr ? 'إضافة سجل صيانة' : 'Add Maintenance Record')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 mt-4">
                   <div>
