@@ -43,6 +43,7 @@ export const PortalAttendance = () => {
   const [dateFrom, setDateFrom] = useState(firstOfMonth);
   const [dateTo, setDateTo] = useState(todayStr);
   const [filteredRecords, setFilteredRecords] = useState<PortalAttendanceRecord[]>([]);
+  const [coveredDates, setCoveredDates] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!PORTAL_EMPLOYEE_ID) return;
@@ -88,6 +89,35 @@ export const PortalAttendance = () => {
         return !stationId || holidayStations.length === 0 || holidayStations.includes(stationId);
       });
       const holidayByDate = new Map(matchingHolidays.map((h: any) => [h.holiday_date, h]));
+
+      // Fetch approved leaves & missions in range — they count as "covered" days, not absences
+      const [leavesRes, missionsRes] = await Promise.all([
+        supabase
+          .from('leave_requests')
+          .select('start_date, end_date, status')
+          .eq('employee_id', PORTAL_EMPLOYEE_ID)
+          .eq('status', 'approved')
+          .lte('start_date', dateTo)
+          .gte('end_date', dateFrom),
+        supabase
+          .from('missions')
+          .select('date, status')
+          .eq('employee_id', PORTAL_EMPLOYEE_ID)
+          .eq('status', 'approved')
+          .gte('date', dateFrom)
+          .lte('date', dateTo),
+      ]);
+      const leaveDates = new Set<string>();
+      (leavesRes.data || []).forEach((l: any) => {
+        const s = new Date(l.start_date + 'T00:00:00');
+        const e = new Date(l.end_date + 'T00:00:00');
+        for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+          leaveDates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+        }
+      });
+      const missionDates = new Set<string>((missionsRes.data || []).map((m: any) => m.date));
+      const covered = new Set<string>([...leaveDates, ...missionDates]);
+      setCoveredDates(covered);
 
       const attLogs: PortalAttendanceRecord[] = (attRes.data || []).map(r => {
         const holiday = holidayByDate.get(r.date) as any;
@@ -160,26 +190,40 @@ export const PortalAttendance = () => {
     return { present, late, absent, totalHours: Math.floor(totalMinutes / 60), totalMinutes: totalMinutes % 60 };
   }, [filteredRecords]);
 
-  // Working days in range = all dates between dateFrom..dateTo excluding Fridays/Saturdays and official holidays
-  const workingDaysInRange = useMemo(() => {
-    if (!dateFrom || !dateTo) return 0;
-    const start = new Date(dateFrom);
-    const end = new Date(dateTo);
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0;
+  // Working days = past + today only, excluding Fri/Sat and official holidays
+  const localIso = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const { workingDaysInRange, coveredInRange } = useMemo(() => {
+    if (!dateFrom || !dateTo) return { workingDaysInRange: 0, coveredInRange: 0 };
+    const start = new Date(dateFrom + 'T00:00:00');
+    const endRaw = new Date(dateTo + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const end = endRaw > today ? today : endRaw;
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
+      return { workingDaysInRange: 0, coveredInRange: 0 };
+    }
     const holidayDates = new Set(filteredRecords.filter(r => r.status === 'official-holiday').map(r => r.date));
     let count = 0;
+    let covered = 0;
     const cur = new Date(start);
     while (cur <= end) {
-      const day = cur.getDay(); // 0=Sun..6=Sat
-      const iso = cur.toISOString().split('T')[0];
-      if (day !== 5 && day !== 6 && !holidayDates.has(iso)) count++;
+      const day = cur.getDay();
+      const iso = localIso(cur);
+      if (day !== 5 && day !== 6 && !holidayDates.has(iso)) {
+        count++;
+        if (coveredDates.has(iso)) covered++;
+      }
       cur.setDate(cur.getDate() + 1);
     }
-    return count;
-  }, [dateFrom, dateTo, filteredRecords]);
+    return { workingDaysInRange: count, coveredInRange: covered };
+  }, [dateFrom, dateTo, filteredRecords, coveredDates]);
 
+  // Numerator = days present (incl. late & auto-closed) + approved leave/mission days on working days.
+  // This prevents "Rate" from dropping due to legitimate approved absences.
   const rate = workingDaysInRange > 0
-    ? Math.min(100, (stats.present / workingDaysInRange) * 100).toFixed(1)
+    ? Math.min(100, ((stats.present + coveredInRange) / workingDaysInRange) * 100).toFixed(1)
     : '0';
 
   const statusBadge = (r: PortalAttendanceRecord) => {
