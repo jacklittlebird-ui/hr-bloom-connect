@@ -261,17 +261,34 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     return vehicles.filter((v) => v.station_id === stationFilter);
   }, [vehicles, stationFilter]);
 
-  // Upcoming maintenance (≤30 days, not negative)
+  // Latest odometer reading per vehicle (max across all maintenance records)
+  const latestOdoByVehicle = useMemo(() => {
+    const map: Record<string, number> = {};
+    records.forEach((r) => {
+      if (r.odometer_reading != null) {
+        const cur = map[r.vehicle_id] ?? -Infinity;
+        if (r.odometer_reading > cur) map[r.vehicle_id] = r.odometer_reading;
+      }
+    });
+    return map;
+  }, [records]);
+
+  // Upcoming maintenance based on odometer: remaining km <= threshold
   const upcoming = useMemo(() => {
     return records
-      .map((r) => ({ r, dl: daysLeft(r.next_maintenance_date) }))
-      .filter(({ dl, r }) => {
+      .map((r) => {
+        const latest = latestOdoByVehicle[r.vehicle_id];
+        const next = r.next_maintenance_odometer;
+        const remaining = (next != null && latest != null) ? (next - latest) : null;
+        return { r, remaining, latest };
+      })
+      .filter(({ remaining, r }) => {
         const v = vehicleMap[r.vehicle_id];
         if (stationFilter && v?.station_id !== stationFilter) return false;
-        return dl !== null && dl >= 0 && dl <= 30;
+        return remaining !== null && remaining <= UPCOMING_KM_THRESHOLD;
       })
-      .sort((a, b) => (a.dl! - b.dl!));
-  }, [records, vehicleMap, stationFilter]);
+      .sort((a, b) => (a.remaining! - b.remaining!));
+  }, [records, vehicleMap, stationFilter, latestOdoByVehicle]);
 
   const totalCost = filtered.reduce((s, r) => s + (r.cost || 0), 0);
   const stationCountInScope = stationFilter ? filteredVehiclesForStation.length : vehicles.length;
