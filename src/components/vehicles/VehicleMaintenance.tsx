@@ -304,7 +304,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
       isAr ? 'الكود' : 'Code', isAr ? 'السيارة' : 'Vehicle', isAr ? 'اللوحة' : 'Plate',
       isAr ? 'المحطة' : 'Station', isAr ? 'النوع' : 'Type', isAr ? 'التاريخ' : 'Date',
       isAr ? 'التكلفة' : 'Cost', isAr ? 'العداد' : 'Odometer',
-      isAr ? 'مقدم الخدمة' : 'Provider', isAr ? 'الصيانة القادمة' : 'Next Date',
+      isAr ? 'مقدم الخدمة' : 'Provider', isAr ? 'العداد القادم (كم)' : 'Next Odo (km)',
       isAr ? 'الوصف' : 'Description',
     ]];
     filtered.forEach((r) => {
