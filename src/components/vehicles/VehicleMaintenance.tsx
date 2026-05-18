@@ -752,6 +752,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                           <TableCell>{r.cost?.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</TableCell>
                           <TableCell>{r.odometer_reading?.toLocaleString() || '-'}</TableCell>
                           <TableCell>{r.provider || '-'}</TableCell>
+                          <TableCell className="max-w-[160px] truncate" title={r.description || ''}>{r.description || '-'}</TableCell>
                           <TableCell>
                             {r.next_maintenance_odometer != null ? (
                               <div className="flex items-center gap-1">
