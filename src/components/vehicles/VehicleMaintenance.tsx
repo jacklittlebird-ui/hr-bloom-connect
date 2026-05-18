@@ -459,21 +459,24 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
           </CardHeader>
           <CardContent className="pt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {upcoming.slice(0, 9).map(({ r, dl }) => {
+              {upcoming.slice(0, 9).map(({ r, remaining, latest }) => {
                 const v = vehicleMap[r.vehicle_id];
+                const overdue = (remaining ?? 0) <= 0;
+                const close = (remaining ?? 0) <= 200;
                 return (
                   <div key={r.id} className="border rounded p-2 bg-background">
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-sm font-medium truncate">{v ? `${v.brand} ${v.model}` : '-'}</div>
-                      <Badge className={cn('text-xs', dl! <= 7 ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300')}>
-                        {dl} {isAr ? 'يوم' : 'd'}
+                      <Badge className={cn('text-xs', overdue || close ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300')}>
+                        {overdue ? (isAr ? 'مستحقة الآن' : 'due now') : `${remaining!.toLocaleString()} ${isAr ? 'كم' : 'km'}`}
                       </Badge>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1 truncate">
                       {typeLabel(r.maintenance_type)} · {stationName(v?.station_id)}
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                      <Calendar className="w-3 h-3" />{r.next_maintenance_date}
+                      <Wrench className="w-3 h-3" />
+                      {isAr ? 'العداد:' : 'Odo:'} {latest?.toLocaleString() ?? '—'} → {r.next_maintenance_odometer?.toLocaleString()} {isAr ? 'كم' : 'km'}
                     </div>
                   </div>
                 );
