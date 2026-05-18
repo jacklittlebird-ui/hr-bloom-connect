@@ -62,6 +62,10 @@ const daysLeft = (d: string | null) => d ? Math.ceil((new Date(d).getTime() - Da
 
 export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: string[] | null } = {}) => {
   const { language, isRTL } = useLanguage();
+const daysLeft = (d: string | null) => d ? Math.ceil((new Date(d).getTime() - Date.now()) / 86400000) : null;
+
+export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: string[] | null } = {}) => {
+  const { language, isRTL } = useLanguage();
   const scopeIds = allowedStationIds && allowedStationIds.length ? new Set(allowedStationIds) : null;
   const isAr = language === 'ar';
   const [records, setRecords] = useState<MaintenanceRecord[]>([]);
@@ -80,7 +84,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   type BulkRow = {
     maintenance_type: string;
     maintenance_date: string;
-    next_maintenance_date: string;
+    next_maintenance_odometer: string;
     cost: number;
     provider: string;
     status: string;
@@ -89,7 +93,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const newBulkRow = (): BulkRow => ({
     maintenance_type: 'periodic',
     maintenance_date: new Date().toISOString().split('T')[0],
-    next_maintenance_date: '',
+    next_maintenance_odometer: '',
     cost: 0,
     provider: '',
     status: 'completed',
@@ -102,7 +106,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'periodic', description: '',
     cost: 0, maintenance_date: new Date().toISOString().split('T')[0],
-    next_maintenance_date: '', odometer_reading: '', provider: '', notes: '',
+    next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '',
   });
 
   const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || !!fromDate || !!toDate;
