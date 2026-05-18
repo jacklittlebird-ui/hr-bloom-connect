@@ -207,8 +207,8 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         toast.error(isAr ? `الصف ${i + 1}: النوع والتاريخ مطلوبان` : `Row ${i + 1}: type and date required`);
         return;
       }
-      if (row.next_maintenance_date && row.next_maintenance_date < row.maintenance_date) {
-        toast.error(isAr ? `الصف ${i + 1}: تاريخ الصيانة القادمة قبل تاريخ الصيانة` : `Row ${i + 1}: next date before maintenance date`);
+      if (row.next_maintenance_odometer && Number.isNaN(Number(row.next_maintenance_odometer))) {
+        toast.error(isAr ? `الصف ${i + 1}: قراءة العداد القادمة غير صحيحة` : `Row ${i + 1}: invalid next odometer`);
         return;
       }
     }
@@ -220,7 +220,8 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         description: row.description || null,
         cost: Number(row.cost) || 0,
         maintenance_date: row.maintenance_date,
-        next_maintenance_date: row.next_maintenance_date || null,
+        next_maintenance_date: null,
+        next_maintenance_odometer: row.next_maintenance_odometer ? Number(row.next_maintenance_odometer) : null,
         provider: row.provider || null,
         status: row.status,
         notes: null,
