@@ -301,6 +301,21 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const totalCost = filtered.reduce((s, r) => s + (r.cost || 0), 0);
   const stationCountInScope = stationFilter ? filteredVehiclesForStation.length : vehicles.length;
 
+  const topStations = useMemo(() => {
+    const agg: Record<string, { count: number; cost: number }> = {};
+    filtered.forEach((r) => {
+      const v = vehicleMap[r.vehicle_id];
+      const key = v?.station_id || '__unassigned__';
+      if (!agg[key]) agg[key] = { count: 0, cost: 0 };
+      agg[key].count += 1;
+      agg[key].cost += r.cost || 0;
+    });
+    return Object.entries(agg)
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [filtered, vehicleMap]);
+
   const stationName = (id: string | null | undefined) => {
     if (!id) return isAr ? 'غير مخصص' : 'Unassigned';
     const st = stationMap[id];
