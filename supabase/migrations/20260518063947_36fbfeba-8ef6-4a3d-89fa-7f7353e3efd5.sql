@@ -1,0 +1,1 @@
+ALTER TABLE public.vehicle_maintenance ADD COLUMN IF NOT EXISTS next_maintenance_odometer NUMERIC;

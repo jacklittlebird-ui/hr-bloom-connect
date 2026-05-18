@@ -32,11 +32,15 @@ interface MaintenanceRecord {
   cost: number;
   maintenance_date: string;
   next_maintenance_date: string | null;
+  next_maintenance_odometer: number | null;
   odometer_reading: number | null;
   provider: string | null;
   status: string;
   notes: string | null;
 }
+
+// Threshold in km - "upcoming" when remaining distance to next maintenance is <= this
+const UPCOMING_KM_THRESHOLD = 1000;
 
 interface VehicleOption {
   id: string; vehicle_code: string; brand: string; model: string; plate_number: string; station_id: string | null;
@@ -76,7 +80,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   type BulkRow = {
     maintenance_type: string;
     maintenance_date: string;
-    next_maintenance_date: string;
+    next_maintenance_odometer: string;
     cost: number;
     provider: string;
     status: string;
@@ -85,7 +89,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const newBulkRow = (): BulkRow => ({
     maintenance_type: 'periodic',
     maintenance_date: new Date().toISOString().split('T')[0],
-    next_maintenance_date: '',
+    next_maintenance_odometer: '',
     cost: 0,
     provider: '',
     status: 'completed',
@@ -98,7 +102,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'periodic', description: '',
     cost: 0, maintenance_date: new Date().toISOString().split('T')[0],
-    next_maintenance_date: '', odometer_reading: '', provider: '', notes: '',
+    next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '',
   });
 
   const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || !!fromDate || !!toDate;
@@ -143,8 +147,10 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
       toast.error(isAr ? 'التكلفة لا يمكن أن تكون سالبة' : 'Cost cannot be negative');
       return;
     }
-    if (form.next_maintenance_date && form.next_maintenance_date < form.maintenance_date) {
-      toast.error(isAr ? 'تاريخ الصيانة القادمة قبل تاريخ الصيانة' : 'Next date is before maintenance date');
+    const nextOdo = form.next_maintenance_odometer ? Number(form.next_maintenance_odometer) : null;
+    const curOdo = form.odometer_reading ? Number(form.odometer_reading) : null;
+    if (nextOdo !== null && curOdo !== null && nextOdo < curOdo) {
+      toast.error(isAr ? 'قراءة العداد القادمة يجب أن تكون أكبر من القراءة الحالية' : 'Next odometer must be greater than current odometer');
       return;
     }
     setSaving(true);
@@ -155,8 +161,9 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         description: form.description || null,
         cost: Number(form.cost) || 0,
         maintenance_date: form.maintenance_date,
-        next_maintenance_date: form.next_maintenance_date || null,
-        odometer_reading: form.odometer_reading ? Number(form.odometer_reading) : null,
+        next_maintenance_date: null,
+        next_maintenance_odometer: nextOdo,
+        odometer_reading: curOdo,
         provider: form.provider || null,
         notes: form.notes || null,
         status: 'completed',
@@ -165,7 +172,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
       if (error) { toast.error(error.message); return; }
       toast.success(isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added');
       setDialogOpen(false);
-      setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_date: '', odometer_reading: '', provider: '', notes: '' });
+      setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '' });
       fetchData();
     } finally {
       setSaving(false);
@@ -200,8 +207,8 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         toast.error(isAr ? `الصف ${i + 1}: النوع والتاريخ مطلوبان` : `Row ${i + 1}: type and date required`);
         return;
       }
-      if (row.next_maintenance_date && row.next_maintenance_date < row.maintenance_date) {
-        toast.error(isAr ? `الصف ${i + 1}: تاريخ الصيانة القادمة قبل تاريخ الصيانة` : `Row ${i + 1}: next date before maintenance date`);
+      if (row.next_maintenance_odometer && Number.isNaN(Number(row.next_maintenance_odometer))) {
+        toast.error(isAr ? `الصف ${i + 1}: قراءة العداد القادمة غير صحيحة` : `Row ${i + 1}: invalid next odometer`);
         return;
       }
     }
@@ -213,7 +220,8 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         description: row.description || null,
         cost: Number(row.cost) || 0,
         maintenance_date: row.maintenance_date,
-        next_maintenance_date: row.next_maintenance_date || null,
+        next_maintenance_date: null,
+        next_maintenance_odometer: row.next_maintenance_odometer ? Number(row.next_maintenance_odometer) : null,
         provider: row.provider || null,
         status: row.status,
         notes: null,
@@ -253,17 +261,34 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     return vehicles.filter((v) => v.station_id === stationFilter);
   }, [vehicles, stationFilter]);
 
-  // Upcoming maintenance (≤30 days, not negative)
+  // Latest odometer reading per vehicle (max across all maintenance records)
+  const latestOdoByVehicle = useMemo(() => {
+    const map: Record<string, number> = {};
+    records.forEach((r) => {
+      if (r.odometer_reading != null) {
+        const cur = map[r.vehicle_id] ?? -Infinity;
+        if (r.odometer_reading > cur) map[r.vehicle_id] = r.odometer_reading;
+      }
+    });
+    return map;
+  }, [records]);
+
+  // Upcoming maintenance based on odometer: remaining km <= threshold
   const upcoming = useMemo(() => {
     return records
-      .map((r) => ({ r, dl: daysLeft(r.next_maintenance_date) }))
-      .filter(({ dl, r }) => {
+      .map((r) => {
+        const latest = latestOdoByVehicle[r.vehicle_id];
+        const next = r.next_maintenance_odometer;
+        const remaining = (next != null && latest != null) ? (next - latest) : null;
+        return { r, remaining, latest };
+      })
+      .filter(({ remaining, r }) => {
         const v = vehicleMap[r.vehicle_id];
         if (stationFilter && v?.station_id !== stationFilter) return false;
-        return dl !== null && dl >= 0 && dl <= 30;
+        return remaining !== null && remaining <= UPCOMING_KM_THRESHOLD;
       })
-      .sort((a, b) => (a.dl! - b.dl!));
-  }, [records, vehicleMap, stationFilter]);
+      .sort((a, b) => (a.remaining! - b.remaining!));
+  }, [records, vehicleMap, stationFilter, latestOdoByVehicle]);
 
   const totalCost = filtered.reduce((s, r) => s + (r.cost || 0), 0);
   const stationCountInScope = stationFilter ? filteredVehiclesForStation.length : vehicles.length;
@@ -279,7 +304,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
       isAr ? 'الكود' : 'Code', isAr ? 'السيارة' : 'Vehicle', isAr ? 'اللوحة' : 'Plate',
       isAr ? 'المحطة' : 'Station', isAr ? 'النوع' : 'Type', isAr ? 'التاريخ' : 'Date',
       isAr ? 'التكلفة' : 'Cost', isAr ? 'العداد' : 'Odometer',
-      isAr ? 'مقدم الخدمة' : 'Provider', isAr ? 'الصيانة القادمة' : 'Next Date',
+      isAr ? 'مقدم الخدمة' : 'Provider', isAr ? 'العداد القادم (كم)' : 'Next Odo (km)',
       isAr ? 'الوصف' : 'Description',
     ]];
     filtered.forEach((r) => {
@@ -289,7 +314,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         stationName(v?.station_id), typeLabel(r.maintenance_type),
         r.maintenance_date, String(r.cost || 0),
         r.odometer_reading != null ? String(r.odometer_reading) : '',
-        r.provider || '', r.next_maintenance_date || '', r.description || '',
+        r.provider || '', r.next_maintenance_odometer != null ? String(r.next_maintenance_odometer) : '', r.description || '',
       ]);
     });
     const csv = '\uFEFF' + rows.map((row) => row.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -328,7 +353,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         { header: 'العداد', key: 'odo' },
         { header: 'مقدم الخدمة', key: 'provider' },
         { header: 'التكلفة (ج.م)', key: 'cost' },
-        { header: 'الصيانة القادمة', key: 'next' },
+        { header: 'العداد القادم (كم)', key: 'next' },
       ],
       rows: filtered.map((r, i) => {
         const v = vehicleMap[r.vehicle_id];
@@ -343,7 +368,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
           odo: r.odometer_reading != null ? r.odometer_reading.toLocaleString() : '—',
           provider: r.provider || '—',
           cost: (r.cost || 0).toLocaleString(),
-          next: r.next_maintenance_date || '—',
+          next: r.next_maintenance_odometer != null ? r.next_maintenance_odometer.toLocaleString() : '—',
         };
       }),
       signatureLabels: ['مسؤول الصيانة', 'مدير الأسطول', 'الإدارة المالية'],
@@ -417,7 +442,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
             <AlertCircle className="w-7 h-7 text-orange-600" />
             <div>
               <p className="text-xl font-bold text-orange-700 dark:text-orange-400">{upcoming.length}</p>
-              <p className="text-xs text-orange-600 dark:text-orange-400">{isAr ? 'صيانة قادمة (30 يوم)' : 'Upcoming (30d)'}</p>
+              <p className="text-xs text-orange-600 dark:text-orange-400">{isAr ? `صيانة قادمة (${UPCOMING_KM_THRESHOLD} كم)` : `Upcoming (${UPCOMING_KM_THRESHOLD} km)`}</p>
             </div>
           </CardContent>
         </Card>
@@ -434,21 +459,24 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
           </CardHeader>
           <CardContent className="pt-0">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              {upcoming.slice(0, 9).map(({ r, dl }) => {
+              {upcoming.slice(0, 9).map(({ r, remaining, latest }) => {
                 const v = vehicleMap[r.vehicle_id];
+                const overdue = (remaining ?? 0) <= 0;
+                const close = (remaining ?? 0) <= 200;
                 return (
                   <div key={r.id} className="border rounded p-2 bg-background">
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-sm font-medium truncate">{v ? `${v.brand} ${v.model}` : '-'}</div>
-                      <Badge className={cn('text-xs', dl! <= 7 ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300')}>
-                        {dl} {isAr ? 'يوم' : 'd'}
+                      <Badge className={cn('text-xs', overdue || close ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300')}>
+                        {overdue ? (isAr ? 'مستحقة الآن' : 'due now') : `${remaining!.toLocaleString()} ${isAr ? 'كم' : 'km'}`}
                       </Badge>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1 truncate">
                       {typeLabel(r.maintenance_type)} · {stationName(v?.station_id)}
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                      <Calendar className="w-3 h-3" />{r.next_maintenance_date}
+                      <Wrench className="w-3 h-3" />
+                      {isAr ? 'العداد:' : 'Odo:'} {latest?.toLocaleString() ?? '—'} → {r.next_maintenance_odometer?.toLocaleString()} {isAr ? 'كم' : 'km'}
                     </div>
                   </div>
                 );
@@ -572,8 +600,8 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                                 <Input type="date" value={row.maintenance_date} onChange={(e) => update({ maintenance_date: e.target.value })} className="h-9" />
                               </div>
                               <div>
-                                <Label className="text-xs">{isAr ? 'الصيانة القادمة' : 'Next due'}</Label>
-                                <Input type="date" value={row.next_maintenance_date} onChange={(e) => update({ next_maintenance_date: e.target.value })} className="h-9" />
+                                <Label className="text-xs">{isAr ? 'قراءة العداد القادمة (كم)' : 'Next odometer (km)'}</Label>
+                                <Input type="number" min={0} placeholder={isAr ? 'مثال: 50000' : 'e.g. 50000'} value={row.next_maintenance_odometer} onChange={(e) => update({ next_maintenance_odometer: e.target.value })} className="h-9" />
                               </div>
                               <div>
                                 <Label className="text-xs">{isAr ? 'التكلفة' : 'Cost'}</Label>
@@ -660,8 +688,9 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                     </div>
                   </div>
                   <div>
-                    <Label className="text-xs">{isAr ? 'الصيانة القادمة' : 'Next Maintenance'}</Label>
-                    <Input type="date" value={form.next_maintenance_date} onChange={(e) => setForm((p) => ({ ...p, next_maintenance_date: e.target.value }))} className="h-9" />
+                    <Label className="text-xs">{isAr ? 'قراءة العداد للصيانة القادمة (كم)' : 'Next Maintenance Odometer (km)'}</Label>
+                    <Input type="number" min={0} placeholder={isAr ? 'مثال: 50000' : 'e.g. 50000'} value={form.next_maintenance_odometer} onChange={(e) => setForm((p) => ({ ...p, next_maintenance_odometer: e.target.value }))} className="h-9" />
+                    <p className="text-[10px] text-muted-foreground mt-1">{isAr ? 'سيظهر تنبيه عندما تقترب قراءة العداد من هذه القيمة' : 'Alert will trigger when odometer approaches this reading'}</p>
                   </div>
                   <div>
                     <Label className="text-xs">{isAr ? 'الوصف' : 'Description'}</Label>
@@ -697,14 +726,15 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                       <TableHead>{isAr ? 'التكلفة' : 'Cost'}</TableHead>
                       <TableHead>{isAr ? 'العداد' : 'Odometer'}</TableHead>
                       <TableHead>{isAr ? 'مقدم الخدمة' : 'Provider'}</TableHead>
-                      <TableHead>{isAr ? 'الصيانة القادمة' : 'Next'}</TableHead>
+                      <TableHead>{isAr ? 'العداد القادم' : 'Next Odo'}</TableHead>
                       <TableHead>{isAr ? 'إجراءات' : 'Actions'}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filtered.map((r) => {
                       const v = vehicleMap[r.vehicle_id];
-                      const dl = daysLeft(r.next_maintenance_date);
+                      const latest = latestOdoByVehicle[r.vehicle_id];
+                      const remaining = (r.next_maintenance_odometer != null && latest != null) ? (r.next_maintenance_odometer - latest) : null;
                       return (
                         <TableRow key={r.id}>
                           <TableCell>
@@ -722,13 +752,15 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                           <TableCell>{r.odometer_reading?.toLocaleString() || '-'}</TableCell>
                           <TableCell>{r.provider || '-'}</TableCell>
                           <TableCell>
-                            {r.next_maintenance_date ? (
+                            {r.next_maintenance_odometer != null ? (
                               <div className="flex items-center gap-1">
-                                <span className="text-xs">{r.next_maintenance_date}</span>
-                                {dl !== null && dl >= 0 && dl <= 30 && (
-                                  <Badge className={cn('text-xs', dl <= 7 ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300')}>{dl}{isAr ? 'ي' : 'd'}</Badge>
+                                <span className="text-xs">{r.next_maintenance_odometer.toLocaleString()} {isAr ? 'كم' : 'km'}</span>
+                                {remaining !== null && remaining <= 0 && (
+                                  <Badge className="text-xs bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">{isAr ? 'مستحقة' : 'due'}</Badge>
                                 )}
-                                {dl !== null && dl < 0 && <Badge className="text-xs bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">{isAr ? 'متأخر' : 'overdue'}</Badge>}
+                                {remaining !== null && remaining > 0 && remaining <= UPCOMING_KM_THRESHOLD && (
+                                  <Badge className={cn('text-xs', remaining <= 200 ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300')}>{remaining.toLocaleString()}{isAr ? 'كم' : 'km'}</Badge>
+                                )}
                               </div>
                             ) : '-'}
                           </TableCell>
@@ -751,7 +783,8 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
               <div className="md:hidden space-y-2">
                 {filtered.map((r) => {
                   const v = vehicleMap[r.vehicle_id];
-                  const dl = daysLeft(r.next_maintenance_date);
+                  const latest = latestOdoByVehicle[r.vehicle_id];
+                  const remaining = (r.next_maintenance_odometer != null && latest != null) ? (r.next_maintenance_odometer - latest) : null;
                   return (
                     <div key={r.id} className="border rounded-lg p-3 bg-card">
                       <div className={cn('flex items-start justify-between gap-2', isRTL && 'flex-row-reverse')}>
@@ -766,11 +799,14 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                         <div><span className="text-muted-foreground">{isAr ? 'التاريخ:' : 'Date:'}</span> {r.maintenance_date}</div>
                         <div><span className="text-muted-foreground">{isAr ? 'التكلفة:' : 'Cost:'}</span> {r.cost?.toLocaleString()} {isAr ? 'ج.م' : 'EGP'}</div>
                         {r.provider && <div className="col-span-2"><span className="text-muted-foreground">{isAr ? 'مقدم:' : 'Provider:'}</span> {r.provider}</div>}
-                        {r.next_maintenance_date && (
-                          <div className="col-span-2 flex items-center gap-1">
-                            <span className="text-muted-foreground">{isAr ? 'القادمة:' : 'Next:'}</span> {r.next_maintenance_date}
-                            {dl !== null && dl >= 0 && dl <= 30 && (
-                              <Badge className={cn('text-xs', dl <= 7 ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800')}>{dl}{isAr ? 'ي' : 'd'}</Badge>
+                        {r.next_maintenance_odometer != null && (
+                          <div className="col-span-2 flex items-center gap-1 flex-wrap">
+                            <span className="text-muted-foreground">{isAr ? 'العداد القادم:' : 'Next odo:'}</span> {r.next_maintenance_odometer.toLocaleString()} {isAr ? 'كم' : 'km'}
+                            {remaining !== null && remaining <= 0 && (
+                              <Badge className="text-xs bg-red-100 text-red-800">{isAr ? 'مستحقة' : 'due'}</Badge>
+                            )}
+                            {remaining !== null && remaining > 0 && remaining <= UPCOMING_KM_THRESHOLD && (
+                              <Badge className={cn('text-xs', remaining <= 200 ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800')}>{remaining.toLocaleString()}{isAr ? 'كم' : 'km'}</Badge>
                             )}
                           </div>
                         )}
