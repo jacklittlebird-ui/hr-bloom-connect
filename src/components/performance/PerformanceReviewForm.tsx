@@ -9,7 +9,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2, Clock, MinusCircle } from 'lucide-react';
+import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2, Clock, AlertTriangle } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
+
+const violationTypeLabels: Record<string, { ar: string; en: string }> = {
+  absence: { ar: 'غياب بدون إذن', en: 'Unauthorized Absence' },
+  late: { ar: 'تأخر متكرر', en: 'Repeated Tardiness' },
+  conduct: { ar: 'سلوك غير لائق', en: 'Misconduct' },
+  safety: { ar: 'مخالفة سلامة', en: 'Safety Violation' },
+  other: { ar: 'أخرى', en: 'Other' },
+};
 import { toast } from 'sonner';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
