@@ -314,7 +314,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         stationName(v?.station_id), typeLabel(r.maintenance_type),
         r.maintenance_date, String(r.cost || 0),
         r.odometer_reading != null ? String(r.odometer_reading) : '',
-        r.provider || '', r.next_maintenance_date || '', r.description || '',
+        r.provider || '', r.next_maintenance_odometer != null ? String(r.next_maintenance_odometer) : '', r.description || '',
       ]);
     });
     const csv = '\uFEFF' + rows.map((row) => row.map((c) => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
