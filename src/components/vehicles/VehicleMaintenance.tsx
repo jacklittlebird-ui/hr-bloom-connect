@@ -14,7 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar, Download, FileDown, FileType2, Loader2, FilterX, Layers } from 'lucide-react';
+import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar, Download, FileDown, FileType2, Loader2, FilterX, Layers, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
@@ -101,11 +101,33 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MaintenanceRecord | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'periodic', description: '',
     cost: 0, maintenance_date: new Date().toISOString().split('T')[0],
     next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '',
   });
+
+  const openEdit = (r: MaintenanceRecord) => {
+    setEditingId(r.id);
+    setForm({
+      vehicle_id: r.vehicle_id,
+      maintenance_type: r.maintenance_type,
+      description: r.description || '',
+      cost: r.cost || 0,
+      maintenance_date: r.maintenance_date,
+      next_maintenance_odometer: r.next_maintenance_odometer != null ? String(r.next_maintenance_odometer) : '',
+      odometer_reading: r.odometer_reading != null ? String(r.odometer_reading) : '',
+      provider: r.provider || '',
+      notes: r.notes || '',
+    });
+    setDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '' });
+  };
 
   const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || vehicleFilter !== 'all' || !!fromDate || !!toDate || sortOrder !== 'desc';
   const resetFilters = () => {
@@ -170,11 +192,13 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
         notes: form.notes || null,
         status: 'completed',
       };
-      const { error } = await supabase.from('vehicle_maintenance').insert(payload as any);
+      const { error } = editingId
+        ? await supabase.from('vehicle_maintenance').update(payload as any).eq('id', editingId)
+        : await supabase.from('vehicle_maintenance').insert(payload as any);
       if (error) { toast.error(error.message); return; }
-      toast.success(isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added');
+      toast.success(editingId ? (isAr ? 'تم تحديث سجل الصيانة' : 'Maintenance record updated') : (isAr ? 'تم إضافة سجل الصيانة' : 'Maintenance record added'));
       setDialogOpen(false);
-      setForm({ vehicle_id: '', maintenance_type: 'periodic', description: '', cost: 0, maintenance_date: new Date().toISOString().split('T')[0], next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '' });
+      resetForm();
       fetchData();
     } finally {
       setSaving(false);
@@ -716,13 +740,13 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                 </div>
               </DialogContent>
             </Dialog>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetForm(); }}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="w-4 h-4 me-1" />{isAr ? 'إضافة صيانة' : 'Add Maintenance'}</Button>
               </DialogTrigger>
               <DialogContent className="max-w-lg" dir={isRTL ? 'rtl' : 'ltr'}>
                 <DialogHeader>
-                  <DialogTitle>{isAr ? 'إضافة سجل صيانة' : 'Add Maintenance Record'}</DialogTitle>
+                  <DialogTitle>{editingId ? (isAr ? 'تعديل سجل صيانة' : 'Edit Maintenance Record') : (isAr ? 'إضافة سجل صيانة' : 'Add Maintenance Record')}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3 mt-4">
                   <div>
@@ -848,12 +872,20 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                             ) : '-'}
                           </TableCell>
                           <TableCell>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
-                              </TooltipTrigger>
-                              <TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent>
-                            </Tooltip>
+                            <div className="flex items-center gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" onClick={() => openEdit(r)} aria-label={isAr ? 'تعديل' : 'Edit'}><Pencil className="w-4 h-4" /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isAr ? 'تعديل' : 'Edit'}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button size="icon" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isAr ? 'حذف' : 'Delete'}</TooltipContent>
+                              </Tooltip>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -896,6 +928,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                         )}
                       </div>
                       <div className={cn('flex justify-end mt-2', isRTL && 'justify-start')}>
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(r)} aria-label={isAr ? 'تعديل' : 'Edit'}><Pencil className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleteTarget(r)} aria-label={isAr ? 'حذف' : 'Delete'}><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </div>
