@@ -475,7 +475,7 @@ export const PerformanceReviewForm = () => {
               {ar ? `بيانات الربع ${selectedQuarter} - ${selectedYear}` : `Quarter ${selectedQuarter} - ${selectedYear} Data`}
             </CardTitle>
             <CardDescription>
-              {ar ? 'ساعات العمل الفعلية والخصومات لكل شهر من أشهر الربع' : 'Actual work hours and deductions per month of the quarter'}
+              {ar ? 'ساعات العمل والجزاءات التي حصل عليها الموظف في كل شهر من أشهر الربع' : 'Actual work hours and penalties received by the employee per month of the quarter'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -498,16 +498,38 @@ export const PerformanceReviewForm = () => {
                       <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
                     </div>
                     <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
-                      <MinusCircle className="w-4 h-4 text-destructive" />
-                      <span className="text-muted-foreground">{ar ? 'إجمالي الخصومات:' : 'Total deductions:'}</span>
-                      <span className="font-bold text-destructive ms-auto">{m.deductions.toLocaleString()} {ar ? 'ج.م' : 'EGP'}</span>
+                      <AlertTriangle className="w-4 h-4 text-destructive" />
+                      <span className="text-muted-foreground">{ar ? 'عدد الجزاءات:' : 'Penalties:'}</span>
+                      <span className="font-bold text-destructive ms-auto">{m.violations.length}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border/40">
-                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'جزاءات' : 'Penalties'}</span><span>{m.penaltyAmount.toLocaleString()}</span></div>
-                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'إجازات' : 'Leaves'}</span><span>{m.leaveDeduction.toLocaleString()}</span></div>
-                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'قروض' : 'Loans'}</span><span>{m.loanPayment.toLocaleString()}</span></div>
-                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'سلف' : 'Advances'}</span><span>{m.advanceAmount.toLocaleString()}</span></div>
-                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'فاتورة موبايل' : 'Mobile bill'}</span><span>{m.mobileBill.toLocaleString()}</span></div>
+                    <div className="space-y-2 pt-2 border-t border-border/40">
+                      {m.violations.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-1">{ar ? 'لا توجد جزاءات' : 'No penalties'}</p>
+                      ) : (
+                        m.violations.map(v => {
+                          const tl = violationTypeLabels[v.type] || violationTypeLabels.other;
+                          return (
+                            <div key={v.id} className="rounded-md bg-destructive/5 border border-destructive/20 p-2 text-xs space-y-1">
+                              <div className={cn("flex items-center justify-between gap-2", isRTL && "flex-row-reverse")}>
+                                <span className="font-semibold text-destructive">{ar ? tl.ar : tl.en}</span>
+                                <span className="text-muted-foreground">{formatDate(v.date)}</span>
+                              </div>
+                              {v.description && (
+                                <div className={cn("text-muted-foreground", isRTL && "text-right")}>
+                                  <span className="font-medium">{ar ? 'السبب: ' : 'Reason: '}</span>
+                                  <span className="whitespace-pre-wrap break-words">{v.description}</span>
+                                </div>
+                              )}
+                              {v.penalty && (
+                                <div className={cn("text-foreground", isRTL && "text-right")}>
+                                  <span className="font-medium">{ar ? 'العقوبة: ' : 'Penalty: '}</span>
+                                  <span className="whitespace-pre-wrap break-words">{v.penalty}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 ))}
@@ -523,7 +545,7 @@ export const PerformanceReviewForm = () => {
                 <span className="font-semibold">{ar ? 'إجمالي الربع' : 'Quarter Total'}</span>
                 <div className={cn("flex items-center gap-6", isRTL && "flex-row-reverse")}>
                   <span><span className="text-muted-foreground me-1">{ar ? 'ساعات:' : 'Hours:'}</span><span className="font-bold text-stat-blue">{quarterMonthly.reduce((s, m) => s + m.hours, 0).toFixed(1)}</span></span>
-                  <span><span className="text-muted-foreground me-1">{ar ? 'خصومات:' : 'Deductions:'}</span><span className="font-bold text-destructive">{quarterMonthly.reduce((s, m) => s + m.deductions, 0).toLocaleString()}</span></span>
+                  <span><span className="text-muted-foreground me-1">{ar ? 'جزاءات:' : 'Penalties:'}</span><span className="font-bold text-destructive">{quarterMonthly.reduce((s, m) => s + m.violations.length, 0)}</span></span>
                 </div>
               </div>
             )}
