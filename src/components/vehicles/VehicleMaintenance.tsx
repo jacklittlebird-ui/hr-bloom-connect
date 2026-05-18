@@ -245,19 +245,24 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     return found ? (isAr ? found.ar : found.en) : t;
   };
 
-  const filtered = useMemo(() => records.filter((r) => {
-    const v = vehicleMap[r.vehicle_id];
-    const txt = search.trim().toLowerCase();
-    const txtMatch = !txt || [v?.vehicle_code, v?.brand, v?.plate_number, r.maintenance_type, r.provider]
-      .some((f) => f?.toLowerCase().includes(txt));
-    const stMatch = !stationFilter || v?.station_id === stationFilter;
-    const typeMatch = typeFilter === 'all' || r.maintenance_type === typeFilter;
-    const vehMatch = vehicleFilter === 'all' || r.vehicle_id === vehicleFilter;
-    let dateMatch = true;
-    if (fromDate && r.maintenance_date < fromDate) dateMatch = false;
-    if (toDate && r.maintenance_date > toDate) dateMatch = false;
-    return txtMatch && stMatch && typeMatch && vehMatch && dateMatch;
-  }), [records, vehicleMap, search, stationFilter, typeFilter, vehicleFilter, fromDate, toDate]);
+  const filtered = useMemo(() => {
+    const list = records.filter((r) => {
+      const v = vehicleMap[r.vehicle_id];
+      const txt = search.trim().toLowerCase();
+      const txtMatch = !txt || [v?.vehicle_code, v?.brand, v?.model, v?.plate_number, r.maintenance_type, r.provider, r.description]
+        .some((f) => f?.toLowerCase().includes(txt));
+      const stMatch = !stationFilter || v?.station_id === stationFilter;
+      const typeMatch = typeFilter === 'all' || r.maintenance_type === typeFilter;
+      const vehMatch = vehicleFilter === 'all' || r.vehicle_id === vehicleFilter;
+      let dateMatch = true;
+      if (fromDate && r.maintenance_date < fromDate) dateMatch = false;
+      if (toDate && r.maintenance_date > toDate) dateMatch = false;
+      return txtMatch && stMatch && typeMatch && vehMatch && dateMatch;
+    });
+    return list.sort((a, b) => sortOrder === 'desc'
+      ? b.maintenance_date.localeCompare(a.maintenance_date)
+      : a.maintenance_date.localeCompare(b.maintenance_date));
+  }, [records, vehicleMap, search, stationFilter, typeFilter, vehicleFilter, fromDate, toDate, sortOrder]);
 
   const filteredVehiclesForStation = useMemo(() => {
     if (!stationFilter) return vehicles;
