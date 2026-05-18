@@ -726,7 +726,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                       <TableHead>{isAr ? 'التكلفة' : 'Cost'}</TableHead>
                       <TableHead>{isAr ? 'العداد' : 'Odometer'}</TableHead>
                       <TableHead>{isAr ? 'مقدم الخدمة' : 'Provider'}</TableHead>
-                      <TableHead>{isAr ? 'الصيانة القادمة' : 'Next'}</TableHead>
+                      <TableHead>{isAr ? 'العداد القادم' : 'Next Odo'}</TableHead>
                       <TableHead>{isAr ? 'إجراءات' : 'Actions'}</TableHead>
                     </TableRow>
                   </TableHeader>
