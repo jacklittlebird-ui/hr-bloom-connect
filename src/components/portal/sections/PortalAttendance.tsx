@@ -116,7 +116,8 @@ export const PortalAttendance = () => {
         }
       });
       const missionDates = new Set<string>((missionsRes.data || []).map((m: any) => m.date));
-      (window as any).__portalCoveredDates = { leaveDates, missionDates };
+      const covered = new Set<string>([...leaveDates, ...missionDates]);
+      setCoveredDates(covered);
 
       const attLogs: PortalAttendanceRecord[] = (attRes.data || []).map(r => {
         const holiday = holidayByDate.get(r.date) as any;
