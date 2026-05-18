@@ -368,7 +368,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
           odo: r.odometer_reading != null ? r.odometer_reading.toLocaleString() : '—',
           provider: r.provider || '—',
           cost: (r.cost || 0).toLocaleString(),
-          next: r.next_maintenance_date || '—',
+          next: r.next_maintenance_odometer != null ? r.next_maintenance_odometer.toLocaleString() : '—',
         };
       }),
       signatureLabels: ['مسؤول الصيانة', 'مدير الأسطول', 'الإدارة المالية'],
