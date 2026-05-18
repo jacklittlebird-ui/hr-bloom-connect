@@ -67,8 +67,11 @@ export const PerformanceReviewForm = () => {
   const [managerComments, setManagerComments] = useState('');
   const [saving, setSaving] = useState<null | 'draft' | 'submitted' | 'approved'>(null);
 
-  // Quarter context: deductions + monthly work hours
-  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; deductions: number; leaveDeduction: number; penaltyAmount: number; loanPayment: number; advanceAmount: number; mobileBill: number; }[]>([]);
+  // Quarter context: monthly work hours + violations (penalties)
+  interface QuarterViolation {
+    id: string; date: string; type: string; description: string; penalty: string; status: string;
+  }
+  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[]; }[]>([]);
   const [quarterLoading, setQuarterLoading] = useState(false);
 
   const quarterMonths = useMemo(() => {
@@ -91,10 +94,11 @@ export const PerformanceReviewForm = () => {
         const lastDay = new Date(parseInt(selectedYear), parseInt(lastMonth), 0).getDate();
         const endDate = `${selectedYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
 
-        const [payrollRes, attRes] = await Promise.all([
-          supabase.from('payroll_entries')
-            .select('month, total_deductions, leave_deduction, penalty_amount, loan_payment, advance_amount, mobile_bill')
-            .eq('employee_id', selectedEmployee).eq('year', selectedYear).in('month', quarterMonths),
+        const [violRes, attRes] = await Promise.all([
+          supabase.from('violations')
+            .select('id, date, type, description, penalty, status')
+            .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate)
+            .order('date', { ascending: false }),
           supabase.from('attendance_records')
             .select('date, work_hours')
             .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate),
@@ -105,17 +109,19 @@ export const PerformanceReviewForm = () => {
           const m = (r.date as string).slice(5, 7);
           hoursByMonth[m] = (hoursByMonth[m] || 0) + Number(r.work_hours || 0);
         });
-        const payrollByMonth: Record<string, any> = {};
-        (payrollRes.data || []).forEach((p: any) => { payrollByMonth[p.month] = p; });
+        const violByMonth: Record<string, QuarterViolation[]> = {};
+        (violRes.data || []).forEach((v: any) => {
+          const m = (v.date as string).slice(5, 7);
+          if (!violByMonth[m]) violByMonth[m] = [];
+          violByMonth[m].push({
+            id: v.id, date: v.date, type: v.type || 'other',
+            description: v.description || '', penalty: v.penalty || '', status: v.status || '',
+          });
+        });
         setQuarterMonthly(quarterMonths.map(m => ({
           month: m,
           hours: Math.round((hoursByMonth[m] || 0) * 10) / 10,
-          deductions: Number(payrollByMonth[m]?.total_deductions || 0),
-          leaveDeduction: Number(payrollByMonth[m]?.leave_deduction || 0),
-          penaltyAmount: Number(payrollByMonth[m]?.penalty_amount || 0),
-          loanPayment: Number(payrollByMonth[m]?.loan_payment || 0),
-          advanceAmount: Number(payrollByMonth[m]?.advance_amount || 0),
-          mobileBill: Number(payrollByMonth[m]?.mobile_bill || 0),
+          violations: violByMonth[m] || [],
         })));
       } finally {
         if (!cancelled) setQuarterLoading(false);
