@@ -26,7 +26,23 @@ import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car, Loader2 } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
+
+const violationTypeLabels: Record<string, { ar: string; en: string }> = {
+  absence: { ar: 'غياب بدون إذن', en: 'Unauthorized Absence' },
+  late: { ar: 'تأخر متكرر', en: 'Repeated Tardiness' },
+  conduct: { ar: 'سلوك غير لائق', en: 'Misconduct' },
+  safety: { ar: 'مخالفة سلامة', en: 'Safety Violation' },
+  other: { ar: 'أخرى', en: 'Other' },
+};
+
+const monthLabelHelper = (m: string, ar: boolean) => {
+  const ar_m = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const en_m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const idx = parseInt(m) - 1;
+  return ar ? ar_m[idx] : en_m[idx];
+};
 import { LeaveCalendar } from '@/components/leaves/LeaveCalendar';
 import type { LeaveRequest } from '@/types/leaves';
 import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
@@ -655,6 +671,61 @@ const StationManagerPortal = () => {
   }, [newEvalExisting]);
 
   useEffect(() => { setNewEvalPage(0); }, [newEvalDeptFilter]);
+
+  // Quarter context: monthly work hours + violations (penalties) for selected employee
+  interface QuarterViolation { id: string; date: string; type: string; description: string; penalty: string; status: string; }
+  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[] }[]>([]);
+  const [quarterLoading, setQuarterLoading] = useState(false);
+
+  const newEvalQuarterMonths = useMemo(() => {
+    if (!newEvalQuarter) return [] as string[];
+    const map: Record<string, string[]> = { Q1: ['01','02','03'], Q2: ['04','05','06'], Q3: ['07','08','09'], Q4: ['10','11','12'] };
+    return map[newEvalQuarter] || [];
+  }, [newEvalQuarter]);
+
+  useEffect(() => {
+    if (!newEvalSelectedEmp || !newEvalYear || newEvalQuarterMonths.length === 0) {
+      setQuarterMonthly([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setQuarterLoading(true);
+      try {
+        const startDate = `${newEvalYear}-${newEvalQuarterMonths[0]}-01`;
+        const lastMonth = newEvalQuarterMonths[newEvalQuarterMonths.length - 1];
+        const lastDay = new Date(parseInt(newEvalYear), parseInt(lastMonth), 0).getDate();
+        const endDate = `${newEvalYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+        const [violRes, attRes] = await Promise.all([
+          supabase.from('violations').select('id, date, type, description, penalty, status')
+            .eq('employee_id', newEvalSelectedEmp).gte('date', startDate).lte('date', endDate)
+            .order('date', { ascending: false }),
+          supabase.from('attendance_records').select('date, work_hours')
+            .eq('employee_id', newEvalSelectedEmp).gte('date', startDate).lte('date', endDate),
+        ]);
+        if (cancelled) return;
+        const hoursByMonth: Record<string, number> = {};
+        (attRes.data || []).forEach((r: any) => {
+          const m = (r.date as string).slice(5, 7);
+          hoursByMonth[m] = (hoursByMonth[m] || 0) + Number(r.work_hours || 0);
+        });
+        const violByMonth: Record<string, QuarterViolation[]> = {};
+        (violRes.data || []).forEach((v: any) => {
+          const m = (v.date as string).slice(5, 7);
+          if (!violByMonth[m]) violByMonth[m] = [];
+          violByMonth[m].push({ id: v.id, date: v.date, type: v.type || 'other', description: v.description || '', penalty: v.penalty || '', status: v.status || '' });
+        });
+        setQuarterMonthly(newEvalQuarterMonths.map(m => ({
+          month: m,
+          hours: Math.round((hoursByMonth[m] || 0) * 10) / 10,
+          violations: violByMonth[m] || [],
+        })));
+      } finally {
+        if (!cancelled) setQuarterLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [newEvalSelectedEmp, newEvalYear, newEvalQuarterMonths]);
 
   const handleNewEvalSave = async (status: 'draft' | 'submitted') => {
     if (!newEvalSelectedEmp || !newEvalYear || !newEvalQuarter) {
@@ -1502,6 +1573,93 @@ const StationManagerPortal = () => {
                       })()}
                     </CardContent>
                   </Card>
+
+                  {/* Quarter context: hours per month + violations */}
+                  {newEvalSelectedEmp && newEvalYear && newEvalQuarter && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className={cn("flex items-center gap-2 text-base", isRTL && "flex-row-reverse")}>
+                          <Clock className="w-5 h-5 text-primary" />
+                          {ar ? `بيانات الربع ${newEvalQuarter} - ${newEvalYear}` : `Quarter ${newEvalQuarter} - ${newEvalYear} Data`}
+                        </CardTitle>
+                        <CardDescription>
+                          {ar ? 'ساعات العمل والجزاءات التي حصل عليها الموظف في كل شهر من أشهر الربع' : 'Actual work hours and penalties received by the employee per month of the quarter'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {quarterLoading ? (
+                          <div className="flex items-center justify-center py-6 text-muted-foreground gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            {ar ? 'جاري التحميل...' : 'Loading...'}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {quarterMonthly.map(m => (
+                              <div key={m.month} className="rounded-lg border border-border/60 p-4 space-y-3 bg-muted/20">
+                                <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+                                  <span className="font-semibold">{monthLabelHelper(m.month, ar)}</span>
+                                  <Badge variant="outline" className="bg-primary/5 border-primary/30 text-primary">{m.month}/{newEvalYear}</Badge>
+                                </div>
+                                <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                                  <Clock className="w-4 h-4 text-stat-blue" />
+                                  <span className="text-muted-foreground">{ar ? 'ساعات العمل:' : 'Work hours:'}</span>
+                                  <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
+                                </div>
+                                <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                                  <AlertTriangle className="w-4 h-4 text-destructive" />
+                                  <span className="text-muted-foreground">{ar ? 'عدد الجزاءات:' : 'Penalties:'}</span>
+                                  <span className="font-bold text-destructive ms-auto">{m.violations.length}</span>
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-border/40">
+                                  {m.violations.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground text-center py-1">{ar ? 'لا توجد جزاءات' : 'No penalties'}</p>
+                                  ) : (
+                                    m.violations.map(v => {
+                                      const tl = violationTypeLabels[v.type] || violationTypeLabels.other;
+                                      return (
+                                        <div key={v.id} className="rounded-md bg-destructive/5 border border-destructive/20 p-2 text-xs space-y-1">
+                                          <div className={cn("flex items-center justify-between gap-2", isRTL && "flex-row-reverse")}>
+                                            <span className="font-semibold text-destructive">{ar ? tl.ar : tl.en}</span>
+                                            <span className="text-muted-foreground">{formatDate(v.date)}</span>
+                                          </div>
+                                          {v.description && (
+                                            <div className={cn("text-muted-foreground", isRTL && "text-right")}>
+                                              <span className="font-medium">{ar ? 'السبب: ' : 'Reason: '}</span>
+                                              <span className="whitespace-pre-wrap break-words">{v.description}</span>
+                                            </div>
+                                          )}
+                                          {v.penalty && (
+                                            <div className={cn("text-foreground", isRTL && "text-right")}>
+                                              <span className="font-medium">{ar ? 'العقوبة: ' : 'Penalty: '}</span>
+                                              <span className="whitespace-pre-wrap break-words">{v.penalty}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                            {quarterMonthly.length === 0 && (
+                              <div className="col-span-full text-center text-sm text-muted-foreground py-6">
+                                {ar ? 'لا توجد بيانات' : 'No data available'}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {quarterMonthly.length > 0 && !quarterLoading && (
+                          <div className={cn("mt-4 flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm", isRTL && "flex-row-reverse")}>
+                            <span className="font-semibold">{ar ? 'إجمالي الربع' : 'Quarter Total'}</span>
+                            <div className={cn("flex items-center gap-6", isRTL && "flex-row-reverse")}>
+                              <span><span className="text-muted-foreground me-1">{ar ? 'ساعات:' : 'Hours:'}</span><span className="font-bold text-stat-blue">{quarterMonthly.reduce((s, m) => s + m.hours, 0).toFixed(1)}</span></span>
+                              <span><span className="text-muted-foreground me-1">{ar ? 'جزاءات:' : 'Penalties:'}</span><span className="font-bold text-destructive">{quarterMonthly.reduce((s, m) => s + m.violations.length, 0)}</span></span>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Criteria */}
                   <Card>
