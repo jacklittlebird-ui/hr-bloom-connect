@@ -9,10 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2, Clock, MinusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CriteriaScore {
   id: string;
@@ -56,6 +57,70 @@ export const PerformanceReviewForm = () => {
   const [goals, setGoals] = useState('');
   const [managerComments, setManagerComments] = useState('');
   const [saving, setSaving] = useState<null | 'draft' | 'submitted' | 'approved'>(null);
+
+  // Quarter context: deductions + monthly work hours
+  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; deductions: number; leaveDeduction: number; penaltyAmount: number; loanPayment: number; advanceAmount: number; mobileBill: number; }[]>([]);
+  const [quarterLoading, setQuarterLoading] = useState(false);
+
+  const quarterMonths = useMemo(() => {
+    if (!selectedQuarter) return [] as string[];
+    const map: Record<string, string[]> = { Q1: ['01','02','03'], Q2: ['04','05','06'], Q3: ['07','08','09'], Q4: ['10','11','12'] };
+    return map[selectedQuarter] || [];
+  }, [selectedQuarter]);
+
+  useEffect(() => {
+    if (!selectedEmployee || !selectedYear || quarterMonths.length === 0) {
+      setQuarterMonthly([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setQuarterLoading(true);
+      try {
+        const startDate = `${selectedYear}-${quarterMonths[0]}-01`;
+        const lastMonth = quarterMonths[quarterMonths.length - 1];
+        const lastDay = new Date(parseInt(selectedYear), parseInt(lastMonth), 0).getDate();
+        const endDate = `${selectedYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+
+        const [payrollRes, attRes] = await Promise.all([
+          supabase.from('payroll_entries')
+            .select('month, total_deductions, leave_deduction, penalty_amount, loan_payment, advance_amount, mobile_bill')
+            .eq('employee_id', selectedEmployee).eq('year', selectedYear).in('month', quarterMonths),
+          supabase.from('attendance_records')
+            .select('date, work_hours')
+            .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate),
+        ]);
+        if (cancelled) return;
+        const hoursByMonth: Record<string, number> = {};
+        (attRes.data || []).forEach((r: any) => {
+          const m = (r.date as string).slice(5, 7);
+          hoursByMonth[m] = (hoursByMonth[m] || 0) + Number(r.work_hours || 0);
+        });
+        const payrollByMonth: Record<string, any> = {};
+        (payrollRes.data || []).forEach((p: any) => { payrollByMonth[p.month] = p; });
+        setQuarterMonthly(quarterMonths.map(m => ({
+          month: m,
+          hours: Math.round((hoursByMonth[m] || 0) * 10) / 10,
+          deductions: Number(payrollByMonth[m]?.total_deductions || 0),
+          leaveDeduction: Number(payrollByMonth[m]?.leave_deduction || 0),
+          penaltyAmount: Number(payrollByMonth[m]?.penalty_amount || 0),
+          loanPayment: Number(payrollByMonth[m]?.loan_payment || 0),
+          advanceAmount: Number(payrollByMonth[m]?.advance_amount || 0),
+          mobileBill: Number(payrollByMonth[m]?.mobile_bill || 0),
+        })));
+      } finally {
+        if (!cancelled) setQuarterLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedEmployee, selectedYear, quarterMonths]);
+
+  const monthLabel = (m: string) => {
+    const ar_m = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    const en_m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const idx = parseInt(m) - 1;
+    return ar ? ar_m[idx] : en_m[idx];
+  };
 
   // Find existing review for selected employee+quarter+year
   const existingReview = useMemo(() => {
@@ -386,7 +451,72 @@ export const PerformanceReviewForm = () => {
         </CardContent>
       </Card>
 
-      {/* Performance Criteria */}
+      {/* Quarter context: hours per month + deductions */}
+      {selectedEmployee && selectedYear && selectedQuarter && (
+        <Card>
+          <CardHeader>
+            <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Clock className="w-5 h-5 text-primary" />
+              {ar ? `بيانات الربع ${selectedQuarter} - ${selectedYear}` : `Quarter ${selectedQuarter} - ${selectedYear} Data`}
+            </CardTitle>
+            <CardDescription>
+              {ar ? 'ساعات العمل الفعلية والخصومات لكل شهر من أشهر الربع' : 'Actual work hours and deductions per month of the quarter'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {quarterLoading ? (
+              <div className="flex items-center justify-center py-6 text-muted-foreground gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {ar ? 'جاري التحميل...' : 'Loading...'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {quarterMonthly.map(m => (
+                  <div key={m.month} className="rounded-lg border border-border/60 p-4 space-y-3 bg-muted/20">
+                    <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+                      <span className="font-semibold">{monthLabel(m.month)}</span>
+                      <Badge variant="outline" className="bg-primary/5 border-primary/30 text-primary">{m.month}/{selectedYear}</Badge>
+                    </div>
+                    <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                      <Clock className="w-4 h-4 text-stat-blue" />
+                      <span className="text-muted-foreground">{ar ? 'ساعات العمل:' : 'Work hours:'}</span>
+                      <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
+                    </div>
+                    <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                      <MinusCircle className="w-4 h-4 text-destructive" />
+                      <span className="text-muted-foreground">{ar ? 'إجمالي الخصومات:' : 'Total deductions:'}</span>
+                      <span className="font-bold text-destructive ms-auto">{m.deductions.toLocaleString()} {ar ? 'ج.م' : 'EGP'}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t border-border/40">
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'جزاءات' : 'Penalties'}</span><span>{m.penaltyAmount.toLocaleString()}</span></div>
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'إجازات' : 'Leaves'}</span><span>{m.leaveDeduction.toLocaleString()}</span></div>
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'قروض' : 'Loans'}</span><span>{m.loanPayment.toLocaleString()}</span></div>
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'سلف' : 'Advances'}</span><span>{m.advanceAmount.toLocaleString()}</span></div>
+                      <div className={cn("flex justify-between", isRTL && "flex-row-reverse")}><span>{ar ? 'فاتورة موبايل' : 'Mobile bill'}</span><span>{m.mobileBill.toLocaleString()}</span></div>
+                    </div>
+                  </div>
+                ))}
+                {quarterMonthly.length === 0 && (
+                  <div className="col-span-full text-center text-sm text-muted-foreground py-6">
+                    {ar ? 'لا توجد بيانات' : 'No data available'}
+                  </div>
+                )}
+              </div>
+            )}
+            {quarterMonthly.length > 0 && !quarterLoading && (
+              <div className={cn("mt-4 flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm", isRTL && "flex-row-reverse")}>
+                <span className="font-semibold">{ar ? 'إجمالي الربع' : 'Quarter Total'}</span>
+                <div className={cn("flex items-center gap-6", isRTL && "flex-row-reverse")}>
+                  <span><span className="text-muted-foreground me-1">{ar ? 'ساعات:' : 'Hours:'}</span><span className="font-bold text-stat-blue">{quarterMonthly.reduce((s, m) => s + m.hours, 0).toFixed(1)}</span></span>
+                  <span><span className="text-muted-foreground me-1">{ar ? 'خصومات:' : 'Deductions:'}</span><span className="font-bold text-destructive">{quarterMonthly.reduce((s, m) => s + m.deductions, 0).toLocaleString()}</span></span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+
       <Card>
         <CardHeader>
           <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
