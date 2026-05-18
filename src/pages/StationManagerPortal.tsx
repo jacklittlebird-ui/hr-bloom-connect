@@ -672,6 +672,61 @@ const StationManagerPortal = () => {
 
   useEffect(() => { setNewEvalPage(0); }, [newEvalDeptFilter]);
 
+  // Quarter context: monthly work hours + violations (penalties) for selected employee
+  interface QuarterViolation { id: string; date: string; type: string; description: string; penalty: string; status: string; }
+  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[] }[]>([]);
+  const [quarterLoading, setQuarterLoading] = useState(false);
+
+  const newEvalQuarterMonths = useMemo(() => {
+    if (!newEvalQuarter) return [] as string[];
+    const map: Record<string, string[]> = { Q1: ['01','02','03'], Q2: ['04','05','06'], Q3: ['07','08','09'], Q4: ['10','11','12'] };
+    return map[newEvalQuarter] || [];
+  }, [newEvalQuarter]);
+
+  useEffect(() => {
+    if (!newEvalSelectedEmp || !newEvalYear || newEvalQuarterMonths.length === 0) {
+      setQuarterMonthly([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setQuarterLoading(true);
+      try {
+        const startDate = `${newEvalYear}-${newEvalQuarterMonths[0]}-01`;
+        const lastMonth = newEvalQuarterMonths[newEvalQuarterMonths.length - 1];
+        const lastDay = new Date(parseInt(newEvalYear), parseInt(lastMonth), 0).getDate();
+        const endDate = `${newEvalYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+        const [violRes, attRes] = await Promise.all([
+          supabase.from('violations').select('id, date, type, description, penalty, status')
+            .eq('employee_id', newEvalSelectedEmp).gte('date', startDate).lte('date', endDate)
+            .order('date', { ascending: false }),
+          supabase.from('attendance_records').select('date, work_hours')
+            .eq('employee_id', newEvalSelectedEmp).gte('date', startDate).lte('date', endDate),
+        ]);
+        if (cancelled) return;
+        const hoursByMonth: Record<string, number> = {};
+        (attRes.data || []).forEach((r: any) => {
+          const m = (r.date as string).slice(5, 7);
+          hoursByMonth[m] = (hoursByMonth[m] || 0) + Number(r.work_hours || 0);
+        });
+        const violByMonth: Record<string, QuarterViolation[]> = {};
+        (violRes.data || []).forEach((v: any) => {
+          const m = (v.date as string).slice(5, 7);
+          if (!violByMonth[m]) violByMonth[m] = [];
+          violByMonth[m].push({ id: v.id, date: v.date, type: v.type || 'other', description: v.description || '', penalty: v.penalty || '', status: v.status || '' });
+        });
+        setQuarterMonthly(newEvalQuarterMonths.map(m => ({
+          month: m,
+          hours: Math.round((hoursByMonth[m] || 0) * 10) / 10,
+          violations: violByMonth[m] || [],
+        })));
+      } finally {
+        if (!cancelled) setQuarterLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [newEvalSelectedEmp, newEvalYear, newEvalQuarterMonths]);
+
   const handleNewEvalSave = async (status: 'draft' | 'submitted') => {
     if (!newEvalSelectedEmp || !newEvalYear || !newEvalQuarter) {
       toast({ title: t('أكمل البيانات المطلوبة', 'Complete required fields'), variant: 'destructive' });
