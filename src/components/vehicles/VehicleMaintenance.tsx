@@ -71,6 +71,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
   const [search, setSearch] = usePersistedState<string>('hr_vehicles_maint_search', '');
   const [stationFilter, setStationFilter] = usePersistedState<string | null>('hr_vehicles_maint_station', null);
   const [typeFilter, setTypeFilter] = usePersistedState<string>('hr_vehicles_maint_type', 'all');
+  const [vehicleFilter, setVehicleFilter] = usePersistedState<string>('hr_vehicles_maint_vehicle', 'all');
   const [fromDate, setFromDate] = usePersistedState<string>('hr_vehicles_maint_from', '');
   const [toDate, setToDate] = usePersistedState<string>('hr_vehicles_maint_to', '');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -105,9 +106,9 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     next_maintenance_odometer: '', odometer_reading: '', provider: '', notes: '',
   });
 
-  const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || !!fromDate || !!toDate;
+  const filtersActive = !!search || !!stationFilter || typeFilter !== 'all' || vehicleFilter !== 'all' || !!fromDate || !!toDate;
   const resetFilters = () => {
-    setSearch(''); setStationFilter(null); setTypeFilter('all'); setFromDate(''); setToDate('');
+    setSearch(''); setStationFilter(null); setTypeFilter('all'); setVehicleFilter('all'); setFromDate(''); setToDate('');
     toast.success(isAr ? 'تم إعادة ضبط الفلاتر' : 'Filters reset');
   };
 
@@ -250,11 +251,12 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
       .some((f) => f?.toLowerCase().includes(txt));
     const stMatch = !stationFilter || v?.station_id === stationFilter;
     const typeMatch = typeFilter === 'all' || r.maintenance_type === typeFilter;
+    const vehMatch = vehicleFilter === 'all' || r.vehicle_id === vehicleFilter;
     let dateMatch = true;
     if (fromDate && r.maintenance_date < fromDate) dateMatch = false;
     if (toDate && r.maintenance_date > toDate) dateMatch = false;
-    return txtMatch && stMatch && typeMatch && dateMatch;
-  }), [records, vehicleMap, search, stationFilter, typeFilter, fromDate, toDate]);
+    return txtMatch && stMatch && typeMatch && vehMatch && dateMatch;
+  }), [records, vehicleMap, search, stationFilter, typeFilter, vehicleFilter, fromDate, toDate]);
 
   const filteredVehiclesForStation = useMemo(() => {
     if (!stationFilter) return vehicles;
@@ -506,6 +508,17 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
               <SelectContent>
                 <SelectItem value="all">{isAr ? 'كل الأنواع' : 'All Types'}</SelectItem>
                 {TYPES.map((t) => (<SelectItem key={t.value} value={t.value}>{isAr ? t.ar : t.en}</SelectItem>))}
+              </SelectContent>
+            </Select>
+            <Select value={vehicleFilter} onValueChange={setVehicleFilter}>
+              <SelectTrigger className="w-48 h-9"><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="all">{isAr ? 'كل السيارات' : 'All Vehicles'}</SelectItem>
+                {filteredVehiclesForStation.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.vehicle_code} - {v.plate_number}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-9 w-36" title={isAr ? 'من تاريخ' : 'From date'} />
