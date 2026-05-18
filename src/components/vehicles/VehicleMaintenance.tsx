@@ -580,8 +580,8 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                                 <Input type="date" value={row.maintenance_date} onChange={(e) => update({ maintenance_date: e.target.value })} className="h-9" />
                               </div>
                               <div>
-                                <Label className="text-xs">{isAr ? 'الصيانة القادمة' : 'Next due'}</Label>
-                                <Input type="date" value={row.next_maintenance_date} onChange={(e) => update({ next_maintenance_date: e.target.value })} className="h-9" />
+                                <Label className="text-xs">{isAr ? 'قراءة العداد القادمة (كم)' : 'Next odometer (km)'}</Label>
+                                <Input type="number" min={0} placeholder={isAr ? 'مثال: 50000' : 'e.g. 50000'} value={row.next_maintenance_odometer} onChange={(e) => update({ next_maintenance_odometer: e.target.value })} className="h-9" />
                               </div>
                               <div>
                                 <Label className="text-xs">{isAr ? 'التكلفة' : 'Cost'}</Label>
