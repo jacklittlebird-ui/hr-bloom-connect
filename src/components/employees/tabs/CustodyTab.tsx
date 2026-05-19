@@ -106,7 +106,9 @@ export const CustodyTab = ({ employee }: CustodyTabProps) => {
     maintenance: { ar: 'بالصيانة', cls: 'bg-amber-100 text-amber-700 border-amber-400' },
   };
   const statusMap: Record<string, { ar: string; cls: string }> = {
-    enrolled: { ar: 'قيد التدريب', cls: 'bg-warning/10 text-warning border-warning' },
+    enrolled: { ar: 'مسجل', cls: 'bg-warning/10 text-warning border-warning' },
+    planned: { ar: 'مخطط', cls: 'bg-blue-100 text-blue-700 border-blue-300' },
+    in_progress: { ar: 'جاري', cls: 'bg-warning/10 text-warning border-warning' },
     failed: { ar: 'لم يجتاز', cls: 'bg-destructive/10 text-destructive border-destructive' },
     completed: { ar: 'مكتمل', cls: 'bg-primary/10 text-primary border-primary' },
   };
