@@ -249,7 +249,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     /* Front */
     .red-arrow{position:absolute;top:-36px;left:-132px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
-    .brand{width:270px;margin:72px auto 0;text-align:center;position:relative;z-index:4;line-height:1;}
+    .brand{width:270px;margin:64px auto 0;text-align:center;position:relative;z-index:4;line-height:1;}
     .brand span{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:42px;letter-spacing:0;line-height:1;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
