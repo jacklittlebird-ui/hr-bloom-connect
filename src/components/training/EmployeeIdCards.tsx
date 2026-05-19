@@ -40,32 +40,40 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
   const logoRef = useRef<HTMLImageElement>(null);
 
   // Runtime overlap detection — warns if brand collides with any other card element
+  const checkOverlap = useCallback(() => {
+    const brand = brandRef.current?.getBoundingClientRect();
+    if (!brand || brand.width === 0) return;
+    const targets: Array<[string, DOMRect | undefined]> = [
+      ['photo', photoRef.current?.getBoundingClientRect()],
+      ['info', infoRef.current?.getBoundingClientRect()],
+      ['logo', logoRef.current?.getBoundingClientRect()],
+    ];
+    const overlap = (a: DOMRect, b: DOMRect) =>
+      !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+    targets.forEach(([name, rect]) => {
+      if (rect && rect.width > 0 && overlap(brand, rect)) {
+        // eslint-disable-next-line no-console
+        console.warn(`[IdCardFront] "Link Aero" overlaps ${name}`, { brand, [name]: rect });
+      }
+    });
+  }, []);
+
   useEffect(() => {
-    const check = () => {
-      const brand = brandRef.current?.getBoundingClientRect();
-      if (!brand) return;
-      const targets: Array<[string, DOMRect | undefined]> = [
-        ['photo', photoRef.current?.getBoundingClientRect()],
-        ['info', infoRef.current?.getBoundingClientRect()],
-        ['logo', logoRef.current?.getBoundingClientRect()],
-      ];
-      const overlap = (a: DOMRect, b: DOMRect) =>
-        !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
-      targets.forEach(([name, rect]) => {
-        if (rect && overlap(brand, rect)) {
-          // eslint-disable-next-line no-console
-          console.warn(`[IdCardFront] "Link Aero" overlaps ${name}`, { brand, [name]: rect });
-        }
-      });
+    let debounceId: number | undefined;
+    const debounced = () => {
+      if (debounceId) window.clearTimeout(debounceId);
+      debounceId = window.setTimeout(checkOverlap, 150);
     };
-    check();
-    const id = window.setTimeout(check, 300); // re-check after images load
-    window.addEventListener('resize', check);
+    // initial check after layout settles
+    const initId = window.setTimeout(checkOverlap, 50);
+    window.addEventListener('resize', debounced);
     return () => {
-      window.clearTimeout(id);
-      window.removeEventListener('resize', check);
+      window.clearTimeout(initId);
+      if (debounceId) window.clearTimeout(debounceId);
+      window.removeEventListener('resize', debounced);
     };
-  }, [emp.avatar]);
+  }, [checkOverlap, emp.avatar]);
+
 
   return (
     <div
@@ -117,7 +125,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       />
 
       {/* Brand wordmark — Link Aero (flow-based, can't overlap photo) */}
-      <div ref={brandRef} style={{ marginTop: '60px', textAlign: 'center', zIndex: 4, position: 'relative' }}>
+      <div ref={brandRef} style={{ marginTop: '44px', textAlign: 'center', zIndex: 4, position: 'relative' }}>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_RED, letterSpacing: '0px' }}>Link</span>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_BLUE, letterSpacing: '0px' }}> Aero</span>
       </div>
@@ -127,7 +135,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         ref={photoRef}
         style={{
           position: 'relative',
-          margin: '18px auto 0',
+          margin: '10px auto 0',
           width: '170px',
           height: '170px',
           borderRadius: '50%',
@@ -142,7 +150,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         }}
       >
         {emp.avatar ? (
-          <img src={emp.avatar} alt={emp.name_en} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={emp.avatar} alt={emp.name_en} onLoad={checkOverlap} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <User style={{ width: '60px', height: '60px', color: '#94a3b8' }} />
         )}
@@ -177,6 +185,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         ref={logoRef}
         src={COMPANY_LOGO}
         alt="Company"
+        onLoad={checkOverlap}
         style={{
           position: 'absolute',
           bottom: '58px',
