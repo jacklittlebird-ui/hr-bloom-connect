@@ -150,7 +150,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         }}
       >
         {emp.avatar ? (
-          <img src={emp.avatar} alt={emp.name_en} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={emp.avatar} alt={emp.name_en} onLoad={checkOverlap} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <User style={{ width: '60px', height: '60px', color: '#94a3b8' }} />
         )}
