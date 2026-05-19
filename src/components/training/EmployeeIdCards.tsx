@@ -110,7 +110,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
 
       {/* Info block bottom-left */}
       <div style={{ position: 'absolute', bottom: '70px', left: '20px', zIndex: 2, maxWidth: '180px' }}>
-        <div style={{ fontSize: '20px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.1 }}>
+        <div style={{ fontSize: '17px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.1 }}>
           {emp.name_en}
         </div>
         {emp.job_title_en && (
@@ -137,7 +137,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
           position: 'absolute',
           bottom: '65px',
           right: '16px',
-          height: '110px',
+          height: '135px',
           objectFit: 'contain',
           zIndex: 3,
         }}
@@ -202,13 +202,13 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
       align-items:center;justify-content:center;z-index:2;}
     .photo img{width:100%;height:100%;object-fit:cover;}
     .info{position:absolute;bottom:80px;left:26px;z-index:2;max-width:210px;}
-    .name{font-size:24px;font-weight:800;color:${BRAND_BLUE};line-height:1.1;}
+    .name{font-size:20px;font-weight:800;color:${BRAND_BLUE};line-height:1.1;}
     .title{font-size:11px;color:#475569;font-weight:600;margin-top:3px;}
     .row{margin-top:12px;font-size:15px;font-weight:700;color:${BRAND_BLUE};}
     .row + .row{margin-top:3px;font-size:14px;}
     .row span{color:#0f172a;font-weight:700;}
     .valid{margin-top:6px;font-size:11px;font-weight:600;color:#475569;}
-    .flogo{position:absolute;bottom:75px;right:20px;height:130px;object-fit:contain;z-index:3;}
+    .flogo{position:absolute;bottom:75px;right:20px;height:160px;object-fit:contain;z-index:3;}
     .site{position:absolute;bottom:18px;left:26px;font-size:14px;font-weight:800;color:${BRAND_RED};z-index:3;}
 
     /* Back */
