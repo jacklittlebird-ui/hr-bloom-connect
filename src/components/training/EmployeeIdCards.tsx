@@ -197,7 +197,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     /* Front */
     .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
-    .brand{position:relative;text-align:center;padding-top:50px;padding-right:36px;z-index:2;}
+    .brand{position:relative;text-align:center;padding-top:50px;padding-left:36px;z-index:2;}
     .brand span{font-weight:800;font-size:48px;letter-spacing:-0.5px;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
@@ -223,8 +223,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .globe{position:absolute;bottom:-30px;right:-40px;width:240px;height:auto;z-index:1;}
 
     @media print{
-      body{background:#fff;padding:0;}
-      .wrap{gap:6mm;justify-content:center;}
+      html,body{background:#fff;padding:0;margin:0;width:100%;display:block;}
+      .wrap{gap:6mm;justify-content:center;align-items:flex-start;width:100%;padding-top:14mm;}
       .card{transform:scale(0.54);transform-origin:top left;margin:0 -175px -276px 0;}
     }
   </style>
