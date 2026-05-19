@@ -40,32 +40,40 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
   const logoRef = useRef<HTMLImageElement>(null);
 
   // Runtime overlap detection — warns if brand collides with any other card element
+  const checkOverlap = useCallback(() => {
+    const brand = brandRef.current?.getBoundingClientRect();
+    if (!brand || brand.width === 0) return;
+    const targets: Array<[string, DOMRect | undefined]> = [
+      ['photo', photoRef.current?.getBoundingClientRect()],
+      ['info', infoRef.current?.getBoundingClientRect()],
+      ['logo', logoRef.current?.getBoundingClientRect()],
+    ];
+    const overlap = (a: DOMRect, b: DOMRect) =>
+      !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+    targets.forEach(([name, rect]) => {
+      if (rect && rect.width > 0 && overlap(brand, rect)) {
+        // eslint-disable-next-line no-console
+        console.warn(`[IdCardFront] "Link Aero" overlaps ${name}`, { brand, [name]: rect });
+      }
+    });
+  }, []);
+
   useEffect(() => {
-    const check = () => {
-      const brand = brandRef.current?.getBoundingClientRect();
-      if (!brand) return;
-      const targets: Array<[string, DOMRect | undefined]> = [
-        ['photo', photoRef.current?.getBoundingClientRect()],
-        ['info', infoRef.current?.getBoundingClientRect()],
-        ['logo', logoRef.current?.getBoundingClientRect()],
-      ];
-      const overlap = (a: DOMRect, b: DOMRect) =>
-        !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
-      targets.forEach(([name, rect]) => {
-        if (rect && overlap(brand, rect)) {
-          // eslint-disable-next-line no-console
-          console.warn(`[IdCardFront] "Link Aero" overlaps ${name}`, { brand, [name]: rect });
-        }
-      });
+    let debounceId: number | undefined;
+    const debounced = () => {
+      if (debounceId) window.clearTimeout(debounceId);
+      debounceId = window.setTimeout(checkOverlap, 150);
     };
-    check();
-    const id = window.setTimeout(check, 300); // re-check after images load
-    window.addEventListener('resize', check);
+    // initial check after layout settles
+    const initId = window.setTimeout(checkOverlap, 50);
+    window.addEventListener('resize', debounced);
     return () => {
-      window.clearTimeout(id);
-      window.removeEventListener('resize', check);
+      window.clearTimeout(initId);
+      if (debounceId) window.clearTimeout(debounceId);
+      window.removeEventListener('resize', debounced);
     };
-  }, [emp.avatar]);
+  }, [checkOverlap, emp.avatar]);
+
 
   return (
     <div
