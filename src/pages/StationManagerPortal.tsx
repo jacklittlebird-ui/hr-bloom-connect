@@ -698,7 +698,7 @@ const StationManagerPortal = () => {
     }
   }, [newEvalExisting]);
 
-  useEffect(() => { setNewEvalPage(0); }, [newEvalDeptFilter]);
+  useEffect(() => { setNewEvalPage(0); }, [newEvalDeptFilter, newEvalSearch]);
 
   // Quarter context: monthly work hours + violations (penalties) for selected employee
   interface QuarterViolation { id: string; date: string; type: string; description: string; penalty: string; status: string; }
