@@ -26,6 +26,8 @@ import { toast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { usePagination } from '@/hooks/usePagination';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car, Loader2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -313,38 +315,47 @@ const StationManagerPortal = () => {
   const [attRecords, setAttRecords] = useState<any[]>([]);
   const [attLoading, setAttLoading] = useState(false);
 
+  const attReqIdRef = useRef(0);
   const fetchAttendance = useCallback(async () => {
-    if (stationEmployees.length === 0) { setAttRecords([]); return; }
+    const reqId = ++attReqIdRef.current;
+    // Clear stale results immediately so partial/old data never displays
+    setAttRecords([]);
+    if (stationEmployees.length === 0) { setAttLoading(false); return; }
     setAttLoading(true);
     const empIds = stationEmployees.map(e => e.id);
     const PAGE_SIZE = 1000;
     const all: any[] = [];
-    let from = 0;
-    let hasMore = true;
-    while (hasMore) {
-      const { data, error } = await supabase
-        .from('attendance_records')
-        .select('*')
-        .in('employee_id', empIds)
-        .gte('date', attDateFrom)
-        .lte('date', attDateTo)
-        .order('date', { ascending: false })
-        .range(from, from + PAGE_SIZE - 1);
-      if (error) { console.error('Attendance fetch error:', error); break; }
-      const page = data || [];
-      all.push(...page);
-      hasMore = page.length === PAGE_SIZE;
-      from += PAGE_SIZE;
+    // Iterate employees in chunks of 200 to avoid huge IN clauses, and paginate within each chunk
+    const EMP_CHUNK = 200;
+    for (let ci = 0; ci < empIds.length; ci += EMP_CHUNK) {
+      const chunk = empIds.slice(ci, ci + EMP_CHUNK);
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('attendance_records')
+          .select('*')
+          .in('employee_id', chunk)
+          .gte('date', attDateFrom)
+          .lte('date', attDateTo)
+          .order('date', { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+        if (reqId !== attReqIdRef.current) return; // superseded by newer request
+        if (error) { console.error('Attendance fetch error:', error); break; }
+        const page = data || [];
+        all.push(...page);
+        hasMore = page.length === PAGE_SIZE;
+        from += PAGE_SIZE;
+      }
     }
+    if (reqId !== attReqIdRef.current) return;
     setAttRecords(all);
     setAttLoading(false);
   }, [stationEmployees, attDateFrom, attDateTo]);
 
-  // Lazy: only fetch attendance when tab is active
-  const attFetched = useRef(false);
+  // Lazy: only fetch attendance when tab is active; refetch on date range change
   useEffect(() => {
     if (activeTab === 'attendance') {
-      attFetched.current = true;
       fetchAttendance();
     }
   }, [activeTab, fetchAttendance]);
@@ -395,6 +406,8 @@ const StationManagerPortal = () => {
     }
     return list;
   }, [attRecords, attSearch, attDeptFilter, stationEmployees]);
+
+  const attPagination = usePagination(filteredAttRecords, 30);
 
   const attStats = useMemo(() => {
     const present = attRecords.filter(r => r.status === 'present' || r.status === 'late').length;
@@ -1292,7 +1305,7 @@ const StationManagerPortal = () => {
                       ) : filteredAttRecords.length === 0 ? (
                         <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{t('لا توجد سجلات', 'No records')}</TableCell></TableRow>
                       ) : (
-                        filteredAttRecords.map(r => {
+                        attPagination.paginatedItems.map(r => {
                           const emp = stationEmployees.find(e => e.id === r.employee_id);
                           const checkInTime = r.check_in ? format(new Date(r.check_in), 'HH:mm') : '--:--';
                           const checkOutTime = r.check_out ? format(new Date(r.check_out), 'HH:mm') : '--:--';
@@ -1331,6 +1344,15 @@ const StationManagerPortal = () => {
                     </TableBody>
                   </Table>
                 </div>
+                <PaginationControls
+                  currentPage={attPagination.currentPage}
+                  totalPages={attPagination.totalPages}
+                  totalItems={attPagination.totalItems}
+                  startIndex={attPagination.startIndex}
+                  endIndex={attPagination.endIndex}
+                  onPageChange={attPagination.setCurrentPage}
+                />
+
               </CardContent>
             </Card>
           </TabsContent>
