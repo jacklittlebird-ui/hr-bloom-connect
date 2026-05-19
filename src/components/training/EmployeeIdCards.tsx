@@ -34,6 +34,39 @@ const WORLD_IMG = '/images/id-world.png';
 /* ---------- Front side preview (matches reference page 1) ---------- */
 
 const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
+  const brandRef = useRef<HTMLDivElement>(null);
+  const photoRef = useRef<HTMLDivElement>(null);
+  const infoRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLImageElement>(null);
+
+  // Runtime overlap detection — warns if brand collides with any other card element
+  useEffect(() => {
+    const check = () => {
+      const brand = brandRef.current?.getBoundingClientRect();
+      if (!brand) return;
+      const targets: Array<[string, DOMRect | undefined]> = [
+        ['photo', photoRef.current?.getBoundingClientRect()],
+        ['info', infoRef.current?.getBoundingClientRect()],
+        ['logo', logoRef.current?.getBoundingClientRect()],
+      ];
+      const overlap = (a: DOMRect, b: DOMRect) =>
+        !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+      targets.forEach(([name, rect]) => {
+        if (rect && overlap(brand, rect)) {
+          // eslint-disable-next-line no-console
+          console.warn(`[IdCardFront] "Link Aero" overlaps ${name}`, { brand, [name]: rect });
+        }
+      });
+    };
+    check();
+    const id = window.setTimeout(check, 300); // re-check after images load
+    window.addEventListener('resize', check);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener('resize', check);
+    };
+  }, [emp.avatar]);
+
   return (
     <div
       dir="ltr"
@@ -49,6 +82,8 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         boxShadow: '0 10px 30px rgba(15,23,42,0.12)',
         border: '1px solid #e5e7eb',
         textAlign: 'left',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Top-left red arrow */}
@@ -81,18 +116,18 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         }}
       />
 
-      {/* Brand wordmark — Link Aero */}
-      <div style={{ position: 'absolute', top: '66px', left: 0, right: 0, textAlign: 'center', zIndex: 4 }}>
+      {/* Brand wordmark — Link Aero (flow-based, can't overlap photo) */}
+      <div ref={brandRef} style={{ marginTop: '60px', textAlign: 'center', zIndex: 4, position: 'relative' }}>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_RED, letterSpacing: '0px' }}>Link</span>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_BLUE, letterSpacing: '0px' }}> Aero</span>
       </div>
-      <div style={{ height: '126px' }} />
 
-      {/* Circular photo */}
+      {/* Circular photo (flow-based, sits below brand) */}
       <div
+        ref={photoRef}
         style={{
           position: 'relative',
-          margin: '14px auto 0',
+          margin: '18px auto 0',
           width: '170px',
           height: '170px',
           borderRadius: '50%',
@@ -103,6 +138,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 2,
+          flexShrink: 0,
         }}
       >
         {emp.avatar ? (
