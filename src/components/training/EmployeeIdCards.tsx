@@ -137,7 +137,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         alt="Company"
         style={{
           position: 'absolute',
-          bottom: '72px',
+          bottom: '58px',
           right: '22px',
           height: '105px',
           width: 'auto',
@@ -212,7 +212,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .row + .row{margin-top:4px;font-size:13px;}
     .row span{color:#0f172a;font-weight:700;}
     .valid{margin-top:6px;font-size:11px;font-weight:600;color:#475569;line-height:1.3;}
-    .flogo{position:absolute;bottom:85px;right:26px;height:125px;width:auto;object-fit:contain;z-index:3;}
+    .flogo{position:absolute;bottom:68px;right:26px;height:125px;width:auto;object-fit:contain;z-index:3;}
     .site{position:absolute;bottom:20px;left:28px;font-size:14px;font-weight:800;color:${BRAND_RED};z-index:3;}
 
     /* Back */
