@@ -324,12 +324,74 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
     setFiltered(list);
   }, [search, deptFilter, stationFilter, employees]);
 
-  const exportPdf = (emp: EmployeeForId) => {
+  const printCard = (emp: EmployeeForId) => {
     const w = window.open('', '_blank');
     if (!w) return;
     w.document.write(buildPrintHtml(emp, window.location.origin));
     w.document.close();
     setTimeout(() => w.print(), 600);
+  };
+
+  // High-quality PDF export: render the print HTML into an isolated iframe,
+  // rasterize each card at scale=3, and embed both faces on a single A4 page.
+  const downloadPdf = async (emp: EmployeeForId) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-10000px';
+    iframe.style.top = '0';
+    iframe.style.width = '900px';
+    iframe.style.height = '1400px';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    try {
+      const doc = iframe.contentDocument!;
+      doc.open();
+      doc.write(buildPrintHtml(emp, window.location.origin));
+      doc.close();
+
+      // Wait for fonts + images
+      await new Promise<void>((res) => {
+        const ready = () => res();
+        if (doc.readyState === 'complete') ready();
+        else iframe.onload = () => ready();
+      });
+      // @ts-ignore
+      if (doc.fonts && doc.fonts.ready) { try { await doc.fonts.ready; } catch {} }
+      const imgs = Array.from(doc.images);
+      await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = () => r(null); })));
+      await new Promise(r => setTimeout(r, 200));
+
+      const cards = Array.from(doc.querySelectorAll<HTMLElement>('.card'));
+      if (cards.length === 0) throw new Error('No cards rendered');
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();   // 210
+      const pageH = pdf.internal.pageSize.getHeight();  // 297
+      const margin = 14;
+      const gap = 8;
+      // Two cards side-by-side fit inside (pageW - 2*margin - gap)
+      const availW = pageW - margin * 2 - gap;
+      const cardW = availW / 2;                         // ~88mm
+      const cardH = cardW * (600 / 380);                // preserve 380x600 ratio
+      const yTop = (pageH - cardH) / 2;
+
+      for (let i = 0; i < cards.length; i++) {
+        const canvas = await html2canvas(cards[i], {
+          scale: 3,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          logging: false,
+        });
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const x = margin + i * (cardW + gap);
+        pdf.addImage(dataUrl, 'JPEG', x, yTop, cardW, cardH, undefined, 'FAST');
+      }
+
+      const safeName = (emp.name_en || emp.employee_code || 'employee').replace(/[^A-Za-z0-9_-]+/g, '_');
+      pdf.save(`ID_${safeName}.pdf`);
+    } finally {
+      document.body.removeChild(iframe);
+    }
   };
 
   return (
