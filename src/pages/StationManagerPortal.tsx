@@ -301,10 +301,12 @@ const StationManagerPortal = () => {
   }, [stationEmployees, todayPresentCount]);
 
   // === Attendance tab state ===
+  // Default range: start of current year → today, so selecting any employee
+  // shows all their records throughout the year (not just current month).
   const nowAtt = new Date();
-  const attFirstOfMonth = `${nowAtt.getFullYear()}-${String(nowAtt.getMonth() + 1).padStart(2, '0')}-01`;
+  const attStartOfYear = `${nowAtt.getFullYear()}-01-01`;
   const attTodayStr = nowAtt.toISOString().split('T')[0];
-  const [attDateFrom, setAttDateFrom] = useState(attFirstOfMonth);
+  const [attDateFrom, setAttDateFrom] = useState(attStartOfYear);
   const [attDateTo, setAttDateTo] = useState(attTodayStr);
   const [attSearch, setAttSearch] = useState('');
   const [attDeptFilter, setAttDeptFilter] = useState('all');
