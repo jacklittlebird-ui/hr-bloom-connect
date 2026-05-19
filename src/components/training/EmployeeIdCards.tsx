@@ -49,21 +49,19 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         textAlign: 'left',
       }}
     >
-      {/* Top-left red arrow image */}
+      {/* Top-left company logo (was red arrow) */}
       <img
-        src={RED_ARROW_IMG}
-        alt=""
-        aria-hidden="true"
+        src={COMPANY_LOGO}
+        alt="Company"
         style={{
           position: 'absolute',
-          top: '-25px',
-          left: '-35px',
-          width: '130px',
-          height: 'auto',
-          zIndex: 1,
+          top: '14px',
+          left: '14px',
+          height: '70px',
+          objectFit: 'contain',
+          zIndex: 3,
         }}
       />
-
 
       {/* Bottom-right blue triangle image */}
       <img
@@ -128,17 +126,18 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         </div>
       </div>
 
-      {/* Logo bottom-left */}
+      {/* Bottom-left red arrow (was top-left) */}
       <img
-        src={COMPANY_LOGO}
-        alt="Company"
+        src={RED_ARROW_IMG}
+        alt=""
+        aria-hidden="true"
         style={{
           position: 'absolute',
-          bottom: '70px',
-          left: '18px',
-          height: '92px',
-          objectFit: 'contain',
-          zIndex: 3,
+          bottom: '34px',
+          left: '-30px',
+          width: '110px',
+          height: 'auto',
+          zIndex: 1,
         }}
       />
 
@@ -190,6 +189,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .card *{text-align:left;}
     .globe-back{position:absolute;bottom:-10px;right:-10px;width:200px;height:auto;z-index:1;pointer-events:none;}
     .red-arrow{position:absolute;top:-28px;left:-40px;width:160px;height:auto;z-index:1;}
+    .red-arrow-bottom{position:absolute;bottom:40px;left:-34px;width:135px;height:auto;z-index:1;}
+    .top-logo{position:absolute;top:16px;left:18px;height:84px;object-fit:contain;z-index:3;}
     .blue-tri{position:absolute;bottom:-12px;right:-12px;width:170px;height:auto;z-index:1;}
     .brand{position:relative;text-align:center;padding-top:26px;z-index:2;}
     .brand span{font-weight:800;font-size:36px;letter-spacing:-0.5px;}
@@ -223,7 +224,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
   <div class="wrap">
     <!-- FRONT -->
     <div class="card">
-      <img class="red-arrow" src="${redArrow}" alt=""/>
+      <img class="top-logo" src="${logo}" alt="Company"/>
+      <img class="red-arrow-bottom" src="${redArrow}" alt=""/>
       <img class="globe-back" src="${world}" alt=""/>
       <div class="brand"><span class="b1">Link</span><span class="b2"> Aero</span></div>
       <div class="photo">
@@ -238,7 +240,6 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
         <div class="row">Employed: <span>${emp.hire_date || 'N/A'}</span></div>
         <div class="row">Valid Until: <span>${ID_EXPIRY}</span></div>
       </div>
-      <img class="vlogo" src="${logo}" alt="Company"/>
       <div class="site">www.linkagency.com</div>
     </div>
 
