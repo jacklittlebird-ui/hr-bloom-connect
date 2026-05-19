@@ -233,10 +233,11 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Archivo+Black&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    @page{size:A4;margin:14mm;}
+    @page{size:auto;margin:12mm;}
     html,body{direction:ltr;text-align:left;background:#f1f5f9;}
     body{font-family:'Baloo Bhaijaan 2','Cairo',sans-serif;padding:24px;display:flex;justify-content:center;}
     .wrap{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;}
+    .card-slot{display:block;}
     .card{
       width:380px;height:600px;border-radius:22px;overflow:hidden;position:relative;
       background:#ffffff;color:#0f172a;
@@ -246,9 +247,9 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .card *{text-align:left;}
 
     /* Front */
-    .red-arrow{position:absolute;top:-34px;left:-100px;width:180px;height:auto;z-index:1;}
+    .red-arrow{position:absolute;top:-36px;left:-132px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
-    .brand{margin-top:84px;text-align:center;position:relative;z-index:4;line-height:1;}
+    .brand{width:270px;margin:72px auto 0;text-align:center;position:relative;z-index:4;line-height:1;}
     .brand span{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:42px;letter-spacing:0;line-height:1;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
@@ -274,16 +275,17 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .globe{position:absolute;bottom:-30px;right:-40px;width:240px;height:auto;z-index:1;}
 
     @media print{
-      html,body{background:#fff;padding:0;margin:0;width:100%;display:block;}
-      .wrap{gap:6mm;justify-content:center;align-items:flex-start;width:100%;padding-top:14mm;}
-      .card{transform:scale(0.54);transform-origin:top left;margin:0 -175px -276px 0;}
+      html,body{background:#fff;padding:0;margin:0;width:auto;min-height:100%;display:flex;justify-content:center;align-items:flex-start;}
+      .wrap{gap:6mm;justify-content:center;align-items:flex-start;width:100%;padding:0;break-inside:avoid;page-break-inside:avoid;}
+      .card-slot{width:205px;height:324px;flex:0 0 205px;break-inside:avoid;page-break-inside:avoid;}
+      .card{transform:scale(0.54);transform-origin:top left;margin:0;box-shadow:none;}
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <!-- FRONT -->
-    <div class="card">
+    <div class="card-slot"><div class="card">
       <img class="red-arrow" src="${redArrow}" alt=""/>
       <img class="blue-tri-sm" src="${blueTri}" alt=""/>
       <div class="brand"><span class="b1">Link</span><span class="b2"> Aero</span></div>
@@ -302,10 +304,10 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
       </div>
       <img class="flogo" src="${logo}" alt="Company"/>
       <div class="site">www.linkagency.com</div>
-    </div>
+    </div></div>
 
     <!-- BACK (page 2) -->
-    <div class="card back">
+    <div class="card-slot"><div class="card back">
       <img class="red-arrow" src="${redArrow}" alt=""/>
       <img class="blogo" src="${logo}" alt="Company"/>
       <div class="contact">
@@ -323,7 +325,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
         </div>
       </div>
       <img class="globe" src="${world}" alt=""/>
-    </div>
+    </div></div>
   </div>
 </body>
 </html>`;
