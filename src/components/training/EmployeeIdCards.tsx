@@ -250,6 +250,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
         ${emp.job_title_en ? `<div class="title">${emp.job_title_en}</div>` : ''}
         <div class="row">ID: <span>${emp.employee_code}</span></div>
         <div class="row">Employed: <span>${emp.hire_date || 'N/A'}</span></div>
+        <div class="row">NID: <span>${emp.national_id || 'N/A'}</span></div>
         <div class="valid">Valid till 31/12/2035</div>
       </div>
       <img class="flogo" src="${logo}" alt="Company"/>
