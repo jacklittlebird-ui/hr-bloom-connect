@@ -83,8 +83,8 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
 
       {/* Brand wordmark — Link Aero */}
       <div style={{ position: 'relative', textAlign: 'center', paddingTop: '44px', zIndex: 2 }}>
-        <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 400, textTransform: 'uppercase', fontSize: '38px', color: BRAND_RED, letterSpacing: '0px' }}>Link</span>
-        <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 400, textTransform: 'uppercase', fontSize: '38px', color: BRAND_BLUE, letterSpacing: '0px' }}> Aero</span>
+        <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_RED, letterSpacing: '0px' }}>Link</span>
+        <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_BLUE, letterSpacing: '0px' }}> Aero</span>
       </div>
 
       {/* Circular photo */}
