@@ -246,6 +246,8 @@ const translations: Record<string, Record<Language, string>> = {
   'employees.tabs.loansAdvances': { en: 'Advances & Loans', ar: 'السلف والقروض' },
   'employees.tabs.training': { en: 'Training & Development', ar: 'التدريب والتطوير' },
   'employees.tabs.companyCard': { en: 'Company Card', ar: 'بطاقة الشركة' },
+  'employees.tabs.custody': { en: 'Custody', ar: 'عهد وتعهدات' },
+  'employees.tabs.uniforms': { en: 'Uniforms', ar: 'اليونيفورم' },
   'employees.tabs.bonusesEid': { en: 'Eid & Bonuses', ar: 'العيديات والمكافآت' },
   'employees.tabs.notes': { en: 'Notes', ar: 'الملاحظات' },
   // Leaves module
