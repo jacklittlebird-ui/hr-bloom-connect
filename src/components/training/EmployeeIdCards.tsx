@@ -442,11 +442,11 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
             <div key={emp.id} className="flex flex-col items-center gap-3">
               <IdCardFront emp={emp} />
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => exportPdf(emp)}>
+                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => printCard(emp)}>
                   <Printer className="w-3.5 h-3.5" />
                   {ar ? 'طباعة' : 'Print'}
                 </Button>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => exportPdf(emp)}>
+                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => downloadPdf(emp)}>
                   <Download className="w-3.5 h-3.5" />
                   PDF
                 </Button>
