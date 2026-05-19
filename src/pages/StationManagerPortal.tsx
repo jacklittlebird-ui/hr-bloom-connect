@@ -407,6 +407,8 @@ const StationManagerPortal = () => {
     return list;
   }, [attRecords, attSearch, attDeptFilter, stationEmployees]);
 
+  const attPagination = usePagination(filteredAttRecords, 30);
+
   const attStats = useMemo(() => {
     const present = attRecords.filter(r => r.status === 'present' || r.status === 'late').length;
     const late = attRecords.filter(r => r.is_late).length;
