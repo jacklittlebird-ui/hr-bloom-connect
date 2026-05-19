@@ -82,8 +82,8 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
 
       {/* Brand wordmark — Link Aero */}
       <div style={{ position: 'relative', textAlign: 'center', paddingTop: '44px', zIndex: 2 }}>
-        <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_RED, letterSpacing: '-0.5px' }}>Link</span>
-        <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_BLUE, letterSpacing: '-0.5px' }}> Aero</span>
+        <span style={{ fontWeight: 800, fontSize: '40px', color: BRAND_RED, letterSpacing: '-0.5px' }}>Link</span>
+        <span style={{ fontWeight: 800, fontSize: '40px', color: BRAND_BLUE, letterSpacing: '-0.5px' }}> Aero</span>
       </div>
 
       {/* Circular photo */}
@@ -198,7 +198,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
     .brand{position:relative;text-align:center;padding-top:50px;z-index:2;}
-    .brand span{font-weight:800;font-size:36px;letter-spacing:-0.5px;}
+    .brand span{font-weight:800;font-size:48px;letter-spacing:-0.5px;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
     .photo{position:relative;margin:18px auto 0;width:200px;height:200px;border-radius:50%;
