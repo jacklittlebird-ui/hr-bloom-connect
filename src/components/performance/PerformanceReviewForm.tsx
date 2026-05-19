@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2, Clock, AlertTriangle } from 'lucide-react';
+import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2, Clock, AlertTriangle, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { formatDate } from '@/lib/utils';
 
 const violationTypeLabels: Record<string, { ar: string; en: string }> = {
@@ -44,6 +45,23 @@ const initialCriteria: CriteriaScore[] = [
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
 
+const normalizeSearchText = (s: string) =>
+  (s || '')
+    .toLowerCase()
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 1632))
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[إأآاٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .replace(/ء/g, '')
+    .replace(/ة/g, 'ه')
+    .replace(/[گک]/g, 'ك')
+    .replace(/پ/g, 'ب')
+    .replace(/چ/g, 'ج')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 export const PerformanceReviewForm = () => {
   const { t, isRTL, language } = useLanguage();
   const { addReview, updateReview, reviews } = usePerformanceData();
@@ -57,6 +75,7 @@ export const PerformanceReviewForm = () => {
   const [selectedQuarter, setSelectedQuarter] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [employeePage, setEmployeePage] = useState(0);
+  const [employeeSearch, setEmployeeSearch] = useState('');
   const PAGE_SIZE = 5;
 
   // Form
@@ -177,16 +196,25 @@ export const PerformanceReviewForm = () => {
     return depts.sort();
   }, [activeEmployees]);
 
-  // Filter employees by station + department
+  // Filter employees by station + department + name search
   const filteredEmployees = useMemo(() => {
     let list = activeEmployees;
     if (stationFilter !== 'all') list = list.filter(e => e.stationLocation === stationFilter);
     if (departmentFilter !== 'all') list = list.filter(e => e.department === departmentFilter);
+    if (employeeSearch.trim()) {
+      const query = normalizeSearchText(employeeSearch);
+      list = list.filter(e => {
+        const nameAr = normalizeSearchText(e.nameAr || '');
+        const nameEn = normalizeSearchText(e.nameEn || '');
+        const code = normalizeSearchText(e.employeeId || '');
+        return nameAr.includes(query) || nameEn.includes(query) || code.includes(query);
+      });
+    }
     return list;
-  }, [activeEmployees, stationFilter, departmentFilter]);
+  }, [activeEmployees, stationFilter, departmentFilter, employeeSearch]);
 
   // Reset page when filters change
-  useEffect(() => { setEmployeePage(0); }, [stationFilter, departmentFilter]);
+  useEffect(() => { setEmployeePage(0); }, [stationFilter, departmentFilter, employeeSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / PAGE_SIZE));
   const paginatedEmployees = filteredEmployees.slice(employeePage * PAGE_SIZE, (employeePage + 1) * PAGE_SIZE);
@@ -360,7 +388,7 @@ export const PerformanceReviewForm = () => {
           </div>
 
           {/* Employee List with evaluation status */}
-          <div className="border rounded-lg max-h-[300px] overflow-y-auto">
+          <div className="border rounded-lg max-h-[340px] overflow-y-auto">
             <div className="p-3 border-b bg-muted/50 flex items-center justify-between">
               <span className="text-sm font-medium">{ar ? 'الموظفون' : 'Employees'} ({filteredEmployees.length})</span>
               {selectedQuarter && selectedYear && (
@@ -369,6 +397,17 @@ export const PerformanceReviewForm = () => {
                   <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30 inline-block" /> {ar ? 'لم يتم التقييم' : 'Not evaluated'}</span>
                 </div>
               )}
+            </div>
+            <div className="p-2 border-b">
+              <div className="relative">
+                <Search className="absolute top-1/2 -translate-y-1/2 start-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={employeeSearch}
+                  onChange={e => setEmployeeSearch(e.target.value)}
+                  placeholder={ar ? 'ابحث بالاسم أو الرقم الوظيفي...' : 'Search by name or employee code...'}
+                  className="ps-8 text-sm"
+                />
+              </div>
             </div>
             {filteredEmployees.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground text-sm">
