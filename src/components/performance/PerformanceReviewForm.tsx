@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2, Clock, AlertTriangle } from 'lucide-react';
+import { Star, Save, Send, Users, Target, Lightbulb, TrendingUp, MessageSquare, CheckCircle, Circle, ChevronLeft, ChevronRight, Loader2, Clock, AlertTriangle, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { formatDate } from '@/lib/utils';
 
 const violationTypeLabels: Record<string, { ar: string; en: string }> = {
