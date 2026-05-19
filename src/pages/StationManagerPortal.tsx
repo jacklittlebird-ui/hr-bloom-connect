@@ -637,13 +637,26 @@ const StationManagerPortal = () => {
   const [newEvalDeptFilter, setNewEvalDeptFilter] = useState('all');
   const [newEvalSelectedEmp, setNewEvalSelectedEmp] = useState('');
   const [newEvalPage, setNewEvalPage] = useState(0);
+  const [newEvalSearch, setNewEvalSearch] = useState('');
   const NEW_EVAL_PAGE_SIZE = 5;
 
   const newEvalFilteredEmps = useMemo(() => {
     let list = stationEmployees.filter(e => e.status === 'active');
     if (newEvalDeptFilter !== 'all') list = list.filter(e => e.department === newEvalDeptFilter);
+    const q = newEvalSearch.trim().toLowerCase();
+    if (q) {
+      const norm = (s: string) => (s || '').toLowerCase()
+        .replace(/[إأآا]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim();
+      const nq = norm(q);
+      list = list.filter(e =>
+        norm(e.nameAr).includes(nq) ||
+        norm(e.nameEn).includes(nq) ||
+        (e.employeeId || '').toLowerCase().includes(q)
+      );
+    }
     return list;
-  }, [stationEmployees, newEvalDeptFilter]);
+  }, [stationEmployees, newEvalDeptFilter, newEvalSearch]);
+
 
   const newEvalTotalPages = Math.max(1, Math.ceil(newEvalFilteredEmps.length / NEW_EVAL_PAGE_SIZE));
   const newEvalPaginatedEmps = newEvalFilteredEmps.slice(newEvalPage * NEW_EVAL_PAGE_SIZE, (newEvalPage + 1) * NEW_EVAL_PAGE_SIZE);
@@ -685,7 +698,7 @@ const StationManagerPortal = () => {
     }
   }, [newEvalExisting]);
 
-  useEffect(() => { setNewEvalPage(0); }, [newEvalDeptFilter]);
+  useEffect(() => { setNewEvalPage(0); }, [newEvalDeptFilter, newEvalSearch]);
 
   // Quarter context: monthly work hours + violations (penalties) for selected employee
   interface QuarterViolation { id: string; date: string; type: string; description: string; penalty: string; status: string; }
@@ -1533,6 +1546,17 @@ const StationManagerPortal = () => {
                               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30 inline-block" /> {t('لم يتم التقييم', 'Not evaluated')}</span>
                             </div>
                           )}
+                        </div>
+                        <div className="p-2 border-b">
+                          <div className="relative">
+                            <Search className="absolute top-1/2 -translate-y-1/2 start-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              value={newEvalSearch}
+                              onChange={e => setNewEvalSearch(e.target.value)}
+                              placeholder={t('ابحث بالاسم أو الرقم الوظيفي...', 'Search by name or employee code...')}
+                              className="ps-8 text-sm h-9"
+                            />
+                          </div>
                         </div>
                         {newEvalFilteredEmps.length === 0 ? (
                           <div className="p-6 text-center text-muted-foreground text-sm">{t('لا يوجد موظفون', 'No employees')}</div>
