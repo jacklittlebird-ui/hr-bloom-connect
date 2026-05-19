@@ -388,7 +388,7 @@ export const PerformanceReviewForm = () => {
           </div>
 
           {/* Employee List with evaluation status */}
-          <div className="border rounded-lg max-h-[300px] overflow-y-auto">
+          <div className="border rounded-lg max-h-[340px] overflow-y-auto">
             <div className="p-3 border-b bg-muted/50 flex items-center justify-between">
               <span className="text-sm font-medium">{ar ? 'الموظفون' : 'Employees'} ({filteredEmployees.length})</span>
               {selectedQuarter && selectedYear && (
@@ -397,6 +397,17 @@ export const PerformanceReviewForm = () => {
                   <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30 inline-block" /> {ar ? 'لم يتم التقييم' : 'Not evaluated'}</span>
                 </div>
               )}
+            </div>
+            <div className="p-2 border-b">
+              <div className="relative">
+                <Search className="absolute top-1/2 -translate-y-1/2 start-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={employeeSearch}
+                  onChange={e => setEmployeeSearch(e.target.value)}
+                  placeholder={ar ? 'ابحث بالاسم أو الرقم الوظيفي...' : 'Search by name or employee code...'}
+                  className="ps-8 text-sm"
+                />
+              </div>
             </div>
             {filteredEmployees.length === 0 ? (
               <div className="p-6 text-center text-muted-foreground text-sm">
