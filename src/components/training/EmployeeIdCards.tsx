@@ -185,6 +185,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         ref={logoRef}
         src={COMPANY_LOGO}
         alt="Company"
+        onLoad={checkOverlap}
         style={{
           position: 'absolute',
           bottom: '58px',
