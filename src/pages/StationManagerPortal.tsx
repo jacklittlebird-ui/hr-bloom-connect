@@ -1534,6 +1534,16 @@ const StationManagerPortal = () => {
                             <SelectContent>{quarters.map(q => <SelectItem key={q} value={q}>{getQuarterLabel(q)}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
+                        <div className="p-2 border-b">
+                          <div className="relative">
+                            <Search className="absolute top-1/2 -translate-y-1/2 start-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              value={newEvalSearch}
+                              onChange={e => setNewEvalSearch(e.target.value)}
+                              placeholder={t('ابحث بالاسم أو الرقم الوظيفي...', 'Search by name or employee code...')}
+                              className="ps-8 text-sm h-9"
+                            />
+                          </div>
                       </div>
 
                       {/* Employee list with pagination */}
