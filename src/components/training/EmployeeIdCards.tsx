@@ -64,22 +64,6 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         }}
       />
 
-      {/* Globe — decorative behind content (not background) */}
-      <img
-        src={WORLD_IMG}
-        alt=""
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          bottom: '110px',
-          right: '14px',
-          width: '120px',
-          height: 'auto',
-          opacity: 0.85,
-          zIndex: 1,
-          pointerEvents: 'none',
-        }}
-      />
 
       {/* Bottom-right blue triangle image */}
       <img
@@ -204,7 +188,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
       border:1px solid #e5e7eb;direction:ltr;text-align:left;
     }
     .card *{text-align:left;}
-    .globe-deco{position:absolute;bottom:140px;right:18px;width:150px;height:auto;opacity:0.85;z-index:1;pointer-events:none;}
+    .globe-back{position:absolute;bottom:-10px;right:-10px;width:200px;height:auto;z-index:1;pointer-events:none;}
     .red-arrow{position:absolute;top:-28px;left:-40px;width:160px;height:auto;z-index:1;}
     .blue-tri{position:absolute;bottom:-12px;right:-12px;width:170px;height:auto;z-index:1;}
     .brand{position:relative;text-align:center;padding-top:26px;z-index:2;}
@@ -240,8 +224,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     <!-- FRONT -->
     <div class="card">
       <img class="red-arrow" src="${redArrow}" alt=""/>
-      <img class="globe-deco" src="${world}" alt=""/>
-      <img class="blue-tri" src="${blueTri}" alt=""/>
+      <img class="globe-back" src="${world}" alt=""/>
       <div class="brand"><span class="b1">Link</span><span class="b2"> Aero</span></div>
       <div class="photo">
         ${photo
@@ -262,7 +245,6 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     <!-- BACK (page 2 inspired) -->
     <div class="card back">
       <img class="red-arrow" src="${redArrow}" alt=""/>
-      <img class="globe-deco" src="${world}" alt=""/>
       <img class="blue-tri" src="${blueTri}" alt=""/>
       <img class="blogo" src="${logo}" alt="Company"/>
       <div class="contact">
