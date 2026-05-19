@@ -250,11 +250,10 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .red-arrow{position:absolute;top:-36px;left:-132px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
     .brand{position:absolute;top:64px;left:50%;transform:translateX(-50%);width:270px;text-align:center;z-index:4;line-height:1;}
-    .photo{margin-top:124px;}
     .brand span{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:42px;letter-spacing:0;line-height:1;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
-    .photo{position:relative;margin:8px auto 0;width:190px;height:190px;border-radius:50%;
+    .photo{position:relative;margin:124px auto 0;width:190px;height:190px;border-radius:50%;
       overflow:hidden;border:2px solid #0f172a;background:#e5e7eb;display:flex;
       align-items:center;justify-content:center;z-index:2;}
     .photo img{width:100%;height:100%;object-fit:cover;}
