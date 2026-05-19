@@ -298,7 +298,7 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
     setLoading(true);
     let empQuery = supabase
       .from('employees')
-      .select('id, employee_code, name_en, job_title_en, hire_date, avatar, department_id, station_id, departments(name_en), stations(name_en)')
+      .select('id, employee_code, name_en, job_title_en, hire_date, avatar, national_id, department_id, station_id, departments(name_en), stations(name_en)')
       .eq('status', 'active')
       .order('name_en');
     if (filterEmployeeId) empQuery = empQuery.eq('id', filterEmployeeId);
