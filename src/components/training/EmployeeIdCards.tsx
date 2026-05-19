@@ -224,7 +224,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
   <div class="wrap">
     <!-- FRONT -->
     <div class="card">
-      <img class="red-arrow" src="${redArrow}" alt=""/>
+      <img class="top-logo" src="${logo}" alt="Company"/>
+      <img class="red-arrow-bottom" src="${redArrow}" alt=""/>
       <img class="globe-back" src="${world}" alt=""/>
       <div class="brand"><span class="b1">Link</span><span class="b2"> Aero</span></div>
       <div class="photo">
@@ -239,7 +240,6 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
         <div class="row">Employed: <span>${emp.hire_date || 'N/A'}</span></div>
         <div class="row">Valid Until: <span>${ID_EXPIRY}</span></div>
       </div>
-      <img class="vlogo" src="${logo}" alt="Company"/>
       <div class="site">www.linkagency.com</div>
     </div>
 
