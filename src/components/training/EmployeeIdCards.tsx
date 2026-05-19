@@ -224,7 +224,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
 
     @media print{
       body{background:#fff;padding:0;}
-      .wrap{gap:18px;}
+      .wrap{gap:6mm;justify-content:center;}
+      .card{transform:scale(0.54);transform-origin:top left;margin:0 -175px -276px 0;}
     }
   </style>
 </head>
