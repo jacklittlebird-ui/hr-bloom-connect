@@ -17,6 +17,7 @@ interface EmployeeForId {
   job_title_en: string | null;
   hire_date: string | null;
   avatar: string | null;
+  national_id: string | null;
   department_id: string | null;
   station_id: string | null;
   departments?: { name_en: string } | null;
@@ -82,8 +83,8 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
 
       {/* Brand wordmark — Link Aero */}
       <div style={{ position: 'relative', textAlign: 'center', paddingTop: '44px', zIndex: 2 }}>
-        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', fontSize: '40px', color: BRAND_RED, letterSpacing: '-1px' }}>Link</span>
-        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', fontSize: '40px', color: BRAND_BLUE, letterSpacing: '-1px' }}> Aero</span>
+        <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 400, textTransform: 'uppercase', fontSize: '38px', color: BRAND_RED, letterSpacing: '-0.5px' }}>Link</span>
+        <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 400, textTransform: 'uppercase', fontSize: '38px', color: BRAND_BLUE, letterSpacing: '-0.5px' }}> Aero</span>
       </div>
 
       {/* Circular photo */}
@@ -125,6 +126,9 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         </div>
         <div style={{ marginTop: '3px', fontSize: '11px', fontWeight: 700, color: BRAND_BLUE, lineHeight: 1.4 }}>
           Employed: <span style={{ color: '#0f172a' }}>{emp.hire_date || 'N/A'}</span>
+        </div>
+        <div style={{ marginTop: '3px', fontSize: '11px', fontWeight: 700, color: BRAND_BLUE, lineHeight: 1.4 }}>
+          NID: <span style={{ color: '#0f172a' }}>{emp.national_id || 'N/A'}</span>
         </div>
         <div style={{ marginTop: '5px', fontSize: '10px', fontWeight: 600, color: '#475569', lineHeight: 1.3 }}>
           Valid till 31/12/2035
@@ -179,7 +183,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
 <head>
   <meta charset="utf-8" />
   <title>Employee ID — ${emp.name_en}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Archivo+Black&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
     @page{size:A4;margin:14mm;}
@@ -198,7 +202,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
     .brand{position:relative;text-align:center;padding-top:50px;padding-left:36px;z-index:2;}
-    .brand span{font-family:'Montserrat',sans-serif;font-weight:900;font-style:italic;font-size:48px;letter-spacing:-1px;text-transform:uppercase;}
+    .brand span{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:46px;letter-spacing:-0.5px;text-transform:uppercase;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
     .photo{position:relative;margin:18px auto 0;width:200px;height:200px;border-radius:50%;
@@ -246,6 +250,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
         ${emp.job_title_en ? `<div class="title">${emp.job_title_en}</div>` : ''}
         <div class="row">ID: <span>${emp.employee_code}</span></div>
         <div class="row">Employed: <span>${emp.hire_date || 'N/A'}</span></div>
+        <div class="row">NID: <span>${emp.national_id || 'N/A'}</span></div>
         <div class="valid">Valid till 31/12/2035</div>
       </div>
       <img class="flogo" src="${logo}" alt="Company"/>
@@ -293,7 +298,7 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
     setLoading(true);
     let empQuery = supabase
       .from('employees')
-      .select('id, employee_code, name_en, job_title_en, hire_date, avatar, department_id, station_id, departments(name_en), stations(name_en)')
+      .select('id, employee_code, name_en, job_title_en, hire_date, avatar, national_id, department_id, station_id, departments(name_en), stations(name_en)')
       .eq('status', 'active')
       .order('name_en');
     if (filterEmployeeId) empQuery = empQuery.eq('id', filterEmployeeId);
