@@ -1227,17 +1227,19 @@ const StationManagerPortal = () => {
                     <TableHead>{t('الاسم', 'Name')}</TableHead>
                     <TableHead>{t('الوظيفة', 'Job Title')}</TableHead>
                     <TableHead>{t('القسم', 'Department')}</TableHead>
+                    <TableHead>{t('تاريخ التعيين', 'Hire Date')}</TableHead>
                     <TableHead>{t('الحالة', 'Status')}</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
                     {filteredStationEmployees.length === 0 ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">{t('لا يوجد موظفين', 'No employees found')}</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t('لا يوجد موظفين', 'No employees found')}</TableCell></TableRow>
                     ) : filteredStationEmployees.map(emp => (
                       <TableRow key={emp.id}>
                         <TableCell className="font-mono text-sm">{emp.employeeId}</TableCell>
                         <TableCell className="font-medium">{language === 'ar' ? emp.nameAr : emp.nameEn}</TableCell>
                         <TableCell>{emp.jobTitle}</TableCell>
                         <TableCell>{emp.department}</TableCell>
+                        <TableCell>{emp.hireDate ? formatDate(emp.hireDate) : '-'}</TableCell>
                         <TableCell>
                           <Badge variant={emp.status === 'active' ? 'default' : 'secondary'}>
                             {emp.status === 'active' ? t('نشط', 'Active') : t('غير نشط', 'Inactive')}
