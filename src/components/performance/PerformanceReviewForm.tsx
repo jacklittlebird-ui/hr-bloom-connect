@@ -196,16 +196,25 @@ export const PerformanceReviewForm = () => {
     return depts.sort();
   }, [activeEmployees]);
 
-  // Filter employees by station + department
+  // Filter employees by station + department + name search
   const filteredEmployees = useMemo(() => {
     let list = activeEmployees;
     if (stationFilter !== 'all') list = list.filter(e => e.stationLocation === stationFilter);
     if (departmentFilter !== 'all') list = list.filter(e => e.department === departmentFilter);
+    if (employeeSearch.trim()) {
+      const query = normalizeSearchText(employeeSearch);
+      list = list.filter(e => {
+        const nameAr = normalizeSearchText(e.nameAr || '');
+        const nameEn = normalizeSearchText(e.nameEn || '');
+        const code = normalizeSearchText(e.employeeId || '');
+        return nameAr.includes(query) || nameEn.includes(query) || code.includes(query);
+      });
+    }
     return list;
-  }, [activeEmployees, stationFilter, departmentFilter]);
+  }, [activeEmployees, stationFilter, departmentFilter, employeeSearch]);
 
   // Reset page when filters change
-  useEffect(() => { setEmployeePage(0); }, [stationFilter, departmentFilter]);
+  useEffect(() => { setEmployeePage(0); }, [stationFilter, departmentFilter, employeeSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / PAGE_SIZE));
   const paginatedEmployees = filteredEmployees.slice(employeePage * PAGE_SIZE, (employeePage + 1) * PAGE_SIZE);
