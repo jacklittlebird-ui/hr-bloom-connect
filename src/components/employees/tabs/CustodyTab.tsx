@@ -59,15 +59,16 @@ export const CustodyTab = ({ employee }: CustodyTabProps) => {
 
       const { data: tData } = await supabase
         .from('training_records')
-        .select('id, status, start_date, end_date, total_cost, provider, courses(name_ar, name_en)')
-        .eq('employee_id', employee.id);
+        .select('id, status, start_date, end_date, planned_date, total_cost, provider, training_courses(name_ar, name_en)')
+        .eq('employee_id', employee.id)
+        .order('start_date', { ascending: false });
       if (!cancelled && tData) {
         setTrainingDebts(tData.map((t: any) => ({
           id: t.id,
-          courseNameAr: t.courses?.name_ar || '',
-          courseNameEn: t.courses?.name_en || '',
+          courseNameAr: t.training_courses?.name_ar || '',
+          courseNameEn: t.training_courses?.name_en || '',
           status: t.status,
-          startDate: t.start_date || '',
+          startDate: t.start_date || t.planned_date || '',
           endDate: t.end_date || '',
           totalCost: Number(t.total_cost) || 0,
           provider: t.provider || '',
