@@ -1305,7 +1305,7 @@ const StationManagerPortal = () => {
                       ) : filteredAttRecords.length === 0 ? (
                         <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{t('لا توجد سجلات', 'No records')}</TableCell></TableRow>
                       ) : (
-                        filteredAttRecords.map(r => {
+                        attPagination.paginatedItems.map(r => {
                           const emp = stationEmployees.find(e => e.id === r.employee_id);
                           const checkInTime = r.check_in ? format(new Date(r.check_in), 'HH:mm') : '--:--';
                           const checkOutTime = r.check_out ? format(new Date(r.check_out), 'HH:mm') : '--:--';
@@ -1344,6 +1344,15 @@ const StationManagerPortal = () => {
                     </TableBody>
                   </Table>
                 </div>
+                <PaginationControls
+                  currentPage={attPagination.currentPage}
+                  totalPages={attPagination.totalPages}
+                  totalItems={attPagination.totalItems}
+                  startIndex={attPagination.startIndex}
+                  endIndex={attPagination.endIndex}
+                  onPageChange={attPagination.setCurrentPage}
+                />
+
               </CardContent>
             </Card>
           </TabsContent>
