@@ -313,38 +313,47 @@ const StationManagerPortal = () => {
   const [attRecords, setAttRecords] = useState<any[]>([]);
   const [attLoading, setAttLoading] = useState(false);
 
+  const attReqIdRef = useRef(0);
   const fetchAttendance = useCallback(async () => {
-    if (stationEmployees.length === 0) { setAttRecords([]); return; }
+    const reqId = ++attReqIdRef.current;
+    // Clear stale results immediately so partial/old data never displays
+    setAttRecords([]);
+    if (stationEmployees.length === 0) { setAttLoading(false); return; }
     setAttLoading(true);
     const empIds = stationEmployees.map(e => e.id);
     const PAGE_SIZE = 1000;
     const all: any[] = [];
-    let from = 0;
-    let hasMore = true;
-    while (hasMore) {
-      const { data, error } = await supabase
-        .from('attendance_records')
-        .select('*')
-        .in('employee_id', empIds)
-        .gte('date', attDateFrom)
-        .lte('date', attDateTo)
-        .order('date', { ascending: false })
-        .range(from, from + PAGE_SIZE - 1);
-      if (error) { console.error('Attendance fetch error:', error); break; }
-      const page = data || [];
-      all.push(...page);
-      hasMore = page.length === PAGE_SIZE;
-      from += PAGE_SIZE;
+    // Iterate employees in chunks of 200 to avoid huge IN clauses, and paginate within each chunk
+    const EMP_CHUNK = 200;
+    for (let ci = 0; ci < empIds.length; ci += EMP_CHUNK) {
+      const chunk = empIds.slice(ci, ci + EMP_CHUNK);
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('attendance_records')
+          .select('*')
+          .in('employee_id', chunk)
+          .gte('date', attDateFrom)
+          .lte('date', attDateTo)
+          .order('date', { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+        if (reqId !== attReqIdRef.current) return; // superseded by newer request
+        if (error) { console.error('Attendance fetch error:', error); break; }
+        const page = data || [];
+        all.push(...page);
+        hasMore = page.length === PAGE_SIZE;
+        from += PAGE_SIZE;
+      }
     }
+    if (reqId !== attReqIdRef.current) return;
     setAttRecords(all);
     setAttLoading(false);
   }, [stationEmployees, attDateFrom, attDateTo]);
 
-  // Lazy: only fetch attendance when tab is active
-  const attFetched = useRef(false);
+  // Lazy: only fetch attendance when tab is active; refetch on date range change
   useEffect(() => {
     if (activeTab === 'attendance') {
-      attFetched.current = true;
       fetchAttendance();
     }
   }, [activeTab, fetchAttendance]);
