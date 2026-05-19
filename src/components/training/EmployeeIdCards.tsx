@@ -49,21 +49,19 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         textAlign: 'left',
       }}
     >
-      {/* Top-left red arrow image */}
+      {/* Top-left company logo (was red arrow) */}
       <img
-        src={RED_ARROW_IMG}
-        alt=""
-        aria-hidden="true"
+        src={COMPANY_LOGO}
+        alt="Company"
         style={{
           position: 'absolute',
-          top: '-25px',
-          left: '-35px',
-          width: '130px',
-          height: 'auto',
-          zIndex: 1,
+          top: '14px',
+          left: '14px',
+          height: '70px',
+          objectFit: 'contain',
+          zIndex: 3,
         }}
       />
-
 
       {/* Bottom-right blue triangle image */}
       <img
@@ -128,17 +126,18 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         </div>
       </div>
 
-      {/* Logo bottom-left */}
+      {/* Bottom-left red arrow (was top-left) */}
       <img
-        src={COMPANY_LOGO}
-        alt="Company"
+        src={RED_ARROW_IMG}
+        alt=""
+        aria-hidden="true"
         style={{
           position: 'absolute',
-          bottom: '70px',
-          left: '18px',
-          height: '92px',
-          objectFit: 'contain',
-          zIndex: 3,
+          bottom: '34px',
+          left: '-30px',
+          width: '110px',
+          height: 'auto',
+          zIndex: 1,
         }}
       />
 
