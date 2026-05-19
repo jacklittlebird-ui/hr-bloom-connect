@@ -233,7 +233,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
   <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Archivo+Black&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    @page{size:auto;margin:12mm;}
+    @page{size:A4 portrait;margin:12mm;}
     html,body{direction:ltr;text-align:left;background:#f1f5f9;}
     body{font-family:'Baloo Bhaijaan 2','Cairo',sans-serif;padding:24px;display:flex;justify-content:center;}
     .wrap{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;}
