@@ -25,48 +25,9 @@ const ID_EXPIRY = '31/12/2036';
 const BRAND_RED = '#E30613';
 const BRAND_BLUE = '#1E3A8A';
 const COMPANY_LOGO = '/images/company-logo-vertical.png';
-const COMPANY_LOGO_H = '/images/company-logo.png';
-
-/* ---------- Reusable SVG decorations (page 1 + page 2 inspired) ---------- */
-
-const RedArrow = ({ style }: { style?: React.CSSProperties }) => (
-  <svg viewBox="0 0 200 200" style={style} aria-hidden="true">
-    <polygon points="0,20 130,20 200,100 130,180 0,180 70,100" fill={BRAND_RED} />
-    <polygon points="0,40 110,40 175,100 110,160 0,160 60,100" fill="#fff" opacity="0.18" />
-  </svg>
-);
-
-const BlueTriangle = ({ style }: { style?: React.CSSProperties }) => (
-  <svg viewBox="0 0 200 200" style={style} aria-hidden="true">
-    <polygon points="200,200 200,40 30,200" fill={BRAND_BLUE} />
-  </svg>
-);
-
-const GlobePlane = ({ style }: { style?: React.CSSProperties }) => (
-  <svg viewBox="0 0 300 300" style={style} aria-hidden="true">
-    <g fill="none" stroke={BRAND_BLUE} strokeWidth="2.2" strokeLinecap="round">
-      <circle cx="170" cy="160" r="95" />
-      <path d="M75 160 q95 -55 190 0" />
-      <path d="M75 160 q95 55 190 0" />
-      <path d="M170 65 q-55 95 0 190" />
-      <path d="M170 65 q55 95 0 190" />
-    </g>
-    <path
-      d="M40 220 q70 -50 150 -90"
-      fill="none"
-      stroke={BRAND_BLUE}
-      strokeWidth="2"
-      strokeDasharray="4 6"
-      strokeLinecap="round"
-    />
-    <g transform="translate(35 225) rotate(-25)">
-      <path
-        d="M0 0 L34 -6 L48 -16 L54 -12 L44 0 L54 12 L48 16 L34 6 L0 0 Z"
-        fill={BRAND_RED}
-      />
-    </g>
-  </svg>
-);
+const RED_ARROW_IMG = '/images/id-red-arrow.png';
+const BLUE_TRI_IMG = '/images/id-blue-triangle.png';
+const WORLD_IMG = '/images/id-world.png';
 
 /* ---------- Front side preview (page 1 inspired) ---------- */
 
@@ -88,11 +49,53 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         textAlign: 'left',
       }}
     >
-      {/* Top-left red arrow */}
-      <RedArrow style={{ position: 'absolute', top: '-30px', left: '-50px', width: '170px', height: '170px' }} />
+      {/* Globe background */}
+      <img
+        src={WORLD_IMG}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '300px',
+          height: 'auto',
+          opacity: 0.08,
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
 
-      {/* Bottom-right blue triangle */}
-      <BlueTriangle style={{ position: 'absolute', bottom: '0', right: '0', width: '110px', height: '110px', opacity: 0.95 }} />
+      {/* Top-right red arrow image */}
+      <img
+        src={RED_ARROW_IMG}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: '-30px',
+          right: '-40px',
+          width: '170px',
+          height: 'auto',
+          zIndex: 1,
+        }}
+      />
+
+      {/* Bottom-right blue triangle image */}
+      <img
+        src={BLUE_TRI_IMG}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          bottom: '-10px',
+          right: '-10px',
+          width: '140px',
+          height: 'auto',
+          zIndex: 1,
+        }}
+      />
 
       {/* Brand wordmark — Link Aero */}
       <div style={{ position: 'relative', textAlign: 'center', paddingTop: '22px', zIndex: 2 }}>
@@ -142,14 +145,14 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         </div>
       </div>
 
-      {/* Logo bottom-right (above triangle) */}
+      {/* Logo bottom-left */}
       <img
         src={COMPANY_LOGO}
         alt="Company"
         style={{
           position: 'absolute',
           bottom: '70px',
-          right: '18px',
+          left: '18px',
           height: '92px',
           objectFit: 'contain',
           zIndex: 3,
@@ -179,6 +182,9 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
 
 function buildPrintHtml(emp: EmployeeForId, origin: string): string {
   const logo = `${origin}${COMPANY_LOGO}`;
+  const redArrow = `${origin}${RED_ARROW_IMG}`;
+  const blueTri = `${origin}${BLUE_TRI_IMG}`;
+  const world = `${origin}${WORLD_IMG}`;
   const photo = emp.avatar || '';
   return `<!DOCTYPE html>
 <html dir="ltr">
@@ -199,8 +205,9 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
       border:1px solid #e5e7eb;direction:ltr;text-align:left;
     }
     .card *{text-align:left;}
-    .red-arrow{position:absolute;top:-36px;left:-58px;width:200px;height:200px;}
-    .blue-tri{position:absolute;bottom:0;right:0;width:130px;height:130px;}
+    .bg-world{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:360px;height:auto;opacity:0.08;z-index:0;pointer-events:none;}
+    .red-arrow{position:absolute;top:-36px;right:-48px;width:210px;height:auto;z-index:1;}
+    .blue-tri{position:absolute;bottom:-12px;right:-12px;width:170px;height:auto;z-index:1;}
     .brand{position:relative;text-align:center;padding-top:26px;z-index:2;}
     .brand span{font-weight:800;font-size:36px;letter-spacing:-0.5px;}
     .brand .b1{color:${BRAND_RED};}
@@ -214,7 +221,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .title{font-size:12px;color:#475569;font-weight:600;margin-top:3px;}
     .row{margin-top:16px;font-size:16px;font-weight:700;color:${BRAND_BLUE};}
     .row span{color:#0f172a;font-weight:700;}
-    .vlogo{position:absolute;bottom:80px;right:20px;height:108px;object-fit:contain;z-index:3;}
+    .vlogo{position:absolute;bottom:80px;left:20px;height:108px;object-fit:contain;z-index:3;}
     .site{position:absolute;bottom:16px;left:22px;font-size:13px;font-weight:800;color:${BRAND_RED};z-index:3;}
 
     /* Back side */
@@ -222,7 +229,6 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .contact{position:absolute;top:330px;left:30px;right:30px;z-index:3;display:flex;flex-direction:column;gap:10px;font-size:13px;color:${BRAND_BLUE};font-weight:700;}
     .contact .li{display:flex;align-items:center;gap:10px;}
     .contact svg{flex-shrink:0;}
-    .globe{position:absolute;bottom:-20px;right:-30px;width:240px;height:240px;opacity:0.95;}
 
     @media print{
       body{background:#fff;padding:0;}
@@ -234,8 +240,9 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
   <div class="wrap">
     <!-- FRONT -->
     <div class="card">
-      <svg class="red-arrow" viewBox="0 0 200 200"><polygon points="0,20 130,20 200,100 130,180 0,180 70,100" fill="${BRAND_RED}"/></svg>
-      <svg class="blue-tri" viewBox="0 0 200 200"><polygon points="200,200 200,40 30,200" fill="${BRAND_BLUE}"/></svg>
+      <img class="bg-world" src="${world}" alt=""/>
+      <img class="red-arrow" src="${redArrow}" alt=""/>
+      <img class="blue-tri" src="${blueTri}" alt=""/>
       <div class="brand"><span class="b1">Link</span><span class="b2"> Aero</span></div>
       <div class="photo">
         ${photo
@@ -255,7 +262,9 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
 
     <!-- BACK (page 2 inspired) -->
     <div class="card back">
-      <svg class="red-arrow" viewBox="0 0 200 200"><polygon points="0,20 130,20 200,100 130,180 0,180 70,100" fill="${BRAND_RED}"/></svg>
+      <img class="bg-world" src="${world}" alt=""/>
+      <img class="red-arrow" src="${redArrow}" alt=""/>
+      <img class="blue-tri" src="${blueTri}" alt=""/>
       <img class="blogo" src="${logo}" alt="Company"/>
       <div class="contact">
         <div class="li">
@@ -271,19 +280,6 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
           +202 27 352025 (10 lines)
         </div>
       </div>
-      <svg class="globe" viewBox="0 0 300 300">
-        <g fill="none" stroke="${BRAND_BLUE}" stroke-width="2.4" stroke-linecap="round">
-          <circle cx="170" cy="160" r="95"/>
-          <path d="M75 160 q95 -55 190 0"/>
-          <path d="M75 160 q95 55 190 0"/>
-          <path d="M170 65 q-55 95 0 190"/>
-          <path d="M170 65 q55 95 0 190"/>
-        </g>
-        <path d="M40 220 q70 -50 150 -90" fill="none" stroke="${BRAND_BLUE}" stroke-width="2" stroke-dasharray="4 6" stroke-linecap="round"/>
-        <g transform="translate(35 225) rotate(-25)">
-          <path d="M0 0 L34 -6 L48 -16 L54 -12 L44 0 L54 12 L48 16 L34 6 L0 0 Z" fill="${BRAND_RED}"/>
-        </g>
-      </svg>
     </div>
   </div>
 </body>
