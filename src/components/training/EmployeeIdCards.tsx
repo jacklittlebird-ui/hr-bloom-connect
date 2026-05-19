@@ -367,24 +367,25 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = pdf.internal.pageSize.getWidth();   // 210
       const pageH = pdf.internal.pageSize.getHeight();  // 297
-      const margin = 14;
-      const gap = 8;
-      // Two cards side-by-side fit inside (pageW - 2*margin - gap)
-      const availW = pageW - margin * 2 - gap;
-      const cardW = availW / 2;                         // ~88mm
-      const cardH = cardW * (600 / 380);                // preserve 380x600 ratio
+      // Smaller card size (CR80-like ~ 54x85.6mm) with higher rasterization quality
+      const gap = 10;
+      const cardW = 54;                                 // mm (smaller)
+      const cardH = cardW * (600 / 380);                // preserve 380x600 ratio (~85.3mm)
+      const totalW = cardW * 2 + gap;
+      const xStart = (pageW - totalW) / 2;
       const yTop = (pageH - cardH) / 2;
 
       for (let i = 0; i < cards.length; i++) {
         const canvas = await html2canvas(cards[i], {
-          scale: 3,
+          scale: 5,
           backgroundColor: '#ffffff',
           useCORS: true,
           logging: false,
+          imageTimeout: 0,
         });
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-        const x = margin + i * (cardW + gap);
-        pdf.addImage(dataUrl, 'JPEG', x, yTop, cardW, cardH, undefined, 'FAST');
+        const dataUrl = canvas.toDataURL('image/png');
+        const x = xStart + i * (cardW + gap);
+        pdf.addImage(dataUrl, 'PNG', x, yTop, cardW, cardH, undefined, 'SLOW');
       }
 
       const safeName = (emp.name_en || emp.employee_code || 'employee').replace(/[^A-Za-z0-9_-]+/g, '_');
