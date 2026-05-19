@@ -201,8 +201,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     /* Front */
     .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
-    .brand{position:relative;text-align:center;padding-top:50px;padding-left:36px;z-index:2;}
-    .brand span{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:46px;letter-spacing:0;}
+    .brand{position:relative;text-align:right;padding-top:50px;padding-right:28px;z-index:2;}
+    .brand span{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:38px;letter-spacing:0;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
     .photo{position:relative;margin:18px auto 0;width:200px;height:200px;border-radius:50%;
