@@ -79,7 +79,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       />
 
       {/* Brand wordmark — Link Aero */}
-      <div style={{ position: 'relative', textAlign: 'center', paddingTop: '24px', zIndex: 2 }}>
+      <div style={{ position: 'relative', textAlign: 'center', paddingTop: '44px', zIndex: 2 }}>
         <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_RED, letterSpacing: '-0.5px' }}>Link</span>
         <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_BLUE, letterSpacing: '-0.5px' }}> Aero</span>
       </div>
@@ -109,7 +109,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       </div>
 
       {/* Info block bottom-left */}
-      <div style={{ position: 'absolute', bottom: '46px', left: '20px', zIndex: 2, maxWidth: '180px' }}>
+      <div style={{ position: 'absolute', bottom: '70px', left: '20px', zIndex: 2, maxWidth: '180px' }}>
         <div style={{ fontSize: '20px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.1 }}>
           {emp.name_en}
         </div>
@@ -124,6 +124,9 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         <div style={{ marginTop: '2px', fontSize: '12px', fontWeight: 700, color: BRAND_BLUE }}>
           Employed: <span style={{ color: '#0f172a' }}>{emp.hire_date || 'N/A'}</span>
         </div>
+        <div style={{ marginTop: '2px', fontSize: '10px', fontWeight: 600, color: '#475569' }}>
+          Valid till 31/12/2035
+        </div>
       </div>
 
       {/* Company logo bottom-right */}
@@ -132,7 +135,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         alt="Company"
         style={{
           position: 'absolute',
-          bottom: '40px',
+          bottom: '65px',
           right: '16px',
           height: '110px',
           objectFit: 'contain',
