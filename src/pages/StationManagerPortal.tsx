@@ -637,13 +637,26 @@ const StationManagerPortal = () => {
   const [newEvalDeptFilter, setNewEvalDeptFilter] = useState('all');
   const [newEvalSelectedEmp, setNewEvalSelectedEmp] = useState('');
   const [newEvalPage, setNewEvalPage] = useState(0);
+  const [newEvalSearch, setNewEvalSearch] = useState('');
   const NEW_EVAL_PAGE_SIZE = 5;
 
   const newEvalFilteredEmps = useMemo(() => {
     let list = stationEmployees.filter(e => e.status === 'active');
     if (newEvalDeptFilter !== 'all') list = list.filter(e => e.department === newEvalDeptFilter);
+    const q = newEvalSearch.trim().toLowerCase();
+    if (q) {
+      const norm = (s: string) => (s || '').toLowerCase()
+        .replace(/[إأآا]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim();
+      const nq = norm(q);
+      list = list.filter(e =>
+        norm(e.nameAr).includes(nq) ||
+        norm(e.nameEn).includes(nq) ||
+        (e.employeeId || '').toLowerCase().includes(q)
+      );
+    }
     return list;
-  }, [stationEmployees, newEvalDeptFilter]);
+  }, [stationEmployees, newEvalDeptFilter, newEvalSearch]);
+
 
   const newEvalTotalPages = Math.max(1, Math.ceil(newEvalFilteredEmps.length / NEW_EVAL_PAGE_SIZE));
   const newEvalPaginatedEmps = newEvalFilteredEmps.slice(newEvalPage * NEW_EVAL_PAGE_SIZE, (newEvalPage + 1) * NEW_EVAL_PAGE_SIZE);
