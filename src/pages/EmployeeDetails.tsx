@@ -36,6 +36,8 @@ import { TrainingTab } from '@/components/employees/tabs/TrainingTab';
 import { NotesTab } from '@/components/employees/tabs/NotesTab';
 import { BonusesEidTab } from '@/components/employees/tabs/BonusesEidTab';
 import { BankAccountTab } from '@/components/employees/tabs/BankAccountTab';
+import { CustodyTab } from '@/components/employees/tabs/CustodyTab';
+import { UniformsTab } from '@/components/employees/tabs/UniformsTab';
 import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { toast } from '@/hooks/use-toast';
