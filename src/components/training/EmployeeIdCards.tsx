@@ -111,22 +111,22 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       </div>
 
       {/* Info block bottom-left */}
-      <div style={{ position: 'absolute', bottom: '70px', left: '20px', zIndex: 2, maxWidth: '180px' }}>
-        <div style={{ fontSize: '17px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.1 }}>
+      <div style={{ position: 'absolute', bottom: '64px', left: '22px', zIndex: 2, maxWidth: '170px' }}>
+        <div style={{ fontSize: '17px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.15 }}>
           {emp.name_en}
         </div>
         {emp.job_title_en && (
-          <div style={{ fontSize: '10px', color: '#475569', fontWeight: 600, marginTop: '2px' }}>
+          <div style={{ fontSize: '10px', color: '#475569', fontWeight: 600, marginTop: '4px', lineHeight: 1.3 }}>
             {emp.job_title_en}
           </div>
         )}
-        <div style={{ marginTop: '10px', fontSize: '13px', fontWeight: 700, color: BRAND_BLUE }}>
+        <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 700, color: BRAND_BLUE, lineHeight: 1.4 }}>
           ID: <span style={{ color: '#0f172a' }}>{emp.employee_code}</span>
         </div>
-        <div style={{ marginTop: '2px', fontSize: '12px', fontWeight: 700, color: BRAND_BLUE }}>
+        <div style={{ marginTop: '3px', fontSize: '11px', fontWeight: 700, color: BRAND_BLUE, lineHeight: 1.4 }}>
           Employed: <span style={{ color: '#0f172a' }}>{emp.hire_date || 'N/A'}</span>
         </div>
-        <div style={{ marginTop: '2px', fontSize: '10px', fontWeight: 600, color: '#475569' }}>
+        <div style={{ marginTop: '5px', fontSize: '10px', fontWeight: 600, color: '#475569', lineHeight: 1.3 }}>
           Valid till 31/12/2035
         </div>
       </div>
@@ -137,13 +137,15 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         alt="Company"
         style={{
           position: 'absolute',
-          bottom: '65px',
-          right: '16px',
-          height: '135px',
+          bottom: '72px',
+          right: '22px',
+          height: '105px',
+          width: 'auto',
           objectFit: 'contain',
           zIndex: 3,
         }}
       />
+
 
       {/* Website bottom-left */}
       <div
