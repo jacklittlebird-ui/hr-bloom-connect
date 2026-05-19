@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,39 @@ const WORLD_IMG = '/images/id-world.png';
 /* ---------- Front side preview (matches reference page 1) ---------- */
 
 const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
+  const brandRef = useRef<HTMLDivElement>(null);
+  const photoRef = useRef<HTMLDivElement>(null);
+  const infoRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLImageElement>(null);
+
+  // Runtime overlap detection — warns if brand collides with any other card element
+  useEffect(() => {
+    const check = () => {
+      const brand = brandRef.current?.getBoundingClientRect();
+      if (!brand) return;
+      const targets: Array<[string, DOMRect | undefined]> = [
+        ['photo', photoRef.current?.getBoundingClientRect()],
+        ['info', infoRef.current?.getBoundingClientRect()],
+        ['logo', logoRef.current?.getBoundingClientRect()],
+      ];
+      const overlap = (a: DOMRect, b: DOMRect) =>
+        !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+      targets.forEach(([name, rect]) => {
+        if (rect && overlap(brand, rect)) {
+          // eslint-disable-next-line no-console
+          console.warn(`[IdCardFront] "Link Aero" overlaps ${name}`, { brand, [name]: rect });
+        }
+      });
+    };
+    check();
+    const id = window.setTimeout(check, 300); // re-check after images load
+    window.addEventListener('resize', check);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener('resize', check);
+    };
+  }, [emp.avatar]);
+
   return (
     <div
       dir="ltr"
@@ -49,6 +82,8 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         boxShadow: '0 10px 30px rgba(15,23,42,0.12)',
         border: '1px solid #e5e7eb',
         textAlign: 'left',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Top-left red arrow */}
@@ -81,18 +116,18 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         }}
       />
 
-      {/* Brand wordmark — Link Aero */}
-      <div style={{ position: 'absolute', top: '66px', left: 0, right: 0, textAlign: 'center', zIndex: 4 }}>
+      {/* Brand wordmark — Link Aero (flow-based, can't overlap photo) */}
+      <div ref={brandRef} style={{ marginTop: '60px', textAlign: 'center', zIndex: 4, position: 'relative' }}>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_RED, letterSpacing: '0px' }}>Link</span>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_BLUE, letterSpacing: '0px' }}> Aero</span>
       </div>
-      <div style={{ height: '126px' }} />
 
-      {/* Circular photo */}
+      {/* Circular photo (flow-based, sits below brand) */}
       <div
+        ref={photoRef}
         style={{
           position: 'relative',
-          margin: '14px auto 0',
+          margin: '18px auto 0',
           width: '170px',
           height: '170px',
           borderRadius: '50%',
@@ -103,6 +138,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 2,
+          flexShrink: 0,
         }}
       >
         {emp.avatar ? (
@@ -113,7 +149,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       </div>
 
       {/* Info block bottom-left */}
-      <div style={{ position: 'absolute', bottom: '64px', left: '22px', zIndex: 2, maxWidth: '170px' }}>
+      <div ref={infoRef} style={{ position: 'absolute', bottom: '64px', left: '22px', zIndex: 2, maxWidth: '170px' }}>
         <div style={{ fontSize: '17px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.15 }}>
           {emp.name_en}
         </div>
@@ -138,6 +174,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
 
       {/* Company logo bottom-right */}
       <img
+        ref={logoRef}
         src={COMPANY_LOGO}
         alt="Company"
         style={{
@@ -202,11 +239,11 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     /* Front */
     .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
-    .brand{position:absolute;top:80px;left:0;right:0;text-align:center;z-index:4;}
+    .brand{margin-top:74px;text-align:center;position:relative;z-index:4;}
     .brand span{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:46px;letter-spacing:0;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
-    .photo{position:relative;margin:160px auto 0;width:200px;height:200px;border-radius:50%;
+    .photo{position:relative;margin:22px auto 0;width:200px;height:200px;border-radius:50%;
       overflow:hidden;border:2px solid #0f172a;background:#e5e7eb;display:flex;
       align-items:center;justify-content:center;z-index:2;}
     .photo img{width:100%;height:100%;object-fit:cover;}
