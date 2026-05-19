@@ -149,7 +149,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       </div>
 
       {/* Info block bottom-left */}
-      <div style={{ position: 'absolute', bottom: '64px', left: '22px', zIndex: 2, maxWidth: '170px' }}>
+      <div ref={infoRef} style={{ position: 'absolute', bottom: '64px', left: '22px', zIndex: 2, maxWidth: '170px' }}>
         <div style={{ fontSize: '17px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.15 }}>
           {emp.name_en}
         </div>
