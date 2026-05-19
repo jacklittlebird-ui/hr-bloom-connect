@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Search, Printer, Download, CreditCard, User } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface EmployeeForId {
   id: string;
@@ -109,22 +111,22 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       </div>
 
       {/* Info block bottom-left */}
-      <div style={{ position: 'absolute', bottom: '70px', left: '20px', zIndex: 2, maxWidth: '180px' }}>
-        <div style={{ fontSize: '17px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.1 }}>
+      <div style={{ position: 'absolute', bottom: '64px', left: '22px', zIndex: 2, maxWidth: '170px' }}>
+        <div style={{ fontSize: '17px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.15 }}>
           {emp.name_en}
         </div>
         {emp.job_title_en && (
-          <div style={{ fontSize: '10px', color: '#475569', fontWeight: 600, marginTop: '2px' }}>
+          <div style={{ fontSize: '10px', color: '#475569', fontWeight: 600, marginTop: '4px', lineHeight: 1.3 }}>
             {emp.job_title_en}
           </div>
         )}
-        <div style={{ marginTop: '10px', fontSize: '13px', fontWeight: 700, color: BRAND_BLUE }}>
+        <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 700, color: BRAND_BLUE, lineHeight: 1.4 }}>
           ID: <span style={{ color: '#0f172a' }}>{emp.employee_code}</span>
         </div>
-        <div style={{ marginTop: '2px', fontSize: '12px', fontWeight: 700, color: BRAND_BLUE }}>
+        <div style={{ marginTop: '3px', fontSize: '11px', fontWeight: 700, color: BRAND_BLUE, lineHeight: 1.4 }}>
           Employed: <span style={{ color: '#0f172a' }}>{emp.hire_date || 'N/A'}</span>
         </div>
-        <div style={{ marginTop: '2px', fontSize: '10px', fontWeight: 600, color: '#475569' }}>
+        <div style={{ marginTop: '5px', fontSize: '10px', fontWeight: 600, color: '#475569', lineHeight: 1.3 }}>
           Valid till 31/12/2035
         </div>
       </div>
@@ -135,13 +137,15 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         alt="Company"
         style={{
           position: 'absolute',
-          bottom: '65px',
-          right: '16px',
-          height: '135px',
+          bottom: '72px',
+          right: '22px',
+          height: '105px',
+          width: 'auto',
           objectFit: 'contain',
           zIndex: 3,
         }}
       />
+
 
       {/* Website bottom-left */}
       <div
@@ -201,15 +205,15 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
       overflow:hidden;border:2px solid #0f172a;background:#e5e7eb;display:flex;
       align-items:center;justify-content:center;z-index:2;}
     .photo img{width:100%;height:100%;object-fit:cover;}
-    .info{position:absolute;bottom:80px;left:26px;z-index:2;max-width:210px;}
-    .name{font-size:20px;font-weight:800;color:${BRAND_BLUE};line-height:1.1;}
-    .title{font-size:11px;color:#475569;font-weight:600;margin-top:3px;}
-    .row{margin-top:12px;font-size:15px;font-weight:700;color:${BRAND_BLUE};}
-    .row + .row{margin-top:3px;font-size:14px;}
+    .info{position:absolute;bottom:78px;left:28px;z-index:2;max-width:200px;}
+    .name{font-size:20px;font-weight:800;color:${BRAND_BLUE};line-height:1.15;}
+    .title{font-size:11px;color:#475569;font-weight:600;margin-top:5px;line-height:1.3;}
+    .row{margin-top:10px;font-size:14px;font-weight:700;color:${BRAND_BLUE};line-height:1.4;}
+    .row + .row{margin-top:4px;font-size:13px;}
     .row span{color:#0f172a;font-weight:700;}
-    .valid{margin-top:6px;font-size:11px;font-weight:600;color:#475569;}
-    .flogo{position:absolute;bottom:75px;right:20px;height:160px;object-fit:contain;z-index:3;}
-    .site{position:absolute;bottom:18px;left:26px;font-size:14px;font-weight:800;color:${BRAND_RED};z-index:3;}
+    .valid{margin-top:6px;font-size:11px;font-weight:600;color:#475569;line-height:1.3;}
+    .flogo{position:absolute;bottom:85px;right:26px;height:125px;width:auto;object-fit:contain;z-index:3;}
+    .site{position:absolute;bottom:20px;left:28px;font-size:14px;font-weight:800;color:${BRAND_RED};z-index:3;}
 
     /* Back */
     .back .blogo{position:absolute;top:140px;left:50%;transform:translateX(-50%);height:170px;object-fit:contain;z-index:3;}
@@ -320,12 +324,74 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
     setFiltered(list);
   }, [search, deptFilter, stationFilter, employees]);
 
-  const exportPdf = (emp: EmployeeForId) => {
+  const printCard = (emp: EmployeeForId) => {
     const w = window.open('', '_blank');
     if (!w) return;
     w.document.write(buildPrintHtml(emp, window.location.origin));
     w.document.close();
     setTimeout(() => w.print(), 600);
+  };
+
+  // High-quality PDF export: render the print HTML into an isolated iframe,
+  // rasterize each card at scale=3, and embed both faces on a single A4 page.
+  const downloadPdf = async (emp: EmployeeForId) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-10000px';
+    iframe.style.top = '0';
+    iframe.style.width = '900px';
+    iframe.style.height = '1400px';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    try {
+      const doc = iframe.contentDocument!;
+      doc.open();
+      doc.write(buildPrintHtml(emp, window.location.origin));
+      doc.close();
+
+      // Wait for fonts + images
+      await new Promise<void>((res) => {
+        const ready = () => res();
+        if (doc.readyState === 'complete') ready();
+        else iframe.onload = () => ready();
+      });
+      // @ts-ignore
+      if (doc.fonts && doc.fonts.ready) { try { await doc.fonts.ready; } catch {} }
+      const imgs = Array.from(doc.images);
+      await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(r => { img.onload = img.onerror = () => r(null); })));
+      await new Promise(r => setTimeout(r, 200));
+
+      const cards = Array.from(doc.querySelectorAll<HTMLElement>('.card'));
+      if (cards.length === 0) throw new Error('No cards rendered');
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();   // 210
+      const pageH = pdf.internal.pageSize.getHeight();  // 297
+      const margin = 14;
+      const gap = 8;
+      // Two cards side-by-side fit inside (pageW - 2*margin - gap)
+      const availW = pageW - margin * 2 - gap;
+      const cardW = availW / 2;                         // ~88mm
+      const cardH = cardW * (600 / 380);                // preserve 380x600 ratio
+      const yTop = (pageH - cardH) / 2;
+
+      for (let i = 0; i < cards.length; i++) {
+        const canvas = await html2canvas(cards[i], {
+          scale: 3,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          logging: false,
+        });
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const x = margin + i * (cardW + gap);
+        pdf.addImage(dataUrl, 'JPEG', x, yTop, cardW, cardH, undefined, 'FAST');
+      }
+
+      const safeName = (emp.name_en || emp.employee_code || 'employee').replace(/[^A-Za-z0-9_-]+/g, '_');
+      pdf.save(`ID_${safeName}.pdf`);
+    } finally {
+      document.body.removeChild(iframe);
+    }
   };
 
   return (
@@ -376,11 +442,11 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
             <div key={emp.id} className="flex flex-col items-center gap-3">
               <IdCardFront emp={emp} />
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => exportPdf(emp)}>
+                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => printCard(emp)}>
                   <Printer className="w-3.5 h-3.5" />
                   {ar ? 'طباعة' : 'Print'}
                 </Button>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => exportPdf(emp)}>
+                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => downloadPdf(emp)}>
                   <Download className="w-3.5 h-3.5" />
                   PDF
                 </Button>
