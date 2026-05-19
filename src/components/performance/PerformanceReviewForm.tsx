@@ -58,6 +58,7 @@ export const PerformanceReviewForm = () => {
   const [selectedQuarter, setSelectedQuarter] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [employeePage, setEmployeePage] = useState(0);
+  const [employeeSearch, setEmployeeSearch] = useState('');
   const PAGE_SIZE = 5;
 
   // Form
