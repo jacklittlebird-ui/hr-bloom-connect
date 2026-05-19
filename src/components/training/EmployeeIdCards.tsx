@@ -179,7 +179,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
 <head>
   <meta charset="utf-8" />
   <title>Employee ID — ${emp.name_en}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
     @page{size:A4;margin:14mm;}
