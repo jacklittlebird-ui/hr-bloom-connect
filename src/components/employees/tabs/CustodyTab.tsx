@@ -59,15 +59,16 @@ export const CustodyTab = ({ employee }: CustodyTabProps) => {
 
       const { data: tData } = await supabase
         .from('training_records')
-        .select('id, status, start_date, end_date, total_cost, provider, courses(name_ar, name_en)')
-        .eq('employee_id', employee.id);
+        .select('id, status, start_date, end_date, planned_date, total_cost, provider, training_courses(name_ar, name_en)')
+        .eq('employee_id', employee.id)
+        .order('start_date', { ascending: false });
       if (!cancelled && tData) {
         setTrainingDebts(tData.map((t: any) => ({
           id: t.id,
-          courseNameAr: t.courses?.name_ar || '',
-          courseNameEn: t.courses?.name_en || '',
+          courseNameAr: t.training_courses?.name_ar || '',
+          courseNameEn: t.training_courses?.name_en || '',
           status: t.status,
-          startDate: t.start_date || '',
+          startDate: t.start_date || t.planned_date || '',
           endDate: t.end_date || '',
           totalCost: Number(t.total_cost) || 0,
           provider: t.provider || '',
@@ -105,7 +106,9 @@ export const CustodyTab = ({ employee }: CustodyTabProps) => {
     maintenance: { ar: 'بالصيانة', cls: 'bg-amber-100 text-amber-700 border-amber-400' },
   };
   const statusMap: Record<string, { ar: string; cls: string }> = {
-    enrolled: { ar: 'قيد التدريب', cls: 'bg-warning/10 text-warning border-warning' },
+    enrolled: { ar: 'مسجل', cls: 'bg-warning/10 text-warning border-warning' },
+    planned: { ar: 'مخطط', cls: 'bg-blue-100 text-blue-700 border-blue-300' },
+    in_progress: { ar: 'جاري', cls: 'bg-warning/10 text-warning border-warning' },
     failed: { ar: 'لم يجتاز', cls: 'bg-destructive/10 text-destructive border-destructive' },
     completed: { ar: 'مكتمل', cls: 'bg-primary/10 text-primary border-primary' },
   };
