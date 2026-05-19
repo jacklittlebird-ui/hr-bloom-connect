@@ -223,8 +223,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .globe{position:absolute;bottom:-30px;right:-40px;width:240px;height:auto;z-index:1;}
 
     @media print{
-      body{background:#fff;padding:0;}
-      .wrap{gap:6mm;justify-content:center;}
+      html,body{background:#fff;padding:0;margin:0;width:100%;display:block;}
+      .wrap{gap:6mm;justify-content:center;align-items:flex-start;width:100%;padding-top:14mm;}
       .card{transform:scale(0.54);transform-origin:top left;margin:0 -175px -276px 0;}
     }
   </style>
