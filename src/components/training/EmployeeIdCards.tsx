@@ -174,6 +174,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
 
       {/* Company logo bottom-right */}
       <img
+        ref={logoRef}
         src={COMPANY_LOGO}
         alt="Company"
         style={{
