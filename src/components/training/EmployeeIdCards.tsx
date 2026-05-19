@@ -82,8 +82,8 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
 
       {/* Brand wordmark — Link Aero */}
       <div style={{ position: 'relative', textAlign: 'center', paddingTop: '44px', zIndex: 2 }}>
-        <span style={{ fontWeight: 800, fontSize: '40px', color: BRAND_RED, letterSpacing: '-0.5px' }}>Link</span>
-        <span style={{ fontWeight: 800, fontSize: '40px', color: BRAND_BLUE, letterSpacing: '-0.5px' }}> Aero</span>
+        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', fontSize: '40px', color: BRAND_RED, letterSpacing: '-1px' }}>Link</span>
+        <span style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', fontSize: '40px', color: BRAND_BLUE, letterSpacing: '-1px' }}> Aero</span>
       </div>
 
       {/* Circular photo */}
@@ -179,7 +179,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
 <head>
   <meta charset="utf-8" />
   <title>Employee ID — ${emp.name_en}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Montserrat:ital,wght@0,700;0,800;0,900;1,800;1,900&display=swap" rel="stylesheet">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
     @page{size:A4;margin:14mm;}
@@ -198,7 +198,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
     .brand{position:relative;text-align:center;padding-top:50px;padding-left:36px;z-index:2;}
-    .brand span{font-weight:800;font-size:48px;letter-spacing:-0.5px;}
+    .brand span{font-family:'Montserrat',sans-serif;font-weight:900;font-style:italic;font-size:48px;letter-spacing:-1px;text-transform:uppercase;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
     .photo{position:relative;margin:18px auto 0;width:200px;height:200px;border-radius:50%;
