@@ -21,7 +21,6 @@ interface EmployeeForId {
   stations?: { name_en: string } | null;
 }
 
-const ID_EXPIRY = '31/12/2036';
 const BRAND_RED = '#E30613';
 const BRAND_BLUE = '#1E3A8A';
 const COMPANY_LOGO = '/images/company-logo-vertical.png';
@@ -29,7 +28,7 @@ const RED_ARROW_IMG = '/images/id-red-arrow.png';
 const BLUE_TRI_IMG = '/images/id-blue-triangle.png';
 const WORLD_IMG = '/images/id-world.png';
 
-/* ---------- Front side preview (page 1 inspired) ---------- */
+/* ---------- Front side preview (matches reference page 1) ---------- */
 
 const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
   return (
@@ -49,21 +48,22 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         textAlign: 'left',
       }}
     >
-      {/* Top-left company logo (was red arrow) */}
+      {/* Top-left red arrow */}
       <img
-        src={COMPANY_LOGO}
-        alt="Company"
+        src={RED_ARROW_IMG}
+        alt=""
+        aria-hidden="true"
         style={{
           position: 'absolute',
-          top: '14px',
-          left: '14px',
-          height: '70px',
-          objectFit: 'contain',
-          zIndex: 3,
+          top: '-30px',
+          left: '-40px',
+          width: '150px',
+          height: 'auto',
+          zIndex: 1,
         }}
       />
 
-      {/* Bottom-right blue triangle image */}
+      {/* Bottom-right small blue triangle */}
       <img
         src={BLUE_TRI_IMG}
         alt=""
@@ -72,14 +72,14 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
           position: 'absolute',
           bottom: '-10px',
           right: '-10px',
-          width: '140px',
+          width: '90px',
           height: 'auto',
           zIndex: 1,
         }}
       />
 
       {/* Brand wordmark — Link Aero */}
-      <div style={{ position: 'relative', textAlign: 'center', paddingTop: '22px', zIndex: 2 }}>
+      <div style={{ position: 'relative', textAlign: 'center', paddingTop: '24px', zIndex: 2 }}>
         <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_RED, letterSpacing: '-0.5px' }}>Link</span>
         <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_BLUE, letterSpacing: '-0.5px' }}> Aero</span>
       </div>
@@ -88,12 +88,12 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       <div
         style={{
           position: 'relative',
-          margin: '18px auto 0',
+          margin: '14px auto 0',
           width: '170px',
           height: '170px',
           borderRadius: '50%',
           overflow: 'hidden',
-          border: '3px solid #0f172a',
+          border: '2px solid #0f172a',
           background: '#e5e7eb',
           display: 'flex',
           alignItems: 'center',
@@ -108,36 +108,35 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         )}
       </div>
 
-      {/* Info block */}
-      <div style={{ position: 'relative', padding: '20px 22px 0', zIndex: 2 }}>
-        <div style={{ fontSize: '22px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.1 }}>
+      {/* Info block bottom-left */}
+      <div style={{ position: 'absolute', bottom: '46px', left: '20px', zIndex: 2, maxWidth: '180px' }}>
+        <div style={{ fontSize: '20px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.1 }}>
           {emp.name_en}
         </div>
         {emp.job_title_en && (
-          <div style={{ fontSize: '11px', color: '#475569', fontWeight: 600, marginTop: '2px' }}>
+          <div style={{ fontSize: '10px', color: '#475569', fontWeight: 600, marginTop: '2px' }}>
             {emp.job_title_en}
           </div>
         )}
-        <div style={{ marginTop: '14px', fontSize: '14px', fontWeight: 700, color: BRAND_BLUE }}>
+        <div style={{ marginTop: '10px', fontSize: '13px', fontWeight: 700, color: BRAND_BLUE }}>
           ID: <span style={{ color: '#0f172a' }}>{emp.employee_code}</span>
         </div>
-        <div style={{ marginTop: '4px', fontSize: '13px', fontWeight: 700, color: BRAND_BLUE }}>
+        <div style={{ marginTop: '2px', fontSize: '12px', fontWeight: 700, color: BRAND_BLUE }}>
           Employed: <span style={{ color: '#0f172a' }}>{emp.hire_date || 'N/A'}</span>
         </div>
       </div>
 
-      {/* Bottom-left red arrow (was top-left) */}
+      {/* Company logo bottom-right */}
       <img
-        src={RED_ARROW_IMG}
-        alt=""
-        aria-hidden="true"
+        src={COMPANY_LOGO}
+        alt="Company"
         style={{
           position: 'absolute',
-          bottom: '34px',
-          left: '-30px',
-          width: '110px',
-          height: 'auto',
-          zIndex: 1,
+          bottom: '40px',
+          right: '16px',
+          height: '110px',
+          objectFit: 'contain',
+          zIndex: 3,
         }}
       />
 
@@ -145,9 +144,9 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       <div
         style={{
           position: 'absolute',
-          bottom: '14px',
+          bottom: '16px',
           left: '20px',
-          fontSize: '12px',
+          fontSize: '13px',
           fontWeight: 800,
           color: BRAND_RED,
           letterSpacing: '0.3px',
@@ -187,32 +186,33 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
       border:1px solid #e5e7eb;direction:ltr;text-align:left;
     }
     .card *{text-align:left;}
-    .globe-back{position:absolute;bottom:-10px;right:-10px;width:200px;height:auto;z-index:1;pointer-events:none;}
-    .red-arrow{position:absolute;top:-28px;left:-40px;width:160px;height:auto;z-index:1;}
-    .red-arrow-bottom{position:absolute;bottom:40px;left:-34px;width:135px;height:auto;z-index:1;}
-    .top-logo{position:absolute;top:16px;left:18px;height:84px;object-fit:contain;z-index:3;}
-    .blue-tri{position:absolute;bottom:-12px;right:-12px;width:170px;height:auto;z-index:1;}
-    .brand{position:relative;text-align:center;padding-top:26px;z-index:2;}
+
+    /* Front */
+    .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
+    .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
+    .brand{position:relative;text-align:center;padding-top:28px;z-index:2;}
     .brand span{font-weight:800;font-size:36px;letter-spacing:-0.5px;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
-    .photo{position:relative;margin:22px auto 0;width:200px;height:200px;border-radius:50%;
-      overflow:hidden;border:3px solid #0f172a;background:#e5e7eb;display:flex;
+    .photo{position:relative;margin:18px auto 0;width:200px;height:200px;border-radius:50%;
+      overflow:hidden;border:2px solid #0f172a;background:#e5e7eb;display:flex;
       align-items:center;justify-content:center;z-index:2;}
     .photo img{width:100%;height:100%;object-fit:cover;}
-    .info{position:relative;padding:24px 26px 0;z-index:2;}
-    .name{font-size:26px;font-weight:800;color:${BRAND_BLUE};line-height:1.1;}
-    .title{font-size:12px;color:#475569;font-weight:600;margin-top:3px;}
-    .row{margin-top:16px;font-size:16px;font-weight:700;color:${BRAND_BLUE};}
+    .info{position:absolute;bottom:60px;left:26px;z-index:2;max-width:210px;}
+    .name{font-size:24px;font-weight:800;color:${BRAND_BLUE};line-height:1.1;}
+    .title{font-size:11px;color:#475569;font-weight:600;margin-top:3px;}
+    .row{margin-top:12px;font-size:15px;font-weight:700;color:${BRAND_BLUE};}
+    .row + .row{margin-top:3px;font-size:14px;}
     .row span{color:#0f172a;font-weight:700;}
-    .vlogo{position:absolute;bottom:80px;left:20px;height:108px;object-fit:contain;z-index:3;}
-    .site{position:absolute;bottom:16px;left:22px;font-size:13px;font-weight:800;color:${BRAND_RED};z-index:3;}
+    .flogo{position:absolute;bottom:50px;right:20px;height:130px;object-fit:contain;z-index:3;}
+    .site{position:absolute;bottom:18px;left:26px;font-size:14px;font-weight:800;color:${BRAND_RED};z-index:3;}
 
-    /* Back side */
-    .back .blogo{position:absolute;top:120px;left:50%;transform:translateX(-50%);height:170px;object-fit:contain;z-index:3;}
-    .contact{position:absolute;top:330px;left:30px;right:30px;z-index:3;display:flex;flex-direction:column;gap:10px;font-size:13px;color:${BRAND_BLUE};font-weight:700;}
-    .contact .li{display:flex;align-items:center;gap:10px;}
+    /* Back */
+    .back .blogo{position:absolute;top:140px;left:50%;transform:translateX(-50%);height:170px;object-fit:contain;z-index:3;}
+    .contact{position:absolute;top:360px;left:34px;z-index:3;display:flex;flex-direction:column;gap:12px;font-size:14px;color:${BRAND_BLUE};font-weight:700;}
+    .contact .li{display:flex;align-items:center;gap:12px;}
     .contact svg{flex-shrink:0;}
+    .globe{position:absolute;bottom:-30px;right:-40px;width:240px;height:auto;z-index:1;}
 
     @media print{
       body{background:#fff;padding:0;}
@@ -224,9 +224,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
   <div class="wrap">
     <!-- FRONT -->
     <div class="card">
-      <img class="top-logo" src="${logo}" alt="Company"/>
-      <img class="red-arrow-bottom" src="${redArrow}" alt=""/>
-      <img class="globe-back" src="${world}" alt=""/>
+      <img class="red-arrow" src="${redArrow}" alt=""/>
+      <img class="blue-tri-sm" src="${blueTri}" alt=""/>
       <div class="brand"><span class="b1">Link</span><span class="b2"> Aero</span></div>
       <div class="photo">
         ${photo
@@ -238,15 +237,14 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
         ${emp.job_title_en ? `<div class="title">${emp.job_title_en}</div>` : ''}
         <div class="row">ID: <span>${emp.employee_code}</span></div>
         <div class="row">Employed: <span>${emp.hire_date || 'N/A'}</span></div>
-        <div class="row">Valid Until: <span>${ID_EXPIRY}</span></div>
       </div>
+      <img class="flogo" src="${logo}" alt="Company"/>
       <div class="site">www.linkagency.com</div>
     </div>
 
-    <!-- BACK (page 2 inspired) -->
+    <!-- BACK (page 2) -->
     <div class="card back">
       <img class="red-arrow" src="${redArrow}" alt=""/>
-      <img class="blue-tri" src="${blueTri}" alt=""/>
       <img class="blogo" src="${logo}" alt="Company"/>
       <div class="contact">
         <div class="li">
@@ -262,6 +260,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
           +202 27 352025 (10 lines)
         </div>
       </div>
+      <img class="globe" src="${world}" alt=""/>
     </div>
   </div>
 </body>
