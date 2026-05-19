@@ -45,6 +45,23 @@ const initialCriteria: CriteriaScore[] = [
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
 
+const normalizeSearchText = (s: string) =>
+  (s || '')
+    .toLowerCase()
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 1632))
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+    .replace(/[إأآاٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .replace(/ء/g, '')
+    .replace(/ة/g, 'ه')
+    .replace(/[گک]/g, 'ك')
+    .replace(/پ/g, 'ب')
+    .replace(/چ/g, 'ج')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 export const PerformanceReviewForm = () => {
   const { t, isRTL, language } = useLanguage();
   const { addReview, updateReview, reviews } = usePerformanceData();
