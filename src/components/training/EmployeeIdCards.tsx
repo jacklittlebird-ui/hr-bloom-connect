@@ -79,7 +79,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       />
 
       {/* Brand wordmark — Link Aero */}
-      <div style={{ position: 'relative', textAlign: 'center', paddingTop: '24px', zIndex: 2 }}>
+      <div style={{ position: 'relative', textAlign: 'center', paddingTop: '44px', zIndex: 2 }}>
         <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_RED, letterSpacing: '-0.5px' }}>Link</span>
         <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_BLUE, letterSpacing: '-0.5px' }}> Aero</span>
       </div>
@@ -109,7 +109,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       </div>
 
       {/* Info block bottom-left */}
-      <div style={{ position: 'absolute', bottom: '46px', left: '20px', zIndex: 2, maxWidth: '180px' }}>
+      <div style={{ position: 'absolute', bottom: '70px', left: '20px', zIndex: 2, maxWidth: '180px' }}>
         <div style={{ fontSize: '20px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.1 }}>
           {emp.name_en}
         </div>
@@ -124,6 +124,9 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         <div style={{ marginTop: '2px', fontSize: '12px', fontWeight: 700, color: BRAND_BLUE }}>
           Employed: <span style={{ color: '#0f172a' }}>{emp.hire_date || 'N/A'}</span>
         </div>
+        <div style={{ marginTop: '2px', fontSize: '10px', fontWeight: 600, color: '#475569' }}>
+          Valid till 31/12/2035
+        </div>
       </div>
 
       {/* Company logo bottom-right */}
@@ -132,7 +135,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         alt="Company"
         style={{
           position: 'absolute',
-          bottom: '40px',
+          bottom: '65px',
           right: '16px',
           height: '110px',
           objectFit: 'contain',
@@ -190,7 +193,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     /* Front */
     .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
-    .brand{position:relative;text-align:center;padding-top:28px;z-index:2;}
+    .brand{position:relative;text-align:center;padding-top:50px;z-index:2;}
     .brand span{font-weight:800;font-size:36px;letter-spacing:-0.5px;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
@@ -198,13 +201,14 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
       overflow:hidden;border:2px solid #0f172a;background:#e5e7eb;display:flex;
       align-items:center;justify-content:center;z-index:2;}
     .photo img{width:100%;height:100%;object-fit:cover;}
-    .info{position:absolute;bottom:60px;left:26px;z-index:2;max-width:210px;}
+    .info{position:absolute;bottom:80px;left:26px;z-index:2;max-width:210px;}
     .name{font-size:24px;font-weight:800;color:${BRAND_BLUE};line-height:1.1;}
     .title{font-size:11px;color:#475569;font-weight:600;margin-top:3px;}
     .row{margin-top:12px;font-size:15px;font-weight:700;color:${BRAND_BLUE};}
     .row + .row{margin-top:3px;font-size:14px;}
     .row span{color:#0f172a;font-weight:700;}
-    .flogo{position:absolute;bottom:50px;right:20px;height:130px;object-fit:contain;z-index:3;}
+    .valid{margin-top:6px;font-size:11px;font-weight:600;color:#475569;}
+    .flogo{position:absolute;bottom:75px;right:20px;height:130px;object-fit:contain;z-index:3;}
     .site{position:absolute;bottom:18px;left:26px;font-size:14px;font-weight:800;color:${BRAND_RED};z-index:3;}
 
     /* Back */
@@ -237,6 +241,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
         ${emp.job_title_en ? `<div class="title">${emp.job_title_en}</div>` : ''}
         <div class="row">ID: <span>${emp.employee_code}</span></div>
         <div class="row">Employed: <span>${emp.hire_date || 'N/A'}</span></div>
+        <div class="valid">Valid till 31/12/2035</div>
       </div>
       <img class="flogo" src="${logo}" alt="Company"/>
       <div class="site">www.linkagency.com</div>
