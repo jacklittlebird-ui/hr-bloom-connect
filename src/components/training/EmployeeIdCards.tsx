@@ -127,6 +127,9 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         <div style={{ marginTop: '3px', fontSize: '11px', fontWeight: 700, color: BRAND_BLUE, lineHeight: 1.4 }}>
           Employed: <span style={{ color: '#0f172a' }}>{emp.hire_date || 'N/A'}</span>
         </div>
+        <div style={{ marginTop: '3px', fontSize: '11px', fontWeight: 700, color: BRAND_BLUE, lineHeight: 1.4 }}>
+          NID: <span style={{ color: '#0f172a' }}>{emp.national_id || 'N/A'}</span>
+        </div>
         <div style={{ marginTop: '5px', fontSize: '10px', fontWeight: 600, color: '#475569', lineHeight: 1.3 }}>
           Valid till 31/12/2035
         </div>
