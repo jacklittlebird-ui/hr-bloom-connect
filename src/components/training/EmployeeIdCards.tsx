@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -6,8 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { Search, Printer, Download, CreditCard, Building2, User } from 'lucide-react';
+import { Search, Printer, Download, CreditCard, User } from 'lucide-react';
 
 interface EmployeeForId {
   id: string;
@@ -23,135 +22,273 @@ interface EmployeeForId {
 }
 
 const ID_EXPIRY = '31/12/2036';
+const BRAND_RED = '#E30613';
+const BRAND_BLUE = '#1E3A8A';
+const COMPANY_LOGO = '/images/company-logo-vertical.png';
+const COMPANY_LOGO_H = '/images/company-logo.png';
 
-const IdCardPreview = ({ emp }: { emp: EmployeeForId }) => {
+/* ---------- Reusable SVG decorations (page 1 + page 2 inspired) ---------- */
+
+const RedArrow = ({ style }: { style?: React.CSSProperties }) => (
+  <svg viewBox="0 0 200 200" style={style} aria-hidden="true">
+    <polygon points="0,20 130,20 200,100 130,180 0,180 70,100" fill={BRAND_RED} />
+    <polygon points="0,40 110,40 175,100 110,160 0,160 60,100" fill="#fff" opacity="0.18" />
+  </svg>
+);
+
+const BlueTriangle = ({ style }: { style?: React.CSSProperties }) => (
+  <svg viewBox="0 0 200 200" style={style} aria-hidden="true">
+    <polygon points="200,200 200,40 30,200" fill={BRAND_BLUE} />
+  </svg>
+);
+
+const GlobePlane = ({ style }: { style?: React.CSSProperties }) => (
+  <svg viewBox="0 0 300 300" style={style} aria-hidden="true">
+    <g fill="none" stroke={BRAND_BLUE} strokeWidth="2.2" strokeLinecap="round">
+      <circle cx="170" cy="160" r="95" />
+      <path d="M75 160 q95 -55 190 0" />
+      <path d="M75 160 q95 55 190 0" />
+      <path d="M170 65 q-55 95 0 190" />
+      <path d="M170 65 q55 95 0 190" />
+    </g>
+    <path
+      d="M40 220 q70 -50 150 -90"
+      fill="none"
+      stroke={BRAND_BLUE}
+      strokeWidth="2"
+      strokeDasharray="4 6"
+      strokeLinecap="round"
+    />
+    <g transform="translate(35 225) rotate(-25)">
+      <path
+        d="M0 0 L34 -6 L48 -16 L54 -12 L44 0 L54 12 L48 16 L34 6 L0 0 Z"
+        fill={BRAND_RED}
+      />
+    </g>
+  </svg>
+);
+
+/* ---------- Front side preview (page 1 inspired) ---------- */
+
+const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
   return (
     <div
-      className="id-card-container"
       dir="ltr"
       style={{
-        width: '340px',
-        height: '215px',
-        borderRadius: '14px',
+        width: '320px',
+        height: '500px',
+        borderRadius: '18px',
         overflow: 'hidden',
         position: 'relative',
-        direction: 'ltr',
+        background: '#ffffff',
+        color: '#0f172a',
         fontFamily: "'Baloo Bhaijaan 2', 'Cairo', sans-serif",
-        background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #f8fafc 100%)',
-        color: '#1e293b',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-        border: '1px solid #e2e8f0',
+        boxShadow: '0 10px 30px rgba(15,23,42,0.12)',
+        border: '1px solid #e5e7eb',
+        textAlign: 'left',
       }}
     >
-      {/* Decorative elements */}
-      <div style={{
-        position: 'absolute', top: '-30px', right: '-30px',
-        width: '120px', height: '120px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%)',
-      }} />
-      <div style={{
-        position: 'absolute', bottom: '-20px', left: '-20px',
-        width: '80px', height: '80px', borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%)',
-      }} />
+      {/* Top-left red arrow */}
+      <RedArrow style={{ position: 'absolute', top: '-30px', left: '-50px', width: '170px', height: '170px' }} />
 
-      {/* Top bar with logo */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 16px 8px', position: 'relative', zIndex: 1,
-      }}>
-        <img
-          src="/images/one-hr-logo.png"
-          alt="Company Logo"
-          style={{ height: '32px', objectFit: 'contain' }}
-        />
-        <div style={{
-          fontSize: '8px', letterSpacing: '2px', textTransform: 'uppercase',
-          color: '#2563eb', fontWeight: 700,
-        }}>
-          EMPLOYEE ID
+      {/* Bottom-right blue triangle */}
+      <BlueTriangle style={{ position: 'absolute', bottom: '0', right: '0', width: '110px', height: '110px', opacity: 0.95 }} />
+
+      {/* Brand wordmark — Link Aero */}
+      <div style={{ position: 'relative', textAlign: 'center', paddingTop: '22px', zIndex: 2 }}>
+        <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_RED, letterSpacing: '-0.5px' }}>Link</span>
+        <span style={{ fontWeight: 800, fontSize: '30px', color: BRAND_BLUE, letterSpacing: '-0.5px' }}> Aero</span>
+      </div>
+
+      {/* Circular photo */}
+      <div
+        style={{
+          position: 'relative',
+          margin: '18px auto 0',
+          width: '170px',
+          height: '170px',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          border: '3px solid #0f172a',
+          background: '#e5e7eb',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2,
+        }}
+      >
+        {emp.avatar ? (
+          <img src={emp.avatar} alt={emp.name_en} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <User style={{ width: '60px', height: '60px', color: '#94a3b8' }} />
+        )}
+      </div>
+
+      {/* Info block */}
+      <div style={{ position: 'relative', padding: '20px 22px 0', zIndex: 2 }}>
+        <div style={{ fontSize: '22px', fontWeight: 800, color: BRAND_BLUE, lineHeight: 1.1 }}>
+          {emp.name_en}
+        </div>
+        {emp.job_title_en && (
+          <div style={{ fontSize: '11px', color: '#475569', fontWeight: 600, marginTop: '2px' }}>
+            {emp.job_title_en}
+          </div>
+        )}
+        <div style={{ marginTop: '14px', fontSize: '14px', fontWeight: 700, color: BRAND_BLUE }}>
+          ID: <span style={{ color: '#0f172a' }}>{emp.employee_code}</span>
+        </div>
+        <div style={{ marginTop: '4px', fontSize: '13px', fontWeight: 700, color: BRAND_BLUE }}>
+          Employed: <span style={{ color: '#0f172a' }}>{emp.hire_date || 'N/A'}</span>
         </div>
       </div>
 
-      {/* Divider line */}
-      <div style={{
-        height: '2px', margin: '0 16px',
-        background: 'linear-gradient(90deg, transparent, #2563eb, transparent)',
-      }} />
+      {/* Logo bottom-right (above triangle) */}
+      <img
+        src={COMPANY_LOGO}
+        alt="Company"
+        style={{
+          position: 'absolute',
+          bottom: '70px',
+          right: '18px',
+          height: '92px',
+          objectFit: 'contain',
+          zIndex: 3,
+        }}
+      />
 
-      {/* Main content */}
-      <div style={{
-        display: 'flex', gap: '14px', padding: '10px 16px',
-        position: 'relative', zIndex: 1,
-      }}>
-        {/* Photo */}
-        <div style={{
-          width: '72px', height: '88px', borderRadius: '8px',
-          overflow: 'hidden', flexShrink: 0,
-          border: '2px solid #2563eb',
-          background: '#e2e8f0',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          {emp.avatar ? (
-            <img src={emp.avatar} alt={emp.name_en}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <User style={{ width: '32px', height: '32px', color: '#94a3b8' }} />
-          )}
-        </div>
-
-        {/* Info */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '5px' }}>
-          <div style={{
-            fontSize: '14px', fontWeight: 700, lineHeight: 1.2,
-            letterSpacing: '0.3px', color: '#0f172a',
-          }}>
-            {emp.name_en}
-          </div>
-          <div style={{
-            fontSize: '10px', color: '#2563eb', fontWeight: 600,
-          }}>
-            {emp.job_title_en || 'N/A'}
-          </div>
-          
-          <div style={{ display: 'flex', gap: '16px', marginTop: '4px' }}>
-            <div>
-              <div style={{ fontSize: '7px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>ID No.</div>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#1e40af' }}>{emp.employee_code}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '7px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Dept</div>
-              <div style={{ fontSize: '10px', fontWeight: 500, color: '#334155' }}>{(emp.departments as any)?.name_en || 'N/A'}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom bar */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '6px 16px',
-        background: 'linear-gradient(90deg, rgba(37,99,235,0.06), rgba(37,99,235,0.02))',
-        borderTop: '1px solid #e2e8f0',
-      }}>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <div>
-            <span style={{ fontSize: '7px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Hired </span>
-            <span style={{ fontSize: '9px', fontWeight: 600, color: '#334155' }}>{emp.hire_date || 'N/A'}</span>
-          </div>
-          <div>
-            <span style={{ fontSize: '7px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Valid Until </span>
-            <span style={{ fontSize: '9px', fontWeight: 600, color: '#334155' }}>{ID_EXPIRY}</span>
-          </div>
-        </div>
-        <div style={{ fontSize: '7px', color: '#94a3b8', letterSpacing: '0.5px' }}>
-          {(emp.stations as any)?.name_en || ''}
-        </div>
+      {/* Website bottom-left */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '14px',
+          left: '20px',
+          fontSize: '12px',
+          fontWeight: 800,
+          color: BRAND_RED,
+          letterSpacing: '0.3px',
+          zIndex: 3,
+        }}
+      >
+        www.linkagency.com
       </div>
     </div>
   );
 };
+
+/* ---------- Build full bilingual two-side print HTML ---------- */
+
+function buildPrintHtml(emp: EmployeeForId, origin: string): string {
+  const logo = `${origin}${COMPANY_LOGO}`;
+  const photo = emp.avatar || '';
+  return `<!DOCTYPE html>
+<html dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <title>Employee ID — ${emp.name_en}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    @page{size:A4;margin:14mm;}
+    html,body{direction:ltr;text-align:left;background:#f1f5f9;}
+    body{font-family:'Baloo Bhaijaan 2','Cairo',sans-serif;padding:24px;display:flex;justify-content:center;}
+    .wrap{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;}
+    .card{
+      width:380px;height:600px;border-radius:22px;overflow:hidden;position:relative;
+      background:#ffffff;color:#0f172a;
+      box-shadow:0 12px 36px rgba(15,23,42,0.15);
+      border:1px solid #e5e7eb;direction:ltr;text-align:left;
+    }
+    .card *{text-align:left;}
+    .red-arrow{position:absolute;top:-36px;left:-58px;width:200px;height:200px;}
+    .blue-tri{position:absolute;bottom:0;right:0;width:130px;height:130px;}
+    .brand{position:relative;text-align:center;padding-top:26px;z-index:2;}
+    .brand span{font-weight:800;font-size:36px;letter-spacing:-0.5px;}
+    .brand .b1{color:${BRAND_RED};}
+    .brand .b2{color:${BRAND_BLUE};}
+    .photo{position:relative;margin:22px auto 0;width:200px;height:200px;border-radius:50%;
+      overflow:hidden;border:3px solid #0f172a;background:#e5e7eb;display:flex;
+      align-items:center;justify-content:center;z-index:2;}
+    .photo img{width:100%;height:100%;object-fit:cover;}
+    .info{position:relative;padding:24px 26px 0;z-index:2;}
+    .name{font-size:26px;font-weight:800;color:${BRAND_BLUE};line-height:1.1;}
+    .title{font-size:12px;color:#475569;font-weight:600;margin-top:3px;}
+    .row{margin-top:16px;font-size:16px;font-weight:700;color:${BRAND_BLUE};}
+    .row span{color:#0f172a;font-weight:700;}
+    .vlogo{position:absolute;bottom:80px;right:20px;height:108px;object-fit:contain;z-index:3;}
+    .site{position:absolute;bottom:16px;left:22px;font-size:13px;font-weight:800;color:${BRAND_RED};z-index:3;}
+
+    /* Back side */
+    .back .blogo{position:absolute;top:120px;left:50%;transform:translateX(-50%);height:170px;object-fit:contain;z-index:3;}
+    .contact{position:absolute;top:330px;left:30px;right:30px;z-index:3;display:flex;flex-direction:column;gap:10px;font-size:13px;color:${BRAND_BLUE};font-weight:700;}
+    .contact .li{display:flex;align-items:center;gap:10px;}
+    .contact svg{flex-shrink:0;}
+    .globe{position:absolute;bottom:-20px;right:-30px;width:240px;height:240px;opacity:0.95;}
+
+    @media print{
+      body{background:#fff;padding:0;}
+      .wrap{gap:18px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- FRONT -->
+    <div class="card">
+      <svg class="red-arrow" viewBox="0 0 200 200"><polygon points="0,20 130,20 200,100 130,180 0,180 70,100" fill="${BRAND_RED}"/></svg>
+      <svg class="blue-tri" viewBox="0 0 200 200"><polygon points="200,200 200,40 30,200" fill="${BRAND_BLUE}"/></svg>
+      <div class="brand"><span class="b1">Link</span><span class="b2"> Aero</span></div>
+      <div class="photo">
+        ${photo
+          ? `<img src="${photo}" alt="${emp.name_en}"/>`
+          : `<svg viewBox="0 0 24 24" width="72" height="72" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
+      </div>
+      <div class="info">
+        <div class="name">${emp.name_en}</div>
+        ${emp.job_title_en ? `<div class="title">${emp.job_title_en}</div>` : ''}
+        <div class="row">ID: <span>${emp.employee_code}</span></div>
+        <div class="row">Employed: <span>${emp.hire_date || 'N/A'}</span></div>
+        <div class="row">Valid Until: <span>${ID_EXPIRY}</span></div>
+      </div>
+      <img class="vlogo" src="${logo}" alt="Company"/>
+      <div class="site">www.linkagency.com</div>
+    </div>
+
+    <!-- BACK (page 2 inspired) -->
+    <div class="card back">
+      <svg class="red-arrow" viewBox="0 0 200 200"><polygon points="0,20 130,20 200,100 130,180 0,180 70,100" fill="${BRAND_RED}"/></svg>
+      <img class="blogo" src="${logo}" alt="Company"/>
+      <div class="contact">
+        <div class="li">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${BRAND_BLUE}" stroke-width="2"><path d="M12 22s8-7.5 8-13a8 8 0 1 0-16 0c0 5.5 8 13 8 13Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Zamalek 11211 Cairo, Egypt
+        </div>
+        <div class="li">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${BRAND_BLUE}" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+          www.linkagency.com
+        </div>
+        <div class="li">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${BRAND_BLUE}" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
+          +202 27 352025 (10 lines)
+        </div>
+      </div>
+      <svg class="globe" viewBox="0 0 300 300">
+        <g fill="none" stroke="${BRAND_BLUE}" stroke-width="2.4" stroke-linecap="round">
+          <circle cx="170" cy="160" r="95"/>
+          <path d="M75 160 q95 -55 190 0"/>
+          <path d="M75 160 q95 55 190 0"/>
+          <path d="M170 65 q-55 95 0 190"/>
+          <path d="M170 65 q55 95 0 190"/>
+        </g>
+        <path d="M40 220 q70 -50 150 -90" fill="none" stroke="${BRAND_BLUE}" stroke-width="2" stroke-dasharray="4 6" stroke-linecap="round"/>
+        <g transform="translate(35 225) rotate(-25)">
+          <path d="M0 0 L34 -6 L48 -16 L54 -12 L44 0 L54 12 L48 16 L34 6 L0 0 Z" fill="${BRAND_RED}"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>`;
+}
 
 export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: string }) => {
   const { language } = useLanguage();
@@ -164,15 +301,16 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
   const [departments, setDepartments] = useState<{ id: string; name_en: string; name_ar: string }[]>([]);
   const [stations, setStations] = useState<{ id: string; name_en: string; name_ar: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedEmp, setSelectedEmp] = useState<EmployeeForId | null>(null);
-  const printRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    let empQuery = supabase.from('employees').select('id, employee_code, name_en, job_title_en, hire_date, avatar, department_id, station_id, departments(name_en), stations(name_en)').eq('status', 'active').order('name_en');
-    if (filterEmployeeId) {
-      empQuery = empQuery.eq('id', filterEmployeeId);
-    }
+    let empQuery = supabase
+      .from('employees')
+      .select('id, employee_code, name_en, job_title_en, hire_date, avatar, department_id, station_id, departments(name_en), stations(name_en)')
+      .eq('status', 'active')
+      .order('name_en');
+    if (filterEmployeeId) empQuery = empQuery.eq('id', filterEmployeeId);
+
     const [empRes, deptRes, stationRes] = await Promise.all([
       empQuery,
       supabase.from('departments').select('id, name_en, name_ar').eq('is_active', true),
@@ -195,115 +333,21 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
       const q = search.toLowerCase();
       list = list.filter(e => e.name_en?.toLowerCase().includes(q) || e.employee_code?.toLowerCase().includes(q));
     }
-    if (deptFilter !== 'all') {
-      list = list.filter(e => e.department_id === deptFilter);
-    }
-    if (stationFilter !== 'all') {
-      list = list.filter(e => e.station_id === stationFilter);
-    }
+    if (deptFilter !== 'all') list = list.filter(e => e.department_id === deptFilter);
+    if (stationFilter !== 'all') list = list.filter(e => e.station_id === stationFilter);
     setFiltered(list);
   }, [search, deptFilter, stationFilter, employees]);
 
   const exportPdf = (emp: EmployeeForId) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Employee ID - ${emp.name_en}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          @page { size: A4; margin: 20mm; }
-          html, body { direction: ltr; text-align: left; }
-          body { font-family: 'Baloo Bhaijaan 2', 'Cairo', sans-serif; display: flex; justify-content: center; align-items: flex-start; padding: 40px; background: #f8fafc; min-height: 100vh; }
-          .page-wrapper { text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; }
-          .page-title { font-size: 18px; font-weight: 700; color: #0a1628; margin-bottom: 24px; letter-spacing: 1px; }
-          .card {
-            width: 680px; height: 430px; border-radius: 28px; overflow: hidden;
-            position: relative; background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #f8fafc 100%);
-            color: #1e293b; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;
-            direction: ltr; text-align: left;
-          }
-          .card * { text-align: left; }
-          .deco1 { position: absolute; top: -60px; right: -60px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%); }
-          .deco2 { position: absolute; bottom: -40px; left: -40px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%); }
-          .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 24px 32px 16px; position: relative; z-index: 1; }
-          .top-bar img { height: 48px; object-fit: contain; }
-          .top-bar .label { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #2563eb; font-weight: 700; }
-          .divider { height: 2px; margin: 0 32px; background: linear-gradient(90deg, transparent, #2563eb, transparent); }
-          .main { display: flex; gap: 28px; padding: 20px 32px; position: relative; z-index: 1; }
-          .photo { width: 144px; height: 176px; border-radius: 16px; overflow: hidden; flex-shrink: 0; border: 3px solid #2563eb; background: #e2e8f0; display: flex; align-items: center; justify-content: center; }
-          .photo img { width: 100%; height: 100%; object-fit: cover; }
-          .photo .placeholder { width: 64px; height: 64px; color: #94a3b8; }
-          .info { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
-          .name { font-size: 26px; font-weight: 700; line-height: 1.2; letter-spacing: 0.3px; color: #0f172a; }
-          .title { font-size: 16px; color: #2563eb; font-weight: 600; }
-          .fields { display: flex; gap: 32px; margin-top: 8px; }
-          .field-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
-          .field-value { font-size: 18px; font-weight: 700; color: #1e40af; }
-          .field-value.normal { font-size: 15px; color: #334155; font-weight: 500; }
-          .bottom { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 12px 32px; background: linear-gradient(90deg, rgba(37,99,235,0.06), rgba(37,99,235,0.02)); border-top: 1px solid #e2e8f0; }
-          .bottom .pair span:first-child { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
-          .bottom .pair span:last-child { font-size: 14px; font-weight: 600; color: #334155; margin-left: 4px; }
-          .bottom .station { font-size: 10px; color: #94a3b8; }
-          @media print { body { background: #fff; padding: 0; } .page-wrapper { align-items: center; } }
-        </style>
-      </head>
-      <body>
-        <div class="page-wrapper">
-          <div class="page-title">EMPLOYEE IDENTIFICATION CARD</div>
-          <div class="card">
-            <div class="deco1"></div>
-            <div class="deco2"></div>
-            <div class="top-bar">
-              <img src="${window.location.origin}/images/one-hr-logo.png" alt="Logo" />
-              <div class="label">EMPLOYEE ID</div>
-            </div>
-            <div class="divider"></div>
-            <div class="main">
-              <div class="photo">
-                ${emp.avatar
-                  ? `<img src="${emp.avatar}" alt="${emp.name_en}" />`
-                  : `<svg class="placeholder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
-                }
-              </div>
-              <div class="info">
-                <div class="name">${emp.name_en}</div>
-                <div class="title">${emp.job_title_en || 'N/A'}</div>
-                <div class="fields">
-                  <div>
-                    <div class="field-label">ID No.</div>
-                    <div class="field-value">${emp.employee_code}</div>
-                  </div>
-                  <div>
-                    <div class="field-label">Department</div>
-                    <div class="field-value normal">${(emp.departments as any)?.name_en || 'N/A'}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="bottom">
-              <div style="display:flex;gap:32px">
-                <div class="pair"><span>Hired </span><span>${emp.hire_date || 'N/A'}</span></div>
-                <div class="pair"><span>Valid Until </span><span>${ID_EXPIRY}</span></div>
-              </div>
-              <div class="station">${(emp.stations as any)?.name_en || ''}</div>
-            </div>
-          </div>
-        </div>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    setTimeout(() => { printWindow.print(); }, 500);
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(buildPrintHtml(emp, window.location.origin));
+    w.document.close();
+    setTimeout(() => w.print(), 600);
   };
 
   return (
     <div className="space-y-6">
-      {/* Filters - hidden when viewing single employee */}
       {!filterEmployeeId && (
         <div className="flex flex-wrap gap-3 items-center">
           <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -316,9 +360,7 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
             />
           </div>
           <Select value={deptFilter} onValueChange={setDeptFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder={ar ? 'القسم' : 'Department'} />
-            </SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder={ar ? 'القسم' : 'Department'} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{ar ? 'الكل' : 'All Departments'}</SelectItem>
               {departments.map(d => (
@@ -327,9 +369,7 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
             </SelectContent>
           </Select>
           <Select value={stationFilter} onValueChange={setStationFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder={ar ? 'المحطة' : 'Station'} />
-            </SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder={ar ? 'المحطة' : 'Station'} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{ar ? 'الكل' : 'All Stations'}</SelectItem>
               {stations.map(s => (
@@ -352,7 +392,7 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filtered.map(emp => (
             <div key={emp.id} className="flex flex-col items-center gap-3">
-              <IdCardPreview emp={emp} />
+              <IdCardFront emp={emp} />
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" className="gap-1.5" onClick={() => exportPdf(emp)}>
                   <Printer className="w-3.5 h-3.5" />
