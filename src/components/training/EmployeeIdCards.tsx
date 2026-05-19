@@ -49,36 +49,35 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         textAlign: 'left',
       }}
     >
-      {/* Globe background */}
-      <img
-        src={WORLD_IMG}
-        alt=""
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '300px',
-          height: 'auto',
-          opacity: 0.08,
-          zIndex: 0,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Top-right red arrow image */}
+      {/* Top-left red arrow image */}
       <img
         src={RED_ARROW_IMG}
         alt=""
         aria-hidden="true"
         style={{
           position: 'absolute',
-          top: '-30px',
-          right: '-40px',
-          width: '170px',
+          top: '-25px',
+          left: '-35px',
+          width: '130px',
           height: 'auto',
           zIndex: 1,
+        }}
+      />
+
+      {/* Globe — decorative behind content (not background) */}
+      <img
+        src={WORLD_IMG}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          bottom: '110px',
+          right: '14px',
+          width: '120px',
+          height: 'auto',
+          opacity: 0.85,
+          zIndex: 1,
+          pointerEvents: 'none',
         }}
       />
 
@@ -205,8 +204,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
       border:1px solid #e5e7eb;direction:ltr;text-align:left;
     }
     .card *{text-align:left;}
-    .bg-world{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:360px;height:auto;opacity:0.08;z-index:0;pointer-events:none;}
-    .red-arrow{position:absolute;top:-36px;right:-48px;width:210px;height:auto;z-index:1;}
+    .globe-deco{position:absolute;bottom:140px;right:18px;width:150px;height:auto;opacity:0.85;z-index:1;pointer-events:none;}
+    .red-arrow{position:absolute;top:-28px;left:-40px;width:160px;height:auto;z-index:1;}
     .blue-tri{position:absolute;bottom:-12px;right:-12px;width:170px;height:auto;z-index:1;}
     .brand{position:relative;text-align:center;padding-top:26px;z-index:2;}
     .brand span{font-weight:800;font-size:36px;letter-spacing:-0.5px;}
@@ -240,8 +239,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
   <div class="wrap">
     <!-- FRONT -->
     <div class="card">
-      <img class="bg-world" src="${world}" alt=""/>
       <img class="red-arrow" src="${redArrow}" alt=""/>
+      <img class="globe-deco" src="${world}" alt=""/>
       <img class="blue-tri" src="${blueTri}" alt=""/>
       <div class="brand"><span class="b1">Link</span><span class="b2"> Aero</span></div>
       <div class="photo">
@@ -262,8 +261,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
 
     <!-- BACK (page 2 inspired) -->
     <div class="card back">
-      <img class="bg-world" src="${world}" alt=""/>
       <img class="red-arrow" src="${redArrow}" alt=""/>
+      <img class="globe-deco" src="${world}" alt=""/>
       <img class="blue-tri" src="${blueTri}" alt=""/>
       <img class="blogo" src="${logo}" alt="Company"/>
       <div class="contact">
