@@ -49,36 +49,35 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         textAlign: 'left',
       }}
     >
-      {/* Globe background */}
-      <img
-        src={WORLD_IMG}
-        alt=""
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '300px',
-          height: 'auto',
-          opacity: 0.08,
-          zIndex: 0,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Top-right red arrow image */}
+      {/* Top-left red arrow image */}
       <img
         src={RED_ARROW_IMG}
         alt=""
         aria-hidden="true"
         style={{
           position: 'absolute',
-          top: '-30px',
-          right: '-40px',
-          width: '170px',
+          top: '-25px',
+          left: '-35px',
+          width: '130px',
           height: 'auto',
           zIndex: 1,
+        }}
+      />
+
+      {/* Globe — decorative behind content (not background) */}
+      <img
+        src={WORLD_IMG}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          bottom: '110px',
+          right: '14px',
+          width: '120px',
+          height: 'auto',
+          opacity: 0.85,
+          zIndex: 1,
+          pointerEvents: 'none',
         }}
       />
 
