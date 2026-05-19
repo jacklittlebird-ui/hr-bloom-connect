@@ -86,7 +86,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_RED, letterSpacing: '0px' }}>Link</span>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_BLUE, letterSpacing: '0px' }}> Aero</span>
       </div>
-      <div style={{ height: '40px' }} />
+      <div style={{ height: '95px' }} />
 
       {/* Circular photo */}
       <div
