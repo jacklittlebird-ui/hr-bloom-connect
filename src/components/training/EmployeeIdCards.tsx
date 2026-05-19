@@ -64,22 +64,6 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         }}
       />
 
-      {/* Globe — decorative behind content (not background) */}
-      <img
-        src={WORLD_IMG}
-        alt=""
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          bottom: '110px',
-          right: '14px',
-          width: '120px',
-          height: 'auto',
-          opacity: 0.85,
-          zIndex: 1,
-          pointerEvents: 'none',
-        }}
-      />
 
       {/* Bottom-right blue triangle image */}
       <img
