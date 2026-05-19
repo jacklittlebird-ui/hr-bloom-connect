@@ -125,7 +125,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       />
 
       {/* Brand wordmark — Link Aero (flow-based, can't overlap photo) */}
-      <div ref={brandRef} style={{ marginTop: '60px', textAlign: 'center', zIndex: 4, position: 'relative' }}>
+      <div ref={brandRef} style={{ marginTop: '44px', textAlign: 'center', zIndex: 4, position: 'relative' }}>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_RED, letterSpacing: '0px' }}>Link</span>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_BLUE, letterSpacing: '0px' }}> Aero</span>
       </div>
@@ -135,7 +135,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
         ref={photoRef}
         style={{
           position: 'relative',
-          margin: '18px auto 0',
+          margin: '10px auto 0',
           width: '170px',
           height: '170px',
           borderRadius: '50%',
