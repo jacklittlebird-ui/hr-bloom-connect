@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   ArrowRight, Save, Edit, Eye, User, Phone, CreditCard, Briefcase, Wallet, Calendar,
   Shield, FileCheck, Award, Building2, Clock, CalendarDays, MapPin,
-  BarChart3, AlertTriangle, FileText, Receipt, HandCoins, GraduationCap, StickyNote, IdCard, Gift, Landmark,
+  BarChart3, AlertTriangle, FileText, Receipt, HandCoins, GraduationCap, StickyNote, IdCard, Gift, Landmark, Package, Shirt,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BasicInfoTab } from '@/components/employees/tabs/BasicInfoTab';
@@ -36,6 +36,8 @@ import { TrainingTab } from '@/components/employees/tabs/TrainingTab';
 import { NotesTab } from '@/components/employees/tabs/NotesTab';
 import { BonusesEidTab } from '@/components/employees/tabs/BonusesEidTab';
 import { BankAccountTab } from '@/components/employees/tabs/BankAccountTab';
+import { CustodyTab } from '@/components/employees/tabs/CustodyTab';
+import { UniformsTab } from '@/components/employees/tabs/UniformsTab';
 import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { toast } from '@/hooks/use-toast';
@@ -66,6 +68,8 @@ const allDetailTabs = [
   { id: 'loansAdvances', icon: HandCoins, labelKey: 'employees.tabs.loansAdvances' },
   { id: 'training', icon: GraduationCap, labelKey: 'employees.tabs.training' },
   { id: 'companyCard', icon: IdCard, labelKey: 'employees.tabs.companyCard' },
+  { id: 'custody', icon: Package, labelKey: 'employees.tabs.custody' },
+  { id: 'uniforms', icon: Shirt, labelKey: 'employees.tabs.uniforms' },
   { id: 'bonusesEid', icon: Gift, labelKey: 'employees.tabs.bonusesEid' },
   { id: 'notes', icon: StickyNote, labelKey: 'employees.tabs.notes' },
 ];
@@ -189,6 +193,8 @@ const EmployeeDetails = () => {
       case 'loansAdvances': return <LoansAdvancesTab employee={employee} />;
       case 'training': return <TrainingTab employee={employee} />;
       case 'companyCard': return <EmployeeIdCards filterEmployeeId={employee.id} />;
+      case 'custody': return <CustodyTab employee={employee} />;
+      case 'uniforms': return <UniformsTab employee={employee} />;
       case 'bonusesEid': return <BonusesEidTab employee={employee} />;
       case 'notes': return <NotesTab employee={employee} onUpdate={effectiveHandler} readOnly={isViewMode} />;
       default: return null;
