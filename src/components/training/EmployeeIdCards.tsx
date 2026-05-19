@@ -17,6 +17,7 @@ interface EmployeeForId {
   job_title_en: string | null;
   hire_date: string | null;
   avatar: string | null;
+  national_id: string | null;
   department_id: string | null;
   station_id: string | null;
   departments?: { name_en: string } | null;
