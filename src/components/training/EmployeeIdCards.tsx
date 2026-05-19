@@ -82,7 +82,7 @@ const IdCardFront = ({ emp }: { emp: EmployeeForId }) => {
       />
 
       {/* Brand wordmark — Link Aero */}
-      <div style={{ position: 'absolute', top: '110px', left: 0, right: 0, textAlign: 'center', zIndex: 4 }}>
+      <div style={{ position: 'absolute', top: '70px', left: 0, right: 0, textAlign: 'center', zIndex: 4 }}>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_RED, letterSpacing: '0px' }}>Link</span>
         <span style={{ fontFamily: "'Archivo Black', sans-serif", fontWeight: 900, fontSize: '38px', color: BRAND_BLUE, letterSpacing: '0px' }}> Aero</span>
       </div>
@@ -202,7 +202,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     /* Front */
     .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
-    .brand{position:absolute;top:130px;left:0;right:0;text-align:center;z-index:4;}
+    .brand{position:absolute;top:85px;left:0;right:0;text-align:center;z-index:4;}
     .brand span{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:46px;letter-spacing:0;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
