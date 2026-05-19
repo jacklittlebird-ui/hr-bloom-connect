@@ -197,7 +197,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     /* Front */
     .red-arrow{position:absolute;top:-34px;left:-44px;width:180px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
-    .brand{position:relative;text-align:center;padding-top:50px;z-index:2;}
+    .brand{position:relative;text-align:center;padding-top:50px;padding-right:36px;z-index:2;}
     .brand span{font-weight:800;font-size:48px;letter-spacing:-0.5px;}
     .brand .b1{color:${BRAND_RED};}
     .brand .b2{color:${BRAND_BLUE};}
@@ -224,7 +224,8 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
 
     @media print{
       body{background:#fff;padding:0;}
-      .wrap{gap:18px;}
+      .wrap{gap:6mm;justify-content:center;}
+      .card{transform:scale(0.54);transform-origin:top left;margin:0 -175px -276px 0;}
     }
   </style>
 </head>
