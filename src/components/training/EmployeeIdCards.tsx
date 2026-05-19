@@ -247,7 +247,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
     .card *{text-align:left;}
 
     /* Front */
-    .red-arrow{position:absolute;top:-36px;left:-132px;width:180px;height:auto;z-index:1;}
+    .red-arrow{position:absolute;top:-40px;left:-148px;width:210px;height:auto;z-index:1;}
     .blue-tri-sm{position:absolute;bottom:-12px;right:-12px;width:110px;height:auto;z-index:1;}
     .brand{position:absolute;top:64px;left:50%;transform:translateX(-50%);width:270px;text-align:center;z-index:4;line-height:1;}
     .brand span{font-family:'Archivo Black',sans-serif;font-weight:900;font-size:42px;letter-spacing:0;line-height:1;}
