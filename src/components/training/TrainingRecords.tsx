@@ -185,13 +185,16 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
 
   // Fetch training records from DB when employee is selected
   useEffect(() => {
-    if (!selectedEmployee) { setTrainingRecords([]); return; }
+    if (!selectedEmployeeId) { setTrainingRecords([]); return; }
+    let cancelled = false;
+    setTrainingRecords([]); // clear previous employee's records immediately
     const fetch = async () => {
       const { data } = await supabase
         .from('training_records')
         .select('*, training_courses(name_en, name_ar)')
-        .eq('employee_id', selectedEmployee.id)
+        .eq('employee_id', selectedEmployeeId)
         .order('start_date', { ascending: false });
+      if (cancelled) return;
       setTrainingRecords((data || []).map((r: any) => ({
         id: r.id,
         employeeId: r.employee_id,
@@ -214,7 +217,8 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
       })));
     };
     fetch();
-  }, [selectedEmployee, language]);
+    return () => { cancelled = true; };
+  }, [selectedEmployeeId, language, ar]);
 
   const filteredEmployees = trainingEmployees.filter(emp => {
     const nameMatch = emp.nameEn.toLowerCase().includes(searchName.toLowerCase()) || emp.nameAr.includes(searchName);
