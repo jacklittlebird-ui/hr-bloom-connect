@@ -1534,16 +1534,6 @@ const StationManagerPortal = () => {
                             <SelectContent>{quarters.map(q => <SelectItem key={q} value={q}>{getQuarterLabel(q)}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
-                        <div className="p-2 border-b">
-                          <div className="relative">
-                            <Search className="absolute top-1/2 -translate-y-1/2 start-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                              value={newEvalSearch}
-                              onChange={e => setNewEvalSearch(e.target.value)}
-                              placeholder={t('ابحث بالاسم أو الرقم الوظيفي...', 'Search by name or employee code...')}
-                              className="ps-8 text-sm h-9"
-                            />
-                          </div>
                       </div>
 
                       {/* Employee list with pagination */}
@@ -1556,6 +1546,17 @@ const StationManagerPortal = () => {
                               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-muted-foreground/30 inline-block" /> {t('لم يتم التقييم', 'Not evaluated')}</span>
                             </div>
                           )}
+                        </div>
+                        <div className="p-2 border-b">
+                          <div className="relative">
+                            <Search className="absolute top-1/2 -translate-y-1/2 start-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              value={newEvalSearch}
+                              onChange={e => setNewEvalSearch(e.target.value)}
+                              placeholder={t('ابحث بالاسم أو الرقم الوظيفي...', 'Search by name or employee code...')}
+                              className="ps-8 text-sm h-9"
+                            />
+                          </div>
                         </div>
                         {newEvalFilteredEmps.length === 0 ? (
                           <div className="p-6 text-center text-muted-foreground text-sm">{t('لا يوجد موظفون', 'No employees')}</div>
