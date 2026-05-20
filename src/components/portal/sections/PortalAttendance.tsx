@@ -125,37 +125,19 @@ export const PortalAttendance = () => {
 
       const attLogs: PortalAttendanceRecord[] = (attRes.data || []).map(r => {
         const holiday = holidayByDate.get(r.date) as any;
-        const isAutoClosed = r.status === 'auto-closed'
-          || !!(r.notes && /AUTO[_-]?CLOSED/i.test(r.notes));
-        const ci = formatTime(r.check_in);
-        const co = formatTime(r.check_out);
-
-        // Prefer computing minutes directly from check_in -> check_out timestamps.
-        // Auto-closed days still count as worked time (auto-checkout sets check_out & work_hours).
-        let totalMins = 0;
-        if (r.check_in && r.check_out) {
-          const diff = (new Date(r.check_out).getTime() - new Date(r.check_in).getTime()) / 60000;
-          totalMins = diff > 0 ? Math.round(diff) : 0;
-        }
-        if (totalMins <= 0) {
-          totalMins = r.work_minutes || (r.work_hours ? Math.round(Number(r.work_hours) * 60) : 0);
-        }
-
-        let status: string;
-        if (holiday) status = 'official-holiday';
-        else if (isAutoClosed) status = 'auto-closed';
-        else if (r.is_late) status = 'late';
-        else status = r.status || 'present';
+        const onLeave = leaveDates.has(r.date);
+        const audit = classifyAttendance(r as any, { isOfficialHoliday: !!holiday, isOnLeave: onLeave && !r.check_in });
         return {
           id: r.id,
           date: r.date,
-          checkIn: ci,
-          checkOut: co,
-          status,
-          workHours: Math.floor(totalMins / 60),
-          workMinutes: totalMins % 60,
+          checkIn: formatTime(r.check_in),
+          checkOut: formatTime(r.check_out),
+          status: audit.status,
+          workHours: Math.floor(audit.totalMinutes / 60),
+          workMinutes: audit.totalMinutes % 60,
           holidayNameAr: holiday?.name_ar,
           holidayNameEn: holiday?.name_en,
+          audit,
         };
       });
 
