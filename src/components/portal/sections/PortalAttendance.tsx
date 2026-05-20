@@ -265,8 +265,12 @@ export const PortalAttendance = () => {
               <div className="flex items-center gap-2">
                 <label className="text-xs md:text-sm text-muted-foreground whitespace-nowrap">{ar ? 'إلى' : 'To'}</label>
                 <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-[140px] md:w-[160px] h-8 text-xs md:text-sm" />
-              </div>
+              <Button variant="outline" size="sm" className="h-8 gap-1" onClick={() => fetchRecords()} disabled={loading} aria-label={ar ? 'تحديث' : 'Refresh'}>
+                <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
+                <span className="hidden sm:inline text-xs">{ar ? 'تحديث' : 'Refresh'}</span>
+              </Button>
             </div>
+          </div>
           </div>
         </CardHeader>
         <CardContent>
