@@ -140,7 +140,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     fetchDepartments();
   }, [activeTab]);
 
-  const trainingEmployees: Employee[] = useMemo(() => contextEmployees.map((emp) => ({
+  const trainingEmployees: Employee[] = useMemo(() => contextEmployees.filter((emp) => emp.status === 'active').map((emp) => ({
     id: emp.id,
     nameEn: emp.nameEn,
     nameAr: emp.nameAr,
