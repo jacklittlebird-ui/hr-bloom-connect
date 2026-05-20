@@ -120,6 +120,7 @@ export const PermissionRequestsList = ({ requests, onDelete, onEdit }: Permissio
                   <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'كود الموظف' : 'Employee ID'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.employee')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.department')}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.type')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.permissions.date')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.permissions.fromTime')}</TableHead>
