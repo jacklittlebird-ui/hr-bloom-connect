@@ -36,6 +36,7 @@ interface AttendanceRow {
   work_minutes: number | null;
   status: string;
   is_late: boolean | null;
+  notes?: string | null;
 }
 interface LeaveRow { employee_id: string; leave_type: string; start_date: string; end_date: string; }
 interface MissionRow { employee_id: string; date: string; mission_type: string; hours: number | null; }
