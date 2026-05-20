@@ -160,9 +160,12 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
           .select('id,employee_code,name_ar,name_en,station_id,department_id')
           .eq('status', 'active');
         if (stationFilter !== 'all') empQuery = empQuery.eq('station_id', stationFilter);
+        else if (allowedStationIds && allowedStationIds.length) empQuery = empQuery.in('station_id', allowedStationIds);
         const { data: emps, error: empErr } = await empQuery.order('employee_code');
         if (empErr) throw empErr;
-        setEmployees((emps as EmployeeRow[]) || []);
+        const empRowsLoaded = (emps as EmployeeRow[]) || [];
+        setEmployees(empRowsLoaded);
+        const empIds = empRowsLoaded.map(e => e.id);
 
         // Paginated fetch of attendance records (up to 20k)
         const recs: AttendanceRow[] = [];
@@ -170,13 +173,15 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         for (let i = 0; i < 20; i++) {
           const from = i * pageSize;
           const to = from + pageSize - 1;
-          const { data, error } = await supabase
+          let q = supabase
             .from('attendance_records')
-            .select('employee_id,date,check_in,check_out,work_hours,work_minutes,status,is_late')
+            .select('employee_id,date,check_in,check_out,work_hours,work_minutes,status,is_late,notes')
             .gte('date', startDate)
             .lte('date', endDate)
             .order('date', { ascending: true })
             .range(from, to);
+          if (empIds.length && empIds.length <= 500) q = q.in('employee_id', empIds);
+          const { data, error } = await q;
           if (error) throw error;
           const rows = (data as AttendanceRow[]) || [];
           recs.push(...rows);
@@ -211,6 +216,32 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         setMissions((msRes.data as MissionRow[]) || []);
         setPermissions((prRes.data as PermissionRow[]) || []);
         setOvertimes((otRes.data as OvertimeRow[]) || []);
+
+        // Fetch raw stamp events (check-in/out scans) so we can show all stamps per day
+        const stampsAcc: StampEvent[] = [];
+        if (empIds.length) {
+          // range covers full day window in Cairo time; widen by 1 day on each side to be safe
+          const startTs = startDate + 'T00:00:00+02:00';
+          const endTs = endDate + 'T23:59:59+02:00';
+          for (let i = 0; i < 20; i++) {
+            const from = i * pageSize;
+            const to = from + pageSize - 1;
+            let q = supabase
+              .from('attendance_events')
+              .select('employee_id,scan_time,event_type')
+              .gte('scan_time', startTs)
+              .lte('scan_time', endTs)
+              .order('scan_time', { ascending: true })
+              .range(from, to);
+            if (empIds.length <= 500) q = q.in('employee_id', empIds);
+            const { data, error } = await q;
+            if (error) { console.warn('[DailyAttendanceReport] stamps fetch error', error); break; }
+            const rows = (data as StampEvent[]) || [];
+            stampsAcc.push(...rows.filter(s => !!s.employee_id));
+            if (rows.length < pageSize) break;
+          }
+        }
+        setStamps(stampsAcc);
       } catch (e) {
         console.error('[DailyAttendanceReport] load error', e);
         toast({ title: ar ? 'تعذر تحميل البيانات' : 'Failed to load data', variant: 'destructive' });
