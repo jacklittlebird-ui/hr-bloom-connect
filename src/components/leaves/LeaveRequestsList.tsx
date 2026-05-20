@@ -117,6 +117,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                   <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'كود الموظف' : 'Employee ID'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.employee')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.department')}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.type')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.startDate')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.endDate')}</TableHead>
