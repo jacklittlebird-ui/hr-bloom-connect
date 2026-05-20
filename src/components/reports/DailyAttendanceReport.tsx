@@ -523,9 +523,13 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       dateRange.forEach(d => {
         const r = inner.get(d);
         if (!r) return;
-        if (r.status === 'present' && !r.is_late) present++;
-        else if (r.status === 'present' && r.is_late) late++;
-        else if (r.status === 'absent') absent++;
+        const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+        const autoClosed = s === 'auto-closed' || (!!r.notes && AUTO_CLOSED_RE.test(r.notes));
+        if (autoClosed || s === 'mission') present++;
+        else if (s === 'present' && !r.is_late) present++;
+        else if (s === 'present' && r.is_late) late++;
+        else if (s === 'absent') absent++;
+        else if (r.check_in) { if (r.is_late) late++; else present++; }
       });
     });
     return { present, late, absent, total: present + late + absent };
