@@ -585,7 +585,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       const extras: string[] = [];
       if (c.leave) extras.push((ar ? 'إجازة ' : 'Leave ') + (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)));
       if (c.mission) extras.push(ar ? `مأمورية (${c.mission.hours || 0}س)` : `Mission (${c.mission.hours || 0}h)`);
-      if (c.permission) extras.push(ar ? `إذن (${c.permission.hours || 0}س)` : `Permission (${c.permission.hours || 0}h)`);
+      if (c.permission) extras.push(ar ? `إذن (${permissionHoursFor(c.permission)}س)` : `Permission (${permissionHoursFor(c.permission)}h)`);
       if (c.overtime) extras.push(ar ? `إضافي (${c.overtime.hours || 0}س)` : `Overtime (${c.overtime.hours || 0}h)`);
       const baseStatus = c.kind === 'present' ? (ar ? 'حاضر' : 'P')
         : c.kind === 'late' ? (ar ? 'متأخر' : 'L')
@@ -836,7 +836,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                         isOff,
                         leave: leaveLbl,
                         mission: c.mission ? (ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`) : null,
-                        permission: c.permission ? (ar ? `${c.permission.hours || 0}س` : `${c.permission.hours || 0}h`) : null,
+                        permission: c.permission ? (ar ? `${permissionHoursFor(c.permission)}س` : `${permissionHoursFor(c.permission)}h`) : null,
                         overtime: c.overtime ? (ar ? `${c.overtime.hours || 0}س` : `${c.overtime.hours || 0}h`) : null,
                       };
                     }),
@@ -1080,7 +1080,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                           if (c.permission) {
                             overlayBadges.push(
                               <span key="pr" className="inline-flex items-center gap-0.5 px-1 rounded bg-cyan-100 text-cyan-800 text-[9px] font-semibold" title={ar ? 'إذن' : 'Permission'}>
-                                <FileClock className="w-2.5 h-2.5" aria-hidden />{ar ? 'إذن' : 'Perm'} {c.permission.hours || 0}{ar ? 'س' : 'h'}
+                                <FileClock className="w-2.5 h-2.5" aria-hidden />{ar ? 'إذن' : 'Perm'} {permissionHoursFor(c.permission)}{ar ? 'س' : 'h'}
                               </span>
                             );
                           }
