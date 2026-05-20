@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { format } from 'date-fns';
 
-type Kind = 'present' | 'late' | 'absent' | 'none';
+type Kind = 'present' | 'late' | 'absent' | 'auto-closed' | 'mission-day' | 'none';
 
 export interface DAExcelCell {
   in: string;
