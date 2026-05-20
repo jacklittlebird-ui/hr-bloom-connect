@@ -295,6 +295,7 @@ export const AttendanceList = () => {
     { headerAr: 'الموظف (عربي)', headerEn: 'Employee (AR)', key: 'employeeNameAr' },
     { headerAr: 'الموظف (إنجليزي)', headerEn: 'Employee (EN)', key: 'employeeName' },
     { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
+    { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
     { headerAr: 'الحضور', headerEn: 'Check In', key: 'checkIn' },
     { headerAr: 'الانصراف', headerEn: 'Check Out', key: 'checkOut' },
     { headerAr: 'ساعات العمل', headerEn: 'Work Hours', key: 'workTime' },
