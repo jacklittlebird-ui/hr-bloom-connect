@@ -4,12 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle, Timer, Loader2 } from 'lucide-react';
+import { Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle, Timer, Loader2, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
+import { classifyAttendance, formatHM, type ClassifiedAttendance } from '@/lib/attendanceClassification';
 
 interface PortalAttendanceRecord {
   id: string;
@@ -21,6 +24,7 @@ interface PortalAttendanceRecord {
   workMinutes: number;
   holidayNameAr?: string;
   holidayNameEn?: string;
+  audit?: ClassifiedAttendance;
 }
 
 const formatTime = (ts: string | null): string | null => {
@@ -44,6 +48,7 @@ export const PortalAttendance = () => {
   const [dateTo, setDateTo] = useState(todayStr);
   const [filteredRecords, setFilteredRecords] = useState<PortalAttendanceRecord[]>([]);
   const [coveredDates, setCoveredDates] = useState<Set<string>>(new Set());
+  const [auditRow, setAuditRow] = useState<PortalAttendanceRecord | null>(null);
 
   useEffect(() => {
     if (!PORTAL_EMPLOYEE_ID) return;
@@ -121,37 +126,19 @@ export const PortalAttendance = () => {
 
       const attLogs: PortalAttendanceRecord[] = (attRes.data || []).map(r => {
         const holiday = holidayByDate.get(r.date) as any;
-        const isAutoClosed = r.status === 'auto-closed'
-          || !!(r.notes && /AUTO[_-]?CLOSED/i.test(r.notes));
-        const ci = formatTime(r.check_in);
-        const co = formatTime(r.check_out);
-
-        // Prefer computing minutes directly from check_in -> check_out timestamps.
-        // Auto-closed days still count as worked time (auto-checkout sets check_out & work_hours).
-        let totalMins = 0;
-        if (r.check_in && r.check_out) {
-          const diff = (new Date(r.check_out).getTime() - new Date(r.check_in).getTime()) / 60000;
-          totalMins = diff > 0 ? Math.round(diff) : 0;
-        }
-        if (totalMins <= 0) {
-          totalMins = r.work_minutes || (r.work_hours ? Math.round(Number(r.work_hours) * 60) : 0);
-        }
-
-        let status: string;
-        if (holiday) status = 'official-holiday';
-        else if (isAutoClosed) status = 'auto-closed';
-        else if (r.is_late) status = 'late';
-        else status = r.status || 'present';
+        const onLeave = leaveDates.has(r.date);
+        const audit = classifyAttendance(r as any, { isOfficialHoliday: !!holiday, isOnLeave: onLeave && !r.check_in });
         return {
           id: r.id,
           date: r.date,
-          checkIn: ci,
-          checkOut: co,
-          status,
-          workHours: Math.floor(totalMins / 60),
-          workMinutes: totalMins % 60,
+          checkIn: formatTime(r.check_in),
+          checkOut: formatTime(r.check_out),
+          status: audit.status,
+          workHours: Math.floor(audit.totalMinutes / 60),
+          workMinutes: audit.totalMinutes % 60,
           holidayNameAr: holiday?.name_ar,
           holidayNameEn: holiday?.name_en,
+          audit,
         };
       });
 
@@ -305,12 +292,13 @@ export const PortalAttendance = () => {
                 <TableHead>{ar ? 'الانصراف' : 'Out'}</TableHead>
                 <TableHead>{ar ? 'الساعات' : 'Hours'}</TableHead>
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
+                <TableHead className="w-12 text-center">{ar ? 'تدقيق' : 'Audit'}</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 mx-auto animate-spin text-muted-foreground" /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-8"><Loader2 className="w-6 h-6 mx-auto animate-spin text-muted-foreground" /></TableCell></TableRow>
                 ) : filteredRecords.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد سجلات' : 'No records'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد سجلات' : 'No records'}</TableCell></TableRow>
                 ) : filteredRecords.map(r => (
                   <TableRow key={r.id}>
                     <TableCell>{r.date}</TableCell>
@@ -319,6 +307,13 @@ export const PortalAttendance = () => {
                     <TableCell className="font-mono">{r.checkOut || '--:--'}</TableCell>
                     <TableCell>{r.workHours > 0 || r.workMinutes > 0 ? `${String(r.workHours).padStart(2, '0')}:${String(r.workMinutes).padStart(2, '0')}` : '-'}</TableCell>
                     <TableCell>{statusBadge(r)}</TableCell>
+                    <TableCell className="text-center">
+                      {r.audit ? (
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAuditRow(r)} aria-label={ar ? 'تدقيق الحساب' : 'Audit'}>
+                          <Info className="w-4 h-4 text-primary" />
+                        </Button>
+                      ) : null}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -326,6 +321,34 @@ export const PortalAttendance = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!auditRow} onOpenChange={(o) => !o && setAuditRow(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-primary" />
+              {ar ? 'تدقيق حساب اليوم' : 'Day Calculation Audit'}
+            </DialogTitle>
+            <DialogDescription>
+              {auditRow?.date} — {auditRow && format(new Date(auditRow.date), 'EEEE', { locale: ar ? arLocale : enUS })}
+            </DialogDescription>
+          </DialogHeader>
+          {auditRow?.audit && (
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'التصنيف' : 'Classification'}</span><span>{statusBadge(auditRow)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'يحتسب حضوراً' : 'Counted as Present'}</span><span>{auditRow.audit.isPresentDay ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No')}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'الحضور' : 'Check-in'}</span><span className="font-mono">{auditRow.checkIn || '--:--'}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'الانصراف' : 'Check-out'}</span><span className="font-mono">{auditRow.checkOut || '--:--'}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'الساعات' : 'Hours'}</span><span className="font-mono">{formatHM(auditRow.audit.totalMinutes)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'مصدر الساعات' : 'Hours source'}</span><span>{auditRow.audit.hoursSource}</span></div>
+              <div className="pt-2 border-t">
+                <div className="text-muted-foreground mb-1">{ar ? 'السبب' : 'Reason'}</div>
+                <div className="leading-relaxed">{ar ? auditRow.audit.reasonAr : auditRow.audit.reasonEn}</div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
