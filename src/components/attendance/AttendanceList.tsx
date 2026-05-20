@@ -275,6 +275,13 @@ export const AttendanceList = () => {
     return dept ? (ar ? dept.name_ar : dept.name_en) : '-';
   };
 
+  const getStationName = (employeeId: string) => {
+    const stId = employeeStationMap[employeeId];
+    if (!stId) return '-';
+    const st = stations.find(s => s.id === stId);
+    return st ? (ar ? st.name_ar : st.name_en) : '-';
+  };
+
   const formatWorkTime = (hours: number, minutes: number) => {
     return `${hours}:${String(minutes).padStart(2, '0')}`;
   };
