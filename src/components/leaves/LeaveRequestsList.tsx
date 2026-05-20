@@ -134,7 +134,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredRequests.map((request) => (
+                  paginatedItems.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell className="font-mono text-xs">{request.employeeCode || '—'}</TableCell>
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
