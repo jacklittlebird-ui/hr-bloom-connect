@@ -51,6 +51,7 @@ import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals'
 import { StationWorkHours } from '@/components/portal/sections/StationWorkHours';
 import { StationUniformsTab } from '@/components/portal/sections/StationUniformsTab';
 import { Tabs as VTabs, TabsContent as VTabsContent, TabsList as VTabsList, TabsTrigger as VTabsTrigger } from '@/components/ui/tabs';
+import { DailyAttendanceReport } from '@/components/reports/DailyAttendanceReport';
 
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
 import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
