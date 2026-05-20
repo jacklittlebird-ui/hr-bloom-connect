@@ -444,6 +444,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       const msInner = missionIndex.get(emp.id);
       const prInner = permissionIndex.get(emp.id);
       const otInner = overtimeIndex.get(emp.id);
+      const stInner = stampsIndex.get(emp.id);
       let present = 0, late = 0, absent = 0, hours = 0, matched = 0;
       let leavesCount = 0, missionsCount = 0, permissionsCount = 0, overtimeHours = 0;
       const cells: DayCell[] = dateRange.map(d => {
@@ -452,19 +453,34 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         const mission = msInner?.get(d) || null;
         const permission = prInner?.get(d) || null;
         const overtime = otInner?.get(d) || null;
+        const dayStamps = stInner?.get(d) || [];
         let kind: DayCell['kind'] = 'none';
         let h = 0;
         if (rec) {
-          h = Number(rec.work_hours || (rec.work_minutes ? rec.work_minutes / 60 : 0)) || 0;
-          if (rec.status === 'present' && !rec.is_late) kind = 'present';
-          else if (rec.status === 'present' && !!rec.is_late) kind = 'late';
-          else if (rec.status === 'absent') kind = 'absent';
+          // Hours: prefer timestamp delta, then work_minutes, then work_hours.
+          if (rec.check_in && rec.check_out) {
+            const diff = (new Date(rec.check_out).getTime() - new Date(rec.check_in).getTime()) / 3600000;
+            if (diff > 0) h = diff;
+          }
+          if (!h && rec.work_minutes && Number(rec.work_minutes) > 0) h = Number(rec.work_minutes) / 60;
+          if (!h && rec.work_hours && Number(rec.work_hours) > 0) h = Number(rec.work_hours);
+
+          const s = String(rec.status || '').toLowerCase().replace(/_/g, '-');
+          const autoClosed = s === 'auto-closed' || (!!rec.notes && AUTO_CLOSED_RE.test(rec.notes));
+          const isMission = s === 'mission';
+          if (autoClosed) kind = 'auto-closed';
+          else if (isMission) kind = 'mission-day';
+          else if (s === 'present' && !rec.is_late) kind = 'present';
+          else if (s === 'present' && !!rec.is_late) kind = 'late';
+          else if (s === 'absent') kind = 'absent';
+          else if (rec.check_in) kind = rec.is_late ? 'late' : 'present';
         }
+        const isPresentLike = kind === 'present' || kind === 'late' || kind === 'auto-closed' || kind === 'mission-day';
         const matchesStatus =
           globalStatusFilter === 'all'
             ? kind !== 'none' || !!leave || !!mission || !!permission || !!overtime
-            : kind === globalStatusFilter;
-        if (kind === 'present') present++;
+            : (globalStatusFilter === 'present' ? (kind === 'present' || kind === 'auto-closed' || kind === 'mission-day') : kind === globalStatusFilter);
+        if (kind === 'present' || kind === 'auto-closed' || kind === 'mission-day') present++;
         else if (kind === 'late') late++;
         else if (kind === 'absent') absent++;
         if (leave) leavesCount++;
@@ -473,11 +489,10 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         if (overtime) overtimeHours += Number(overtime.hours || 0);
         if (matchesStatus) {
           matched++;
-          if (kind === 'present' || kind === 'late') hours += h;
+          if (isPresentLike) hours += h;
         }
-        return { record: rec, hours: h, matchesStatus, kind, leave, mission, permission, overtime };
+        return { record: rec, hours: h, matchesStatus, kind, leave, mission, permission, overtime, stamps: dayStamps };
       });
-      // If a status filter is active, hide employees with zero matching days.
       if (globalStatusFilter !== 'all' && matched === 0) return;
       rows.push({
         employee: emp,
@@ -487,7 +502,6 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         totals: { present, late, absent, hours, matched, leaves: leavesCount, missions: missionsCount, permissions: permissionsCount, overtimeHours },
       });
     });
-    // Sort by station then employee name (alphabetical)
     rows.sort((a, b) => {
       const sa = a.station ? (ar ? a.station.name_ar : a.station.name_en) : 'zzz';
       const sb = b.station ? (ar ? b.station.name_ar : b.station.name_en) : 'zzz';
@@ -497,7 +511,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       return (na || '').localeCompare(nb || '', 'ar');
     });
     return rows;
-  }, [employees, visibleEmpIds, recordIndex, leaveIndex, missionIndex, permissionIndex, overtimeIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar]);
+  }, [employees, visibleEmpIds, recordIndex, leaveIndex, missionIndex, permissionIndex, overtimeIndex, stampsIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar]);
 
   // Counters (status badges) — across all visible employees and days, regardless of filter.
   const counters = useMemo(() => {
