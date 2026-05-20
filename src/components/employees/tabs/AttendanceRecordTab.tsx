@@ -72,19 +72,15 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
       }
 
       const attLogs: AttendanceLog[] = (attRes.data || []).map(r => {
-        const isAutoClosed = !!(r.notes && r.notes.includes('auto-closed'));
-        let status: string;
-        if (isAutoClosed) status = 'auto-closed';
-        else if (r.is_late) status = 'late';
-        else status = r.status || 'present';
+        const audit = classifyAttendance(r as any);
         return {
           id: r.id,
           date: r.date,
           checkIn: formatTime(r.check_in),
-          checkOut: isAutoClosed ? null : formatTime(r.check_out),
-          status,
-          workHours: r.work_hours ? Math.floor(r.work_hours) : 0,
-          workMinutes: r.work_minutes || 0,
+          checkOut: formatTime(r.check_out),
+          status: audit.status,
+          workHours: Math.floor(audit.totalMinutes / 60),
+          workMinutes: audit.totalMinutes % 60,
         };
       });
 
