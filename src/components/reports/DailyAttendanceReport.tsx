@@ -91,7 +91,7 @@ function permissionHoursFor(p: { hours: number | null; start_time: string | null
   return 0;
 }
 
-export const DailyAttendanceReport = () => {
+export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds?: string[] } = {}) => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
   const { reportRef, handlePrint, exportToPDF, exportToCSV, previewWordExport, downloadWordHtml } = useReportExport();
