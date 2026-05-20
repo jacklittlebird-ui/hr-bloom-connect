@@ -2037,6 +2037,17 @@ const StationManagerPortal = () => {
               </TabsContent>
             );
           })()}
+
+          {canSee('reports') && (
+            <TabsContent value="reports">
+              {(() => {
+                const allowedIds = (user?.stationIds && user.stationIds.length)
+                  ? user.stationIds
+                  : (user?.stations || []).map(s => s).filter(Boolean) as string[];
+                return <DailyAttendanceReport allowedStationIds={allowedIds} />;
+              })()}
+            </TabsContent>
+          )}
         </Tabs>
         </div>
       </main>
