@@ -180,33 +180,30 @@ export const PortalAttendance = () => {
   const localIso = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-  const { workingDaysInRange, coveredInRange } = useMemo(() => {
-    if (!dateFrom || !dateTo) return { workingDaysInRange: 0, coveredInRange: 0 };
+  // Rate formula: (actual present days incl. missions) / (24 - official holidays - approved leaves)
+  const { workingDaysInRange } = useMemo(() => {
+    if (!dateFrom || !dateTo) return { workingDaysInRange: 0 };
+    const holidayCount = filteredRecords.filter(r => r.status === 'official-holiday').length;
+    // Count approved leave days inside the range (cap at range length).
     const start = new Date(dateFrom + 'T00:00:00');
     const endRaw = new Date(dateTo + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const end = endRaw > today ? today : endRaw;
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
-      return { workingDaysInRange: 0, coveredInRange: 0 };
+    let leaveCount = 0;
+    if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
+      const cur = new Date(start);
+      while (cur <= end) {
+        if (coveredDates.has(localIso(cur))) leaveCount++;
+        cur.setDate(cur.getDate() + 1);
+      }
     }
-    // Formula: denominator = 24 - (one day per official holiday in range).
-    // Numerator = present days (incl. late, auto-closed, mission) + approved leaves.
-    const holidayCount = filteredRecords.filter(r => r.status === 'official-holiday').length;
-    let covered = 0;
-    const cur = new Date(start);
-    while (cur <= end) {
-      const iso = localIso(cur);
-      if (coveredDates.has(iso)) covered++;
-      cur.setDate(cur.getDate() + 1);
-    }
-    const denom = Math.max(0, 24 - holidayCount);
-    return { workingDaysInRange: denom, coveredInRange: covered };
+    const denom = Math.max(0, 24 - holidayCount - leaveCount);
+    return { workingDaysInRange: denom };
   }, [dateFrom, dateTo, filteredRecords, coveredDates]);
 
-  // Rate = (actual present days + covered) / (24 - official holidays in range)
   const rate = workingDaysInRange > 0
-    ? Math.min(100, ((stats.present + coveredInRange) / workingDaysInRange) * 100).toFixed(1)
+    ? Math.min(100, (stats.present / workingDaysInRange) * 100).toFixed(1)
     : '0';
 
   const statusBadge = (r: PortalAttendanceRecord) => {
