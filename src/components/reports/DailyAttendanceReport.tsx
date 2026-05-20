@@ -41,6 +41,7 @@ interface LeaveRow { employee_id: string; leave_type: string; start_date: string
 interface MissionRow { employee_id: string; date: string; mission_type: string; hours: number | null; }
 interface PermissionRow { employee_id: string; date: string; hours: number | null; permission_type: string; start_time: string | null; end_time: string | null; }
 interface OvertimeRow { employee_id: string; date: string; hours: number; overtime_type: string; }
+interface StampEvent { employee_id: string; scan_time: string; event_type: string; }
 
 type DayFilter = 'all' | 'present' | 'late' | 'absent';
 
@@ -48,6 +49,7 @@ const LEAVE_LABEL_AR: Record<string, string> = { annual: 'سنوية', sick: 'م
 const LEAVE_LABEL_EN: Record<string, string> = { annual: 'Annual', sick: 'Sick', casual: 'Casual', unpaid: 'Unpaid', marriage: 'Marriage' };
 
 const PIN_KEY = 'attendanceReport.pinSummary';
+const AUTO_CLOSED_RE = /AUTO[_-]?CLOSED/i;
 
 function formatTimeCairo(iso: string | null): string {
   if (!iso) return '—';
@@ -58,6 +60,14 @@ function formatTimeCairo(iso: string | null): string {
   } catch { return '—'; }
 }
 
+function toCairoDate(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date(iso));
+  } catch { return ''; }
+}
+
 function fmtHours(h: number): string {
   if (!h || h <= 0) return '0';
   return (Math.round(h * 100) / 100).toFixed(2);
@@ -65,6 +75,20 @@ function fmtHours(h: number): string {
 
 function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function permissionHoursFor(p: { hours: number | null; start_time: string | null; end_time: string | null }): number {
+  const h = Number(p.hours || 0);
+  if (h > 0) return Math.round(h * 100) / 100;
+  if (p.start_time && p.end_time) {
+    const [sh, sm] = p.start_time.split(':').map(Number);
+    const [eh, em] = p.end_time.split(':').map(Number);
+    if ([sh, sm, eh, em].every(n => Number.isFinite(n))) {
+      const mins = (eh * 60 + em) - (sh * 60 + sm);
+      if (mins > 0) return Math.round((mins / 60) * 100) / 100;
+    }
+  }
+  return 0;
 }
 
 export const DailyAttendanceReport = () => {
