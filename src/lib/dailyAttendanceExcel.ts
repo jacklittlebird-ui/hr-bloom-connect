@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import { format } from 'date-fns';
 
-type Kind = 'present' | 'late' | 'absent' | 'none';
+type Kind = 'present' | 'late' | 'absent' | 'auto-closed' | 'mission-day' | 'none';
 
 export interface DAExcelCell {
   in: string;
@@ -261,7 +261,7 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
       let bg = rowTint || C.white;
       let textColor = 'FF111827';
       let labelOverride: string | null = null;
-      const hasAttn = cell.kind === 'present' || cell.kind === 'late';
+      const hasAttn = cell.kind === 'present' || cell.kind === 'late' || cell.kind === 'auto-closed' || cell.kind === 'mission-day';
 
       if (cell.leave && !hasAttn) {
         bg = C.leave; textColor = C.leaveText;
@@ -271,6 +271,8 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
         labelOverride = (ar ? 'مأمورية' : 'Mission') + (cell.mission ? ` — ${cell.mission}` : '');
       } else if (cell.kind === 'present') { bg = C.present; textColor = C.presentText; }
       else if (cell.kind === 'late') { bg = C.late; textColor = C.lateText; }
+      else if (cell.kind === 'auto-closed') { bg = C.present; textColor = C.presentText; }
+      else if (cell.kind === 'mission-day') { bg = C.mission; textColor = C.missionText; }
       else if (cell.kind === 'absent') { bg = C.absent; textColor = C.absentText; }
       else if (cell.permission) {
         bg = C.permission; textColor = C.permissionText;
