@@ -249,7 +249,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         setLoading(false);
       }
     })();
-  }, [fromDate, toDate, stationFilter, ar]);
+  }, [fromDate, toDate, stationFilter, ar, allowedStationIds]);
 
   const stationMap = useMemo(() => {
     const m = new Map<string, StationRow>();
