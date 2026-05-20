@@ -48,6 +48,7 @@ export const PortalAttendance = () => {
   const [dateTo, setDateTo] = useState(todayStr);
   const [filteredRecords, setFilteredRecords] = useState<PortalAttendanceRecord[]>([]);
   const [coveredDates, setCoveredDates] = useState<Set<string>>(new Set());
+  const [auditRow, setAuditRow] = useState<PortalAttendanceRecord | null>(null);
 
   useEffect(() => {
     if (!PORTAL_EMPLOYEE_ID) return;
