@@ -129,16 +129,17 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
               <TableBody>
                 {paginatedItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={(onDelete || onEdit) ? 9 : 8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={(onDelete || onEdit) ? 10 : 9} className="text-center text-muted-foreground py-8">
                       {t('leaves.list.noRequests')}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedItems.map((request) => (
+                  filteredRequests.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell className="font-mono text-xs">{request.employeeCode || '—'}</TableCell>
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
                       <TableCell>{request.department}</TableCell>
+                      <TableCell>{request.station || '—'}</TableCell>
                       <TableCell>{getLeaveTypeBadge(request.leaveType)}</TableCell>
                       <TableCell>{formatDate(request.startDate)}</TableCell>
                       <TableCell>{formatDate(request.endDate)}</TableCell>
