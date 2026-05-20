@@ -1,0 +1,2 @@
+[functions.seed-station-managers]
+verify_jwt = false
