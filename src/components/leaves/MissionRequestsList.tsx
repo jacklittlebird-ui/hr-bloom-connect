@@ -90,7 +90,7 @@ export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListP
               <TableBody>
                 {paginatedItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={onDelete ? 9 : 8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={onDelete ? 10 : 9} className="text-center text-muted-foreground py-8">
                       {t('leaves.missions.noRequests')}
                     </TableCell>
                   </TableRow>
@@ -100,6 +100,7 @@ export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListP
                       <TableCell className="font-mono text-xs">{request.employeeCode || '—'}</TableCell>
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
                       <TableCell>{request.department}</TableCell>
+                      <TableCell>{request.station || '—'}</TableCell>
                       <TableCell>{getMissionTypeBadge(request.missionType)}</TableCell>
                       <TableCell>{formatDate(request.date)}</TableCell>
                       <TableCell>{request.destination || '-'}</TableCell>
