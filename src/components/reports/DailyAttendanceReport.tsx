@@ -126,6 +126,8 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
   const [permissions, setPermissions] = useState<PermissionRow[]>([]);
   const [overtimes, setOvertimes] = useState<OvertimeRow[]>([]);
 
+  const [stamps, setStamps] = useState<StampEvent[]>([]);
+
   // Load stations + departments once
   useEffect(() => {
     (async () => {
@@ -133,10 +135,17 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         supabase.from('stations').select('id,name_ar,name_en,weekend_days').order('name_ar'),
         supabase.from('departments').select('id,name_ar,name_en'),
       ]);
-      setStations((st as StationRow[]) || []);
+      const allStations = (st as StationRow[]) || [];
+      const filtered = allowedStationIds && allowedStationIds.length
+        ? allStations.filter(s => allowedStationIds.includes(s.id))
+        : allStations;
+      setStations(filtered);
       setDepartments((dp as DepartmentRow[]) || []);
+      if (allowedStationIds && allowedStationIds.length === 1) {
+        setStationFilter(allowedStationIds[0]);
+      }
     })();
-  }, []);
+  }, [allowedStationIds]);
 
   // Load employees + attendance for the selected range
   useEffect(() => {
