@@ -1158,13 +1158,42 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                             );
                           }
                           const isLate = c.kind === 'late';
-                          const bg = isLate ? 'bg-amber-50' : 'bg-emerald-50/40';
+                          const isAuto = c.kind === 'auto-closed';
+                          const isMissionDay = c.kind === 'mission-day';
+                          const bg = isLate ? 'bg-amber-50'
+                            : isAuto ? 'bg-emerald-50/60 ring-1 ring-inset ring-amber-300'
+                            : isMissionDay ? 'bg-purple-50'
+                            : 'bg-emerald-50/40';
                           const dimCls = dimmed ? 'opacity-40' : '';
-                          const StatusIcon = isLate ? AlertTriangle : CheckCircle2;
-                          const statusColor = isLate ? 'text-amber-600' : 'text-emerald-600';
-                          const statusTitle = isLate
-                            ? (ar ? 'متأخر' : 'Late')
+                          const StatusIcon = isLate ? AlertTriangle : isMissionDay ? Briefcase : CheckCircle2;
+                          const statusColor = isLate ? 'text-amber-600' : isMissionDay ? 'text-purple-600' : 'text-emerald-600';
+                          const statusTitle = isLate ? (ar ? 'متأخر' : 'Late')
+                            : isAuto ? (ar ? 'إغلاق تلقائي — يحتسب حضور' : 'Auto-closed — counted as present')
+                            : isMissionDay ? (ar ? 'مأمورية' : 'Mission')
                             : (ar ? 'حاضر' : 'Present');
+
+                          // Show extra stamps (beyond first/last) when there are multiples or a permission/mission
+                          const showAllStamps = (c.stamps && c.stamps.length > 2) || !!c.permission || !!c.mission;
+                          const extraStampsRow = showAllStamps && c.stamps && c.stamps.length > 0 ? (
+                            <div className="mt-1 flex flex-wrap items-center justify-center gap-0.5 border-t border-dashed border-muted-foreground/30 pt-0.5" title={ar ? 'جميع الأختام في هذا اليوم' : 'All stamps for this day'}>
+                              {c.stamps.map((s, si) => (
+                                <span
+                                  key={si}
+                                  className={cn(
+                                    'inline-flex items-center gap-0.5 px-1 rounded text-[9px] font-mono',
+                                    String(s.event_type).toLowerCase().includes('out')
+                                      ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700',
+                                  )}
+                                >
+                                  {String(s.event_type).toLowerCase().includes('out')
+                                    ? <LogOut className="w-2.5 h-2.5" aria-hidden />
+                                    : <LogIn className="w-2.5 h-2.5" aria-hidden />}
+                                  {formatTimeCairo(s.scan_time)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null;
+
                           return (
                             <Fragment key={ci}>
                               <td className={cn(baseCell, bg, dimCls)} title={statusTitle}>
@@ -1177,12 +1206,13 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                               <td className={cn(baseCell, bg, dimCls)} title={statusTitle}>
                                 <span className="inline-flex items-center justify-center gap-1">
                                   <LogOut className="w-3 h-3 text-rose-500" aria-hidden />
-                                  <span>{formatTimeCairo(c.record!.check_out)}</span>
+                                  <span>{c.record!.check_out ? formatTimeCairo(c.record!.check_out) : (isAuto ? (ar ? 'إغلاق تلقائي' : 'Auto') : '—')}</span>
                                 </span>
                               </td>
                               <td className={cn(baseCell, bg, dimCls, 'tabular-nums font-semibold')}>
                                 {fmtHours(c.hours)}
                                 {overlayRow}
+                                {extraStampsRow}
                               </td>
                             </Fragment>
                           );
