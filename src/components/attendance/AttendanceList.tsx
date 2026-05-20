@@ -308,6 +308,7 @@ export const AttendanceList = () => {
     employeeNameAr: r.employeeNameAr,
     employeeName: r.employeeName,
     department: getDeptName(r.employeeId),
+    station: getStationName(r.employeeId),
     checkIn: r.checkIn || '-',
     checkOut: r.checkOut || '-',
     workTime: formatWorkTime(r.workHours, r.workMinutes),
