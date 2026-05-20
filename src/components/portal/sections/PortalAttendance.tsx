@@ -292,12 +292,13 @@ export const PortalAttendance = () => {
                 <TableHead>{ar ? 'الانصراف' : 'Out'}</TableHead>
                 <TableHead>{ar ? 'الساعات' : 'Hours'}</TableHead>
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
+                <TableHead className="w-12 text-center">{ar ? 'تدقيق' : 'Audit'}</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="w-6 h-6 mx-auto animate-spin text-muted-foreground" /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-8"><Loader2 className="w-6 h-6 mx-auto animate-spin text-muted-foreground" /></TableCell></TableRow>
                 ) : filteredRecords.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد سجلات' : 'No records'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد سجلات' : 'No records'}</TableCell></TableRow>
                 ) : filteredRecords.map(r => (
                   <TableRow key={r.id}>
                     <TableCell>{r.date}</TableCell>
@@ -306,6 +307,13 @@ export const PortalAttendance = () => {
                     <TableCell className="font-mono">{r.checkOut || '--:--'}</TableCell>
                     <TableCell>{r.workHours > 0 || r.workMinutes > 0 ? `${String(r.workHours).padStart(2, '0')}:${String(r.workMinutes).padStart(2, '0')}` : '-'}</TableCell>
                     <TableCell>{statusBadge(r)}</TableCell>
+                    <TableCell className="text-center">
+                      {r.audit ? (
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAuditRow(r)} aria-label={ar ? 'تدقيق الحساب' : 'Audit'}>
+                          <Info className="w-4 h-4 text-primary" />
+                        </Button>
+                      ) : null}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -313,6 +321,34 @@ export const PortalAttendance = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!auditRow} onOpenChange={(o) => !o && setAuditRow(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5 text-primary" />
+              {ar ? 'تدقيق حساب اليوم' : 'Day Calculation Audit'}
+            </DialogTitle>
+            <DialogDescription>
+              {auditRow?.date} — {auditRow && format(new Date(auditRow.date), 'EEEE', { locale: ar ? arLocale : enUS })}
+            </DialogDescription>
+          </DialogHeader>
+          {auditRow?.audit && (
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'التصنيف' : 'Classification'}</span><span>{statusBadge(auditRow)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'يحتسب حضوراً' : 'Counted as Present'}</span><span>{auditRow.audit.isPresentDay ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No')}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'الحضور' : 'Check-in'}</span><span className="font-mono">{auditRow.checkIn || '--:--'}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'الانصراف' : 'Check-out'}</span><span className="font-mono">{auditRow.checkOut || '--:--'}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'الساعات' : 'Hours'}</span><span className="font-mono">{formatHM(auditRow.audit.totalMinutes)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'مصدر الساعات' : 'Hours source'}</span><span>{auditRow.audit.hoursSource}</span></div>
+              <div className="pt-2 border-t">
+                <div className="text-muted-foreground mb-1">{ar ? 'السبب' : 'Reason'}</div>
+                <div className="leading-relaxed">{ar ? auditRow.audit.reasonAr : auditRow.audit.reasonEn}</div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
