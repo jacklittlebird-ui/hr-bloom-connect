@@ -50,120 +50,118 @@ export const PortalAttendance = () => {
   const [coveredDates, setCoveredDates] = useState<Set<string>>(new Set());
   const [auditRow, setAuditRow] = useState<PortalAttendanceRecord | null>(null);
 
-  useEffect(() => {
+  const fetchRecords = useCallback(async () => {
     if (!PORTAL_EMPLOYEE_ID) return;
-    const fetchRecords = async () => {
-      setLoading(true);
+    setLoading(true);
 
-      // Get employee's station_id to filter holidays correctly
-      const { data: empRow } = await supabase
-        .from('employees')
-        .select('station_id')
-        .eq('id', PORTAL_EMPLOYEE_ID)
-        .maybeSingle();
-      const stationId = empRow?.station_id;
+    // Get employee's station_id to filter holidays correctly
+    const { data: empRow } = await supabase
+      .from('employees')
+      .select('station_id')
+      .eq('id', PORTAL_EMPLOYEE_ID)
+      .maybeSingle();
+    const stationId = empRow?.station_id;
 
-      const [attRes, holRes] = await Promise.all([
-        supabase
-          .from('attendance_records')
-          .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late, notes')
-          .eq('employee_id', PORTAL_EMPLOYEE_ID)
-          .gte('date', dateFrom)
-          .lte('date', dateTo)
-          .order('date', { ascending: false }),
-        supabase
-          .from('official_holidays')
-          .select('id, name_ar, name_en, holiday_date, station_ids')
-          .gte('holiday_date', dateFrom)
-          .lte('holiday_date', dateTo),
-      ]);
+    const [attRes, holRes] = await Promise.all([
+      supabase
+        .from('attendance_records')
+        .select('id, date, check_in, check_out, status, work_hours, work_minutes, is_late, notes')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .gte('date', dateFrom)
+        .lte('date', dateTo)
+        .order('date', { ascending: false }),
+      supabase
+        .from('official_holidays')
+        .select('id, name_ar, name_en, holiday_date, station_ids')
+        .gte('holiday_date', dateFrom)
+        .lte('holiday_date', dateTo),
+    ]);
 
-      if (attRes.error) {
-        console.error('Portal attendance fetch error:', attRes.error);
-        setFilteredRecords([]);
-        setLoading(false);
-        return;
-      }
-
-      if (holRes.error) {
-        console.error('Portal official holidays fetch error:', holRes.error);
-      }
-
-      const matchingHolidays = (holRes.data || []).filter((h: any) => {
-        const holidayStations = h.station_ids || [];
-        return !stationId || holidayStations.length === 0 || holidayStations.includes(stationId);
-      });
-      const holidayByDate = new Map(matchingHolidays.map((h: any) => [h.holiday_date, h]));
-
-      // Fetch approved leaves & missions in range — they count as "covered" days, not absences
-      const [leavesRes, missionsRes] = await Promise.all([
-        supabase
-          .from('leave_requests')
-          .select('start_date, end_date, status')
-          .eq('employee_id', PORTAL_EMPLOYEE_ID)
-          .eq('status', 'approved')
-          .lte('start_date', dateTo)
-          .gte('end_date', dateFrom),
-        supabase
-          .from('missions')
-          .select('date, status')
-          .eq('employee_id', PORTAL_EMPLOYEE_ID)
-          .eq('status', 'approved')
-          .gte('date', dateFrom)
-          .lte('date', dateTo),
-      ]);
-      const leaveDates = new Set<string>();
-      (leavesRes.data || []).forEach((l: any) => {
-        const s = new Date(l.start_date + 'T00:00:00');
-        const e = new Date(l.end_date + 'T00:00:00');
-        for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
-          leaveDates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-        }
-      });
-      const missionDates = new Set<string>((missionsRes.data || []).map((m: any) => m.date));
-      const covered = new Set<string>([...leaveDates, ...missionDates]);
-      setCoveredDates(covered);
-
-      const attLogs: PortalAttendanceRecord[] = (attRes.data || []).map(r => {
-        const holiday = holidayByDate.get(r.date) as any;
-        const onLeave = leaveDates.has(r.date);
-        const audit = classifyAttendance(r as any, { isOfficialHoliday: !!holiday, isOnLeave: onLeave && !r.check_in });
-        return {
-          id: r.id,
-          date: r.date,
-          checkIn: formatTime(r.check_in),
-          checkOut: formatTime(r.check_out),
-          status: audit.status,
-          workHours: Math.floor(audit.totalMinutes / 60),
-          workMinutes: audit.totalMinutes % 60,
-          holidayNameAr: holiday?.name_ar,
-          holidayNameEn: holiday?.name_en,
-          audit,
-        };
-      });
-
-      // Add official holidays for days where employee has no attendance record, while attendance rows on holidays are labeled above.
-      const datesWithRecords = new Set(attLogs.map(l => l.date));
-      const holidayLogs: PortalAttendanceRecord[] = matchingHolidays
-        .filter((h: any) => !datesWithRecords.has(h.holiday_date))
-        .map((h: any) => ({
-          id: `holiday-${h.id}`,
-          date: h.holiday_date,
-          checkIn: null,
-          checkOut: null,
-          status: 'official-holiday',
-          workHours: 0,
-          workMinutes: 0,
-          holidayNameAr: h.name_ar,
-          holidayNameEn: h.name_en,
-        } as any));
-
-      const combined = [...attLogs, ...holidayLogs].sort((a, b) => b.date.localeCompare(a.date));
-      setFilteredRecords(combined);
+    if (attRes.error) {
+      console.error('Portal attendance fetch error:', attRes.error);
+      setFilteredRecords([]);
       setLoading(false);
-    };
-    fetchRecords();
+      return;
+    }
+
+    if (holRes.error) {
+      console.error('Portal official holidays fetch error:', holRes.error);
+    }
+
+    const matchingHolidays = (holRes.data || []).filter((h: any) => {
+      const holidayStations = h.station_ids || [];
+      return !stationId || holidayStations.length === 0 || holidayStations.includes(stationId);
+    });
+    const holidayByDate = new Map(matchingHolidays.map((h: any) => [h.holiday_date, h]));
+
+    // Fetch approved leaves & missions in range — they count as "covered" days, not absences
+    const [leavesRes, missionsRes] = await Promise.all([
+      supabase
+        .from('leave_requests')
+        .select('start_date, end_date, status')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .eq('status', 'approved')
+        .lte('start_date', dateTo)
+        .gte('end_date', dateFrom),
+      supabase
+        .from('missions')
+        .select('date, status')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .eq('status', 'approved')
+        .gte('date', dateFrom)
+        .lte('date', dateTo),
+    ]);
+    const leaveDates = new Set<string>();
+    (leavesRes.data || []).forEach((l: any) => {
+      const s = new Date(l.start_date + 'T00:00:00');
+      const e = new Date(l.end_date + 'T00:00:00');
+      for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+        leaveDates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+      }
+    });
+    const missionDates = new Set<string>((missionsRes.data || []).map((m: any) => m.date));
+    const covered = new Set<string>([...leaveDates, ...missionDates]);
+    setCoveredDates(covered);
+
+    const attLogs: PortalAttendanceRecord[] = (attRes.data || []).map(r => {
+      const holiday = holidayByDate.get(r.date) as any;
+      const onLeave = leaveDates.has(r.date);
+      const audit = classifyAttendance(r as any, { isOfficialHoliday: !!holiday, isOnLeave: onLeave && !r.check_in });
+      return {
+        id: r.id,
+        date: r.date,
+        checkIn: formatTime(r.check_in),
+        checkOut: formatTime(r.check_out),
+        status: audit.status,
+        workHours: Math.floor(audit.totalMinutes / 60),
+        workMinutes: audit.totalMinutes % 60,
+        holidayNameAr: holiday?.name_ar,
+        holidayNameEn: holiday?.name_en,
+        audit,
+      };
+    });
+
+    const datesWithRecords = new Set(attLogs.map(l => l.date));
+    const holidayLogs: PortalAttendanceRecord[] = matchingHolidays
+      .filter((h: any) => !datesWithRecords.has(h.holiday_date))
+      .map((h: any) => ({
+        id: `holiday-${h.id}`,
+        date: h.holiday_date,
+        checkIn: null,
+        checkOut: null,
+        status: 'official-holiday',
+        workHours: 0,
+        workMinutes: 0,
+        holidayNameAr: h.name_ar,
+        holidayNameEn: h.name_en,
+      } as any));
+
+    const combined = [...attLogs, ...holidayLogs].sort((a, b) => b.date.localeCompare(a.date));
+    setFilteredRecords(combined);
+    setLoading(false);
   }, [PORTAL_EMPLOYEE_ID, dateFrom, dateTo]);
+
+  useEffect(() => { fetchRecords(); }, [fetchRecords]);
 
   const stats = useMemo(() => {
     let present = 0, late = 0, absent = 0, totalMinutes = 0;
