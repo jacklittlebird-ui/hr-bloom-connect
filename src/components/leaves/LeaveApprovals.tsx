@@ -257,6 +257,11 @@ export const LeaveApprovals = ({
                           <Badge variant="outline" className="text-xs">
                             {request.department}
                           </Badge>
+                          {request.station && (
+                            <Badge variant="outline" className="text-xs">
+                              {request.station}
+                            </Badge>
+                          )}
                         </div>
 
                         <div className={cn("flex items-center gap-4 text-sm text-muted-foreground flex-wrap", isRTL && "flex-row-reverse")}>
