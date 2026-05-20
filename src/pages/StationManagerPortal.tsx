@@ -51,6 +51,7 @@ import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals'
 import { StationWorkHours } from '@/components/portal/sections/StationWorkHours';
 import { StationUniformsTab } from '@/components/portal/sections/StationUniformsTab';
 import { Tabs as VTabs, TabsContent as VTabsContent, TabsList as VTabsList, TabsTrigger as VTabsTrigger } from '@/components/ui/tabs';
+import { DailyAttendanceReport } from '@/components/reports/DailyAttendanceReport';
 
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
 import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
@@ -153,9 +154,9 @@ const StationManagerPortal = () => {
     switch (user?.role) {
       case 'station_manager':
       case 'area_manager':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations', 'vehicles'];
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations', 'vehicles', 'reports'];
       case 'station_hr':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles'];
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles', 'reports'];
       case 'department_manager':
         return ['employees', 'attendance', 'leaveCalendar', 'approvals', 'evaluations', 'violations'];
       default:
@@ -1184,6 +1185,9 @@ const StationManagerPortal = () => {
             {canSee('vehicles') && (
               <TabsTrigger value="vehicles" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Car className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('السيارات', 'Vehicles')}</span></TabsTrigger>
             )}
+            {canSee('reports') && (
+              <TabsTrigger value="reports" className="gap-1 md:gap-1.5 text-xs md:text-sm"><FileText className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقارير', 'Reports')}</span></TabsTrigger>
+            )}
           </TabsList>
 
           {/* Employees Tab */}
@@ -2034,6 +2038,17 @@ const StationManagerPortal = () => {
               </TabsContent>
             );
           })()}
+
+          {canSee('reports') && (
+            <TabsContent value="reports">
+              {(() => {
+                const allowedIds = (user?.stationIds && user.stationIds.length)
+                  ? user.stationIds
+                  : (user?.stations || []).map(s => s).filter(Boolean) as string[];
+                return <DailyAttendanceReport allowedStationIds={allowedIds} />;
+              })()}
+            </TabsContent>
+          )}
         </Tabs>
         </div>
       </main>
