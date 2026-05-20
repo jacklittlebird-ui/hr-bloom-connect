@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle, Timer, Loader2, Info } from 'lucide-react';
+import { Calendar, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle, Timer, Loader2, Info, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
