@@ -336,12 +336,13 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
   type DayCell = {
     record: AttendanceRow | null;
     hours: number;
-    matchesStatus: boolean; // does this cell match the active status filter?
-    kind: 'present' | 'late' | 'absent' | 'none';
+    matchesStatus: boolean;
+    kind: 'present' | 'late' | 'absent' | 'auto-closed' | 'mission-day' | 'none';
     leave?: LeaveRow | null;
     mission?: MissionRow | null;
     permission?: PermissionRow | null;
     overtime?: OvertimeRow | null;
+    stamps?: StampEvent[];
   };
 
   // Map: employee_id -> date -> record
