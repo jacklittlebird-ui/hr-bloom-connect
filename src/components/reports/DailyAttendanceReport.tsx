@@ -407,6 +407,23 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
     return m;
   }, [overtimes]);
 
+  // Index raw stamp events by employee_id -> Cairo date -> list (sorted by time)
+  const stampsIndex = useMemo(() => {
+    const m = new Map<string, Map<string, StampEvent[]>>();
+    stamps.forEach(s => {
+      if (!s.employee_id) return;
+      const d = toCairoDate(s.scan_time);
+      if (!d) return;
+      let inner = m.get(s.employee_id);
+      if (!inner) { inner = new Map(); m.set(s.employee_id, inner); }
+      const list = inner.get(d) || [];
+      list.push(s);
+      inner.set(d, list);
+    });
+    m.forEach(inner => inner.forEach(list => list.sort((a, b) => a.scan_time.localeCompare(b.scan_time))));
+    return m;
+  }, [stamps]);
+
   type EmpRow = {
     employee: EmployeeRow;
     department: DepartmentRow | null;
