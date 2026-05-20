@@ -275,6 +275,13 @@ export const AttendanceList = () => {
     return dept ? (ar ? dept.name_ar : dept.name_en) : '-';
   };
 
+  const getStationName = (employeeId: string) => {
+    const stId = employeeStationMap[employeeId];
+    if (!stId) return '-';
+    const st = stations.find(s => s.id === stId);
+    return st ? (ar ? st.name_ar : st.name_en) : '-';
+  };
+
   const formatWorkTime = (hours: number, minutes: number) => {
     return `${hours}:${String(minutes).padStart(2, '0')}`;
   };
@@ -288,6 +295,7 @@ export const AttendanceList = () => {
     { headerAr: 'الموظف (عربي)', headerEn: 'Employee (AR)', key: 'employeeNameAr' },
     { headerAr: 'الموظف (إنجليزي)', headerEn: 'Employee (EN)', key: 'employeeName' },
     { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
+    { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
     { headerAr: 'الحضور', headerEn: 'Check In', key: 'checkIn' },
     { headerAr: 'الانصراف', headerEn: 'Check Out', key: 'checkOut' },
     { headerAr: 'ساعات العمل', headerEn: 'Work Hours', key: 'workTime' },
@@ -300,6 +308,7 @@ export const AttendanceList = () => {
     employeeNameAr: r.employeeNameAr,
     employeeName: r.employeeName,
     department: getDeptName(r.employeeId),
+    station: getStationName(r.employeeId),
     checkIn: r.checkIn || '-',
     checkOut: r.checkOut || '-',
     workTime: formatWorkTime(r.workHours, r.workMinutes),
@@ -539,6 +548,7 @@ export const AttendanceList = () => {
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'كود الموظف' : 'Employee ID'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الموظف' : 'Employee'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'القسم' : 'Department'}</TableHead>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحضور' : 'Check In'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الانصراف' : 'Check Out'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'ساعات العمل' : 'Work Hours'}</TableHead>
@@ -550,13 +560,13 @@ export const AttendanceList = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                     {ar ? 'جاري التحميل...' : 'Loading...'}
                   </TableCell>
                 </TableRow>
               ) : records.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
                     {ar ? 'لا توجد سجلات حضور' : 'No attendance records'}
                   </TableCell>
                 </TableRow>
@@ -569,6 +579,7 @@ export const AttendanceList = () => {
                       {ar ? record.employeeNameAr : record.employeeName}
                     </TableCell>
                     <TableCell>{getDeptName(record.employeeId)}</TableCell>
+                    <TableCell>{getStationName(record.employeeId)}</TableCell>
                     <TableCell>{record.checkIn || '-'}</TableCell>
                     <TableCell>{record.checkOut || '-'}</TableCell>
                     <TableCell>{formatWorkTime(record.workHours, record.workMinutes)}</TableCell>

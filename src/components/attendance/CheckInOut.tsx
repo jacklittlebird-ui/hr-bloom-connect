@@ -446,7 +446,13 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
                       <p className="font-medium">
                         {language === 'ar' ? record.employeeNameAr : record.employeeName}
                       </p>
-                      <p className="text-sm text-muted-foreground">{record.department}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {record.department}
+                        {(() => {
+                          const emp = contextEmployees.find(e => e.employeeId === record.employeeId);
+                          return emp?.stationName ? ` • ${emp.stationName}` : '';
+                        })()}
+                      </p>
                     </div>
                   </div>
                   <div className={cn("flex items-center gap-4", isRTL && "flex-row-reverse")}>
