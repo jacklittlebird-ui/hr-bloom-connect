@@ -120,6 +120,7 @@ export const PermissionRequestsList = ({ requests, onDelete, onEdit }: Permissio
                   <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'كود الموظف' : 'Employee ID'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.employee')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.department')}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.type')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.permissions.date')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.permissions.fromTime')}</TableHead>
@@ -132,7 +133,7 @@ export const PermissionRequestsList = ({ requests, onDelete, onEdit }: Permissio
               <TableBody>
                 {paginatedItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={(onDelete || onEdit) ? 10 : 9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={(onDelete || onEdit) ? 11 : 10} className="text-center text-muted-foreground py-8">
                       {t('leaves.permissions.noRequests')}
                     </TableCell>
                   </TableRow>
@@ -142,6 +143,7 @@ export const PermissionRequestsList = ({ requests, onDelete, onEdit }: Permissio
                       <TableCell className="font-mono text-xs">{request.employeeCode || '—'}</TableCell>
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
                       <TableCell>{request.department}</TableCell>
+                      <TableCell>{request.station || '—'}</TableCell>
                       <TableCell>{getPermTypeBadge(request.permissionType)}</TableCell>
                       <TableCell>{formatDate(request.date)}</TableCell>
                       <TableCell>{request.fromTime}</TableCell>

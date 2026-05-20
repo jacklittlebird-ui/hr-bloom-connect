@@ -17,6 +17,7 @@ type UnifiedRequest = {
   employeeName: string;
   employeeNameAr: string;
   department: string;
+  station?: string;
   reason: string;
   details: string;
   badgeLabel: string;
@@ -66,6 +67,7 @@ export const LeaveApprovals = ({
       employeeName: r.employeeName,
       employeeNameAr: r.employeeNameAr,
       department: r.department,
+      station: r.station,
       reason: r.reason,
       details: `${formatDate(r.startDate)} → ${formatDate(r.endDate)} (${r.days} ${t('leaves.days')})`,
       badgeLabel: t(`leaves.types.${r.leaveType}`),
@@ -78,6 +80,7 @@ export const LeaveApprovals = ({
       employeeName: r.employeeName,
       employeeNameAr: r.employeeNameAr,
       department: r.department,
+      station: r.station,
       reason: r.reason,
       details: `${formatDate(r.date)} | ${r.fromTime} - ${r.toTime} (${r.durationHours} ${t('leaveBalance.hours')})`,
       badgeLabel: t(`leaves.permTypes.${r.permissionType}`),
@@ -97,6 +100,7 @@ export const LeaveApprovals = ({
         employeeName: r.employeeName,
         employeeNameAr: r.employeeNameAr,
         department: r.department,
+      station: r.station,
         reason: r.reason,
         details: `${formatDate(r.date)}${r.destination ? ` | ${r.destination}` : ''}`,
         badgeLabel: language === 'ar' ? lbl.ar : lbl.en,
@@ -110,6 +114,7 @@ export const LeaveApprovals = ({
       employeeName: r.employeeName,
       employeeNameAr: r.employeeNameAr,
       department: r.department,
+      station: r.station,
       reason: r.reason,
       details: `${formatDate(r.date)} | ${r.hours} ${t('leaveBalance.hours')}`,
       badgeLabel: t(`leaves.overtimeTypes.${r.overtimeType}`),
@@ -252,6 +257,11 @@ export const LeaveApprovals = ({
                           <Badge variant="outline" className="text-xs">
                             {request.department}
                           </Badge>
+                          {request.station && (
+                            <Badge variant="outline" className="text-xs">
+                              {request.station}
+                            </Badge>
+                          )}
                         </div>
 
                         <div className={cn("flex items-center gap-4 text-sm text-muted-foreground flex-wrap", isRTL && "flex-row-reverse")}>

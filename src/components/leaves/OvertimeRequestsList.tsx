@@ -78,6 +78,7 @@ export const OvertimeRequestsList = ({ requests, onDelete }: OvertimeRequestsLis
                   <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'كود الموظف' : 'Employee ID'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.employee')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.department')}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.type')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.overtime.date')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.overtime.hours')}</TableHead>
@@ -89,7 +90,7 @@ export const OvertimeRequestsList = ({ requests, onDelete }: OvertimeRequestsLis
               <TableBody>
                 {paginatedItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={onDelete ? 9 : 8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={onDelete ? 10 : 9} className="text-center text-muted-foreground py-8">
                       {t('leaves.overtime.noRequests')}
                     </TableCell>
                   </TableRow>
@@ -99,6 +100,7 @@ export const OvertimeRequestsList = ({ requests, onDelete }: OvertimeRequestsLis
                       <TableCell className="font-mono text-xs">{request.employeeCode || '—'}</TableCell>
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
                       <TableCell>{request.department}</TableCell>
+                      <TableCell>{request.station || '—'}</TableCell>
                       <TableCell>{getOvertimeTypeBadge(request.overtimeType)}</TableCell>
                       <TableCell>{formatDate(request.date)}</TableCell>
                       <TableCell>{request.hours} {t('leaveBalance.hours')}</TableCell>

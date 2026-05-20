@@ -117,6 +117,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                   <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'كود الموظف' : 'Employee ID'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.employee')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.department')}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.type')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.startDate')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.endDate')}</TableHead>
@@ -128,7 +129,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
               <TableBody>
                 {paginatedItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={(onDelete || onEdit) ? 9 : 8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={(onDelete || onEdit) ? 10 : 9} className="text-center text-muted-foreground py-8">
                       {t('leaves.list.noRequests')}
                     </TableCell>
                   </TableRow>
@@ -138,6 +139,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                       <TableCell className="font-mono text-xs">{request.employeeCode || '—'}</TableCell>
                       <TableCell className="font-medium">{language === 'ar' ? request.employeeNameAr : request.employeeName}</TableCell>
                       <TableCell>{request.department}</TableCell>
+                      <TableCell>{request.station || '—'}</TableCell>
                       <TableCell>{getLeaveTypeBadge(request.leaveType)}</TableCell>
                       <TableCell>{formatDate(request.startDate)}</TableCell>
                       <TableCell>{formatDate(request.endDate)}</TableCell>
