@@ -17,6 +17,7 @@ type UnifiedRequest = {
   employeeName: string;
   employeeNameAr: string;
   department: string;
+  station?: string;
   reason: string;
   details: string;
   badgeLabel: string;
