@@ -190,24 +190,21 @@ export const PortalAttendance = () => {
     if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) {
       return { workingDaysInRange: 0, coveredInRange: 0 };
     }
-    const holidayDates = new Set(filteredRecords.filter(r => r.status === 'official-holiday').map(r => r.date));
-    let count = 0;
+    // Formula: denominator = 24 - (one day per official holiday in range).
+    // Numerator = present days (incl. late, auto-closed, mission) + approved leaves.
+    const holidayCount = filteredRecords.filter(r => r.status === 'official-holiday').length;
     let covered = 0;
     const cur = new Date(start);
     while (cur <= end) {
-      const day = cur.getDay();
       const iso = localIso(cur);
-      if (day !== 5 && day !== 6 && !holidayDates.has(iso)) {
-        count++;
-        if (coveredDates.has(iso)) covered++;
-      }
+      if (coveredDates.has(iso)) covered++;
       cur.setDate(cur.getDate() + 1);
     }
-    return { workingDaysInRange: count, coveredInRange: covered };
+    const denom = Math.max(0, 24 - holidayCount);
+    return { workingDaysInRange: denom, coveredInRange: covered };
   }, [dateFrom, dateTo, filteredRecords, coveredDates]);
 
-  // Numerator = days present (incl. late & auto-closed) + approved leave/mission days on working days.
-  // This prevents "Rate" from dropping due to legitimate approved absences.
+  // Rate = (actual present days + covered) / (24 - official holidays in range)
   const rate = workingDaysInRange > 0
     ? Math.min(100, ((stats.present + coveredInRange) / workingDaysInRange) * 100).toFixed(1)
     : '0';
