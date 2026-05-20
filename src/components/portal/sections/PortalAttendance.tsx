@@ -181,7 +181,7 @@ export const PortalAttendance = () => {
   const stats = useMemo(() => {
     let present = 0, late = 0, absent = 0, totalMinutes = 0;
     filteredRecords.forEach(r => {
-      if (r.status === 'present' || r.status === 'late' || r.status === 'auto-closed') present++;
+      if (r.status === 'present' || r.status === 'late' || r.status === 'auto-closed' || r.status === 'mission') present++;
       if (r.status === 'late') late++;
       if (r.status === 'absent') absent++;
       totalMinutes += (r.workHours * 60) + r.workMinutes;
