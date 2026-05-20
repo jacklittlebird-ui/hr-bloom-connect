@@ -214,13 +214,16 @@ export const PortalDashboard = () => {
         data.forEach((r: any) => {
           const status = String(r.status || '').toLowerCase().replace(/_/g, '-');
           const notes = String(r.notes || '').toLowerCase().replace(/_/g, '-');
-          const isAutoClosed = status === 'auto-closed' || notes.includes('auto-closed');
-          const isPresentDay = !!r.check_in || isAutoClosed || ['present', 'late', 'early-leave', 'mission'].includes(status);
+          const isAutoClosed = status === 'auto-closed' || /auto[_-]?closed/i.test(notes);
+          const isMission = status === 'mission';
+          const isPresentDay = !!r.check_in || isAutoClosed || isMission || ['present', 'late', 'early-leave'].includes(status);
           if (isPresentDay && r.date) presentDates.add(r.date);
           if (r.is_late) late++;
           if (status === 'absent') absent++;
+          // Always include hours when both timestamps exist (covers normal,
+          // auto-closed and mission days). Fallback to DB work_minutes/work_hours.
           let mins = 0;
-          if (!isAutoClosed && r.check_in && r.check_out) {
+          if (r.check_in && r.check_out) {
             const diff = (new Date(r.check_out).getTime() - new Date(r.check_in).getTime()) / 60000;
             if (diff > 0) mins = Math.round(diff);
           }
