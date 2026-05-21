@@ -3,13 +3,17 @@ import { Employee } from '@/types/employee';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
+import { trackQuery, debouncedFetch, getCached, setCache } from '@/lib/queryOptimizer';
 
 // Columns needed for the employee list table (fast load)
 const LIST_COLUMNS = 'id, employee_code, name_ar, name_en, phone, status, avatar, station_id, department_id, job_title_ar, job_title_en, job_level, dept_code, hire_date, first_name, father_name, family_name, email, employment_status, contract_type, resigned, resignation_date, gender, national_id, bank_account_number, bank_id_number, bank_account_type, bank_name, social_insurance_start_date, social_insurance_no, has_social_insurance';
 
 // Lighter select WITHOUT nested joins — joins are resolved client-side via maps for speed
 const LIST_SELECT = LIST_COLUMNS;
+
+// Cache for station code → id (avoids extra roundtrip in updateEmployee)
+const stationCodeIdCache = new Map<string, string>();
+const EMPLOYEES_TTL_MS = 5 * 60_000; // 5 minutes
 
 interface EmployeeDataContextType {
   employees: Employee[];
@@ -226,6 +230,8 @@ async function mapUpdates(updates: Partial<Employee>): Promise<Record<string, an
       dbUpdates['station_id'] = null;
     } else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stationValue)) {
       dbUpdates['station_id'] = stationValue;
+    } else if (stationCodeIdCache.has(stationValue)) {
+      dbUpdates['station_id'] = stationCodeIdCache.get(stationValue);
     } else {
       const { data: stationData } = await supabase
         .from('stations')
@@ -234,6 +240,7 @@ async function mapUpdates(updates: Partial<Employee>): Promise<Record<string, an
         .maybeSingle();
 
       if (stationData?.id) {
+        stationCodeIdCache.set(stationValue, stationData.id);
         dbUpdates['station_id'] = stationData.id;
       }
     }
@@ -261,8 +268,15 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const fullLoadedIds = useRef<Set<string>>(new Set());
 
   const fetchEmployees = useCallback(async () => {
-    setLoading(true);
     const cacheKey = employeeCacheKey;
+    // Hydrate from cache instantly to avoid showing a spinner if we have data
+    const cached = getCached<Employee[]>(cacheKey, EMPLOYEES_TTL_MS);
+    if (cached && cached.length) {
+      setEmployees(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
 
     try {
       const result = await debouncedFetch(cacheKey, async () => {
@@ -301,6 +315,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
             ]);
             const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
             const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
+            (stationsRes.data || []).forEach(s => s.code && stationCodeIdCache.set(s.code, s.id));
 
             return (viewData || []).map((row: any) => {
               const dept = deptMap.get(row.department_id);
@@ -322,24 +337,21 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (empRes.error) { console.error('Error fetching employees:', empRes.error); return []; }
         const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
         const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
+        (stationsRes.data || []).forEach(s => s.code && stationCodeIdCache.set(s.code, s.id));
         return (empRes.data || []).map((row: any) => mapRow({
           ...row,
           departments: deptMap.get(row.department_id) || null,
           stations: stationMap.get(row.station_id) || null,
         }));
-      }, { ttlMs: 60_000 });
+      }, { ttlMs: EMPLOYEES_TTL_MS });
 
-      fullLoadedIds.current = new Set();
-      setEmployees(result);
+      // Only reset fullLoadedIds when the dataset actually changed (not when cache is reused)
+      setEmployees(prev => (prev === result ? prev : result));
     } catch (err) {
       console.error('fetchEmployees error:', err);
     }
     setLoading(false);
   }, [employeeCacheKey, user?.role, isEmployee, scopedEmployeeId]);
-
-  useEffect(() => {
-    invalidateCache('employees_');
-  }, [employeeCacheKey]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -349,6 +361,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setLoading(false);
     }
   }, [isAuthenticated, fetchEmployees]);
+
 
   // Fetch full employee data on-demand (for detail pages)
   const ensureFullEmployee = useCallback(async (id: string): Promise<Employee | undefined> => {
@@ -408,16 +421,26 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const dbUpdates = await mapUpdates(updates);
     if (Object.keys(dbUpdates).length === 0) return;
 
+    // Optimistic UI: update local state immediately so the form feels instant
+    const prevSnapshot = employees;
+    const emp = employees.find(e => e.id === id);
+    const nextList = employees.map(e => e.id === id ? { ...e, ...updates } : e);
+    setEmployees(nextList);
+    // Keep SWR cache in sync so a re-mount won't flash stale data
+    setCache(employeeCacheKey, nextList);
+
     const { error } = await supabase.from('employees').update(dbUpdates).eq('id', id);
     if (error) {
       console.error('Error updating employee:', error);
+      // Revert on failure
+      setEmployees(prevSnapshot);
+      setCache(employeeCacheKey, prevSnapshot);
       throw error;
     }
 
-    setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-    const emp = employees.find(e => e.id === id);
     addNotification({ titleAr: `تم تحديث بيانات الموظف: ${emp?.nameAr || id}`, titleEn: `Employee updated: ${emp?.nameEn || id}`, type: 'success', module: 'employee' });
-  }, [employees, addNotification]);
+  }, [employees, addNotification, employeeCacheKey]);
+
 
   const addEmployee = useCallback(async (employee: Employee) => {
     const dbRow: any = {
