@@ -54,7 +54,7 @@ const Index = () => {
 
     // Use head:true count queries — zero rows transferred, only count header
     const [totalEmpRes, activeEmpRes, deptRes, attRes, leaveRes, assetRes, courseRes, perfRes, loanRes, maleRes, femaleRes] = await Promise.all([
-      supabase.from('employees').select('id', { count: 'exact', head: true }),
+      supabase.from('employees').select('id', { count: 'exact', head: true }).not('status', 'in', "('resigned','under_resignation')"),
       supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'active'),
       supabase.from('departments').select('id', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('attendance_records').select('id', { count: 'exact', head: true }).eq('date', today),
