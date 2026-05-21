@@ -200,7 +200,7 @@ export const LeaveRecordTab = ({ employee }: LeaveRecordTabProps) => {
   );
   const permissionsUsedLive = useMemo(() =>
     employeePermissions
-      .filter(r => r.status === 'approved' && new Date(r.date).getFullYear() === currentYear)
+      .filter(r => r.status === 'approved' && r.permissionType !== 'no_deduction' && new Date(r.date).getFullYear() === currentYear)
       .reduce((s, r) => s + Number(r.durationHours || 0), 0),
     [employeePermissions, currentYear]
   );
