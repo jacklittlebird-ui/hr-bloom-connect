@@ -295,16 +295,16 @@ const Leaves = () => {
     if (toDate && dateStr > toDate) return false;
     return true;
   };
-  const matchStatus = (status?: string) => selectedStatus === 'all' || status === selectedStatus;
+  const matchStatus = (status?: string) => selectedStatuses.length === 0 || (status ? selectedStatuses.includes(status) : false);
 
   const filteredLeaves = useMemo(() => filterBase(leaveRequests).filter(r => matchStatus(r.status) && inDateRange(r.startDate)),
-    [leaveRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
+    [leaveRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
   const filteredPermissions = useMemo(() => filterBase(permissionRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
-    [permissionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
+    [permissionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
   const filteredMissions = useMemo(() => filterBase(missionRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
-    [missionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
+    [missionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
   const filteredOvertime = useMemo(() => filterBase(overtimeRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
-    [overtimeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
+    [overtimeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
   const filteredBalances = useMemo(() => filterBase(leaveBalances), [leaveBalances, searchQuery, selectedDepartment, selectedStation]);
   const filteredEmployeeRequests = useMemo(() => {
     return employeeRequests.filter(r => {
@@ -314,10 +314,10 @@ const Leaves = () => {
         r.employeeCode.includes(searchQuery);
       const matchDept = selectedDepartment === 'all' || empDeptMap.get(r.employeeId) === selectedDepartment;
       const matchStation = selectedStation === 'all' || empStationMap.get(r.employeeId) === selectedStation;
-      const matchSt = selectedStatus === 'all' || r.status === selectedStatus;
+      const matchSt = matchStatus(r.status);
       return matchSearch && matchDept && matchStation && matchSt && inDateRange(r.date);
     });
-  }, [employeeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatus, fromDate, toDate]);
+  }, [employeeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
 
   // Unified loading state — set of mutation keys currently running
   const [mutating, setMutating] = useState<Set<string>>(new Set());
