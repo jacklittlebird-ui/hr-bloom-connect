@@ -333,6 +333,7 @@ const translations: Record<string, Record<Language, string>> = {
   'leaves.permTypes.late_arrival': { en: 'Late Arrival', ar: 'حضور متأخر' },
   'leaves.permTypes.personal': { en: 'Personal', ar: 'شخصي' },
   'leaves.permTypes.medical': { en: 'Medical', ar: 'طبي' },
+  'leaves.permTypes.no_deduction': { en: 'No-Deduction Permission', ar: 'إذن بدون خصم' },
   'leaves.permissions.listTitle': { en: 'Permission Requests', ar: 'طلبات الأذونات' },
   'leaves.permissions.type': { en: 'Permission Type', ar: 'نوع الإذن' },
   'leaves.permissions.selectType': { en: 'Select permission type', ar: 'اختر نوع الإذن' },
