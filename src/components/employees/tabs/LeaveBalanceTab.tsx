@@ -98,7 +98,7 @@ export const LeaveBalanceTab = ({ employee, onUpdate, onDirectSave, readOnly }: 
       supabase.from('leave_balances').select('*').eq('employee_id', employee.id),
       supabase.from('overtime_requests').select('date, overtime_type, status').eq('employee_id', employee.id).eq('status', 'approved'),
       supabase.from('leave_requests').select('start_date, leave_type, days, status').eq('employee_id', employee.id).eq('status', 'approved'),
-      supabase.from('permission_requests').select('date, hours, status').eq('employee_id', employee.id).eq('status', 'approved'),
+      supabase.from('permission_requests').select('date, hours, status, permission_type').eq('employee_id', employee.id).eq('status', 'approved').neq('permission_type', 'no_deduction'),
     ]);
 
     // Approved overtime days per year (Eid first day = 2 days, others = 1)
