@@ -57,17 +57,37 @@ export const PayrollProcessing = () => {
 
   // Fetch active loans, approved advances, and mobile bills from DB
   const fetchLoansAndAdvances = useCallback(async () => {
-    const [loansRes, installmentsRes, advancesRes, billsRes] = await Promise.all([
+    // Fetch all pending installments with pagination (Supabase default limit is 1000)
+    const fetchAllInstallments = async () => {
+      const all: any[] = [];
+      const pageSize = 1000;
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from('loan_installments')
+          .select('loan_id, employee_id, amount, due_date, status')
+          .eq('status', 'pending')
+          .range(from, from + pageSize - 1);
+        if (error || !data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return all;
+    };
+
+    const [loansRes, installmentsAll, advancesRes, billsRes] = await Promise.all([
       supabase.from('loans').select('id, employee_id, monthly_installment, installments_count, paid_count, remaining').eq('status', 'active'),
-      supabase.from('loan_installments').select('loan_id, employee_id, amount, due_date, status').eq('status', 'pending'),
+      fetchAllInstallments(),
       supabase.from('advances').select('id, employee_id, amount, deduction_month, status').in('status', ['approved', 'deducted']),
       supabase.from('mobile_bills').select('employee_id, amount, deduction_month'),
     ]);
     if (loansRes.data) setDbLoans(loansRes.data);
-    if (installmentsRes.data) setDbInstallments(installmentsRes.data);
+    setDbInstallments(installmentsAll);
     if (advancesRes.data) setDbAdvances(advancesRes.data);
     if (billsRes.data) setDbMobileBills(billsRes.data);
   }, []);
+
 
   // Sync loan records after payroll: update paid_count, remaining, status, and mark installments
   const syncLoansAfterPayroll = useCallback(async (employeeIds: string[], month: string, year: string) => {
