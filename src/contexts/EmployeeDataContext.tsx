@@ -268,8 +268,15 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const fullLoadedIds = useRef<Set<string>>(new Set());
 
   const fetchEmployees = useCallback(async () => {
-    setLoading(true);
     const cacheKey = employeeCacheKey;
+    // Hydrate from cache instantly to avoid showing a spinner if we have data
+    const cached = getCached<Employee[]>(cacheKey, EMPLOYEES_TTL_MS);
+    if (cached && cached.length) {
+      setEmployees(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
 
     try {
       const result = await debouncedFetch(cacheKey, async () => {
@@ -308,6 +315,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
             ]);
             const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
             const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
+            (stationsRes.data || []).forEach(s => s.code && stationCodeIdCache.set(s.code, s.id));
 
             return (viewData || []).map((row: any) => {
               const dept = deptMap.get(row.department_id);
@@ -329,24 +337,21 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (empRes.error) { console.error('Error fetching employees:', empRes.error); return []; }
         const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
         const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
+        (stationsRes.data || []).forEach(s => s.code && stationCodeIdCache.set(s.code, s.id));
         return (empRes.data || []).map((row: any) => mapRow({
           ...row,
           departments: deptMap.get(row.department_id) || null,
           stations: stationMap.get(row.station_id) || null,
         }));
-      }, { ttlMs: 60_000 });
+      }, { ttlMs: EMPLOYEES_TTL_MS });
 
-      fullLoadedIds.current = new Set();
-      setEmployees(result);
+      // Only reset fullLoadedIds when the dataset actually changed (not when cache is reused)
+      setEmployees(prev => (prev === result ? prev : result));
     } catch (err) {
       console.error('fetchEmployees error:', err);
     }
     setLoading(false);
   }, [employeeCacheKey, user?.role, isEmployee, scopedEmployeeId]);
-
-  useEffect(() => {
-    invalidateCache('employees_');
-  }, [employeeCacheKey]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -356,6 +361,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setLoading(false);
     }
   }, [isAuthenticated, fetchEmployees]);
+
 
   // Fetch full employee data on-demand (for detail pages)
   const ensureFullEmployee = useCallback(async (id: string): Promise<Employee | undefined> => {
