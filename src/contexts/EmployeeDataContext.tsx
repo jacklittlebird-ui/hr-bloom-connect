@@ -471,16 +471,20 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     const { data, error } = await supabase.from('employees').insert(dbRow).select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)').single();
-    if (error) {
+    if (error || !data) {
       console.error('Error adding employee:', error);
-      return;
+      throw error || new Error('Insert failed');
     }
-    if (data) {
-      fullLoadedIds.current.add(data.id);
-      setEmployees(prev => [...prev, mapRow(data)]);
-    }
+    const mapped = mapRow(data);
+    fullLoadedIds.current.add(data.id);
+    setEmployees(prev => {
+      const merged = [...prev, mapped];
+      // Sync cache so a refresh/remount won't lose the newly added row
+      setCache(employeeCacheKey, merged);
+      return merged;
+    });
     addNotification({ titleAr: `تم إضافة موظف جديد: ${employee.nameAr}`, titleEn: `New employee added: ${employee.nameEn}`, type: 'success', module: 'employee' });
-  }, [addNotification]);
+  }, [addNotification, employeeCacheKey]);
 
   return (
     <EmployeeDataContext.Provider value={{ employees, loading, getEmployee, getEmployeeById, updateEmployee, addEmployee, refreshEmployees: fetchEmployees, ensureFullEmployee, fetchFullEmployeesByIds }}>
