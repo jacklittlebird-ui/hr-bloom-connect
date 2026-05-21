@@ -117,7 +117,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
       v.employeeName.toLowerCase().includes(q) ||
       v.employeeNameAr.includes(searchQuery.trim()) ||
       (v.employeeCode || '').toLowerCase().includes(q);
-    const matchStatus = filterStatus === 'all' || v.status === filterStatus;
+    const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes(v.status);
     return matchSearch && matchStatus;
   });
 
