@@ -193,7 +193,7 @@ const Leaves = () => {
 
     const [approvedYearLeaves, approvedYearPerms, approvedOt] = await Promise.all([
       fetchAllRows<ApprovedLeaveRow>((from, to) => supabase.from('leave_requests').select('employee_id, leave_type, days, start_date').eq('status', 'approved').gte('start_date', `${currentYear}-01-01`).lte('start_date', `${currentYear}-12-31`).range(from, to)),
-      fetchAllRows<ApprovedPermissionRow>((from, to) => supabase.from('permission_requests').select('employee_id, date, hours, start_time, end_time').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
+      fetchAllRows<ApprovedPermissionRow>((from, to) => supabase.from('permission_requests').select('employee_id, date, hours, start_time, end_time, permission_type').eq('status', 'approved').neq('permission_type', 'no_deduction').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
       fetchAllRows<ApprovedOvertimeRow>((from, to) => supabase.from('overtime_requests').select('employee_id, date, overtime_type').eq('status', 'approved').gte('date', `${currentYear}-01-01`).lte('date', `${currentYear}-12-31`).range(from, to)),
     ]);
 
