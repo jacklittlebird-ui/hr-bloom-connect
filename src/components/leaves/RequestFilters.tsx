@@ -2,7 +2,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, Building2, MapPin, X, CalendarRange, ListFilter } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Search, Building2, MapPin, X, CalendarRange, ListFilter, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Department { id: string; name_ar: string; name_en: string; }
@@ -18,9 +21,10 @@ interface RequestFiltersProps {
   departments: Department[];
   stations: Station[];
 
-  // New optional advanced filters
-  selectedStatus?: string;
-  onStatusChange?: (value: string) => void;
+  // Status filter — multi-select array. Empty array = no filter (all).
+  selectedStatuses?: string[];
+  onSelectedStatusesChange?: (values: string[]) => void;
+
   fromDate?: string;
   onFromDateChange?: (value: string) => void;
   toDate?: string;
@@ -28,33 +32,54 @@ interface RequestFiltersProps {
   showAdvanced?: boolean;
 }
 
+const STATUS_OPTIONS: { value: string; ar: string; en: string; cls: string }[] = [
+  { value: 'pending', ar: 'معلق', en: 'Pending', cls: 'bg-warning/10 text-warning border-warning' },
+  { value: 'approved', ar: 'معتمد', en: 'Approved', cls: 'bg-success/10 text-success border-success' },
+  { value: 'rejected', ar: 'مرفوض', en: 'Rejected', cls: 'bg-destructive/10 text-destructive border-destructive' },
+];
+
 export const RequestFilters = ({
   searchQuery, onSearchChange,
   selectedDepartment, onDepartmentChange,
   selectedStation, onStationChange,
   departments, stations,
-  selectedStatus, onStatusChange,
+  selectedStatuses, onSelectedStatusesChange,
   fromDate, onFromDateChange,
   toDate, onToDateChange,
   showAdvanced = true,
 }: RequestFiltersProps) => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
+  const statuses = selectedStatuses || [];
+
+  const toggleStatus = (v: string) => {
+    if (!onSelectedStatusesChange) return;
+    onSelectedStatusesChange(statuses.includes(v) ? statuses.filter(s => s !== v) : [...statuses, v]);
+  };
 
   const hasActive =
     !!searchQuery ||
     selectedDepartment !== 'all' ||
     selectedStation !== 'all' ||
-    (selectedStatus && selectedStatus !== 'all') ||
+    statuses.length > 0 ||
     !!fromDate || !!toDate;
 
   const clearAll = () => {
     onSearchChange('');
     onDepartmentChange('all');
     onStationChange('all');
-    onStatusChange?.('all');
+    onSelectedStatusesChange?.([]);
     onFromDateChange?.('');
     onToDateChange?.('');
+  };
+
+  const statusButtonLabel = () => {
+    if (statuses.length === 0) return ar ? 'كل الحالات' : 'All Statuses';
+    if (statuses.length === 1) {
+      const o = STATUS_OPTIONS.find(s => s.value === statuses[0]);
+      return ar ? o?.ar : o?.en;
+    }
+    return ar ? `${statuses.length} حالات محددة` : `${statuses.length} selected`;
   };
 
   return (
@@ -96,19 +121,58 @@ export const RequestFilters = ({
           </SelectContent>
         </Select>
 
-        {showAdvanced && onStatusChange && (
-          <Select value={selectedStatus || 'all'} onValueChange={onStatusChange}>
-            <SelectTrigger className="w-full sm:w-[160px] h-10">
-              <ListFilter className="h-4 w-4 text-muted-foreground shrink-0" />
-              <SelectValue placeholder={ar ? 'كل الحالات' : 'All Statuses'} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{ar ? 'كل الحالات' : 'All Statuses'}</SelectItem>
-              <SelectItem value="pending">{ar ? 'معلق' : 'Pending'}</SelectItem>
-              <SelectItem value="approved">{ar ? 'معتمد' : 'Approved'}</SelectItem>
-              <SelectItem value="rejected">{ar ? 'مرفوض' : 'Rejected'}</SelectItem>
-            </SelectContent>
-          </Select>
+        {showAdvanced && onSelectedStatusesChange && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-10 w-full sm:w-[200px] justify-between gap-2 font-normal",
+                  statuses.length > 0 && "border-primary bg-primary/5"
+                )}
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <ListFilter className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="truncate text-sm">{statusButtonLabel()}</span>
+                </span>
+                {statuses.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 min-w-[20px] justify-center">
+                    {statuses.length}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align={isRTL ? 'end' : 'start'}>
+              <div className="p-2 border-b flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">{ar ? 'الحالة' : 'Status'}</span>
+                {statuses.length > 0 && (
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onSelectedStatusesChange([])}>
+                    {ar ? 'مسح' : 'Clear'}
+                  </Button>
+                )}
+              </div>
+              <div className="p-1">
+                {STATUS_OPTIONS.map(opt => {
+                  const checked = statuses.includes(opt.value);
+                  return (
+                    <label
+                      key={opt.value}
+                      className={cn(
+                        "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer hover:bg-accent text-sm",
+                        isRTL && "flex-row-reverse text-right"
+                      )}
+                    >
+                      <Checkbox checked={checked} onCheckedChange={() => toggleStatus(opt.value)} />
+                      <Badge variant="outline" className={cn("text-xs", opt.cls)}>
+                        {ar ? opt.ar : opt.en}
+                      </Badge>
+                      {checked && <Check className="w-3.5 h-3.5 text-primary ms-auto" />}
+                    </label>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
         )}
       </div>
 
