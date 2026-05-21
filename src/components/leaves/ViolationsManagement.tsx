@@ -12,7 +12,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, CheckCircle, XCircle, Clock, Edit, Ban } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { AlertTriangle, CheckCircle, XCircle, Clock, Edit, Ban, ListFilter, Check, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -55,7 +57,25 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
   const [editDescription, setEditDescription] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+
+  const STATUS_OPTIONS = [
+    { value: 'pending', ar: 'بانتظار الموافقة', en: 'Pending', cls: 'bg-warning/10 text-warning border-warning' },
+    { value: 'approved', ar: 'نشطة', en: 'Active', cls: 'bg-destructive/10 text-destructive border-destructive' },
+    { value: 'rejected', ar: 'مرفوضة', en: 'Rejected', cls: 'bg-muted text-muted-foreground' },
+  ];
+
+  const toggleStatus = (v: string) =>
+    setSelectedStatuses(prev => prev.includes(v) ? prev.filter(s => s !== v) : [...prev, v]);
+
+  const statusButtonLabel = () => {
+    if (selectedStatuses.length === 0) return ar ? 'كل الحالات' : 'All Statuses';
+    if (selectedStatuses.length === 1) {
+      const o = STATUS_OPTIONS.find(s => s.value === selectedStatuses[0]);
+      return ar ? o?.ar : o?.en;
+    }
+    return ar ? `${selectedStatuses.length} حالات محددة` : `${selectedStatuses.length} selected`;
+  };
 
   const fetchViolations = useCallback(async () => {
     const { data: employees } = await supabase.from('employees').select('id, employee_code, name_en, name_ar, department_id, station_id').order('employee_code');
@@ -97,7 +117,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
       v.employeeName.toLowerCase().includes(q) ||
       v.employeeNameAr.includes(searchQuery.trim()) ||
       (v.employeeCode || '').toLowerCase().includes(q);
-    const matchStatus = filterStatus === 'all' || v.status === filterStatus;
+    const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes(v.status);
     return matchSearch && matchStatus;
   });
 
@@ -177,18 +197,64 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
       </div>
 
       {/* Filter */}
-      <div className="flex items-center gap-3">
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-            <SelectItem value="pending">{ar ? 'بانتظار الموافقة' : 'Pending'}</SelectItem>
-            <SelectItem value="approved">{ar ? 'نشطة' : 'Active'}</SelectItem>
-            <SelectItem value="rejected">{ar ? 'مرفوضة' : 'Rejected'}</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "h-10 w-full sm:w-[220px] justify-between gap-2 font-normal",
+                selectedStatuses.length > 0 && "border-primary bg-primary/5"
+              )}
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <ListFilter className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="truncate text-sm">{statusButtonLabel()}</span>
+              </span>
+              {selectedStatuses.length > 0 && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 min-w-[20px] justify-center">
+                  {selectedStatuses.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align={isRTL ? 'end' : 'start'}>
+            <div className="p-2 border-b flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">{ar ? 'الحالة' : 'Status'}</span>
+              {selectedStatuses.length > 0 && (
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedStatuses([])}>
+                  {ar ? 'مسح' : 'Clear'}
+                </Button>
+              )}
+            </div>
+            <div className="p-1">
+              {STATUS_OPTIONS.map(opt => {
+                const checked = selectedStatuses.includes(opt.value);
+                return (
+                  <label
+                    key={opt.value}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer hover:bg-accent text-sm",
+                      isRTL && "flex-row-reverse text-right"
+                    )}
+                  >
+                    <Checkbox checked={checked} onCheckedChange={() => toggleStatus(opt.value)} />
+                    <Badge variant="outline" className={cn("text-xs", opt.cls)}>
+                      {ar ? opt.ar : opt.en}
+                    </Badge>
+                    {checked && <Check className="w-3.5 h-3.5 text-primary ms-auto" />}
+                  </label>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+        {selectedStatuses.length > 0 && (
+          <Button variant="ghost" size="sm" onClick={() => setSelectedStatuses([])} className="gap-1.5 text-muted-foreground hover:text-destructive">
+            <X className="w-4 h-4" />
+            {ar ? 'مسح الفلاتر' : 'Clear filters'}
+          </Button>
+        )}
       </div>
 
       {/* Table */}
