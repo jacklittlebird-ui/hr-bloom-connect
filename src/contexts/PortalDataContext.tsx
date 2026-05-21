@@ -211,7 +211,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const currentYear = new Date().getFullYear();
       const lbQuery = supabase.from('leave_balances').select('employee_id, annual_total, annual_used, sick_total, sick_used, casual_total, casual_used, permissions_total, permissions_used').eq('year', currentYear);
       const lrQuery = supabase.from('leave_requests').select('id, employee_id, leave_type, start_date, end_date, days, status').order('created_at', { ascending: false }).limit(LIMIT);
-      const pQuery = supabase.from('permission_requests').select('id, employee_id, permission_type, date, start_time, end_time, reason, status').order('created_at', { ascending: false }).limit(LIMIT);
+      const pQuery = supabase.from('permission_requests').select('id, employee_id, permission_type, date, start_time, end_time, reason, status').neq('permission_type', 'no_deduction').order('created_at', { ascending: false }).limit(LIMIT);
       const otQuery = supabase.from('overtime_requests').select('id, employee_id, date, overtime_type, reason, status').order('created_at', { ascending: false }).limit(LIMIT);
 
       if (scopedEmployeeId) {
