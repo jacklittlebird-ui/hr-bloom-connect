@@ -558,8 +558,8 @@ const Leaves = () => {
               onStationChange={setSelectedStation}
               departments={departments}
               stations={stations}
-              selectedStatus={selectedStatus}
-              onStatusChange={setSelectedStatus}
+              selectedStatuses={selectedStatuses}
+              onSelectedStatusesChange={setSelectedStatuses}
               fromDate={fromDate}
               onFromDateChange={setFromDate}
               toDate={toDate}
