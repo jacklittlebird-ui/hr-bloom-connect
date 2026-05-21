@@ -197,18 +197,64 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
       </div>
 
       {/* Filter */}
-      <div className="flex items-center gap-3">
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-            <SelectItem value="pending">{ar ? 'بانتظار الموافقة' : 'Pending'}</SelectItem>
-            <SelectItem value="approved">{ar ? 'نشطة' : 'Active'}</SelectItem>
-            <SelectItem value="rejected">{ar ? 'مرفوضة' : 'Rejected'}</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "h-10 w-full sm:w-[220px] justify-between gap-2 font-normal",
+                selectedStatuses.length > 0 && "border-primary bg-primary/5"
+              )}
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <ListFilter className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="truncate text-sm">{statusButtonLabel()}</span>
+              </span>
+              {selectedStatuses.length > 0 && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 min-w-[20px] justify-center">
+                  {selectedStatuses.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align={isRTL ? 'end' : 'start'}>
+            <div className="p-2 border-b flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">{ar ? 'الحالة' : 'Status'}</span>
+              {selectedStatuses.length > 0 && (
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedStatuses([])}>
+                  {ar ? 'مسح' : 'Clear'}
+                </Button>
+              )}
+            </div>
+            <div className="p-1">
+              {STATUS_OPTIONS.map(opt => {
+                const checked = selectedStatuses.includes(opt.value);
+                return (
+                  <label
+                    key={opt.value}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer hover:bg-accent text-sm",
+                      isRTL && "flex-row-reverse text-right"
+                    )}
+                  >
+                    <Checkbox checked={checked} onCheckedChange={() => toggleStatus(opt.value)} />
+                    <Badge variant="outline" className={cn("text-xs", opt.cls)}>
+                      {ar ? opt.ar : opt.en}
+                    </Badge>
+                    {checked && <Check className="w-3.5 h-3.5 text-primary ms-auto" />}
+                  </label>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+        {selectedStatuses.length > 0 && (
+          <Button variant="ghost" size="sm" onClick={() => setSelectedStatuses([])} className="gap-1.5 text-muted-foreground hover:text-destructive">
+            <X className="w-4 h-4" />
+            {ar ? 'مسح الفلاتر' : 'Clear filters'}
+          </Button>
+        )}
       </div>
 
       {/* Table */}
