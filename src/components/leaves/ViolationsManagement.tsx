@@ -57,7 +57,25 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
   const [editDescription, setEditDescription] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+
+  const STATUS_OPTIONS = [
+    { value: 'pending', ar: 'بانتظار الموافقة', en: 'Pending', cls: 'bg-warning/10 text-warning border-warning' },
+    { value: 'approved', ar: 'نشطة', en: 'Active', cls: 'bg-destructive/10 text-destructive border-destructive' },
+    { value: 'rejected', ar: 'مرفوضة', en: 'Rejected', cls: 'bg-muted text-muted-foreground' },
+  ];
+
+  const toggleStatus = (v: string) =>
+    setSelectedStatuses(prev => prev.includes(v) ? prev.filter(s => s !== v) : [...prev, v]);
+
+  const statusButtonLabel = () => {
+    if (selectedStatuses.length === 0) return ar ? 'كل الحالات' : 'All Statuses';
+    if (selectedStatuses.length === 1) {
+      const o = STATUS_OPTIONS.find(s => s.value === selectedStatuses[0]);
+      return ar ? o?.ar : o?.en;
+    }
+    return ar ? `${selectedStatuses.length} حالات محددة` : `${selectedStatuses.length} selected`;
+  };
 
   const fetchViolations = useCallback(async () => {
     const { data: employees } = await supabase.from('employees').select('id, employee_code, name_en, name_ar, department_id, station_id').order('employee_code');
