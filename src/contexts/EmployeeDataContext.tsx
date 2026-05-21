@@ -429,14 +429,30 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Keep SWR cache in sync so a re-mount won't flash stale data
     setCache(employeeCacheKey, nextList);
 
-    const { error } = await supabase.from('employees').update(dbUpdates).eq('id', id);
-    if (error) {
+    // Persist to DB and request the authoritative row back so we reconcile cache with server truth
+    const { data: savedRow, error } = await supabase
+      .from('employees')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+      .single();
+
+    if (error || !savedRow) {
       console.error('Error updating employee:', error);
-      // Revert on failure
+      // Revert local state AND cache on failure so nothing is silently lost
       setEmployees(prevSnapshot);
       setCache(employeeCacheKey, prevSnapshot);
-      throw error;
+      throw error || new Error('Update failed');
     }
+
+    // Reconcile with the canonical server row (handles triggers, defaults, normalisations)
+    const reconciled = mapRow(savedRow);
+    fullLoadedIds.current.add(reconciled.id);
+    setEmployees(prev => {
+      const merged = prev.map(e => e.id === id ? reconciled : e);
+      setCache(employeeCacheKey, merged);
+      return merged;
+    });
 
     addNotification({ titleAr: `تم تحديث بيانات الموظف: ${emp?.nameAr || id}`, titleEn: `Employee updated: ${emp?.nameEn || id}`, type: 'success', module: 'employee' });
   }, [employees, addNotification, employeeCacheKey]);
@@ -455,16 +471,20 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     const { data, error } = await supabase.from('employees').insert(dbRow).select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)').single();
-    if (error) {
+    if (error || !data) {
       console.error('Error adding employee:', error);
-      return;
+      throw error || new Error('Insert failed');
     }
-    if (data) {
-      fullLoadedIds.current.add(data.id);
-      setEmployees(prev => [...prev, mapRow(data)]);
-    }
+    const mapped = mapRow(data);
+    fullLoadedIds.current.add(data.id);
+    setEmployees(prev => {
+      const merged = [...prev, mapped];
+      // Sync cache so a refresh/remount won't lose the newly added row
+      setCache(employeeCacheKey, merged);
+      return merged;
+    });
     addNotification({ titleAr: `تم إضافة موظف جديد: ${employee.nameAr}`, titleEn: `New employee added: ${employee.nameEn}`, type: 'success', module: 'employee' });
-  }, [addNotification]);
+  }, [addNotification, employeeCacheKey]);
 
   return (
     <EmployeeDataContext.Provider value={{ employees, loading, getEmployee, getEmployeeById, updateEmployee, addEmployee, refreshEmployees: fetchEmployees, ensureFullEmployee, fetchFullEmployeesByIds }}>
