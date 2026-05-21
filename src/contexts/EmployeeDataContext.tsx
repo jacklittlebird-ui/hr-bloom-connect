@@ -421,16 +421,26 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const dbUpdates = await mapUpdates(updates);
     if (Object.keys(dbUpdates).length === 0) return;
 
+    // Optimistic UI: update local state immediately so the form feels instant
+    const prevSnapshot = employees;
+    const emp = employees.find(e => e.id === id);
+    const nextList = employees.map(e => e.id === id ? { ...e, ...updates } : e);
+    setEmployees(nextList);
+    // Keep SWR cache in sync so a re-mount won't flash stale data
+    setCache(employeeCacheKey, nextList);
+
     const { error } = await supabase.from('employees').update(dbUpdates).eq('id', id);
     if (error) {
       console.error('Error updating employee:', error);
+      // Revert on failure
+      setEmployees(prevSnapshot);
+      setCache(employeeCacheKey, prevSnapshot);
       throw error;
     }
 
-    setEmployees(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
-    const emp = employees.find(e => e.id === id);
     addNotification({ titleAr: `تم تحديث بيانات الموظف: ${emp?.nameAr || id}`, titleEn: `Employee updated: ${emp?.nameEn || id}`, type: 'success', module: 'employee' });
-  }, [employees, addNotification]);
+  }, [employees, addNotification, employeeCacheKey]);
+
 
   const addEmployee = useCallback(async (employee: Employee) => {
     const dbRow: any = {
