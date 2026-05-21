@@ -230,6 +230,8 @@ async function mapUpdates(updates: Partial<Employee>): Promise<Record<string, an
       dbUpdates['station_id'] = null;
     } else if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stationValue)) {
       dbUpdates['station_id'] = stationValue;
+    } else if (stationCodeIdCache.has(stationValue)) {
+      dbUpdates['station_id'] = stationCodeIdCache.get(stationValue);
     } else {
       const { data: stationData } = await supabase
         .from('stations')
@@ -238,6 +240,7 @@ async function mapUpdates(updates: Partial<Employee>): Promise<Record<string, an
         .maybeSingle();
 
       if (stationData?.id) {
+        stationCodeIdCache.set(stationValue, stationData.id);
         dbUpdates['station_id'] = stationData.id;
       }
     }
