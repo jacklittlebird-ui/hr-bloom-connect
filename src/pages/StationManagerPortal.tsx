@@ -58,6 +58,7 @@ import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
 import { VehicleRegistry } from '@/components/vehicles/VehicleRegistry';
 import { VehicleLicenseTracking } from '@/components/vehicles/VehicleLicenseTracking';
 import { VehicleMaintenance } from '@/components/vehicles/VehicleMaintenance';
+import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
