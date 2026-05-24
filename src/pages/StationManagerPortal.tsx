@@ -1186,6 +1186,9 @@ const StationManagerPortal = () => {
             {canSee('vehicles') && (
               <TabsTrigger value="vehicles" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Car className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('السيارات', 'Vehicles')}</span></TabsTrigger>
             )}
+            {canSee('companyCard') && (
+              <TabsTrigger value="companyCard" className="gap-1 md:gap-1.5 text-xs md:text-sm"><IdCard className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('كارت الشركة', 'Company Card')}</span></TabsTrigger>
+            )}
             {canSee('reports') && (
               <TabsTrigger value="reports" className="gap-1 md:gap-1.5 text-xs md:text-sm"><FileText className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقارير', 'Reports')}</span></TabsTrigger>
             )}
