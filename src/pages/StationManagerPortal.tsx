@@ -2043,6 +2043,17 @@ const StationManagerPortal = () => {
             );
           })()}
 
+          {canSee('companyCard') && (
+            <TabsContent value="companyCard">
+              {(() => {
+                const allowedIds = (user?.stationIds && user.stationIds.length)
+                  ? user.stationIds
+                  : (user?.stations || []).map(s => s).filter(Boolean) as string[];
+                return <EmployeeIdCards allowedStationIds={allowedIds} />;
+              })()}
+            </TabsContent>
+          )}
+
           {canSee('reports') && (
             <TabsContent value="reports">
               {(() => {
