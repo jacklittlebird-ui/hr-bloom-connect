@@ -28,7 +28,7 @@ import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car, Loader2 } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car, Loader2, IdCard } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 const violationTypeLabels: Record<string, { ar: string; en: string }> = {
@@ -58,6 +58,7 @@ import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
 import { VehicleRegistry } from '@/components/vehicles/VehicleRegistry';
 import { VehicleLicenseTracking } from '@/components/vehicles/VehicleLicenseTracking';
 import { VehicleMaintenance } from '@/components/vehicles/VehicleMaintenance';
+import { EmployeeIdCards } from '@/components/training/EmployeeIdCards';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -154,9 +155,9 @@ const StationManagerPortal = () => {
     switch (user?.role) {
       case 'station_manager':
       case 'area_manager':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations', 'vehicles', 'reports'];
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations', 'vehicles', 'companyCard', 'reports'];
       case 'station_hr':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles', 'reports'];
+        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles', 'companyCard', 'reports'];
       case 'department_manager':
         return ['employees', 'attendance', 'leaveCalendar', 'approvals', 'evaluations', 'violations'];
       default:
@@ -1185,6 +1186,9 @@ const StationManagerPortal = () => {
             {canSee('vehicles') && (
               <TabsTrigger value="vehicles" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Car className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('السيارات', 'Vehicles')}</span></TabsTrigger>
             )}
+            {canSee('companyCard') && (
+              <TabsTrigger value="companyCard" className="gap-1 md:gap-1.5 text-xs md:text-sm"><IdCard className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('كارت الشركة', 'Company Card')}</span></TabsTrigger>
+            )}
             {canSee('reports') && (
               <TabsTrigger value="reports" className="gap-1 md:gap-1.5 text-xs md:text-sm"><FileText className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقارير', 'Reports')}</span></TabsTrigger>
             )}
@@ -2038,6 +2042,17 @@ const StationManagerPortal = () => {
               </TabsContent>
             );
           })()}
+
+          {canSee('companyCard') && (
+            <TabsContent value="companyCard">
+              {(() => {
+                const allowedIds = (user?.stationIds && user.stationIds.length)
+                  ? user.stationIds
+                  : (user?.stations || []).map(s => s).filter(Boolean) as string[];
+                return <EmployeeIdCards allowedStationIds={allowedIds} />;
+              })()}
+            </TabsContent>
+          )}
 
           {canSee('reports') && (
             <TabsContent value="reports">

@@ -331,7 +331,7 @@ function buildPrintHtml(emp: EmployeeForId, origin: string): string {
 </html>`;
 }
 
-export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: string }) => {
+export const EmployeeIdCards = ({ filterEmployeeId, allowedStationIds }: { filterEmployeeId?: string; allowedStationIds?: string[] }) => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const [employees, setEmployees] = useState<EmployeeForId[]>([]);
@@ -351,11 +351,15 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
       .eq('status', 'active')
       .order('name_en');
     if (filterEmployeeId) empQuery = empQuery.eq('id', filterEmployeeId);
+    if (allowedStationIds && allowedStationIds.length) empQuery = empQuery.in('station_id', allowedStationIds);
+
+    let stationsQuery = supabase.from('stations').select('id, name_en, name_ar').eq('is_active', true);
+    if (allowedStationIds && allowedStationIds.length) stationsQuery = stationsQuery.in('id', allowedStationIds);
 
     const [empRes, deptRes, stationRes] = await Promise.all([
       empQuery,
       supabase.from('departments').select('id, name_en, name_ar').eq('is_active', true),
-      supabase.from('stations').select('id, name_en, name_ar').eq('is_active', true),
+      stationsQuery,
     ]);
     if (empRes.data) {
       setEmployees(empRes.data as any);
@@ -364,7 +368,7 @@ export const EmployeeIdCards = ({ filterEmployeeId }: { filterEmployeeId?: strin
     if (deptRes.data) setDepartments(deptRes.data);
     if (stationRes.data) setStations(stationRes.data);
     setLoading(false);
-  }, [filterEmployeeId]);
+  }, [filterEmployeeId, allowedStationIds?.join(',')]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
