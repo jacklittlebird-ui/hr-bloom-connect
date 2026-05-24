@@ -28,7 +28,7 @@ import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car, Loader2 } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car, Loader2, IdCard } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 const violationTypeLabels: Record<string, { ar: string; en: string }> = {
