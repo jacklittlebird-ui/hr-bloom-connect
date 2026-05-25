@@ -17,6 +17,7 @@ import { initialDepartments } from '@/data/departments';
 import { exportMonthlyByStationExcel } from '@/lib/monthlyByStationExcel';
 import { exportEmployeeDetailExcel, type EDRow, type EDKpi } from '@/lib/employeeDetailExcel';
 import { toast } from 'sonner';
+import { SalaryComparison } from '@/components/reports/SalaryComparison';
 
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', '#14b8a6', '#6366f1', '#84cc16', '#e11d48', '#0ea5e9', '#a855f7'];
 
@@ -943,6 +944,7 @@ const SalaryReports = () => {
     { id: 'monthly-station', label: ar ? 'تقرير إجمالي بالمحطات' : 'Stations Total Report' },
     { id: 'employee-detail', label: ar ? 'تفصيل رواتب الموظفين' : 'Employee Salary Detail' },
     { id: 'allowances', label: ar ? 'تحليل البدلات والخصومات' : 'Allowances & Deductions' },
+    { id: 'compare', label: ar ? 'مقارنة المرتبات' : 'Salary Comparison' },
   ];
 
   return (
@@ -1558,6 +1560,10 @@ const SalaryReports = () => {
               </div></CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="compare">
+          <SalaryComparison />
         </TabsContent>
       </Tabs>
     </DashboardLayout>
