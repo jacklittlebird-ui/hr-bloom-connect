@@ -1,6 +1,17 @@
 import { supabase } from '@/integrations/supabase/client';
 
-const getPeriodDueDate = (year: string, month: string) => `${year}-${month}-01`;
+// Period bounds: any installment whose due_date falls within the target month
+// (regardless of day-of-month) is considered belonging to that payroll period.
+const getPeriodBounds = (year: string, month: string) => {
+  const start = `${year}-${month}-01`;
+  const y = parseInt(year, 10);
+  const m = parseInt(month, 10);
+  const nextY = m === 12 ? y + 1 : y;
+  const nextM = m === 12 ? 1 : m + 1;
+  const endExclusive = `${nextY}-${String(nextM).padStart(2, '0')}-01`;
+  return { start, endExclusive };
+};
+
 
 const updateInstallmentsStatus = async (installmentIds: string[], status: 'paid' | 'pending') => {
   if (installmentIds.length === 0) return;
