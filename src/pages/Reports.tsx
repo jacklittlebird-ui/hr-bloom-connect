@@ -9,6 +9,7 @@ import { StationAttendanceReport } from '@/components/reports/StationAttendanceR
 import { DailyAttendanceReport } from '@/components/reports/DailyAttendanceReport';
 import { LeaveReports } from '@/components/reports/LeaveReports';
 import { SalaryReports } from '@/components/reports/SalaryReports';
+import { SalaryComparison } from '@/components/reports/SalaryComparison';
 import { PerformanceReports } from '@/components/reports/PerformanceReports';
 import { TrainingReports } from '@/components/reports/TrainingReports';
 import { TrainingDebtReport } from '@/components/reports/TrainingDebtReport';
@@ -35,6 +36,7 @@ const Reports = () => {
   const { t, isRTL, language } = useLanguage();
   const [activeTab, setActiveTab] = useState('employees');
   const [trainingSubTab, setTrainingSubTab] = useState('stats');
+  const [salarySubTab, setSalarySubTab] = useState('overview');
   const [attendanceSubTab, setAttendanceSubTab] = useState('stations');
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -137,7 +139,20 @@ const Reports = () => {
           </Tabs>
         </TabsContent>
         <TabsContent value="leaves"><LeaveReports key={`lv-${refreshKey}`} /></TabsContent>
-        <TabsContent value="salaries"><SalaryReports key={`sl-${refreshKey}`} /></TabsContent>
+        <TabsContent value="salaries">
+          <Tabs value={salarySubTab} onValueChange={setSalarySubTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+            <TabsList className="mb-4 bg-muted/30">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {ar ? 'نظرة عامة' : 'Overview'}
+              </TabsTrigger>
+              <TabsTrigger value="compare" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {ar ? 'مقارنة المرتبات' : 'Salary Comparison'}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview"><SalaryReports key={`sl-${refreshKey}`} /></TabsContent>
+            <TabsContent value="compare"><SalaryComparison key={`sc-${refreshKey}`} /></TabsContent>
+          </Tabs>
+        </TabsContent>
         <TabsContent value="loanDeductions"><LoanDeductionsReport key={`ld-${refreshKey}`} /></TabsContent>
         <TabsContent value="performance"><PerformanceReports key={`pf-${refreshKey}`} /></TabsContent>
         <TabsContent value="training">
