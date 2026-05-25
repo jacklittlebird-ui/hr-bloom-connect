@@ -36,6 +36,7 @@ const Reports = () => {
   const { t, isRTL, language } = useLanguage();
   const [activeTab, setActiveTab] = useState('employees');
   const [trainingSubTab, setTrainingSubTab] = useState('stats');
+  const [salarySubTab, setSalarySubTab] = useState('overview');
   const [attendanceSubTab, setAttendanceSubTab] = useState('stations');
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
