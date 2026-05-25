@@ -167,15 +167,27 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const employeeIds = new Set(entries.map(entry => entry.employeeId));
     const periods = Array.from(new Set(entries.map(entry => `${entry.year}-${entry.month}`)));
 
-    const dueDates = periods.map((period) => `${period}-01`);
+    // Build month-range bounds for each period so we match installments whose
+    // due_date is any day within the period month (not only YYYY-MM-01).
+    const periodBounds = periods.map((p) => {
+      const [yStr, mStr] = p.split('-');
+      const y = parseInt(yStr, 10);
+      const m = parseInt(mStr, 10);
+      const nextY = m === 12 ? y + 1 : y;
+      const nextM = m === 12 ? 1 : m + 1;
+      return { start: `${p}-01`, endExclusive: `${nextY}-${String(nextM).padStart(2, '0')}-01` };
+    });
+    const overallStart = periodBounds.reduce((a, b) => (a < b.start ? a : b.start), periodBounds[0]?.start ?? '');
+    const overallEnd = periodBounds.reduce((a, b) => (a > b.endExclusive ? a : b.endExclusive), periodBounds[0]?.endExclusive ?? '');
 
     const [loanInstallmentRows, advanceRows, mobileBillRows] = await Promise.all([
-      dueDates.length
+      periodBounds.length
         ? fetchAllBatches<{ employee_id: string; amount: number | null; due_date: string }>(async (from, to) => {
             let query = supabase
               .from('loan_installments')
               .select('employee_id, amount, due_date, status')
-              .in('due_date', dueDates)
+              .gte('due_date', overallStart)
+              .lt('due_date', overallEnd)
               .in('status', ['pending', 'paid'])
               .range(from, to);
 
@@ -186,6 +198,7 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
             return await query;
           })
         : Promise.resolve([]),
+
       periods.length
         ? fetchAllBatches<{ employee_id: string; amount: number | null; deduction_month: string }>(async (from, to) => {
             let query = supabase
