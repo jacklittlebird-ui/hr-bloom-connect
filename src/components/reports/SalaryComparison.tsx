@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Download, FileText, Printer, TrendingDown, TrendingUp, Minus, ChevronDown, ChevronUp, Users, Wallet } from 'lucide-react';
 import { useReportExport } from '@/hooks/useReportExport';
@@ -38,6 +39,8 @@ interface EmployeeRow {
   a: Totals;
   b: Totals;
 }
+
+type ElemKey = 'basic' | 'incentives' | 'transport' | 'living' | 'mobile' | 'roster' | 'net';
 
 const emptyTotals = (): Totals => ({ basic: 0, incentives: 0, transport: 0, living: 0, mobile: 0, roster: 0, net: 0, count: 0 });
 
@@ -74,6 +77,9 @@ export const SalaryComparison: React.FC = () => {
   const [jobTitle, setJobTitle] = useState('all');
   const [search, setSearch] = useState('');
   const [showDetails, setShowDetails] = useState(false);
+  const [sortBy, setSortBy] = useState<ElemKey>('net');
+  const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
+  const [visibleCols, setVisibleCols] = useState<Set<ElemKey>>(new Set(['basic', 'incentives', 'transport', 'living', 'mobile', 'roster', 'net']));
 
   useEffect(() => { refreshPayroll(); ensureLoaded(); }, [refreshPayroll, ensureLoaded]);
 
@@ -176,9 +182,19 @@ export const SalaryComparison: React.FC = () => {
       }
     });
 
-    const rows = Array.from(rowMap.values()).sort((x, y) => (y.b.net - y.a.net) - (x.b.net - x.a.net));
+    const rows = Array.from(rowMap.values());
     return { periodA: pa, periodB: pb, employeeRows: rows };
   }, [payrollEntries, salaryRecords, aMonth, aYear, bMonth, bYear, station, department, jobTitle, search, empMap, ar]);
+
+  const sortedEmployeeRows = useMemo(() => {
+    const arr = [...employeeRows];
+    arr.sort((x, y) => {
+      const dx = x.b[sortBy] - x.a[sortBy];
+      const dy = y.b[sortBy] - y.a[sortBy];
+      return sortDir === 'desc' ? dy - dx : dx - dy;
+    });
+    return arr;
+  }, [employeeRows, sortBy, sortDir]);
 
   const labelA = `${monthNames[parseInt(aMonth, 10) - 1]} ${aYear}`;
   const labelB = `${monthNames[parseInt(bMonth, 10) - 1]} ${bYear}`;
@@ -192,6 +208,16 @@ export const SalaryComparison: React.FC = () => {
     { key: 'roster', label: ar ? 'بدل الروستر' : 'Roster Allowance' },
     { key: 'net', label: ar ? 'صافي الراتب' : 'Net Salary' },
   ] as const;
+
+  const visibleRows = rows.filter((r) => visibleCols.has(r.key as ElemKey));
+
+  const toggleCol = (k: ElemKey) => {
+    setVisibleCols((prev) => {
+      const next = new Set(prev);
+      if (next.has(k)) next.delete(k); else next.add(k);
+      return next;
+    });
+  };
 
   const diff = (a: number, b: number) => b - a;
   const pct = (a: number, b: number) => (a === 0 ? (b === 0 ? 0 : 100) : ((b - a) / a) * 100);
@@ -243,16 +269,33 @@ export const SalaryComparison: React.FC = () => {
       const row = sum.addRow([r.item, r.a, r.b, r.diff, r.pct]);
       const isNet = rows[idx].key === 'net';
       const dColor = r.diff > 0 ? 'FF16A34A' : r.diff < 0 ? 'FFDC2626' : 'FF64748B';
+      const bgColor = isNet ? 'FFEFF6FF' : r.diff > 0 ? 'FFF0FDF4' : r.diff < 0 ? 'FFFEF2F2' : 'FFFFFFFF';
       row.eachCell((c, col) => {
         c.border = { top: { style: 'thin', color: { argb: 'FFE5E7EB' } }, bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } }, left: { style: 'thin', color: { argb: 'FFE5E7EB' } }, right: { style: 'thin', color: { argb: 'FFE5E7EB' } } };
+        c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgColor } };
         if (col === 1) c.font = { bold: isNet };
         if (col === 2 || col === 3) c.numFmt = '#,##0.00';
         if (col === 4) { c.numFmt = '#,##0.00'; c.font = { color: { argb: dColor }, bold: true }; }
         if (col === 5) c.font = { color: { argb: dColor }, bold: true };
-        if (isNet) c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEFF6FF' } };
       });
     });
-    sum.columns.forEach((c) => { c.width = 22; });
+
+    // Totals row
+    const totalA = rows.reduce((s, r) => r.key === 'net' ? s : s + periodA[r.key], 0);
+    const totalB = rows.reduce((s, r) => r.key === 'net' ? s : s + periodB[r.key], 0);
+    const totalD = totalB - totalA;
+    const totalP = totalA === 0 ? 0 : (totalD / totalA) * 100;
+    const totalRow = sum.addRow([ar ? 'إجمالي البنود (بدون الصافي)' : 'Total (excl. Net)', totalA, totalB, totalD, `${totalP.toFixed(1)}%`]);
+    const tColor = totalD > 0 ? 'FF16A34A' : totalD < 0 ? 'FFDC2626' : 'FF64748B';
+    totalRow.eachCell((c, col) => {
+      c.font = { bold: true };
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
+      c.border = { top: { style: 'medium' }, bottom: { style: 'medium' }, left: { style: 'thin' }, right: { style: 'thin' } };
+      if (col === 2 || col === 3) c.numFmt = '#,##0.00';
+      if (col === 4) { c.numFmt = '#,##0.00'; c.font = { color: { argb: tColor }, bold: true }; }
+      if (col === 5) c.font = { color: { argb: tColor }, bold: true };
+    });
+    sum.columns.forEach((c) => { c.width = 24; });
 
     // ---- Employees sheet ----
     const det = wb.addWorksheet(ar ? 'تفاصيل الموظفين' : 'Employees', { views: [{ rightToLeft: isRTL }] });
@@ -263,7 +306,7 @@ export const SalaryComparison: React.FC = () => {
       ar ? 'الوظيفة' : 'Job Title',
     ];
     rows.forEach((r) => {
-      detHeaders.push(`${r.label} — ${labelA}`, `${r.label} — ${labelB}`, `${r.label} — ${ar ? 'الفرق' : 'Δ'}`);
+      detHeaders.push(`${r.label} — ${labelA}`, `${r.label} — ${labelB}`, `${r.label} — ${ar ? 'الفرق' : 'Δ'}`, `${r.label} — %`);
     });
     const dh = det.addRow(detHeaders);
     dh.eachCell((c) => {
@@ -272,29 +315,36 @@ export const SalaryComparison: React.FC = () => {
       c.alignment = { horizontal: 'center' };
       c.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
     });
-    employeeRows.forEach((er) => {
+    sortedEmployeeRows.forEach((er) => {
       const values: (string | number)[] = [er.code, er.name, er.department, er.jobTitle];
       rows.forEach((r) => {
         const a = er.a[r.key]; const b = er.b[r.key];
-        values.push(a, b, b - a);
+        const d = b - a;
+        const p = a === 0 ? (b === 0 ? 0 : 100) : (d / a) * 100;
+        values.push(a, b, d, `${p.toFixed(1)}%`);
       });
       const row = det.addRow(values);
       row.eachCell((c, col) => {
         c.border = { top: { style: 'thin', color: { argb: 'FFE5E7EB' } }, bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } }, left: { style: 'thin', color: { argb: 'FFE5E7EB' } }, right: { style: 'thin', color: { argb: 'FFE5E7EB' } } };
         if (col >= 5) c.numFmt = '#,##0.00';
-        // every 3rd column starting at 7 (col 7,10,13...) is the diff column
-        if (col >= 7 && (col - 4) % 3 === 0) {
-          const v = Number(c.value) || 0;
-          const dColor = v > 0 ? 'FF16A34A' : v < 0 ? 'FFDC2626' : 'FF64748B';
-          c.font = { color: { argb: dColor }, bold: true };
+        // Per element block: cols 5,6,7,8 then 9,10,11,12 ... block of 4
+        if (col >= 5) {
+          const offset = (col - 5) % 4;
+          if (offset === 2 || offset === 3) {
+            // diff col (offset 2) or pct col (offset 3) — find diff value
+            const diffColIdx = col - offset + 2;
+            const v = Number(row.getCell(diffColIdx).value) || 0;
+            const dColor = v > 0 ? 'FF16A34A' : v < 0 ? 'FFDC2626' : 'FF64748B';
+            c.font = { color: { argb: dColor }, bold: true };
+          }
         }
       });
     });
     const colWidths = [14, 30, 22, 24];
-    rows.forEach(() => colWidths.push(16, 16, 14));
+    rows.forEach(() => colWidths.push(15, 15, 13, 11));
     det.columns = colWidths.map((w) => ({ width: w }));
     det.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: detHeaders.length } };
-    det.views = [{ rightToLeft: isRTL, state: 'frozen', ySplit: 1 }];
+    det.views = [{ rightToLeft: isRTL, state: 'frozen', ySplit: 1, xSplit: 4 }];
 
     const buf = await wb.xlsx.writeBuffer();
     const stamp = new Date().toISOString().slice(0, 10);
@@ -381,7 +431,7 @@ export const SalaryComparison: React.FC = () => {
       </Card>
 
       <div ref={reportRef} className="space-y-6">
-        {/* Summary cards */}
+        {/* Period totals cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {summaryCards.map((c, i) => {
             const Icon = c.icon;
@@ -410,6 +460,48 @@ export const SalaryComparison: React.FC = () => {
               </Card>
             );
           })}
+        </div>
+
+        {/* Per-element summary cards */}
+        <div>
+          <h3 className={cn('text-sm font-semibold text-muted-foreground mb-3', isRTL && 'text-right')}>
+            {ar ? 'ملخص لكل عنصر راتب' : 'Per-Element Summary'}
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+            {rows.map((r) => {
+              const a = periodA[r.key];
+              const b = periodB[r.key];
+              const d = diff(a, b);
+              const p = pct(a, b);
+              const tone = d > 0 ? 'border-success/40 bg-success/5' : d < 0 ? 'border-destructive/40 bg-destructive/5' : 'border-muted bg-muted/20';
+              const dColor = d > 0 ? 'text-success' : d < 0 ? 'text-destructive' : 'text-muted-foreground';
+              const Icon = d > 0 ? TrendingUp : d < 0 ? TrendingDown : Minus;
+              return (
+                <Card key={r.key} className={cn('border', tone)}>
+                  <CardContent className="p-3">
+                    <p className={cn('text-[11px] font-medium text-muted-foreground truncate', isRTL && 'text-right')} title={r.label}>{r.label}</p>
+                    <div className={cn('mt-2 space-y-0.5 text-xs', isRTL && 'text-right')}>
+                      <div className={cn('flex justify-between gap-2', isRTL && 'flex-row-reverse')}>
+                        <span className="text-muted-foreground">{labelA}</span>
+                        <span className="font-medium">{fmt(a)}</span>
+                      </div>
+                      <div className={cn('flex justify-between gap-2', isRTL && 'flex-row-reverse')}>
+                        <span className="text-muted-foreground">{labelB}</span>
+                        <span className="font-medium">{fmt(b)}</span>
+                      </div>
+                    </div>
+                    <div className={cn('mt-2 pt-2 border-t flex items-center justify-between gap-1', dColor, isRTL && 'flex-row-reverse')}>
+                      <span className={cn('inline-flex items-center gap-1 text-sm font-bold', isRTL && 'flex-row-reverse')}>
+                        <Icon className="w-3.5 h-3.5" />
+                        {d > 0 ? '+' : ''}{fmt(d)}
+                      </span>
+                      <span className="text-xs font-semibold">{p.toFixed(1)}%</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
 
         <Card>
@@ -477,7 +569,7 @@ export const SalaryComparison: React.FC = () => {
                   <Button variant="ghost" className={cn('gap-2 p-0 h-auto hover:bg-transparent', isRTL && 'flex-row-reverse')}>
                     {showDetails ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     <CardTitle className="text-lg">
-                      {ar ? `تفاصيل الموظفين (${employeeRows.length})` : `Employee Details (${employeeRows.length})`}
+                      {ar ? `تفاصيل الموظفين (${sortedEmployeeRows.length})` : `Employee Details (${sortedEmployeeRows.length})`}
                     </CardTitle>
                   </Button>
                 </CollapsibleTrigger>
@@ -492,9 +584,48 @@ export const SalaryComparison: React.FC = () => {
               </div>
             </CardHeader>
             <CollapsibleContent>
-              <CardContent>
-                {employeeRows.length === 0 ? (
+              <CardContent className="space-y-4">
+                {/* Sort + column visibility controls */}
+                <div className={cn('flex flex-wrap items-end gap-4 p-3 rounded-md bg-muted/30 border', isRTL && 'flex-row-reverse')}>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">{ar ? 'الفرز حسب عنصر' : 'Sort by element'}</p>
+                    <Select value={sortBy} onValueChange={(v) => setSortBy(v as ElemKey)}>
+                      <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {rows.map((r) => <SelectItem key={r.key} value={r.key}>{r.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">{ar ? 'الاتجاه' : 'Direction'}</p>
+                    <Select value={sortDir} onValueChange={(v) => setSortDir(v as 'desc' | 'asc')}>
+                      <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="desc">{ar ? 'أكبر زيادة أولاً' : 'Biggest increase first'}</SelectItem>
+                        <SelectItem value="asc">{ar ? 'أكبر نقصان أولاً' : 'Biggest decrease first'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex-1 min-w-[280px]">
+                    <p className="text-xs text-muted-foreground mb-2">{ar ? 'إظهار/إخفاء الأعمدة' : 'Show/hide columns'}</p>
+                    <div className={cn('flex flex-wrap gap-3', isRTL && 'flex-row-reverse')}>
+                      {rows.map((r) => (
+                        <label key={r.key} className={cn('flex items-center gap-2 text-xs cursor-pointer', isRTL && 'flex-row-reverse')}>
+                          <Checkbox
+                            checked={visibleCols.has(r.key as ElemKey)}
+                            onCheckedChange={() => toggleCol(r.key as ElemKey)}
+                          />
+                          <span>{r.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {sortedEmployeeRows.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">{ar ? 'لا توجد بيانات موظفين' : 'No employee data'}</div>
+                ) : visibleRows.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">{ar ? 'اختر عنصرًا واحدًا على الأقل للعرض' : 'Select at least one column to display'}</div>
                 ) : (
                   <div className="max-h-[600px] overflow-auto">
                     <Table>
@@ -503,25 +634,27 @@ export const SalaryComparison: React.FC = () => {
                           <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الكود' : 'Code'}</TableHead>
                           <TableHead className={cn('whitespace-nowrap', isRTL && 'text-right')}>{ar ? 'الاسم' : 'Name'}</TableHead>
                           <TableHead className={cn('whitespace-nowrap', isRTL && 'text-right')}>{ar ? 'القسم' : 'Department'}</TableHead>
-                          {rows.map((r) => (
+                          {visibleRows.map((r) => (
                             <React.Fragment key={r.key}>
                               <TableHead className={cn('text-center whitespace-nowrap border-l border-border/50', isRTL && 'text-right')}>{r.label} — {labelA}</TableHead>
                               <TableHead className={cn('text-center whitespace-nowrap', isRTL && 'text-right')}>{r.label} — {labelB}</TableHead>
                               <TableHead className={cn('text-center whitespace-nowrap', isRTL && 'text-right')}>{ar ? 'الفرق' : 'Δ'}</TableHead>
+                              <TableHead className={cn('text-center whitespace-nowrap', isRTL && 'text-right')}>%</TableHead>
                             </React.Fragment>
                           ))}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {employeeRows.map((er) => (
+                        {sortedEmployeeRows.map((er) => (
                           <TableRow key={er.employeeId}>
                             <TableCell className={cn('font-mono text-xs', isRTL && 'text-right')}>{er.code}</TableCell>
                             <TableCell className={cn('font-medium whitespace-nowrap', isRTL && 'text-right')}>{er.name}</TableCell>
                             <TableCell className={cn('text-xs whitespace-nowrap', isRTL && 'text-right')}>{er.department}</TableCell>
-                            {rows.map((r) => {
+                            {visibleRows.map((r) => {
                               const a = er.a[r.key];
                               const b = er.b[r.key];
                               const d = b - a;
+                              const p = pct(a, b);
                               const color = d > 0 ? 'text-success' : d < 0 ? 'text-destructive' : 'text-muted-foreground';
                               const isNet = r.key === 'net';
                               return (
@@ -530,6 +663,9 @@ export const SalaryComparison: React.FC = () => {
                                   <TableCell className={cn('text-center whitespace-nowrap', isNet && 'font-semibold', isRTL && 'text-right')}>{fmt(b)}</TableCell>
                                   <TableCell className={cn('text-center whitespace-nowrap font-medium', color, isRTL && 'text-right')}>
                                     {d > 0 ? '+' : ''}{fmt(d)}
+                                  </TableCell>
+                                  <TableCell className={cn('text-center whitespace-nowrap text-xs font-medium', color, isRTL && 'text-right')}>
+                                    {p.toFixed(1)}%
                                   </TableCell>
                                 </React.Fragment>
                               );
