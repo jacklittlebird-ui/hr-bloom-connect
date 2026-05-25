@@ -94,12 +94,13 @@ export const markLoanInstallmentsPaidForPeriod = async (employeeIds: string[], m
   const uniqueEmployeeIds = Array.from(new Set(employeeIds.filter(Boolean)));
   if (uniqueEmployeeIds.length === 0) return;
 
-  const dueDate = getPeriodDueDate(year, month);
+  const { start, endExclusive } = getPeriodBounds(year, month);
   const { data: installments, error } = await supabase
     .from('loan_installments')
     .select('id, loan_id')
     .in('employee_id', uniqueEmployeeIds)
-    .eq('due_date', dueDate)
+    .gte('due_date', start)
+    .lt('due_date', endExclusive)
     .eq('status', 'pending');
 
   if (error) throw error;
@@ -114,13 +115,15 @@ export const markLoanInstallmentsPaidForPeriod = async (employeeIds: string[], m
 export const revertLoanPaymentsForPeriod = async (employeeId: string, month: string, year: string) => {
   if (!employeeId) return;
 
-  const dueDate = getPeriodDueDate(year, month);
+  const { start, endExclusive } = getPeriodBounds(year, month);
   const { data: installments, error } = await supabase
     .from('loan_installments')
     .select('id, loan_id')
     .eq('employee_id', employeeId)
-    .eq('due_date', dueDate)
+    .gte('due_date', start)
+    .lt('due_date', endExclusive)
     .eq('status', 'paid');
+
 
   if (error) throw error;
   if (!installments || installments.length === 0) return;
