@@ -1560,6 +1560,10 @@ const SalaryReports = () => {
             </Card>
           </div>
         </TabsContent>
+
+        <TabsContent value="compare">
+          <SalaryComparison />
+        </TabsContent>
       </Tabs>
     </DashboardLayout>
   );
