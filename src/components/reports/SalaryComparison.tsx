@@ -256,16 +256,15 @@ export const SalaryComparison: React.FC = () => {
 
     // ---- Employees sheet ----
     const det = wb.addWorksheet(ar ? 'تفاصيل الموظفين' : 'Employees', { views: [{ rightToLeft: isRTL }] });
-    const detHeaders = [
+    const detHeaders: string[] = [
       ar ? 'الكود' : 'Code',
       ar ? 'الاسم' : 'Name',
       ar ? 'القسم' : 'Department',
       ar ? 'الوظيفة' : 'Job Title',
-      `${ar ? 'صافي ' : 'Net '}${labelA}`,
-      `${ar ? 'صافي ' : 'Net '}${labelB}`,
-      ar ? 'الفرق' : 'Difference',
-      ar ? 'النسبة' : 'Change %',
     ];
+    rows.forEach((r) => {
+      detHeaders.push(`${r.label} — ${labelA}`, `${r.label} — ${labelB}`, `${r.label} — ${ar ? 'الفرق' : 'Δ'}`);
+    });
     const dh = det.addRow(detHeaders);
     dh.eachCell((c) => {
       c.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -274,21 +273,27 @@ export const SalaryComparison: React.FC = () => {
       c.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
     });
     employeeRows.forEach((er) => {
-      const d = er.b.net - er.a.net;
-      const p = pct(er.a.net, er.b.net);
-      const dColor = d > 0 ? 'FF16A34A' : d < 0 ? 'FFDC2626' : 'FF64748B';
-      const row = det.addRow([er.code, er.name, er.department, er.jobTitle, er.a.net, er.b.net, d, `${p.toFixed(1)}%`]);
+      const values: (string | number)[] = [er.code, er.name, er.department, er.jobTitle];
+      rows.forEach((r) => {
+        const a = er.a[r.key]; const b = er.b[r.key];
+        values.push(a, b, b - a);
+      });
+      const row = det.addRow(values);
       row.eachCell((c, col) => {
         c.border = { top: { style: 'thin', color: { argb: 'FFE5E7EB' } }, bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } }, left: { style: 'thin', color: { argb: 'FFE5E7EB' } }, right: { style: 'thin', color: { argb: 'FFE5E7EB' } } };
-        if (col === 5 || col === 6 || col === 7) c.numFmt = '#,##0.00';
-        if (col === 7 || col === 8) c.font = { color: { argb: dColor }, bold: true };
+        if (col >= 5) c.numFmt = '#,##0.00';
+        // every 3rd column starting at 7 (col 7,10,13...) is the diff column
+        if (col >= 7 && (col - 4) % 3 === 0) {
+          const v = Number(c.value) || 0;
+          const dColor = v > 0 ? 'FF16A34A' : v < 0 ? 'FFDC2626' : 'FF64748B';
+          c.font = { color: { argb: dColor }, bold: true };
+        }
       });
     });
-    det.columns = [
-      { width: 14 }, { width: 30 }, { width: 22 }, { width: 24 },
-      { width: 18 }, { width: 18 }, { width: 16 }, { width: 14 },
-    ];
-    det.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: 8 } };
+    const colWidths = [14, 30, 22, 24];
+    rows.forEach(() => colWidths.push(16, 16, 14));
+    det.columns = colWidths.map((w) => ({ width: w }));
+    det.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: detHeaders.length } };
     det.views = [{ rightToLeft: isRTL, state: 'frozen', ySplit: 1 }];
 
     const buf = await wb.xlsx.writeBuffer();
@@ -496,39 +501,41 @@ export const SalaryComparison: React.FC = () => {
                       <TableHeader className="sticky top-0 bg-background z-10">
                         <TableRow>
                           <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الكود' : 'Code'}</TableHead>
-                          <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الاسم' : 'Name'}</TableHead>
-                          <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'القسم' : 'Department'}</TableHead>
-                          <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الوظيفة' : 'Job Title'}</TableHead>
-                          <TableHead className={cn(isRTL && 'text-right')}>{ar ? `صافي ${labelA}` : `Net ${labelA}`}</TableHead>
-                          <TableHead className={cn(isRTL && 'text-right')}>{ar ? `صافي ${labelB}` : `Net ${labelB}`}</TableHead>
-                          <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'الفرق' : 'Difference'}</TableHead>
-                          <TableHead className={cn(isRTL && 'text-right')}>{ar ? 'النسبة' : 'Change %'}</TableHead>
+                          <TableHead className={cn('whitespace-nowrap', isRTL && 'text-right')}>{ar ? 'الاسم' : 'Name'}</TableHead>
+                          <TableHead className={cn('whitespace-nowrap', isRTL && 'text-right')}>{ar ? 'القسم' : 'Department'}</TableHead>
+                          {rows.map((r) => (
+                            <React.Fragment key={r.key}>
+                              <TableHead className={cn('text-center whitespace-nowrap border-l border-border/50', isRTL && 'text-right')}>{r.label} — {labelA}</TableHead>
+                              <TableHead className={cn('text-center whitespace-nowrap', isRTL && 'text-right')}>{r.label} — {labelB}</TableHead>
+                              <TableHead className={cn('text-center whitespace-nowrap', isRTL && 'text-right')}>{ar ? 'الفرق' : 'Δ'}</TableHead>
+                            </React.Fragment>
+                          ))}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {employeeRows.map((er) => {
-                          const d = er.b.net - er.a.net;
-                          const p = pct(er.a.net, er.b.net);
-                          const Icon = d > 0 ? TrendingUp : d < 0 ? TrendingDown : Minus;
-                          const color = d > 0 ? 'text-success' : d < 0 ? 'text-destructive' : 'text-muted-foreground';
-                          return (
-                            <TableRow key={er.employeeId}>
-                              <TableCell className={cn('font-mono text-xs', isRTL && 'text-right')}>{er.code}</TableCell>
-                              <TableCell className={cn('font-medium', isRTL && 'text-right')}>{er.name}</TableCell>
-                              <TableCell className={cn('text-xs', isRTL && 'text-right')}>{er.department}</TableCell>
-                              <TableCell className={cn('text-xs', isRTL && 'text-right')}>{er.jobTitle}</TableCell>
-                              <TableCell className={cn(isRTL && 'text-right')}>{fmt(er.a.net)}</TableCell>
-                              <TableCell className={cn(isRTL && 'text-right')}>{fmt(er.b.net)}</TableCell>
-                              <TableCell className={cn(color, isRTL && 'text-right')}>
-                                <span className={cn('inline-flex items-center gap-1', isRTL && 'flex-row-reverse')}>
-                                  <Icon className="w-3.5 h-3.5" />
-                                  {fmt(Math.abs(d))}
-                                </span>
-                              </TableCell>
-                              <TableCell className={cn(color, isRTL && 'text-right')}>{p.toFixed(1)}%</TableCell>
-                            </TableRow>
-                          );
-                        })}
+                        {employeeRows.map((er) => (
+                          <TableRow key={er.employeeId}>
+                            <TableCell className={cn('font-mono text-xs', isRTL && 'text-right')}>{er.code}</TableCell>
+                            <TableCell className={cn('font-medium whitespace-nowrap', isRTL && 'text-right')}>{er.name}</TableCell>
+                            <TableCell className={cn('text-xs whitespace-nowrap', isRTL && 'text-right')}>{er.department}</TableCell>
+                            {rows.map((r) => {
+                              const a = er.a[r.key];
+                              const b = er.b[r.key];
+                              const d = b - a;
+                              const color = d > 0 ? 'text-success' : d < 0 ? 'text-destructive' : 'text-muted-foreground';
+                              const isNet = r.key === 'net';
+                              return (
+                                <React.Fragment key={r.key}>
+                                  <TableCell className={cn('text-center whitespace-nowrap border-l border-border/50', isNet && 'font-semibold', isRTL && 'text-right')}>{fmt(a)}</TableCell>
+                                  <TableCell className={cn('text-center whitespace-nowrap', isNet && 'font-semibold', isRTL && 'text-right')}>{fmt(b)}</TableCell>
+                                  <TableCell className={cn('text-center whitespace-nowrap font-medium', color, isRTL && 'text-right')}>
+                                    {d > 0 ? '+' : ''}{fmt(d)}
+                                  </TableCell>
+                                </React.Fragment>
+                              );
+                            })}
+                          </TableRow>
+                        ))}
                       </TableBody>
                     </Table>
                   </div>
