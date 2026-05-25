@@ -139,7 +139,20 @@ const Reports = () => {
           </Tabs>
         </TabsContent>
         <TabsContent value="leaves"><LeaveReports key={`lv-${refreshKey}`} /></TabsContent>
-        <TabsContent value="salaries"><SalaryReports key={`sl-${refreshKey}`} /></TabsContent>
+        <TabsContent value="salaries">
+          <Tabs value={salarySubTab} onValueChange={setSalarySubTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+            <TabsList className="mb-4 bg-muted/30">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {ar ? 'نظرة عامة' : 'Overview'}
+              </TabsTrigger>
+              <TabsTrigger value="compare" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                {ar ? 'مقارنة المرتبات' : 'Salary Comparison'}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview"><SalaryReports key={`sl-${refreshKey}`} /></TabsContent>
+            <TabsContent value="compare"><SalaryComparison key={`sc-${refreshKey}`} /></TabsContent>
+          </Tabs>
+        </TabsContent>
         <TabsContent value="loanDeductions"><LoanDeductionsReport key={`ld-${refreshKey}`} /></TabsContent>
         <TabsContent value="performance"><PerformanceReports key={`pf-${refreshKey}`} /></TabsContent>
         <TabsContent value="training">
