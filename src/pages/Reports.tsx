@@ -9,6 +9,7 @@ import { StationAttendanceReport } from '@/components/reports/StationAttendanceR
 import { DailyAttendanceReport } from '@/components/reports/DailyAttendanceReport';
 import { LeaveReports } from '@/components/reports/LeaveReports';
 import { SalaryReports } from '@/components/reports/SalaryReports';
+import { SalaryComparison } from '@/components/reports/SalaryComparison';
 import { PerformanceReports } from '@/components/reports/PerformanceReports';
 import { TrainingReports } from '@/components/reports/TrainingReports';
 import { TrainingDebtReport } from '@/components/reports/TrainingDebtReport';
