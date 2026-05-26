@@ -175,7 +175,7 @@ export const PerformanceDashboard = () => {
                 <SelectTrigger className="w-[140px]" aria-label={ar ? 'الربع السنوي' : 'Quarter'}><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع الأرباع' : 'All Quarters'}</SelectItem>
-                  {quarters.map(q => <SelectItem key={q} value={q}>{q}</SelectItem>)}
+                  {quarters.map(q => <SelectItem key={q} value={q}>{q === 'M3' ? (ar ? 'تقييم 3 شهور' : '3-Month Evolution') : q}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
