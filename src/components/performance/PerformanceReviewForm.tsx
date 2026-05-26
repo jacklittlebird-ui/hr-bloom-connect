@@ -371,7 +371,9 @@ export const PerformanceReviewForm = () => {
       'Q2': { ar: 'Q2 (أبريل - يونيو)', en: 'Q2 (Apr - Jun)' },
       'Q3': { ar: 'Q3 (يوليو - سبتمبر)', en: 'Q3 (Jul - Sep)' },
       'Q4': { ar: 'Q4 (أكتوبر - ديسمبر)', en: 'Q4 (Oct - Dec)' },
+      'M3': { ar: 'تقييم 3 شهور من التعيين', en: '3-Month Evolution (from hire date)' },
     };
+    if (!labels[q]) return q;
     return ar ? labels[q].ar : labels[q].en;
   };
 
