@@ -559,10 +559,14 @@ export const PerformanceReviewForm = () => {
           <CardHeader>
             <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
               <Clock className="w-5 h-5 text-primary" />
-              {ar ? `بيانات الربع ${selectedQuarter} - ${selectedYear}` : `Quarter ${selectedQuarter} - ${selectedYear} Data`}
+              {selectedQuarter === 'M3'
+                ? (ar ? `تقييم 3 شهور من التعيين${selectedEmpForMonths?.hireDate ? ` (${formatDate(selectedEmpForMonths.hireDate)})` : ''}` : `3-Month Evolution${selectedEmpForMonths?.hireDate ? ` (from ${formatDate(selectedEmpForMonths.hireDate)})` : ''}`)
+                : (ar ? `بيانات الربع ${selectedQuarter} - ${selectedYear}` : `Quarter ${selectedQuarter} - ${selectedYear} Data`)}
             </CardTitle>
             <CardDescription>
-              {ar ? 'ساعات العمل والجزاءات التي حصل عليها الموظف في كل شهر من أشهر الربع' : 'Actual work hours and penalties received by the employee per month of the quarter'}
+              {selectedQuarter === 'M3'
+                ? (ar ? 'ساعات العمل والجزاءات خلال أول 3 أشهر من تاريخ التعيين' : 'Work hours and penalties during the first 3 months from hire date')
+                : (ar ? 'ساعات العمل والجزاءات التي حصل عليها الموظف في كل شهر من أشهر الربع' : 'Actual work hours and penalties received by the employee per month of the quarter')}
             </CardDescription>
           </CardHeader>
           <CardContent>
