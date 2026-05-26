@@ -26,7 +26,7 @@ export const PerformanceDashboard = () => {
   const [departmentFilter, setDepartmentFilter] = useState('all');
 
   const years = useMemo(() => Array.from({ length: 11 }, (_, i) => String(2025 + i)), []);
-  const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+  const quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'M3'];
 
   const allActiveEmployees = useMemo(() => employees.filter(e => e.status === 'active'), [employees]);
 
@@ -175,7 +175,7 @@ export const PerformanceDashboard = () => {
                 <SelectTrigger className="w-[140px]" aria-label={ar ? 'الربع السنوي' : 'Quarter'}><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{ar ? 'جميع الأرباع' : 'All Quarters'}</SelectItem>
-                  {quarters.map(q => <SelectItem key={q} value={q}>{q}</SelectItem>)}
+                  {quarters.map(q => <SelectItem key={q} value={q}>{q === 'M3' ? (ar ? 'تقييم 3 شهور' : '3-Month Evolution') : q}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

@@ -43,7 +43,7 @@ const initialCriteria: CriteriaScore[] = [
 ];
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
-const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+const quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'M3'];
 
 const normalizeSearchText = (s: string) =>
   (s || '')
@@ -93,14 +93,60 @@ export const PerformanceReviewForm = () => {
   const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[]; }[]>([]);
   const [quarterLoading, setQuarterLoading] = useState(false);
 
+  const selectedEmpForMonths = useMemo(
+    () => employees.find(e => e.id === selectedEmployee),
+    [employees, selectedEmployee]
+  );
+
   const quarterMonths = useMemo(() => {
     if (!selectedQuarter) return [] as string[];
+    if (selectedQuarter === 'M3') {
+      const hire = selectedEmpForMonths?.hireDate;
+      if (!hire) return [];
+      const d = new Date(hire);
+      if (isNaN(d.getTime())) return [];
+      // 3 months starting from hire month
+      return [0, 1, 2].map(i => {
+        const m = new Date(d.getFullYear(), d.getMonth() + i, 1);
+        return String(m.getMonth() + 1).padStart(2, '0');
+      });
+    }
     const map: Record<string, string[]> = { Q1: ['01','02','03'], Q2: ['04','05','06'], Q3: ['07','08','09'], Q4: ['10','11','12'] };
     return map[selectedQuarter] || [];
-  }, [selectedQuarter]);
+  }, [selectedQuarter, selectedEmpForMonths]);
+
+  
+  // For M3, compute exact 3-month window from hire date. For quarters, use selectedYear.
+  const periodRange = useMemo(() => {
+    if (!selectedQuarter || quarterMonths.length === 0) return null;
+    if (selectedQuarter === 'M3') {
+      const hire = selectedEmpForMonths?.hireDate;
+      if (!hire) return null;
+      const d = new Date(hire);
+      if (isNaN(d.getTime())) return null;
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 3, 0); // last day of 3rd month
+      const months = [0, 1, 2].map(i => {
+        const m = new Date(d.getFullYear(), d.getMonth() + i, 1);
+        return { key: String(m.getMonth() + 1).padStart(2, '0'), year: m.getFullYear() };
+      });
+      const toIso = (x: Date) => `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
+      return { start: toIso(start), end: toIso(end), months };
+    }
+    if (!selectedYear) return null;
+    const startDate = `${selectedYear}-${quarterMonths[0]}-01`;
+    const lastMonth = quarterMonths[quarterMonths.length - 1];
+    const lastDay = new Date(parseInt(selectedYear), parseInt(lastMonth), 0).getDate();
+    const endDate = `${selectedYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+    return {
+      start: startDate,
+      end: endDate,
+      months: quarterMonths.map(m => ({ key: m, year: parseInt(selectedYear) })),
+    };
+  }, [selectedQuarter, selectedYear, quarterMonths, selectedEmpForMonths]);
 
   useEffect(() => {
-    if (!selectedEmployee || !selectedYear || quarterMonths.length === 0) {
+    if (!selectedEmployee || !periodRange) {
       setQuarterMonthly([]);
       return;
     }
@@ -108,10 +154,7 @@ export const PerformanceReviewForm = () => {
     (async () => {
       setQuarterLoading(true);
       try {
-        const startDate = `${selectedYear}-${quarterMonths[0]}-01`;
-        const lastMonth = quarterMonths[quarterMonths.length - 1];
-        const lastDay = new Date(parseInt(selectedYear), parseInt(lastMonth), 0).getDate();
-        const endDate = `${selectedYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+        const { start: startDate, end: endDate, months } = periodRange;
 
         const [violRes, attRes] = await Promise.all([
           supabase.from('violations')
@@ -123,31 +166,34 @@ export const PerformanceReviewForm = () => {
             .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate),
         ]);
         if (cancelled) return;
-        const hoursByMonth: Record<string, number> = {};
+        const hoursByKey: Record<string, number> = {};
         (attRes.data || []).forEach((r: any) => {
-          const m = (r.date as string).slice(5, 7);
-          hoursByMonth[m] = (hoursByMonth[m] || 0) + Number(r.work_hours || 0);
+          const k = (r.date as string).slice(0, 7); // YYYY-MM
+          hoursByKey[k] = (hoursByKey[k] || 0) + Number(r.work_hours || 0);
         });
-        const violByMonth: Record<string, QuarterViolation[]> = {};
+        const violByKey: Record<string, QuarterViolation[]> = {};
         (violRes.data || []).forEach((v: any) => {
-          const m = (v.date as string).slice(5, 7);
-          if (!violByMonth[m]) violByMonth[m] = [];
-          violByMonth[m].push({
+          const k = (v.date as string).slice(0, 7);
+          if (!violByKey[k]) violByKey[k] = [];
+          violByKey[k].push({
             id: v.id, date: v.date, type: v.type || 'other',
             description: v.description || '', penalty: v.penalty || '', status: v.status || '',
           });
         });
-        setQuarterMonthly(quarterMonths.map(m => ({
-          month: m,
-          hours: Math.round((hoursByMonth[m] || 0) * 10) / 10,
-          violations: violByMonth[m] || [],
-        })));
+        setQuarterMonthly(months.map(({ key, year }) => {
+          const k = `${year}-${key}`;
+          return {
+            month: key,
+            hours: Math.round((hoursByKey[k] || 0) * 10) / 10,
+            violations: violByKey[k] || [],
+          };
+        }));
       } finally {
         if (!cancelled) setQuarterLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [selectedEmployee, selectedYear, quarterMonths]);
+  }, [selectedEmployee, periodRange]);
 
   const monthLabel = (m: string) => {
     const ar_m = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
@@ -325,7 +371,9 @@ export const PerformanceReviewForm = () => {
       'Q2': { ar: 'Q2 (أبريل - يونيو)', en: 'Q2 (Apr - Jun)' },
       'Q3': { ar: 'Q3 (يوليو - سبتمبر)', en: 'Q3 (Jul - Sep)' },
       'Q4': { ar: 'Q4 (أكتوبر - ديسمبر)', en: 'Q4 (Oct - Dec)' },
+      'M3': { ar: 'تقييم 3 شهور من التعيين', en: '3-Month Evolution (from hire date)' },
     };
+    if (!labels[q]) return q;
     return ar ? labels[q].ar : labels[q].en;
   };
 
@@ -511,10 +559,14 @@ export const PerformanceReviewForm = () => {
           <CardHeader>
             <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
               <Clock className="w-5 h-5 text-primary" />
-              {ar ? `بيانات الربع ${selectedQuarter} - ${selectedYear}` : `Quarter ${selectedQuarter} - ${selectedYear} Data`}
+              {selectedQuarter === 'M3'
+                ? (ar ? `تقييم 3 شهور من التعيين${selectedEmpForMonths?.hireDate ? ` (${formatDate(selectedEmpForMonths.hireDate)})` : ''}` : `3-Month Evolution${selectedEmpForMonths?.hireDate ? ` (from ${formatDate(selectedEmpForMonths.hireDate)})` : ''}`)
+                : (ar ? `بيانات الربع ${selectedQuarter} - ${selectedYear}` : `Quarter ${selectedQuarter} - ${selectedYear} Data`)}
             </CardTitle>
             <CardDescription>
-              {ar ? 'ساعات العمل والجزاءات التي حصل عليها الموظف في كل شهر من أشهر الربع' : 'Actual work hours and penalties received by the employee per month of the quarter'}
+              {selectedQuarter === 'M3'
+                ? (ar ? 'ساعات العمل والجزاءات خلال أول 3 أشهر من تاريخ التعيين' : 'Work hours and penalties during the first 3 months from hire date')
+                : (ar ? 'ساعات العمل والجزاءات التي حصل عليها الموظف في كل شهر من أشهر الربع' : 'Actual work hours and penalties received by the employee per month of the quarter')}
             </CardDescription>
           </CardHeader>
           <CardContent>
