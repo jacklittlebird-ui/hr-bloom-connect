@@ -123,11 +123,45 @@ export const PerformanceReviewForm = () => {
     let cancelled = false;
     (async () => {
       setQuarterLoading(true);
+  // For M3, compute exact 3-month window from hire date. For quarters, use selectedYear.
+  const periodRange = useMemo(() => {
+    if (!selectedQuarter || quarterMonths.length === 0) return null;
+    if (selectedQuarter === 'M3') {
+      const hire = selectedEmpForMonths?.hireDate;
+      if (!hire) return null;
+      const d = new Date(hire);
+      if (isNaN(d.getTime())) return null;
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 3, 0); // last day of 3rd month
+      const months = [0, 1, 2].map(i => {
+        const m = new Date(d.getFullYear(), d.getMonth() + i, 1);
+        return { key: String(m.getMonth() + 1).padStart(2, '0'), year: m.getFullYear() };
+      });
+      const toIso = (x: Date) => `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
+      return { start: toIso(start), end: toIso(end), months };
+    }
+    if (!selectedYear) return null;
+    const startDate = `${selectedYear}-${quarterMonths[0]}-01`;
+    const lastMonth = quarterMonths[quarterMonths.length - 1];
+    const lastDay = new Date(parseInt(selectedYear), parseInt(lastMonth), 0).getDate();
+    const endDate = `${selectedYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+    return {
+      start: startDate,
+      end: endDate,
+      months: quarterMonths.map(m => ({ key: m, year: parseInt(selectedYear) })),
+    };
+  }, [selectedQuarter, selectedYear, quarterMonths, selectedEmpForMonths]);
+
+  useEffect(() => {
+    if (!selectedEmployee || !periodRange) {
+      setQuarterMonthly([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setQuarterLoading(true);
       try {
-        const startDate = `${selectedYear}-${quarterMonths[0]}-01`;
-        const lastMonth = quarterMonths[quarterMonths.length - 1];
-        const lastDay = new Date(parseInt(selectedYear), parseInt(lastMonth), 0).getDate();
-        const endDate = `${selectedYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+        const { start: startDate, end: endDate, months } = periodRange;
 
         const [violRes, attRes] = await Promise.all([
           supabase.from('violations')
@@ -139,31 +173,34 @@ export const PerformanceReviewForm = () => {
             .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate),
         ]);
         if (cancelled) return;
-        const hoursByMonth: Record<string, number> = {};
+        const hoursByKey: Record<string, number> = {};
         (attRes.data || []).forEach((r: any) => {
-          const m = (r.date as string).slice(5, 7);
-          hoursByMonth[m] = (hoursByMonth[m] || 0) + Number(r.work_hours || 0);
+          const k = (r.date as string).slice(0, 7); // YYYY-MM
+          hoursByKey[k] = (hoursByKey[k] || 0) + Number(r.work_hours || 0);
         });
-        const violByMonth: Record<string, QuarterViolation[]> = {};
+        const violByKey: Record<string, QuarterViolation[]> = {};
         (violRes.data || []).forEach((v: any) => {
-          const m = (v.date as string).slice(5, 7);
-          if (!violByMonth[m]) violByMonth[m] = [];
-          violByMonth[m].push({
+          const k = (v.date as string).slice(0, 7);
+          if (!violByKey[k]) violByKey[k] = [];
+          violByKey[k].push({
             id: v.id, date: v.date, type: v.type || 'other',
             description: v.description || '', penalty: v.penalty || '', status: v.status || '',
           });
         });
-        setQuarterMonthly(quarterMonths.map(m => ({
-          month: m,
-          hours: Math.round((hoursByMonth[m] || 0) * 10) / 10,
-          violations: violByMonth[m] || [],
-        })));
+        setQuarterMonthly(months.map(({ key, year }) => {
+          const k = `${year}-${key}`;
+          return {
+            month: key,
+            hours: Math.round((hoursByKey[k] || 0) * 10) / 10,
+            violations: violByKey[k] || [],
+          };
+        }));
       } finally {
         if (!cancelled) setQuarterLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [selectedEmployee, selectedYear, quarterMonths]);
+  }, [selectedEmployee, periodRange]);
 
   const monthLabel = (m: string) => {
     const ar_m = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
