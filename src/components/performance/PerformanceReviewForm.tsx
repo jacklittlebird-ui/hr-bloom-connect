@@ -93,11 +93,27 @@ export const PerformanceReviewForm = () => {
   const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[]; }[]>([]);
   const [quarterLoading, setQuarterLoading] = useState(false);
 
+  const selectedEmpForMonths = useMemo(
+    () => employees.find(e => e.id === selectedEmployee),
+    [employees, selectedEmployee]
+  );
+
   const quarterMonths = useMemo(() => {
     if (!selectedQuarter) return [] as string[];
+    if (selectedQuarter === 'M3') {
+      const hire = selectedEmpForMonths?.hireDate;
+      if (!hire) return [];
+      const d = new Date(hire);
+      if (isNaN(d.getTime())) return [];
+      // 3 months starting from hire month
+      return [0, 1, 2].map(i => {
+        const m = new Date(d.getFullYear(), d.getMonth() + i, 1);
+        return String(m.getMonth() + 1).padStart(2, '0');
+      });
+    }
     const map: Record<string, string[]> = { Q1: ['01','02','03'], Q2: ['04','05','06'], Q3: ['07','08','09'], Q4: ['10','11','12'] };
     return map[selectedQuarter] || [];
-  }, [selectedQuarter]);
+  }, [selectedQuarter, selectedEmpForMonths]);
 
   useEffect(() => {
     if (!selectedEmployee || !selectedYear || quarterMonths.length === 0) {
