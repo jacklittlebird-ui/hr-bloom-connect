@@ -115,14 +115,7 @@ export const PerformanceReviewForm = () => {
     return map[selectedQuarter] || [];
   }, [selectedQuarter, selectedEmpForMonths]);
 
-  useEffect(() => {
-    if (!selectedEmployee || !selectedYear || quarterMonths.length === 0) {
-      setQuarterMonthly([]);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      setQuarterLoading(true);
+  
   // For M3, compute exact 3-month window from hire date. For quarters, use selectedYear.
   const periodRange = useMemo(() => {
     if (!selectedQuarter || quarterMonths.length === 0) return null;
