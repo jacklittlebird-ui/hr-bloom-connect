@@ -585,11 +585,28 @@ export const PortalLeaves = () => {
                 <Select value={permDuration} onValueChange={setPermDuration}>
                   <SelectTrigger><SelectValue placeholder={ar ? 'اختر المدة' : 'Select duration'} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">{ar ? 'ساعة' : '1 Hour'}</SelectItem>
-                    <SelectItem value="2">{ar ? 'ساعتين' : '2 Hours'}</SelectItem>
+                    {isUnpaidPermMode ? (
+                      <>
+                        <SelectItem value="1">{ar ? 'ساعة (بخصم 1/8 يوم من الراتب)' : '1 Hour (deduct 1/8 day from salary)'}</SelectItem>
+                        <SelectItem value="2">{ar ? 'ساعتين (بخصم 1/4 يوم من الراتب)' : '2 Hours (deduct 1/4 day from salary)'}</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="1" disabled={permRemainingHours < 1}>{ar ? 'ساعة' : '1 Hour'}</SelectItem>
+                        <SelectItem value="2" disabled={permRemainingHours < 2}>{ar ? 'ساعتين' : '2 Hours'}</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
+                {isUnpaidPermMode && (
+                  <p className="text-xs text-warning">
+                    {ar
+                      ? 'لا يوجد رصيد أذونات. سيتم تسجيل الطلب كإجازة بدون راتب.'
+                      : 'No permission balance. Request will be saved as unpaid leave.'}
+                  </p>
+                )}
               </div>
+
               <div className="space-y-2">
                 <Label>{ar ? 'وقت البداية' : 'Start Time'} <span className="text-destructive">*</span></Label>
                 <Input type="time" value={permFrom} onChange={e => setPermFrom(e.target.value)} />
