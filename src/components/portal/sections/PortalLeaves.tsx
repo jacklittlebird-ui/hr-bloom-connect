@@ -110,6 +110,7 @@ export const PortalLeaves = () => {
   ];
 
   const overtimeTypes = [
+    { value: 'eid_first_day', ar: 'أول يوم العيد (الأضحى/الفطر)', en: 'Eid First Day (Adha/Fitr)' },
     { value: 'holiday', ar: 'إجازة رسمية', en: 'Holiday' },
     { value: 'weekend', ar: 'عطلة أسبوعية', en: 'Weekend' },
     { value: 'regular', ar: 'أخرى', en: 'Other' },
