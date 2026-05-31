@@ -105,24 +105,63 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
       return;
     }
 
-    // Sick leave: must have sufficient balance unless user is admin or hr@linkagency.com
-    if (leaveType === 'sick' && !isPrivilegedUser) {
+    // Balance enforcement for sick / annual / casual (admin & hr@linkagency.com bypass)
+    if (['sick', 'annual', 'casual'].includes(leaveType) && !isPrivilegedUser) {
       const emp = allEmployees.find((e: any) => e.employeeId === employeeId);
       const empUuid = (emp as any)?.id || employeeId;
       const year = new Date().getFullYear();
       const { data: lb } = await supabase
         .from('leave_balances')
-        .select('sick_total, sick_used')
+        .select('annual_total, annual_used, sick_total, sick_used, casual_total, casual_used')
         .eq('employee_id', empUuid)
         .eq('year', year)
         .maybeSingle();
-      const remaining = lb ? Number(lb.sick_total || 0) - Number(lb.sick_used || 0) : 0;
-      if (remaining <= 0 || calculateDays() > remaining) {
+
+      // Live used from approved leave_requests of this year (more authoritative than counters)
+      const { data: approvedThisYear } = await supabase
+        .from('leave_requests')
+        .select('leave_type, days, start_date')
+        .eq('employee_id', empUuid)
+        .eq('status', 'approved')
+        .gte('start_date', `${year}-01-01`)
+        .lte('start_date', `${year}-12-31`);
+      const liveUsed = { annual: 0, sick: 0, casual: 0 } as Record<string, number>;
+      (approvedThisYear || []).forEach((r: any) => {
+        if (r.leave_type in liveUsed) liveUsed[r.leave_type] += Number(r.days || 0);
+      });
+
+      let remaining = 0;
+      let totalLabel = '';
+      if (leaveType === 'sick') {
+        const total = lb ? Number(lb.sick_total || 0) : 0;
+        remaining = total - liveUsed.sick;
+        totalLabel = isRTL ? 'مرضي' : 'sick';
+      } else if (leaveType === 'casual') {
+        const total = lb ? Number(lb.casual_total || 0) : 7;
+        remaining = total - liveUsed.casual;
+        totalLabel = isRTL ? 'عارضة' : 'casual';
+      } else if (leaveType === 'annual') {
+        const total = lb ? Number(lb.annual_total || 0) : 0;
+        // Add overtime credit (eid_first_day = 2 days, others = 1)
+        const { data: ot } = await supabase
+          .from('overtime_requests')
+          .select('overtime_type')
+          .eq('employee_id', empUuid)
+          .eq('status', 'approved')
+          .gte('date', `${year}-01-01`)
+          .lte('date', `${year}-12-31`);
+        const otDays = (ot || []).reduce((sum: number, o: any) => sum + (o.overtime_type === 'eid_first_day' ? 2 : 1), 0);
+        remaining = total + otDays - liveUsed.annual;
+        totalLabel = isRTL ? 'سنوي' : 'annual';
+      }
+
+      const requested = calculateDays();
+      if (remaining <= 0 || requested > remaining) {
         toast({
           title: t('leaves.form.error'),
           description: isRTL
-            ? 'لا يمكن تسجيل إجازة مرضية تتجاوز الرصيد المتاح. يجب أن يقوم بإدخالها مدير النظام أو حساب hr@linkagency.com فقط.'
-            : 'Cannot register sick leave exceeding available balance. Only admin or hr@linkagency.com can do this.',
+            ? `الرصيد المتاح (${totalLabel}) هو ${remaining} يوم فقط ولا يمكن تقديم ${requested} يوم.`
+            : `Available ${totalLabel} balance is ${remaining} day(s) only — cannot request ${requested} day(s).`,
           variant: 'destructive',
         });
         return;
