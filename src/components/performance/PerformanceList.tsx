@@ -175,6 +175,32 @@ export const PerformanceList = () => {
     });
   };
 
+  const m3Columns = [
+    { header: t('performance.list.employee'), key: 'employeeName' },
+    { header: t('performance.list.department'), key: 'department' },
+    { header: language === 'ar' ? 'المحطة' : 'Station', key: 'station' },
+    { header: language === 'ar' ? 'السنة' : 'Year', key: 'year' },
+    { header: language === 'ar' ? 'تاريخ التقييم' : 'Review Date', key: 'reviewDate' },
+    { header: t('performance.list.score'), key: 'score' },
+    { header: t('performance.list.status'), key: 'statusLabel' },
+    { header: t('performance.list.reviewer'), key: 'reviewer' },
+  ];
+
+  const handleExportM3 = (fmt: 'csv' | 'pdf') => {
+    if (m3Reviews.length === 0) {
+      toast.info(ar ? 'لا توجد تقييمات M3 لتصديرها' : 'No M3 reviews to export');
+      return;
+    }
+    const title = ar ? 'تقييمات M3 — بعد 3 أشهر من التعيين' : 'M3 Reviews — Post-Hire 3-Month';
+    const data = m3Reviews.map(r => ({ ...r, station: getStationLabel(r.station), statusLabel: t(`performance.status.${r.status}`) }));
+    if (fmt === 'csv') {
+      exportToCSV({ title, columns: m3Columns, data, fileName: 'm3_performance_reviews' });
+    } else {
+      exportToPDF({ title, columns: m3Columns, data, fileName: 'm3_performance_reviews' });
+    }
+  };
+
+
   return (
     <>
       <Card>
