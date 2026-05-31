@@ -10,6 +10,7 @@ const LIST_COLUMNS = 'id, employee_code, name_ar, name_en, phone, status, avatar
 
 // Lighter select WITHOUT nested joins — joins are resolved client-side via maps for speed
 const LIST_SELECT = LIST_COLUMNS;
+const TRAINING_MANAGER_LIST_SELECT = 'id, employee_code, name_ar, name_en, phone, status, station_id, department_id, job_title_ar, job_title_en, dept_code, hire_date, national_id';
 
 // Cache for station code → id (avoids extra roundtrip in updateEmployee)
 const stationCodeIdCache = new Map<string, string>();
@@ -325,6 +326,25 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }
           trackQuery('employees', data?.length || 0);
           return (data || []).map(mapRow);
+        }
+
+        // Training manager: use a lean employee list without large photo/bank fields to avoid request timeouts in the training portal.
+        if (user?.role === 'training_manager') {
+          const [empRes, deptsRes, stationsRes] = await Promise.all([
+            supabase.from('employees').select(TRAINING_MANAGER_LIST_SELECT).eq('status', 'active').order('employee_code', { ascending: true }),
+            supabase.from('departments').select('id, name_ar, name_en'),
+            supabase.from('stations').select('id, code, name_ar, name_en'),
+          ]);
+          trackQuery('employees', empRes.data?.length || 0);
+          if (empRes.error) { console.error('Error fetching training employees:', empRes.error); return []; }
+          const deptMap = new Map((deptsRes.data || []).map(d => [d.id, d]));
+          const stationMap = new Map((stationsRes.data || []).map(s => [s.id, s]));
+          (stationsRes.data || []).forEach(s => s.code && stationCodeIdCache.set(s.code, s.id));
+          return (empRes.data || []).map((row: any) => mapRow({
+            ...row,
+            departments: deptMap.get(row.department_id) || null,
+            stations: stationMap.get(row.station_id) || null,
+          }));
         }
 
         // Admin/HR: fast list load with essential columns + parallel join (faster than nested PostgREST joins on large tables)
