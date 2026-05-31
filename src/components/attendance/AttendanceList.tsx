@@ -125,6 +125,66 @@ export const AttendanceList = () => {
     setDeleteTarget(null);
   };
 
+  // Edit state
+  const [editTarget, setEditTarget] = useState<AttendanceRecord | null>(null);
+  const [editCheckIn, setEditCheckIn] = useState('');
+  const [editCheckOut, setEditCheckOut] = useState('');
+  const [editStatus, setEditStatus] = useState('present');
+  const [editNotes, setEditNotes] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const openEdit = (r: AttendanceRecord) => {
+    setEditTarget(r);
+    setEditCheckIn(r.checkIn || '');
+    setEditCheckOut(r.checkOut || '');
+    setEditStatus(r.status || 'present');
+    setEditNotes(r.notes || '');
+  };
+
+  // Build Cairo (+02:00) ISO timestamp from date + HH:MM
+  const buildCairoIso = (date: string, hhmm: string): string | null => {
+    if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return null;
+    return `${date}T${hhmm}:00+02:00`;
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTarget) return;
+    setSavingEdit(true);
+    try {
+      const ciIso = buildCairoIso(editTarget.date, editCheckIn);
+      const coIso = buildCairoIso(editTarget.date, editCheckOut);
+      const wt = calculateWorkTime(editCheckIn || null, editCheckOut || null);
+      const totalMinutes = wt.hours * 60 + wt.minutes;
+      const payload: any = {
+        check_in: ciIso,
+        check_out: coIso,
+        status: editStatus,
+        notes: editNotes || null,
+        work_hours: +(totalMinutes / 60).toFixed(2),
+        work_minutes: totalMinutes,
+      };
+      const { error } = await supabase.from('attendance_records').update(payload).eq('id', editTarget.id);
+      if (error) throw error;
+      toast.success(ar ? 'تم تحديث السجل بنجاح' : 'Record updated');
+      setRecords(prev => prev.map(r => r.id === editTarget.id ? {
+        ...r,
+        checkIn: editCheckIn || null,
+        checkOut: editCheckOut || null,
+        status: editStatus,
+        notes: editNotes || undefined,
+        workHours: wt.hours,
+        workMinutes: wt.minutes,
+        overtime: Math.max(0, wt.hours - 8),
+      } : r));
+      setEditTarget(null);
+    } catch (e) {
+      toast.error(ar ? 'تعذر تحديث السجل' : 'Failed to update record');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+
 
   useEffect(() => {
     const fetchMeta = async () => {
