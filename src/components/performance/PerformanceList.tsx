@@ -108,9 +108,18 @@ export const PerformanceList = () => {
     const matchesStation = stationFilter === 'all' || review.station === stationFilter;
     const matchesDepartment = departmentFilter === 'all' || review.department === departmentFilter;
     return matchesSearch && matchesStatus && matchesQuarter && matchesYear && matchesStation && matchesDepartment;
+  }).sort((a, b) => {
+    // M3 (3-month post-hire) appears first; then by year desc, then quarter desc
+    if (a.quarter === 'M3' && b.quarter !== 'M3') return -1;
+    if (b.quarter === 'M3' && a.quarter !== 'M3') return 1;
+    if (a.year !== b.year) return b.year.localeCompare(a.year);
+    return b.quarter.localeCompare(a.quarter);
   });
 
+  const m3Reviews = filteredReviews.filter(r => r.quarter === 'M3');
+
   const { paginatedItems: paginatedReviews, currentPage: revPage, totalPages: revTotalPages, totalItems: revTotalItems, startIndex: revStart, endIndex: revEnd, setCurrentPage: setRevPage } = usePagination(filteredReviews);
+
 
   const getStatusBadge = (status: string) => {
     switch (status) {
