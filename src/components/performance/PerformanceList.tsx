@@ -223,8 +223,15 @@ export const PerformanceList = () => {
                 <Download className="w-4 h-4" />
                 PDF
               </Button>
-            </div>
-          </div>
+              <Button variant="default" size="sm" onClick={() => handleExportM3('csv')} className="gap-1.5">
+                <FileSpreadsheet className="w-4 h-4" />
+                {ar ? `M3 Excel (${m3Reviews.length})` : `M3 Excel (${m3Reviews.length})`}
+              </Button>
+              <Button variant="default" size="sm" onClick={() => handleExportM3('pdf')} className="gap-1.5">
+                <Download className="w-4 h-4" />
+                {ar ? `M3 PDF (${m3Reviews.length})` : `M3 PDF (${m3Reviews.length})`}
+              </Button>
+
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
