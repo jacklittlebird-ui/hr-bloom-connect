@@ -655,16 +655,28 @@ export const AttendanceList = () => {
                     </TableCell>
                     <TableCell>{getStatusBadge(record.status)}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setDeleteTarget(record)}
-                        aria-label={ar ? 'حذف' : 'Delete'}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={() => openEdit(record)}
+                          aria-label={ar ? 'تعديل' : 'Edit'}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteTarget(record)}
+                          aria-label={ar ? 'حذف' : 'Delete'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
+
                   </TableRow>
                 ))
               )}
