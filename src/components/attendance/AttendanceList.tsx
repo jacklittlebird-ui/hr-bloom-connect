@@ -9,7 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, FileType, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { List, Search, Building2, MapPin, Printer, FileText, FileSpreadsheet, FileType, ChevronLeft, ChevronRight, Trash2, Pencil } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import {
   AlertDialog,
@@ -121,6 +124,66 @@ export const AttendanceList = () => {
     setTotalCount(c => Math.max(0, c - 1));
     setDeleteTarget(null);
   };
+
+  // Edit state
+  const [editTarget, setEditTarget] = useState<AttendanceRecord | null>(null);
+  const [editCheckIn, setEditCheckIn] = useState('');
+  const [editCheckOut, setEditCheckOut] = useState('');
+  const [editStatus, setEditStatus] = useState('present');
+  const [editNotes, setEditNotes] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const openEdit = (r: AttendanceRecord) => {
+    setEditTarget(r);
+    setEditCheckIn(r.checkIn || '');
+    setEditCheckOut(r.checkOut || '');
+    setEditStatus(r.status || 'present');
+    setEditNotes(r.notes || '');
+  };
+
+  // Build Cairo (+02:00) ISO timestamp from date + HH:MM
+  const buildCairoIso = (date: string, hhmm: string): string | null => {
+    if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return null;
+    return `${date}T${hhmm}:00+02:00`;
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTarget) return;
+    setSavingEdit(true);
+    try {
+      const ciIso = buildCairoIso(editTarget.date, editCheckIn);
+      const coIso = buildCairoIso(editTarget.date, editCheckOut);
+      const wt = calculateWorkTime(editCheckIn || null, editCheckOut || null);
+      const totalMinutes = wt.hours * 60 + wt.minutes;
+      const payload: any = {
+        check_in: ciIso,
+        check_out: coIso,
+        status: editStatus,
+        notes: editNotes || null,
+        work_hours: +(totalMinutes / 60).toFixed(2),
+        work_minutes: totalMinutes,
+      };
+      const { error } = await supabase.from('attendance_records').update(payload).eq('id', editTarget.id);
+      if (error) throw error;
+      toast.success(ar ? 'تم تحديث السجل بنجاح' : 'Record updated');
+      setRecords(prev => prev.map(r => r.id === editTarget.id ? {
+        ...r,
+        checkIn: editCheckIn || null,
+        checkOut: editCheckOut || null,
+        status: editStatus,
+        notes: editNotes || undefined,
+        workHours: wt.hours,
+        workMinutes: wt.minutes,
+        overtime: Math.max(0, wt.hours - 8),
+      } : r));
+      setEditTarget(null);
+    } catch (e) {
+      toast.error(ar ? 'تعذر تحديث السجل' : 'Failed to update record');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
 
 
   useEffect(() => {
@@ -592,16 +655,28 @@ export const AttendanceList = () => {
                     </TableCell>
                     <TableCell>{getStatusBadge(record.status)}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setDeleteTarget(record)}
-                        aria-label={ar ? 'حذف' : 'Delete'}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={() => openEdit(record)}
+                          aria-label={ar ? 'تعديل' : 'Edit'}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setDeleteTarget(record)}
+                          aria-label={ar ? 'حذف' : 'Delete'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
+
                   </TableRow>
                 ))
               )}
@@ -663,6 +738,57 @@ export const AttendanceList = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <DialogContent dir={isRTL ? 'rtl' : 'ltr'} className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{ar ? 'تعديل سجل الحضور' : 'Edit Attendance Record'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="text-sm text-muted-foreground">
+              {ar ? editTarget?.employeeNameAr : editTarget?.employeeName} — {editTarget?.date}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>{ar ? 'الحضور (24س)' : 'Check In (24h)'}</Label>
+                <Input type="time" value={editCheckIn} onChange={e => setEditCheckIn(e.target.value)} step={60} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{ar ? 'الانصراف (24س)' : 'Check Out (24h)'}</Label>
+                <Input type="time" value={editCheckOut} onChange={e => setEditCheckOut(e.target.value)} step={60} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{ar ? 'الحالة' : 'Status'}</Label>
+              <Select value={editStatus} onValueChange={setEditStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="present">{ar ? 'حاضر' : 'Present'}</SelectItem>
+                  <SelectItem value="late">{ar ? 'متأخر' : 'Late'}</SelectItem>
+                  <SelectItem value="absent">{ar ? 'غائب' : 'Absent'}</SelectItem>
+                  <SelectItem value="early-leave">{ar ? 'انصراف مبكر' : 'Early Leave'}</SelectItem>
+                  <SelectItem value="on-leave">{ar ? 'إجازة' : 'On Leave'}</SelectItem>
+                  <SelectItem value="mission">{ar ? 'مأمورية' : 'Mission'}</SelectItem>
+                  <SelectItem value="weekend">{ar ? 'عطلة' : 'Weekend'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{ar ? 'ملاحظات' : 'Notes'}</Label>
+              <Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={3} className="whitespace-pre-wrap break-words" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)} disabled={savingEdit}>
+              {ar ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={savingEdit}>
+              {savingEdit ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ التعديلات' : 'Save Changes')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </Card>
   );
 };
