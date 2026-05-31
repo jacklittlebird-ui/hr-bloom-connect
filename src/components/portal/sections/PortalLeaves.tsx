@@ -110,6 +110,7 @@ export const PortalLeaves = () => {
   ];
 
   const overtimeTypes = [
+    { value: 'eid_first_day', ar: 'أول يوم العيد (الأضحى/الفطر)', en: 'Eid First Day (Adha/Fitr)' },
     { value: 'holiday', ar: 'إجازة رسمية', en: 'Holiday' },
     { value: 'weekend', ar: 'عطلة أسبوعية', en: 'Weekend' },
     { value: 'regular', ar: 'أخرى', en: 'Other' },
@@ -138,6 +139,24 @@ export const PortalLeaves = () => {
     if (leaveType === 'marriage' && calculateDays() > 8) {
       toast.error(ar ? 'إجازة الزواج بحد أقصى 8 أيام' : 'Marriage leave is limited to a maximum of 8 days');
       return;
+    }
+
+    // Annual leave: must have sufficient balance (already includes overtime days)
+    if (leaveType === 'annual') {
+      const remaining = annualBalance?.remaining ?? 0;
+      if (remaining <= 0 || calculateDays() > remaining) {
+        toast.error(ar ? `لا يمكن تقديم الطلب: الرصيد المتاح ${remaining} يوم فقط` : `Cannot submit: only ${remaining} day(s) available`);
+        return;
+      }
+    }
+
+    // Casual leave: must have sufficient balance
+    if (leaveType === 'casual') {
+      const remaining = casualBalance?.remaining ?? 0;
+      if (remaining <= 0 || calculateDays() > remaining) {
+        toast.error(ar ? `لا يمكن تقديم الطلب: الرصيد المتاح ${remaining} يوم فقط` : `Cannot submit: only ${remaining} day(s) available`);
+        return;
+      }
     }
 
     // Sick leave: must have sufficient balance
