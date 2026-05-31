@@ -342,32 +342,41 @@ export const EmployeeIdCards = ({ filterEmployeeId, allowedStationIds }: { filte
   const [departments, setDepartments] = useState<{ id: string; name_en: string; name_ar: string }[]>([]);
   const [stations, setStations] = useState<{ id: string; name_en: string; name_ar: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    let empQuery = supabase
-      .from('employees')
-      .select('id, employee_code, name_en, job_title_en, hire_date, avatar, national_id, department_id, station_id, departments(name_en), stations(name_en)')
-      .eq('status', 'active')
-      .order('name_en');
-    if (filterEmployeeId) empQuery = empQuery.eq('id', filterEmployeeId);
-    if (allowedStationIds && allowedStationIds.length) empQuery = empQuery.in('station_id', allowedStationIds);
+    setError(null);
+    try {
+      let empQuery = supabase
+        .from('employees')
+        .select('id, employee_code, name_en, job_title_en, hire_date, avatar, national_id, department_id, station_id, departments(name_en), stations(name_en)')
+        .eq('status', 'active')
+        .order('name_en');
+      if (filterEmployeeId) empQuery = empQuery.eq('id', filterEmployeeId);
+      if (allowedStationIds && allowedStationIds.length) empQuery = empQuery.in('station_id', allowedStationIds);
 
-    let stationsQuery = supabase.from('stations').select('id, name_en, name_ar').eq('is_active', true);
-    if (allowedStationIds && allowedStationIds.length) stationsQuery = stationsQuery.in('id', allowedStationIds);
+      let stationsQuery = supabase.from('stations').select('id, name_en, name_ar').eq('is_active', true);
+      if (allowedStationIds && allowedStationIds.length) stationsQuery = stationsQuery.in('id', allowedStationIds);
 
-    const [empRes, deptRes, stationRes] = await Promise.all([
-      empQuery,
-      supabase.from('departments').select('id, name_en, name_ar').eq('is_active', true),
-      stationsQuery,
-    ]);
-    if (empRes.data) {
-      setEmployees(empRes.data as any);
-      setFiltered(empRes.data as any);
+      const [empRes, deptRes, stationRes] = await Promise.all([
+        empQuery,
+        supabase.from('departments').select('id, name_en, name_ar').eq('is_active', true),
+        stationsQuery,
+      ]);
+      if (empRes.error) throw empRes.error;
+      if (empRes.data) {
+        setEmployees(empRes.data as any);
+        setFiltered(empRes.data as any);
+      }
+      if (deptRes.data) setDepartments(deptRes.data);
+      if (stationRes.data) setStations(stationRes.data);
+    } catch (err: any) {
+      console.error('EmployeeIdCards fetch error:', err);
+      setError(err?.message || 'Failed to load employees');
+    } finally {
+      setLoading(false);
     }
-    if (deptRes.data) setDepartments(deptRes.data);
-    if (stationRes.data) setStations(stationRes.data);
-    setLoading(false);
   }, [filterEmployeeId, allowedStationIds?.join(',')]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -493,7 +502,17 @@ export const EmployeeIdCards = ({ filterEmployeeId, allowedStationIds }: { filte
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-56 rounded-xl bg-muted animate-pulse" />
+          ))}
+        </div>
+      ) : error ? (
+        <Card><CardContent className="py-12 text-center space-y-3">
+          <p className="text-destructive font-medium">{ar ? 'تعذر تحميل البيانات' : 'Failed to load data'}</p>
+          <p className="text-sm text-muted-foreground">{error}</p>
+          <Button size="sm" variant="outline" onClick={fetchData}>{ar ? 'إعادة المحاولة' : 'Retry'}</Button>
+        </CardContent></Card>
       ) : filtered.length === 0 ? (
         <Card><CardContent className="py-12 text-center text-muted-foreground">{ar ? 'لا توجد نتائج' : 'No results found'}</CardContent></Card>
       ) : (

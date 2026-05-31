@@ -87,7 +87,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const { t, language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { toast } = useToast();
-  const { employees: contextEmployees, updateEmployee } = useEmployeeData();
+  const { employees: contextEmployees, updateEmployee, loading: employeesLoading } = useEmployeeData();
   const [searchName, setSearchName] = useState('');
   const [searchDept, setSearchDept] = useState('');
   const [searchStation, setSearchStation] = useState('');
@@ -433,19 +433,34 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
           </CardContent>
         </Card>
         <div className="space-y-1 max-h-[500px] overflow-y-auto">
-          {filteredEmployees.map(emp => (
-            <button key={emp.id} onClick={() => setSelectedEmployeeId(emp.id)}
-              className={cn("w-full text-start px-3 py-2 rounded-lg transition-colors text-sm",
-                selectedEmployee?.id === emp.id ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground")}>
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="font-medium truncate">{language === 'ar' ? emp.nameAr : emp.nameEn}</span>
-                <span className={cn("text-xs truncate", selectedEmployee?.id === emp.id ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                  {ar ? (emp.jobTitleAr || '') : (emp.jobTitleEn || '')}
-                  {emp.station ? ` • ${emp.station}` : ''}
-                </span>
-              </div>
-            </button>
-          ))}
+          {employeesLoading && contextEmployees.length === 0 ? (
+            <div className="space-y-2 p-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-10 rounded-lg bg-muted animate-pulse" />
+              ))}
+              <p className="text-center text-xs text-muted-foreground pt-2">{ar ? 'جاري تحميل الموظفين...' : 'Loading employees...'}</p>
+            </div>
+          ) : filteredEmployees.length === 0 ? (
+            <div className="text-center text-sm text-muted-foreground py-8 px-3">
+              {contextEmployees.length === 0
+                ? (ar ? 'لا يمكن تحميل بيانات الموظفين. تحقق من الاتصال أو الصلاحيات.' : 'Unable to load employees. Check connection or permissions.')
+                : (ar ? 'لا يوجد موظفون مطابقون للبحث' : 'No employees match your search')}
+            </div>
+          ) : (
+            filteredEmployees.map(emp => (
+              <button key={emp.id} onClick={() => setSelectedEmployeeId(emp.id)}
+                className={cn("w-full text-start px-3 py-2 rounded-lg transition-colors text-sm",
+                  selectedEmployee?.id === emp.id ? "bg-primary text-primary-foreground" : "hover:bg-muted text-foreground")}>
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="font-medium truncate">{language === 'ar' ? emp.nameAr : emp.nameEn}</span>
+                  <span className={cn("text-xs truncate", selectedEmployee?.id === emp.id ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                    {ar ? (emp.jobTitleAr || '') : (emp.jobTitleEn || '')}
+                    {emp.station ? ` • ${emp.station}` : ''}
+                  </span>
+                </div>
+              </button>
+            ))
+          )}
         </div>
       </div>
 
