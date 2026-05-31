@@ -153,9 +153,19 @@ const EmployeesRouteProviders = ({ children }: { children: React.ReactNode }) =>
   </NotificationProvider>
 );
 
+const TrainingPortalRouteProviders = ({ children }: { children: React.ReactNode }) => (
+  <NotificationProvider>
+    <EmployeeDataProvider>{children}</EmployeeDataProvider>
+  </NotificationProvider>
+);
+
 const RouteScopedProviders = ({ children, pathname }: { children: React.ReactNode; pathname: string }) => {
   if (pathname === '/employees') {
     return <EmployeesRouteProviders>{children}</EmployeesRouteProviders>;
+  }
+
+  if (pathname === '/training-portal') {
+    return <TrainingPortalRouteProviders>{children}</TrainingPortalRouteProviders>;
   }
 
   return <FullAuthenticatedDataProviders>{children}</FullAuthenticatedDataProviders>;

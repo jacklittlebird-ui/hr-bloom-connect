@@ -24,6 +24,8 @@ interface EmployeeForId {
   stations?: { name_en: string } | null;
 }
 
+const EMPLOYEE_CARD_SELECT = 'id, employee_code, name_en, job_title_en, hire_date, national_id, department_id, station_id';
+
 const BRAND_RED = '#E30613';
 const BRAND_BLUE = '#1E3A8A';
 const COMPANY_LOGO = '/images/company-logo-vertical.png';
@@ -350,9 +352,9 @@ export const EmployeeIdCards = ({ filterEmployeeId, allowedStationIds }: { filte
     try {
       let empQuery = supabase
         .from('employees')
-        .select('id, employee_code, name_en, job_title_en, hire_date, avatar, national_id, department_id, station_id, departments(name_en), stations(name_en)')
+        .select(EMPLOYEE_CARD_SELECT)
         .eq('status', 'active')
-        .order('name_en');
+        .order('employee_code');
       if (filterEmployeeId) empQuery = empQuery.eq('id', filterEmployeeId);
       if (allowedStationIds && allowedStationIds.length) empQuery = empQuery.in('station_id', allowedStationIds);
 
@@ -365,12 +367,20 @@ export const EmployeeIdCards = ({ filterEmployeeId, allowedStationIds }: { filte
         stationsQuery,
       ]);
       if (empRes.error) throw empRes.error;
-      if (empRes.data) {
-        setEmployees(empRes.data as any);
-        setFiltered(empRes.data as any);
-      }
       if (deptRes.data) setDepartments(deptRes.data);
       if (stationRes.data) setStations(stationRes.data);
+      if (empRes.data) {
+        const deptMap = new Map((deptRes.data || []).map(d => [d.id, d]));
+        const stationMap = new Map((stationRes.data || []).map(s => [s.id, s]));
+        const rows = (empRes.data as any[]).map((emp) => ({
+          ...emp,
+          avatar: null,
+          departments: deptMap.get(emp.department_id) ? { name_en: deptMap.get(emp.department_id)!.name_en } : null,
+          stations: stationMap.get(emp.station_id) ? { name_en: stationMap.get(emp.station_id)!.name_en } : null,
+        })) as EmployeeForId[];
+        setEmployees(rows);
+        setFiltered(rows);
+      }
     } catch (err: any) {
       console.error('EmployeeIdCards fetch error:', err);
       setError(err?.message || 'Failed to load employees');
