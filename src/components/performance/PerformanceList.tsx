@@ -231,8 +231,10 @@ export const PerformanceList = () => {
                 <Download className="w-4 h-4" />
                 {ar ? `M3 PDF (${m3Reviews.length})` : `M3 PDF (${m3Reviews.length})`}
               </Button>
-
+            </div>
+          </div>
         </CardHeader>
+
         <CardContent className="space-y-4">
           {/* Filters */}
           <div className={cn("flex flex-col sm:flex-row gap-3 flex-wrap", isRTL && "sm:flex-row-reverse")}>
