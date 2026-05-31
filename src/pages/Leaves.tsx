@@ -246,8 +246,9 @@ const Leaves = () => {
         department: d ? (language === 'ar' ? d.name_ar : d.name_en) : '',
         station: s ? (language === 'ar' ? s.name_ar : s.name_en) : '',
         hireDate: e.hire_date || '',
-        // Annual remaining = opening - used (overtime added days are tracked separately)
-        annualTotal, annualUsed: u.annual, annualRemaining: annualTotal - u.annual,
+        // Annual remaining = opening + overtime credit - used
+        // (Eid Adha/Fitr first day overtime = 2 days, others = 1; can be taken as annual or casual)
+        annualTotal, annualUsed: u.annual, annualRemaining: annualTotal + overtimeDaysCount - u.annual,
         overtimeDays: overtimeDaysCount,
         sickTotal, sickUsed: u.sick, sickRemaining: sickTotal - u.sick,
         casualTotal, casualUsed: u.casual, casualRemaining: casualTotal - u.casual,
