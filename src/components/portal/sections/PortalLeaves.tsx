@@ -141,6 +141,24 @@ export const PortalLeaves = () => {
       return;
     }
 
+    // Annual leave: must have sufficient balance (already includes overtime days)
+    if (leaveType === 'annual') {
+      const remaining = annualBalance?.remaining ?? 0;
+      if (remaining <= 0 || calculateDays() > remaining) {
+        toast.error(ar ? `لا يمكن تقديم الطلب: الرصيد المتاح ${remaining} يوم فقط` : `Cannot submit: only ${remaining} day(s) available`);
+        return;
+      }
+    }
+
+    // Casual leave: must have sufficient balance
+    if (leaveType === 'casual') {
+      const remaining = casualBalance?.remaining ?? 0;
+      if (remaining <= 0 || calculateDays() > remaining) {
+        toast.error(ar ? `لا يمكن تقديم الطلب: الرصيد المتاح ${remaining} يوم فقط` : `Cannot submit: only ${remaining} day(s) available`);
+        return;
+      }
+    }
+
     // Sick leave: must have sufficient balance
     if (leaveType === 'sick') {
       const remaining = sickBalance?.remaining ?? 0;
