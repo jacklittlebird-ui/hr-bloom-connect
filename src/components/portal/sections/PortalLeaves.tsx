@@ -192,12 +192,53 @@ export const PortalLeaves = () => {
     setLeaveType(''); setLeaveStartDate(undefined); setLeaveEndDate(undefined); setLeaveReason('');
   };
 
+  const permBalance = balances.find(b => b.typeEn === 'Permissions');
+  const permRemainingHours = permBalance?.remaining ?? 0;
+  const isUnpaidPermMode = permRemainingHours < 1;
+
   const handleSubmitPerm = async () => {
     if (!permType || !permDate || !permFrom || !permDuration || !permReason) {
       toast.error(ar ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
     }
     const t = permTypes.find(p => p.value === permType);
+    const durationHours = Number(permDuration);
+
+    // Unpaid permission mode: no balance → register as unpaid leave with fractional day
+    if (isUnpaidPermMode) {
+      const unpaidDays = durationHours === 1 ? 0.125 : 0.25;
+      try {
+        await addLeaveRequest({
+          employeeId: PORTAL_EMPLOYEE_ID,
+          typeAr: 'بدون راتب',
+          typeEn: 'Unpaid',
+          from: format(permDate, 'yyyy-MM-dd'),
+          to: format(permDate, 'yyyy-MM-dd'),
+          days: unpaidDays,
+        });
+        toast.success(
+          ar
+            ? `تم تسجيل الطلب كإجازة بدون راتب (${unpaidDays} يوم)`
+            : `Request saved as unpaid leave (${unpaidDays} day)`
+        );
+        setShowPermDialog(false);
+        setPermType(''); setPermDate(undefined); setPermFrom(''); setPermDuration(''); setPermReason('');
+      } catch {
+        toast.error(ar ? 'حدث خطأ أثناء تقديم الطلب' : 'Error submitting request');
+      }
+      return;
+    }
+
+    // Normal permission: must have enough hours in balance
+    if (durationHours > permRemainingHours) {
+      toast.error(
+        ar
+          ? `لا يمكن تقديم الطلب: الرصيد المتاح ${permRemainingHours} ساعة فقط`
+          : `Cannot submit: only ${permRemainingHours} hour(s) available in permissions balance`
+      );
+      return;
+    }
+
     try {
       await addPermission({
         employeeId: PORTAL_EMPLOYEE_ID,
@@ -544,11 +585,28 @@ export const PortalLeaves = () => {
                 <Select value={permDuration} onValueChange={setPermDuration}>
                   <SelectTrigger><SelectValue placeholder={ar ? 'اختر المدة' : 'Select duration'} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">{ar ? 'ساعة' : '1 Hour'}</SelectItem>
-                    <SelectItem value="2">{ar ? 'ساعتين' : '2 Hours'}</SelectItem>
+                    {isUnpaidPermMode ? (
+                      <>
+                        <SelectItem value="1">{ar ? 'ساعة (بخصم 1/8 يوم من الراتب)' : '1 Hour (deduct 1/8 day from salary)'}</SelectItem>
+                        <SelectItem value="2">{ar ? 'ساعتين (بخصم 1/4 يوم من الراتب)' : '2 Hours (deduct 1/4 day from salary)'}</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="1" disabled={permRemainingHours < 1}>{ar ? 'ساعة' : '1 Hour'}</SelectItem>
+                        <SelectItem value="2" disabled={permRemainingHours < 2}>{ar ? 'ساعتين' : '2 Hours'}</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
+                {isUnpaidPermMode && (
+                  <p className="text-xs text-warning">
+                    {ar
+                      ? 'لا يوجد رصيد أذونات. سيتم تسجيل الطلب كإجازة بدون راتب.'
+                      : 'No permission balance. Request will be saved as unpaid leave.'}
+                  </p>
+                )}
               </div>
+
               <div className="space-y-2">
                 <Label>{ar ? 'وقت البداية' : 'Start Time'} <span className="text-destructive">*</span></Label>
                 <Input type="time" value={permFrom} onChange={e => setPermFrom(e.target.value)} />
