@@ -213,6 +213,7 @@ export const PerformanceList = () => {
                 <SelectItem value="Q3">Q3</SelectItem>
                 <SelectItem value="Q2">Q2</SelectItem>
                 <SelectItem value="Q1">Q1</SelectItem>
+                <SelectItem value="M3">{language === 'ar' ? 'تقييم 3 شهور' : 'M3 (3-Month)'}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
