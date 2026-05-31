@@ -738,6 +738,57 @@ export const AttendanceList = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <DialogContent dir={isRTL ? 'rtl' : 'ltr'} className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{ar ? 'تعديل سجل الحضور' : 'Edit Attendance Record'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="text-sm text-muted-foreground">
+              {ar ? editTarget?.employeeNameAr : editTarget?.employeeName} — {editTarget?.date}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>{ar ? 'الحضور (24س)' : 'Check In (24h)'}</Label>
+                <Input type="time" value={editCheckIn} onChange={e => setEditCheckIn(e.target.value)} step={60} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{ar ? 'الانصراف (24س)' : 'Check Out (24h)'}</Label>
+                <Input type="time" value={editCheckOut} onChange={e => setEditCheckOut(e.target.value)} step={60} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{ar ? 'الحالة' : 'Status'}</Label>
+              <Select value={editStatus} onValueChange={setEditStatus}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="present">{ar ? 'حاضر' : 'Present'}</SelectItem>
+                  <SelectItem value="late">{ar ? 'متأخر' : 'Late'}</SelectItem>
+                  <SelectItem value="absent">{ar ? 'غائب' : 'Absent'}</SelectItem>
+                  <SelectItem value="early-leave">{ar ? 'انصراف مبكر' : 'Early Leave'}</SelectItem>
+                  <SelectItem value="on-leave">{ar ? 'إجازة' : 'On Leave'}</SelectItem>
+                  <SelectItem value="mission">{ar ? 'مأمورية' : 'Mission'}</SelectItem>
+                  <SelectItem value="weekend">{ar ? 'عطلة' : 'Weekend'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>{ar ? 'ملاحظات' : 'Notes'}</Label>
+              <Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={3} className="whitespace-pre-wrap break-words" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditTarget(null)} disabled={savingEdit}>
+              {ar ? 'إلغاء' : 'Cancel'}
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={savingEdit}>
+              {savingEdit ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ التعديلات' : 'Save Changes')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </Card>
   );
 };
