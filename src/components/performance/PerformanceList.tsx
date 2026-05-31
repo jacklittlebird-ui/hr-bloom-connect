@@ -108,9 +108,18 @@ export const PerformanceList = () => {
     const matchesStation = stationFilter === 'all' || review.station === stationFilter;
     const matchesDepartment = departmentFilter === 'all' || review.department === departmentFilter;
     return matchesSearch && matchesStatus && matchesQuarter && matchesYear && matchesStation && matchesDepartment;
+  }).sort((a, b) => {
+    // M3 (3-month post-hire) appears first; then by year desc, then quarter desc
+    if (a.quarter === 'M3' && b.quarter !== 'M3') return -1;
+    if (b.quarter === 'M3' && a.quarter !== 'M3') return 1;
+    if (a.year !== b.year) return b.year.localeCompare(a.year);
+    return b.quarter.localeCompare(a.quarter);
   });
 
+  const m3Reviews = filteredReviews.filter(r => r.quarter === 'M3');
+
   const { paginatedItems: paginatedReviews, currentPage: revPage, totalPages: revTotalPages, totalItems: revTotalItems, startIndex: revStart, endIndex: revEnd, setCurrentPage: setRevPage } = usePagination(filteredReviews);
+
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -166,6 +175,32 @@ export const PerformanceList = () => {
     });
   };
 
+  const m3Columns = [
+    { header: t('performance.list.employee'), key: 'employeeName' },
+    { header: t('performance.list.department'), key: 'department' },
+    { header: language === 'ar' ? 'المحطة' : 'Station', key: 'station' },
+    { header: language === 'ar' ? 'السنة' : 'Year', key: 'year' },
+    { header: language === 'ar' ? 'تاريخ التقييم' : 'Review Date', key: 'reviewDate' },
+    { header: t('performance.list.score'), key: 'score' },
+    { header: t('performance.list.status'), key: 'statusLabel' },
+    { header: t('performance.list.reviewer'), key: 'reviewer' },
+  ];
+
+  const handleExportM3 = (fmt: 'csv' | 'pdf') => {
+    if (m3Reviews.length === 0) {
+      toast.info(ar ? 'لا توجد تقييمات M3 لتصديرها' : 'No M3 reviews to export');
+      return;
+    }
+    const title = ar ? 'تقييمات M3 — بعد 3 أشهر من التعيين' : 'M3 Reviews — Post-Hire 3-Month';
+    const data = m3Reviews.map(r => ({ ...r, station: getStationLabel(r.station), statusLabel: t(`performance.status.${r.status}`) }));
+    if (fmt === 'csv') {
+      exportToCSV({ title, columns: m3Columns, data, fileName: 'm3_performance_reviews' });
+    } else {
+      exportToPDF({ title, columns: m3Columns, data, fileName: 'm3_performance_reviews' });
+    }
+  };
+
+
   return (
     <>
       <Card>
@@ -188,9 +223,18 @@ export const PerformanceList = () => {
                 <Download className="w-4 h-4" />
                 PDF
               </Button>
+              <Button variant="default" size="sm" onClick={() => handleExportM3('csv')} className="gap-1.5">
+                <FileSpreadsheet className="w-4 h-4" />
+                {ar ? `M3 Excel (${m3Reviews.length})` : `M3 Excel (${m3Reviews.length})`}
+              </Button>
+              <Button variant="default" size="sm" onClick={() => handleExportM3('pdf')} className="gap-1.5">
+                <Download className="w-4 h-4" />
+                {ar ? `M3 PDF (${m3Reviews.length})` : `M3 PDF (${m3Reviews.length})`}
+              </Button>
             </div>
           </div>
         </CardHeader>
+
         <CardContent className="space-y-4">
           {/* Filters */}
           <div className={cn("flex flex-col sm:flex-row gap-3 flex-wrap", isRTL && "sm:flex-row-reverse")}>
