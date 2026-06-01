@@ -102,7 +102,7 @@ const initialCriteria: CriteriaScore[] = [
 ];
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
-const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+const quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'M3'];
 
 // Lazy-loaded leave calendar for station employees
 const StationLeaveCalendar = ({ stationEmployees, language }: { stationEmployees: any[]; language: string }) => {
