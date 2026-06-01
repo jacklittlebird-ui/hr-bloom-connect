@@ -21,6 +21,8 @@ interface Station {
   name_en: string;
 }
 
+type Religion = 'all' | 'muslim' | 'christian';
+
 interface OfficialHoliday {
   id: string;
   name_ar: string;
@@ -28,6 +30,7 @@ interface OfficialHoliday {
   holiday_date: string;
   station_ids: string[];
   notes: string | null;
+  religion: Religion;
   created_at: string;
 }
 
@@ -49,7 +52,13 @@ export const OfficialHolidays = () => {
     holiday_date: '',
     station_ids: [] as string[],
     notes: '',
+    religion: 'all' as Religion,
   });
+
+  const religionLabel = (r: Religion) =>
+    r === 'muslim' ? (ar ? 'للمسلمين فقط' : 'Muslims only')
+    : r === 'christian' ? (ar ? 'للمسيحيين فقط' : 'Christians only')
+    : (ar ? 'الجميع' : 'Everyone');
 
   const loadData = async () => {
     setLoading(true);
