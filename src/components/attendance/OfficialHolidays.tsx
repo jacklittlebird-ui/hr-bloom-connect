@@ -257,6 +257,26 @@ export const OfficialHolidays = () => {
               <Input type="date" value={form.holiday_date} onChange={e => setForm({ ...form, holiday_date: e.target.value })} />
             </div>
             <div>
+              <Label className="mb-2 block">{ar ? 'تنطبق على' : 'Applies to'} *</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['all', 'muslim', 'christian'] as Religion[]).map(r => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setForm({ ...form, religion: r })}
+                    className={cn(
+                      'border rounded-lg p-3 text-sm transition-colors',
+                      form.religion === r
+                        ? 'border-primary bg-primary/10 text-primary font-medium'
+                        : 'border-border hover:bg-muted/50'
+                    )}
+                  >
+                    {religionLabel(r)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
               <div className="flex items-center justify-between mb-2">
                 <Label>{ar ? 'المحطات' : 'Stations'} *</Label>
                 <Button type="button" variant="link" size="sm" onClick={toggleAllStations}>
