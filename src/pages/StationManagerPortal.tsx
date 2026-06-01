@@ -788,7 +788,7 @@ const StationManagerPortal = () => {
       }
     })();
     return () => { cancelled = true; };
-  }, [newEvalSelectedEmp, newEvalYear, newEvalQuarterMonths]);
+  }, [newEvalSelectedEmp, newEvalPeriodRange, newEvalQuarterMonths]);
 
   const handleNewEvalSave = async (status: 'draft' | 'submitted') => {
     if (!newEvalSelectedEmp || !newEvalYear || !newEvalQuarter) {
