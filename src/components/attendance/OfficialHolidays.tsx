@@ -209,6 +209,11 @@ export const OfficialHolidays = () => {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <Badge variant={(h.religion || 'all') === 'all' ? 'secondary' : 'default'}>
+                          {religionLabel(h.religion || 'all')}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-sm max-w-xs truncate">{h.notes || '-'}</TableCell>
                       <TableCell>
                         <div className={cn("flex gap-1", isRTL && "flex-row-reverse")}>
