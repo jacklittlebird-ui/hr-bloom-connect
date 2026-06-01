@@ -749,7 +749,7 @@ const StationManagerPortal = () => {
   }, [newEvalQuarter, newEvalQuarterMonths, newEvalYear, newEvalSelectedEmpObj]);
 
   useEffect(() => {
-    if (!newEvalSelectedEmp || !newEvalYear || newEvalQuarterMonths.length === 0) {
+    if (!newEvalSelectedEmp || !newEvalPeriodRange || newEvalQuarterMonths.length === 0) {
       setQuarterMonthly([]);
       return;
     }
@@ -757,10 +757,8 @@ const StationManagerPortal = () => {
     (async () => {
       setQuarterLoading(true);
       try {
-        const startDate = `${newEvalYear}-${newEvalQuarterMonths[0]}-01`;
-        const lastMonth = newEvalQuarterMonths[newEvalQuarterMonths.length - 1];
-        const lastDay = new Date(parseInt(newEvalYear), parseInt(lastMonth), 0).getDate();
-        const endDate = `${newEvalYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+        const startDate = newEvalPeriodRange.start;
+        const endDate = newEvalPeriodRange.end;
         const [violRes, attRes] = await Promise.all([
           supabase.from('violations').select('id, date, type, description, penalty, status')
             .eq('employee_id', newEvalSelectedEmp).gte('date', startDate).lte('date', endDate)
