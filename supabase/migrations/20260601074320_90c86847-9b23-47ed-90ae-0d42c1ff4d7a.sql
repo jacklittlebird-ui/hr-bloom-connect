@@ -1,0 +1,1 @@
+ALTER TABLE public.official_holidays ADD COLUMN IF NOT EXISTS religion text NOT NULL DEFAULT 'all' CHECK (religion IN ('all', 'muslim', 'christian'));

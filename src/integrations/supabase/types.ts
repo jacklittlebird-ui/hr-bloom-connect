@@ -1594,6 +1594,7 @@ export type Database = {
           name_ar: string
           name_en: string
           notes: string | null
+          religion: string
           station_ids: string[]
         }
         Insert: {
@@ -1604,6 +1605,7 @@ export type Database = {
           name_ar: string
           name_en: string
           notes?: string | null
+          religion?: string
           station_ids?: string[]
         }
         Update: {
@@ -1614,6 +1616,7 @@ export type Database = {
           name_ar?: string
           name_en?: string
           notes?: string | null
+          religion?: string
           station_ids?: string[]
         }
         Relationships: []

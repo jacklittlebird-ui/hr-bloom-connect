@@ -21,6 +21,8 @@ interface Station {
   name_en: string;
 }
 
+type Religion = 'all' | 'muslim' | 'christian';
+
 interface OfficialHoliday {
   id: string;
   name_ar: string;
@@ -28,6 +30,7 @@ interface OfficialHoliday {
   holiday_date: string;
   station_ids: string[];
   notes: string | null;
+  religion: Religion;
   created_at: string;
 }
 
@@ -49,7 +52,13 @@ export const OfficialHolidays = () => {
     holiday_date: '',
     station_ids: [] as string[],
     notes: '',
+    religion: 'all' as Religion,
   });
+
+  const religionLabel = (r: Religion) =>
+    r === 'muslim' ? (ar ? 'للمسلمين فقط' : 'Muslims only')
+    : r === 'christian' ? (ar ? 'للمسيحيين فقط' : 'Christians only')
+    : (ar ? 'الجميع' : 'Everyone');
 
   const loadData = async () => {
     setLoading(true);
@@ -69,7 +78,7 @@ export const OfficialHolidays = () => {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name_ar: '', name_en: '', holiday_date: '', station_ids: [], notes: '' });
+    setForm({ name_ar: '', name_en: '', holiday_date: '', station_ids: [], notes: '', religion: 'all' });
     setDialogOpen(true);
   };
 
@@ -81,6 +90,7 @@ export const OfficialHolidays = () => {
       holiday_date: h.holiday_date,
       station_ids: h.station_ids || [],
       notes: h.notes || '',
+      religion: h.religion || 'all',
     });
     setDialogOpen(true);
   };
@@ -115,6 +125,7 @@ export const OfficialHolidays = () => {
       holiday_date: form.holiday_date,
       station_ids: form.station_ids,
       notes: form.notes.trim() || null,
+      religion: form.religion,
     };
     const { error } = editing
       ? await supabase.from('official_holidays').update(payload).eq('id', editing.id)
@@ -170,6 +181,7 @@ export const OfficialHolidays = () => {
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الاسم' : 'Name'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'التاريخ' : 'Date'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطات' : 'Stations'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الديانة' : 'Religion'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'ملاحظات' : 'Notes'}</TableHead>
                   <TableHead className={cn("w-[120px]", isRTL && "text-right")}>{ar ? 'إجراءات' : 'Actions'}</TableHead>
                 </TableRow>
@@ -177,7 +189,7 @@ export const OfficialHolidays = () => {
               <TableBody>
                 {holidays.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       {ar ? 'لا توجد إجازات رسمية' : 'No official holidays'}
                     </TableCell>
                   </TableRow>
@@ -196,6 +208,11 @@ export const OfficialHolidays = () => {
                             ))
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={(h.religion || 'all') === 'all' ? 'secondary' : 'default'}>
+                          {religionLabel(h.religion || 'all')}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm max-w-xs truncate">{h.notes || '-'}</TableCell>
                       <TableCell>
@@ -238,6 +255,26 @@ export const OfficialHolidays = () => {
             <div>
               <Label>{ar ? 'التاريخ' : 'Date'} *</Label>
               <Input type="date" value={form.holiday_date} onChange={e => setForm({ ...form, holiday_date: e.target.value })} />
+            </div>
+            <div>
+              <Label className="mb-2 block">{ar ? 'تنطبق على' : 'Applies to'} *</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['all', 'muslim', 'christian'] as Religion[]).map(r => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setForm({ ...form, religion: r })}
+                    className={cn(
+                      'border rounded-lg p-3 text-sm transition-colors',
+                      form.religion === r
+                        ? 'border-primary bg-primary/10 text-primary font-medium'
+                        : 'border-border hover:bg-muted/50'
+                    )}
+                  >
+                    {religionLabel(r)}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
