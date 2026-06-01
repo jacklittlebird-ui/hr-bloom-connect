@@ -882,6 +882,7 @@ const StationManagerPortal = () => {
       'Q2': { ar: 'Q2 (أبريل - يونيو)', en: 'Q2 (Apr - Jun)' },
       'Q3': { ar: 'Q3 (يوليو - سبتمبر)', en: 'Q3 (Jul - Sep)' },
       'Q4': { ar: 'Q4 (أكتوبر - ديسمبر)', en: 'Q4 (Oct - Dec)' },
+      'M3': { ar: 'M3 — تقييم بعد 3 أشهر من التعيين', en: 'M3 — Post-Hire 3-Month' },
     };
     return language === 'ar' ? labels[q]?.ar : labels[q]?.en;
   };
