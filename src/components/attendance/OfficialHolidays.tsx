@@ -78,7 +78,7 @@ export const OfficialHolidays = () => {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name_ar: '', name_en: '', holiday_date: '', station_ids: [], notes: '' });
+    setForm({ name_ar: '', name_en: '', holiday_date: '', station_ids: [], notes: '', religion: 'all' });
     setDialogOpen(true);
   };
 
@@ -90,6 +90,7 @@ export const OfficialHolidays = () => {
       holiday_date: h.holiday_date,
       station_ids: h.station_ids || [],
       notes: h.notes || '',
+      religion: h.religion || 'all',
     });
     setDialogOpen(true);
   };
