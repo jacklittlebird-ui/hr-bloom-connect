@@ -1,22 +1,4 @@
 project_id = "iygkzkglrkdrmuyeuiht"
 
-[functions.setup-user]
-verify_jwt = false
-
-[functions.generate-qr-token]
-verify_jwt = false
-
-[functions.submit-scan]
-verify_jwt = false
-
-[functions.gps-checkin]
-verify_jwt = false
-
-[functions.attendance-state]
-verify_jwt = false
-
-[functions.send-notification]
-verify_jwt = false
-
-[functions.seed-station-managers]
+[functions.seed-batch-managers]
 verify_jwt = false
