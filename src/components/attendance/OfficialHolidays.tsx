@@ -125,6 +125,7 @@ export const OfficialHolidays = () => {
       holiday_date: form.holiday_date,
       station_ids: form.station_ids,
       notes: form.notes.trim() || null,
+      religion: form.religion,
     };
     const { error } = editing
       ? await supabase.from('official_holidays').update(payload).eq('id', editing.id)
