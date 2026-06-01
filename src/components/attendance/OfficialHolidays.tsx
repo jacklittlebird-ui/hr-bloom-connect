@@ -181,6 +181,7 @@ export const OfficialHolidays = () => {
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الاسم' : 'Name'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'التاريخ' : 'Date'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطات' : 'Stations'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الديانة' : 'Religion'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'ملاحظات' : 'Notes'}</TableHead>
                   <TableHead className={cn("w-[120px]", isRTL && "text-right")}>{ar ? 'إجراءات' : 'Actions'}</TableHead>
                 </TableRow>
