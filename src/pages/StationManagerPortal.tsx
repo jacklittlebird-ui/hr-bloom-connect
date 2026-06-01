@@ -707,11 +707,46 @@ const StationManagerPortal = () => {
   const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[] }[]>([]);
   const [quarterLoading, setQuarterLoading] = useState(false);
 
+  const newEvalSelectedEmpObj = useMemo(
+    () => stationEmployees.find(e => e.id === newEvalSelectedEmp),
+    [stationEmployees, newEvalSelectedEmp]
+  );
+
   const newEvalQuarterMonths = useMemo(() => {
     if (!newEvalQuarter) return [] as string[];
+    if (newEvalQuarter === 'M3') {
+      const hire = (newEvalSelectedEmpObj as any)?.hireDate;
+      if (!hire) return [];
+      const d = new Date(hire);
+      if (isNaN(d.getTime())) return [];
+      return [0, 1, 2].map(i => {
+        const m = new Date(d.getFullYear(), d.getMonth() + i, 1);
+        return String(m.getMonth() + 1).padStart(2, '0');
+      });
+    }
     const map: Record<string, string[]> = { Q1: ['01','02','03'], Q2: ['04','05','06'], Q3: ['07','08','09'], Q4: ['10','11','12'] };
     return map[newEvalQuarter] || [];
-  }, [newEvalQuarter]);
+  }, [newEvalQuarter, newEvalSelectedEmpObj]);
+
+  // For M3 the year/month spans the hire date window, not selectedYear
+  const newEvalPeriodRange = useMemo(() => {
+    if (!newEvalQuarter || newEvalQuarterMonths.length === 0) return null;
+    if (newEvalQuarter === 'M3') {
+      const hire = (newEvalSelectedEmpObj as any)?.hireDate;
+      if (!hire) return null;
+      const d = new Date(hire);
+      if (isNaN(d.getTime())) return null;
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 3, 0);
+      const toIso = (x: Date) => `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;
+      return { start: toIso(start), end: toIso(end) };
+    }
+    const startDate = `${newEvalYear}-${newEvalQuarterMonths[0]}-01`;
+    const lastMonth = newEvalQuarterMonths[newEvalQuarterMonths.length - 1];
+    const lastDay = new Date(parseInt(newEvalYear), parseInt(lastMonth), 0).getDate();
+    const endDate = `${newEvalYear}-${lastMonth}-${String(lastDay).padStart(2,'0')}`;
+    return { start: startDate, end: endDate };
+  }, [newEvalQuarter, newEvalQuarterMonths, newEvalYear, newEvalSelectedEmpObj]);
 
   useEffect(() => {
     if (!newEvalSelectedEmp || !newEvalYear || newEvalQuarterMonths.length === 0) {
