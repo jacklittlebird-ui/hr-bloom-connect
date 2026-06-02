@@ -110,32 +110,43 @@ export const PortalAttendance = () => {
     });
     const holidayByDate = new Map(matchingHolidays.map((h: any) => [h.holiday_date, h]));
 
-    // Fetch approved leaves & missions in range — they count as "covered" days, not absences
-    const [leavesRes, missionsRes] = await Promise.all([
+    // Fetch approved leaves, missions, and permissions in range
+    const [leavesRes, missionsRes, permsRes] = await Promise.all([
       supabase
         .from('leave_requests')
-        .select('start_date, end_date, status')
+        .select('start_date, end_date, status, leave_type')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
         .eq('status', 'approved')
         .lte('start_date', dateTo)
         .gte('end_date', dateFrom),
       supabase
         .from('missions')
-        .select('date, status')
+        .select('id, date, status, location')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .eq('status', 'approved')
+        .gte('date', dateFrom)
+        .lte('date', dateTo),
+      supabase
+        .from('permission_requests')
+        .select('id, date, status, permission_type, start_time, end_time')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
         .eq('status', 'approved')
         .gte('date', dateFrom)
         .lte('date', dateTo),
     ]);
-    const leaveDates = new Set<string>();
+    const leaveByDate = new Map<string, string>(); // date -> leave_type
     (leavesRes.data || []).forEach((l: any) => {
       const s = new Date(l.start_date + 'T00:00:00');
       const e = new Date(l.end_date + 'T00:00:00');
       for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
-        leaveDates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (!leaveByDate.has(iso)) leaveByDate.set(iso, l.leave_type);
       }
     });
-    const missionDates = new Set<string>((missionsRes.data || []).map((m: any) => m.date));
+    const leaveDates = new Set<string>(leaveByDate.keys());
+    const missionByDate = new Map<string, any>();
+    (missionsRes.data || []).forEach((m: any) => { missionByDate.set(m.date, m); });
+    const missionDates = new Set<string>(missionByDate.keys());
     const covered = new Set<string>([...leaveDates, ...missionDates]);
     setCoveredDates(covered);
 
@@ -153,6 +164,8 @@ export const PortalAttendance = () => {
         workMinutes: audit.totalMinutes % 60,
         holidayNameAr: holiday?.name_ar,
         holidayNameEn: holiday?.name_en,
+        leaveType: onLeave ? leaveByDate.get(r.date) : undefined,
+        missionLocation: audit.status === 'mission' ? missionByDate.get(r.date)?.location : undefined,
         audit,
       };
     });
@@ -172,7 +185,49 @@ export const PortalAttendance = () => {
         holidayNameEn: h.name_en,
       } as any));
 
-    const combined = [...attLogs, ...holidayLogs].sort((a, b) => b.date.localeCompare(a.date));
+    // Synthetic rows for leave/mission dates without attendance record
+    const leaveLogs: PortalAttendanceRecord[] = Array.from(leaveByDate.entries())
+      .filter(([d]) => !datesWithRecords.has(d) && !holidayByDate.has(d))
+      .map(([d, lt]) => ({
+        id: `leave-${d}`,
+        date: d,
+        checkIn: null,
+        checkOut: null,
+        status: 'on-leave',
+        workHours: 0,
+        workMinutes: 0,
+        leaveType: lt,
+      } as any));
+
+    const missionLogs: PortalAttendanceRecord[] = Array.from(missionByDate.entries())
+      .filter(([d]) => !datesWithRecords.has(d) && !holidayByDate.has(d))
+      .map(([d, m]) => ({
+        id: `mission-${m.id}`,
+        date: d,
+        checkIn: null,
+        checkOut: null,
+        status: 'mission',
+        workHours: 0,
+        workMinutes: 0,
+        missionLocation: m.location,
+      } as any));
+
+    // Permissions are partial-day — always show as their own row alongside attendance
+    const permLogs: PortalAttendanceRecord[] = (permsRes.data || []).map((p: any) => ({
+      id: `perm-${p.id}`,
+      date: p.date,
+      checkIn: null,
+      checkOut: null,
+      status: 'permission',
+      workHours: 0,
+      workMinutes: 0,
+      permissionType: p.permission_type,
+      permissionFrom: p.start_time,
+      permissionTo: p.end_time,
+    } as any));
+
+    const combined = [...attLogs, ...holidayLogs, ...leaveLogs, ...missionLogs, ...permLogs]
+      .sort((a, b) => b.date.localeCompare(a.date));
     setFilteredRecords(combined);
     setLoading(false);
   }, [PORTAL_EMPLOYEE_ID, dateFrom, dateTo]);
