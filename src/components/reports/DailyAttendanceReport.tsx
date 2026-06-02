@@ -1114,12 +1114,16 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                           const dow = new Date(dateRange[ci] + 'T00:00:00').getDay();
                           const isOff = isEmpWeekend(r.station?.id || null, dow);
                           const isFri = dow === 5;
-                          const weekendBorder = isOff ? 'border-x-2 border-x-amber-500' : '';
-                          const weekendBg = isOff ? 'bg-amber-50/60' : '';
-                          const offTitle = isOff
-                            ? (ar ? `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('ar-EG', { weekday: 'long' })} — عطلة` : `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' })} — Off`)
-                            : undefined;
+                          const holiday = getHolidayFor(dateRange[ci], r.station?.id || null);
+                          const weekendBorder = holiday ? 'border-x-2 border-x-rose-500' : (isOff ? 'border-x-2 border-x-amber-500' : '');
+                          const weekendBg = holiday ? 'bg-rose-50/60' : (isOff ? 'bg-amber-50/60' : '');
+                          const offTitle = holiday
+                            ? (ar ? `عطلة رسمية: ${holiday.name_ar}` : `Official Holiday: ${holiday.name_en}`)
+                            : (isOff
+                              ? (ar ? `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('ar-EG', { weekday: 'long' })} — عطلة` : `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' })} — Off`)
+                              : undefined);
                           const baseCell = cn('border p-1 text-center font-mono whitespace-nowrap', weekendBorder);
+
 
                           // Build small badges for permission/overtime/mission/leave overlays
                           const overlayBadges: JSX.Element[] = [];
