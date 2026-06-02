@@ -15,7 +15,7 @@ import {
   Download, Printer, FileText, Building2, Users, Clock,
   CalendarDays, Search, X, CalendarIcon,
   LogIn, LogOut, CheckCircle2, AlertTriangle, XCircle,
-  Plane, Briefcase, Timer, FileClock,
+  Plane, Briefcase, Timer, FileClock, Star,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
