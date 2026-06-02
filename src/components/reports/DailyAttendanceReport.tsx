@@ -628,10 +628,12 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
     };
     r.cells.forEach((c, i) => {
       const dateKey = dateRange[i];
+      const holiday = getHolidayFor(dateKey, r.station?.id || null);
       row[`${dateKey}__in`] = formatTimeCairo(c.record?.check_in ?? null);
       row[`${dateKey}__out`] = formatTimeCairo(c.record?.check_out ?? null);
       row[`${dateKey}__hours`] = c.kind === 'none' ? '' : fmtHours(c.hours);
       const extras: string[] = [];
+      if (holiday) extras.push((ar ? 'عطلة رسمية: ' : 'Holiday: ') + (ar ? holiday.name_ar : holiday.name_en));
       if (c.leave) extras.push((ar ? 'إجازة ' : 'Leave ') + (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)));
       if (c.mission) extras.push(ar ? `مأمورية (${c.mission.hours || 0}س)` : `Mission (${c.mission.hours || 0}h)`);
       if (c.permission) extras.push(ar ? `إذن (${permissionHoursFor(c.permission)}س)` : `Permission (${permissionHoursFor(c.permission)}h)`);
