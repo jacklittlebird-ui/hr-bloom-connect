@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { usePagination } from '@/hooks/usePagination';
 import { useReportExport } from '@/hooks/useReportExport';
-import { Edit, Search, Printer, Download, Building2, MapPin, UserX, CheckCircle2 } from 'lucide-react';
+import { Edit, Search, Printer, Download, Building2, MapPin, UserX, CheckCircle2, ListFilter, Check, X } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
