@@ -176,6 +176,7 @@ async function mapUpdates(updates: Partial<Employee>): Promise<Record<string, an
     hasHealthInsurance: 'has_health_insurance',
     hasGovHealthInsurance: 'has_gov_health_insurance',
     hasSocialInsurance: 'has_social_insurance',
+    socialInsuranceClosed: 'social_insurance_closed',
     contractType: 'contract_type',
     hasSpecialNeeds: 'has_special_needs',
     hasCairoAirportTempPermit: 'has_cairo_airport_temp_permit',
