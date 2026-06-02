@@ -15,7 +15,7 @@ import {
   Download, Printer, FileText, Building2, Users, Clock,
   CalendarDays, Search, X, CalendarIcon,
   LogIn, LogOut, CheckCircle2, AlertTriangle, XCircle,
-  Plane, Briefcase, Timer, FileClock,
+  Plane, Briefcase, Timer, FileClock, Star,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
@@ -43,6 +43,7 @@ interface MissionRow { employee_id: string; date: string; mission_type: string; 
 interface PermissionRow { employee_id: string; date: string; hours: number | null; permission_type: string; start_time: string | null; end_time: string | null; }
 interface OvertimeRow { employee_id: string; date: string; hours: number; overtime_type: string; }
 interface StampEvent { employee_id: string; scan_time: string; event_type: string; }
+interface HolidayRow { holiday_date: string; name_ar: string; name_en: string; station_ids: string[] | null; }
 
 type DayFilter = 'all' | 'present' | 'late' | 'absent';
 
@@ -128,6 +129,8 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
   const [overtimes, setOvertimes] = useState<OvertimeRow[]>([]);
 
   const [stamps, setStamps] = useState<StampEvent[]>([]);
+  const [holidays, setHolidays] = useState<HolidayRow[]>([]);
+
 
   // Load stations + departments once
   useEffect(() => {
@@ -217,6 +220,15 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         setMissions((msRes.data as MissionRow[]) || []);
         setPermissions((prRes.data as PermissionRow[]) || []);
         setOvertimes((otRes.data as OvertimeRow[]) || []);
+
+        // Fetch official holidays in range
+        const { data: holData, error: holErr } = await supabase
+          .from('official_holidays')
+          .select('holiday_date,name_ar,name_en,station_ids')
+          .gte('holiday_date', startDate)
+          .lte('holiday_date', endDate);
+        if (holErr) console.warn('[DailyAttendanceReport] holidays fetch error', holErr);
+        setHolidays((holData as HolidayRow[]) || []);
 
         // Fetch raw stamp events (check-in/out scans) so we can show all stamps per day
         const stampsAcc: StampEvent[] = [];
@@ -407,6 +419,39 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
     return m;
   }, [overtimes]);
 
+  // Index holidays by date — multiple holidays may share a date (different station sets).
+  const holidayIndex = useMemo(() => {
+    const m = new Map<string, HolidayRow[]>();
+    holidays.forEach(h => {
+      const list = m.get(h.holiday_date) || [];
+      list.push(h);
+      m.set(h.holiday_date, list);
+    });
+    return m;
+  }, [holidays]);
+
+  // Return the holiday that applies to a given (date, station) pair, or null.
+  const getHolidayFor = (date: string, empStationId: string | null): HolidayRow | null => {
+    const list = holidayIndex.get(date);
+    if (!list || list.length === 0) return null;
+    const match = list.find(h => {
+      const sids = h.station_ids || [];
+      if (sids.length === 0) return true; // applies to all stations
+      return empStationId ? sids.includes(empStationId) : false;
+    });
+    return match || null;
+  };
+
+  // For the header row: when filtering one station, use that station; otherwise highlight
+  // if there is ANY holiday on that date (best-effort visual cue).
+  const getHeaderHoliday = (date: string): HolidayRow | null => {
+    const list = holidayIndex.get(date);
+    if (!list || list.length === 0) return null;
+    if (stationFilter !== 'all') return getHolidayFor(date, stationFilter);
+    return list[0];
+  };
+
+
   // Index raw stamp events by employee_id -> Cairo date -> list (sorted by time)
   const stampsIndex = useMemo(() => {
     const m = new Map<string, Map<string, StampEvent[]>>();
@@ -583,10 +628,12 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
     };
     r.cells.forEach((c, i) => {
       const dateKey = dateRange[i];
+      const holiday = getHolidayFor(dateKey, r.station?.id || null);
       row[`${dateKey}__in`] = formatTimeCairo(c.record?.check_in ?? null);
       row[`${dateKey}__out`] = formatTimeCairo(c.record?.check_out ?? null);
       row[`${dateKey}__hours`] = c.kind === 'none' ? '' : fmtHours(c.hours);
       const extras: string[] = [];
+      if (holiday) extras.push((ar ? 'عطلة رسمية: ' : 'Holiday: ') + (ar ? holiday.name_ar : holiday.name_en));
       if (c.leave) extras.push((ar ? 'إجازة ' : 'Leave ') + (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)));
       if (c.mission) extras.push(ar ? `مأمورية (${c.mission.hours || 0}س)` : `Mission (${c.mission.hours || 0}h)`);
       if (c.permission) extras.push(ar ? `إذن (${permissionHoursFor(c.permission)}س)` : `Permission (${permissionHoursFor(c.permission)}h)`);
@@ -946,6 +993,10 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                   <Timer className="w-3.5 h-3.5 text-orange-600" aria-hidden />
                   <span className="text-orange-700 font-medium">{ar ? 'إضافي' : 'Overtime'}</span>
                 </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-rose-50">
+                  <Star className="w-3.5 h-3.5 text-rose-600" aria-hidden />
+                  <span className="text-rose-700 font-medium">{ar ? 'عطلة رسمية' : 'Official Holiday'}</span>
+                </span>
               </div>
               <div className={cn('overflow-auto bg-background', pinSummary && 'max-h-[640px]')}>
                 <table className="text-xs border-collapse" style={{ minWidth: '100%' }}>
@@ -967,24 +1018,30 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                         const dow = dObj.getDay();
                         const isOff = isHeaderWeekend(dow);
                         const isFri = dow === 5;
-                        const headBg = isOff ? 'bg-amber-100' : 'bg-blue-50';
-                        const borderCls = isOff ? 'border-x-2 border-x-amber-500' : '';
+                        const headHoliday = getHeaderHoliday(d);
+                        const headBg = headHoliday ? 'bg-rose-100' : (isOff ? 'bg-amber-100' : 'bg-blue-50');
+                        const borderCls = headHoliday ? 'border-x-2 border-x-rose-500' : (isOff ? 'border-x-2 border-x-amber-500' : '');
+                        const topBar = headHoliday ? 'bg-rose-500' : (isOff ? 'bg-amber-500' : null);
                         return (
                           <th
                             key={d}
                             colSpan={3}
                             className={cn('border p-1 text-center whitespace-nowrap relative', headBg, borderCls)}
                             style={{ minWidth: 150 }}
+                            title={headHoliday ? (ar ? `عطلة رسمية: ${headHoliday.name_ar}` : `Official Holiday: ${headHoliday.name_en}`) : undefined}
                           >
-                            {isOff && (
-                              <div className="absolute inset-x-0 top-0 h-1 bg-amber-500" aria-hidden />
+                            {topBar && (
+                              <div className={cn('absolute inset-x-0 top-0 h-1', topBar)} aria-hidden />
                             )}
                             <div className="font-bold tabular-nums flex items-center justify-center gap-1">
-                              {isOff && isFri && <span aria-hidden>🕌</span>}
+                              {headHoliday && <Star className="w-3 h-3 text-rose-600" aria-hidden />}
+                              {isOff && isFri && !headHoliday && <span aria-hidden>🕌</span>}
                               {dateLabel}
                             </div>
-                            <div className={cn('text-[10px] font-normal', isOff ? 'text-amber-700 font-semibold' : 'text-muted-foreground')}>
-                              {isOff ? `${dayLabel} — ${ar ? 'عطلة' : 'Off'}` : dayLabel}
+                            <div className={cn('text-[10px] font-normal truncate max-w-[150px]', headHoliday ? 'text-rose-700 font-semibold' : (isOff ? 'text-amber-700 font-semibold' : 'text-muted-foreground'))}>
+                              {headHoliday
+                                ? (ar ? headHoliday.name_ar : headHoliday.name_en)
+                                : (isOff ? `${dayLabel} — ${ar ? 'عطلة' : 'Off'}` : dayLabel)}
                             </div>
                           </th>
                         );
@@ -1057,15 +1114,26 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                           const dow = new Date(dateRange[ci] + 'T00:00:00').getDay();
                           const isOff = isEmpWeekend(r.station?.id || null, dow);
                           const isFri = dow === 5;
-                          const weekendBorder = isOff ? 'border-x-2 border-x-amber-500' : '';
-                          const weekendBg = isOff ? 'bg-amber-50/60' : '';
-                          const offTitle = isOff
-                            ? (ar ? `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('ar-EG', { weekday: 'long' })} — عطلة` : `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' })} — Off`)
-                            : undefined;
+                          const holiday = getHolidayFor(dateRange[ci], r.station?.id || null);
+                          const weekendBorder = holiday ? 'border-x-2 border-x-rose-500' : (isOff ? 'border-x-2 border-x-amber-500' : '');
+                          const weekendBg = holiday ? 'bg-rose-50/60' : (isOff ? 'bg-amber-50/60' : '');
+                          const offTitle = holiday
+                            ? (ar ? `عطلة رسمية: ${holiday.name_ar}` : `Official Holiday: ${holiday.name_en}`)
+                            : (isOff
+                              ? (ar ? `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('ar-EG', { weekday: 'long' })} — عطلة` : `${new Date(dateRange[ci] + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' })} — Off`)
+                              : undefined);
                           const baseCell = cn('border p-1 text-center font-mono whitespace-nowrap', weekendBorder);
+
 
                           // Build small badges for permission/overtime/mission/leave overlays
                           const overlayBadges: JSX.Element[] = [];
+                          if (holiday) {
+                            overlayBadges.push(
+                              <span key="ho" className="inline-flex items-center gap-0.5 px-1 rounded bg-rose-100 text-rose-800 text-[9px] font-semibold" title={ar ? 'عطلة رسمية' : 'Official Holiday'}>
+                                <Star className="w-2.5 h-2.5" aria-hidden />{ar ? holiday.name_ar : holiday.name_en}
+                              </span>
+                            );
+                          }
                           if (c.leave) {
                             const lbl = ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type);
                             overlayBadges.push(
@@ -1121,6 +1189,19 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                                     <span className="inline-flex items-center justify-center gap-1">
                                       <Briefcase className="w-3.5 h-3.5" aria-hidden />
                                       {ar ? 'مأمورية' : 'Mission'} ({c.mission.hours || 0}{ar ? 'س' : 'h'})
+                                    </span>
+                                  </td>
+                                </Fragment>
+                              );
+                            }
+                            // No attendance and no leave/mission, but it's an official holiday — show holiday cell.
+                            if (holiday) {
+                              return (
+                                <Fragment key={ci}>
+                                  <td colSpan={3} className={cn(baseCell, 'bg-rose-100 text-rose-800 font-semibold')} title={ar ? `عطلة رسمية: ${holiday.name_ar}` : `Official Holiday: ${holiday.name_en}`}>
+                                    <span className="inline-flex items-center justify-center gap-1">
+                                      <Star className="w-3.5 h-3.5" aria-hidden />
+                                      {ar ? 'عطلة رسمية' : 'Holiday'} — {ar ? holiday.name_ar : holiday.name_en}
                                     </span>
                                   </td>
                                 </Fragment>
