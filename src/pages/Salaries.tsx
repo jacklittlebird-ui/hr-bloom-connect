@@ -16,6 +16,7 @@ const MobileBills = lazy(() => import('@/components/salaries/MobileBills').then(
 const SalaryTransfer = lazy(() => import('@/components/salaries/SalaryTransfer').then(m => ({ default: m.SalaryTransfer })));
 const EidBonuses = lazy(() => import('@/components/salaries/EidBonuses').then(m => ({ default: m.EidBonuses })));
 const BonusManagement = lazy(() => import('@/components/salaries/BonusManagement').then(m => ({ default: m.BonusManagement })));
+const NonRecurringBonuses = lazy(() => import('@/components/salaries/NonRecurringBonuses').then(m => ({ default: m.NonRecurringBonuses })));
 
 const TabFallback = () => <div className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-64 w-full" /></div>;
 
