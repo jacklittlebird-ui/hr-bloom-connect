@@ -43,6 +43,7 @@ interface MissionRow { employee_id: string; date: string; mission_type: string; 
 interface PermissionRow { employee_id: string; date: string; hours: number | null; permission_type: string; start_time: string | null; end_time: string | null; }
 interface OvertimeRow { employee_id: string; date: string; hours: number; overtime_type: string; }
 interface StampEvent { employee_id: string; scan_time: string; event_type: string; }
+interface HolidayRow { holiday_date: string; name_ar: string; name_en: string; station_ids: string[] | null; }
 
 type DayFilter = 'all' | 'present' | 'late' | 'absent';
 
