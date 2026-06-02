@@ -82,7 +82,7 @@ export const ResignedInsuranceRenewals = () => {
     const { data, error } = await supabase
       .from('employees')
       .select('id, employee_code, name_ar, name_en, status, social_insurance_no, social_insurance_start_date, social_insurance_end_date, social_insurance_closed, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, resignation_date, station_id, department_id')
-      .in('status', RESIGNED_STATUSES)
+      .in('status', RESIGNED_STATUSES as unknown as ResignedStatus[])
       .order('resignation_date', { ascending: false, nullsFirst: false });
 
     if (error) { setLoading(false); return; }
