@@ -38,6 +38,7 @@ export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) =>
     resignationDate: employee.resignationDate || '',
     resignationReason: employee.resignationReason || '',
     hasSpecialNeeds: employee.hasSpecialNeeds || false,
+    socialInsuranceClosed: employee.socialInsuranceClosed || false,
   });
 
   const updateField = (field: string, value: string | boolean) => {
