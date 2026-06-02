@@ -125,6 +125,7 @@ const Documents = () => {
       title: { ar: 'التجديدات', en: 'Renewals' },
       items: [
         { key: 'renewals', ar: 'تجديد التأمين', en: 'Insurance', icon: ShieldAlert, statKey: 'renewals' },
+        { key: 'resignedInsurance', ar: 'الموظفين المستقيلين', en: 'Resigned Employees', icon: UserX },
         { key: 'nationalId', ar: 'الرقم القومي', en: 'National ID', icon: CreditCard, statKey: 'nationalId' },
       ],
     },
