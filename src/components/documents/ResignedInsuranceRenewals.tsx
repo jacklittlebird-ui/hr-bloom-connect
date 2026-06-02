@@ -121,7 +121,7 @@ export const ResignedInsuranceRenewals = () => {
     }
     if (selectedStation !== 'all' && e.station_id !== selectedStation) return false;
     if (selectedDept !== 'all' && e.department_id !== selectedDept) return false;
-    if (selectedStatus !== 'all' && e.status !== selectedStatus) return false;
+    if (selectedStatuses.length > 0 && !selectedStatuses.includes(e.status)) return false;
     if (closedFilter === 'closed' && !e.social_insurance_closed) return false;
     if (closedFilter === 'open' && e.social_insurance_closed) return false;
     return true;
