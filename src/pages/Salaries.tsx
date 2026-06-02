@@ -16,6 +16,7 @@ const MobileBills = lazy(() => import('@/components/salaries/MobileBills').then(
 const SalaryTransfer = lazy(() => import('@/components/salaries/SalaryTransfer').then(m => ({ default: m.SalaryTransfer })));
 const EidBonuses = lazy(() => import('@/components/salaries/EidBonuses').then(m => ({ default: m.EidBonuses })));
 const BonusManagement = lazy(() => import('@/components/salaries/BonusManagement').then(m => ({ default: m.BonusManagement })));
+const NonRecurringBonuses = lazy(() => import('@/components/salaries/NonRecurringBonuses').then(m => ({ default: m.NonRecurringBonuses })));
 
 const TabFallback = () => <div className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-64 w-full" /></div>;
 
@@ -34,6 +35,7 @@ const Salaries = () => {
     { id: 'transfer', label: isRTL ? 'تحويل الرواتب' : 'Salary Transfer' },
     { id: 'eid-bonuses', label: isRTL ? 'العيديات' : 'Eid Bonuses' },
     { id: 'bonus', label: isRTL ? 'المكافأة' : 'Bonus' },
+    { id: 'non-recurring-bonuses', label: isRTL ? 'مكافآت غير دورية' : 'Non-Recurring Bonuses' },
   ];
 
   return (
@@ -88,6 +90,9 @@ const Salaries = () => {
         )}
         {activeTab === 'bonus' && (
           <TabsContent value="bonus"><Suspense fallback={<TabFallback />}><BonusManagement /></Suspense></TabsContent>
+        )}
+        {activeTab === 'non-recurring-bonuses' && (
+          <TabsContent value="non-recurring-bonuses"><Suspense fallback={<TabFallback />}><NonRecurringBonuses /></Suspense></TabsContent>
         )}
       </Tabs>
     </DashboardLayout>
