@@ -91,6 +91,9 @@ const Salaries = () => {
         {activeTab === 'bonus' && (
           <TabsContent value="bonus"><Suspense fallback={<TabFallback />}><BonusManagement /></Suspense></TabsContent>
         )}
+        {activeTab === 'non-recurring-bonuses' && (
+          <TabsContent value="non-recurring-bonuses"><Suspense fallback={<TabFallback />}><NonRecurringBonuses /></Suspense></TabsContent>
+        )}
       </Tabs>
     </DashboardLayout>
   );
