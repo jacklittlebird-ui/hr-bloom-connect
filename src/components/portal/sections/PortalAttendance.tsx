@@ -284,6 +284,29 @@ export const PortalAttendance = () => {
         </Badge>
       );
     }
+    if (s === 'on-leave' && r.leaveType) {
+      const lbl = ar ? (LEAVE_LABEL_AR[r.leaveType] || r.leaveType) : (LEAVE_LABEL_EN[r.leaveType] || r.leaveType);
+      return (
+        <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+          {ar ? `إجازة: ${lbl}` : `Leave: ${lbl}`}
+        </Badge>
+      );
+    }
+    if (s === 'mission') {
+      return (
+        <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
+          {ar ? `مأمورية${r.missionLocation ? `: ${r.missionLocation}` : ''}` : `Mission${r.missionLocation ? `: ${r.missionLocation}` : ''}`}
+        </Badge>
+      );
+    }
+    if (s === 'permission') {
+      const time = r.permissionFrom && r.permissionTo ? ` (${r.permissionFrom}-${r.permissionTo})` : '';
+      return (
+        <Badge variant="outline" className="bg-teal-100 text-teal-700 border-teal-300">
+          {ar ? `إذن${r.permissionType ? `: ${r.permissionType}` : ''}${time}` : `Permission${r.permissionType ? `: ${r.permissionType}` : ''}${time}`}
+        </Badge>
+      );
+    }
     const map: Record<string, { cls: string; ar: string; en: string }> = {
       present: { cls: 'bg-success/10 text-success border-success', ar: 'حاضر', en: 'Present' },
       absent: { cls: 'bg-destructive/10 text-destructive border-destructive', ar: 'غائب', en: 'Absent' },
