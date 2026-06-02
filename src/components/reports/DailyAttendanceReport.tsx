@@ -1127,6 +1127,13 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
 
                           // Build small badges for permission/overtime/mission/leave overlays
                           const overlayBadges: JSX.Element[] = [];
+                          if (holiday) {
+                            overlayBadges.push(
+                              <span key="ho" className="inline-flex items-center gap-0.5 px-1 rounded bg-rose-100 text-rose-800 text-[9px] font-semibold" title={ar ? 'عطلة رسمية' : 'Official Holiday'}>
+                                <Star className="w-2.5 h-2.5" aria-hidden />{ar ? holiday.name_ar : holiday.name_en}
+                              </span>
+                            );
+                          }
                           if (c.leave) {
                             const lbl = ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type);
                             overlayBadges.push(
