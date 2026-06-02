@@ -226,9 +226,35 @@ export const PortalAttendance = () => {
       permissionTo: p.end_time,
     } as any));
 
-    const combined = [...attLogs, ...holidayLogs, ...leaveLogs, ...missionLogs, ...permLogs]
-      .sort((a, b) => b.date.localeCompare(a.date));
-    setFilteredRecords(combined);
+    const combined = [...attLogs, ...holidayLogs, ...leaveLogs, ...missionLogs, ...permLogs];
+
+    // Fill in every day in range (including Fri/Sat and days with no record)
+    const dateOccupied = new Set(combined.filter(r => r.status !== 'permission').map(r => r.date));
+    const startD = new Date(dateFrom + 'T00:00:00');
+    const endD = new Date(dateTo + 'T00:00:00');
+    const todayD = new Date(); todayD.setHours(0, 0, 0, 0);
+    const emptyLogs: PortalAttendanceRecord[] = [];
+    if (!isNaN(startD.getTime()) && !isNaN(endD.getTime())) {
+      for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (dateOccupied.has(iso)) continue;
+        const dow = d.getDay(); // 5=Fri, 6=Sat
+        const isWeekend = dow === 5 || dow === 6;
+        const isFuture = d > todayD;
+        emptyLogs.push({
+          id: `empty-${iso}`,
+          date: iso,
+          checkIn: null,
+          checkOut: null,
+          status: isWeekend ? 'weekend' : (isFuture ? 'weekend' : 'absent'),
+          workHours: 0,
+          workMinutes: 0,
+        } as any);
+      }
+    }
+
+    const all = [...combined, ...emptyLogs].sort((a, b) => b.date.localeCompare(a.date));
+    setFilteredRecords(all);
     setLoading(false);
   }, [PORTAL_EMPLOYEE_ID, dateFrom, dateTo]);
 
