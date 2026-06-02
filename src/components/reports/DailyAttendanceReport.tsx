@@ -419,6 +419,39 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
     return m;
   }, [overtimes]);
 
+  // Index holidays by date — multiple holidays may share a date (different station sets).
+  const holidayIndex = useMemo(() => {
+    const m = new Map<string, HolidayRow[]>();
+    holidays.forEach(h => {
+      const list = m.get(h.holiday_date) || [];
+      list.push(h);
+      m.set(h.holiday_date, list);
+    });
+    return m;
+  }, [holidays]);
+
+  // Return the holiday that applies to a given (date, station) pair, or null.
+  const getHolidayFor = (date: string, empStationId: string | null): HolidayRow | null => {
+    const list = holidayIndex.get(date);
+    if (!list || list.length === 0) return null;
+    const match = list.find(h => {
+      const sids = h.station_ids || [];
+      if (sids.length === 0) return true; // applies to all stations
+      return empStationId ? sids.includes(empStationId) : false;
+    });
+    return match || null;
+  };
+
+  // For the header row: when filtering one station, use that station; otherwise highlight
+  // if there is ANY holiday on that date (best-effort visual cue).
+  const getHeaderHoliday = (date: string): HolidayRow | null => {
+    const list = holidayIndex.get(date);
+    if (!list || list.length === 0) return null;
+    if (stationFilter !== 'all') return getHolidayFor(date, stationFilter);
+    return list[0];
+  };
+
+
   // Index raw stamp events by employee_id -> Cairo date -> list (sorted by time)
   const stampsIndex = useMemo(() => {
     const m = new Map<string, Map<string, StampEvent[]>>();
