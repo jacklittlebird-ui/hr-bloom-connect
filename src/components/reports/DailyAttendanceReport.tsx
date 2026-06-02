@@ -129,6 +129,8 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
   const [overtimes, setOvertimes] = useState<OvertimeRow[]>([]);
 
   const [stamps, setStamps] = useState<StampEvent[]>([]);
+  const [holidays, setHolidays] = useState<HolidayRow[]>([]);
+
 
   // Load stations + departments once
   useEffect(() => {
