@@ -88,6 +88,7 @@ function mapRow(row: any): Employee {
     hasHealthInsurance: row.has_health_insurance ?? undefined,
     hasGovHealthInsurance: row.has_gov_health_insurance ?? undefined,
     hasSocialInsurance: row.has_social_insurance ?? undefined,
+    socialInsuranceClosed: row.social_insurance_closed ?? undefined,
     contractType: row.contract_type || undefined,
     hasSpecialNeeds: row.has_special_needs ?? undefined,
     hasCairoAirportTempPermit: row.has_cairo_airport_temp_permit ?? undefined,
