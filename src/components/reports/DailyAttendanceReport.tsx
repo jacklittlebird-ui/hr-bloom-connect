@@ -1018,24 +1018,30 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                         const dow = dObj.getDay();
                         const isOff = isHeaderWeekend(dow);
                         const isFri = dow === 5;
-                        const headBg = isOff ? 'bg-amber-100' : 'bg-blue-50';
-                        const borderCls = isOff ? 'border-x-2 border-x-amber-500' : '';
+                        const headHoliday = getHeaderHoliday(d);
+                        const headBg = headHoliday ? 'bg-rose-100' : (isOff ? 'bg-amber-100' : 'bg-blue-50');
+                        const borderCls = headHoliday ? 'border-x-2 border-x-rose-500' : (isOff ? 'border-x-2 border-x-amber-500' : '');
+                        const topBar = headHoliday ? 'bg-rose-500' : (isOff ? 'bg-amber-500' : null);
                         return (
                           <th
                             key={d}
                             colSpan={3}
                             className={cn('border p-1 text-center whitespace-nowrap relative', headBg, borderCls)}
                             style={{ minWidth: 150 }}
+                            title={headHoliday ? (ar ? `عطلة رسمية: ${headHoliday.name_ar}` : `Official Holiday: ${headHoliday.name_en}`) : undefined}
                           >
-                            {isOff && (
-                              <div className="absolute inset-x-0 top-0 h-1 bg-amber-500" aria-hidden />
+                            {topBar && (
+                              <div className={cn('absolute inset-x-0 top-0 h-1', topBar)} aria-hidden />
                             )}
                             <div className="font-bold tabular-nums flex items-center justify-center gap-1">
-                              {isOff && isFri && <span aria-hidden>🕌</span>}
+                              {headHoliday && <Star className="w-3 h-3 text-rose-600" aria-hidden />}
+                              {isOff && isFri && !headHoliday && <span aria-hidden>🕌</span>}
                               {dateLabel}
                             </div>
-                            <div className={cn('text-[10px] font-normal', isOff ? 'text-amber-700 font-semibold' : 'text-muted-foreground')}>
-                              {isOff ? `${dayLabel} — ${ar ? 'عطلة' : 'Off'}` : dayLabel}
+                            <div className={cn('text-[10px] font-normal truncate max-w-[150px]', headHoliday ? 'text-rose-700 font-semibold' : (isOff ? 'text-amber-700 font-semibold' : 'text-muted-foreground'))}>
+                              {headHoliday
+                                ? (ar ? headHoliday.name_ar : headHoliday.name_en)
+                                : (isOff ? `${dayLabel} — ${ar ? 'عطلة' : 'Off'}` : dayLabel)}
                             </div>
                           </th>
                         );
