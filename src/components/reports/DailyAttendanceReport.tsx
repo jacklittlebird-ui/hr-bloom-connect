@@ -993,6 +993,10 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                   <Timer className="w-3.5 h-3.5 text-orange-600" aria-hidden />
                   <span className="text-orange-700 font-medium">{ar ? 'إضافي' : 'Overtime'}</span>
                 </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-rose-50">
+                  <Star className="w-3.5 h-3.5 text-rose-600" aria-hidden />
+                  <span className="text-rose-700 font-medium">{ar ? 'عطلة رسمية' : 'Official Holiday'}</span>
+                </span>
               </div>
               <div className={cn('overflow-auto bg-background', pinSummary && 'max-h-[640px]')}>
                 <table className="text-xs border-collapse" style={{ minWidth: '100%' }}>
