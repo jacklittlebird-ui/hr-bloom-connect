@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { usePagination } from '@/hooks/usePagination';
 import { useReportExport } from '@/hooks/useReportExport';
-import { Edit, Search, Printer, Download, Building2, MapPin, UserX, CheckCircle2 } from 'lucide-react';
+import { Edit, Search, Printer, Download, Building2, MapPin, UserX, CheckCircle2, ListFilter, Check, X } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -67,7 +68,7 @@ export const ResignedInsuranceRenewals = () => {
   const [search, setSearch] = useState('');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [closedFilter, setClosedFilter] = useState<'all' | 'open' | 'closed'>('all');
   const [stations, setStations] = useState<StationDept[]>([]);
   const [departments, setDepartments] = useState<StationDept[]>([]);
@@ -120,7 +121,7 @@ export const ResignedInsuranceRenewals = () => {
     }
     if (selectedStation !== 'all' && e.station_id !== selectedStation) return false;
     if (selectedDept !== 'all' && e.department_id !== selectedDept) return false;
-    if (selectedStatus !== 'all' && e.status !== selectedStatus) return false;
+    if (selectedStatuses.length > 0 && !selectedStatuses.includes(e.status)) return false;
     if (closedFilter === 'closed' && !e.social_insurance_closed) return false;
     if (closedFilter === 'open' && e.social_insurance_closed) return false;
     return true;
@@ -149,6 +150,15 @@ export const ResignedInsuranceRenewals = () => {
   };
 
   const statusLabel = (s: string) => STATUS_LABEL[s] ? (ar ? STATUS_LABEL[s].ar : STATUS_LABEL[s].en) : s;
+
+  const toggleStatus = (v: string) =>
+    setSelectedStatuses(prev => prev.includes(v) ? prev.filter(s => s !== v) : [...prev, v]);
+
+  const statusButtonLabel = () => {
+    if (selectedStatuses.length === 0) return ar ? 'كل الحالات' : 'All Statuses';
+    if (selectedStatuses.length === 1) return statusLabel(selectedStatuses[0]);
+    return ar ? `${selectedStatuses.length} حالات محددة` : `${selectedStatuses.length} selected`;
+  };
 
   const handleExportExcel = () => {
     const columns = [
@@ -215,16 +225,55 @@ export const ResignedInsuranceRenewals = () => {
           <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
           <Input placeholder={ar ? 'بحث بالاسم أو الكود...' : 'Search by name or code...'} value={search} onChange={e => setSearch(e.target.value)} className={cn("h-10", isRTL ? "pr-10" : "pl-10")} />
         </div>
-        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-          <SelectTrigger className="w-full sm:w-[180px] h-10">
-            <UserX className="h-4 w-4 text-muted-foreground shrink-0" />
-            <SelectValue placeholder={ar ? 'كل الحالات' : 'All Statuses'} />
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px] overflow-y-auto">
-            <SelectItem value="all">{ar ? 'كل الحالات' : 'All Statuses'}</SelectItem>
-            {RESIGNED_STATUSES.map(s => <SelectItem key={s} value={s}>{statusLabel(s)}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "h-10 w-full sm:w-[200px] justify-between gap-2 font-normal",
+                selectedStatuses.length > 0 && "border-primary bg-primary/5"
+              )}
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <ListFilter className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="truncate text-sm">{statusButtonLabel()}</span>
+              </span>
+              {selectedStatuses.length > 0 && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 min-w-[20px] justify-center">
+                  {selectedStatuses.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align={isRTL ? 'end' : 'start'}>
+            <div className="p-2 border-b flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">{ar ? 'الحالة' : 'Status'}</span>
+              {selectedStatuses.length > 0 && (
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedStatuses([])}>
+                  {ar ? 'مسح' : 'Clear'}
+                </Button>
+              )}
+            </div>
+            <div className="p-1">
+              {RESIGNED_STATUSES.map(s => {
+                const checked = selectedStatuses.includes(s);
+                return (
+                  <label
+                    key={s}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer hover:bg-accent text-sm",
+                      isRTL && "flex-row-reverse text-right"
+                    )}
+                  >
+                    <Checkbox checked={checked} onCheckedChange={() => toggleStatus(s)} />
+                    <Badge variant="outline" className="text-xs">{statusLabel(s)}</Badge>
+                    {checked && <Check className="w-3.5 h-3.5 text-primary ms-auto" />}
+                  </label>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
         <Select value={closedFilter} onValueChange={v => setClosedFilter(v as any)}>
           <SelectTrigger className="w-full sm:w-[180px] h-10">
             <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
