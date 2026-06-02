@@ -221,6 +221,15 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         setPermissions((prRes.data as PermissionRow[]) || []);
         setOvertimes((otRes.data as OvertimeRow[]) || []);
 
+        // Fetch official holidays in range
+        const { data: holData, error: holErr } = await supabase
+          .from('official_holidays')
+          .select('holiday_date,name_ar,name_en,station_ids')
+          .gte('holiday_date', startDate)
+          .lte('holiday_date', endDate);
+        if (holErr) console.warn('[DailyAttendanceReport] holidays fetch error', holErr);
+        setHolidays((holData as HolidayRow[]) || []);
+
         // Fetch raw stamp events (check-in/out scans) so we can show all stamps per day
         const stampsAcc: StampEvent[] = [];
         if (empIds.length) {
