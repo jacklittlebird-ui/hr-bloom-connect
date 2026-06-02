@@ -69,7 +69,7 @@ export const ResignedInsuranceRenewals = () => {
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
-  const [closedFilter, setClosedFilter] = useState<'all' | 'open' | 'closed'>('all');
+  const [closedFilter, setClosedFilter] = useState<'all' | 'open' | 'closed'>('open');
   const [stations, setStations] = useState<StationDept[]>([]);
   const [departments, setDepartments] = useState<StationDept[]>([]);
   const [editDialog, setEditDialog] = useState<ResignedEmployee | null>(null);
