@@ -24,8 +24,24 @@ interface PortalAttendanceRecord {
   workMinutes: number;
   holidayNameAr?: string;
   holidayNameEn?: string;
+  leaveType?: string;
+  permissionType?: string;
+  permissionFrom?: string | null;
+  permissionTo?: string | null;
+  missionLocation?: string;
   audit?: ClassifiedAttendance;
 }
+
+const LEAVE_LABEL_AR: Record<string, string> = {
+  annual: 'سنوية', sick: 'مرضية', emergency: 'عارضة', maternity: 'وضع',
+  unpaid: 'بدون أجر', hajj: 'حج', bereavement: 'وفاة', marriage: 'زواج',
+  study: 'دراسية', compensatory: 'تعويضية', other: 'أخرى',
+};
+const LEAVE_LABEL_EN: Record<string, string> = {
+  annual: 'Annual', sick: 'Sick', emergency: 'Emergency', maternity: 'Maternity',
+  unpaid: 'Unpaid', hajj: 'Hajj', bereavement: 'Bereavement', marriage: 'Marriage',
+  study: 'Study', compensatory: 'Compensatory', other: 'Other',
+};
 
 const formatTime = (ts: string | null): string | null => {
   if (!ts) return null;
