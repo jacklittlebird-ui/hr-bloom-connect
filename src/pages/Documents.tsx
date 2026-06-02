@@ -14,8 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Search, FileText, Download, Trash2, Edit, FolderOpen, File, Eye, Upload, Filter, ShieldAlert, CreditCard, Landmark, Briefcase, CalendarCheck, Users, MinusCircle, AlertTriangle, AlertCircle, CheckCircle2, Bell, RefreshCw, Clock } from 'lucide-react';
+import { Plus, Search, FileText, Download, Trash2, Edit, FolderOpen, File, Eye, Upload, Filter, ShieldAlert, CreditCard, Landmark, Briefcase, CalendarCheck, Users, MinusCircle, AlertTriangle, AlertCircle, CheckCircle2, Bell, RefreshCw, Clock, UserX } from 'lucide-react';
 import { InsuranceRenewals } from '@/components/documents/InsuranceRenewals';
+import { ResignedInsuranceRenewals } from '@/components/documents/ResignedInsuranceRenewals';
 import { NationalIdRenewals } from '@/components/documents/NationalIdRenewals';
 import { MissingBankData } from '@/components/documents/MissingBankData';
 import { MissingJobData } from '@/components/documents/MissingJobData';
@@ -62,7 +63,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents'>('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance'>('renewals');
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -124,6 +125,7 @@ const Documents = () => {
       title: { ar: 'التجديدات', en: 'Renewals' },
       items: [
         { key: 'renewals', ar: 'تجديد التأمين', en: 'Insurance', icon: ShieldAlert, statKey: 'renewals' },
+        { key: 'resignedInsurance', ar: 'الموظفين المستقيلين', en: 'Resigned Employees', icon: UserX },
         { key: 'nationalId', ar: 'الرقم القومي', en: 'National ID', icon: CreditCard, statKey: 'nationalId' },
       ],
     },
@@ -301,6 +303,8 @@ const Documents = () => {
 
         {activeMainTab === 'renewals' ? (
           <InsuranceRenewals />
+        ) : activeMainTab === 'resignedInsurance' ? (
+          <ResignedInsuranceRenewals />
         ) : activeMainTab === 'nationalId' ? (
           <NationalIdRenewals />
         ) : activeMainTab === 'bankData' ? (
