@@ -1194,6 +1194,19 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                                 </Fragment>
                               );
                             }
+                            // No attendance and no leave/mission, but it's an official holiday — show holiday cell.
+                            if (holiday) {
+                              return (
+                                <Fragment key={ci}>
+                                  <td colSpan={3} className={cn(baseCell, 'bg-rose-100 text-rose-800 font-semibold')} title={ar ? `عطلة رسمية: ${holiday.name_ar}` : `Official Holiday: ${holiday.name_en}`}>
+                                    <span className="inline-flex items-center justify-center gap-1">
+                                      <Star className="w-3.5 h-3.5" aria-hidden />
+                                      {ar ? 'عطلة رسمية' : 'Holiday'} — {ar ? holiday.name_ar : holiday.name_en}
+                                    </span>
+                                  </td>
+                                </Fragment>
+                              );
+                            }
                             // Permission/overtime without attendance record — render overlay row only.
                             if (overlayBadges.length > 0) {
                               return (
