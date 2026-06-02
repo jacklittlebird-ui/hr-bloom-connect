@@ -17,7 +17,8 @@ import { Edit, Search, Printer, Download, Building2, MapPin, UserX, CheckCircle2
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-const RESIGNED_STATUSES = ['inactive', 'suspended', 'absent', 'pending_hire', 'resigned', 'under_resignation'];
+const RESIGNED_STATUSES = ['inactive', 'suspended', 'absent', 'pending_hire', 'resigned', 'under_resignation'] as const;
+type ResignedStatus = typeof RESIGNED_STATUSES[number];
 
 const STATUS_LABEL: Record<string, { ar: string; en: string }> = {
   inactive: { ar: 'غير نشط', en: 'Inactive' },
