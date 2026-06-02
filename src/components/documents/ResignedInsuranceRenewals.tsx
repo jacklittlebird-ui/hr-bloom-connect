@@ -151,6 +151,15 @@ export const ResignedInsuranceRenewals = () => {
 
   const statusLabel = (s: string) => STATUS_LABEL[s] ? (ar ? STATUS_LABEL[s].ar : STATUS_LABEL[s].en) : s;
 
+  const toggleStatus = (v: string) =>
+    setSelectedStatuses(prev => prev.includes(v) ? prev.filter(s => s !== v) : [...prev, v]);
+
+  const statusButtonLabel = () => {
+    if (selectedStatuses.length === 0) return ar ? 'كل الحالات' : 'All Statuses';
+    if (selectedStatuses.length === 1) return statusLabel(selectedStatuses[0]);
+    return ar ? `${selectedStatuses.length} حالات محددة` : `${selectedStatuses.length} selected`;
+  };
+
   const handleExportExcel = () => {
     const columns = [
       { headerAr: 'الكود', headerEn: 'Code', key: 'code' },
