@@ -1505,6 +1505,66 @@ export type Database = {
           },
         ]
       }
+      non_recurring_bonuses: {
+        Row: {
+          amount: number
+          bank_account_number: string | null
+          bank_id_number: string | null
+          batch_id: string
+          bonus_month: string | null
+          created_at: string
+          description: string | null
+          employee_code: string
+          employee_id: string | null
+          employee_name: string | null
+          id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          amount?: number
+          bank_account_number?: string | null
+          bank_id_number?: string | null
+          batch_id?: string
+          bonus_month?: string | null
+          created_at?: string
+          description?: string | null
+          employee_code: string
+          employee_id?: string | null
+          employee_name?: string | null
+          id?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_account_number?: string | null
+          bank_id_number?: string | null
+          batch_id?: string
+          bonus_month?: string | null
+          created_at?: string
+          description?: string | null
+          employee_code?: string
+          employee_id?: string | null
+          employee_name?: string | null
+          id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "non_recurring_bonuses_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "non_recurring_bonuses_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
