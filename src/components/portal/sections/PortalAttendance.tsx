@@ -246,7 +246,7 @@ export const PortalAttendance = () => {
           date: iso,
           checkIn: null,
           checkOut: null,
-          status: isWeekend ? 'weekend' : (isFuture ? 'weekend' : 'absent'),
+          status: isWeekend ? 'weekend' : (isFuture ? 'weekend' : 'no-record'),
           workHours: 0,
           workMinutes: 0,
         } as any);
@@ -342,6 +342,7 @@ export const PortalAttendance = () => {
       'on-leave': { cls: 'bg-blue-100 text-blue-600 border-blue-300', ar: 'إجازة', en: 'On Leave' },
       mission: { cls: 'bg-purple-100 text-purple-600 border-purple-300', ar: 'مأمورية', en: 'Mission' },
       'auto-closed': { cls: 'bg-orange-100 text-orange-700 border-orange-300', ar: 'إغلاق بدون ختم', en: 'Closed without checkout' },
+      'no-record': { cls: 'bg-transparent text-muted-foreground border-transparent', ar: '—', en: '—' },
     };
     const m = map[s] || map.absent;
     return <Badge variant="outline" className={m.cls}>{ar ? m.ar : m.en}</Badge>;
