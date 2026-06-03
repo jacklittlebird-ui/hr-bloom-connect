@@ -460,6 +460,18 @@ const Leaves = () => {
     { key: `edit-perm-${data.id}` },
   );
 
+  const handleEditOvertime = (data: { id: string; date: string; hours: number; overtimeType: string; status: string; reason: string }) => runMutation(
+    () => supabase.from('overtime_requests').update({
+      date: data.date,
+      hours: data.hours,
+      overtime_type: data.overtimeType,
+      status: data.status,
+      reason: data.reason,
+    }).eq('id', data.id),
+    language === 'ar' ? 'تم تعديل العمل الإضافي بنجاح' : 'Overtime updated successfully',
+    { key: `edit-ot-${data.id}` },
+  );
+
   const resolveEmployeeUUID = async (employeeCode: string): Promise<string | null> => {
     const { data } = await supabase.from('employees').select('id').eq('employee_code', employeeCode).single();
     return data?.id || null;
@@ -572,7 +584,7 @@ const Leaves = () => {
           <TabsContent value="leaves"><LeaveRequestsList requests={filteredLeaves} onDelete={handleDeleteLeave} onEdit={handleEditLeave} /></TabsContent>
           <TabsContent value="permissions"><PermissionRequestsList requests={filteredPermissions} onDelete={handleDeletePermission} onEdit={handleEditPermission} /></TabsContent>
           <TabsContent value="missions"><MissionRequestsList requests={filteredMissions} onDelete={handleDeleteMission} /></TabsContent>
-          <TabsContent value="overtime"><OvertimeRequestsList requests={filteredOvertime} onDelete={handleDeleteOvertime} /></TabsContent>
+          <TabsContent value="overtime"><OvertimeRequestsList requests={filteredOvertime} onDelete={handleDeleteOvertime} onEdit={handleEditOvertime} /></TabsContent>
           <TabsContent value="new">
             <NewRequestForm onSubmitLeave={handleNewLeave} onSubmitPermission={handleNewPermission} onSubmitMission={handleNewMission} onSubmitOvertime={handleNewOvertime} />
           </TabsContent>
