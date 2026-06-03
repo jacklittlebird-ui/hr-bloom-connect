@@ -30,6 +30,7 @@ interface DetailRow {
   station: string;
   type: string;
   amount: number;
+  notes?: string;
   reference?: string;
 }
 
