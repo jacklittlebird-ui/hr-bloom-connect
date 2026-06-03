@@ -246,7 +246,7 @@ export const PortalAttendance = () => {
           date: iso,
           checkIn: null,
           checkOut: null,
-          status: isWeekend ? 'weekend' : (isFuture ? 'weekend' : 'absent'),
+          status: isWeekend ? 'weekend' : (isFuture ? 'weekend' : 'no-record'),
           workHours: 0,
           workMinutes: 0,
         } as any);
