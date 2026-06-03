@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Clock, CheckCircle, XCircle, PlusCircle, Trash2 } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, PlusCircle, Trash2, Pencil } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { OvertimeRequest } from '@/types/leaves';
 import { ExportButton } from './ExportButton';
