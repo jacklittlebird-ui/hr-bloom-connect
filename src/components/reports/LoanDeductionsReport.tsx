@@ -30,6 +30,7 @@ interface DetailRow {
   station: string;
   type: string;
   amount: number;
+  notes?: string;
   reference?: string;
 }
 
@@ -53,12 +54,39 @@ export const LoanDeductionsReport = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [stations, setStations] = useState<{ id: string; code: string; name_ar: string; name_en: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loanNotesByEmp, setLoanNotesByEmp] = useState<Record<string, string>>({});
+  const [advanceNotesByEmpMonth, setAdvanceNotesByEmpMonth] = useState<Record<string, string>>({});
 
   useEffect(() => {
     supabase.from('stations').select('id,code,name_ar,name_en').then(({ data }) => {
       if (data) setStations(data as any);
     });
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: loans }, { data: advances }] = await Promise.all([
+        supabase.from('loans').select('employee_id, reason, start_date'),
+        supabase.from('advances').select('employee_id, reason, deduction_month'),
+      ]);
+      const lMap: Record<string, string> = {};
+      (loans || []).forEach((l: any) => {
+        if (!l.reason) return;
+        // Keep latest by start_date
+        const existing = lMap[l.employee_id];
+        if (!existing) lMap[l.employee_id] = l.reason;
+      });
+      const aMap: Record<string, string> = {};
+      (advances || []).forEach((a: any) => {
+        if (!a.reason || !a.deduction_month) return;
+        const month = String(a.deduction_month).slice(0, 7); // YYYY-MM
+        const key = `${a.employee_id}|${month}`;
+        aMap[key] = a.reason;
+      });
+      setLoanNotesByEmp(lMap);
+      setAdvanceNotesByEmpMonth(aMap);
+    })();
+  }, [year]);
 
   useEffect(() => {
     const load = async () => {
@@ -142,6 +170,7 @@ export const LoanDeductionsReport = () => {
     if (selectedMonth === 'all') return [];
     const out: DetailRow[] = [];
     const month = String(Number(selectedMonth) + 1).padStart(2, '0');
+    const monthKey = `${year}-${month}`;
     filteredPayrollEntries.filter(entry => entry.month === month).forEach((entry) => {
       if ((Number(entry.loanPayment) || 0) > 0) {
         out.push({
@@ -150,6 +179,7 @@ export const LoanDeductionsReport = () => {
           station: stationName(entry.stationLocation),
           type: isRTL ? 'قسط قرض' : 'Loan Installment',
           amount: Number(entry.loanPayment) || 0,
+          notes: loanNotesByEmp[entry.employeeId] || '',
         });
       }
       if ((Number(entry.advanceAmount) || 0) > 0) {
@@ -159,6 +189,7 @@ export const LoanDeductionsReport = () => {
           station: stationName(entry.stationLocation),
           type: isRTL ? 'سلفة' : 'Advance',
           amount: Number(entry.advanceAmount) || 0,
+          notes: advanceNotesByEmpMonth[`${entry.employeeId}|${monthKey}`] || '',
         });
       }
     });
@@ -168,7 +199,7 @@ export const LoanDeductionsReport = () => {
       if (s !== 0) return s;
       return a.employeeName.localeCompare(b.employeeName, locale);
     });
-  }, [selectedMonth, filteredPayrollEntries, isRTL, stationsByCode]);
+  }, [selectedMonth, filteredPayrollEntries, isRTL, stationsByCode, loanNotesByEmp, advanceNotesByEmpMonth, year]);
 
   // Per-employee yearly aggregate (used when no specific month is selected)
   const employeeYearlyRows = useMemo(() => {
@@ -225,6 +256,7 @@ export const LoanDeductionsReport = () => {
     { header: isRTL ? 'المحطة' : 'Station', key: 'station' },
     { header: isRTL ? 'نوع الخصم' : 'Type', key: 'type' },
     { header: isRTL ? 'المبلغ' : 'Amount', key: 'amount', numeric: true },
+    { header: isRTL ? 'ملاحظات' : 'Notes', key: 'notes' },
   ];
 
   const summaryCards = [
@@ -423,11 +455,13 @@ export const LoanDeductionsReport = () => {
                       <TableCell>{r.station}</TableCell>
                       <TableCell>{r.type}</TableCell>
                       <TableCell className="font-mono">{r.amount.toLocaleString()}</TableCell>
+                      <TableCell className="whitespace-pre-wrap break-words max-w-xs">{r.notes || '-'}</TableCell>
                     </TableRow>
                   ))}
                   <TableRow className="bg-muted/50 font-bold">
                     <TableCell colSpan={4}>{isRTL ? 'الإجمالي' : 'Total'}</TableCell>
                     <TableCell className="font-mono">{detailRows.reduce((s, r) => s + r.amount, 0).toLocaleString()}</TableCell>
+                    <TableCell />
                   </TableRow>
                 </TableBody>
               </Table>
