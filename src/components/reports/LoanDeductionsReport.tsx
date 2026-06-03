@@ -199,7 +199,7 @@ export const LoanDeductionsReport = () => {
       if (s !== 0) return s;
       return a.employeeName.localeCompare(b.employeeName, locale);
     });
-  }, [selectedMonth, filteredPayrollEntries, isRTL, stationsByCode]);
+  }, [selectedMonth, filteredPayrollEntries, isRTL, stationsByCode, loanNotesByEmp, advanceNotesByEmpMonth, year]);
 
   // Per-employee yearly aggregate (used when no specific month is selected)
   const employeeYearlyRows = useMemo(() => {
