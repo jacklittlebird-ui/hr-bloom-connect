@@ -455,11 +455,13 @@ export const LoanDeductionsReport = () => {
                       <TableCell>{r.station}</TableCell>
                       <TableCell>{r.type}</TableCell>
                       <TableCell className="font-mono">{r.amount.toLocaleString()}</TableCell>
+                      <TableCell className="whitespace-pre-wrap break-words max-w-xs">{r.notes || '-'}</TableCell>
                     </TableRow>
                   ))}
                   <TableRow className="bg-muted/50 font-bold">
                     <TableCell colSpan={4}>{isRTL ? 'الإجمالي' : 'Total'}</TableCell>
                     <TableCell className="font-mono">{detailRows.reduce((s, r) => s + r.amount, 0).toLocaleString()}</TableCell>
+                    <TableCell />
                   </TableRow>
                 </TableBody>
               </Table>
