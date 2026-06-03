@@ -256,6 +256,7 @@ export const LoanDeductionsReport = () => {
     { header: isRTL ? 'المحطة' : 'Station', key: 'station' },
     { header: isRTL ? 'نوع الخصم' : 'Type', key: 'type' },
     { header: isRTL ? 'المبلغ' : 'Amount', key: 'amount', numeric: true },
+    { header: isRTL ? 'ملاحظات' : 'Notes', key: 'notes' },
   ];
 
   const summaryCards = [
