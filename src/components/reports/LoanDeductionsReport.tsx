@@ -170,6 +170,7 @@ export const LoanDeductionsReport = () => {
     if (selectedMonth === 'all') return [];
     const out: DetailRow[] = [];
     const month = String(Number(selectedMonth) + 1).padStart(2, '0');
+    const monthKey = `${year}-${month}`;
     filteredPayrollEntries.filter(entry => entry.month === month).forEach((entry) => {
       if ((Number(entry.loanPayment) || 0) > 0) {
         out.push({
@@ -178,6 +179,7 @@ export const LoanDeductionsReport = () => {
           station: stationName(entry.stationLocation),
           type: isRTL ? 'قسط قرض' : 'Loan Installment',
           amount: Number(entry.loanPayment) || 0,
+          notes: loanNotesByEmp[entry.employeeId] || '',
         });
       }
       if ((Number(entry.advanceAmount) || 0) > 0) {
@@ -187,6 +189,7 @@ export const LoanDeductionsReport = () => {
           station: stationName(entry.stationLocation),
           type: isRTL ? 'سلفة' : 'Advance',
           amount: Number(entry.advanceAmount) || 0,
+          notes: advanceNotesByEmpMonth[`${entry.employeeId}|${monthKey}`] || '',
         });
       }
     });
