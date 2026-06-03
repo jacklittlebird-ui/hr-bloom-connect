@@ -54,12 +54,39 @@ export const LoanDeductionsReport = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [stations, setStations] = useState<{ id: string; code: string; name_ar: string; name_en: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loanNotesByEmp, setLoanNotesByEmp] = useState<Record<string, string>>({});
+  const [advanceNotesByEmpMonth, setAdvanceNotesByEmpMonth] = useState<Record<string, string>>({});
 
   useEffect(() => {
     supabase.from('stations').select('id,code,name_ar,name_en').then(({ data }) => {
       if (data) setStations(data as any);
     });
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: loans }, { data: advances }] = await Promise.all([
+        supabase.from('loans').select('employee_id, reason, start_date'),
+        supabase.from('advances').select('employee_id, reason, deduction_month'),
+      ]);
+      const lMap: Record<string, string> = {};
+      (loans || []).forEach((l: any) => {
+        if (!l.reason) return;
+        // Keep latest by start_date
+        const existing = lMap[l.employee_id];
+        if (!existing) lMap[l.employee_id] = l.reason;
+      });
+      const aMap: Record<string, string> = {};
+      (advances || []).forEach((a: any) => {
+        if (!a.reason || !a.deduction_month) return;
+        const month = String(a.deduction_month).slice(0, 7); // YYYY-MM
+        const key = `${a.employee_id}|${month}`;
+        aMap[key] = a.reason;
+      });
+      setLoanNotesByEmp(lMap);
+      setAdvanceNotesByEmpMonth(aMap);
+    })();
+  }, [year]);
 
   useEffect(() => {
     const load = async () => {
