@@ -2091,6 +2091,71 @@ const StationManagerPortal = () => {
                     </CardContent>
                   </Card>
 
+                  {/* Per-employee Quarterly Bonus Summary */}
+                  {newEvalSelectedEmp && (() => {
+                    const empReviews = stationReviews
+                      .filter(r => r.employeeId === newEvalSelectedEmp && r.bonusPercentage != null)
+                      .sort((a, b) => `${a.year}-${a.quarter}`.localeCompare(`${b.year}-${b.quarter}`));
+                    const qs = ['Q1','Q2','Q3','Q4'];
+                    const yr = newEvalYear || String(new Date().getFullYear());
+                    const perQuarter = qs.map(q => {
+                      const rs = empReviews.filter(r => r.quarter === q && String(r.year) === String(yr));
+                      const avg = rs.length ? rs.reduce((s, r) => s + (r.bonusPercentage || 0), 0) / rs.length : 0;
+                      return { q, avg: Math.round(avg * 10) / 10, count: rs.length };
+                    });
+                    const overallAvg = empReviews.length
+                      ? Math.round((empReviews.reduce((s, r) => s + (r.bonusPercentage || 0), 0) / empReviews.length) * 10) / 10
+                      : 0;
+                    return (
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-primary" />
+                            {t('ملخص نسبة المكافأة للموظف', "Employee Bonus % Summary")}
+                            <Badge variant="secondary" className="ms-2">{t('متوسط عام', 'Overall Avg')}: {overallAvg}%</Badge>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 space-y-3">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {perQuarter.map(p => (
+                              <div key={p.q} className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+                                <div className="text-xs text-muted-foreground mb-1">{p.q} {yr}</div>
+                                <div className="text-xl font-bold text-primary">{p.count ? `${p.avg}%` : '-'}</div>
+                                <div className="text-[10px] text-muted-foreground mt-1">{p.count} {t('تقييم', 'review(s)')}</div>
+                              </div>
+                            ))}
+                          </div>
+                          {empReviews.length > 0 ? (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs">
+                                <thead className="bg-muted/40">
+                                  <tr>
+                                    <th className="text-start p-2">{t('الربع', 'Quarter')}</th>
+                                    <th className="text-center p-2">{t('السنة', 'Year')}</th>
+                                    <th className="text-center p-2">{t('الدرجة', 'Score')}</th>
+                                    <th className="text-center p-2">{t('المكافأة', 'Bonus')}</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {empReviews.slice(-8).map(r => (
+                                    <tr key={r.id} className="border-t border-border/40">
+                                      <td className="p-2">{r.quarter}</td>
+                                      <td className="p-2 text-center">{r.year}</td>
+                                      <td className="p-2 text-center font-semibold">{(r.score || 0).toFixed(1)}</td>
+                                      <td className="p-2 text-center"><span className="inline-block px-2 py-0.5 rounded-full bg-[hsl(var(--stat-green))]/15 text-[hsl(var(--stat-green))] font-bold">{r.bonusPercentage}%</span></td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div className="text-center text-xs text-muted-foreground py-2">{t('لا توجد بيانات مكافآت سابقة لهذا الموظف', 'No prior bonus data for this employee')}</div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })()}
+
                   {/* Comments */}
                   <Card>
                     <CardContent className="p-4 space-y-4">
