@@ -1321,6 +1321,7 @@ const StationManagerPortal = () => {
               </TabsList>
             </div>
             <TabsList className="hidden lg:flex flex-col items-stretch gap-1 bg-transparent h-auto p-0 w-full">
+              {canSee('dashboard') && (<TabsTrigger value="dashboard" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><BarChart3 className="h-5 w-5 shrink-0" />{t('لوحة التحكم', 'Dashboard')}</TabsTrigger>)}
               {canSee('employees') && (<TabsTrigger value="employees" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><Users className="h-5 w-5 shrink-0" />{t('الموظفين', 'Employees')}</TabsTrigger>)}
               {canSee('attendance') && (<TabsTrigger value="attendance" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><CalendarDays className="h-5 w-5 shrink-0" />{t('الحضور', 'Attendance')}</TabsTrigger>)}
               {canSee('leaveCalendar') && (<TabsTrigger value="leaveCalendar" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><CalendarIcon className="h-5 w-5 shrink-0" />{t('تقويم الإجازات', 'Leave Calendar')}</TabsTrigger>)}
