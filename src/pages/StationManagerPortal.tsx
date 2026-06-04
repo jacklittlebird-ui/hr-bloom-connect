@@ -1878,8 +1878,9 @@ const StationManagerPortal = () => {
 
               {/* New Review */}
               <TabsContent value="newReview">
-                <div className="space-y-4">
-                  {/* Employee selection with green/gray indicators */}
+                <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-4 items-start">
+                  {/* Sidebar: Employee selection */}
+                  <aside className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-base">
@@ -1888,7 +1889,7 @@ const StationManagerPortal = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">{t('القسم', 'Department')}</Label>
                           <Select value={newEvalDeptFilter} onValueChange={setNewEvalDeptFilter}>
@@ -2000,6 +2001,10 @@ const StationManagerPortal = () => {
                       })()}
                     </CardContent>
                   </Card>
+                  </aside>
+
+                  {/* Right column: Evaluation content */}
+                  <div className="space-y-4 min-w-0">
 
                   {/* Quarter context: hours per month + violations */}
                   {newEvalSelectedEmp && newEvalYear && newEvalQuarter && (
@@ -2279,6 +2284,7 @@ const StationManagerPortal = () => {
                       </div>
                     </CardContent>
                   </Card>
+                  </div>
                 </div>
               </TabsContent>
 
