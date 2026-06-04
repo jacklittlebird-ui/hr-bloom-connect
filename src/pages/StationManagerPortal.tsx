@@ -601,6 +601,11 @@ const StationManagerPortal = () => {
   }, [editEvalOverallScore]);
 
   const handleSaveEditEval = (status: 'draft' | 'submitted') => {
+    const bonusCheck = validateBonusPercentage(editEvalBonusPercentage);
+    if (!bonusCheck.valid) {
+      toast({ title: t('نسبة مكافأة غير صحيحة', 'Invalid bonus percentage'), description: bonusCheck.message, variant: 'destructive' });
+      return;
+    }
     updateReview(editEvalId, {
       score: editEvalOverallScore,
       status,
