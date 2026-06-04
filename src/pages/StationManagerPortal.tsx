@@ -2263,13 +2263,15 @@ const StationManagerPortal = () => {
                           <Textarea value={evalImprovements} onChange={e => setEvalImprovements(e.target.value)} className="min-h-[80px]" />
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label className="flex items-center gap-1.5"><Target className="w-4 h-4 text-primary" />{t('أهداف الربع القادم', 'Next Quarter Goals')}</Label>
-                        <Textarea value={evalGoals} onChange={e => setEvalGoals(e.target.value)} className="min-h-[60px]" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4 text-primary" />{t('ملاحظات المدير', 'Manager Comments')}</Label>
-                        <Textarea value={evalComments} onChange={e => setEvalComments(e.target.value)} className="min-h-[60px]" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1.5"><Target className="w-4 h-4 text-primary" />{t('أهداف الربع القادم', 'Next Quarter Goals')}</Label>
+                          <Textarea value={evalGoals} onChange={e => setEvalGoals(e.target.value)} className="min-h-[80px]" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-1.5"><MessageSquare className="w-4 h-4 text-primary" />{t('ملاحظات المدير', 'Manager Comments')}</Label>
+                          <Textarea value={evalComments} onChange={e => setEvalComments(e.target.value)} className="min-h-[80px]" />
+                        </div>
                       </div>
                       <div className="flex gap-2 pt-2">
                         <Button variant="outline" onClick={() => handleNewEvalSave('draft')} className="gap-1.5"><Save className="w-4 h-4" />{t('حفظ كمسودة', 'Save Draft')}</Button>
