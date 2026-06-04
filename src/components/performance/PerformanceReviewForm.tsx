@@ -717,7 +717,29 @@ export const PerformanceReviewForm = () => {
               : 'You can type the percentage manually or select from the dropdown (0% to 100%).'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
+          {/* Suggested bonus percentage */}
+          <div className={cn(
+            "flex items-center justify-between p-4 rounded-lg bg-stat-green/5 border border-stat-green/20",
+            isRTL && "flex-row-reverse"
+          )}>
+            <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Lightbulb className="w-5 h-5 text-stat-green" />
+              <span className="font-semibold text-base">{ar ? 'نسبة المكافأة المقترحة' : 'Suggested Bonus Percentage'}</span>
+            </div>
+            <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+              <span className="font-bold text-2xl text-stat-green">{suggestedBonusPercentage}%</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setBonusPercentage(String(suggestedBonusPercentage))}
+                className="text-xs"
+              >
+                {ar ? 'استخدام' : 'Use'}
+              </Button>
+            </div>
+          </div>
+
           <Popover open={bonusOpen} onOpenChange={setBonusOpen}>
             <PopoverTrigger asChild>
               <Button
