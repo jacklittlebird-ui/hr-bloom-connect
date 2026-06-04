@@ -2100,6 +2100,7 @@ const StationManagerPortal = () => {
               })()}
             </TabsContent>
           )}
+          </div>
         </Tabs>
         </div>
       </main>
