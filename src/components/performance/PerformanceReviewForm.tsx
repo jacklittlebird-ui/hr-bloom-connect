@@ -334,6 +334,8 @@ export const PerformanceReviewForm = () => {
     setImprovements('');
     setGoals('');
     setManagerComments('');
+    setBonusPercentage('');
+    setBonusSearch('');
   };
 
   const saveOrUpdate = async (status: 'draft' | 'submitted' | 'approved') => {
