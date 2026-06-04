@@ -472,6 +472,22 @@ const StationManagerPortal = () => {
     setEvalBonusPercentage('');
   };
 
+  // Validate bonus percentage (0-100, numeric, optional empty)
+  const validateBonusPercentage = (raw: string): { valid: boolean; value?: number; message?: string } => {
+    if (raw === '' || raw == null) return { valid: true, value: undefined };
+    const trimmed = String(raw).trim().replace('%', '');
+    if (!/^-?\d+(\.\d+)?$/.test(trimmed)) {
+      return { valid: false, message: t('نسبة المكافأة يجب أن تكون رقمًا صحيحًا', 'Bonus percentage must be a valid number') };
+    }
+    const n = Number(trimmed);
+    if (isNaN(n)) {
+      return { valid: false, message: t('نسبة المكافأة غير صالحة', 'Invalid bonus percentage') };
+    }
+    if (n < 0) return { valid: false, message: t('لا يمكن أن تكون نسبة المكافأة أقل من 0%', 'Bonus percentage cannot be less than 0%') };
+    if (n > 100) return { valid: false, message: t('لا يمكن أن تتجاوز نسبة المكافأة 100%', 'Bonus percentage cannot exceed 100%') };
+    return { valid: true, value: n };
+  };
+
   const handleAddEvaluation = (status: 'draft' | 'submitted') => {
     if (!evalEmployeeId || !evalYear || !evalQuarter) {
       toast({ title: t('أكمل البيانات المطلوبة', 'Complete required fields'), variant: 'destructive' });
