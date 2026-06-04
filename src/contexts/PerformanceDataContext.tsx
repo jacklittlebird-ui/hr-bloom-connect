@@ -27,7 +27,9 @@ export interface PerformanceReview {
   goals?: string;
   managerComments?: string;
   criteria?: CriteriaItem[];
+  bonusPercentage?: number;
 }
+
 
 export const defaultCriteria: CriteriaItem[] = [
   { name: 'جودة العمل', nameEn: 'Work Quality', score: 3, weight: 25 },
