@@ -24,7 +24,7 @@ interface EmployeeForId {
   stations?: { name_en: string } | null;
 }
 
-const EMPLOYEE_CARD_SELECT = 'id, employee_code, name_en, job_title_en, hire_date, national_id, department_id, station_id';
+const EMPLOYEE_CARD_SELECT = 'id, employee_code, name_en, job_title_en, hire_date, national_id, department_id, station_id, avatar';
 
 const BRAND_RED = '#E30613';
 const BRAND_BLUE = '#1E3A8A';
@@ -374,7 +374,7 @@ export const EmployeeIdCards = ({ filterEmployeeId, allowedStationIds }: { filte
         const stationMap = new Map((stationRes.data || []).map(s => [s.id, s]));
         const rows = (empRes.data as any[]).map((emp) => ({
           ...emp,
-          avatar: null,
+          avatar: emp.avatar || null,
           departments: deptMap.get(emp.department_id) ? { name_en: deptMap.get(emp.department_id)!.name_en } : null,
           stations: stationMap.get(emp.station_id) ? { name_en: stationMap.get(emp.station_id)!.name_en } : null,
         })) as EmployeeForId[];
