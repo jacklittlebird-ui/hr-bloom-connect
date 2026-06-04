@@ -90,7 +90,7 @@ export const PerformanceReviewForm = () => {
   const [saving, setSaving] = useState<null | 'draft' | 'submitted' | 'approved'>(null);
   const [bonusOpen, setBonusOpen] = useState(false);
   const [bonusSearch, setBonusSearch] = useState('');
-  const BONUS_OPTIONS = Array.from({ length: 21 }, (_, i) => i * 5);
+  const BONUS_OPTIONS = Array.from({ length: 41 }, (_, i) => i * 2.5);
 
   // Quarter context: monthly work hours + violations (penalties)
   interface QuarterViolation {
