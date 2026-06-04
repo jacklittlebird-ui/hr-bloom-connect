@@ -818,10 +818,12 @@ const StationManagerPortal = () => {
             .eq('employee_id', newEvalSelectedEmp).gte('date', startDate).lte('date', endDate),
         ]);
         if (cancelled) return;
-        const hoursByMonth: Record<string, number> = {};
+        const hoursByMonth: Record<string, { hours: number; count: number }> = {};
         (attRes.data || []).forEach((r: any) => {
           const m = (r.date as string).slice(5, 7);
-          hoursByMonth[m] = (hoursByMonth[m] || 0) + Number(r.work_hours || 0);
+          if (!hoursByMonth[m]) hoursByMonth[m] = { hours: 0, count: 0 };
+          hoursByMonth[m].hours += Number(r.work_hours || 0);
+          hoursByMonth[m].count += 1;
         });
         const violByMonth: Record<string, QuarterViolation[]> = {};
         (violRes.data || []).forEach((v: any) => {
