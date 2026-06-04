@@ -132,6 +132,7 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
       goals: review.goals || null,
       manager_comments: review.managerComments || null,
       criteria: review.criteria ? JSON.parse(JSON.stringify(review.criteria)) : null,
+      bonus_percentage: review.bonusPercentage ?? null,
     });
     if (error) { console.error('addReview error:', error); throw error; }
     invalidateCache('performance_');
