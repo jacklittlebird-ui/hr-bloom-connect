@@ -152,6 +152,7 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
     if (updates.goals !== undefined) payload.goals = updates.goals;
     if (updates.managerComments !== undefined) payload.manager_comments = updates.managerComments;
     if (updates.criteria !== undefined) payload.criteria = JSON.parse(JSON.stringify(updates.criteria));
+    if (updates.bonusPercentage !== undefined) payload.bonus_percentage = updates.bonusPercentage ?? null;
     if (updates.employeeId !== undefined) payload.employee_id = updates.employeeId;
 
     const { error } = await supabase.from('performance_reviews').update(payload).eq('id', id);
