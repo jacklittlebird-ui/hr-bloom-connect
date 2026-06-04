@@ -28,7 +28,7 @@ import { usePreventPullToRefresh } from '@/hooks/usePreventPullToRefresh';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
-import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car, Loader2, IdCard } from 'lucide-react';
+import { Users, Star, AlertTriangle, LogOut, Globe, MapPin, Target, TrendingUp, Lightbulb, MessageSquare, Save, Send, Plus, Trash2, Search, Filter, Pencil, Clock, UserCheck, UserX, FileText, ShieldCheck, Building2, BarChart3, CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, ChevronsUpDown, Check, RefreshCw, CalendarDays, LogIn, LogOut as LogOutIcon, ClipboardCheck, Calendar as CalendarIcon, Shirt, Car, Loader2, IdCard, Download, FileSpreadsheet } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from 'recharts';
 
@@ -472,9 +472,30 @@ const StationManagerPortal = () => {
     setEvalBonusPercentage('');
   };
 
+  // Validate bonus percentage (0-100, numeric, optional empty)
+  const validateBonusPercentage = (raw: string): { valid: boolean; value?: number; message?: string } => {
+    if (raw === '' || raw == null) return { valid: true, value: undefined };
+    const trimmed = String(raw).trim().replace('%', '');
+    if (!/^-?\d+(\.\d+)?$/.test(trimmed)) {
+      return { valid: false, message: t('نسبة المكافأة يجب أن تكون رقمًا صحيحًا', 'Bonus percentage must be a valid number') };
+    }
+    const n = Number(trimmed);
+    if (isNaN(n)) {
+      return { valid: false, message: t('نسبة المكافأة غير صالحة', 'Invalid bonus percentage') };
+    }
+    if (n < 0) return { valid: false, message: t('لا يمكن أن تكون نسبة المكافأة أقل من 0%', 'Bonus percentage cannot be less than 0%') };
+    if (n > 100) return { valid: false, message: t('لا يمكن أن تتجاوز نسبة المكافأة 100%', 'Bonus percentage cannot exceed 100%') };
+    return { valid: true, value: n };
+  };
+
   const handleAddEvaluation = (status: 'draft' | 'submitted') => {
     if (!evalEmployeeId || !evalYear || !evalQuarter) {
       toast({ title: t('أكمل البيانات المطلوبة', 'Complete required fields'), variant: 'destructive' });
+      return;
+    }
+    const bonusCheck = validateBonusPercentage(evalBonusPercentage);
+    if (!bonusCheck.valid) {
+      toast({ title: t('نسبة مكافأة غير صحيحة', 'Invalid bonus percentage'), description: bonusCheck.message, variant: 'destructive' });
       return;
     }
     const emp = stationEmployees.find(e => e.id === evalEmployeeId);
@@ -580,6 +601,11 @@ const StationManagerPortal = () => {
   }, [editEvalOverallScore]);
 
   const handleSaveEditEval = (status: 'draft' | 'submitted') => {
+    const bonusCheck = validateBonusPercentage(editEvalBonusPercentage);
+    if (!bonusCheck.valid) {
+      toast({ title: t('نسبة مكافأة غير صحيحة', 'Invalid bonus percentage'), description: bonusCheck.message, variant: 'destructive' });
+      return;
+    }
     updateReview(editEvalId, {
       score: editEvalOverallScore,
       status,
@@ -818,6 +844,11 @@ const StationManagerPortal = () => {
   const handleNewEvalSave = async (status: 'draft' | 'submitted') => {
     if (!newEvalSelectedEmp || !newEvalYear || !newEvalQuarter) {
       toast({ title: t('أكمل البيانات المطلوبة', 'Complete required fields'), variant: 'destructive' });
+      return;
+    }
+    const bonusCheck = validateBonusPercentage(evalBonusPercentage);
+    if (!bonusCheck.valid) {
+      toast({ title: t('نسبة مكافأة غير صحيحة', 'Invalid bonus percentage'), description: bonusCheck.message, variant: 'destructive' });
       return;
     }
     const emp = stationEmployees.find(e => e.id === newEvalSelectedEmp);
@@ -1367,6 +1398,97 @@ const StationManagerPortal = () => {
           </Card>
         </div>
         {/* Bonus Percentage linked to Quarterly Evaluations */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-2">
+          <div className="text-sm font-semibold flex items-center gap-2">
+            <Star className="w-4 h-4 text-primary" />
+            {t('تقرير المكافآت', 'Bonus Report')}
+            <Badge variant="outline" className="font-normal">{dashboardQuarter || t('كل الأرباع', 'All quarters')} · {dashboardYear || ''}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => {
+                const rows = stationReviews.filter(r =>
+                  (!dashboardYear || String(r.year) === String(dashboardYear)) &&
+                  (!dashboardQuarter || r.quarter === dashboardQuarter) &&
+                  r.bonusPercentage != null
+                );
+                if (rows.length === 0) {
+                  toast({ title: t('لا توجد بيانات للتصدير', 'No data to export'), variant: 'destructive' });
+                  return;
+                }
+                const headers = ['Employee','Department','Station','Quarter','Year','Score','Bonus %','Status','Review Date'];
+                const csvRows = [headers.join(',')];
+                rows.forEach(r => {
+                  const emp = stationEmployees.find(e => e.id === r.employeeId);
+                  const name = (emp?.nameAr || emp?.nameEn || r.employeeName || '').replace(/"/g, '""');
+                  const dept = (r.department || '').replace(/"/g, '""');
+                  const station = (r.station || user?.station || '').replace(/"/g, '""');
+                  csvRows.push([
+                    `"${name}"`, `"${dept}"`, `"${station}"`,
+                    r.quarter, r.year, (r.score || 0).toFixed(2),
+                    r.bonusPercentage, r.status || '', r.reviewDate || ''
+                  ].join(','));
+                });
+                const csv = '\uFEFF' + csvRows.join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bonus_report_${dashboardQuarter || 'all'}_${dashboardYear || 'all'}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast({ title: t('تم تصدير CSV', 'CSV exported') });
+              }}
+            >
+              <FileSpreadsheet className="w-4 h-4" /> CSV
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={async () => {
+                const rows = stationReviews.filter(r =>
+                  (!dashboardYear || String(r.year) === String(dashboardYear)) &&
+                  (!dashboardQuarter || r.quarter === dashboardQuarter) &&
+                  r.bonusPercentage != null
+                );
+                if (rows.length === 0) {
+                  toast({ title: t('لا توجد بيانات للتصدير', 'No data to export'), variant: 'destructive' });
+                  return;
+                }
+                const { default: jsPDF } = await import('jspdf');
+                const { default: autoTable } = await import('jspdf-autotable');
+                const doc = new jsPDF({ orientation: 'landscape' });
+                doc.setFontSize(14);
+                doc.text(`Bonus Report - ${dashboardQuarter || 'All'} ${dashboardYear || ''}`, 14, 14);
+                doc.setFontSize(10);
+                doc.text(`Station/Area: ${user?.station || '-'}    Generated: ${new Date().toLocaleString()}`, 14, 20);
+                const body = rows.map(r => {
+                  const emp = stationEmployees.find(e => e.id === r.employeeId);
+                  const name = emp?.nameEn || emp?.nameAr || r.employeeName || '-';
+                  return [name, r.department || '-', r.station || user?.station || '-', r.quarter, String(r.year), (r.score || 0).toFixed(2), `${r.bonusPercentage}%`, r.status || '-'];
+                });
+                const avg = Math.round((rows.reduce((s, r) => s + (r.bonusPercentage || 0), 0) / rows.length) * 10) / 10;
+                autoTable(doc, {
+                  startY: 26,
+                  head: [['Employee','Department','Station','Quarter','Year','Score','Bonus %','Status']],
+                  body,
+                  styles: { fontSize: 9 },
+                  headStyles: { fillColor: [37, 99, 235] },
+                  foot: [['', '', '', '', '', 'Average', `${avg}%`, '']],
+                  footStyles: { fillColor: [241, 245, 249], textColor: 20, fontStyle: 'bold' },
+                });
+                doc.save(`bonus_report_${dashboardQuarter || 'all'}_${dashboardYear || 'all'}.pdf`);
+                toast({ title: t('تم تصدير PDF', 'PDF exported') });
+              }}
+            >
+              <Download className="w-4 h-4" /> PDF
+            </Button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" />{t('متوسط نسبة المكافأة لكل ربع', 'Avg Bonus % per Quarter')}</CardTitle></CardHeader>
@@ -2059,6 +2181,71 @@ const StationManagerPortal = () => {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Per-employee Quarterly Bonus Summary */}
+                  {newEvalSelectedEmp && (() => {
+                    const empReviews = stationReviews
+                      .filter(r => r.employeeId === newEvalSelectedEmp && r.bonusPercentage != null)
+                      .sort((a, b) => `${a.year}-${a.quarter}`.localeCompare(`${b.year}-${b.quarter}`));
+                    const qs = ['Q1','Q2','Q3','Q4'];
+                    const yr = newEvalYear || String(new Date().getFullYear());
+                    const perQuarter = qs.map(q => {
+                      const rs = empReviews.filter(r => r.quarter === q && String(r.year) === String(yr));
+                      const avg = rs.length ? rs.reduce((s, r) => s + (r.bonusPercentage || 0), 0) / rs.length : 0;
+                      return { q, avg: Math.round(avg * 10) / 10, count: rs.length };
+                    });
+                    const overallAvg = empReviews.length
+                      ? Math.round((empReviews.reduce((s, r) => s + (r.bonusPercentage || 0), 0) / empReviews.length) * 10) / 10
+                      : 0;
+                    return (
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-primary" />
+                            {t('ملخص نسبة المكافأة للموظف', "Employee Bonus % Summary")}
+                            <Badge variant="secondary" className="ms-2">{t('متوسط عام', 'Overall Avg')}: {overallAvg}%</Badge>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 space-y-3">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {perQuarter.map(p => (
+                              <div key={p.q} className="rounded-lg border border-border bg-muted/30 p-3 text-center">
+                                <div className="text-xs text-muted-foreground mb-1">{p.q} {yr}</div>
+                                <div className="text-xl font-bold text-primary">{p.count ? `${p.avg}%` : '-'}</div>
+                                <div className="text-[10px] text-muted-foreground mt-1">{p.count} {t('تقييم', 'review(s)')}</div>
+                              </div>
+                            ))}
+                          </div>
+                          {empReviews.length > 0 ? (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs">
+                                <thead className="bg-muted/40">
+                                  <tr>
+                                    <th className="text-start p-2">{t('الربع', 'Quarter')}</th>
+                                    <th className="text-center p-2">{t('السنة', 'Year')}</th>
+                                    <th className="text-center p-2">{t('الدرجة', 'Score')}</th>
+                                    <th className="text-center p-2">{t('المكافأة', 'Bonus')}</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {empReviews.slice(-8).map(r => (
+                                    <tr key={r.id} className="border-t border-border/40">
+                                      <td className="p-2">{r.quarter}</td>
+                                      <td className="p-2 text-center">{r.year}</td>
+                                      <td className="p-2 text-center font-semibold">{(r.score || 0).toFixed(1)}</td>
+                                      <td className="p-2 text-center"><span className="inline-block px-2 py-0.5 rounded-full bg-[hsl(var(--stat-green))]/15 text-[hsl(var(--stat-green))] font-bold">{r.bonusPercentage}%</span></td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div className="text-center text-xs text-muted-foreground py-2">{t('لا توجد بيانات مكافآت سابقة لهذا الموظف', 'No prior bonus data for this employee')}</div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })()}
 
                   {/* Comments */}
                   <Card>
