@@ -690,6 +690,67 @@ export const PerformanceReviewForm = () => {
         </CardContent>
       </Card>
 
+      {/* Bonus Percentage */}
+      <Card>
+        <CardHeader>
+          <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+            <Star className="w-5 h-5 text-stat-yellow" />
+            {ar ? 'نسبة المكافأة' : 'Bonus Percentage'}
+          </CardTitle>
+          <CardDescription>
+            {ar
+              ? 'يمكنك كتابة النسبة يدوياً أو اختيارها من القائمة المنسدلة (من 0% حتى 100%).'
+              : 'You can type the percentage manually or select from the dropdown (0% to 100%).'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4")}>
+            <div className="space-y-2">
+              <Label>{ar ? 'كتابة النسبة (%)' : 'Type Percentage (%)'}</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={bonusPercentage}
+                onChange={e => {
+                  const v = e.target.value;
+                  if (v === '') { setBonusPercentage(''); return; }
+                  const n = Number(v);
+                  if (Number.isNaN(n)) return;
+                  if (n < 0 || n > 100) return;
+                  setBonusPercentage(String(n));
+                }}
+                placeholder="0 - 100"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{ar ? 'اختيار من قائمة' : 'Select from list'}</Label>
+              <Select value={bonusPercentage} onValueChange={setBonusPercentage}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'اختر النسبة...' : 'Select percentage...'} /></SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {Array.from({ length: 21 }, (_, i) => i * 5).map(p => (
+                    <SelectItem key={p} value={String(p)}>{p}%</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className={cn(
+            "flex items-start gap-2 p-3 rounded-lg bg-stat-yellow/5 border border-stat-yellow/30 text-sm",
+            isRTL && "flex-row-reverse text-right"
+          )}>
+            <AlertTriangle className="w-4 h-4 text-stat-yellow shrink-0 mt-0.5" />
+            <span className="text-foreground">
+              {ar
+                ? 'ملاحظة: يجب أن تكون نسبة المكافأة متماشية مع درجات التقييم وساعات العمل والجزاءات الموقعة على الموظف.'
+                : 'Note: The bonus percentage must be consistent with the evaluation scores, work hours, and penalties imposed on the employee.'}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+
       {/* Comments Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
