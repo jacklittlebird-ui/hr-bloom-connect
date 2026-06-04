@@ -2451,6 +2451,63 @@ const StationManagerPortal = () => {
               </CardContent>
             </Card>
 
+            {/* Bonus Percentage */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base"><Star className="w-5 h-5 text-[hsl(var(--stat-yellow))]" />{t('نسبة المكافأة', 'Bonus Percentage')}</CardTitle>
+                <CardDescription className="text-xs">{t('يمكنك كتابة النسبة يدوياً أو اختيارها من القائمة المنسدلة (من 0% حتى 100%).', 'Type the percentage manually or select from the dropdown (0% to 100%).')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--stat-green))]/5 border border-[hsl(var(--stat-green))]/20">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-[hsl(var(--stat-green))]" />
+                    <span className="font-semibold text-sm">{t('نسبة المكافأة المقترحة', 'Suggested Bonus')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xl text-[hsl(var(--stat-green))]">{evalSuggestedBonus}%</span>
+                    <Button variant="outline" size="sm" onClick={() => setEvalBonusPercentage(String(evalSuggestedBonus))} className="text-xs h-7">{t('استخدام', 'Use')}</Button>
+                  </div>
+                </div>
+                <Popover open={bonusOpen} onOpenChange={setBonusOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full md:w-80 justify-between font-normal h-10">
+                      <span>{evalBonusPercentage === '' ? t('اختر النسبة...', 'Select percentage...') : `${evalBonusPercentage}%`}</span>
+                      <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full md:w-80 p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput placeholder={t('اكتب أو اختر...', 'Type or select...')} value={bonusSearch} onValueChange={setBonusSearch} />
+                      <CommandList className="max-h-72">
+                        <CommandEmpty>{t('لا توجد نتائج', 'No results')}</CommandEmpty>
+                        <CommandGroup>
+                          {(() => {
+                            const n = Number(bonusSearch);
+                            const isValid = bonusSearch !== '' && !Number.isNaN(n) && n >= 0 && n <= 100;
+                            const isInList = BONUS_OPTIONS.includes(n);
+                            if (isValid && !isInList) {
+                              return (<CommandItem value={`custom-${n}`} onSelect={() => { setEvalBonusPercentage(String(n)); setBonusSearch(''); setBonusOpen(false); }}>{t(`استخدام ${n}%`, `Use ${n}%`)}</CommandItem>);
+                            }
+                            return null;
+                          })()}
+                          {BONUS_OPTIONS.map(p => (
+                            <CommandItem key={p} value={String(p)} onSelect={() => { setEvalBonusPercentage(String(p)); setBonusSearch(''); setBonusOpen(false); }}>
+                              <Check className={cn("me-2 h-4 w-4", evalBonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
+                              {p}%
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-[hsl(var(--stat-yellow))]/5 border border-[hsl(var(--stat-yellow))]/30 text-sm">
+                  <AlertTriangle className="w-4 h-4 text-[hsl(var(--stat-yellow))] shrink-0 mt-0.5" />
+                  <span>{t('ملاحظة: يجب أن تكون نسبة المكافأة متماشية مع درجات التقييم وساعات العمل والجزاءات الموقعة على الموظف.', 'Note: The bonus percentage must align with evaluation scores, work hours, and penalties imposed on the employee.')}</span>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Comments */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -2615,6 +2672,63 @@ const StationManagerPortal = () => {
                 <Textarea value={editEvalImprovements} onChange={e => setEditEvalImprovements(e.target.value)} className="min-h-[80px]" />
               </div>
             </div>
+            {/* Bonus Percentage */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base"><Star className="w-5 h-5 text-[hsl(var(--stat-yellow))]" />{t('نسبة المكافأة', 'Bonus Percentage')}</CardTitle>
+                <CardDescription className="text-xs">{t('يمكنك كتابة النسبة يدوياً أو اختيارها من القائمة المنسدلة (من 0% حتى 100%).', 'Type the percentage manually or select from the dropdown (0% to 100%).')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--stat-green))]/5 border border-[hsl(var(--stat-green))]/20">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-[hsl(var(--stat-green))]" />
+                    <span className="font-semibold text-sm">{t('نسبة المكافأة المقترحة', 'Suggested Bonus')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xl text-[hsl(var(--stat-green))]">{editEvalSuggestedBonus}%</span>
+                    <Button variant="outline" size="sm" onClick={() => setEditEvalBonusPercentage(String(editEvalSuggestedBonus))} className="text-xs h-7">{t('استخدام', 'Use')}</Button>
+                  </div>
+                </div>
+                <Popover open={editBonusOpen} onOpenChange={setEditBonusOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full md:w-80 justify-between font-normal h-10">
+                      <span>{editEvalBonusPercentage === '' ? t('اختر النسبة...', 'Select percentage...') : `${editEvalBonusPercentage}%`}</span>
+                      <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full md:w-80 p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput placeholder={t('اكتب أو اختر...', 'Type or select...')} value={editBonusSearch} onValueChange={setEditBonusSearch} />
+                      <CommandList className="max-h-72">
+                        <CommandEmpty>{t('لا توجد نتائج', 'No results')}</CommandEmpty>
+                        <CommandGroup>
+                          {(() => {
+                            const n = Number(editBonusSearch);
+                            const isValid = editBonusSearch !== '' && !Number.isNaN(n) && n >= 0 && n <= 100;
+                            const isInList = BONUS_OPTIONS.includes(n);
+                            if (isValid && !isInList) {
+                              return (<CommandItem value={`custom-${n}`} onSelect={() => { setEditEvalBonusPercentage(String(n)); setEditBonusSearch(''); setEditBonusOpen(false); }}>{t(`استخدام ${n}%`, `Use ${n}%`)}</CommandItem>);
+                            }
+                            return null;
+                          })()}
+                          {BONUS_OPTIONS.map(p => (
+                            <CommandItem key={p} value={String(p)} onSelect={() => { setEditEvalBonusPercentage(String(p)); setEditBonusSearch(''); setEditBonusOpen(false); }}>
+                              <Check className={cn("me-2 h-4 w-4", editEvalBonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
+                              {p}%
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-[hsl(var(--stat-yellow))]/5 border border-[hsl(var(--stat-yellow))]/30 text-sm">
+                  <AlertTriangle className="w-4 h-4 text-[hsl(var(--stat-yellow))] shrink-0 mt-0.5" />
+                  <span>{t('ملاحظة: يجب أن تكون نسبة المكافأة متماشية مع درجات التقييم وساعات العمل والجزاءات الموقعة على الموظف.', 'Note: The bonus percentage must align with evaluation scores, work hours, and penalties imposed on the employee.')}</span>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="space-y-2">
               <Label>{t('أهداف الربع القادم', 'Next Quarter Goals')}</Label>
               <Textarea value={editEvalGoals} onChange={e => setEditEvalGoals(e.target.value)} className="min-h-[60px]" />
