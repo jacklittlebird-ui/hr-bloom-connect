@@ -840,12 +840,12 @@ export const PerformanceReviewForm = () => {
           </CardHeader>
           <CardContent><Textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} placeholder={t('performance.form.strengthsPlaceholder')} className="min-h-[120px]" /></CardContent>
         </Card>
-      </div>
 
-      <Card>
-        <CardHeader><CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}><Target className="w-5 h-5 text-primary" />{t('performance.form.nextQuarterGoals')}</CardTitle></CardHeader>
-        <CardContent><Textarea value={goals} onChange={(e) => setGoals(e.target.value)} placeholder={t('performance.form.goalsPlaceholder')} className="min-h-[100px]" /></CardContent>
-      </Card>
+        <Card>
+          <CardHeader><CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}><Target className="w-5 h-5 text-primary" />{t('performance.form.nextQuarterGoals')}</CardTitle></CardHeader>
+          <CardContent><Textarea value={goals} onChange={(e) => setGoals(e.target.value)} placeholder={t('performance.form.goalsPlaceholder')} className="min-h-[100px]" /></CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader><CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}><MessageSquare className="w-5 h-5 text-primary" />{t('performance.form.managerComments')}</CardTitle></CardHeader>
