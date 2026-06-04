@@ -194,7 +194,7 @@ export const StationWorkHours = ({ employeeIds: legacyIds, stationEmployees }: S
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
               <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
@@ -213,6 +213,35 @@ export const StationWorkHours = ({ employeeIds: legacyIds, stationEmployees }: S
                 <div>
                   <p className="text-xs text-muted-foreground">{ar ? 'عدد الموظفين' : 'Employees'}</p>
                   <p className="text-2xl font-bold">{filteredData.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+                <div className="p-2 rounded-lg bg-amber-100"><Clock className="w-5 h-5 text-amber-600" /></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{ar ? 'متوسط الساعات اليومية' : 'Avg Daily Hours'}</p>
+                  <p className="text-2xl font-bold">
+                    {(() => {
+                      const totalDays = filteredData.reduce((s, e) => s + e.recordCount, 0);
+                      if (totalDays === 0) return '0:00';
+                      const avgMin = Math.round(grandTotal / totalDays);
+                      return formatHM(avgMin);
+                    })()}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+                <div className="p-2 rounded-lg bg-blue-100"><Clock className="w-5 h-5 text-blue-600" /></div>
+                <div>
+                  <p className="text-xs text-muted-foreground">{ar ? 'إجمالي الأيام' : 'Total Days'}</p>
+                  <p className="text-2xl font-bold">{filteredData.reduce((s, e) => s + e.recordCount, 0)}</p>
                 </div>
               </div>
             </CardContent>
@@ -236,24 +265,38 @@ export const StationWorkHours = ({ employeeIds: legacyIds, stationEmployees }: S
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الموظف' : 'Employee'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'عدد الأيام' : 'Days'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'إجمالي الساعات' : 'Total Hours'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{ar ? 'متوسط الساعات اليومية' : 'Avg Daily Hours'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredData.map((emp, idx) => (
-                  <TableRow key={emp.employeeId}>
-                    <TableCell>{idx + 1}</TableCell>
-                    <TableCell className="font-mono text-xs">{emp.employeeCode}</TableCell>
-                    <TableCell className="font-medium">{ar ? emp.employeeNameAr : emp.employeeNameEn}</TableCell>
-                    <TableCell>{emp.recordCount}</TableCell>
-                    <TableCell className="font-mono font-bold">{formatHM(emp.totalMinutes)}</TableCell>
-                  </TableRow>
-                ))}
+                {filteredData.map((emp, idx) => {
+                  const avgDailyMin = emp.recordCount > 0 ? Math.round(emp.totalMinutes / emp.recordCount) : 0;
+                  return (
+                    <TableRow key={emp.employeeId}>
+                      <TableCell>{idx + 1}</TableCell>
+                      <TableCell className="font-mono text-xs">{emp.employeeCode}</TableCell>
+                      <TableCell className="font-medium">{ar ? emp.employeeNameAr : emp.employeeNameEn}</TableCell>
+                      <TableCell>{emp.recordCount}</TableCell>
+                      <TableCell className="font-mono font-bold">{formatHM(emp.totalMinutes)}</TableCell>
+                      <TableCell className="font-mono">
+                        {formatHM(avgDailyMin)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 <TableRow className="bg-muted/50 font-bold">
                   <TableCell></TableCell>
                   <TableCell></TableCell>
                   <TableCell>{ar ? 'الإجمالي' : 'Total'}</TableCell>
                   <TableCell>{filteredData.reduce((s, e) => s + e.recordCount, 0)}</TableCell>
                   <TableCell className="font-mono">{formatHM(grandTotal)}</TableCell>
+                  <TableCell className="font-mono">
+                    {(() => {
+                      const totalDays = filteredData.reduce((s, e) => s + e.recordCount, 0);
+                      if (totalDays === 0) return '0:00';
+                      return formatHM(Math.round(grandTotal / totalDays));
+                    })()}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
