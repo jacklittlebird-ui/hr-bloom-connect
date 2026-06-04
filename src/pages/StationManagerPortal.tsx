@@ -1192,6 +1192,113 @@ const StationManagerPortal = () => {
           </Card>
         </div>
 
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" />{t('توزيع الأقسام', 'Department Distribution')}</CardTitle></CardHeader>
+            <CardContent className="h-[300px]">
+              {(() => {
+                const deptCounts: Record<string, number> = {};
+                stationEmployees.forEach(e => { const k = e.department || (ar ? 'غير محدد' : 'N/A'); deptCounts[k] = (deptCounts[k] || 0) + 1; });
+                const data = Object.entries(deptCounts).map(([name, count]) => ({ name, count })).sort((a,b) => b.count - a.count).slice(0, 8);
+                if (data.length === 0) return <div className="flex items-center justify-center h-full text-sm text-muted-foreground">{t('لا توجد بيانات', 'No data')}</div>;
+                return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} angle={-25} textAnchor="end" interval={0} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} orientation={ar ? 'right' : 'left'} allowDecimals={false} />
+                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4 text-primary" />{t('حالة الموظفين', 'Employee Status')}</CardTitle></CardHeader>
+            <CardContent className="h-[300px]">
+              {(() => {
+                const data = [
+                  { name: t('نشط', 'Active'), value: stationEmployees.filter(e => e.status === 'active').length, color: 'hsl(var(--stat-green))' },
+                  { name: t('غير نشط', 'Inactive'), value: stationEmployees.filter(e => e.status === 'inactive').length, color: 'hsl(var(--stat-coral))' },
+                  { name: t('موقوف', 'Suspended'), value: stationEmployees.filter(e => e.status === 'suspended').length, color: 'hsl(var(--stat-purple))' },
+                ].filter(d => d.value > 0);
+                if (data.length === 0) return <div className="flex items-center justify-center h-full text-sm text-muted-foreground">{t('لا توجد بيانات', 'No data')}</div>;
+                return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={50} label>
+                        {data.map((d, i) => <Cell key={i} fill={d.color} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Star className="h-4 w-4 text-primary" />{t('توزيع التقييمات', 'Evaluation Scores')}</CardTitle></CardHeader>
+            <CardContent className="h-[300px]">
+              {(() => {
+                const buckets = [
+                  { name: t('ممتاز', 'Excellent') + ' (4-5)', count: stationReviews.filter(r => (r.score || 0) >= 4).length },
+                  { name: t('جيد', 'Good') + ' (3-4)', count: stationReviews.filter(r => (r.score || 0) >= 3 && (r.score || 0) < 4).length },
+                  { name: t('متوسط', 'Average') + ' (2-3)', count: stationReviews.filter(r => (r.score || 0) >= 2 && (r.score || 0) < 3).length },
+                  { name: t('ضعيف', 'Poor') + ' (<2)', count: stationReviews.filter(r => (r.score || 0) < 2).length },
+                ];
+                if (stationReviews.length === 0) return <div className="flex items-center justify-center h-full text-sm text-muted-foreground">{t('لا توجد تقييمات', 'No evaluations')}</div>;
+                return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={buckets} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} />
+                      <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} orientation={ar ? 'right' : 'left'} allowDecimals={false} />
+                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                      <Bar dataKey="count" fill="hsl(var(--stat-purple))" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-primary" />{t('أنواع المخالفات', 'Violation Types')}</CardTitle></CardHeader>
+            <CardContent className="h-[300px]">
+              {(() => {
+                const typeCounts: Record<string, number> = {};
+                stationViolations.forEach(v => { typeCounts[v.type] = (typeCounts[v.type] || 0) + 1; });
+                const data = Object.entries(typeCounts).map(([k, v]) => {
+                  const vt = violationTypes.find(vv => vv.value === k);
+                  return { name: ar ? (vt?.ar || k) : (vt?.en || k), value: v };
+                });
+                if (data.length === 0) return <div className="flex items-center justify-center h-full text-sm text-muted-foreground">{t('لا توجد مخالفات', 'No violations')}</div>;
+                const palette = ['hsl(var(--stat-coral))','hsl(var(--stat-purple))','hsl(var(--stat-blue))','hsl(var(--stat-green))','hsl(var(--primary))','hsl(var(--destructive))','hsl(var(--muted-foreground))'];
+                return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
+                        {data.map((_, i) => <Cell key={i} fill={palette[i % palette.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </div>
+        </>)}
+
+
+
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => { if (canSee(v)) setActiveTab(v); }} className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6 xl:gap-8" dir={isRTL ? 'rtl' : 'ltr'}>
           {/* Sidebar nav (lg+) / scroll bar (mobile) */}
