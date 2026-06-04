@@ -755,7 +755,7 @@ const StationManagerPortal = () => {
 
   // Quarter context: monthly work hours + violations (penalties) for selected employee
   interface QuarterViolation { id: string; date: string; type: string; description: string; penalty: string; status: string; }
-  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[] }[]>([]);
+  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; recordCount: number; avgDailyHours: number; violations: QuarterViolation[] }[]>([]);
   const [quarterLoading, setQuarterLoading] = useState(false);
 
   const newEvalSelectedEmpObj = useMemo(
