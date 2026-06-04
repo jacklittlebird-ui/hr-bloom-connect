@@ -1398,6 +1398,97 @@ const StationManagerPortal = () => {
           </Card>
         </div>
         {/* Bonus Percentage linked to Quarterly Evaluations */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-2">
+          <div className="text-sm font-semibold flex items-center gap-2">
+            <Star className="w-4 h-4 text-primary" />
+            {t('تقرير المكافآت', 'Bonus Report')}
+            <Badge variant="outline" className="font-normal">{dashboardQuarter || t('كل الأرباع', 'All quarters')} · {dashboardYear || ''}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => {
+                const rows = stationReviews.filter(r =>
+                  (!dashboardYear || String(r.year) === String(dashboardYear)) &&
+                  (!dashboardQuarter || r.quarter === dashboardQuarter) &&
+                  r.bonusPercentage != null
+                );
+                if (rows.length === 0) {
+                  toast({ title: t('لا توجد بيانات للتصدير', 'No data to export'), variant: 'destructive' });
+                  return;
+                }
+                const headers = ['Employee','Department','Station','Quarter','Year','Score','Bonus %','Status','Review Date'];
+                const csvRows = [headers.join(',')];
+                rows.forEach(r => {
+                  const emp = stationEmployees.find(e => e.id === r.employeeId);
+                  const name = (emp?.nameAr || emp?.nameEn || r.employeeName || '').replace(/"/g, '""');
+                  const dept = (r.department || '').replace(/"/g, '""');
+                  const station = (r.station || user?.station || '').replace(/"/g, '""');
+                  csvRows.push([
+                    `"${name}"`, `"${dept}"`, `"${station}"`,
+                    r.quarter, r.year, (r.score || 0).toFixed(2),
+                    r.bonusPercentage, r.status || '', r.reviewDate || ''
+                  ].join(','));
+                });
+                const csv = '\uFEFF' + csvRows.join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bonus_report_${dashboardQuarter || 'all'}_${dashboardYear || 'all'}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast({ title: t('تم تصدير CSV', 'CSV exported') });
+              }}
+            >
+              <FileSpreadsheet className="w-4 h-4" /> CSV
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={async () => {
+                const rows = stationReviews.filter(r =>
+                  (!dashboardYear || String(r.year) === String(dashboardYear)) &&
+                  (!dashboardQuarter || r.quarter === dashboardQuarter) &&
+                  r.bonusPercentage != null
+                );
+                if (rows.length === 0) {
+                  toast({ title: t('لا توجد بيانات للتصدير', 'No data to export'), variant: 'destructive' });
+                  return;
+                }
+                const { default: jsPDF } = await import('jspdf');
+                const { default: autoTable } = await import('jspdf-autotable');
+                const doc = new jsPDF({ orientation: 'landscape' });
+                doc.setFontSize(14);
+                doc.text(`Bonus Report - ${dashboardQuarter || 'All'} ${dashboardYear || ''}`, 14, 14);
+                doc.setFontSize(10);
+                doc.text(`Station/Area: ${user?.station || '-'}    Generated: ${new Date().toLocaleString()}`, 14, 20);
+                const body = rows.map(r => {
+                  const emp = stationEmployees.find(e => e.id === r.employeeId);
+                  const name = emp?.nameEn || emp?.nameAr || r.employeeName || '-';
+                  return [name, r.department || '-', r.station || user?.station || '-', r.quarter, String(r.year), (r.score || 0).toFixed(2), `${r.bonusPercentage}%`, r.status || '-'];
+                });
+                const avg = Math.round((rows.reduce((s, r) => s + (r.bonusPercentage || 0), 0) / rows.length) * 10) / 10;
+                autoTable(doc, {
+                  startY: 26,
+                  head: [['Employee','Department','Station','Quarter','Year','Score','Bonus %','Status']],
+                  body,
+                  styles: { fontSize: 9 },
+                  headStyles: { fillColor: [37, 99, 235] },
+                  foot: [['', '', '', '', '', 'Average', `${avg}%`, '']],
+                  footStyles: { fillColor: [241, 245, 249], textColor: 20, fontStyle: 'bold' },
+                });
+                doc.save(`bonus_report_${dashboardQuarter || 'all'}_${dashboardYear || 'all'}.pdf`);
+                toast({ title: t('تم تصدير PDF', 'PDF exported') });
+              }}
+            >
+              <Download className="w-4 h-4" /> PDF
+            </Button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" />{t('متوسط نسبة المكافأة لكل ربع', 'Avg Bonus % per Quarter')}</CardTitle></CardHeader>
