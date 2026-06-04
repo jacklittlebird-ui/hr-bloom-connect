@@ -84,6 +84,7 @@ export const PerformanceReviewForm = () => {
   const [improvements, setImprovements] = useState('');
   const [goals, setGoals] = useState('');
   const [managerComments, setManagerComments] = useState('');
+  const [bonusPercentage, setBonusPercentage] = useState<string>('');
   const [saving, setSaving] = useState<null | 'draft' | 'submitted' | 'approved'>(null);
 
   // Quarter context: monthly work hours + violations (penalties)
