@@ -1878,8 +1878,9 @@ const StationManagerPortal = () => {
 
               {/* New Review */}
               <TabsContent value="newReview">
-                <div className="space-y-4">
-                  {/* Employee selection with green/gray indicators */}
+                <div className="grid grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-4 items-start">
+                  {/* Sidebar: Employee selection */}
+                  <aside className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-base">
