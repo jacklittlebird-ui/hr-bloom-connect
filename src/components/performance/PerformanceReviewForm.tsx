@@ -663,160 +663,163 @@ export const PerformanceReviewForm = () => {
       )}
 
 
-      <Card>
-        <CardHeader>
-          <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-            <Target className="w-5 h-5 text-primary" />
-            {t('performance.form.criteria')}
-          </CardTitle>
-          <CardDescription>{t('performance.form.criteriaDesc')}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {criteria.map((criterion) => (
-            <div key={criterion.id} className="space-y-2">
-              <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
-                <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-                  <Label className="text-base font-medium">{ar ? criterion.nameAr : criterion.name}</Label>
-                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">{criterion.weight}%</span>
-                </div>
-                <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className={cn("w-6 h-6 cursor-pointer transition-colors hover:scale-110", star <= criterion.score ? "text-stat-yellow fill-stat-yellow" : "text-muted-foreground hover:text-stat-yellow/50")}
-                      onClick={() => handleScoreChange(criterion.id, [star])} />
-                  ))}
-                  <span className="font-bold text-lg w-8 text-center">{criterion.score}</span>
-                </div>
-              </div>
-              <Progress value={criterion.score * 20} className="h-2" />
-            </div>
-          ))}
-
-          <div className={cn("flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>
-            <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-              <Star className="w-6 h-6 text-stat-yellow fill-stat-yellow" />
-              <span className="font-semibold text-lg">{t('performance.form.overallScore')}</span>
-            </div>
-            <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-              <span className={cn("font-bold text-2xl", scoreInfo.color)}>{overallScore}</span>
-              <Badge variant="outline" className={cn(scoreInfo.color, "border-current")}>{scoreInfo.label}</Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Bonus Percentage */}
-      <Card>
-        <CardHeader>
-          <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-            <Star className="w-5 h-5 text-stat-yellow" />
-            {ar ? 'نسبة المكافأة' : 'Bonus Percentage'}
-          </CardTitle>
-          <CardDescription>
-            {ar
-              ? 'يمكنك كتابة النسبة يدوياً أو اختيارها من القائمة المنسدلة (من 0% حتى 100%).'
-              : 'You can type the percentage manually or select from the dropdown (0% to 100%).'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Suggested bonus percentage */}
-          <div className={cn(
-            "flex items-center justify-between p-4 rounded-lg bg-stat-green/5 border border-stat-green/20",
-            isRTL && "flex-row-reverse"
-          )}>
-            <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-              <Lightbulb className="w-5 h-5 text-stat-green" />
-              <span className="font-semibold text-base">{ar ? 'نسبة المكافأة المقترحة' : 'Suggested Bonus Percentage'}</span>
-            </div>
-            <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
-              <span className="font-bold text-2xl text-stat-green">{suggestedBonusPercentage}%</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setBonusPercentage(String(suggestedBonusPercentage))}
-                className="text-xs"
-              >
-                {ar ? 'استخدام' : 'Use'}
-              </Button>
-            </div>
-          </div>
-
-          <Popover open={bonusOpen} onOpenChange={setBonusOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={bonusOpen}
-                className={cn("w-full md:w-80 justify-between font-normal h-10", isRTL && "flex-row-reverse")}
-              >
-                <span>
-                  {bonusPercentage === '' ? (ar ? 'اختر النسبة...' : 'Select percentage...') : `${bonusPercentage}%`}
-                </span>
-                <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className={cn("w-full md:w-80 p-0", isRTL && "text-right")} align="start">
-              <Command shouldFilter={false}>
-                <CommandInput
-                  placeholder={ar ? 'اكتب أو اختر...' : 'Type or select...'}
-                  value={bonusSearch}
-                  onValueChange={setBonusSearch}
-                />
-                <CommandList className="max-h-72">
-                  <CommandEmpty>{ar ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
-                  <CommandGroup>
-                    {(() => {
-                      const n = Number(bonusSearch);
-                      const isValidSearch = bonusSearch !== '' && !Number.isNaN(n) && n >= 0 && n <= 100;
-                      const isInList = BONUS_OPTIONS.includes(n);
-                      if (isValidSearch && !isInList) {
-                        return (
-                          <CommandItem
-                            value={`custom-${bonusSearch}`}
-                            onSelect={() => {
-                              setBonusPercentage(String(n));
-                              setBonusSearch('');
-                              setBonusOpen(false);
-                            }}
-                          >
-                            {ar ? `استخدام ${n}%` : `Use ${n}%`}
-                          </CommandItem>
-                        );
-                      }
-                      return null;
-                    })()}
-                    {BONUS_OPTIONS.map(p => (
-                      <CommandItem
-                        key={p}
-                        value={String(p)}
-                        onSelect={() => {
-                          setBonusPercentage(String(p));
-                          setBonusSearch('');
-                          setBonusOpen(false);
-                        }}
-                      >
-                        <Check className={cn("me-2 h-4 w-4", bonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
-                        {p}%
-                      </CommandItem>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Evaluation Criteria */}
+        <Card>
+          <CardHeader>
+            <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Target className="w-5 h-5 text-primary" />
+              {t('performance.form.criteria')}
+            </CardTitle>
+            <CardDescription>{t('performance.form.criteriaDesc')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {criteria.map((criterion) => (
+              <div key={criterion.id} className="space-y-2">
+                <div className={cn("flex items-center justify-between", isRTL && "flex-row-reverse")}>
+                  <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                    <Label className="text-base font-medium">{ar ? criterion.nameAr : criterion.name}</Label>
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">{criterion.weight}%</span>
+                  </div>
+                  <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className={cn("w-6 h-6 cursor-pointer transition-colors hover:scale-110", star <= criterion.score ? "text-stat-yellow fill-stat-yellow" : "text-muted-foreground hover:text-stat-yellow/50")}
+                        onClick={() => handleScoreChange(criterion.id, [star])} />
                     ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+                    <span className="font-bold text-lg w-8 text-center">{criterion.score}</span>
+                  </div>
+                </div>
+                <Progress value={criterion.score * 20} className="h-2" />
+              </div>
+            ))}
 
-          <div className={cn(
-            "flex items-start gap-2 p-4 rounded-lg bg-stat-yellow/5 border border-stat-yellow/30 text-base leading-relaxed",
-            isRTL && "flex-row-reverse text-right"
-          )}>
-            <AlertTriangle className="w-5 h-5 text-stat-yellow shrink-0 mt-0.5" />
-            <span className="text-foreground">
+            <div className={cn("flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>
+              <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                <Star className="w-6 h-6 text-stat-yellow fill-stat-yellow" />
+                <span className="font-semibold text-lg">{t('performance.form.overallScore')}</span>
+              </div>
+              <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+                <span className={cn("font-bold text-2xl", scoreInfo.color)}>{overallScore}</span>
+                <Badge variant="outline" className={cn(scoreInfo.color, "border-current")}>{scoreInfo.label}</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bonus Percentage */}
+        <Card>
+          <CardHeader>
+            <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Star className="w-5 h-5 text-stat-yellow" />
+              {ar ? 'نسبة المكافأة' : 'Bonus Percentage'}
+            </CardTitle>
+            <CardDescription>
               {ar
-                ? 'ملاحظة: يجب أن تكون نسبة المكافأة متماشية مع درجات التقييم وساعات العمل والجزاءات الموقعة على الموظف.'
-                : 'Note: The bonus percentage must be consistent with the evaluation scores, work hours, and penalties imposed on the employee.'}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+                ? 'يمكنك كتابة النسبة يدوياً أو اختيارها من القائمة المنسدلة (من 0% حتى 100%).'
+                : 'You can type the percentage manually or select from the dropdown (0% to 100%).'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Suggested bonus percentage */}
+            <div className={cn(
+              "flex items-center justify-between p-4 rounded-lg bg-stat-green/5 border border-stat-green/20",
+              isRTL && "flex-row-reverse"
+            )}>
+              <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                <Lightbulb className="w-5 h-5 text-stat-green" />
+                <span className="font-semibold text-base">{ar ? 'نسبة المكافأة المقترحة' : 'Suggested Bonus Percentage'}</span>
+              </div>
+              <div className={cn("flex items-center gap-3", isRTL && "flex-row-reverse")}>
+                <span className="font-bold text-2xl text-stat-green">{suggestedBonusPercentage}%</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBonusPercentage(String(suggestedBonusPercentage))}
+                  className="text-xs"
+                >
+                  {ar ? 'استخدام' : 'Use'}
+                </Button>
+              </div>
+            </div>
+
+            <Popover open={bonusOpen} onOpenChange={setBonusOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={bonusOpen}
+                  className={cn("w-full md:w-80 justify-between font-normal h-10", isRTL && "flex-row-reverse")}
+                >
+                  <span>
+                    {bonusPercentage === '' ? (ar ? 'اختر النسبة...' : 'Select percentage...') : `${bonusPercentage}%`}
+                  </span>
+                  <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className={cn("w-full md:w-80 p-0", isRTL && "text-right")} align="start">
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder={ar ? 'اكتب أو اختر...' : 'Type or select...'}
+                    value={bonusSearch}
+                    onValueChange={setBonusSearch}
+                  />
+                  <CommandList className="max-h-72">
+                    <CommandEmpty>{ar ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
+                    <CommandGroup>
+                      {(() => {
+                        const n = Number(bonusSearch);
+                        const isValidSearch = bonusSearch !== '' && !Number.isNaN(n) && n >= 0 && n <= 100;
+                        const isInList = BONUS_OPTIONS.includes(n);
+                        if (isValidSearch && !isInList) {
+                          return (
+                            <CommandItem
+                              value={`custom-${bonusSearch}`}
+                              onSelect={() => {
+                                setBonusPercentage(String(n));
+                                setBonusSearch('');
+                                setBonusOpen(false);
+                              }}
+                            >
+                              {ar ? `استخدام ${n}%` : `Use ${n}%`}
+                            </CommandItem>
+                          );
+                        }
+                        return null;
+                      })()}
+                      {BONUS_OPTIONS.map(p => (
+                        <CommandItem
+                          key={p}
+                          value={String(p)}
+                          onSelect={() => {
+                            setBonusPercentage(String(p));
+                            setBonusSearch('');
+                            setBonusOpen(false);
+                          }}
+                        >
+                          <Check className={cn("me-2 h-4 w-4", bonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
+                          {p}%
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
+            <div className={cn(
+              "flex items-start gap-2 p-4 rounded-lg bg-stat-yellow/5 border border-stat-yellow/30 text-base leading-relaxed",
+              isRTL && "flex-row-reverse text-right"
+            )}>
+              <AlertTriangle className="w-5 h-5 text-stat-yellow shrink-0 mt-0.5" />
+              <span className="text-foreground">
+                {ar
+                  ? 'ملاحظة: يجب أن تكون نسبة المكافأة متماشية مع درجات التقييم وساعات العمل والجزاءات الموقعة على الموظف.'
+                  : 'Note: The bonus percentage must be consistent with the evaluation scores, work hours, and penalties imposed on the employee.'}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
 
       {/* Comments Section */}
