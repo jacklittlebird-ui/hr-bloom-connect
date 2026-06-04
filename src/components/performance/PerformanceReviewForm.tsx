@@ -225,6 +225,7 @@ export const PerformanceReviewForm = () => {
       setImprovements(existingReview.improvements || '');
       setGoals(existingReview.goals || '');
       setManagerComments(existingReview.managerComments || '');
+      setBonusPercentage(existingReview.bonusPercentage != null ? String(existingReview.bonusPercentage) : '');
     } else {
       // Reset form for new evaluation
       setCriteria(initialCriteria.map(c => ({ ...c })));
@@ -232,6 +233,7 @@ export const PerformanceReviewForm = () => {
       setImprovements('');
       setGoals('');
       setManagerComments('');
+      setBonusPercentage('');
     }
   }, [existingReview]);
 
