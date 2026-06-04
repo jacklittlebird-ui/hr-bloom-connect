@@ -986,6 +986,7 @@ const StationManagerPortal = () => {
             </CardContent>
           </Card>
         )}
+        {activeTab === 'dashboard' && (<>
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-[hsl(var(--stat-blue))] to-[hsl(var(--stat-blue)/0.8)] text-white shadow-lg">
