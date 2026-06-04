@@ -2048,6 +2048,11 @@ const StationManagerPortal = () => {
                                   <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
                                 </div>
                                 <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                                  <Clock className="w-4 h-4 text-amber-500" />
+                                  <span className="text-muted-foreground">{ar ? 'متوسط الساعات اليومية:' : 'Avg daily hours:'}</span>
+                                  <span className="font-bold text-amber-600 ms-auto">{m.avgDailyHours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
+                                </div>
+                                <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
                                   <AlertTriangle className="w-4 h-4 text-destructive" />
                                   <span className="text-muted-foreground">{ar ? 'عدد الجزاءات:' : 'Penalties:'}</span>
                                   <span className="font-bold text-destructive ms-auto">{m.violations.length}</span>
