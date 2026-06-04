@@ -1192,7 +1192,8 @@ const StationManagerPortal = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => { if (canSee(v)) setActiveTab(v); }} className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
-          <TabsList className="inline-flex flex-wrap gap-1" dir="rtl">
+          <div className="sticky top-16 z-30 -mx-4 md:-mx-6 xl:-mx-8 px-4 md:px-6 xl:px-8 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border/50 overflow-x-auto">
+          <TabsList className="inline-flex flex-nowrap md:flex-wrap gap-1 w-max md:w-auto" dir="rtl">
             {canSee('employees') && (
               <TabsTrigger value="employees" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>
             )}
