@@ -2284,6 +2284,7 @@ const StationManagerPortal = () => {
                       </div>
                     </CardContent>
                   </Card>
+                  </div>
                 </div>
               </TabsContent>
 
