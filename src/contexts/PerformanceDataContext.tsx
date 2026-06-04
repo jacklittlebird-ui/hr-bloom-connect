@@ -27,7 +27,9 @@ export interface PerformanceReview {
   goals?: string;
   managerComments?: string;
   criteria?: CriteriaItem[];
+  bonusPercentage?: number;
 }
+
 
 export const defaultCriteria: CriteriaItem[] = [
   { name: 'جودة العمل', nameEn: 'Work Quality', score: 3, weight: 25 },
@@ -55,8 +57,8 @@ interface PerformanceDataContextType {
 const PerformanceDataContext = createContext<PerformanceDataContextType | undefined>(undefined);
 
 // Specific columns - no SELECT *
-const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, employees(name_ar)';
-const EMPLOYEE_PERF_COLS = 'id, employee_id, quarter, year, score, status, review_date, strengths, improvements';
+const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, bonus_percentage, employees(name_ar)';
+const EMPLOYEE_PERF_COLS = 'id, employee_id, quarter, year, score, status, review_date, strengths, improvements, bonus_percentage';
 
 const mapRow = (r: any): PerformanceReview => ({
   id: r.id,
@@ -75,6 +77,7 @@ const mapRow = (r: any): PerformanceReview => ({
   goals: r.goals || undefined,
   managerComments: r.manager_comments || undefined,
   criteria: r.criteria ? (r.criteria as CriteriaItem[]) : undefined,
+  bonusPercentage: r.bonus_percentage != null ? Number(r.bonus_percentage) : undefined,
 });
 
 export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -129,6 +132,7 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
       goals: review.goals || null,
       manager_comments: review.managerComments || null,
       criteria: review.criteria ? JSON.parse(JSON.stringify(review.criteria)) : null,
+      bonus_percentage: review.bonusPercentage ?? null,
     });
     if (error) { console.error('addReview error:', error); throw error; }
     invalidateCache('performance_');
@@ -148,6 +152,7 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
     if (updates.goals !== undefined) payload.goals = updates.goals;
     if (updates.managerComments !== undefined) payload.manager_comments = updates.managerComments;
     if (updates.criteria !== undefined) payload.criteria = JSON.parse(JSON.stringify(updates.criteria));
+    if (updates.bonusPercentage !== undefined) payload.bonus_percentage = updates.bonusPercentage ?? null;
     if (updates.employeeId !== undefined) payload.employee_id = updates.employeeId;
 
     const { error } = await supabase.from('performance_reviews').update(payload).eq('id', id);

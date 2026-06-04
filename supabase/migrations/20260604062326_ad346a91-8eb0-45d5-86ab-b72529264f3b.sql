@@ -1,0 +1,1 @@
+ALTER TABLE public.performance_reviews ADD COLUMN IF NOT EXISTS bonus_percentage numeric;

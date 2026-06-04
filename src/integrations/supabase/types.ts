@@ -1851,6 +1851,7 @@ export type Database = {
       }
       performance_reviews: {
         Row: {
+          bonus_percentage: number | null
           created_at: string
           criteria: Json | null
           employee_id: string
@@ -1867,6 +1868,7 @@ export type Database = {
           year: string
         }
         Insert: {
+          bonus_percentage?: number | null
           created_at?: string
           criteria?: Json | null
           employee_id: string
@@ -1883,6 +1885,7 @@ export type Database = {
           year: string
         }
         Update: {
+          bonus_percentage?: number | null
           created_at?: string
           criteria?: Json | null
           employee_id?: string
