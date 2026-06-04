@@ -77,6 +77,7 @@ const mapRow = (r: any): PerformanceReview => ({
   goals: r.goals || undefined,
   managerComments: r.manager_comments || undefined,
   criteria: r.criteria ? (r.criteria as CriteriaItem[]) : undefined,
+  bonusPercentage: r.bonus_percentage != null ? Number(r.bonus_percentage) : undefined,
 });
 
 export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
