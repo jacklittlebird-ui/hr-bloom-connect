@@ -831,11 +831,19 @@ const StationManagerPortal = () => {
           if (!violByMonth[m]) violByMonth[m] = [];
           violByMonth[m].push({ id: v.id, date: v.date, type: v.type || 'other', description: v.description || '', penalty: v.penalty || '', status: v.status || '' });
         });
-        setQuarterMonthly(newEvalQuarterMonths.map(m => ({
-          month: m,
-          hours: Math.round((hoursByMonth[m] || 0) * 10) / 10,
-          violations: violByMonth[m] || [],
-        })));
+        setQuarterMonthly(newEvalQuarterMonths.map(m => {
+          const h = hoursByMonth[m];
+          const totalHours = h ? h.hours : 0;
+          const count = h ? h.count : 0;
+          const avgDailyHours = count > 0 ? Math.round((totalHours / count) * 10) / 10 : 0;
+          return {
+            month: m,
+            hours: Math.round(totalHours * 10) / 10,
+            recordCount: count,
+            avgDailyHours,
+            violations: violByMonth[m] || [],
+          };
+        }));
       } finally {
         if (!cancelled) setQuarterLoading(false);
       }
