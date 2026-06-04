@@ -155,13 +155,13 @@ const StationManagerPortal = () => {
     switch (user?.role) {
       case 'station_manager':
       case 'area_manager':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations', 'vehicles', 'companyCard', 'reports'];
+        return ['dashboard', 'employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations', 'vehicles', 'companyCard', 'reports'];
       case 'station_hr':
-        return ['employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles', 'companyCard', 'reports'];
+        return ['dashboard', 'employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles', 'companyCard', 'reports'];
       case 'department_manager':
-        return ['employees', 'attendance', 'leaveCalendar', 'approvals', 'evaluations', 'violations'];
+        return ['dashboard', 'employees', 'attendance', 'leaveCalendar', 'approvals', 'evaluations', 'violations'];
       default:
-        return ['employees'];
+        return ['dashboard', 'employees'];
     }
   }, [user?.role]);
   const canSee = useCallback((tab: string) => allowedTabs.includes(tab), [allowedTabs]);
