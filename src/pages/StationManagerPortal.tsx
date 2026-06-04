@@ -950,7 +950,7 @@ const StationManagerPortal = () => {
       </header>
 
       <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none', overscrollBehaviorY: 'none', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' as any }}>
-        <div className="p-4 md:p-6 w-full max-w-none space-y-4 md:space-y-6">
+        <div className="p-4 md:p-6 xl:p-8 w-full max-w-none space-y-4 md:space-y-6 xl:space-y-8">
           <PortalWelcomeBanner />
 
         {/* Multi-Station Selector (Area Manager / Station HR with multiple stations) */}
