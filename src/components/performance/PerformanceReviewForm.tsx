@@ -304,6 +304,13 @@ export const PerformanceReviewForm = () => {
   const overallScore = parseFloat(calculateOverallScore());
   const scoreInfo = getScoreLabel(overallScore);
 
+  // Suggested bonus percentage: linear from 0% at score=1 to 50% at score=5
+  // score 3 -> 25%, score 5 -> 50%, below 3 -> < 25%
+  const suggestedBonusPercentage = useMemo(() => {
+    const clamped = Math.min(5, Math.max(1, overallScore));
+    return Math.round((clamped - 1) * 12.5 * 10) / 10; // 1 decimal place
+  }, [overallScore]);
+
   const buildReview = (status: 'draft' | 'submitted' | 'approved') => {
     const emp = employees.find(e => e.id === selectedEmployee);
     if (!emp) return null;
