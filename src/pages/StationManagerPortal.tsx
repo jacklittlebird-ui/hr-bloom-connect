@@ -755,7 +755,7 @@ const StationManagerPortal = () => {
 
   // Quarter context: monthly work hours + violations (penalties) for selected employee
   interface QuarterViolation { id: string; date: string; type: string; description: string; penalty: string; status: string; }
-  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[] }[]>([]);
+  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; recordCount: number; avgDailyHours: number; violations: QuarterViolation[] }[]>([]);
   const [quarterLoading, setQuarterLoading] = useState(false);
 
   const newEvalSelectedEmpObj = useMemo(
@@ -818,10 +818,12 @@ const StationManagerPortal = () => {
             .eq('employee_id', newEvalSelectedEmp).gte('date', startDate).lte('date', endDate),
         ]);
         if (cancelled) return;
-        const hoursByMonth: Record<string, number> = {};
+        const hoursByMonth: Record<string, { hours: number; count: number }> = {};
         (attRes.data || []).forEach((r: any) => {
           const m = (r.date as string).slice(5, 7);
-          hoursByMonth[m] = (hoursByMonth[m] || 0) + Number(r.work_hours || 0);
+          if (!hoursByMonth[m]) hoursByMonth[m] = { hours: 0, count: 0 };
+          hoursByMonth[m].hours += Number(r.work_hours || 0);
+          hoursByMonth[m].count += 1;
         });
         const violByMonth: Record<string, QuarterViolation[]> = {};
         (violRes.data || []).forEach((v: any) => {
@@ -829,11 +831,19 @@ const StationManagerPortal = () => {
           if (!violByMonth[m]) violByMonth[m] = [];
           violByMonth[m].push({ id: v.id, date: v.date, type: v.type || 'other', description: v.description || '', penalty: v.penalty || '', status: v.status || '' });
         });
-        setQuarterMonthly(newEvalQuarterMonths.map(m => ({
-          month: m,
-          hours: Math.round((hoursByMonth[m] || 0) * 10) / 10,
-          violations: violByMonth[m] || [],
-        })));
+        setQuarterMonthly(newEvalQuarterMonths.map(m => {
+          const h = hoursByMonth[m];
+          const totalHours = h ? h.hours : 0;
+          const count = h ? h.count : 0;
+          const avgDailyHours = count > 0 ? Math.round((totalHours / count) * 10) / 10 : 0;
+          return {
+            month: m,
+            hours: Math.round(totalHours * 10) / 10,
+            recordCount: count,
+            avgDailyHours,
+            violations: violByMonth[m] || [],
+          };
+        }));
       } finally {
         if (!cancelled) setQuarterLoading(false);
       }
@@ -2036,6 +2046,11 @@ const StationManagerPortal = () => {
                                   <Clock className="w-4 h-4 text-stat-blue" />
                                   <span className="text-muted-foreground">{ar ? 'ساعات العمل:' : 'Work hours:'}</span>
                                   <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
+                                </div>
+                                <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                                  <Clock className="w-4 h-4 text-amber-500" />
+                                  <span className="text-muted-foreground">{ar ? 'متوسط الساعات اليومية:' : 'Avg daily hours:'}</span>
+                                  <span className="font-bold text-amber-600 ms-auto">{m.avgDailyHours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
                                 </div>
                                 <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
                                   <AlertTriangle className="w-4 h-4 text-destructive" />
