@@ -2001,6 +2001,10 @@ const StationManagerPortal = () => {
                       })()}
                     </CardContent>
                   </Card>
+                  </aside>
+
+                  {/* Right column: Evaluation content */}
+                  <div className="space-y-4 min-w-0">
 
                   {/* Quarter context: hours per month + violations */}
                   {newEvalSelectedEmp && newEvalYear && newEvalQuarter && (
