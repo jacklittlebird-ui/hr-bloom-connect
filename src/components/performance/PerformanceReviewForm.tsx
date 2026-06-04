@@ -830,12 +830,6 @@ export const PerformanceReviewForm = () => {
           </CardHeader>
           <CardContent><Textarea value={strengths} onChange={(e) => setStrengths(e.target.value)} placeholder={t('performance.form.strengthsPlaceholder')} className="min-h-[120px]" /></CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className={cn("flex items-center gap-2 text-stat-coral", isRTL && "flex-row-reverse")}><Lightbulb className="w-5 h-5" />{t('performance.form.improvements')}</CardTitle>
-          </CardHeader>
-          <CardContent><Textarea value={improvements} onChange={(e) => setImprovements(e.target.value)} placeholder={t('performance.form.improvementsPlaceholder')} className="min-h-[120px]" /></CardContent>
-        </Card>
       </div>
 
       <Card>
