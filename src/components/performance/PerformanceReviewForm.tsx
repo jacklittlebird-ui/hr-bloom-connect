@@ -318,6 +318,7 @@ export const PerformanceReviewForm = () => {
       goals,
       managerComments,
       criteria: criteria.map(c => ({ name: c.nameAr, nameEn: c.name, score: c.score, weight: c.weight })),
+      bonusPercentage: bonusPercentage === '' ? undefined : Number(bonusPercentage),
     };
   };
 
