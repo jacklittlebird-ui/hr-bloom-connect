@@ -709,43 +709,75 @@ export const PerformanceReviewForm = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4")}>
-            <div className="space-y-2">
-              <Label>{ar ? 'كتابة النسبة (%)' : 'Type Percentage (%)'}</Label>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                step={1}
-                value={bonusPercentage}
-                onChange={e => {
-                  const v = e.target.value;
-                  if (v === '') { setBonusPercentage(''); return; }
-                  const n = Number(v);
-                  if (Number.isNaN(n)) return;
-                  if (n < 0 || n > 100) return;
-                  setBonusPercentage(String(n));
-                }}
-                placeholder="0 - 100"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{ar ? 'اختيار من قائمة' : 'Select from list'}</Label>
-              <Select value={bonusPercentage} onValueChange={setBonusPercentage}>
-                <SelectTrigger><SelectValue placeholder={ar ? 'اختر النسبة...' : 'Select percentage...'} /></SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {Array.from({ length: 21 }, (_, i) => i * 5).map(p => (
-                    <SelectItem key={p} value={String(p)}>{p}%</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <Popover open={bonusOpen} onOpenChange={setBonusOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={bonusOpen}
+                className={cn("w-full md:w-80 justify-between font-normal h-10", isRTL && "flex-row-reverse")}
+              >
+                <span>
+                  {bonusPercentage === '' ? (ar ? 'اختر النسبة...' : 'Select percentage...') : `${bonusPercentage}%`}
+                </span>
+                <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className={cn("w-full md:w-80 p-0", isRTL && "text-right")} align="start">
+              <Command shouldFilter={false}>
+                <CommandInput
+                  placeholder={ar ? 'اكتب أو اختر...' : 'Type or select...'}
+                  value={bonusSearch}
+                  onValueChange={setBonusSearch}
+                />
+                <CommandList className="max-h-72">
+                  <CommandEmpty>{ar ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
+                  <CommandGroup>
+                    {(() => {
+                      const n = Number(bonusSearch);
+                      const isValidSearch = bonusSearch !== '' && !Number.isNaN(n) && n >= 0 && n <= 100;
+                      const isInList = BONUS_OPTIONS.includes(n);
+                      if (isValidSearch && !isInList) {
+                        return (
+                          <CommandItem
+                            value={`custom-${bonusSearch}`}
+                            onSelect={() => {
+                              setBonusPercentage(String(n));
+                              setBonusSearch('');
+                              setBonusOpen(false);
+                            }}
+                          >
+                            {ar ? `استخدام ${n}%` : `Use ${n}%`}
+                          </CommandItem>
+                        );
+                      }
+                      return null;
+                    })()}
+                    {BONUS_OPTIONS.map(p => (
+                      <CommandItem
+                        key={p}
+                        value={String(p)}
+                        onSelect={() => {
+                          setBonusPercentage(String(p));
+                          setBonusSearch('');
+                          setBonusOpen(false);
+                        }}
+                      >
+                        <Check className={cn("me-2 h-4 w-4", bonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
+                        {p}%
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
           <div className={cn(
-            "flex items-start gap-2 p-3 rounded-lg bg-stat-yellow/5 border border-stat-yellow/30 text-sm",
+            "flex items-start gap-2 p-4 rounded-lg bg-stat-yellow/5 border border-stat-yellow/30 text-base leading-relaxed",
             isRTL && "flex-row-reverse text-right"
           )}>
-            <AlertTriangle className="w-4 h-4 text-stat-yellow shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-stat-yellow shrink-0 mt-0.5" />
             <span className="text-foreground">
               {ar
                 ? 'ملاحظة: يجب أن تكون نسبة المكافأة متماشية مع درجات التقييم وساعات العمل والجزاءات الموقعة على الموظف.'
