@@ -950,7 +950,7 @@ const StationManagerPortal = () => {
       </header>
 
       <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none', overscrollBehaviorY: 'none', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' as any }}>
-        <div className="p-4 md:p-6 xl:p-8 w-full max-w-none space-y-4 md:space-y-6 xl:space-y-8">
+        <div className="p-4 md:p-6 xl:p-8 w-full max-w-none space-y-4 md:space-y-6 xl:space-y-8 lg:text-[15px]">
           <PortalWelcomeBanner />
 
         {/* Multi-Station Selector (Area Manager / Station HR with multiple stations) */}
@@ -1191,44 +1191,42 @@ const StationManagerPortal = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(v) => { if (canSee(v)) setActiveTab(v); }} className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
-          <div className="sticky top-16 z-30 -mx-4 md:-mx-6 xl:-mx-8 px-4 md:px-6 xl:px-8 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border/50 overflow-x-auto">
-          <TabsList className="inline-flex flex-nowrap md:flex-wrap gap-1 w-max md:w-auto" dir="rtl">
-            {canSee('employees') && (
-              <TabsTrigger value="employees" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>
-            )}
-            {canSee('attendance') && (
-              <TabsTrigger value="attendance" className="gap-1 md:gap-1.5 text-xs md:text-sm"><CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الحضور', 'Attendance')}</span></TabsTrigger>
-            )}
-            {canSee('leaveCalendar') && (
-              <TabsTrigger value="leaveCalendar" className="gap-1 md:gap-1.5 text-xs md:text-sm"><CalendarIcon className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('تقويم الإجازات', 'Leave Calendar')}</span></TabsTrigger>
-            )}
-            {canSee('workHours') && (
-              <TabsTrigger value="workHours" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Clock className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('ساعات العمل', 'Work Hours')}</span></TabsTrigger>
-            )}
-            {canSee('approvals') && (
-              <TabsTrigger value="approvals" className="gap-1 md:gap-1.5 text-xs md:text-sm"><ClipboardCheck className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموافقات', 'Approvals')}</span></TabsTrigger>
-            )}
-            {canSee('evaluations') && (
-              <TabsTrigger value="evaluations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Star className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقييمات', 'Evaluations')}</span></TabsTrigger>
-            )}
-            {canSee('uniforms') && (
-              <TabsTrigger value="uniforms" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Shirt className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('اليونيفورم', 'Uniforms')}</span></TabsTrigger>
-            )}
-            {canSee('violations') && (
-              <TabsTrigger value="violations" className="gap-1 md:gap-1.5 text-xs md:text-sm"><AlertTriangle className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('المخالفات', 'Violations')}</span></TabsTrigger>
-            )}
-            {canSee('vehicles') && (
-              <TabsTrigger value="vehicles" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Car className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('السيارات', 'Vehicles')}</span></TabsTrigger>
-            )}
-            {canSee('companyCard') && (
-              <TabsTrigger value="companyCard" className="gap-1 md:gap-1.5 text-xs md:text-sm"><IdCard className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('كارت الشركة', 'Company Card')}</span></TabsTrigger>
-            )}
-            {canSee('reports') && (
-              <TabsTrigger value="reports" className="gap-1 md:gap-1.5 text-xs md:text-sm"><FileText className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقارير', 'Reports')}</span></TabsTrigger>
-            )}
-          </TabsList>
-          </div>
+        <Tabs value={activeTab} onValueChange={(v) => { if (canSee(v)) setActiveTab(v); }} className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6 xl:gap-8" dir={isRTL ? 'rtl' : 'ltr'}>
+          {/* Sidebar nav (lg+) / scroll bar (mobile) */}
+          <aside className="lg:sticky lg:top-20 lg:self-start lg:h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:bg-card lg:rounded-2xl lg:border lg:border-border lg:shadow-sm lg:p-3">
+            <div className="hidden lg:block px-2 pt-1 pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('الأقسام', 'Sections')}</div>
+            <div className="lg:hidden -mx-4 md:-mx-6 px-4 md:px-6 py-2 bg-background/95 backdrop-blur border-b border-border/50 overflow-x-auto sticky top-16 z-30">
+              <TabsList className="inline-flex flex-nowrap gap-1 w-max" dir="rtl">
+                {canSee('employees') && (<TabsTrigger value="employees" className="gap-1.5 text-xs"><Users className="h-4 w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>)}
+                {canSee('attendance') && (<TabsTrigger value="attendance" className="gap-1.5 text-xs"><CalendarDays className="h-4 w-4" /><span className="hidden sm:inline">{t('الحضور', 'Attendance')}</span></TabsTrigger>)}
+                {canSee('leaveCalendar') && (<TabsTrigger value="leaveCalendar" className="gap-1.5 text-xs"><CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t('تقويم الإجازات', 'Leave Calendar')}</span></TabsTrigger>)}
+                {canSee('workHours') && (<TabsTrigger value="workHours" className="gap-1.5 text-xs"><Clock className="h-4 w-4" /><span className="hidden sm:inline">{t('ساعات العمل', 'Work Hours')}</span></TabsTrigger>)}
+                {canSee('approvals') && (<TabsTrigger value="approvals" className="gap-1.5 text-xs"><ClipboardCheck className="h-4 w-4" /><span className="hidden sm:inline">{t('الموافقات', 'Approvals')}</span></TabsTrigger>)}
+                {canSee('evaluations') && (<TabsTrigger value="evaluations" className="gap-1.5 text-xs"><Star className="h-4 w-4" /><span className="hidden sm:inline">{t('التقييمات', 'Evaluations')}</span></TabsTrigger>)}
+                {canSee('uniforms') && (<TabsTrigger value="uniforms" className="gap-1.5 text-xs"><Shirt className="h-4 w-4" /><span className="hidden sm:inline">{t('اليونيفورم', 'Uniforms')}</span></TabsTrigger>)}
+                {canSee('violations') && (<TabsTrigger value="violations" className="gap-1.5 text-xs"><AlertTriangle className="h-4 w-4" /><span className="hidden sm:inline">{t('المخالفات', 'Violations')}</span></TabsTrigger>)}
+                {canSee('vehicles') && (<TabsTrigger value="vehicles" className="gap-1.5 text-xs"><Car className="h-4 w-4" /><span className="hidden sm:inline">{t('السيارات', 'Vehicles')}</span></TabsTrigger>)}
+                {canSee('companyCard') && (<TabsTrigger value="companyCard" className="gap-1.5 text-xs"><IdCard className="h-4 w-4" /><span className="hidden sm:inline">{t('كارت الشركة', 'Company Card')}</span></TabsTrigger>)}
+                {canSee('reports') && (<TabsTrigger value="reports" className="gap-1.5 text-xs"><FileText className="h-4 w-4" /><span className="hidden sm:inline">{t('التقارير', 'Reports')}</span></TabsTrigger>)}
+              </TabsList>
+            </div>
+            <TabsList className="hidden lg:flex flex-col items-stretch gap-1 bg-transparent h-auto p-0 w-full">
+              {canSee('employees') && (<TabsTrigger value="employees" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><Users className="h-5 w-5 shrink-0" />{t('الموظفين', 'Employees')}</TabsTrigger>)}
+              {canSee('attendance') && (<TabsTrigger value="attendance" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><CalendarDays className="h-5 w-5 shrink-0" />{t('الحضور', 'Attendance')}</TabsTrigger>)}
+              {canSee('leaveCalendar') && (<TabsTrigger value="leaveCalendar" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><CalendarIcon className="h-5 w-5 shrink-0" />{t('تقويم الإجازات', 'Leave Calendar')}</TabsTrigger>)}
+              {canSee('workHours') && (<TabsTrigger value="workHours" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><Clock className="h-5 w-5 shrink-0" />{t('ساعات العمل', 'Work Hours')}</TabsTrigger>)}
+              {canSee('approvals') && (<TabsTrigger value="approvals" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><ClipboardCheck className="h-5 w-5 shrink-0" />{t('الموافقات', 'Approvals')}</TabsTrigger>)}
+              {canSee('evaluations') && (<TabsTrigger value="evaluations" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><Star className="h-5 w-5 shrink-0" />{t('التقييمات', 'Evaluations')}</TabsTrigger>)}
+              {canSee('uniforms') && (<TabsTrigger value="uniforms" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><Shirt className="h-5 w-5 shrink-0" />{t('اليونيفورم', 'Uniforms')}</TabsTrigger>)}
+              {canSee('violations') && (<TabsTrigger value="violations" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><AlertTriangle className="h-5 w-5 shrink-0" />{t('المخالفات', 'Violations')}</TabsTrigger>)}
+              {canSee('vehicles') && (<TabsTrigger value="vehicles" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><Car className="h-5 w-5 shrink-0" />{t('السيارات', 'Vehicles')}</TabsTrigger>)}
+              {canSee('companyCard') && (<TabsTrigger value="companyCard" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><IdCard className="h-5 w-5 shrink-0" />{t('كارت الشركة', 'Company Card')}</TabsTrigger>)}
+              {canSee('reports') && (<TabsTrigger value="reports" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><FileText className="h-5 w-5 shrink-0" />{t('التقارير', 'Reports')}</TabsTrigger>)}
+            </TabsList>
+          </aside>
+
+          <div className="min-w-0 space-y-4">
+
 
           {/* Employees Tab */}
           <TabsContent value="employees">
@@ -2102,6 +2100,7 @@ const StationManagerPortal = () => {
               })()}
             </TabsContent>
           )}
+          </div>
         </Tabs>
         </div>
       </main>
