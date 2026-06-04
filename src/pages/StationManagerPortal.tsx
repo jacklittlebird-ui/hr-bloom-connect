@@ -493,6 +493,11 @@ const StationManagerPortal = () => {
       toast({ title: t('أكمل البيانات المطلوبة', 'Complete required fields'), variant: 'destructive' });
       return;
     }
+    const bonusCheck = validateBonusPercentage(evalBonusPercentage);
+    if (!bonusCheck.valid) {
+      toast({ title: t('نسبة مكافأة غير صحيحة', 'Invalid bonus percentage'), description: bonusCheck.message, variant: 'destructive' });
+      return;
+    }
     const emp = stationEmployees.find(e => e.id === evalEmployeeId);
     if (!emp) return;
     addReview({
