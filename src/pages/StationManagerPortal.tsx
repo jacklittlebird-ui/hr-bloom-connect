@@ -1265,7 +1265,8 @@ const StationManagerPortal = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="overflow-x-auto">
+                <Table className="min-w-[720px]">
                   <TableHeader><TableRow>
                     <TableHead>{t('الرقم', 'ID')}</TableHead>
                     <TableHead>{t('الاسم', 'Name')}</TableHead>
@@ -1293,6 +1294,7 @@ const StationManagerPortal = () => {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
