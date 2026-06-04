@@ -1889,7 +1889,7 @@ const StationManagerPortal = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">{t('القسم', 'Department')}</Label>
                           <Select value={newEvalDeptFilter} onValueChange={setNewEvalDeptFilter}>
