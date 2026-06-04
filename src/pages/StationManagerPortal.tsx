@@ -1306,6 +1306,7 @@ const StationManagerPortal = () => {
             <div className="hidden lg:block px-2 pt-1 pb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('الأقسام', 'Sections')}</div>
             <div className="lg:hidden -mx-4 md:-mx-6 px-4 md:px-6 py-2 bg-background/95 backdrop-blur border-b border-border/50 overflow-x-auto sticky top-16 z-30">
               <TabsList className="inline-flex flex-nowrap gap-1 w-max" dir="rtl">
+                {canSee('dashboard') && (<TabsTrigger value="dashboard" className="gap-1.5 text-xs"><BarChart3 className="h-4 w-4" /><span className="hidden sm:inline">{t('لوحة التحكم', 'Dashboard')}</span></TabsTrigger>)}
                 {canSee('employees') && (<TabsTrigger value="employees" className="gap-1.5 text-xs"><Users className="h-4 w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>)}
                 {canSee('attendance') && (<TabsTrigger value="attendance" className="gap-1.5 text-xs"><CalendarDays className="h-4 w-4" /><span className="hidden sm:inline">{t('الحضور', 'Attendance')}</span></TabsTrigger>)}
                 {canSee('leaveCalendar') && (<TabsTrigger value="leaveCalendar" className="gap-1.5 text-xs"><CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t('تقويم الإجازات', 'Leave Calendar')}</span></TabsTrigger>)}
