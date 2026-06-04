@@ -950,7 +950,7 @@ const StationManagerPortal = () => {
       </header>
 
       <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden" style={{ overscrollBehavior: 'none', overscrollBehaviorY: 'none', touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' as any }}>
-        <div className="p-4 md:p-6 w-full max-w-none space-y-4 md:space-y-6">
+        <div className="p-4 md:p-6 xl:p-8 w-full max-w-none space-y-4 md:space-y-6 xl:space-y-8">
           <PortalWelcomeBanner />
 
         {/* Multi-Station Selector (Area Manager / Station HR with multiple stations) */}
@@ -1192,7 +1192,8 @@ const StationManagerPortal = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => { if (canSee(v)) setActiveTab(v); }} className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
-          <TabsList className="inline-flex flex-wrap gap-1" dir="rtl">
+          <div className="sticky top-16 z-30 -mx-4 md:-mx-6 xl:-mx-8 px-4 md:px-6 xl:px-8 py-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border/50 overflow-x-auto">
+          <TabsList className="inline-flex flex-nowrap md:flex-wrap gap-1 w-max md:w-auto" dir="rtl">
             {canSee('employees') && (
               <TabsTrigger value="employees" className="gap-1 md:gap-1.5 text-xs md:text-sm"><Users className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>
             )}
@@ -1227,6 +1228,7 @@ const StationManagerPortal = () => {
               <TabsTrigger value="reports" className="gap-1 md:gap-1.5 text-xs md:text-sm"><FileText className="h-3.5 w-3.5 md:h-4 md:w-4" /><span className="hidden sm:inline">{t('التقارير', 'Reports')}</span></TabsTrigger>
             )}
           </TabsList>
+          </div>
 
           {/* Employees Tab */}
           <TabsContent value="employees">
@@ -1263,7 +1265,8 @@ const StationManagerPortal = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
+                <div className="overflow-x-auto">
+                <Table className="min-w-[720px]">
                   <TableHeader><TableRow>
                     <TableHead>{t('الرقم', 'ID')}</TableHead>
                     <TableHead>{t('الاسم', 'Name')}</TableHead>
@@ -1291,6 +1294,7 @@ const StationManagerPortal = () => {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
