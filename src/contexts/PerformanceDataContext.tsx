@@ -57,8 +57,8 @@ interface PerformanceDataContextType {
 const PerformanceDataContext = createContext<PerformanceDataContextType | undefined>(undefined);
 
 // Specific columns - no SELECT *
-const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, employees(name_ar)';
-const EMPLOYEE_PERF_COLS = 'id, employee_id, quarter, year, score, status, review_date, strengths, improvements';
+const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, bonus_percentage, employees(name_ar)';
+const EMPLOYEE_PERF_COLS = 'id, employee_id, quarter, year, score, status, review_date, strengths, improvements, bonus_percentage';
 
 const mapRow = (r: any): PerformanceReview => ({
   id: r.id,
