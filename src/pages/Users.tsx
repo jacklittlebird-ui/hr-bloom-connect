@@ -328,7 +328,7 @@ const Users = () => {
         const station = stationsRes.data?.find(s => s.id === r.station_id);
         const emp = empsRes.data?.find(e => e.id === r.employee_id);
         const dept = deptsRes.data?.find(d => d.id === (r as any).department_id);
-        const userPerm = (userPerms as any[])?.find(up => up.user_id === r.user_id);
+        const userPerm = userPerms.find(up => up.user_id === r.user_id);
 
         // For department_manager, build full list (linked + legacy)
         let department_ids: string[] | undefined;
