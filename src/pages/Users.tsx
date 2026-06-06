@@ -287,8 +287,23 @@ const Users = () => {
         if (chunkData) profilesData.push(...chunkData);
       }
 
-      // Fetch user_module_permissions
-      const { data: userPerms } = await supabase.from('user_module_permissions' as any).select('user_id, profile_id, custom_modules, feature_flags');
+      // Fetch user_module_permissions (paginated to bypass 1000-row PostgREST default)
+      const userPerms: any[] = [];
+      {
+        const pageSize = 1000;
+        let from = 0;
+        while (true) {
+          const { data: chunk, error: chErr } = await supabase
+            .from('user_module_permissions' as any)
+            .select('user_id, profile_id, custom_modules, feature_flags')
+            .range(from, from + pageSize - 1);
+          if (chErr) { console.warn('user_module_permissions fetch error:', chErr); break; }
+          if (!chunk || chunk.length === 0) break;
+          userPerms.push(...chunk);
+          if (chunk.length < pageSize) break;
+          from += pageSize;
+        }
+      }
 
       // Build map of all linked departments per dm user
       const dmDeptMap = new Map<string, string[]>();
