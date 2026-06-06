@@ -151,6 +151,18 @@ const StationManagerPortal = () => {
   useScrollRestoration(mainRef);
   const t = (ar: string, en: string) => language === 'ar' ? ar : en;
   const ar = language === 'ar';
+  // Hide bonus percentage UI for specific accounts/stations
+  const hideBonusUI = useMemo(() => {
+    const HIDDEN_STATIONS = new Set(['aswan', 'rmf', 'atz', 'lxr', 'hmb']);
+    const HIDDEN_EMAILS = new Set(['sechrg@hr.com', 'hanhrg@hr.com']);
+    const email = (user?.email || '').toLowerCase();
+    if (HIDDEN_EMAILS.has(email)) return true;
+    const stationCode = (user?.station || '').toLowerCase();
+    if (HIDDEN_STATIONS.has(stationCode)) return true;
+    const stationsArr = (user?.stations || []).map(s => (s || '').toLowerCase());
+    if (stationsArr.some(s => HIDDEN_STATIONS.has(s))) return true;
+    return false;
+  }, [user?.station, user?.email, user?.stations]);
   // Role-based tab access — each manager role only sees its allowed tabs
   const allowedTabs = useMemo<string[]>(() => {
     switch (user?.role) {
