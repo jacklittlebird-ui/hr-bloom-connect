@@ -2563,14 +2563,16 @@ const StationManagerPortal = () => {
           {canSee('companyCard') && (
             <TabsContent value="companyCard">
               {(() => {
-                const allStationIds = (user?.stationIds && user.stationIds.length)
+                // Derive allowed station UUIDs from the currently-scoped employees,
+                // so the selected station (area manager) is respected and we don't
+                // leak employees from sibling stations.
+                const idsFromEmps = Array.from(new Set(
+                  stationEmployees.map(e => (e as any).stationId).filter(Boolean)
+                )) as string[];
+                const fallbackIds = (user?.stationIds && user.stationIds.length)
                   ? user.stationIds
-                  : (user?.stations || []).map(s => s).filter(Boolean) as string[];
-                // For multi-station managers: scope to the currently selected station
-                // unless "all" is selected. Single-station roles keep their full list.
-                const allowedIds = (isMultiStation && selectedStation && selectedStation !== 'all')
-                  ? [selectedStation]
-                  : allStationIds;
+                  : (user?.stations || []).filter(Boolean) as string[];
+                const allowedIds = idsFromEmps.length ? idsFromEmps : fallbackIds;
                 return <EmployeeIdCards key={allowedIds.join(',')} allowedStationIds={allowedIds} />;
               })()}
             </TabsContent>
