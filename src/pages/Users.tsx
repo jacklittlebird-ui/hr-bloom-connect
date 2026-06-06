@@ -1026,6 +1026,7 @@ const Users = () => {
                 );
               })}
             </div>
+            )}
           </TabsContent>
 
           {/* ========== AUDIT LOG TAB ========== */}
