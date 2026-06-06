@@ -71,6 +71,14 @@ const Users = () => {
   const [profiles, setProfiles] = useState<PermissionProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  // ===== Users tab filters =====
+  const [filterRole, setFilterRole] = useState<string>('all');
+  const [filterStation, setFilterStation] = useState<string>('all');
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
+  const [filterProfile, setFilterProfile] = useState<string>('all'); // 'all' | 'none' | 'custom' | profile_id
+  // ===== Profiles tab filters =====
+  const [profileSearch, setProfileSearch] = useState('');
+  const [filterProfileType, setFilterProfileType] = useState<'all' | 'system' | 'custom'>('all');
   const [stations, setStations] = useState<{ id: string; code: string; name_ar: string; name_en: string }[]>([]);
   const [employees, setEmployees] = useState<{ id: string; employee_code: string; name_ar: string; name_en: string }[]>([]);
   const [departments, setDepartments] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
@@ -611,13 +619,39 @@ const Users = () => {
   };
 
   // ========== HELPERS ==========
-  const filtered = users.filter(u =>
-    u.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase()) ||
-    u.role.includes(search.toLowerCase()) ||
-    (u.employee_code || '').toLowerCase().includes(search.toLowerCase())
-  ).sort((a, b) => {
-    // Sort by employee_code numerically (emp1001 < emp1002)
+  const filtered = users.filter(u => {
+    const q = search.toLowerCase();
+    const matchesSearch = !q ||
+      u.full_name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.role.toLowerCase().includes(q) ||
+      (u.employee_code || '').toLowerCase().includes(q) ||
+      (u.station_name || '').toLowerCase().includes(q) ||
+      (u.station_names || []).some(n => n.toLowerCase().includes(q)) ||
+      (u.department_name || '').toLowerCase().includes(q) ||
+      (u.department_names || []).some(n => n.toLowerCase().includes(q));
+
+    const matchesRole = filterRole === 'all' || u.role === filterRole;
+
+    const matchesStation = filterStation === 'all' ||
+      u.station_code === filterStation ||
+      (u.station_codes || []).includes(filterStation);
+
+    const matchesDept = filterDepartment === 'all' ||
+      u.department_id === filterDepartment ||
+      (u.department_ids || []).includes(filterDepartment);
+
+    let matchesProfile = true;
+    if (filterProfile === 'none') {
+      matchesProfile = !u.permission_profile_id && !(u.custom_modules && u.custom_modules.length > 0);
+    } else if (filterProfile === 'custom') {
+      matchesProfile = !!(u.custom_modules && u.custom_modules.length > 0);
+    } else if (filterProfile !== 'all') {
+      matchesProfile = u.permission_profile_id === filterProfile;
+    }
+
+    return matchesSearch && matchesRole && matchesStation && matchesDept && matchesProfile;
+  }).sort((a, b) => {
     const codeA = a.employee_code || '';
     const codeB = b.employee_code || '';
     const numA = parseInt(codeA.replace(/\D/g, '')) || 0;
@@ -625,9 +659,27 @@ const Users = () => {
     if (numA && numB) return numA - numB;
     if (numA) return -1;
     if (numB) return 1;
-    // Non-employee users: sort by role then name
     return a.role.localeCompare(b.role) || a.full_name.localeCompare(b.full_name);
   });
+
+  const filteredProfiles = profiles.filter(p => {
+    const q = profileSearch.toLowerCase();
+    const matchesSearch = !q ||
+      p.name_ar.toLowerCase().includes(q) ||
+      p.name_en.toLowerCase().includes(q) ||
+      (p.description_ar || '').toLowerCase().includes(q) ||
+      (p.description_en || '').toLowerCase().includes(q) ||
+      p.modules.some(m => m.toLowerCase().includes(q));
+    const matchesType = filterProfileType === 'all'
+      || (filterProfileType === 'system' && p.is_system)
+      || (filterProfileType === 'custom' && !p.is_system);
+    return matchesSearch && matchesType;
+  });
+
+  const activeFiltersCount = [filterRole, filterStation, filterDepartment, filterProfile].filter(v => v !== 'all').length;
+  const resetUserFilters = () => {
+    setFilterRole('all'); setFilterStation('all'); setFilterDepartment('all'); setFilterProfile('all');
+  };
 
   const { paginatedItems: paginatedUsers, currentPage, totalPages, totalItems, startIndex, endIndex, setCurrentPage } = usePagination(filtered, 20);
 
