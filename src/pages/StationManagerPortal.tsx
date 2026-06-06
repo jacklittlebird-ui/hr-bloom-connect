@@ -2364,7 +2364,7 @@ const StationManagerPortal = () => {
                         {filteredReviews.length === 0 ? (
                           <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">{t('لا توجد تقييمات', 'No evaluations')}</TableCell></TableRow>
                         ) : filteredReviews.map(r => {
-                          const emp = stationEmployees.find(e => e.employeeId === r.employeeId);
+                          const emp = stationEmployees.find(e => e.id === r.employeeId || e.employeeId === r.employeeId);
                           const jobTitle = emp ? (ar ? (emp.jobTitleAr || emp.jobTitle) : (emp.jobTitleEn || emp.jobTitle)) : '-';
                           const hireDate = emp?.hireDate ? formatDate(emp.hireDate) : '-';
                           return (
