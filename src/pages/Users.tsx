@@ -1145,6 +1145,9 @@ const Users = () => {
                 <Shield className="w-5 h-5" />
                 {isAr ? 'تعيين صلاحيات' : 'Assign Permissions'} — {selectedUser?.full_name}
               </DialogTitle>
+              {selectedUser?.email && (
+                <p className="text-xs text-muted-foreground" dir="ltr">{selectedUser.email}</p>
+              )}
             </DialogHeader>
 
             {selectedUser?.role === 'admin' ? (
