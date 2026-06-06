@@ -153,6 +153,8 @@ const StationManagerPortal = () => {
   const ar = language === 'ar';
   // Hide bonus percentage UI for specific accounts/stations
   const hideBonusUI = useMemo(() => {
+    // Area managers always see the bonus UI
+    if (user?.role === 'area_manager') return false;
     const HIDDEN_STATIONS = new Set(['aswan', 'rmf', 'atz', 'lxr', 'hmb']);
     const HIDDEN_EMAILS = new Set(['sechrg@hr.com', 'hanhrg@hr.com']);
     const email = (user?.email || '').toLowerCase();
@@ -162,7 +164,7 @@ const StationManagerPortal = () => {
     const stationsArr = (user?.stations || []).map(s => (s || '').toLowerCase());
     if (stationsArr.some(s => HIDDEN_STATIONS.has(s))) return true;
     return false;
-  }, [user?.station, user?.email, user?.stations]);
+  }, [user?.role, user?.station, user?.email, user?.stations]);
   // Role-based tab access — each manager role only sees its allowed tabs
   const allowedTabs = useMemo<string[]>(() => {
     switch (user?.role) {
