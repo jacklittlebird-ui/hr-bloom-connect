@@ -45,7 +45,12 @@ export const TrainingChart = () => {
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" tick={{ fontFamily: ar ? 'Cairo' : 'Inter', fontSize: 12 }} />
               <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} orientation={ar ? 'right' : 'left'} />
               <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontFamily: ar ? 'Cairo' : 'Inter' }} />
-              <Bar dataKey="count" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                {data.map((_, i) => {
+                  const palette = ['hsl(217, 91%, 60%)', 'hsl(45, 93%, 55%)', 'hsl(142, 71%, 50%)', 'hsl(0, 79%, 63%)', 'hsl(262, 83%, 65%)', 'hsl(330, 81%, 60%)'];
+                  return <Cell key={i} fill={palette[i % palette.length]} />;
+                })}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         )}
