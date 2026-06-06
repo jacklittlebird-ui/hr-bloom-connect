@@ -94,12 +94,12 @@ interface CriteriaScore {
 }
 
 const initialCriteria: CriteriaScore[] = [
+  { id: 'attendance', name: 'Attendance & Punctuality', nameAr: 'الحضور والالتزام', score: 3, weight: 20 },
   { id: 'quality', name: 'Work Quality', nameAr: 'جودة العمل', score: 3, weight: 25 },
   { id: 'productivity', name: 'Productivity', nameAr: 'الإنتاجية', score: 3, weight: 20 },
-  { id: 'teamwork', name: 'Teamwork', nameAr: 'العمل الجماعي', score: 3, weight: 20 },
-  { id: 'communication', name: 'Communication', nameAr: 'التواصل', score: 3, weight: 15 },
+  { id: 'teamwork', name: 'Teamwork', nameAr: 'العمل الجماعي', score: 3, weight: 15 },
+  { id: 'communication', name: 'Communication', nameAr: 'التواصل', score: 3, weight: 10 },
   { id: 'initiative', name: 'Initiative', nameAr: 'المبادرة', score: 3, weight: 10 },
-  { id: 'attendance', name: 'Attendance & Punctuality', nameAr: 'الحضور والالتزام', score: 3, weight: 10 },
 ];
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
