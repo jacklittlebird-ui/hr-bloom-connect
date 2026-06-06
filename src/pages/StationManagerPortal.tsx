@@ -151,20 +151,11 @@ const StationManagerPortal = () => {
   useScrollRestoration(mainRef);
   const t = (ar: string, en: string) => language === 'ar' ? ar : en;
   const ar = language === 'ar';
-  // Hide bonus percentage UI for specific accounts/stations
-  const hideBonusUI = useMemo(() => {
-    // Area managers always see the bonus UI
-    if (user?.role === 'area_manager') return false;
-    const HIDDEN_STATIONS = new Set(['aswan', 'rmf', 'atz', 'lxr', 'hmb']);
-    const HIDDEN_EMAILS = new Set(['sechrg@hr.com', 'hanhrg@hr.com']);
-    const email = (user?.email || '').toLowerCase();
-    if (HIDDEN_EMAILS.has(email)) return true;
-    const stationCode = (user?.station || '').toLowerCase();
-    if (HIDDEN_STATIONS.has(stationCode)) return true;
-    const stationsArr = (user?.stations || []).map(s => (s || '').toLowerCase());
-    if (stationsArr.some(s => HIDDEN_STATIONS.has(s))) return true;
-    return false;
-  }, [user?.role, user?.station, user?.email, user?.stations]);
+  // Bonus percentage UI is role-gated: ONLY area managers can see it inside
+  // the portal (across New Evaluation, History, and Edit screens). Station
+  // managers, station HR, and department managers never see it — no manual
+  // station/email exceptions.
+  const hideBonusUI = useMemo(() => user?.role !== 'area_manager', [user?.role]);
   // Role-based tab access — each manager role only sees its allowed tabs
   const allowedTabs = useMemo<string[]>(() => {
     switch (user?.role) {
