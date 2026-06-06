@@ -43,12 +43,18 @@ export const SalaryOverviewChart = () => {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="salGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(142, 71%, 50%)" stopOpacity={1} />
+                  <stop offset="100%" stopColor="hsl(168, 76%, 42%)" stopOpacity={0.9} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fontFamily: ar ? 'Cairo' : 'Inter', fontSize: 11 }} />
               <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} orientation={ar ? 'right' : 'left'} />
               <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontFamily: ar ? 'Cairo' : 'Inter' }}
                 formatter={(v: number) => [v.toLocaleString(), ar ? 'الإجمالي' : 'Total']} />
-              <Bar dataKey="total" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="total" fill="url(#salGrad)" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
