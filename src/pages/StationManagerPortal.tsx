@@ -2392,11 +2392,13 @@ const StationManagerPortal = () => {
                             <TableCell>
                               <Badge className={severityFromScore(r.score)}>{r.score}/5 - {getScoreLabel(r.score).label}</Badge>
                             </TableCell>
+                            {!hideBonusUI && (
                             <TableCell>
                               {r.bonusPercentage != null ? (
                                 <span className="inline-block px-2 py-0.5 rounded-full bg-[hsl(var(--stat-green))]/15 text-[hsl(var(--stat-green))] font-bold text-xs">{r.bonusPercentage}%</span>
                               ) : <span className="text-muted-foreground text-xs">-</span>}
                             </TableCell>
+                            )}
                             <TableCell>
                               <Badge variant="outline" className={
                                 r.status === 'approved' ? 'bg-[hsl(var(--stat-green-bg))] text-[hsl(var(--stat-green))] border-[hsl(var(--stat-green))]' :
