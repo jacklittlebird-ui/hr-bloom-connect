@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
 import { ALL_MODULES, MODULE_LABELS, ModuleKey } from '@/hooks/useModulePermissions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from '@/components/ui/command';
@@ -32,7 +33,7 @@ interface SystemUser {
   user_id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'station_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk' | 'department_manager' | 'station_hr';
+  role: 'admin' | 'station_manager' | 'area_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk' | 'department_manager' | 'station_hr';
   station_code?: string;
   station_name?: string;
   /** For station_hr (multi-station) */
@@ -46,6 +47,7 @@ interface SystemUser {
   created_at: string;
   permission_profile_id?: string;
   custom_modules?: string[];
+  feature_flags?: Record<string, boolean>;
 }
 
 interface PermissionProfile {
@@ -90,6 +92,7 @@ const Users = () => {
   const [permMode, setPermMode] = useState<'profile' | 'custom'>('profile');
   const [selectedProfileId, setSelectedProfileId] = useState('');
   const [customModules, setCustomModules] = useState<string[]>([]);
+  const [featureFlags, setFeatureFlags] = useState<Record<string, boolean>>({});
 
   // Edit user dialog
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -261,7 +264,7 @@ const Users = () => {
       }
 
       // Fetch user_module_permissions
-      const { data: userPerms } = await supabase.from('user_module_permissions' as any).select('user_id, profile_id, custom_modules');
+      const { data: userPerms } = await supabase.from('user_module_permissions' as any).select('user_id, profile_id, custom_modules, feature_flags');
 
       // Build map of all linked departments per dm user
       const dmDeptMap = new Map<string, string[]>();
@@ -332,6 +335,7 @@ const Users = () => {
           created_at: profile?.created_at || '',
           permission_profile_id: userPerm?.profile_id || undefined,
           custom_modules: userPerm?.custom_modules || undefined,
+          feature_flags: (userPerm?.feature_flags as any) || {},
         };
       });
 
@@ -432,6 +436,11 @@ const Users = () => {
       setSelectedProfileId('');
       setCustomModules([]);
     }
+    // Default: show bonus % only for area_manager unless explicitly overridden
+    const defaultShowBonus = user.role === 'area_manager';
+    setFeatureFlags({
+      show_bonus_percentage: user.feature_flags?.show_bonus_percentage ?? defaultShowBonus,
+    });
     setPermDialogOpen(true);
   };
 
@@ -442,6 +451,7 @@ const Users = () => {
         user_id: selectedUser.user_id,
         profile_id: permMode === 'profile' && selectedProfileId ? selectedProfileId : null,
         custom_modules: permMode === 'custom' ? customModules : null,
+        feature_flags: featureFlags,
       };
 
       // Upsert
@@ -1232,6 +1242,29 @@ const Users = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Per-account feature flags */}
+                <div className="space-y-3 border-t pt-4">
+                  <Label className="text-sm font-semibold">
+                    {isAr ? 'الإعدادات المخصصة' : 'Custom Settings'}
+                  </Label>
+                  <div className={cn("flex items-center justify-between rounded-lg border p-3", isRTL && "flex-row-reverse")}>
+                    <div className={cn(isRTL && "text-right")}>
+                      <p className="text-sm font-medium">
+                        {isAr ? 'إظهار نسبة المكافأة في التقييم' : 'Show Bonus Percentage in Evaluation'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {isAr
+                          ? 'يتحكم في ظهور حقل نسبة المكافأة في شاشات التقييم (تقييم جديد، السجل، التعديل).'
+                          : 'Controls visibility of the bonus % field in evaluation screens (new, history, edit).'}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={!!featureFlags.show_bonus_percentage}
+                      onCheckedChange={(v) => setFeatureFlags(prev => ({ ...prev, show_bonus_percentage: v }))}
+                    />
+                  </div>
+                </div>
               </div>
             )}
 

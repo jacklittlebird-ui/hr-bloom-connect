@@ -2854,6 +2854,7 @@ export type Database = {
         Row: {
           created_at: string
           custom_modules: Json | null
+          feature_flags: Json
           id: string
           profile_id: string | null
           user_id: string
@@ -2861,6 +2862,7 @@ export type Database = {
         Insert: {
           created_at?: string
           custom_modules?: Json | null
+          feature_flags?: Json
           id?: string
           profile_id?: string | null
           user_id: string
@@ -2868,6 +2870,7 @@ export type Database = {
         Update: {
           created_at?: string
           custom_modules?: Json | null
+          feature_flags?: Json
           id?: string
           profile_id?: string | null
           user_id?: string
