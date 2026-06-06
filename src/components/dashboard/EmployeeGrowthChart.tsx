@@ -40,11 +40,18 @@ export const EmployeeGrowthChart = () => {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="growLine" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="hsl(262, 83%, 65%)" />
+                  <stop offset="50%" stopColor="hsl(217, 91%, 60%)" />
+                  <stop offset="100%" stopColor="hsl(168, 76%, 45%)" />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" tick={{ fontFamily: isRTL ? 'Cairo' : 'Inter', fontSize: 12 }} reversed={isRTL} />
               <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontFamily: isRTL ? 'Cairo' : 'Inter', fontSize: 12 }} orientation={isRTL ? 'right' : 'left'} />
               <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontFamily: isRTL ? 'Cairo' : 'Inter' }} />
-              <Line type="monotone" dataKey="employees" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 5 }} activeDot={{ r: 8 }} />
+              <Line type="monotone" dataKey="employees" stroke="url(#growLine)" strokeWidth={4} dot={{ fill: 'hsl(217, 91%, 60%)', strokeWidth: 2, r: 5 }} activeDot={{ r: 8, fill: 'hsl(262, 83%, 65%)' }} />
             </LineChart>
           </ResponsiveContainer>
         )}
