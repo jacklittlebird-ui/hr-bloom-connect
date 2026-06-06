@@ -32,12 +32,12 @@ export interface PerformanceReview {
 
 
 export const defaultCriteria: CriteriaItem[] = [
+  { name: 'الحضور والالتزام', nameEn: 'Attendance', score: 3, weight: 20 },
   { name: 'جودة العمل', nameEn: 'Work Quality', score: 3, weight: 25 },
   { name: 'الإنتاجية', nameEn: 'Productivity', score: 3, weight: 20 },
-  { name: 'العمل الجماعي', nameEn: 'Teamwork', score: 3, weight: 20 },
-  { name: 'التواصل', nameEn: 'Communication', score: 3, weight: 15 },
+  { name: 'العمل الجماعي', nameEn: 'Teamwork', score: 3, weight: 15 },
+  { name: 'التواصل', nameEn: 'Communication', score: 3, weight: 10 },
   { name: 'المبادرة', nameEn: 'Initiative', score: 3, weight: 10 },
-  { name: 'الحضور والالتزام', nameEn: 'Attendance', score: 3, weight: 10 },
 ];
 
 export const calculateScore = (criteria: CriteriaItem[]) => {
