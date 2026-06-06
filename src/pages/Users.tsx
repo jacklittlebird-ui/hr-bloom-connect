@@ -955,8 +955,39 @@ const Users = () => {
               </Button>
             </div>
 
+            <div className={cn("flex gap-2 items-center flex-wrap", isRTL && "flex-row-reverse")}>
+              <div className="relative flex-1 min-w-[240px] max-w-md">
+                <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
+                <Input
+                  placeholder={isAr ? 'بحث عن ملف صلاحيات...' : 'Search profiles...'}
+                  value={profileSearch}
+                  onChange={e => setProfileSearch(e.target.value)}
+                  className={cn(isRTL ? "pr-10" : "pl-10")}
+                />
+              </div>
+              <Select value={filterProfileType} onValueChange={(v) => setFilterProfileType(v as any)}>
+                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{isAr ? 'كل الأنواع' : 'All Types'}</SelectItem>
+                  <SelectItem value="system">{isAr ? 'قوالب النظام' : 'System Templates'}</SelectItem>
+                  <SelectItem value="custom">{isAr ? 'مخصصة' : 'Custom'}</SelectItem>
+                </SelectContent>
+              </Select>
+              {(profileSearch || filterProfileType !== 'all') && (
+                <Button variant="ghost" size="sm" onClick={() => { setProfileSearch(''); setFilterProfileType('all'); }} className="gap-1 text-muted-foreground">
+                  {isAr ? 'مسح الفلاتر' : 'Clear filters'}
+                </Button>
+              )}
+              <Badge variant="outline" className="ml-auto">
+                {isAr ? `${filteredProfiles.length} نتيجة` : `${filteredProfiles.length} results`}
+              </Badge>
+            </div>
+
+            {filteredProfiles.length === 0 ? (
+              <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr ? 'لا توجد نتائج' : 'No results'}</CardContent></Card>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profiles.map(profile => {
+              {filteredProfiles.map(profile => {
                 const assignedCount = users.filter(u => u.permission_profile_id === profile.id).length;
                 return (
                   <Card key={profile.id} className={profile.is_system ? 'border-primary/30' : ''}>
