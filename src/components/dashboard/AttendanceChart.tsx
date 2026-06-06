@@ -61,6 +61,16 @@ export const AttendanceChart = () => {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="attGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(217, 91%, 60%)" stopOpacity={1} />
+                  <stop offset="100%" stopColor="hsl(199, 89%, 48%)" stopOpacity={0.85} />
+                </linearGradient>
+                <linearGradient id="lateGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(0, 79%, 63%)" stopOpacity={1} />
+                  <stop offset="100%" stopColor="hsl(25, 95%, 55%)" stopOpacity={0.85} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" tick={{ fontFamily: isRTL ? 'Cairo' : 'Inter', fontSize: 12 }} reversed={isRTL} />
               <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontFamily: isRTL ? 'Cairo' : 'Inter', fontSize: 12 }} orientation={isRTL ? 'right' : 'left'} />
@@ -69,8 +79,8 @@ export const AttendanceChart = () => {
                 const labels: Record<string, string> = { attendance: t('legend.attendance'), late: t('legend.late') };
                 return <span style={{ fontFamily: isRTL ? 'Cairo' : 'Inter' }}>{labels[value] || value}</span>;
               }} />
-              <Bar dataKey="attendance" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="late" fill="hsl(var(--chart-6))" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="attendance" fill="url(#attGrad)" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="late" fill="url(#lateGrad)" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}
