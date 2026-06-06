@@ -2563,10 +2563,15 @@ const StationManagerPortal = () => {
           {canSee('companyCard') && (
             <TabsContent value="companyCard">
               {(() => {
-                const allowedIds = (user?.stationIds && user.stationIds.length)
+                const allStationIds = (user?.stationIds && user.stationIds.length)
                   ? user.stationIds
                   : (user?.stations || []).map(s => s).filter(Boolean) as string[];
-                return <EmployeeIdCards allowedStationIds={allowedIds} />;
+                // For multi-station managers: scope to the currently selected station
+                // unless "all" is selected. Single-station roles keep their full list.
+                const allowedIds = (isMultiStation && selectedStation && selectedStation !== 'all')
+                  ? [selectedStation]
+                  : allStationIds;
+                return <EmployeeIdCards key={allowedIds.join(',')} allowedStationIds={allowedIds} />;
               })()}
             </TabsContent>
           )}
