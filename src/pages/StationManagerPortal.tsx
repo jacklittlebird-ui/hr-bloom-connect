@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserFeatureFlags } from '@/hooks/useUserFeatureFlags';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { usePerformanceData, defaultCriteria, calculateScore, CriteriaItem } from '@/contexts/PerformanceDataContext';
@@ -155,7 +156,8 @@ const StationManagerPortal = () => {
   // the portal (across New Evaluation, History, and Edit screens). Station
   // managers, station HR, and department managers never see it — no manual
   // station/email exceptions.
-  const hideBonusUI = useMemo(() => user?.role !== 'area_manager', [user?.role]);
+  const { flags: userFeatureFlags } = useUserFeatureFlags();
+  const hideBonusUI = useMemo(() => !userFeatureFlags.show_bonus_percentage, [userFeatureFlags.show_bonus_percentage]);
   // Role-based tab access — each manager role only sees its allowed tabs
   const allowedTabs = useMemo<string[]>(() => {
     switch (user?.role) {
