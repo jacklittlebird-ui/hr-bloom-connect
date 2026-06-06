@@ -244,7 +244,21 @@ const Users = () => {
       const roles = rolesRes.data || [];
       const userIds = [...new Set(roles.map(r => r.user_id))];
 
-      const { data: profilesData } = await supabase.from('profiles').select('id, email, full_name, created_at').in('id', userIds);
+      // Batch profiles fetch (Supabase .in() has practical URL length limit ~1000 ids)
+      const profilesData: any[] = [];
+      const chunkSize = 200;
+      for (let i = 0; i < userIds.length; i += chunkSize) {
+        const chunk = userIds.slice(i, i + chunkSize);
+        const { data: chunkData, error: chunkErr } = await supabase
+          .from('profiles')
+          .select('id, email, full_name, created_at')
+          .in('id', chunk);
+        if (chunkErr) {
+          console.warn('Profile fetch chunk error:', chunkErr);
+          continue;
+        }
+        if (chunkData) profilesData.push(...chunkData);
+      }
 
       // Fetch user_module_permissions
       const { data: userPerms } = await supabase.from('user_module_permissions' as any).select('user_id, profile_id, custom_modules');
