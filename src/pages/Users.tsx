@@ -71,6 +71,14 @@ const Users = () => {
   const [profiles, setProfiles] = useState<PermissionProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  // ===== Users tab filters =====
+  const [filterRole, setFilterRole] = useState<string>('all');
+  const [filterStation, setFilterStation] = useState<string>('all');
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
+  const [filterProfile, setFilterProfile] = useState<string>('all'); // 'all' | 'none' | 'custom' | profile_id
+  // ===== Profiles tab filters =====
+  const [profileSearch, setProfileSearch] = useState('');
+  const [filterProfileType, setFilterProfileType] = useState<'all' | 'system' | 'custom'>('all');
   const [stations, setStations] = useState<{ id: string; code: string; name_ar: string; name_en: string }[]>([]);
   const [employees, setEmployees] = useState<{ id: string; employee_code: string; name_ar: string; name_en: string }[]>([]);
   const [departments, setDepartments] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
@@ -611,13 +619,39 @@ const Users = () => {
   };
 
   // ========== HELPERS ==========
-  const filtered = users.filter(u =>
-    u.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase()) ||
-    u.role.includes(search.toLowerCase()) ||
-    (u.employee_code || '').toLowerCase().includes(search.toLowerCase())
-  ).sort((a, b) => {
-    // Sort by employee_code numerically (emp1001 < emp1002)
+  const filtered = users.filter(u => {
+    const q = search.toLowerCase();
+    const matchesSearch = !q ||
+      u.full_name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      u.role.toLowerCase().includes(q) ||
+      (u.employee_code || '').toLowerCase().includes(q) ||
+      (u.station_name || '').toLowerCase().includes(q) ||
+      (u.station_names || []).some(n => n.toLowerCase().includes(q)) ||
+      (u.department_name || '').toLowerCase().includes(q) ||
+      (u.department_names || []).some(n => n.toLowerCase().includes(q));
+
+    const matchesRole = filterRole === 'all' || u.role === filterRole;
+
+    const matchesStation = filterStation === 'all' ||
+      u.station_code === filterStation ||
+      (u.station_codes || []).includes(filterStation);
+
+    const matchesDept = filterDepartment === 'all' ||
+      u.department_id === filterDepartment ||
+      (u.department_ids || []).includes(filterDepartment);
+
+    let matchesProfile = true;
+    if (filterProfile === 'none') {
+      matchesProfile = !u.permission_profile_id && !(u.custom_modules && u.custom_modules.length > 0);
+    } else if (filterProfile === 'custom') {
+      matchesProfile = !!(u.custom_modules && u.custom_modules.length > 0);
+    } else if (filterProfile !== 'all') {
+      matchesProfile = u.permission_profile_id === filterProfile;
+    }
+
+    return matchesSearch && matchesRole && matchesStation && matchesDept && matchesProfile;
+  }).sort((a, b) => {
     const codeA = a.employee_code || '';
     const codeB = b.employee_code || '';
     const numA = parseInt(codeA.replace(/\D/g, '')) || 0;
@@ -625,9 +659,27 @@ const Users = () => {
     if (numA && numB) return numA - numB;
     if (numA) return -1;
     if (numB) return 1;
-    // Non-employee users: sort by role then name
     return a.role.localeCompare(b.role) || a.full_name.localeCompare(b.full_name);
   });
+
+  const filteredProfiles = profiles.filter(p => {
+    const q = profileSearch.toLowerCase();
+    const matchesSearch = !q ||
+      p.name_ar.toLowerCase().includes(q) ||
+      p.name_en.toLowerCase().includes(q) ||
+      (p.description_ar || '').toLowerCase().includes(q) ||
+      (p.description_en || '').toLowerCase().includes(q) ||
+      p.modules.some(m => m.toLowerCase().includes(q));
+    const matchesType = filterProfileType === 'all'
+      || (filterProfileType === 'system' && p.is_system)
+      || (filterProfileType === 'custom' && !p.is_system);
+    return matchesSearch && matchesType;
+  });
+
+  const activeFiltersCount = [filterRole, filterStation, filterDepartment, filterProfile].filter(v => v !== 'all').length;
+  const resetUserFilters = () => {
+    setFilterRole('all'); setFilterStation('all'); setFilterDepartment('all'); setFilterProfile('all');
+  };
 
   const { paginatedItems: paginatedUsers, currentPage, totalPages, totalItems, startIndex, endIndex, setCurrentPage } = usePagination(filtered, 20);
 
@@ -714,18 +766,79 @@ const Users = () => {
               </CardContent></Card>
             </div>
 
-            {/* Search + Add */}
-            <div className={cn("flex gap-4 items-center", isRTL && "flex-row-reverse")}>
-              <div className="relative flex-1 max-w-md">
-                <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
-                <Input placeholder={isAr ? 'بحث عن مستخدم...' : 'Search users...'} value={search} onChange={e => setSearch(e.target.value)} className={cn(isRTL ? "pr-10" : "pl-10")} />
+            {/* Search + Filters + Add */}
+            <div className="space-y-3">
+              <div className={cn("flex gap-4 items-center flex-wrap", isRTL && "flex-row-reverse")}>
+                <div className="relative flex-1 min-w-[240px] max-w-md">
+                  <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
+                  <Input placeholder={isAr ? 'بحث عن مستخدم...' : 'Search users...'} value={search} onChange={e => setSearch(e.target.value)} className={cn(isRTL ? "pr-10" : "pl-10")} />
+                </div>
+                <Button onClick={() => setBulkApplyOpen(true)} variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")}>
+                  <Layers className="w-4 h-4" /> {isAr ? 'تطبيق ملف صلاحيات' : 'Apply Profile'}
+                </Button>
+                <Button onClick={() => setDialogOpen(true)} className={cn("gap-2", isRTL && "flex-row-reverse")}>
+                  <Plus className="w-4 h-4" /> {isAr ? 'إضافة مستخدم' : 'Add User'}
+                </Button>
               </div>
-              <Button onClick={() => setBulkApplyOpen(true)} variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")}>
-                <Layers className="w-4 h-4" /> {isAr ? 'تطبيق ملف صلاحيات' : 'Apply Profile'}
-              </Button>
-              <Button onClick={() => setDialogOpen(true)} className={cn("gap-2", isRTL && "flex-row-reverse")}>
-                <Plus className="w-4 h-4" /> {isAr ? 'إضافة مستخدم' : 'Add User'}
-              </Button>
+
+              <div className={cn("flex gap-2 items-center flex-wrap", isRTL && "flex-row-reverse")}>
+                <Select value={filterRole} onValueChange={setFilterRole}>
+                  <SelectTrigger className="w-[180px]"><SelectValue placeholder={isAr ? 'الدور' : 'Role'} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{isAr ? 'كل الأدوار' : 'All Roles'}</SelectItem>
+                    <SelectItem value="admin">{isAr ? 'مدير النظام' : 'Admin'}</SelectItem>
+                    <SelectItem value="hr">{isAr ? 'موارد بشرية' : 'HR'}</SelectItem>
+                    <SelectItem value="area_manager">{isAr ? 'مدير منطقة' : 'Area Manager'}</SelectItem>
+                    <SelectItem value="station_manager">{isAr ? 'مدير محطة' : 'Station Manager'}</SelectItem>
+                    <SelectItem value="station_hr">{isAr ? 'موارد بشرية محطات' : 'Station HR'}</SelectItem>
+                    <SelectItem value="department_manager">{isAr ? 'مدير قسم' : 'Department Manager'}</SelectItem>
+                    <SelectItem value="training_manager">{isAr ? 'مدير التدريب' : 'Training Manager'}</SelectItem>
+                    <SelectItem value="employee">{isAr ? 'موظف' : 'Employee'}</SelectItem>
+                    <SelectItem value="kiosk">{isAr ? 'كشك الحضور' : 'Kiosk'}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterStation} onValueChange={setFilterStation}>
+                  <SelectTrigger className="w-[180px]"><SelectValue placeholder={isAr ? 'المحطة' : 'Station'} /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="all">{isAr ? 'كل المحطات' : 'All Stations'}</SelectItem>
+                    {stations.map(s => (
+                      <SelectItem key={s.id} value={s.code}>{isAr ? s.name_ar : s.name_en}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                  <SelectTrigger className="w-[180px]"><SelectValue placeholder={isAr ? 'القسم' : 'Department'} /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="all">{isAr ? 'كل الأقسام' : 'All Departments'}</SelectItem>
+                    {departments.map(d => (
+                      <SelectItem key={d.id} value={d.id}>{isAr ? d.name_ar : d.name_en}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterProfile} onValueChange={setFilterProfile}>
+                  <SelectTrigger className="w-[200px]"><SelectValue placeholder={isAr ? 'ملف الصلاحيات' : 'Permission Profile'} /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    <SelectItem value="all">{isAr ? 'كل الملفات' : 'All Profiles'}</SelectItem>
+                    <SelectItem value="none">{isAr ? 'بدون ملف' : 'No profile'}</SelectItem>
+                    <SelectItem value="custom">{isAr ? 'مخصص' : 'Custom'}</SelectItem>
+                    {profiles.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{isAr ? p.name_ar : p.name_en}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {activeFiltersCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={resetUserFilters} className="gap-1 text-muted-foreground">
+                    {isAr ? `مسح الفلاتر (${activeFiltersCount})` : `Clear filters (${activeFiltersCount})`}
+                  </Button>
+                )}
+                <Badge variant="outline" className="ml-auto">
+                  {isAr ? `${filtered.length} نتيجة` : `${filtered.length} results`}
+                </Badge>
+              </div>
             </div>
 
             {/* Users Table */}
@@ -842,8 +955,39 @@ const Users = () => {
               </Button>
             </div>
 
+            <div className={cn("flex gap-2 items-center flex-wrap", isRTL && "flex-row-reverse")}>
+              <div className="relative flex-1 min-w-[240px] max-w-md">
+                <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
+                <Input
+                  placeholder={isAr ? 'بحث عن ملف صلاحيات...' : 'Search profiles...'}
+                  value={profileSearch}
+                  onChange={e => setProfileSearch(e.target.value)}
+                  className={cn(isRTL ? "pr-10" : "pl-10")}
+                />
+              </div>
+              <Select value={filterProfileType} onValueChange={(v) => setFilterProfileType(v as any)}>
+                <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{isAr ? 'كل الأنواع' : 'All Types'}</SelectItem>
+                  <SelectItem value="system">{isAr ? 'قوالب النظام' : 'System Templates'}</SelectItem>
+                  <SelectItem value="custom">{isAr ? 'مخصصة' : 'Custom'}</SelectItem>
+                </SelectContent>
+              </Select>
+              {(profileSearch || filterProfileType !== 'all') && (
+                <Button variant="ghost" size="sm" onClick={() => { setProfileSearch(''); setFilterProfileType('all'); }} className="gap-1 text-muted-foreground">
+                  {isAr ? 'مسح الفلاتر' : 'Clear filters'}
+                </Button>
+              )}
+              <Badge variant="outline" className="ml-auto">
+                {isAr ? `${filteredProfiles.length} نتيجة` : `${filteredProfiles.length} results`}
+              </Badge>
+            </div>
+
+            {filteredProfiles.length === 0 ? (
+              <Card><CardContent className="py-12 text-center text-muted-foreground">{isAr ? 'لا توجد نتائج' : 'No results'}</CardContent></Card>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profiles.map(profile => {
+              {filteredProfiles.map(profile => {
                 const assignedCount = users.filter(u => u.permission_profile_id === profile.id).length;
                 return (
                   <Card key={profile.id} className={profile.is_system ? 'border-primary/30' : ''}>
@@ -882,6 +1026,7 @@ const Users = () => {
                 );
               })}
             </div>
+            )}
           </TabsContent>
 
           {/* ========== AUDIT LOG TAB ========== */}
