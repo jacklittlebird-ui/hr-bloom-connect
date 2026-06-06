@@ -108,6 +108,74 @@ const Users = () => {
   const [bulkCreating, setBulkCreating] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ done: 0, total: 0, created: 0, skipped: 0, errors: 0 });
 
+  // Bulk apply permission profile dialog
+  const [bulkApplyOpen, setBulkApplyOpen] = useState(false);
+  const [bulkApplyMode, setBulkApplyMode] = useState<'role' | 'email'>('role');
+  const [bulkApplyRole, setBulkApplyRole] = useState<string>('');
+  const [bulkApplyEmail, setBulkApplyEmail] = useState<string>('');
+  const [bulkApplyProfileId, setBulkApplyProfileId] = useState<string>('');
+  const [bulkApplying, setBulkApplying] = useState(false);
+
+  const handleBulkApplyProfile = async () => {
+    if (!bulkApplyProfileId) {
+      toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'اختر ملف صلاحيات' : 'Select a profile', variant: 'destructive' });
+      return;
+    }
+    let targetUsers: SystemUser[] = [];
+    if (bulkApplyMode === 'role') {
+      if (!bulkApplyRole) {
+        toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'اختر نوع الحساب' : 'Select a role', variant: 'destructive' });
+        return;
+      }
+      targetUsers = users.filter(u => u.role === bulkApplyRole && u.role !== 'admin');
+    } else {
+      const em = bulkApplyEmail.trim().toLowerCase();
+      if (!em) {
+        toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'أدخل البريد الإلكتروني' : 'Enter email', variant: 'destructive' });
+        return;
+      }
+      targetUsers = users.filter(u => u.email.toLowerCase() === em && u.role !== 'admin');
+      if (targetUsers.length === 0) {
+        toast({ title: isAr ? 'لم يتم العثور' : 'Not found', description: isAr ? 'لا يوجد مستخدم بهذا البريد (أو حساب مدير النظام)' : 'No matching user (or admin account)', variant: 'destructive' });
+        return;
+      }
+    }
+    if (targetUsers.length === 0) {
+      toast({ title: isAr ? 'لا توجد حسابات' : 'No accounts', description: isAr ? 'لا توجد حسابات مطابقة' : 'No matching accounts', variant: 'destructive' });
+      return;
+    }
+    const confirmed = window.confirm(
+      isAr
+        ? `سيتم تطبيق ملف الصلاحيات على ${targetUsers.length} حساب. متابعة؟`
+        : `Apply profile to ${targetUsers.length} account(s). Continue?`
+    );
+    if (!confirmed) return;
+    setBulkApplying(true);
+    try {
+      const rows = targetUsers.map(u => ({
+        user_id: u.user_id,
+        profile_id: bulkApplyProfileId,
+        custom_modules: null,
+      }));
+      const { error } = await supabase
+        .from('user_module_permissions' as any)
+        .upsert(rows, { onConflict: 'user_id' });
+      if (error) throw error;
+      toast({
+        title: isAr ? 'تم التطبيق' : 'Applied',
+        description: isAr ? `تم تطبيق الملف على ${targetUsers.length} حساب` : `Profile applied to ${targetUsers.length} account(s)`,
+      });
+      setBulkApplyOpen(false);
+      setBulkApplyEmail('');
+      setBulkApplyRole('');
+      setBulkApplyProfileId('');
+      fetchAll();
+    } catch (err: any) {
+      toast({ title: isAr ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
+    }
+    setBulkApplying(false);
+  };
+
   const handleBulkCreate = async (startFromCode?: string) => {
     // Filter credentials starting from a specific code if provided
     let credentials = EMPLOYEE_CREDENTIALS;
@@ -628,6 +696,9 @@ const Users = () => {
                 <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
                 <Input placeholder={isAr ? 'بحث عن مستخدم...' : 'Search users...'} value={search} onChange={e => setSearch(e.target.value)} className={cn(isRTL ? "pr-10" : "pl-10")} />
               </div>
+              <Button onClick={() => setBulkApplyOpen(true)} variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")}>
+                <Layers className="w-4 h-4" /> {isAr ? 'تطبيق ملف صلاحيات' : 'Apply Profile'}
+              </Button>
               <Button onClick={() => setDialogOpen(true)} className={cn("gap-2", isRTL && "flex-row-reverse")}>
                 <Plus className="w-4 h-4" /> {isAr ? 'إضافة مستخدم' : 'Add User'}
               </Button>
@@ -1074,6 +1145,9 @@ const Users = () => {
                 <Shield className="w-5 h-5" />
                 {isAr ? 'تعيين صلاحيات' : 'Assign Permissions'} — {selectedUser?.full_name}
               </DialogTitle>
+              {selectedUser?.email && (
+                <p className="text-xs text-muted-foreground" dir="ltr">{selectedUser.email}</p>
+              )}
             </DialogHeader>
 
             {selectedUser?.role === 'admin' ? (
@@ -1152,6 +1226,95 @@ const Users = () => {
               {selectedUser?.role !== 'admin' && (
                 <Button onClick={handleSavePermissions}>{isAr ? 'حفظ الصلاحيات' : 'Save Permissions'}</Button>
               )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ========== BULK APPLY PROFILE DIALOG ========== */}
+        <Dialog open={bulkApplyOpen} onOpenChange={setBulkApplyOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                <Layers className="w-5 h-5" />
+                {isAr ? 'تطبيق ملف صلاحيات على حسابات' : 'Apply Profile to Accounts'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>{isAr ? 'استهداف' : 'Target'}</Label>
+                <div className={cn("flex gap-2 mt-1", isRTL && "flex-row-reverse")}>
+                  <Button size="sm" variant={bulkApplyMode === 'role' ? 'default' : 'outline'} onClick={() => setBulkApplyMode('role')}>
+                    {isAr ? 'نوع الحساب' : 'Role'}
+                  </Button>
+                  <Button size="sm" variant={bulkApplyMode === 'email' ? 'default' : 'outline'} onClick={() => setBulkApplyMode('email')}>
+                    {isAr ? 'بريد إلكتروني' : 'Email'}
+                  </Button>
+                </div>
+              </div>
+
+              {bulkApplyMode === 'role' ? (
+                <div>
+                  <Label>{isAr ? 'نوع الحساب' : 'Account Role'}</Label>
+                  <Select value={bulkApplyRole} onValueChange={setBulkApplyRole}>
+                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر النوع' : 'Select role'} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hr">{isAr ? 'موارد بشرية' : 'HR'}</SelectItem>
+                      <SelectItem value="station_hr">{isAr ? 'موارد بشرية محطات' : 'Station HR'}</SelectItem>
+                      <SelectItem value="station_manager">{isAr ? 'مدير محطة' : 'Station Manager'}</SelectItem>
+                      <SelectItem value="area_manager">{isAr ? 'مدير منطقة' : 'Area Manager'}</SelectItem>
+                      <SelectItem value="department_manager">{isAr ? 'مدير قسم' : 'Department Manager'}</SelectItem>
+                      <SelectItem value="training_manager">{isAr ? 'مدير التدريب' : 'Training Manager'}</SelectItem>
+                      <SelectItem value="employee">{isAr ? 'موظف' : 'Employee'}</SelectItem>
+                      <SelectItem value="kiosk">{isAr ? 'كشك الحضور' : 'Kiosk'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {bulkApplyRole && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {(() => {
+                        const n = users.filter(u => u.role === bulkApplyRole && u.role !== 'admin').length;
+                        return isAr ? `سيتم التطبيق على ${n} حساب` : `Will apply to ${n} account(s)`;
+                      })()}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <Label>{isAr ? 'البريد الإلكتروني' : 'Email'}</Label>
+                  <Input
+                    dir="ltr"
+                    type="email"
+                    placeholder="user@example.com"
+                    value={bulkApplyEmail}
+                    onChange={e => setBulkApplyEmail(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label>{isAr ? 'ملف الصلاحيات' : 'Permission Profile'}</Label>
+                <Select value={bulkApplyProfileId} onValueChange={setBulkApplyProfileId}>
+                  <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الملف' : 'Select profile'} /></SelectTrigger>
+                  <SelectContent>
+                    {profiles.map(p => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {isAr ? p.name_ar : p.name_en} ({p.modules.length})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                {isAr
+                  ? 'ملاحظة: حسابات مدير النظام لها وصول كامل ولن تتأثر.'
+                  : 'Note: Admin accounts have full access and will not be affected.'}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBulkApplyOpen(false)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+              <Button onClick={handleBulkApplyProfile} disabled={bulkApplying}>
+                {bulkApplying ? (isAr ? 'جاري التطبيق...' : 'Applying...') : (isAr ? 'تطبيق' : 'Apply')}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
