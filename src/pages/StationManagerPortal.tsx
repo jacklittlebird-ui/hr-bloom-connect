@@ -2928,6 +2928,7 @@ const StationManagerPortal = () => {
               </div>
             </div>
             {/* Bonus Percentage */}
+            {!hideBonusUI && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base"><Star className="w-5 h-5 text-[hsl(var(--stat-yellow))]" />{t('نسبة المكافأة', 'Bonus Percentage')}</CardTitle>
