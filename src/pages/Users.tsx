@@ -696,6 +696,9 @@ const Users = () => {
                 <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
                 <Input placeholder={isAr ? 'بحث عن مستخدم...' : 'Search users...'} value={search} onChange={e => setSearch(e.target.value)} className={cn(isRTL ? "pr-10" : "pl-10")} />
               </div>
+              <Button onClick={() => setBulkApplyOpen(true)} variant="outline" className={cn("gap-2", isRTL && "flex-row-reverse")}>
+                <Layers className="w-4 h-4" /> {isAr ? 'تطبيق ملف صلاحيات' : 'Apply Profile'}
+              </Button>
               <Button onClick={() => setDialogOpen(true)} className={cn("gap-2", isRTL && "flex-row-reverse")}>
                 <Plus className="w-4 h-4" /> {isAr ? 'إضافة مستخدم' : 'Add User'}
               </Button>
