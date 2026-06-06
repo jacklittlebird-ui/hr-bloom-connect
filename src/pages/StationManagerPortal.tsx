@@ -2220,7 +2220,7 @@ const StationManagerPortal = () => {
                   </div>
 
                   {/* Per-employee Quarterly Bonus Summary */}
-                  {newEvalSelectedEmp && (() => {
+                  {!hideBonusUI && newEvalSelectedEmp && (() => {
                     const empReviews = stationReviews
                       .filter(r => r.employeeId === newEvalSelectedEmp && r.bonusPercentage != null)
                       .sort((a, b) => `${a.year}-${a.quarter}`.localeCompare(`${b.year}-${b.quarter}`));
