@@ -42,13 +42,23 @@ export const PerformanceChart = () => {
       <div className="h-[280px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="perfAvgGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(45, 93%, 55%)" stopOpacity={1} />
+                <stop offset="100%" stopColor="hsl(25, 95%, 55%)" stopOpacity={0.9} />
+              </linearGradient>
+              <linearGradient id="perfCntGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(262, 83%, 65%)" stopOpacity={1} />
+                <stop offset="100%" stopColor="hsl(217, 91%, 60%)" stopOpacity={0.9} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey="quarter" stroke="hsl(var(--muted-foreground))" tick={{ fontFamily: ar ? 'Cairo' : 'Inter', fontSize: 12 }} />
             <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} orientation={ar ? 'right' : 'left'} />
             <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontFamily: ar ? 'Cairo' : 'Inter' }} />
             <Legend formatter={(v) => <span style={{ fontFamily: ar ? 'Cairo' : 'Inter' }}>{v === 'avg' ? (ar ? 'متوسط الدرجة' : 'Avg Score') : (ar ? 'عدد التقييمات' : 'Reviews')}</span>} />
-            <Bar dataKey="avg" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="count" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="avg" fill="url(#perfAvgGrad)" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="count" fill="url(#perfCntGrad)" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
