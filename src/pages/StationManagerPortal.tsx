@@ -151,6 +151,18 @@ const StationManagerPortal = () => {
   useScrollRestoration(mainRef);
   const t = (ar: string, en: string) => language === 'ar' ? ar : en;
   const ar = language === 'ar';
+  // Hide bonus percentage UI for specific accounts/stations
+  const hideBonusUI = useMemo(() => {
+    const HIDDEN_STATIONS = new Set(['aswan', 'rmf', 'atz', 'lxr', 'hmb']);
+    const HIDDEN_EMAILS = new Set(['sechrg@hr.com', 'hanhrg@hr.com']);
+    const email = (user?.email || '').toLowerCase();
+    if (HIDDEN_EMAILS.has(email)) return true;
+    const stationCode = (user?.station || '').toLowerCase();
+    if (HIDDEN_STATIONS.has(stationCode)) return true;
+    const stationsArr = (user?.stations || []).map(s => (s || '').toLowerCase());
+    if (stationsArr.some(s => HIDDEN_STATIONS.has(s))) return true;
+    return false;
+  }, [user?.station, user?.email, user?.stations]);
   // Role-based tab access — each manager role only sees its allowed tabs
   const allowedTabs = useMemo<string[]>(() => {
     switch (user?.role) {
@@ -2148,6 +2160,7 @@ const StationManagerPortal = () => {
                     </Card>
 
                     {/* Bonus Percentage */}
+                    {!hideBonusUI && (
                     <Card>
                       <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base"><Star className="w-5 h-5 text-[hsl(var(--stat-yellow))]" />{t('نسبة المكافأة', 'Bonus Percentage')}</CardTitle>
@@ -2203,10 +2216,11 @@ const StationManagerPortal = () => {
                         </div>
                       </CardContent>
                     </Card>
+                    )}
                   </div>
 
                   {/* Per-employee Quarterly Bonus Summary */}
-                  {newEvalSelectedEmp && (() => {
+                  {!hideBonusUI && newEvalSelectedEmp && (() => {
                     const empReviews = stationReviews
                       .filter(r => r.employeeId === newEvalSelectedEmp && r.bonusPercentage != null)
                       .sort((a, b) => `${a.year}-${a.quarter}`.localeCompare(`${b.year}-${b.quarter}`));
@@ -2355,14 +2369,14 @@ const StationManagerPortal = () => {
                         <TableHead>{t('الربع', 'Quarter')}</TableHead>
                         <TableHead>{t('السنة', 'Year')}</TableHead>
                         <TableHead>{t('الدرجة', 'Score')}</TableHead>
-                        <TableHead>{t('نسبة المكافأة', 'Bonus %')}</TableHead>
+                        {!hideBonusUI && <TableHead>{t('نسبة المكافأة', 'Bonus %')}</TableHead>}
                         <TableHead>{t('الحالة', 'Status')}</TableHead>
                         <TableHead>{t('التاريخ', 'Date')}</TableHead>
                         <TableHead>{t('إجراءات', 'Actions')}</TableHead>
                       </TableRow></TableHeader>
                       <TableBody>
                         {filteredReviews.length === 0 ? (
-                          <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">{t('لا توجد تقييمات', 'No evaluations')}</TableCell></TableRow>
+                          <TableRow><TableCell colSpan={hideBonusUI ? 10 : 11} className="text-center text-muted-foreground py-8">{t('لا توجد تقييمات', 'No evaluations')}</TableCell></TableRow>
                         ) : filteredReviews.map(r => {
                           const emp = stationEmployees.find(e => e.id === r.employeeId || e.employeeId === r.employeeId);
                           const jobTitle = emp ? (ar ? (emp.jobTitleAr || emp.jobTitle) : (emp.jobTitleEn || emp.jobTitle)) : '-';
@@ -2378,11 +2392,13 @@ const StationManagerPortal = () => {
                             <TableCell>
                               <Badge className={severityFromScore(r.score)}>{r.score}/5 - {getScoreLabel(r.score).label}</Badge>
                             </TableCell>
+                            {!hideBonusUI && (
                             <TableCell>
                               {r.bonusPercentage != null ? (
                                 <span className="inline-block px-2 py-0.5 rounded-full bg-[hsl(var(--stat-green))]/15 text-[hsl(var(--stat-green))] font-bold text-xs">{r.bonusPercentage}%</span>
                               ) : <span className="text-muted-foreground text-xs">-</span>}
                             </TableCell>
+                            )}
                             <TableCell>
                               <Badge variant="outline" className={
                                 r.status === 'approved' ? 'bg-[hsl(var(--stat-green-bg))] text-[hsl(var(--stat-green))] border-[hsl(var(--stat-green))]' :
@@ -2689,6 +2705,7 @@ const StationManagerPortal = () => {
             </Card>
 
             {/* Bonus Percentage */}
+            {!hideBonusUI && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base"><Star className="w-5 h-5 text-[hsl(var(--stat-yellow))]" />{t('نسبة المكافأة', 'Bonus Percentage')}</CardTitle>
@@ -2744,6 +2761,7 @@ const StationManagerPortal = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
 
             {/* Comments */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2910,6 +2928,7 @@ const StationManagerPortal = () => {
               </div>
             </div>
             {/* Bonus Percentage */}
+            {!hideBonusUI && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base"><Star className="w-5 h-5 text-[hsl(var(--stat-yellow))]" />{t('نسبة المكافأة', 'Bonus Percentage')}</CardTitle>
@@ -2965,6 +2984,8 @@ const StationManagerPortal = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
+
 
             <div className="space-y-2">
               <Label>{t('أهداف الربع القادم', 'Next Quarter Goals')}</Label>
