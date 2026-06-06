@@ -1230,6 +1230,95 @@ const Users = () => {
           </DialogContent>
         </Dialog>
 
+        {/* ========== BULK APPLY PROFILE DIALOG ========== */}
+        <Dialog open={bulkApplyOpen} onOpenChange={setBulkApplyOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                <Layers className="w-5 h-5" />
+                {isAr ? 'تطبيق ملف صلاحيات على حسابات' : 'Apply Profile to Accounts'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>{isAr ? 'استهداف' : 'Target'}</Label>
+                <div className={cn("flex gap-2 mt-1", isRTL && "flex-row-reverse")}>
+                  <Button size="sm" variant={bulkApplyMode === 'role' ? 'default' : 'outline'} onClick={() => setBulkApplyMode('role')}>
+                    {isAr ? 'نوع الحساب' : 'Role'}
+                  </Button>
+                  <Button size="sm" variant={bulkApplyMode === 'email' ? 'default' : 'outline'} onClick={() => setBulkApplyMode('email')}>
+                    {isAr ? 'بريد إلكتروني' : 'Email'}
+                  </Button>
+                </div>
+              </div>
+
+              {bulkApplyMode === 'role' ? (
+                <div>
+                  <Label>{isAr ? 'نوع الحساب' : 'Account Role'}</Label>
+                  <Select value={bulkApplyRole} onValueChange={setBulkApplyRole}>
+                    <SelectTrigger><SelectValue placeholder={isAr ? 'اختر النوع' : 'Select role'} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hr">{isAr ? 'موارد بشرية' : 'HR'}</SelectItem>
+                      <SelectItem value="station_hr">{isAr ? 'موارد بشرية محطات' : 'Station HR'}</SelectItem>
+                      <SelectItem value="station_manager">{isAr ? 'مدير محطة' : 'Station Manager'}</SelectItem>
+                      <SelectItem value="area_manager">{isAr ? 'مدير منطقة' : 'Area Manager'}</SelectItem>
+                      <SelectItem value="department_manager">{isAr ? 'مدير قسم' : 'Department Manager'}</SelectItem>
+                      <SelectItem value="training_manager">{isAr ? 'مدير التدريب' : 'Training Manager'}</SelectItem>
+                      <SelectItem value="employee">{isAr ? 'موظف' : 'Employee'}</SelectItem>
+                      <SelectItem value="kiosk">{isAr ? 'كشك الحضور' : 'Kiosk'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {bulkApplyRole && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {(() => {
+                        const n = users.filter(u => u.role === bulkApplyRole && u.role !== 'admin').length;
+                        return isAr ? `سيتم التطبيق على ${n} حساب` : `Will apply to ${n} account(s)`;
+                      })()}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <Label>{isAr ? 'البريد الإلكتروني' : 'Email'}</Label>
+                  <Input
+                    dir="ltr"
+                    type="email"
+                    placeholder="user@example.com"
+                    value={bulkApplyEmail}
+                    onChange={e => setBulkApplyEmail(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label>{isAr ? 'ملف الصلاحيات' : 'Permission Profile'}</Label>
+                <Select value={bulkApplyProfileId} onValueChange={setBulkApplyProfileId}>
+                  <SelectTrigger><SelectValue placeholder={isAr ? 'اختر الملف' : 'Select profile'} /></SelectTrigger>
+                  <SelectContent>
+                    {profiles.map(p => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {isAr ? p.name_ar : p.name_en} ({p.modules.length})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                {isAr
+                  ? 'ملاحظة: حسابات مدير النظام لها وصول كامل ولن تتأثر.'
+                  : 'Note: Admin accounts have full access and will not be affected.'}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBulkApplyOpen(false)}>{isAr ? 'إلغاء' : 'Cancel'}</Button>
+              <Button onClick={handleBulkApplyProfile} disabled={bulkApplying}>
+                {bulkApplying ? (isAr ? 'جاري التطبيق...' : 'Applying...') : (isAr ? 'تطبيق' : 'Apply')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* ========== PROFILE MANAGEMENT DIALOG ========== */}
         <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
