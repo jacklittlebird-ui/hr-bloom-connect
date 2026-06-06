@@ -2349,23 +2349,39 @@ const StationManagerPortal = () => {
                     <Table>
                       <TableHeader><TableRow>
                         <TableHead>{t('الموظف', 'Employee')}</TableHead>
+                        <TableHead>{t('الوظيفة', 'Job Title')}</TableHead>
+                        <TableHead>{t('القسم', 'Department')}</TableHead>
+                        <TableHead>{t('تاريخ التعيين', 'Hire Date')}</TableHead>
                         <TableHead>{t('الربع', 'Quarter')}</TableHead>
                         <TableHead>{t('السنة', 'Year')}</TableHead>
                         <TableHead>{t('الدرجة', 'Score')}</TableHead>
+                        <TableHead>{t('نسبة المكافأة', 'Bonus %')}</TableHead>
                         <TableHead>{t('الحالة', 'Status')}</TableHead>
                         <TableHead>{t('التاريخ', 'Date')}</TableHead>
                         <TableHead>{t('إجراءات', 'Actions')}</TableHead>
                       </TableRow></TableHeader>
                       <TableBody>
                         {filteredReviews.length === 0 ? (
-                          <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">{t('لا توجد تقييمات', 'No evaluations')}</TableCell></TableRow>
-                        ) : filteredReviews.map(r => (
+                          <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">{t('لا توجد تقييمات', 'No evaluations')}</TableCell></TableRow>
+                        ) : filteredReviews.map(r => {
+                          const emp = stationEmployees.find(e => e.employeeId === r.employeeId);
+                          const jobTitle = emp ? (ar ? (emp.jobTitleAr || emp.jobTitle) : (emp.jobTitleEn || emp.jobTitle)) : '-';
+                          const hireDate = emp?.hireDate ? formatDate(emp.hireDate) : '-';
+                          return (
                           <TableRow key={r.id}>
                             <TableCell className="font-medium">{r.employeeName}</TableCell>
+                            <TableCell className="text-xs">{jobTitle || '-'}</TableCell>
+                            <TableCell className="text-xs">{r.department || emp?.department || '-'}</TableCell>
+                            <TableCell className="text-xs whitespace-nowrap">{hireDate}</TableCell>
                             <TableCell>{r.quarter}</TableCell>
                             <TableCell>{r.year}</TableCell>
                             <TableCell>
                               <Badge className={severityFromScore(r.score)}>{r.score}/5 - {getScoreLabel(r.score).label}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              {r.bonusPercentage != null ? (
+                                <span className="inline-block px-2 py-0.5 rounded-full bg-[hsl(var(--stat-green))]/15 text-[hsl(var(--stat-green))] font-bold text-xs">{r.bonusPercentage}%</span>
+                              ) : <span className="text-muted-foreground text-xs">-</span>}
                             </TableCell>
                             <TableCell>
                               <Badge variant="outline" className={
@@ -2385,7 +2401,8 @@ const StationManagerPortal = () => {
                               )}
                             </TableCell>
                           </TableRow>
-                        ))}
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </CardContent>
