@@ -242,17 +242,33 @@ const Users = () => {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [rolesRes, profilesRes, stationsRes, empsRes, deptsRes, dmDeptsRes, shrStationsRes] = await Promise.all([
-        supabase.from('user_roles').select('user_id, role, station_id, employee_id, department_id'),
+      // Paginate user_roles to bypass PostgREST's default 1000-row limit
+      const fetchAllRoles = async () => {
+        const pageSize = 1000;
+        const all: any[] = [];
+        for (let from = 0; ; from += pageSize) {
+          const { data, error } = await supabase
+            .from('user_roles')
+            .select('user_id, role, station_id, employee_id, department_id')
+            .range(from, from + pageSize - 1);
+          if (error) { console.warn('user_roles fetch error:', error); break; }
+          if (!data || data.length === 0) break;
+          all.push(...data);
+          if (data.length < pageSize) break;
+        }
+        return all;
+      };
+
+      const [roles, profilesRes, stationsRes, empsRes, deptsRes, dmDeptsRes, shrStationsRes] = await Promise.all([
+        fetchAllRoles(),
         supabase.from('permission_profiles' as any).select('*'),
         supabase.from('stations').select('id, code, name_ar, name_en'),
-        supabase.from('employees').select('id, employee_code, name_ar, name_en').order('employee_code'),
+        supabase.from('employees').select('id, employee_code, name_ar, name_en').order('employee_code').range(0, 9999),
         supabase.from('departments').select('id, name_ar, name_en').order('name_ar'),
         supabase.from('department_manager_departments' as any).select('user_id, department_id'),
         supabase.from('station_hr_stations' as any).select('user_id, station_id'),
       ]);
 
-      const roles = rolesRes.data || [];
       const userIds = [...new Set(roles.map(r => r.user_id))];
 
       // Batch profiles fetch (Supabase .in() has practical URL length limit ~1000 ids)
