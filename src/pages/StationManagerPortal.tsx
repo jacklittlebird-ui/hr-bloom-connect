@@ -2984,6 +2984,8 @@ const StationManagerPortal = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
+
 
             <div className="space-y-2">
               <Label>{t('أهداف الربع القادم', 'Next Quarter Goals')}</Label>
