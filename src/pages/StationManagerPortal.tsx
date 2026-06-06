@@ -2369,7 +2369,7 @@ const StationManagerPortal = () => {
                         <TableHead>{t('الربع', 'Quarter')}</TableHead>
                         <TableHead>{t('السنة', 'Year')}</TableHead>
                         <TableHead>{t('الدرجة', 'Score')}</TableHead>
-                        <TableHead>{t('نسبة المكافأة', 'Bonus %')}</TableHead>
+                        {!hideBonusUI && <TableHead>{t('نسبة المكافأة', 'Bonus %')}</TableHead>}
                         <TableHead>{t('الحالة', 'Status')}</TableHead>
                         <TableHead>{t('التاريخ', 'Date')}</TableHead>
                         <TableHead>{t('إجراءات', 'Actions')}</TableHead>
