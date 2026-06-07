@@ -1374,13 +1374,14 @@ const SalaryReports = () => {
 
                       const renderStationEntries = (entries: typeof allEntries, groupTotals: ReturnType<typeof createMonthlyTotals>) => {
                         entries.forEach(([stKey, stRows]) => {
-                          const stTotals = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
+                          const stTotals = { count: 0, basic: 0, transport: 0, incentives: 0, stationAllowance: 0, mobileAllowance: 0, livingAllowance: 0, overtimePay: 0, bonuses: 0, gross: 0, insurance: 0, loans: 0, leaveDeduction: 0, penalty: 0, mobileBill: 0, totalDeductions: 0, net: 0, employerInsurance: 0, healthInsurance: 0, incomeTax: 0 };
                           stRows.forEach((r, i) => {
                             stTotals.count += r.count; stTotals.basic += r.basic; stTotals.transport += r.transport;
                             stTotals.incentives += r.incentives; stTotals.stationAllowance += r.stationAllowance;
                             stTotals.mobileAllowance += r.mobileAllowance; stTotals.livingAllowance += r.livingAllowance;
                             stTotals.overtimePay += r.overtimePay; stTotals.bonuses += r.bonuses; stTotals.gross += r.gross;
                             stTotals.insurance += r.insurance; stTotals.loans += r.loans;
+                            stTotals.leaveDeduction += r.leaveDeduction; stTotals.penalty += r.penalty; stTotals.mobileBill += r.mobileBill;
                             stTotals.totalDeductions += r.totalDeductions; stTotals.net += r.net;
                             stTotals.employerInsurance += r.employerInsurance; stTotals.healthInsurance += r.healthInsurance;
                             stTotals.incomeTax += r.incomeTax;
