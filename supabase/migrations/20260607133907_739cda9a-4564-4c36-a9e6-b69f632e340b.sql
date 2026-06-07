@@ -1,0 +1,1 @@
+ALTER TABLE public.employees ADD COLUMN IF NOT EXISTS documents_originals_received boolean NOT NULL DEFAULT false;

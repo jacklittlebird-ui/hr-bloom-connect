@@ -40,6 +40,7 @@ interface ResignedEmployee {
   social_insurance_start_date: string | null;
   social_insurance_end_date: string | null;
   social_insurance_closed: boolean | null;
+  documents_originals_received: boolean | null;
   national_id: string | null;
   education_ar: string | null;
   address: string | null;
@@ -76,13 +77,14 @@ export const ResignedInsuranceRenewals = () => {
   const [newStartDate, setNewStartDate] = useState('');
   const [newEndDate, setNewEndDate] = useState('');
   const [newClosed, setNewClosed] = useState(false);
+  const [newDocsReceived, setNewDocsReceived] = useState(false);
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('employees')
-      .select('id, employee_code, name_ar, name_en, status, social_insurance_no, social_insurance_start_date, social_insurance_end_date, social_insurance_closed, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, resignation_date, station_id, department_id')
+      .select('id, employee_code, name_ar, name_en, status, social_insurance_no, social_insurance_start_date, social_insurance_end_date, social_insurance_closed, documents_originals_received, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, resignation_date, station_id, department_id')
       .in('status', RESIGNED_STATUSES as unknown as ResignedStatus[])
       .order('resignation_date', { ascending: false, nullsFirst: false });
 
@@ -122,8 +124,9 @@ export const ResignedInsuranceRenewals = () => {
     if (selectedStation !== 'all' && e.station_id !== selectedStation) return false;
     if (selectedDept !== 'all' && e.department_id !== selectedDept) return false;
     if (selectedStatuses.length > 0 && !selectedStatuses.includes(e.status)) return false;
-    if (closedFilter === 'closed' && !e.social_insurance_closed) return false;
-    if (closedFilter === 'open' && e.social_insurance_closed) return false;
+    // "open" means employee still pending closure: either insurance not closed OR docs not received
+    if (closedFilter === 'closed' && (!e.social_insurance_closed || !e.documents_originals_received)) return false;
+    if (closedFilter === 'open' && e.social_insurance_closed && e.documents_originals_received) return false;
     return true;
   });
 
@@ -134,6 +137,7 @@ export const ResignedInsuranceRenewals = () => {
     setNewStartDate(emp.social_insurance_start_date || '');
     setNewEndDate(emp.social_insurance_end_date || '');
     setNewClosed(!!emp.social_insurance_closed);
+    setNewDocsReceived(!!emp.documents_originals_received);
   };
 
   const handleSave = async () => {
@@ -142,6 +146,7 @@ export const ResignedInsuranceRenewals = () => {
       social_insurance_start_date: newStartDate || null,
       social_insurance_end_date: newEndDate || null,
       social_insurance_closed: newClosed,
+      documents_originals_received: newDocsReceived,
     }).eq('id', editDialog.id);
     if (error) { toast({ title: ar ? 'خطأ' : 'Error', description: error.message, variant: 'destructive' }); return; }
     toast({ title: ar ? 'تم التحديث بنجاح' : 'Updated successfully' });
@@ -179,6 +184,7 @@ export const ResignedInsuranceRenewals = () => {
       { headerAr: 'تاريخ الانتهاء', headerEn: 'End Date', key: 'endDate' },
       { headerAr: 'تاريخ الاستقالة', headerEn: 'Resignation Date', key: 'resDate' },
       { headerAr: 'تم اغلاق التأمين', headerEn: 'Insurance Closed', key: 'closed' },
+      { headerAr: 'تم استلام أصول المستندات', headerEn: 'Documents Received', key: 'docs' },
     ];
     const data = filtered.map(e => ({
       code: e.employee_code, nameAr: e.name_ar, nameEn: e.name_en,
@@ -195,6 +201,7 @@ export const ResignedInsuranceRenewals = () => {
       endDate: e.social_insurance_end_date || '-',
       resDate: e.resignation_date || '-',
       closed: e.social_insurance_closed ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No'),
+      docs: e.documents_originals_received ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No'),
     }));
     exportBilingualCSV({
       titleAr: 'تأمينات الموظفين المستقيلين', titleEn: 'Resigned Employees Insurance',
@@ -215,7 +222,7 @@ export const ResignedInsuranceRenewals = () => {
       ]);
   };
 
-  const closedCount = filtered.filter(e => e.social_insurance_closed).length;
+  const closedCount = filtered.filter(e => e.social_insurance_closed && e.documents_originals_received).length;
   const openCount = filtered.length - closedCount;
 
   return (
@@ -280,9 +287,9 @@ export const ResignedInsuranceRenewals = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{ar ? 'كل التأمينات' : 'All Insurance'}</SelectItem>
-            <SelectItem value="open">{ar ? 'لم يغلق' : 'Not Closed'}</SelectItem>
-            <SelectItem value="closed">{ar ? 'تم الإغلاق' : 'Closed'}</SelectItem>
+            <SelectItem value="all">{ar ? 'كل الحالات' : 'All'}</SelectItem>
+            <SelectItem value="open">{ar ? 'لم يكتمل (تأمين أو مستندات)' : 'Pending (Insurance or Docs)'}</SelectItem>
+            <SelectItem value="closed">{ar ? 'مكتمل بالكامل' : 'Fully Completed'}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={selectedStation} onValueChange={setSelectedStation}>
@@ -348,6 +355,7 @@ export const ResignedInsuranceRenewals = () => {
                     <TableHead>{ar ? 'تاريخ الانتهاء' : 'End Date'}</TableHead>
                     <TableHead>{ar ? 'تاريخ الاستقالة' : 'Resignation Date'}</TableHead>
                     <TableHead>{ar ? 'إغلاق التأمين' : 'Insurance Closed'}</TableHead>
+                    <TableHead>{ar ? 'استلام المستندات' : 'Docs Received'}</TableHead>
                     <TableHead className="print:hidden">{ar ? 'إجراءات' : 'Actions'}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -370,6 +378,11 @@ export const ResignedInsuranceRenewals = () => {
                         {emp.social_insurance_closed
                           ? <Badge className="bg-emerald-600 hover:bg-emerald-700">{ar ? 'تم الإغلاق' : 'Closed'}</Badge>
                           : <Badge variant="destructive">{ar ? 'لم يغلق' : 'Not Closed'}</Badge>}
+                      </TableCell>
+                      <TableCell>
+                        {emp.documents_originals_received
+                          ? <Badge className="bg-emerald-600 hover:bg-emerald-700">{ar ? 'تم الاستلام' : 'Received'}</Badge>
+                          : <Badge variant="destructive">{ar ? 'لم يستلم' : 'Not Received'}</Badge>}
                       </TableCell>
                       <TableCell className="print:hidden">
                         <Button size="sm" variant="outline" className="gap-1 h-7 text-xs" onClick={() => handleEdit(emp)}>
@@ -397,6 +410,10 @@ export const ResignedInsuranceRenewals = () => {
               <div className="flex items-center gap-2 pt-2">
                 <Checkbox id="closedSI" checked={newClosed} onCheckedChange={v => setNewClosed(!!v)} />
                 <Label htmlFor="closedSI">{ar ? 'تم اغلاق التأمين الإجتماعي' : 'Social Insurance Closed'}</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="docsReceived" checked={newDocsReceived} onCheckedChange={v => setNewDocsReceived(!!v)} />
+                <Label htmlFor="docsReceived">{ar ? 'تم استلام أصول مستنداته' : 'Original Documents Received'}</Label>
               </div>
             </div>
           )}
