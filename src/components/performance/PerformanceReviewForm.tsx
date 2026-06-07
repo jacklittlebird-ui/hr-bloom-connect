@@ -207,6 +207,7 @@ export const PerformanceReviewForm = () => {
           return {
             month: key,
             hours: Math.round((hoursByKey[k] || 0) * 10) / 10,
+            days: daysByKey[k]?.size || 0,
             violations: violByKey[k] || [],
           };
         }));
