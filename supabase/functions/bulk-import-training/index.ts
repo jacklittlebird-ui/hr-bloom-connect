@@ -14,6 +14,20 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Require authenticated admin, HR, or training_manager
+    const authHeader = req.headers.get('authorization') || req.headers.get('Authorization') || '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const { data: { user: caller }, error: callerErr } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (callerErr || !caller) {
+      return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const { data: callerRoles } = await supabase.from('user_roles').select('role').eq('user_id', caller.id).in('role', ['admin', 'hr', 'training_manager']);
+    if (!callerRoles || callerRoles.length === 0) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const { lines } = await req.json() as { lines: string[] };
 
     if (!lines?.length) {
