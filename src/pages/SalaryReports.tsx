@@ -1199,7 +1199,7 @@ const SalaryReports = () => {
                         const stName = getStationLabel(stKey);
                         rows.push(
                           <TableRow key={`hdr-${stKey}`} className="bg-primary/10 border-t-2 border-primary/30">
-                            <TableCell colSpan={23} className={cn("font-bold text-base", isRTL && "text-right")}>
+                            <TableCell colSpan={26} className={cn("font-bold text-base", isRTL && "text-right")}>
                               <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
                                 <MapPin className="w-4 h-4" />
                                 {stName} ({records.length})
