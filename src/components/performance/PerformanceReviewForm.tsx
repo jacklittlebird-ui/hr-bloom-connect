@@ -96,7 +96,7 @@ export const PerformanceReviewForm = () => {
   interface QuarterViolation {
     id: string; date: string; type: string; description: string; penalty: string; status: string;
   }
-  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[]; }[]>([]);
+  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; days: number; violations: QuarterViolation[]; }[]>([]);
   const [quarterLoading, setQuarterLoading] = useState(false);
 
   const selectedEmpForMonths = useMemo(
@@ -186,9 +186,12 @@ export const PerformanceReviewForm = () => {
         }
 
         const hoursByKey: Record<string, number> = {};
+        const daysByKey: Record<string, Set<string>> = {};
         (attRes.data || []).forEach((r: any) => {
           const k = (r.date as string).slice(0, 7); // YYYY-MM
           hoursByKey[k] = (hoursByKey[k] || 0) + Number(r.work_hours || 0);
+          if (!daysByKey[k]) daysByKey[k] = new Set();
+          daysByKey[k].add(r.date as string);
         });
         const violByKey: Record<string, QuarterViolation[]> = {};
         (violRes.data || []).forEach((v: any) => {
@@ -204,6 +207,7 @@ export const PerformanceReviewForm = () => {
           return {
             month: key,
             hours: Math.round((hoursByKey[k] || 0) * 10) / 10,
+            days: daysByKey[k]?.size || 0,
             violations: violByKey[k] || [],
           };
         }));
@@ -615,6 +619,11 @@ export const PerformanceReviewForm = () => {
                       <Badge variant="outline" className="bg-primary/5 border-primary/30 text-primary">{m.month}/{selectedYear}</Badge>
                     </div>
                     <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                      <Users className="w-4 h-4 text-stat-green" />
+                      <span className="text-muted-foreground">{ar ? 'أيام العمل:' : 'Work days:'}</span>
+                      <span className="font-bold text-stat-green ms-auto">{m.days}</span>
+                    </div>
+                    <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
                       <Clock className="w-4 h-4 text-stat-blue" />
                       <span className="text-muted-foreground">{ar ? 'ساعات العمل:' : 'Work hours:'}</span>
                       <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
@@ -666,6 +675,7 @@ export const PerformanceReviewForm = () => {
               <div className={cn("mt-4 flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm", isRTL && "flex-row-reverse")}>
                 <span className="font-semibold">{ar ? 'إجمالي الربع' : 'Quarter Total'}</span>
                 <div className={cn("flex items-center gap-6", isRTL && "flex-row-reverse")}>
+                  <span><span className="text-muted-foreground me-1">{ar ? 'أيام:' : 'Days:'}</span><span className="font-bold text-stat-green">{quarterMonthly.reduce((s, m) => s + m.days, 0)}</span></span>
                   <span><span className="text-muted-foreground me-1">{ar ? 'ساعات:' : 'Hours:'}</span><span className="font-bold text-stat-blue">{quarterMonthly.reduce((s, m) => s + m.hours, 0).toFixed(1)}</span></span>
                   <span><span className="text-muted-foreground me-1">{ar ? 'جزاءات:' : 'Penalties:'}</span><span className="font-bold text-destructive">{quarterMonthly.reduce((s, m) => s + m.violations.length, 0)}</span></span>
                 </div>
