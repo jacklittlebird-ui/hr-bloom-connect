@@ -39,6 +39,7 @@ export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) =>
     resignationReason: employee.resignationReason || '',
     hasSpecialNeeds: employee.hasSpecialNeeds || false,
     socialInsuranceClosed: employee.socialInsuranceClosed || false,
+    documentsOriginalsReceived: employee.documentsOriginalsReceived || false,
   });
 
   const updateField = (field: string, value: string | boolean) => {
@@ -140,20 +141,24 @@ export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) =>
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Checkbox id="resigned" checked={formData.resigned as boolean} onCheckedChange={v => updateField('resigned', !!v)} />
-          <Label htmlFor="resigned">{t('employees.fields.resigned')}</Label>
-        </div>
-        <div className="flex items-center gap-2">
           <Checkbox id="hasSpecialNeeds" checked={formData.hasSpecialNeeds as boolean} onCheckedChange={v => updateField('hasSpecialNeeds', !!v)} />
           <Label htmlFor="hasSpecialNeeds">{isRTL ? 'من ذوي الاحتياجات الخاصة (5%)' : 'Person with Special Needs (5%)'}</Label>
+        </div>
+        <div className="space-y-2">
+          <Label className={cn(isRTL && "text-right block")}>{t('employees.fields.resignationDate')}</Label>
+          <Input type="date" value={formData.resignationDate} onChange={e => updateField('resignationDate', e.target.value)} className={cn(isRTL && "text-right")} />
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox id="resigned" checked={formData.resigned as boolean} onCheckedChange={v => updateField('resigned', !!v)} />
+          <Label htmlFor="resigned">{t('employees.fields.resigned')}</Label>
         </div>
         <div className="flex items-center gap-2">
           <Checkbox id="socialInsuranceClosed" checked={formData.socialInsuranceClosed as boolean} onCheckedChange={v => updateField('socialInsuranceClosed', !!v)} disabled={readOnly} />
           <Label htmlFor="socialInsuranceClosed">{isRTL ? 'تم اغلاق التأمين الإجتماعي' : 'Social Insurance Closed'}</Label>
         </div>
-        <div className="space-y-2">
-          <Label className={cn(isRTL && "text-right block")}>{t('employees.fields.resignationDate')}</Label>
-          <Input type="date" value={formData.resignationDate} onChange={e => updateField('resignationDate', e.target.value)} className={cn(isRTL && "text-right")} />
+        <div className="flex items-center gap-2">
+          <Checkbox id="documentsOriginalsReceived" checked={formData.documentsOriginalsReceived as boolean} onCheckedChange={v => updateField('documentsOriginalsReceived', !!v)} disabled={readOnly} />
+          <Label htmlFor="documentsOriginalsReceived">{isRTL ? 'تم استلام أصول مستنداته' : 'Original Documents Received'}</Label>
         </div>
       </div>
 
