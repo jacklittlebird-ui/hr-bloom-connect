@@ -1284,6 +1284,9 @@ const SalaryReports = () => {
                             <TableCell className={cn(isRTL && "text-right")}>{totals.insurance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                             <TableCell className={cn(isRTL && "text-right")}>{totals.loans.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                             <TableCell className={cn(isRTL && "text-right")}>{totals.advances.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.leaveDed.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.penalty.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
+                            <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.mobileBill.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                             <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.totalDed.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                             <TableCell className={cn("text-blue-700", isRTL && "text-right")}>{totals.net.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                             <TableCell className={cn(isRTL && "text-right")}>{totals.empIns.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
