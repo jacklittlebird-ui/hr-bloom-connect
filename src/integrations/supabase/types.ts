@@ -3300,6 +3300,14 @@ export type Database = {
       }
     }
     Functions: {
+      audit_dm_multi_dept_policies: {
+        Args: never
+        Returns: {
+          expression: string
+          policy_name: string
+          table_name: string
+        }[]
+      }
       get_area_manager_station_ids: {
         Args: { _user_id: string }
         Returns: string[]
@@ -3318,6 +3326,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_rls_access_denied: {
+        Args: { p_module: string; p_resource_id?: string }
+        Returns: undefined
       }
       notify_employee_and_admins: {
         Args: {
