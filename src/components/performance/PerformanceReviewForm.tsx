@@ -619,6 +619,11 @@ export const PerformanceReviewForm = () => {
                       <Badge variant="outline" className="bg-primary/5 border-primary/30 text-primary">{m.month}/{selectedYear}</Badge>
                     </div>
                     <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
+                      <Users className="w-4 h-4 text-stat-green" />
+                      <span className="text-muted-foreground">{ar ? 'أيام العمل:' : 'Work days:'}</span>
+                      <span className="font-bold text-stat-green ms-auto">{m.days}</span>
+                    </div>
+                    <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
                       <Clock className="w-4 h-4 text-stat-blue" />
                       <span className="text-muted-foreground">{ar ? 'ساعات العمل:' : 'Work hours:'}</span>
                       <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
