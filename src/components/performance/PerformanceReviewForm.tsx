@@ -96,7 +96,7 @@ export const PerformanceReviewForm = () => {
   interface QuarterViolation {
     id: string; date: string; type: string; description: string; penalty: string; status: string;
   }
-  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; violations: QuarterViolation[]; }[]>([]);
+  const [quarterMonthly, setQuarterMonthly] = useState<{ month: string; hours: number; days: number; violations: QuarterViolation[]; }[]>([]);
   const [quarterLoading, setQuarterLoading] = useState(false);
 
   const selectedEmpForMonths = useMemo(
@@ -186,9 +186,12 @@ export const PerformanceReviewForm = () => {
         }
 
         const hoursByKey: Record<string, number> = {};
+        const daysByKey: Record<string, Set<string>> = {};
         (attRes.data || []).forEach((r: any) => {
           const k = (r.date as string).slice(0, 7); // YYYY-MM
           hoursByKey[k] = (hoursByKey[k] || 0) + Number(r.work_hours || 0);
+          if (!daysByKey[k]) daysByKey[k] = new Set();
+          daysByKey[k].add(r.date as string);
         });
         const violByKey: Record<string, QuarterViolation[]> = {};
         (violRes.data || []).forEach((v: any) => {
