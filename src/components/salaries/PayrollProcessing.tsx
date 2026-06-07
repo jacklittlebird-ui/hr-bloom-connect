@@ -632,7 +632,7 @@ export const PayrollProcessing = () => {
                     {readOnlyField(ar ? 'التأمينات - الموظف' : 'Social Ins. - Employee', employeeInsurance)}
                     {readOnlyField(ar ? 'القروض (تلقائي)' : 'Loans (Auto)', loanPayment)}
                     {readOnlyField(ar ? 'السلف (تلقائي)' : 'Advances (Auto)', advanceAmount)}
-                    {readOnlyField(ar ? 'الجوال الشخصي' : 'Mobile Bill', mobileBill)}
+                    {readOnlyField(ar ? 'المحمول الشخصي' : 'Mobile Bill', mobileBill)}
                   </div>
                   <Separator />
                   <div>
