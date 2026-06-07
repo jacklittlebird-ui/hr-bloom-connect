@@ -172,6 +172,19 @@ export const PerformanceReviewForm = () => {
             .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate),
         ]);
         if (cancelled) return;
+
+        // RLS denial detection: log when violations query fails for permission reasons
+        if (violRes.error) {
+          const msg = (violRes.error.message || '').toLowerCase();
+          if (msg.includes('permission') || msg.includes('rls') || msg.includes('policy')) {
+            supabase.rpc('log_rls_access_denied' as any, {
+              p_module: 'performance_review:violations',
+              p_resource_id: selectedEmployee,
+            }).then(() => {}, () => {});
+            console.warn('[RLS] violations access denied for employee', selectedEmployee, violRes.error);
+          }
+        }
+
         const hoursByKey: Record<string, number> = {};
         (attRes.data || []).forEach((r: any) => {
           const k = (r.date as string).slice(0, 7); // YYYY-MM
