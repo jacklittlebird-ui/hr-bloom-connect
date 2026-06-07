@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.audit_dm_multi_dept_policies() TO anon;
