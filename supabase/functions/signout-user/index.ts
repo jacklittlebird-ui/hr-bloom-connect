@@ -13,44 +13,40 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
+  // Require authenticated admin caller
+  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
+  if (!authHeader.startsWith("Bearer ")) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+  const token = authHeader.replace("Bearer ", "");
+  const { data: { user: caller }, error: callerErr } = await supabaseAdmin.auth.getUser(token);
+  if (callerErr || !caller) {
+    return new Response(JSON.stringify({ error: "Invalid token" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+  const { data: callerRoles } = await supabaseAdmin
+    .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin");
+  if (!callerRoles || callerRoles.length === 0) {
+    return new Response(JSON.stringify({ error: "Forbidden: admin only" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+
   const { user_id } = await req.json();
   if (!user_id) return new Response(JSON.stringify({ error: "user_id required" }), { status: 400, headers: corsHeaders });
+  if (user_id === caller.id) {
+    return new Response(JSON.stringify({ error: "Cannot sign yourself out via this endpoint" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
 
-  // Invalidate all refresh tokens by calling the GoTrue admin API directly
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  
-  const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${user_id}/factors`, {
-    method: "GET",
-    headers: { "Authorization": `Bearer ${serviceKey}`, "apikey": serviceKey },
-  });
-
-  // Force sign out by changing the user's password temporarily and back, or use logout endpoint
-  const logoutRes = await fetch(`${supabaseUrl}/auth/v1/logout?scope=global`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${serviceKey}`,
-      "apikey": serviceKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ user_id }),
-  });
-
-  // Alternative: just revoke by updating user ban_duration briefly
-  // Most reliable: generate a new password hash to invalidate sessions
+  // Force sign out by briefly banning and unbanning
   const { error } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
-    // Setting ban_duration to force logout, then immediately unban
     ban_duration: "1s",
   });
-  
+
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders });
 
-  // Immediately unban
   await supabaseAdmin.auth.admin.updateUserById(user_id, {
     ban_duration: "none",
   });
 
-  return new Response(JSON.stringify({ success: true, message: "User signed out from all devices" }), { 
-    headers: { ...corsHeaders, "Content-Type": "application/json" } 
+  return new Response(JSON.stringify({ success: true, message: "User signed out from all devices" }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" }
   });
 });
