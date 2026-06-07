@@ -675,6 +675,7 @@ export const PerformanceReviewForm = () => {
               <div className={cn("mt-4 flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm", isRTL && "flex-row-reverse")}>
                 <span className="font-semibold">{ar ? 'إجمالي الربع' : 'Quarter Total'}</span>
                 <div className={cn("flex items-center gap-6", isRTL && "flex-row-reverse")}>
+                  <span><span className="text-muted-foreground me-1">{ar ? 'أيام:' : 'Days:'}</span><span className="font-bold text-stat-green">{quarterMonthly.reduce((s, m) => s + m.days, 0)}</span></span>
                   <span><span className="text-muted-foreground me-1">{ar ? 'ساعات:' : 'Hours:'}</span><span className="font-bold text-stat-blue">{quarterMonthly.reduce((s, m) => s + m.hours, 0).toFixed(1)}</span></span>
                   <span><span className="text-muted-foreground me-1">{ar ? 'جزاءات:' : 'Penalties:'}</span><span className="font-bold text-destructive">{quarterMonthly.reduce((s, m) => s + m.violations.length, 0)}</span></span>
                 </div>
