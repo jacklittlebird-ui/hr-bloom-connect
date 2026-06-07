@@ -60,6 +60,21 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
   const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+
+  // Require authenticated admin caller
+  const authHeader = req.headers.get('authorization') || req.headers.get('Authorization') || ''
+  if (!authHeader.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+  const { data: { user: caller }, error: callerErr } = await admin.auth.getUser(authHeader.replace('Bearer ', ''))
+  if (callerErr || !caller) {
+    return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+  const { data: callerRoles } = await admin.from('user_roles').select('role').eq('user_id', caller.id).eq('role', 'admin')
+  if (!callerRoles || callerRoles.length === 0) {
+    return new Response(JSON.stringify({ error: 'Forbidden: admin only' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+  }
+
   const results: any[] = []
 
   for (const acc of ACCOUNTS) {

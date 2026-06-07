@@ -6,14 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function decodeJwtPayload(token: string): any {
-  const parts = token.split(".");
-  if (parts.length !== 3) throw new Error("Invalid JWT");
-  const payload = parts[1];
-  const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-  return JSON.parse(decoded);
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -31,35 +23,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Decode JWT to get user ID
     const token = authHeader.replace("Bearer ", "");
-    let jwtPayload: any;
-    try {
-      jwtPayload = decodeJwtPayload(token);
-    } catch {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "content-type": "application/json" },
-      });
-    }
-
-    const userId = jwtPayload.sub;
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "content-type": "application/json" },
-      });
-    }
-
-    // Verify user exists using admin client
     const adminClient = createClient(supabaseUrl, serviceKey);
-    const { data: { user }, error: userError } = await adminClient.auth.admin.getUserById(userId);
+
+    // Verify JWT signature via the auth server using the service key
+    const { data: { user }, error: userError } = await adminClient.auth.getUser(token);
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "content-type": "application/json" },
       });
     }
+
 
     // Check role (reuse adminClient from above)
 
