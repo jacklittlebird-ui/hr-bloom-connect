@@ -857,6 +857,7 @@ export type Database = {
           created_at: string
           department_id: string | null
           dept_code: string | null
+          documents_originals_received: boolean
           education_ar: string | null
           email: string | null
           emergency_contact_mobile1: string | null
@@ -948,6 +949,7 @@ export type Database = {
           created_at?: string
           department_id?: string | null
           dept_code?: string | null
+          documents_originals_received?: boolean
           education_ar?: string | null
           email?: string | null
           emergency_contact_mobile1?: string | null
@@ -1039,6 +1041,7 @@ export type Database = {
           created_at?: string
           department_id?: string | null
           dept_code?: string | null
+          documents_originals_received?: boolean
           education_ar?: string | null
           email?: string | null
           emergency_contact_mobile1?: string | null
