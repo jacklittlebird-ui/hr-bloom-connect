@@ -96,6 +96,16 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+
+      // HR cannot create privileged roles (admin/hr/kiosk) - only admin can
+      const callerRoleNames = (callerRoles as any[]).map((r) => r.role);
+      const isCallerAdmin = callerRoleNames.includes('admin');
+      const privilegedRoles = ['admin', 'hr', 'kiosk'];
+      if (!isCallerAdmin && privilegedRoles.includes(role)) {
+        return new Response(JSON.stringify({ error: 'Forbidden: HR cannot create admin, hr, or kiosk accounts' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
     // else: no admins exist, allow first admin creation without auth
 
