@@ -81,7 +81,8 @@ export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListP
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.department')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.type')}</TableHead>
-                  <TableHead className={cn(isRTL && "text-right")}>{t('leaves.missions.date')}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'تاريخ البداية' : 'Start Date'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'تاريخ النهاية' : 'End Date'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.missions.destination')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.missions.reason')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.status')}</TableHead>
