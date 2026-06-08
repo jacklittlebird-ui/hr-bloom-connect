@@ -13,6 +13,8 @@ interface MissionRow {
   id: string;
   mission_type: string;
   date: string;
+  start_date: string | null;
+  end_date: string | null;
   destination: string | null;
   reason: string | null;
   status: string;
