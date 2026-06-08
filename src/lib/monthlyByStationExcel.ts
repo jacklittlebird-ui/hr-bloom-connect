@@ -18,6 +18,9 @@ export interface MBSRow {
   insurance: number;
   loans: number;
   advances: number;
+  mobileBill: number;
+  leaveDeduction: number;
+  penalty: number;
   totalDeductions: number;
   net: number;
   employerInsurance: number;
