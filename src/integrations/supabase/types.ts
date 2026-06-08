@@ -1442,11 +1442,13 @@ export type Database = {
           date: string
           destination: string | null
           employee_id: string
+          end_date: string | null
           hours: number | null
           id: string
           mission_type: string
           reason: string | null
           rejection_reason: string | null
+          start_date: string | null
           status: string
         }
         Insert: {
@@ -1457,11 +1459,13 @@ export type Database = {
           date: string
           destination?: string | null
           employee_id: string
+          end_date?: string | null
           hours?: number | null
           id?: string
           mission_type?: string
           reason?: string | null
           rejection_reason?: string | null
+          start_date?: string | null
           status?: string
         }
         Update: {
@@ -1472,11 +1476,13 @@ export type Database = {
           date?: string
           destination?: string | null
           employee_id?: string
+          end_date?: string | null
           hours?: number | null
           id?: string
           mission_type?: string
           reason?: string | null
           rejection_reason?: string | null
+          start_date?: string | null
           status?: string
         }
         Relationships: [

@@ -163,7 +163,10 @@ const Leaves = () => {
         employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
         department: info.department, station: info.station,
         missionType: m.mission_type as MissionRequest['missionType'],
-        date: m.date, destination: m.destination || '', reason: m.reason || '',
+        date: m.date,
+        startDate: m.start_date || m.date,
+        endDate: m.end_date || m.date,
+        destination: m.destination || '', reason: m.reason || '',
         status: m.status as MissionRequest['status'],
         submittedDate: m.created_at.split('T')[0],
       };
@@ -400,7 +403,14 @@ const Leaves = () => {
     const mission = missionRequests.find(r => r.id === id);
     if (mission) {
       const config = MISSION_TIME_CONFIG[mission.missionType];
-      addMissionAttendance(mission.employeeId, mission.employeeName, mission.employeeNameAr, mission.department, mission.date, config.checkIn, config.checkOut, config.hours);
+      const start = mission.startDate || mission.date;
+      const end = mission.endDate || mission.date;
+      const startD = new Date(start + 'T00:00:00');
+      const endD = new Date(end + 'T00:00:00');
+      for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+        const ds = d.toISOString().slice(0, 10);
+        addMissionAttendance(mission.employeeId, mission.employeeName, mission.employeeNameAr, mission.department, ds, config.checkIn, config.checkOut, config.hours);
+      }
     }
   };
   const handleRejectMission = (id: string, reason: string) => runMutation(
@@ -502,8 +512,18 @@ const Leaves = () => {
   const handleNewMission = async (data: Omit<MissionRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
     if (!uuid) { toast.error(language === 'ar' ? 'تعذّر العثور على بيانات الموظف' : 'Employee not found'); return; }
+    const startDate = data.startDate || data.date;
+    const endDate = data.endDate || data.date;
     const ok = await runMutation(
-      () => supabase.from('missions').insert({ employee_id: uuid, mission_type: data.missionType, date: data.date, destination: data.destination, reason: data.reason }),
+      () => supabase.from('missions').insert({
+        employee_id: uuid,
+        mission_type: data.missionType,
+        date: startDate,
+        start_date: startDate,
+        end_date: endDate,
+        destination: data.destination,
+        reason: data.reason,
+      } as any),
       language === 'ar' ? 'تم تسجيل طلب المأمورية' : 'Mission request submitted',
       { key: 'new-mission' },
     );

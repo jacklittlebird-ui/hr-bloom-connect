@@ -312,7 +312,8 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
   const ar = language === 'ar';
   const [employeeId, setEmployeeId] = useState('');
   const [missionType, setMissionType] = useState('');
-  const [date, setDate] = useState<Date>();
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
   const [destination, setDestination] = useState('');
   const [reason, setReason] = useState('');
 
@@ -324,8 +325,13 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!employeeId || !missionType || !date || !reason) {
+    if (!employeeId || !missionType || !startDate || !reason) {
       toast({ title: t('leaves.form.error'), description: t('leaves.form.fillAllFields'), variant: 'destructive' });
+      return;
+    }
+    const effectiveEnd = endDate || startDate;
+    if (effectiveEnd < startDate) {
+      toast({ title: t('leaves.form.error'), description: ar ? 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية' : 'End date must be after start date', variant: 'destructive' });
       return;
     }
     const emp = allEmployees.find((e: any) => e.employeeId === employeeId);
@@ -335,12 +341,14 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
       employeeNameAr: emp?.nameAr || '',
       department: emp?.department || '',
       missionType,
-      date: format(date, 'yyyy-MM-dd'),
+      date: format(startDate, 'yyyy-MM-dd'),
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      endDate: format(effectiveEnd, 'yyyy-MM-dd'),
       destination,
       reason,
     });
     toast({ title: t('leaves.form.success'), description: t('leaves.missions.requestSubmitted') });
-    setEmployeeId(''); setMissionType(''); setDate(undefined); setDestination(''); setReason('');
+    setEmployeeId(''); setMissionType(''); setStartDate(undefined); setEndDate(undefined); setDestination(''); setReason('');
   };
 
   return (
@@ -360,7 +368,9 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
             </SelectContent>
           </Select>
         </div>
-        <DatePickerField label={t('leaves.missions.date')} date={date} onSelect={setDate} />
+        <div className="hidden md:block" />
+        <DatePickerField label={ar ? 'تاريخ البداية' : 'Start Date'} date={startDate} onSelect={setStartDate} />
+        <DatePickerField label={ar ? 'تاريخ النهاية' : 'End Date'} date={endDate} onSelect={setEndDate} />
         <div className="space-y-2 md:col-span-2">
           <Label>{t('leaves.missions.destination')}</Label>
           <Input value={destination} onChange={(e) => setDestination(e.target.value)} placeholder={t('leaves.missions.destinationPlaceholder')} />

@@ -54,6 +54,8 @@ export interface MissionRequest {
   station: string;
   missionType: MissionType;
   date: string;
+  startDate?: string;
+  endDate?: string;
   destination?: string;
   reason: string;
   status: 'pending' | 'approved' | 'rejected';

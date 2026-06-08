@@ -62,7 +62,8 @@ export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListP
                 { header: language === 'ar' ? 'الموظف' : 'Employee', accessor: (r) => language === 'ar' ? r.employeeNameAr : r.employeeName },
                 { header: language === 'ar' ? 'القسم' : 'Department', accessor: (r) => r.department },
                 { header: language === 'ar' ? 'النوع' : 'Type', accessor: (r) => r.missionType },
-                { header: language === 'ar' ? 'التاريخ' : 'Date', accessor: (r) => formatDate(r.date) },
+                { header: language === 'ar' ? 'تاريخ البداية' : 'Start Date', accessor: (r) => formatDate(r.startDate || r.date) },
+                { header: language === 'ar' ? 'تاريخ النهاية' : 'End Date', accessor: (r) => formatDate(r.endDate || r.date) },
                 { header: language === 'ar' ? 'الوجهة' : 'Destination', accessor: (r) => r.destination || '' },
                 { header: language === 'ar' ? 'السبب' : 'Reason', accessor: (r) => r.reason || '' },
                 { header: language === 'ar' ? 'الحالة' : 'Status', accessor: (r) => r.status },
@@ -80,7 +81,8 @@ export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListP
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.department')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.type')}</TableHead>
-                  <TableHead className={cn(isRTL && "text-right")}>{t('leaves.missions.date')}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'تاريخ البداية' : 'Start Date'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'تاريخ النهاية' : 'End Date'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.missions.destination')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.missions.reason')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.status')}</TableHead>
@@ -90,7 +92,7 @@ export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListP
               <TableBody>
                 {paginatedItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={onDelete ? 10 : 9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={onDelete ? 11 : 10} className="text-center text-muted-foreground py-8">
                       {t('leaves.missions.noRequests')}
                     </TableCell>
                   </TableRow>
@@ -102,7 +104,8 @@ export const MissionRequestsList = ({ requests, onDelete }: MissionRequestsListP
                       <TableCell>{request.department}</TableCell>
                       <TableCell>{request.station || '—'}</TableCell>
                       <TableCell>{getMissionTypeBadge(request.missionType)}</TableCell>
-                      <TableCell>{formatDate(request.date)}</TableCell>
+                      <TableCell>{formatDate(request.startDate || request.date)}</TableCell>
+                      <TableCell>{formatDate(request.endDate || request.date)}</TableCell>
                       <TableCell>{request.destination || '-'}</TableCell>
                       <TableCell className="max-w-[300px] whitespace-normal break-words">{request.reason}</TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
