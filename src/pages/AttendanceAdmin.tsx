@@ -379,6 +379,7 @@ const AttendanceAdmin = () => {
   return (
     <DashboardLayout>
       <div className="space-y-4 p-4 sm:p-6" dir={dir}>
+        <CronHealthBanner />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold flex items-center gap-2 min-w-0">
             <Shield className="h-6 w-6 shrink-0" />
