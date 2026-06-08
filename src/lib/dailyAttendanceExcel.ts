@@ -312,6 +312,7 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
         // Build small overlay tag (leave/mission/permission/overtime) shown
         // visibly under the times when the day also has an attendance record.
         const tags: string[] = [];
+        if (cell.holiday) tags.push((ar ? 'عطلة: ' : 'H: ') + cell.holiday);
         if (cell.leave) tags.push((ar ? 'إجازة: ' : 'L: ') + cell.leave);
         if (cell.mission) tags.push((ar ? 'مأمورية: ' : 'M: ') + cell.mission);
         if (cell.permission) tags.push((ar ? 'إذن: ' : 'P: ') + cell.permission);
@@ -345,6 +346,7 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
 
         // Always also attach as a comment for full detail
         const extras: string[] = [];
+        if (cell.holiday) extras.push((ar ? 'عطلة رسمية: ' : 'Holiday: ') + cell.holiday);
         if (cell.leave) extras.push((ar ? 'إجازة: ' : 'Leave: ') + cell.leave);
         if (cell.mission) extras.push((ar ? 'مأمورية: ' : 'Mission: ') + cell.mission);
         if (cell.permission) extras.push((ar ? 'إذن: ' : 'Permission: ') + cell.permission);
