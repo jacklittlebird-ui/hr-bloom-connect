@@ -163,7 +163,10 @@ const Leaves = () => {
         employeeName: info.employeeName, employeeNameAr: info.employeeNameAr,
         department: info.department, station: info.station,
         missionType: m.mission_type as MissionRequest['missionType'],
-        date: m.date, destination: m.destination || '', reason: m.reason || '',
+        date: m.date,
+        startDate: m.start_date || m.date,
+        endDate: m.end_date || m.date,
+        destination: m.destination || '', reason: m.reason || '',
         status: m.status as MissionRequest['status'],
         submittedDate: m.created_at.split('T')[0],
       };
