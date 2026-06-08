@@ -891,6 +891,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                       const dow = new Date(dateRange[ci] + 'T00:00:00').getDay();
                       const isOff = isEmpWeekend(r.station?.id || null, dow);
                       const leaveLbl = c.leave ? (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)) : null;
+                      const holiday = getHolidayFor(dateRange[ci], r.station?.id || null);
                       return {
                         in: formatTimeCairo(c.record?.check_in ?? null),
                         out: formatTimeCairo(c.record?.check_out ?? null),
@@ -901,6 +902,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                         mission: c.mission ? (ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`) : null,
                         permission: c.permission ? (ar ? `${permissionHoursFor(c.permission)}س` : `${permissionHoursFor(c.permission)}h`) : null,
                         overtime: c.overtime ? (ar ? `${c.overtime.hours || 0}س` : `${c.overtime.hours || 0}h`) : null,
+                        holiday: holiday ? (ar ? holiday.name_ar : holiday.name_en) : null,
                       };
                     }),
                   })),
