@@ -11,44 +11,75 @@ const corsHeaders = {
  *  - Run hourly via pg_cron.
  *  - Close any attendance record whose check_in is older than EXACTLY 18 hours
  *    and which has no check_out yet.
- *  - check_out is set to check_in + 18h (not "now"), so the record reflects
- *    the policy boundary, not the time the cron happened to run.
- *  - status is set to 'auto-closed', notes are appended, and an audit log
- *    entry is inserted into audit_logs (action_type = 'AUTO_CLOSED').
- *  - The unique partial index `idx_attendance_one_open_per_employee` guarantees
- *    only ONE open record per employee at any moment.
+ *  - When auto-closing, work hours are HARD-CAPPED to 5h (never the elapsed 18-24h).
+ *  - status set to 'auto-closed', notes appended with [AUTO_CLOSED], audit log
+ *    entry inserted (action_type = 'AUTO_CLOSED').
+ *  - After every run, records a heartbeat into public.cron_health_pings so the
+ *    dashboard can alert when the cron stops running.
  */
 const AUTO_CLOSE_AFTER_HOURS = 18;
+const AUTO_CLOSED_WORK_HOURS = 5;
+
+export async function recordCronPing(
+  admin: any,
+  jobName: string,
+  payload: { success: boolean; records_processed?: number; errors_count?: number; details?: unknown },
+) {
+  try {
+    await admin.from("cron_health_pings").insert({
+      job_name: jobName,
+      success: payload.success,
+      records_processed: payload.records_processed ?? 0,
+      errors_count: payload.errors_count ?? 0,
+      details: (payload.details ?? null) as any,
+    });
+  } catch (e) {
+    console.error("[auto-checkout] failed to write cron health ping:", e);
+  }
+}
+
+/**
+ * Pure helper used by tests and by the runtime. Given an open attendance
+ * record's check_in timestamp (ISO), returns the auto-close payload while
+ * enforcing the 5h cap regardless of how long the record was open.
+ */
+export function computeAutoCloseUpdate(checkInIso: string, nowMs: number = Date.now()) {
+  const checkInMs = new Date(checkInIso).getTime();
+  const elapsedMs = nowMs - checkInMs;
+  const elapsedHours = elapsedMs / (60 * 60 * 1000);
+  const eligible = elapsedHours >= AUTO_CLOSE_AFTER_HOURS;
+  // HARD CAP: always 5h, never more — even if cron was down for days.
+  const workHours = AUTO_CLOSED_WORK_HOURS;
+  const checkOutIso = new Date(checkInMs + workHours * 60 * 60 * 1000).toISOString();
+  return {
+    eligible,
+    elapsedHours,
+    checkOutIso,
+    workHours,
+    workMinutes: workHours * 60,
+    status: "auto-closed" as const,
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const admin = createClient(supabaseUrl, serviceKey);
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const admin = createClient(supabaseUrl, serviceKey);
 
-    // Auth: this endpoint is idempotent and only closes attendance records
-    // older than 18h (writing audit_logs entries). It is safe to expose to
-    // the scheduled cron job (which uses the anon key). When CRON_SECRET
-    // is configured we additionally accept it as a stronger signal, but we
-    // do NOT reject callers that don't supply it — otherwise the hourly
-    // pg_cron job (which uses the anon Bearer token by default) silently
-    // fails and open records pile up beyond 18h.
+  try {
     const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
     const cronHeader = req.headers.get("x-cron-secret") || "";
     const expectedCron = Deno.env.get("CRON_SECRET") || "";
     if (expectedCron && cronHeader && cronHeader !== expectedCron && authHeader !== `Bearer ${expectedCron}`) {
-      // A CRON_SECRET header was supplied but does not match — reject.
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "content-type": "application/json" },
       });
     }
 
-
-    // Cutoff: any check_in strictly earlier than (now - 18h) is eligible.
     const cutoffMs = Date.now() - AUTO_CLOSE_AFTER_HOURS * 60 * 60 * 1000;
     const cutoff = new Date(cutoffMs).toISOString();
 
@@ -62,14 +93,15 @@ Deno.serve(async (req) => {
 
     if (fetchErr) {
       console.error("[auto-checkout] fetch error:", fetchErr);
+      await recordCronPing(admin, "auto-checkout", { success: false, details: { error: fetchErr.message } });
       return new Response(JSON.stringify({ error: fetchErr.message }), {
-        status: 500,
-        headers: { ...corsHeaders, "content-type": "application/json" },
+        status: 500, headers: { ...corsHeaders, "content-type": "application/json" },
       });
     }
 
     if (!openRecords || openRecords.length === 0) {
       console.log("[auto-checkout] No records older than 18h to close");
+      await recordCronPing(admin, "auto-checkout", { success: true, records_processed: 0 });
       return new Response(JSON.stringify({ ok: true, closed: 0 }), {
         headers: { ...corsHeaders, "content-type": "application/json" },
       });
@@ -81,34 +113,28 @@ Deno.serve(async (req) => {
     let errors = 0;
 
     for (const record of openRecords) {
-      const checkInMs = new Date(record.check_in).getTime();
-      // SAFETY: never close a record that is not actually >= 18h old.
-      if (Date.now() - checkInMs < AUTO_CLOSE_AFTER_HOURS * 60 * 60 * 1000) {
+      const plan = computeAutoCloseUpdate(record.check_in as string);
+      if (!plan.eligible) {
         console.log(`[auto-checkout] SKIP record ${record.id} - not yet 18h old`);
         continue;
       }
 
-      // Policy: when auto-closing after 18h of no checkout, work hours
-      // recorded for the day must be exactly 5 hours (not 18). So set
-      // check_out = check_in + 5 hours so calculated work_hours/work_minutes = 5h.
-      const AUTO_CLOSED_WORK_HOURS = 5;
-      const autoCheckoutIso = new Date(checkInMs + AUTO_CLOSED_WORK_HOURS * 60 * 60 * 1000).toISOString();
-      const noteSuffix = `[AUTO_CLOSED] Automatically closed after ${AUTO_CLOSE_AFTER_HOURS} hours because employee did not check out. Work hours recorded as ${AUTO_CLOSED_WORK_HOURS}h.`;
-      const newNotes = record.notes && !record.notes.includes("[AUTO_CLOSED]")
+      const noteSuffix = `[AUTO_CLOSED] Automatically closed after ${AUTO_CLOSE_AFTER_HOURS}h because employee did not check out. Work hours capped at ${plan.workHours}h.`;
+      const newNotes = record.notes && !String(record.notes).includes("[AUTO_CLOSED]")
         ? `${record.notes} ${noteSuffix}`
         : (record.notes ?? noteSuffix);
 
       const { error: updateErr } = await admin
         .from("attendance_records")
         .update({
-          check_out: autoCheckoutIso,
-          status: "auto-closed",
-          work_hours: AUTO_CLOSED_WORK_HOURS,
-          work_minutes: AUTO_CLOSED_WORK_HOURS * 60,
+          check_out: plan.checkOutIso,
+          status: plan.status,
+          work_hours: plan.workHours,
+          work_minutes: plan.workMinutes,
           notes: newNotes,
         })
         .eq("id", record.id)
-        .is("check_out", null); // Only close if still open (guards against race)
+        .is("check_out", null);
 
       if (updateErr) {
         console.error(`[auto-checkout] Failed to close record ${record.id}:`, updateErr);
@@ -116,8 +142,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Audit log (non-blocking — log errors but keep going)
-      const { error: auditErr } = await admin.from("audit_logs").insert({
+      await admin.from("audit_logs").insert({
         user_id: "00000000-0000-0000-0000-000000000000",
         action_type: "AUTO_CLOSED",
         affected_table: "attendance_records",
@@ -125,19 +150,22 @@ Deno.serve(async (req) => {
         new_data: {
           employee_id: record.employee_id,
           check_in: record.check_in,
-          check_out: autoCheckoutIso,
-          reason: `Automatically closed after ${AUTO_CLOSE_AFTER_HOURS} hours because employee did not check out`,
+          check_out: plan.checkOutIso,
+          reason: `Automatically closed after ${AUTO_CLOSE_AFTER_HOURS}h — work hours capped at ${plan.workHours}h`,
           policy_hours: AUTO_CLOSE_AFTER_HOURS,
+          capped_work_hours: plan.workHours,
         },
       });
 
-      if (auditErr) {
-        console.error(`[auto-checkout] audit log insert failed for ${record.id}:`, auditErr);
-      }
-
       closed++;
-      console.log(`[auto-checkout] CLOSED record ${record.id} for employee ${record.employee_id} at ${autoCheckoutIso}`);
     }
+
+    await recordCronPing(admin, "auto-checkout", {
+      success: errors === 0,
+      records_processed: closed,
+      errors_count: errors,
+      details: { total_eligible: openRecords.length },
+    });
 
     return new Response(
       JSON.stringify({ ok: true, closed, errors, total: openRecords.length }),
@@ -145,9 +173,9 @@ Deno.serve(async (req) => {
     );
   } catch (e: any) {
     console.error("[auto-checkout] error:", e);
+    await recordCronPing(admin, "auto-checkout", { success: false, details: { error: e?.message ?? String(e) } });
     return new Response(JSON.stringify({ error: e.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "content-type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "content-type": "application/json" },
     });
   }
 });

@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CronHealthBanner } from "@/components/dashboard/CronHealthBanner";
+import { AttendanceAnomaliesTab } from "@/components/attendance/AttendanceAnomaliesTab";
 
 const PER_PAGE = 20;
 
@@ -377,6 +379,7 @@ const AttendanceAdmin = () => {
   return (
     <DashboardLayout>
       <div className="space-y-4 p-4 sm:p-6" dir={dir}>
+        <CronHealthBanner />
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold flex items-center gap-2 min-w-0">
             <Shield className="h-6 w-6 shrink-0" />
@@ -413,6 +416,10 @@ const AttendanceAdmin = () => {
               <Smartphone className="h-4 w-4" />
               {ar ? "الأجهزة" : "Devices"}
               {devices.length > 0 && <Badge variant="secondary" className="text-xs">{devices.length}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="anomalies" className="gap-1.5">
+              <AlertTriangle className="h-4 w-4" />
+              {ar ? "تحتاج مراجعة" : "Anomalies"}
             </TabsTrigger>
           </TabsList>
 
@@ -897,6 +904,10 @@ const AttendanceAdmin = () => {
                 })()}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="anomalies">
+            <AttendanceAnomaliesTab />
           </TabsContent>
         </Tabs>
 

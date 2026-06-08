@@ -584,6 +584,39 @@ export type Database = {
           },
         ]
       }
+      cron_health_pings: {
+        Row: {
+          created_at: string
+          details: Json | null
+          errors_count: number | null
+          id: string
+          job_name: string
+          last_run_at: string
+          records_processed: number | null
+          success: boolean
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          errors_count?: number | null
+          id?: string
+          job_name: string
+          last_run_at?: string
+          records_processed?: number | null
+          success?: boolean
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          errors_count?: number | null
+          id?: string
+          job_name?: string
+          last_run_at?: string
+          records_processed?: number | null
+          success?: boolean
+        }
+        Relationships: []
+      }
       department_manager_departments: {
         Row: {
           created_at: string
@@ -3315,6 +3348,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string[]
       }
+      get_cron_last_success: { Args: { p_job_name: string }; Returns: string }
       get_dm_department_ids: { Args: { _user_id: string }; Returns: string[] }
       get_station_hr_station_ids: {
         Args: { _user_id: string }
