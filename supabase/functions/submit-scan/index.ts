@@ -10,6 +10,9 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+const AUTO_CLOSE_AFTER_HOURS = 18;
+const AUTO_CLOSED_WORK_HOURS = 5;
+
 async function auditCheckout(
   userId: string,
   employeeId: string | null,
@@ -490,7 +493,7 @@ Deno.serve(async (req) => {
 
         const { data: openRecord, error: findErr } = await admin
           .from("attendance_records")
-          .select("id, date, check_in")
+          .select("id, date, check_in, notes")
           .eq("employee_id", empId)
           .is("check_out", null)
           .order("check_in", { ascending: false })
@@ -523,8 +526,24 @@ Deno.serve(async (req) => {
           }
 
           const isEarly = !isFlexible && localHour < 17;
+          const checkInTime = openRecord.check_in ? new Date(openRecord.check_in).getTime() : Date.now();
+          const elapsedHours = (Date.now() - checkInTime) / (60 * 60 * 1000);
+          const staleOpenRecord = elapsedHours >= AUTO_CLOSE_AFTER_HOURS;
           const updatePayload: Record<string, any> = { check_out: nowIso };
-          if (isEarly) updatePayload.status = "early-leave";
+
+          if (staleOpenRecord) {
+            const protectedCheckoutIso = new Date(checkInTime + AUTO_CLOSED_WORK_HOURS * 60 * 60 * 1000).toISOString();
+            const noteSuffix = `[AUTO_CLOSED] Protected checkout: stale open record exceeded ${AUTO_CLOSE_AFTER_HOURS}h, recorded ${AUTO_CLOSED_WORK_HOURS}h instead of elapsed time.`;
+            updatePayload.check_out = protectedCheckoutIso;
+            updatePayload.status = "auto-closed";
+            updatePayload.work_hours = AUTO_CLOSED_WORK_HOURS;
+            updatePayload.work_minutes = AUTO_CLOSED_WORK_HOURS * 60;
+            updatePayload.notes = openRecord.notes && !openRecord.notes.includes("[AUTO_CLOSED]")
+              ? `${openRecord.notes} ${noteSuffix}`
+              : (openRecord.notes ?? noteSuffix);
+          } else if (isEarly) {
+            updatePayload.status = "early-leave";
+          }
 
           const { data: updatedRecord, error: updateErr } = await admin
             .from("attendance_records")
@@ -549,6 +568,7 @@ Deno.serve(async (req) => {
           await auditCheckout(user_id, empId, "success", {
             channel: "qr",
             checked_out_at: updatedRecord.check_out,
+            stale_open_record: staleOpenRecord,
           }, openRecord.id);
           console.log("[submit-scan] checkout saved for record:", openRecord.id);
         } else {
