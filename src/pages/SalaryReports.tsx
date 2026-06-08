@@ -1462,6 +1462,7 @@ const SalaryReports = () => {
                             <TableCell className={cn(isRTL && "text-right")}>{totals.gross.toLocaleString()}</TableCell>
                             <TableCell className={cn(isRTL && "text-right")}>{totals.insurance.toLocaleString()}</TableCell>
                             <TableCell className={cn(isRTL && "text-right")}>{totals.loans.toLocaleString()}</TableCell>
+                            <TableCell className={cn(isRTL && "text-right")}>{totals.advances.toLocaleString()}</TableCell>
                             <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.leaveDeduction.toLocaleString()}</TableCell>
                             <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.penalty.toLocaleString()}</TableCell>
                             <TableCell className={cn("text-destructive", isRTL && "text-right")}>{totals.mobileBill.toLocaleString()}</TableCell>
