@@ -252,6 +252,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
           num(r.overtimePay), num(r.bonuses),
           num(r.gross),
           num(r.insurance), num(r.loans), num(r.advances),
+          num(r.mobileBill), num(r.leaveDeduction), num(r.penalty),
           num(r.totalDeductions), num(r.net),
           num(r.employerInsurance), num(r.healthInsurance), num(r.incomeTax),
           num(r.employerInsurance + r.healthInsurance + r.incomeTax),
@@ -265,9 +266,9 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
           if (typeof v === 'number') cell.numFmt = '#,##0.##;(#,##0.##);-';
           if (zebra) fill(cell, C.zebra);
           if (ci === 11) { fill(cell, C.grossBg); cell.font = { ...cell.font, bold: true }; }
-          else if (ci === 15) { cell.font = { ...cell.font, color: { argb: C.destructive } }; }
-          else if (ci === 16) { fill(cell, C.netBg); cell.font = { ...cell.font, bold: true }; }
-          else if (ci === 20) { cell.font = { ...cell.font, bold: true, color: { argb: C.blueBold } }; }
+          else if (ci === 18) { cell.font = { ...cell.font, color: { argb: C.destructive } }; }
+          else if (ci === 19) { fill(cell, C.netBg); cell.font = { ...cell.font, bold: true }; }
+          else if (ci === 23) { cell.font = { ...cell.font, bold: true, color: { argb: C.blueBold } }; }
           if (ci === 0) cell.font = { ...cell.font, bold: true };
         });
         zebra = !zebra;
@@ -277,6 +278,7 @@ export async function exportMonthlyByStationExcel(input: MBSInput): Promise<void
         st.mobileAllowance += r.mobileAllowance; st.livingAllowance += r.livingAllowance;
         st.overtimePay += r.overtimePay; st.bonuses += r.bonuses; st.gross += r.gross;
         st.insurance += r.insurance; st.loans += r.loans; st.advances += r.advances;
+        st.mobileBill += r.mobileBill; st.leaveDeduction += r.leaveDeduction; st.penalty += r.penalty;
         st.totalDeductions += r.totalDeductions; st.net += r.net;
         st.employerInsurance += r.employerInsurance; st.healthInsurance += r.healthInsurance;
         st.incomeTax += r.incomeTax;
