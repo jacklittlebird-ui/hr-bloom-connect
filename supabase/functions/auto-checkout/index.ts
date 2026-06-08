@@ -21,7 +21,7 @@ const AUTO_CLOSE_AFTER_HOURS = 18;
 const AUTO_CLOSED_WORK_HOURS = 5;
 
 export async function recordCronPing(
-  admin: ReturnType<typeof createClient>,
+  admin: any,
   jobName: string,
   payload: { success: boolean; records_processed?: number; errors_count?: number; details?: unknown },
 ) {
