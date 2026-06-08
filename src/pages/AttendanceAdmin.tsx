@@ -416,6 +416,10 @@ const AttendanceAdmin = () => {
               {ar ? "الأجهزة" : "Devices"}
               {devices.length > 0 && <Badge variant="secondary" className="text-xs">{devices.length}</Badge>}
             </TabsTrigger>
+            <TabsTrigger value="anomalies" className="gap-1.5">
+              <AlertTriangle className="h-4 w-4" />
+              {ar ? "تحتاج مراجعة" : "Anomalies"}
+            </TabsTrigger>
           </TabsList>
 
           {/* Search Bar */}
