@@ -403,7 +403,14 @@ const Leaves = () => {
     const mission = missionRequests.find(r => r.id === id);
     if (mission) {
       const config = MISSION_TIME_CONFIG[mission.missionType];
-      addMissionAttendance(mission.employeeId, mission.employeeName, mission.employeeNameAr, mission.department, mission.date, config.checkIn, config.checkOut, config.hours);
+      const start = mission.startDate || mission.date;
+      const end = mission.endDate || mission.date;
+      const startD = new Date(start + 'T00:00:00');
+      const endD = new Date(end + 'T00:00:00');
+      for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+        const ds = d.toISOString().slice(0, 10);
+        addMissionAttendance(mission.employeeId, mission.employeeName, mission.employeeNameAr, mission.department, ds, config.checkIn, config.checkOut, config.hours);
+      }
     }
   };
   const handleRejectMission = (id: string, reason: string) => runMutation(
