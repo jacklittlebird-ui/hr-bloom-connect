@@ -266,7 +266,10 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
       let labelOverride: string | null = null;
       const hasAttn = cell.kind === 'present' || cell.kind === 'late' || cell.kind === 'auto-closed' || cell.kind === 'mission-day';
 
-      if (cell.leave && !hasAttn) {
+      if (cell.holiday && !hasAttn) {
+        bg = C.holiday; textColor = C.holidayText;
+        labelOverride = (ar ? 'عطلة رسمية' : 'Holiday') + ` — ${cell.holiday}`;
+      } else if (cell.leave && !hasAttn) {
         bg = C.leave; textColor = C.leaveText;
         labelOverride = (ar ? 'إجازة' : 'Leave') + ` — ${cell.leave}`;
       } else if (cell.mission && !hasAttn) {
