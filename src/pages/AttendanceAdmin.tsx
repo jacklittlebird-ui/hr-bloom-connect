@@ -904,6 +904,10 @@ const AttendanceAdmin = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="anomalies">
+            <AttendanceAnomaliesTab />
+          </TabsContent>
         </Tabs>
 
         {/* Confirmations */}
