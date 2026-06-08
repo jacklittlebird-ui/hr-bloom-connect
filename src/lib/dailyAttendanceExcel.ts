@@ -13,6 +13,7 @@ export interface DAExcelCell {
   mission?: string | null;
   permission?: string | null;
   overtime?: string | null;
+  holiday?: string | null;
 }
 
 export interface DAExcelRow {
