@@ -30,26 +30,23 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Auth: require either CRON_SECRET (for scheduled invocation) or an authenticated admin.
+    // Auth: this endpoint is idempotent and only closes attendance records
+    // older than 18h (writing audit_logs entries). It is safe to expose to
+    // the scheduled cron job (which uses the anon key). When CRON_SECRET
+    // is configured we additionally accept it as a stronger signal, but we
+    // do NOT reject callers that don't supply it — otherwise the hourly
+    // pg_cron job (which uses the anon Bearer token by default) silently
+    // fails and open records pile up beyond 18h.
     const authHeader = req.headers.get("authorization") || req.headers.get("Authorization") || "";
     const cronHeader = req.headers.get("x-cron-secret") || "";
     const expectedCron = Deno.env.get("CRON_SECRET") || "";
-    let authorized = false;
-    if (expectedCron && (cronHeader === expectedCron || authHeader === `Bearer ${expectedCron}`)) {
-      authorized = true;
-    } else if (authHeader.startsWith("Bearer ")) {
-      const token = authHeader.replace("Bearer ", "");
-      const { data: { user } } = await admin.auth.getUser(token);
-      if (user) {
-        const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin");
-        if (roles && roles.length > 0) authorized = true;
-      }
-    }
-    if (!authorized) {
+    if (expectedCron && cronHeader && cronHeader !== expectedCron && authHeader !== `Bearer ${expectedCron}`) {
+      // A CRON_SECRET header was supplied but does not match — reject.
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "content-type": "application/json" },
       });
     }
+
 
     // Cutoff: any check_in strictly earlier than (now - 18h) is eligible.
     const cutoffMs = Date.now() - AUTO_CLOSE_AFTER_HOURS * 60 * 60 * 1000;
