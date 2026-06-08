@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { CronHealthBanner } from '@/components/dashboard/CronHealthBanner';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { WelcomeBanner } from '@/components/dashboard/WelcomeBanner';
 import { SectionHeader } from '@/components/dashboard/SectionHeader';
