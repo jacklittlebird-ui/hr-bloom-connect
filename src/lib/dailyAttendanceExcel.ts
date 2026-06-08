@@ -76,6 +76,8 @@ const C = {
   permissionText: 'FF155E75',
   overtime: 'FFFFEDD5',        // orange-100
   overtimeText: 'FF9A3412',
+  holiday: 'FFEDE9FE',          // violet-100
+  holidayText: 'FF5B21B6',
   // row severity tints
   rowAbs1: 'FFFEE2E2',
   rowAbs3: 'FFFECACA',
