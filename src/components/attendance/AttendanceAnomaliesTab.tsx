@@ -81,12 +81,12 @@ export const AttendanceAnomaliesTab = () => {
       if (empIds.length) {
         const { data: emps } = await supabase
           .from("employees")
-          .select("id, code, name_ar, name_en")
+          .select("id, employee_code, name_ar, name_en")
           .in("id", empIds);
         const ix = new Map((emps ?? []).map((e: any) => [e.id, e]));
         for (const r of all) {
           const e: any = ix.get(r.employee_id);
-          r.employee_code = e?.code ?? null;
+          r.employee_code = e?.employee_code ?? null;
           r.employee_name = ar ? (e?.name_ar ?? e?.name_en ?? "") : (e?.name_en ?? e?.name_ar ?? "");
         }
       }
