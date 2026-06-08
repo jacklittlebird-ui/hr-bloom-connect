@@ -512,8 +512,18 @@ const Leaves = () => {
   const handleNewMission = async (data: Omit<MissionRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
     if (!uuid) { toast.error(language === 'ar' ? 'تعذّر العثور على بيانات الموظف' : 'Employee not found'); return; }
+    const startDate = data.startDate || data.date;
+    const endDate = data.endDate || data.date;
     const ok = await runMutation(
-      () => supabase.from('missions').insert({ employee_id: uuid, mission_type: data.missionType, date: data.date, destination: data.destination, reason: data.reason }),
+      () => supabase.from('missions').insert({
+        employee_id: uuid,
+        mission_type: data.missionType,
+        date: startDate,
+        start_date: startDate,
+        end_date: endDate,
+        destination: data.destination,
+        reason: data.reason,
+      } as any),
       language === 'ar' ? 'تم تسجيل طلب المأمورية' : 'Mission request submitted',
       { key: 'new-mission' },
     );
