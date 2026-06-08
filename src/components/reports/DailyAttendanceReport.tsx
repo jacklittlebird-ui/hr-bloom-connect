@@ -499,10 +499,10 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         const permission = prInner?.get(d) || null;
         const overtime = otInner?.get(d) || null;
         const dayStamps = stInner?.get(d) || [];
+        const holiday = getHolidayFor(d, emp.station_id || null);
         let kind: DayCell['kind'] = 'none';
         let h = 0;
         if (rec) {
-          // Hours: prefer timestamp delta, then work_minutes, then work_hours.
           if (rec.check_in && rec.check_out) {
             const diff = (new Date(rec.check_out).getTime() - new Date(rec.check_in).getTime()) / 3600000;
             if (diff > 0) h = diff;
@@ -519,6 +519,15 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
           else if (s === 'present' && !!rec.is_late) kind = 'late';
           else if (s === 'absent') kind = 'absent';
           else if (rec.check_in) kind = rec.is_late ? 'late' : 'present';
+        } else {
+          // Infer absent: no record, not weekend/holiday/leave/mission/permission, and date already passed
+          const dow = new Date(d + 'T00:00:00').getDay();
+          const isOff = isEmpWeekend(emp.station_id || null, dow);
+          const dateObj = new Date(d + 'T23:59:59');
+          const isPast = dateObj.getTime() < Date.now();
+          if (isPast && !isOff && !holiday && !leave && !mission && !permission) {
+            kind = 'absent';
+          }
         }
         const isPresentLike = kind === 'present' || kind === 'late' || kind === 'auto-closed' || kind === 'mission-day';
         const matchesStatus =
@@ -551,12 +560,15 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       const sa = a.station ? (ar ? a.station.name_ar : a.station.name_en) : 'zzz';
       const sb = b.station ? (ar ? b.station.name_ar : b.station.name_en) : 'zzz';
       if (sa !== sb) return sa.localeCompare(sb, 'ar');
+      const da = a.department ? (ar ? a.department.name_ar : a.department.name_en) : 'zzz';
+      const db = b.department ? (ar ? b.department.name_ar : b.department.name_en) : 'zzz';
+      if (da !== db) return da.localeCompare(db, 'ar');
       const na = ar ? a.employee.name_ar : a.employee.name_en;
       const nb = ar ? b.employee.name_ar : b.employee.name_en;
       return (na || '').localeCompare(nb || '', 'ar');
     });
     return rows;
-  }, [employees, visibleEmpIds, recordIndex, leaveIndex, missionIndex, permissionIndex, overtimeIndex, stampsIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar]);
+  }, [employees, visibleEmpIds, recordIndex, leaveIndex, missionIndex, permissionIndex, overtimeIndex, stampsIndex, dateRange, globalStatusFilter, deptMap, stationMap, ar, holidayIndex, stationFilter, weekendByStation]);
 
   // Counters (status badges) — across all visible employees and days, regardless of filter.
   const counters = useMemo(() => {
@@ -879,6 +891,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                       const dow = new Date(dateRange[ci] + 'T00:00:00').getDay();
                       const isOff = isEmpWeekend(r.station?.id || null, dow);
                       const leaveLbl = c.leave ? (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)) : null;
+                      const holiday = getHolidayFor(dateRange[ci], r.station?.id || null);
                       return {
                         in: formatTimeCairo(c.record?.check_in ?? null),
                         out: formatTimeCairo(c.record?.check_out ?? null),
@@ -889,6 +902,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                         mission: c.mission ? (ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`) : null,
                         permission: c.permission ? (ar ? `${permissionHoursFor(c.permission)}س` : `${permissionHoursFor(c.permission)}h`) : null,
                         overtime: c.overtime ? (ar ? `${c.overtime.hours || 0}س` : `${c.overtime.hours || 0}h`) : null,
+                        holiday: holiday ? (ar ? holiday.name_ar : holiday.name_en) : null,
                       };
                     }),
                   })),

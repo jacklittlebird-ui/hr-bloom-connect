@@ -13,6 +13,7 @@ export interface DAExcelCell {
   mission?: string | null;
   permission?: string | null;
   overtime?: string | null;
+  holiday?: string | null;
 }
 
 export interface DAExcelRow {
@@ -75,6 +76,8 @@ const C = {
   permissionText: 'FF155E75',
   overtime: 'FFFFEDD5',        // orange-100
   overtimeText: 'FF9A3412',
+  holiday: 'FFEDE9FE',          // violet-100
+  holidayText: 'FF5B21B6',
   // row severity tints
   rowAbs1: 'FFFEE2E2',
   rowAbs3: 'FFFECACA',
@@ -263,7 +266,10 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
       let labelOverride: string | null = null;
       const hasAttn = cell.kind === 'present' || cell.kind === 'late' || cell.kind === 'auto-closed' || cell.kind === 'mission-day';
 
-      if (cell.leave && !hasAttn) {
+      if (cell.holiday && !hasAttn) {
+        bg = C.holiday; textColor = C.holidayText;
+        labelOverride = (ar ? 'عطلة رسمية' : 'Holiday') + ` — ${cell.holiday}`;
+      } else if (cell.leave && !hasAttn) {
         bg = C.leave; textColor = C.leaveText;
         labelOverride = (ar ? 'إجازة' : 'Leave') + ` — ${cell.leave}`;
       } else if (cell.mission && !hasAttn) {
@@ -306,6 +312,7 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
         // Build small overlay tag (leave/mission/permission/overtime) shown
         // visibly under the times when the day also has an attendance record.
         const tags: string[] = [];
+        if (cell.holiday) tags.push((ar ? 'عطلة: ' : 'H: ') + cell.holiday);
         if (cell.leave) tags.push((ar ? 'إجازة: ' : 'L: ') + cell.leave);
         if (cell.mission) tags.push((ar ? 'مأمورية: ' : 'M: ') + cell.mission);
         if (cell.permission) tags.push((ar ? 'إذن: ' : 'P: ') + cell.permission);
@@ -339,6 +346,7 @@ export async function exportDailyAttendanceExcel(input: DAExcelInput) {
 
         // Always also attach as a comment for full detail
         const extras: string[] = [];
+        if (cell.holiday) extras.push((ar ? 'عطلة رسمية: ' : 'Holiday: ') + cell.holiday);
         if (cell.leave) extras.push((ar ? 'إجازة: ' : 'Leave: ') + cell.leave);
         if (cell.mission) extras.push((ar ? 'مأمورية: ' : 'Mission: ') + cell.mission);
         if (cell.permission) extras.push((ar ? 'إذن: ' : 'Permission: ') + cell.permission);
