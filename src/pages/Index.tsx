@@ -117,6 +117,7 @@ const Index = () => {
 
   return (
     <DashboardLayout>
+      <div className="px-4 sm:px-6 pt-3"><CronHealthBanner /></div>
       <WelcomeBanner />
       <QuickActions />
       <LiveStatus />
