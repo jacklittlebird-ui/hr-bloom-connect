@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CronHealthBanner } from "@/components/dashboard/CronHealthBanner";
+import { AttendanceAnomaliesTab } from "@/components/attendance/AttendanceAnomaliesTab";
 
 const PER_PAGE = 20;
 
