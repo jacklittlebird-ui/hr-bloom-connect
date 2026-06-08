@@ -121,7 +121,10 @@ export const MissionRecordTab = ({ employee }: MissionRecordTabProps) => {
                 {language === 'ar' ? 'نوع المأمورية' : 'Mission Type'}
               </th>
               <th className={cn("px-4 py-3 text-sm font-semibold", isRTL ? "text-right" : "text-left")}>
-                {language === 'ar' ? 'التاريخ' : 'Date'}
+                {language === 'ar' ? 'تاريخ البداية' : 'Start Date'}
+              </th>
+              <th className={cn("px-4 py-3 text-sm font-semibold", isRTL ? "text-right" : "text-left")}>
+                {language === 'ar' ? 'تاريخ النهاية' : 'End Date'}
               </th>
               <th className={cn("px-4 py-3 text-sm font-semibold", isRTL ? "text-right" : "text-left")}>
                 {language === 'ar' ? 'الوجهة' : 'Destination'}
@@ -137,7 +140,7 @@ export const MissionRecordTab = ({ employee }: MissionRecordTabProps) => {
           <tbody>
             {missions.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                   {language === 'ar' ? 'لا توجد مأموريات مسجلة' : 'No missions recorded'}
                 </td>
               </tr>
@@ -149,7 +152,8 @@ export const MissionRecordTab = ({ employee }: MissionRecordTabProps) => {
                     <td className="px-4 py-3 text-sm text-foreground">
                       {language === 'ar' ? typeLabel?.ar : typeLabel?.en}
                     </td>
-                    <td className="px-4 py-3 text-sm text-foreground">{formatDate(record.date)}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{formatDate(record.start_date || record.date)}</td>
+                    <td className="px-4 py-3 text-sm text-foreground">{formatDate(record.end_date || record.date)}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{record.destination || '-'}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{record.reason || '-'}</td>
                     <td className="px-4 py-3"><StatusBadge status={record.status as RecordStatus} /></td>
