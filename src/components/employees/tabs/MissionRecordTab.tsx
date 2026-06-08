@@ -61,11 +61,11 @@ export const MissionRecordTab = ({ employee }: MissionRecordTabProps) => {
 
       const { data } = await supabase
         .from('missions')
-        .select('id, mission_type, date, destination, reason, status')
+        .select('id, mission_type, date, start_date, end_date, destination, reason, status')
         .eq('employee_id', emp.id)
         .order('created_at', { ascending: false });
 
-      setMissions(data || []);
+      setMissions((data as MissionRow[]) || []);
     };
     fetch();
   }, [employee.employeeId]);
