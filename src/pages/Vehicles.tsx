@@ -9,6 +9,7 @@ import { VehicleLicenseTracking } from '@/components/vehicles/VehicleLicenseTrac
 import { VehicleMaintenance } from '@/components/vehicles/VehicleMaintenance';
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
 import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
+import { VehicleReports } from '@/components/vehicles/VehicleReports';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -39,6 +40,7 @@ const Vehicles = () => {
 
   const tabs = [
     { id: 'by-station', label: isAr ? 'سيارات لكل محطة' : 'Vehicles per Station' },
+    { id: 'reports', label: isAr ? 'التقارير' : 'Reports' },
     { id: 'alerts', label: isAr ? 'تنبيهات التراخيص' : 'License Alerts' },
     { id: 'registry', label: isAr ? 'سجل السيارات' : 'Vehicle Registry' },
     { id: 'licenses', label: isAr ? 'متابعة التراخيص' : 'License Tracking' },
@@ -87,6 +89,7 @@ const Vehicles = () => {
         </TabsList>
 
         <TabsContent value="by-station"><FleetByStation key={`fbs-${refreshKey}`} /></TabsContent>
+        <TabsContent value="reports"><VehicleReports key={`vrep-${refreshKey}`} /></TabsContent>
         <TabsContent value="alerts"><LicenseAlerts key={`la-${refreshKey}`} /></TabsContent>
         <TabsContent value="registry"><VehicleRegistry key={`vr-${refreshKey}`} readOnly={registryReadOnly} /></TabsContent>
         <TabsContent value="licenses"><VehicleLicenseTracking key={`vl-${refreshKey}`} /></TabsContent>
