@@ -104,7 +104,7 @@ const VehiclePortal = () => {
       </header>
 
       {/* Welcome banner */}
-      <div className="w-full px-4 pt-4">
+      <div className="shrink-0 w-full px-4 pt-4">
         <Card className="p-4 sm:p-5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
           <div className={cn('flex items-center justify-between gap-3 flex-wrap', isRTL && 'flex-row-reverse')}>
             <div className={cn(isRTL && 'text-end')}>
