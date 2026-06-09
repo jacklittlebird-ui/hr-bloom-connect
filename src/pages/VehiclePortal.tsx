@@ -25,7 +25,8 @@ const VehiclePortal = () => {
   const [refreshing, setRefreshing] = useState(false);
   const refreshingRef = useRef(false);
   const [now, setNow] = useState(new Date());
-  usePreventPullToRefresh();
+  const containerRef = useRef<HTMLDivElement>(null);
+  usePreventPullToRefresh(containerRef);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
