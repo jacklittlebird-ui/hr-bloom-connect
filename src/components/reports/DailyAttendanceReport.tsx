@@ -29,6 +29,7 @@ interface StationRow { id: string; name_ar: string; name_en: string; weekend_day
 interface EmployeeRow { id: string; employee_code: string; name_ar: string; name_en: string; station_id: string | null; department_id: string | null; }
 interface DepartmentRow { id: string; name_ar: string; name_en: string; }
 interface AttendanceRow {
+  id?: string;
   employee_id: string;
   date: string;
   check_in: string | null;
@@ -174,18 +175,19 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         setEmployees(empRowsLoaded);
         const empIds = empRowsLoaded.map(e => e.id);
 
-        // Paginated fetch of attendance records (up to 20k)
+        // Paginated fetch of all attendance records in range
         const recs: AttendanceRow[] = [];
         const pageSize = 1000;
-        for (let i = 0; i < 20; i++) {
-          const from = i * pageSize;
+        let from = 0;
+        while (true) {
           const to = from + pageSize - 1;
           let q = supabase
             .from('attendance_records')
-            .select('employee_id,date,check_in,check_out,work_hours,work_minutes,status,is_late,notes')
+            .select('id,employee_id,date,check_in,check_out,work_hours,work_minutes,status,is_late,notes')
             .gte('date', startDate)
             .lte('date', endDate)
             .order('date', { ascending: true })
+            .order('check_in', { ascending: true, nullsFirst: true })
             .range(from, to);
           if (empIds.length && empIds.length <= 500) q = q.in('employee_id', empIds);
           const { data, error } = await q;
@@ -193,6 +195,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
           const rows = (data as AttendanceRow[]) || [];
           recs.push(...rows);
           if (rows.length < pageSize) break;
+          from += pageSize;
         }
         setRecords(recs);
 
