@@ -71,7 +71,7 @@ const VehiclePortal = () => {
   const displayName = isAr ? (user?.nameAr || '') : (user?.name || '');
 
   return (
-    <div className="min-h-dvh bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div ref={containerRef} className="min-h-dvh bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
