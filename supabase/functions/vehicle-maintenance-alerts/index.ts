@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     // Fetch last maintenance per vehicle (latest)
     const { data: maint, error: mErr } = await supabase
       .from('vehicle_maintenance')
-      .select('vehicle_id, maintenance_date, odometer_reading, next_maintenance_date, next_maintenance_km')
+      .select('vehicle_id, maintenance_date, odometer_reading, next_maintenance_date, next_maintenance_odometer')
       .order('maintenance_date', { ascending: false });
     if (mErr) throw mErr;
 
@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
         reasons.push('تاريخ الصيانة القادمة قد حان');
         reasonsEn.push('Next maintenance date reached');
       }
-      if (last?.next_maintenance_km && currentKm >= Number(last.next_maintenance_km)) {
+      if (last?.next_maintenance_odometer && currentKm >= Number(last.next_maintenance_odometer)) {
         reasons.push('وصول العداد للصيانة القادمة');
         reasonsEn.push('Odometer reached next service km');
       }
