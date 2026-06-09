@@ -14,6 +14,10 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 import { toast } from '@/hooks/use-toast';
+import { computeWorkMinutes } from '@/lib/attendanceClassification';
+
+const recHoursFromRow = (r: { check_in?: string | null; check_out?: string | null; work_hours?: number | null; work_minutes?: number | null }) =>
+  computeWorkMinutes(r as any).minutes / 60;
 
 interface StationRow { id: string; name_ar: string; name_en: string; }
 interface EmployeeRow { id: string; employee_code: string; name_ar: string; name_en: string; station_id: string | null; department_id: string | null; }
