@@ -257,16 +257,18 @@ export const StationAttendanceReport = () => {
       let lateDays = 0;
       let absentDays = 0;
       recs.forEach(r => {
-        const w = getWeekOfMonth(r.date, year, month, weekStart) - 1;
-        if (w < 0 || w >= weeksCount) return;
         const h = recHoursFromRow(r);
         const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
         const isPresentLike = s === 'present' || s === 'late' || s === 'auto-closed' || s === 'mission' || (!!r.check_in && s !== 'absent');
-        weeks[w] += h;
+        // Unified totals: sum every record's computed work minutes regardless of status/week bounds
+        totalHours += h;
+        const w = getWeekOfMonth(r.date, year, month, weekStart) - 1;
+        if (w >= 0 && w < weeksCount) {
+          weeks[w] += h;
+          if (isPresentLike) weekDays[w]++;
+        }
         if (isPresentLike) {
           presentDays++;
-          weekDays[w]++;
-          totalHours += h;
           if (r.is_late) lateDays++;
         } else if (s === 'absent') {
           absentDays++;
