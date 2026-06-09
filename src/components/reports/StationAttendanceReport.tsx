@@ -635,8 +635,7 @@ export const StationAttendanceReport = () => {
                                       if (f === 'present') return rec.status === 'present' && !rec.is_late;
                                       return true;
                                     });
-                                    const recHours = (x: AttendanceRow) =>
-                                      Number(x.work_hours || (x.work_minutes ? x.work_minutes / 60 : 0)) || 0;
+                                    const recHours = (x: AttendanceRow) => recHoursFromRow(x);
                                     const counts = {
                                       all: r.records.length,
                                       present: r.records.filter(x => x.status === 'present' && !x.is_late).length,
