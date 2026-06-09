@@ -594,15 +594,22 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       const inner = recordIndex.get(emp.id);
       if (!inner) return;
       dateRange.forEach(d => {
-        const r = inner.get(d);
-        if (!r) return;
-        const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
-        const autoClosed = s === 'auto-closed' || (!!r.notes && AUTO_CLOSED_RE.test(r.notes));
-        if (autoClosed || s === 'mission') present++;
-        else if (s === 'present' && !r.is_late) present++;
-        else if (s === 'present' && r.is_late) late++;
-        else if (s === 'absent') absent++;
-        else if (r.check_in) { if (r.is_late) late++; else present++; }
+        const dayRecords = inner.get(d) || [];
+        if (dayRecords.length === 0) return;
+        const hasAutoClosed = dayRecords.some(r => {
+          const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+          return s === 'auto-closed' || (!!r.notes && AUTO_CLOSED_RE.test(r.notes));
+        });
+        const hasMission = dayRecords.some(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'mission');
+        const hasLate = dayRecords.some(r => !!r.is_late);
+        const hasPresent = dayRecords.some(r => {
+          const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+          return s === 'present' || !!r.check_in;
+        });
+        const allAbsent = dayRecords.every(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'absent');
+        if (hasAutoClosed || hasMission || (hasPresent && !hasLate)) present++;
+        else if (hasLate) late++;
+        else if (allAbsent) absent++;
       });
     });
     return { present, late, absent, total: present + late + absent };
