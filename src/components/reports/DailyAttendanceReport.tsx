@@ -539,8 +539,9 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         if (overtime) overtimeHours += Number(overtime.hours || 0);
         if (matchesStatus) {
           matched++;
-          if (isPresentLike) hours += h;
         }
+        // Unified totals: sum every record's computed work minutes regardless of status filter
+        if (rec) hours += h;
         return { record: rec, hours: h, matchesStatus, kind, leave, mission, permission, overtime, stamps: dayStamps };
       });
       if (globalStatusFilter !== 'all' && matched === 0) return;
