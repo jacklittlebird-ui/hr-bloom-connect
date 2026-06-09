@@ -511,6 +511,41 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
                 {renderField(isAr ? 'بداية ترخيص النقل البري' : 'Transport License Start', 'transport_license_start', 'date')}
                 {renderField(isAr ? 'نهاية ترخيص النقل البري' : 'Transport License End', 'transport_license_end', 'date')}
               </div>
+
+              {/* Alert & Maintenance configuration */}
+              <div className="mt-4 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                <div className={cn('flex items-center gap-2 mb-3 text-sm font-semibold text-primary', isRTL && 'flex-row-reverse')}>
+                  <Settings2 className="w-4 h-4" />
+                  {isAr ? 'إعدادات التنبيهات والصيانة الدورية' : 'Alerts & Maintenance Schedule'}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? 'تنبيه قبل انتهاء الترخيص (يوم)' : 'License alert before (days)'}</Label>
+                    <Input type="number" min={1} max={365} value={form.license_alert_days_before}
+                      onChange={(e) => setForm((p) => ({ ...p, license_alert_days_before: Math.max(1, Number(e.target.value) || 30) }))}
+                      className="h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? 'فترة الصيانة (كم)' : 'Maintenance interval (km)'}</Label>
+                    <Input type="number" min={500} step={500} value={form.maintenance_km_interval}
+                      onChange={(e) => setForm((p) => ({ ...p, maintenance_km_interval: Math.max(500, Number(e.target.value) || 5000) }))}
+                      className="h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? 'فترة الصيانة (شهر)' : 'Maintenance interval (months)'}</Label>
+                    <Input type="number" min={1} max={36} value={form.maintenance_month_interval}
+                      onChange={(e) => setForm((p) => ({ ...p, maintenance_month_interval: Math.max(1, Number(e.target.value) || 6) }))}
+                      className="h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? 'قراءة العداد الحالية (كم)' : 'Current odometer (km)'}</Label>
+                    <Input type="number" min={0} value={form.current_odometer}
+                      onChange={(e) => setForm((p) => ({ ...p, current_odometer: Math.max(0, Number(e.target.value) || 0) }))}
+                      className="h-9" />
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-3">
                 <Label className="text-xs">{isAr ? 'ملاحظات' : 'Notes'}</Label>
                 <Input value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} />
