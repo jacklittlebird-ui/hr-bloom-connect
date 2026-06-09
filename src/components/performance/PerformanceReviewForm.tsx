@@ -26,6 +26,12 @@ import { toast } from 'sonner';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
 import { supabase } from '@/integrations/supabase/client';
+import { computeWorkMinutes } from '@/lib/attendanceClassification';
+
+const fmtHoursHM = (h: number): string => {
+  const totalMinutes = Math.max(0, Math.round((Number(h) || 0) * 60));
+  return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+};
 
 interface CriteriaScore {
   id: string;
@@ -168,7 +174,7 @@ export const PerformanceReviewForm = () => {
             .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate)
             .order('date', { ascending: false }),
           supabase.from('attendance_records')
-            .select('date, work_hours')
+            .select('date, work_hours, work_minutes, check_in, check_out')
             .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate),
         ]);
         if (cancelled) return;
@@ -185,11 +191,12 @@ export const PerformanceReviewForm = () => {
           }
         }
 
-        const hoursByKey: Record<string, number> = {};
+        const minutesByKey: Record<string, number> = {};
         const daysByKey: Record<string, Set<string>> = {};
         (attRes.data || []).forEach((r: any) => {
           const k = (r.date as string).slice(0, 7); // YYYY-MM
-          hoursByKey[k] = (hoursByKey[k] || 0) + Number(r.work_hours || 0);
+          const mins = computeWorkMinutes(r).minutes;
+          minutesByKey[k] = (minutesByKey[k] || 0) + mins;
           if (!daysByKey[k]) daysByKey[k] = new Set();
           daysByKey[k].add(r.date as string);
         });
@@ -206,7 +213,7 @@ export const PerformanceReviewForm = () => {
           const k = `${year}-${key}`;
           return {
             month: key,
-            hours: Math.round((hoursByKey[k] || 0) * 10) / 10,
+            hours: (minutesByKey[k] || 0) / 60,
             days: daysByKey[k]?.size || 0,
             violations: violByKey[k] || [],
           };
@@ -626,7 +633,7 @@ export const PerformanceReviewForm = () => {
                     <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
                       <Clock className="w-4 h-4 text-stat-blue" />
                       <span className="text-muted-foreground">{ar ? 'ساعات العمل:' : 'Work hours:'}</span>
-                      <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
+                      <span className="font-bold text-stat-blue ms-auto">{fmtHoursHM(m.hours)} {ar ? 'س' : 'h'}</span>
                     </div>
                     <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
                       <AlertTriangle className="w-4 h-4 text-destructive" />
@@ -676,7 +683,7 @@ export const PerformanceReviewForm = () => {
                 <span className="font-semibold">{ar ? 'إجمالي الربع' : 'Quarter Total'}</span>
                 <div className={cn("flex items-center gap-6", isRTL && "flex-row-reverse")}>
                   <span><span className="text-muted-foreground me-1">{ar ? 'أيام:' : 'Days:'}</span><span className="font-bold text-stat-green">{quarterMonthly.reduce((s, m) => s + m.days, 0)}</span></span>
-                  <span><span className="text-muted-foreground me-1">{ar ? 'ساعات:' : 'Hours:'}</span><span className="font-bold text-stat-blue">{quarterMonthly.reduce((s, m) => s + m.hours, 0).toFixed(1)}</span></span>
+                  <span><span className="text-muted-foreground me-1">{ar ? 'ساعات:' : 'Hours:'}</span><span className="font-bold text-stat-blue">{fmtHoursHM(quarterMonthly.reduce((s, m) => s + m.hours, 0))}</span></span>
                   <span><span className="text-muted-foreground me-1">{ar ? 'جزاءات:' : 'Penalties:'}</span><span className="font-bold text-destructive">{quarterMonthly.reduce((s, m) => s + m.violations.length, 0)}</span></span>
                 </div>
               </div>
