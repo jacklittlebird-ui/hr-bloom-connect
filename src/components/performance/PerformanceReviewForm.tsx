@@ -26,6 +26,12 @@ import { toast } from 'sonner';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
 import { supabase } from '@/integrations/supabase/client';
+import { computeWorkMinutes } from '@/lib/attendanceClassification';
+
+const fmtHoursHM = (h: number): string => {
+  const totalMinutes = Math.max(0, Math.round((Number(h) || 0) * 60));
+  return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+};
 
 interface CriteriaScore {
   id: string;
