@@ -170,6 +170,10 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
         cylinders_count: form.cylinders_count === '' ? null : Number(form.cylinders_count),
         passengers_count: form.passengers_count === '' ? null : Number(form.passengers_count),
         inspection_year: form.inspection_year === '' ? null : Number(form.inspection_year),
+        license_alert_days_before: Number(form.license_alert_days_before) || 30,
+        maintenance_km_interval: Number(form.maintenance_km_interval) || 5000,
+        maintenance_month_interval: Number(form.maintenance_month_interval) || 6,
+        current_odometer: Number(form.current_odometer) || 0,
       };
 
       if (editingId) {
