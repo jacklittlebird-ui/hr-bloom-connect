@@ -139,6 +139,7 @@ const VehiclePortal = () => {
           </TabsList>
 
           <TabsContent value="by-station"><FleetByStation key={`fbs-${refreshKey}`} /></TabsContent>
+          <TabsContent value="reports"><VehicleReports key={`vrep-${refreshKey}`} /></TabsContent>
           <TabsContent value="alerts"><LicenseAlerts key={`la-${refreshKey}`} /></TabsContent>
           <TabsContent value="registry"><VehicleRegistry key={`vr-${refreshKey}`} /></TabsContent>
           <TabsContent value="licenses"><VehicleLicenseTracking key={`vl-${refreshKey}`} /></TabsContent>
