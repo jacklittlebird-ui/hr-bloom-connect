@@ -14,6 +14,10 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
 import { toast } from '@/hooks/use-toast';
+import { computeWorkMinutes } from '@/lib/attendanceClassification';
+
+const recHoursFromRow = (r: { check_in?: string | null; check_out?: string | null; work_hours?: number | null; work_minutes?: number | null }) =>
+  computeWorkMinutes(r as any).minutes / 60;
 
 interface StationRow { id: string; name_ar: string; name_en: string; }
 interface EmployeeRow { id: string; employee_code: string; name_ar: string; name_en: string; station_id: string | null; department_id: string | null; }
@@ -255,14 +259,16 @@ export const StationAttendanceReport = () => {
       recs.forEach(r => {
         const w = getWeekOfMonth(r.date, year, month, weekStart) - 1;
         if (w < 0 || w >= weeksCount) return;
-        const h = Number(r.work_hours || (r.work_minutes ? r.work_minutes / 60 : 0)) || 0;
+        const h = recHoursFromRow(r);
+        const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+        const isPresentLike = s === 'present' || s === 'late' || s === 'auto-closed' || s === 'mission' || (!!r.check_in && s !== 'absent');
         weeks[w] += h;
-        if (r.status === 'present') {
+        if (isPresentLike) {
           presentDays++;
           weekDays[w]++;
           totalHours += h;
           if (r.is_late) lateDays++;
-        } else if (r.status === 'absent') {
+        } else if (s === 'absent') {
           absentDays++;
         }
       });
@@ -629,8 +635,7 @@ export const StationAttendanceReport = () => {
                                       if (f === 'present') return rec.status === 'present' && !rec.is_late;
                                       return true;
                                     });
-                                    const recHours = (x: AttendanceRow) =>
-                                      Number(x.work_hours || (x.work_minutes ? x.work_minutes / 60 : 0)) || 0;
+                                    const recHours = (x: AttendanceRow) => recHoursFromRow(x);
                                     const counts = {
                                       all: r.records.length,
                                       present: r.records.filter(x => x.status === 'present' && !x.is_late).length,
@@ -722,7 +727,7 @@ export const StationAttendanceReport = () => {
                                               </thead>
                                               <tbody>
                                                 {filtered.map((rec, i) => {
-                                                  const hours = Number(rec.work_hours || (rec.work_minutes ? rec.work_minutes / 60 : 0)) || 0;
+                                                  const hours = recHoursFromRow(rec);
                                                   const dateObj = new Date(rec.date + 'T00:00:00');
                                                   const dayLabel = dateObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short', day: '2-digit', month: '2-digit' });
                                                   return (

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Clock, Users, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { computeWorkMinutes } from '@/lib/attendanceClassification';
 
 const months = [
   { value: '01', ar: 'يناير', en: 'January' },
@@ -89,7 +90,7 @@ export const StationWorkHours = ({ employeeIds: legacyIds, stationEmployees }: S
       while (hasMore) {
         const { data: page, error } = await supabase
           .from('attendance_records')
-          .select(`id, employee_id, work_hours, work_minutes, employees!attendance_records_employee_id_fkey(employee_code, name_ar, name_en)`)
+          .select(`id, employee_id, check_in, check_out, work_hours, work_minutes, employees!attendance_records_employee_id_fkey(employee_code, name_ar, name_en)`)
           .in('employee_id', employeeIds)
           .gte('date', startDate)
           .lte('date', endDate)
@@ -117,9 +118,8 @@ export const StationWorkHours = ({ employeeIds: legacyIds, stationEmployees }: S
             recordCount: 0,
           };
         }
-        const mins = Number(r.work_minutes || 0);
-        const hours = Number(r.work_hours || 0);
-        empMap[empId].totalMinutes += mins > 0 ? Math.round(mins) : Math.round(hours * 60);
+        const { minutes } = computeWorkMinutes(r as any);
+        empMap[empId].totalMinutes += minutes;
         empMap[empId].recordCount++;
       });
 

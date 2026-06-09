@@ -189,7 +189,9 @@ export const AttendanceRecordTab = ({ employee }: AttendanceRecordTabProps) => {
                     </span>
                   </TableCell>
                   <TableCell>
-                    {log.workMinutes > 0 ? `${Math.floor(log.workMinutes / 60)}:${String(log.workMinutes % 60).padStart(2, '0')}` : '-'}
+                    {(log.workHours > 0 || log.workMinutes > 0)
+                      ? `${String(log.workHours).padStart(2, '0')}:${String(log.workMinutes).padStart(2, '0')}`
+                      : '-'}
                   </TableCell>
                   <TableCell>
                     {log.status === 'official-holiday' ? (

@@ -23,6 +23,7 @@ import { useReportExport } from '@/hooks/useReportExport';
 import { WordPreviewDialog } from '@/components/reports/WordPreviewDialog';
 import { toast } from '@/hooks/use-toast';
 import { exportDailyAttendanceExcel } from '@/lib/dailyAttendanceExcel';
+import { computeWorkMinutes } from '@/lib/attendanceClassification';
 
 interface StationRow { id: string; name_ar: string; name_en: string; weekend_days?: number[] | null; }
 interface EmployeeRow { id: string; employee_code: string; name_ar: string; name_en: string; station_id: string | null; department_id: string | null; }
@@ -503,12 +504,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         let kind: DayCell['kind'] = 'none';
         let h = 0;
         if (rec) {
-          if (rec.check_in && rec.check_out) {
-            const diff = (new Date(rec.check_out).getTime() - new Date(rec.check_in).getTime()) / 3600000;
-            if (diff > 0) h = diff;
-          }
-          if (!h && rec.work_minutes && Number(rec.work_minutes) > 0) h = Number(rec.work_minutes) / 60;
-          if (!h && rec.work_hours && Number(rec.work_hours) > 0) h = Number(rec.work_hours);
+          h = computeWorkMinutes(rec as any).minutes / 60;
 
           const s = String(rec.status || '').toLowerCase().replace(/_/g, '-');
           const autoClosed = s === 'auto-closed' || (!!rec.notes && AUTO_CLOSED_RE.test(rec.notes));
