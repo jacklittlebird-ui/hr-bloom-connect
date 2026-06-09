@@ -19,6 +19,7 @@ interface Vehicle {
   model: string;
   plate_number: string;
   status: string;
+  station_id?: string | null;
   license_end_date: string | null;
   curtains_license_end: string | null;
   transport_license_end: string | null;
