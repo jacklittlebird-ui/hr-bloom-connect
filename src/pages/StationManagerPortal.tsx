@@ -2578,12 +2578,12 @@ const StationManagerPortal = () => {
                         <VTabsTrigger value="licenses" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('متابعة التراخيص', 'License Tracking')}</VTabsTrigger>
                         <VTabsTrigger value="maintenance" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('الصيانة', 'Maintenance')}</VTabsTrigger>
                       </VTabsList>
-                      <VTabsContent value="by-station"><FleetByStation allowedStationIds={allowedIds} /></VTabsContent>
-                      <VTabsContent value="reports"><VehicleReports allowedStationIds={allowedIds} /></VTabsContent>
-                      <VTabsContent value="alerts"><LicenseAlerts allowedStationIds={allowedIds} /></VTabsContent>
-                      <VTabsContent value="registry"><VehicleRegistry allowedStationIds={allowedIds} readOnly /></VTabsContent>
-                      <VTabsContent value="licenses"><VehicleLicenseTracking allowedStationIds={allowedIds} /></VTabsContent>
-                      <VTabsContent value="maintenance"><VehicleMaintenance allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="by-station"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 320px)' }} dir={isRTL ? 'rtl' : 'ltr'}><FleetByStation allowedStationIds={allowedIds} /></div></VTabsContent>
+                      <VTabsContent value="reports"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 320px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleReports allowedStationIds={allowedIds} /></div></VTabsContent>
+                      <VTabsContent value="alerts"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 320px)' }} dir={isRTL ? 'rtl' : 'ltr'}><LicenseAlerts allowedStationIds={allowedIds} /></div></VTabsContent>
+                      <VTabsContent value="registry"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 320px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleRegistry allowedStationIds={allowedIds} readOnly /></div></VTabsContent>
+                      <VTabsContent value="licenses"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 320px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleLicenseTracking allowedStationIds={allowedIds} /></div></VTabsContent>
+                      <VTabsContent value="maintenance"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 320px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleMaintenance allowedStationIds={allowedIds} /></div></VTabsContent>
                     </VTabs>
                   </CardContent>
                 </Card>

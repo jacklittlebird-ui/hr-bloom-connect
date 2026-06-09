@@ -138,12 +138,22 @@ const VehiclePortal = () => {
             ))}
           </TabsList>
 
-          <TabsContent value="by-station"><FleetByStation key={`fbs-${refreshKey}`} /></TabsContent>
-          <TabsContent value="reports"><VehicleReports key={`vrep-${refreshKey}`} /></TabsContent>
-          <TabsContent value="alerts"><LicenseAlerts key={`la-${refreshKey}`} /></TabsContent>
-          <TabsContent value="registry"><VehicleRegistry key={`vr-${refreshKey}`} /></TabsContent>
-          <TabsContent value="licenses"><VehicleLicenseTracking key={`vl-${refreshKey}`} /></TabsContent>
-          <TabsContent value="maintenance"><VehicleMaintenance key={`vm-${refreshKey}`} /></TabsContent>
+          {tabs.map((tab) => (
+            <TabsContent key={tab.id} value={tab.id}>
+              <div
+                className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3"
+                style={{ maxHeight: 'calc(100dvh - 280px)' }}
+                dir={isRTL ? 'rtl' : 'ltr'}
+              >
+                {tab.id === 'by-station' && <FleetByStation key={`fbs-${refreshKey}`} />}
+                {tab.id === 'reports' && <VehicleReports key={`vrep-${refreshKey}`} />}
+                {tab.id === 'alerts' && <LicenseAlerts key={`la-${refreshKey}`} />}
+                {tab.id === 'registry' && <VehicleRegistry key={`vr-${refreshKey}`} />}
+                {tab.id === 'licenses' && <VehicleLicenseTracking key={`vl-${refreshKey}`} />}
+                {tab.id === 'maintenance' && <VehicleMaintenance key={`vm-${refreshKey}`} />}
+              </div>
+            </TabsContent>
+          ))}
         </Tabs>
       </main>
     </div>
