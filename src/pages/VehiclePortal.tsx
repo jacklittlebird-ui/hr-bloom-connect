@@ -55,6 +55,7 @@ const VehiclePortal = () => {
 
   const tabs = [
     { id: 'by-station', label: isAr ? 'سيارات المحطة' : 'Station Vehicles' },
+    { id: 'reports', label: isAr ? 'التقارير' : 'Reports' },
     { id: 'alerts', label: isAr ? 'تنبيهات التراخيص' : 'License Alerts' },
     { id: 'registry', label: isAr ? 'سجل السيارات' : 'Vehicle Registry' },
     { id: 'licenses', label: isAr ? 'متابعة التراخيص' : 'License Tracking' },
