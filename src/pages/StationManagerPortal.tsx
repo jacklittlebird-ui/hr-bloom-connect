@@ -2572,12 +2572,14 @@ const StationManagerPortal = () => {
                     <VTabs defaultValue="by-station" className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
                       <VTabsList className="w-full justify-start mb-4 flex-wrap h-auto gap-1 bg-muted/50 p-1">
                         <VTabsTrigger value="by-station" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('سيارات لكل محطة', 'Vehicles per Station')}</VTabsTrigger>
+                        <VTabsTrigger value="reports" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('التقارير', 'Reports')}</VTabsTrigger>
                         <VTabsTrigger value="alerts" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('تنبيهات التراخيص', 'License Alerts')}</VTabsTrigger>
                         <VTabsTrigger value="registry" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('سجل السيارات', 'Vehicle Registry')}</VTabsTrigger>
                         <VTabsTrigger value="licenses" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('متابعة التراخيص', 'License Tracking')}</VTabsTrigger>
                         <VTabsTrigger value="maintenance" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-xs md:text-sm">{t('الصيانة', 'Maintenance')}</VTabsTrigger>
                       </VTabsList>
                       <VTabsContent value="by-station"><FleetByStation allowedStationIds={allowedIds} /></VTabsContent>
+                      <VTabsContent value="reports"><VehicleReports allowedStationIds={allowedIds} /></VTabsContent>
                       <VTabsContent value="alerts"><LicenseAlerts allowedStationIds={allowedIds} /></VTabsContent>
                       <VTabsContent value="registry"><VehicleRegistry allowedStationIds={allowedIds} readOnly /></VTabsContent>
                       <VTabsContent value="licenses"><VehicleLicenseTracking allowedStationIds={allowedIds} /></VTabsContent>
