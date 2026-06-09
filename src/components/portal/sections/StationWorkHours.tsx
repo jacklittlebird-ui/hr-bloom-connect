@@ -118,9 +118,8 @@ export const StationWorkHours = ({ employeeIds: legacyIds, stationEmployees }: S
             recordCount: 0,
           };
         }
-        const mins = Number(r.work_minutes || 0);
-        const hours = Number(r.work_hours || 0);
-        empMap[empId].totalMinutes += mins > 0 ? Math.round(mins) : Math.round(hours * 60);
+        const { minutes } = computeWorkMinutes(r as any);
+        empMap[empId].totalMinutes += minutes;
         empMap[empId].recordCount++;
       });
 
