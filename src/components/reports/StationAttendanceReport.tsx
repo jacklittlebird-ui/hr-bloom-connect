@@ -259,14 +259,16 @@ export const StationAttendanceReport = () => {
       recs.forEach(r => {
         const w = getWeekOfMonth(r.date, year, month, weekStart) - 1;
         if (w < 0 || w >= weeksCount) return;
-        const h = Number(r.work_hours || (r.work_minutes ? r.work_minutes / 60 : 0)) || 0;
+        const h = recHoursFromRow(r);
+        const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+        const isPresentLike = s === 'present' || s === 'late' || s === 'auto-closed' || s === 'mission' || (!!r.check_in && s !== 'absent');
         weeks[w] += h;
-        if (r.status === 'present') {
+        if (isPresentLike) {
           presentDays++;
           weekDays[w]++;
           totalHours += h;
           if (r.is_late) lateDays++;
-        } else if (r.status === 'absent') {
+        } else if (s === 'absent') {
           absentDays++;
         }
       });
