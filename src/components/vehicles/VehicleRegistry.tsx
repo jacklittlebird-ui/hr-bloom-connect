@@ -307,6 +307,47 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
     a.click(); URL.revokeObjectURL(url);
   };
 
+  const exportXlsx = () => {
+    if (filtered.length === 0) {
+      toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export');
+      return;
+    }
+    const columns = [
+      { header: isAr ? 'كود السيارة' : 'Code', accessor: (v: Vehicle) => v.vehicle_code },
+      { header: isAr ? 'الماركة' : 'Brand', accessor: (v: Vehicle) => v.brand },
+      { header: isAr ? 'الموديل' : 'Model', accessor: (v: Vehicle) => v.model },
+      { header: isAr ? 'سنة الصنع' : 'Year', accessor: (v: Vehicle) => v.year },
+      { header: isAr ? 'رقم اللوحة' : 'Plate', accessor: (v: Vehicle) => v.plate_number },
+      { header: isAr ? 'اللون' : 'Color', accessor: (v: Vehicle) => v.color || '' },
+      { header: isAr ? 'المحطة' : 'Station', accessor: (v: Vehicle) => {
+        const st = v.station_id ? stationMap[v.station_id] : null;
+        return st ? (isAr ? st.name_ar : st.name_en) : (isAr ? 'غير مخصص' : 'Unassigned');
+      }},
+      { header: isAr ? 'السائق' : 'Driver', accessor: (v: Vehicle) => v.insured_driver_name || '' },
+      { header: isAr ? 'رقم التأمين' : 'Insurance #', accessor: (v: Vehicle) => v.insurance_number || '' },
+      { header: isAr ? 'رقم الماتور' : 'Engine #', accessor: (v: Vehicle) => v.engine_number || '' },
+      { header: isAr ? 'رقم الشاسيه' : 'Chassis #', accessor: (v: Vehicle) => v.chassis_number || '' },
+      { header: isAr ? 'السعة (سي سي)' : 'Engine (CC)', accessor: (v: Vehicle) => v.engine_capacity_liters ?? '' },
+      { header: isAr ? 'عدد السلندر' : 'Cylinders', accessor: (v: Vehicle) => v.cylinders_count ?? '' },
+      { header: isAr ? 'عدد الركاب' : 'Passengers', accessor: (v: Vehicle) => v.passengers_count ?? '' },
+      { header: isAr ? 'سنة الفحص' : 'Inspection Yr', accessor: (v: Vehicle) => v.inspection_year ?? '' },
+      { header: isAr ? 'القراءة الحالية (كم)' : 'Current Odo (KM)', accessor: (v: Vehicle) => v.current_odometer ?? 0 },
+      { header: isAr ? 'بداية الترخيص' : 'License Start', accessor: (v: Vehicle) => v.license_start_date || '' },
+      { header: isAr ? 'نهاية الترخيص' : 'License End', accessor: (v: Vehicle) => v.license_end_date || '' },
+      { header: isAr ? 'نهاية ترخيص الستائر' : 'Curtains End', accessor: (v: Vehicle) => v.curtains_license_end || '' },
+      { header: isAr ? 'نهاية ترخيص النقل' : 'Transport End', accessor: (v: Vehicle) => v.transport_license_end || '' },
+      { header: isAr ? 'تنبيه قبل (يوم)' : 'Alert Days', accessor: (v: Vehicle) => v.license_alert_days_before ?? 30 },
+      { header: isAr ? 'فترة الصيانة (كم)' : 'Maint Interval KM', accessor: (v: Vehicle) => v.maintenance_km_interval ?? 5000 },
+      { header: isAr ? 'فترة الصيانة (شهر)' : 'Maint Interval Months', accessor: (v: Vehicle) => v.maintenance_month_interval ?? 6 },
+      { header: isAr ? 'الحالة' : 'Status', accessor: (v: Vehicle) => v.status },
+    ];
+    exportToXLSX(filtered, columns as any, 'vehicles_registry', isAr ? 'سجل السيارات' : 'Vehicle Registry', {
+      title: isAr ? 'سجل السيارات - تقرير تفصيلي' : 'Vehicle Registry - Detailed Report',
+      isRTL: true,
+    });
+    toast.success(isAr ? `تم تصدير ${filtered.length} سيارة` : `Exported ${filtered.length} vehicles`);
+  };
+
   const statusBadge = (s: string) => {
     const map: Record<string, string> = {
       active: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
