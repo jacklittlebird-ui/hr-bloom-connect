@@ -121,11 +121,10 @@ export const PortalAttendance = () => {
         .gte('end_date', dateFrom),
       supabase
         .from('missions')
-        .select('id, date, status, location')
+        .select('id, date, start_date, end_date, status, location')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
         .eq('status', 'approved')
-        .gte('date', dateFrom)
-        .lte('date', dateTo),
+        .or(`and(start_date.lte.${dateTo},end_date.gte.${dateFrom}),and(start_date.is.null,date.gte.${dateFrom},date.lte.${dateTo})`),
       supabase
         .from('permission_requests')
         .select('id, date, status, permission_type, start_time, end_time')
@@ -145,7 +144,16 @@ export const PortalAttendance = () => {
     });
     const leaveDates = new Set<string>(leaveByDate.keys());
     const missionByDate = new Map<string, any>();
-    (missionsRes.data || []).forEach((m: any) => { missionByDate.set(m.date, m); });
+    (missionsRes.data || []).forEach((m: any) => {
+      const start = new Date((m.start_date || m.date) + 'T00:00:00');
+      const end = new Date((m.end_date || m.date) + 'T00:00:00');
+      const rangeStart = new Date(dateFrom + 'T00:00:00');
+      const rangeEnd = new Date(dateTo + 'T00:00:00');
+      for (let d = new Date(start < rangeStart ? rangeStart : start); d <= (end > rangeEnd ? rangeEnd : end); d.setDate(d.getDate() + 1)) {
+        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        missionByDate.set(iso, m);
+      }
+    });
     const missionDates = new Set<string>(missionByDate.keys());
     const covered = new Set<string>([...leaveDates, ...missionDates]);
     setCoveredDates(covered);

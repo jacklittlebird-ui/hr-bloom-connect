@@ -29,6 +29,7 @@ interface StationRow { id: string; name_ar: string; name_en: string; weekend_day
 interface EmployeeRow { id: string; employee_code: string; name_ar: string; name_en: string; station_id: string | null; department_id: string | null; }
 interface DepartmentRow { id: string; name_ar: string; name_en: string; }
 interface AttendanceRow {
+  id?: string;
   employee_id: string;
   date: string;
   check_in: string | null;
@@ -72,8 +73,10 @@ function toCairoDate(iso: string): string {
 }
 
 function fmtHours(h: number): string {
-  if (!h || h <= 0) return '0';
-  return (Math.round(h * 100) / 100).toFixed(2);
+  const totalMinutes = Math.max(0, Math.round((Number(h) || 0) * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
 function toIsoDate(d: Date): string {
@@ -172,18 +175,19 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         setEmployees(empRowsLoaded);
         const empIds = empRowsLoaded.map(e => e.id);
 
-        // Paginated fetch of attendance records (up to 20k)
+        // Paginated fetch of all attendance records in range
         const recs: AttendanceRow[] = [];
         const pageSize = 1000;
-        for (let i = 0; i < 20; i++) {
-          const from = i * pageSize;
+        let from = 0;
+        while (true) {
           const to = from + pageSize - 1;
           let q = supabase
             .from('attendance_records')
-            .select('employee_id,date,check_in,check_out,work_hours,work_minutes,status,is_late,notes')
+            .select('id,employee_id,date,check_in,check_out,work_hours,work_minutes,status,is_late,notes')
             .gte('date', startDate)
             .lte('date', endDate)
             .order('date', { ascending: true })
+            .order('check_in', { ascending: true, nullsFirst: true })
             .range(from, to);
           if (empIds.length && empIds.length <= 500) q = q.in('employee_id', empIds);
           const { data, error } = await q;
@@ -191,6 +195,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
           const rows = (data as AttendanceRow[]) || [];
           recs.push(...rows);
           if (rows.length < pageSize) break;
+          from += pageSize;
         }
         setRecords(recs);
 
@@ -348,6 +353,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
   // Cell shape for a single (employee, day) intersection.
   type DayCell = {
     record: AttendanceRow | null;
+    records: AttendanceRow[];
     hours: number;
     matchesStatus: boolean;
     kind: 'present' | 'late' | 'absent' | 'auto-closed' | 'mission-day' | 'none';
@@ -358,14 +364,17 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
     stamps?: StampEvent[];
   };
 
-  // Map: employee_id -> date -> record
+  // Map: employee_id -> date -> records. A day can have multiple check-in/out intervals.
   const recordIndex = useMemo(() => {
-    const m = new Map<string, Map<string, AttendanceRow>>();
+    const m = new Map<string, Map<string, AttendanceRow[]>>();
     records.forEach(r => {
       let inner = m.get(r.employee_id);
       if (!inner) { inner = new Map(); m.set(r.employee_id, inner); }
-      inner.set(r.date, r);
+      const dayRecords = inner.get(r.date) || [];
+      dayRecords.push(r);
+      inner.set(r.date, dayRecords);
     });
+    m.forEach(inner => inner.forEach(dayRecords => dayRecords.sort((a, b) => String(a.check_in || '').localeCompare(String(b.check_in || '')))));
     return m;
   }, [records]);
 
@@ -494,7 +503,8 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       let present = 0, late = 0, absent = 0, hours = 0, matched = 0;
       let leavesCount = 0, missionsCount = 0, permissionsCount = 0, overtimeHours = 0;
       const cells: DayCell[] = dateRange.map(d => {
-        const rec = inner?.get(d) || null;
+        const dayRecords = inner?.get(d) || [];
+        const rec = dayRecords[0] || null;
         const leave = lvInner?.get(d) || null;
         const mission = msInner?.get(d) || null;
         const permission = prInner?.get(d) || null;
@@ -504,17 +514,24 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         let kind: DayCell['kind'] = 'none';
         let h = 0;
         if (rec) {
-          h = computeWorkMinutes(rec as any).minutes / 60;
+          h = dayRecords.reduce((sum, r) => sum + computeWorkMinutes(r as any).minutes / 60, 0);
 
-          const s = String(rec.status || '').toLowerCase().replace(/_/g, '-');
-          const autoClosed = s === 'auto-closed' || (!!rec.notes && AUTO_CLOSED_RE.test(rec.notes));
-          const isMission = s === 'mission';
-          if (autoClosed) kind = 'auto-closed';
-          else if (isMission) kind = 'mission-day';
-          else if (s === 'present' && !rec.is_late) kind = 'present';
-          else if (s === 'present' && !!rec.is_late) kind = 'late';
-          else if (s === 'absent') kind = 'absent';
-          else if (rec.check_in) kind = rec.is_late ? 'late' : 'present';
+          const hasAutoClosed = dayRecords.some(r => {
+            const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+            return s === 'auto-closed' || (!!r.notes && AUTO_CLOSED_RE.test(r.notes));
+          });
+          const hasMission = dayRecords.some(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'mission');
+          const hasLate = dayRecords.some(r => !!r.is_late);
+          const hasPresent = dayRecords.some(r => {
+            const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+            return s === 'present' || !!r.check_in;
+          });
+          const allAbsent = dayRecords.every(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'absent');
+          if (hasAutoClosed) kind = 'auto-closed';
+          else if (hasMission) kind = 'mission-day';
+          else if (hasLate) kind = 'late';
+          else if (hasPresent) kind = 'present';
+          else if (allAbsent) kind = 'absent';
         } else {
           // Infer absent: no record, not weekend/holiday/leave/mission/permission, and date already passed
           const dow = new Date(d + 'T00:00:00').getDay();
@@ -540,9 +557,11 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         if (matchesStatus) {
           matched++;
         }
-        // Unified totals: sum every record's computed work minutes regardless of status filter
+        // Unified totals: sum every attendance interval in the day regardless of status filter
         if (rec) hours += h;
-        return { record: rec, hours: h, matchesStatus, kind, leave, mission, permission, overtime, stamps: dayStamps };
+        const lastWithCheckout = [...dayRecords].reverse().find(r => !!r.check_out) || dayRecords[dayRecords.length - 1];
+        const displayRecord = rec ? { ...rec, check_out: lastWithCheckout?.check_out ?? rec.check_out } : null;
+        return { record: displayRecord, records: dayRecords, hours: h, matchesStatus, kind, leave, mission, permission, overtime, stamps: dayStamps };
       });
       if (globalStatusFilter !== 'all' && matched === 0) return;
       rows.push({
@@ -575,15 +594,22 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       const inner = recordIndex.get(emp.id);
       if (!inner) return;
       dateRange.forEach(d => {
-        const r = inner.get(d);
-        if (!r) return;
-        const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
-        const autoClosed = s === 'auto-closed' || (!!r.notes && AUTO_CLOSED_RE.test(r.notes));
-        if (autoClosed || s === 'mission') present++;
-        else if (s === 'present' && !r.is_late) present++;
-        else if (s === 'present' && r.is_late) late++;
-        else if (s === 'absent') absent++;
-        else if (r.check_in) { if (r.is_late) late++; else present++; }
+        const dayRecords = inner.get(d) || [];
+        if (dayRecords.length === 0) return;
+        const hasAutoClosed = dayRecords.some(r => {
+          const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+          return s === 'auto-closed' || (!!r.notes && AUTO_CLOSED_RE.test(r.notes));
+        });
+        const hasMission = dayRecords.some(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'mission');
+        const hasLate = dayRecords.some(r => !!r.is_late);
+        const hasPresent = dayRecords.some(r => {
+          const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+          return s === 'present' || !!r.check_in;
+        });
+        const allAbsent = dayRecords.every(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'absent');
+        if (hasAutoClosed || hasMission || (hasPresent && !hasLate)) present++;
+        else if (hasLate) late++;
+        else if (allAbsent) absent++;
       });
     });
     return { present, late, absent, total: present + late + absent };

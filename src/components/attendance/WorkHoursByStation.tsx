@@ -11,6 +11,7 @@ import { Clock, Building2, Users, Search, MapPin, Printer, FileText, FileSpreads
 import { cn } from '@/lib/utils';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
+import { computeWorkMinutes } from '@/lib/attendanceClassification';
 
 const months = [
   { value: '01', ar: 'يناير', en: 'January' },
@@ -91,12 +92,11 @@ export const WorkHoursByStation = () => {
         const { data: page, error } = await supabase
           .from('attendance_records')
           .select(`
-            id, employee_id, work_hours, work_minutes,
+            id, employee_id, check_in, check_out, work_hours, work_minutes,
             employees!attendance_records_employee_id_fkey(employee_code, name_ar, name_en, station_id, department_id, stations(id, name_ar, name_en))
           `)
           .gte('date', startDate)
           .lte('date', endDate)
-          .not('check_in', 'is', null)
           .range(from, from + pageSize - 1);
 
         if (error) {
@@ -138,10 +138,7 @@ export const WorkHoursByStation = () => {
               recordCount: 0,
             };
           }
-          const mins = Number(r.work_minutes || 0);
-          const hours = Number(r.work_hours || 0);
-          const totalMins = mins > 0 ? Math.round(mins) : Math.round(hours * 60);
-          empMap[empId].totalMinutes += totalMins;
+          empMap[empId].totalMinutes += computeWorkMinutes(r as any).minutes;
           empMap[empId].recordCount++;
         });
 
@@ -152,6 +149,8 @@ export const WorkHoursByStation = () => {
         });
 
         setEmployeeData(result);
+      } else {
+        setEmployeeData([]);
       }
       setLoading(false);
     };
