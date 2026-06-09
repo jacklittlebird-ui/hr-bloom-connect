@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { RefreshCw, Loader2, LogOut, Globe, Car, Clock } from 'lucide-react';
+import { RefreshCw, Loader2, LogOut, Globe, Car, Clock, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
