@@ -457,6 +457,57 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     }
   };
 
+  const exportExcel = async () => {
+    if (filtered.length === 0) {
+      toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export');
+      return;
+    }
+    try {
+      const stationLabel = stationFilter
+        ? (isAr ? stationMap[stationFilter]?.name_ar : stationMap[stationFilter]?.name_en) || '-'
+        : (isAr ? 'كل المحطات' : 'All stations');
+      const typeLbl = typeFilter === 'all'
+        ? (isAr ? 'كل الأنواع' : 'All types')
+        : (isAr ? (TYPES.find((t) => t.value === typeFilter)?.ar || typeFilter) : (TYPES.find((t) => t.value === typeFilter)?.en || typeFilter));
+      await exportVehicleMaintenanceXLSX({
+        isAr,
+        rows: filtered.map((r, i) => {
+          const v = vehicleMap[r.vehicle_id];
+          return {
+            idx: i + 1,
+            code: v?.vehicle_code || '',
+            vehicle: v ? `${v.brand} ${v.model}` : '',
+            plate: v?.plate_number || '',
+            station: stationName(v?.station_id) as string,
+            type: typeLabel(r.maintenance_type),
+            date: r.maintenance_date,
+            odo: r.odometer_reading,
+            nextOdo: r.next_maintenance_odometer,
+            provider: r.provider || '',
+            cost: r.cost || 0,
+            description: r.description || '',
+          };
+        }),
+        filters: { station: stationLabel, type: typeLbl, from: fromDate, to: toDate },
+        summary: {
+          totalRecords: filtered.length,
+          totalCost,
+          vehiclesInScope: stationCountInScope,
+          upcomingCount: upcoming.length,
+        },
+        topStations: topStations.map((s) => ({
+          name: s.id === '__unassigned__' ? (isAr ? 'غير مخصص' : 'Unassigned') : (stationName(s.id) as string),
+          count: s.count,
+          cost: s.cost,
+        })),
+        fileName: `vehicle_maintenance_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      });
+      toast.success(isAr ? 'تم تصدير Excel بنجاح' : 'Excel exported successfully');
+    } catch (e: any) {
+      toast.error(e?.message || (isAr ? 'فشل التصدير' : 'Export failed'));
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Stats */}
