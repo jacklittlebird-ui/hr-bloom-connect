@@ -48,6 +48,7 @@ const NotificationsPage = React.lazy(() => import("./pages/Notifications"));
 const AuditLogsPage = React.lazy(() => import("./pages/AuditLogs"));
 const GpsVerificationLogs = React.lazy(() => import("./pages/GpsVerificationLogs"));
 const Vehicles = React.lazy(() => import("./pages/Vehicles"));
+const VehiclePortal = React.lazy(() => import("./pages/VehiclePortal"));
 const PropertyTaxes = React.lazy(() => import("./pages/PropertyTaxes"));
 
 const queryClient = new QueryClient();
@@ -75,6 +76,7 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   if (isAuthenticated) {
     if (user?.role === 'employee') return <Navigate to="/employee-portal" replace />;
     if (user?.role === 'station_manager' || user?.role === 'area_manager' || user?.role === 'department_manager' || user?.role === 'station_hr') return <Navigate to="/station-manager" replace />;
+    if (user?.role === 'station_vehicle_manager') return <Navigate to="/vehicle-portal" replace />;
     if (user?.role === 'kiosk') return <Navigate to="/attendance/kiosk" replace />;
     if (user?.role === 'training_manager') return <Navigate to="/training-portal" replace />;
     return <Navigate to="/" replace />;
@@ -117,6 +119,7 @@ const AppRoutes = () => (
 
       <Route path="/employee-portal" element={<ProtectedRoute allowedRoles={['employee']}><EmployeePortal /></ProtectedRoute>} />
       <Route path="/station-manager" element={<ProtectedRoute allowedRoles={['station_manager', 'area_manager', 'department_manager', 'station_hr']}><StationManagerPortal /></ProtectedRoute>} />
+      <Route path="/vehicle-portal" element={<ProtectedRoute allowedRoles={['station_vehicle_manager']}><VehiclePortal /></ProtectedRoute>} />
       <Route path="/training-portal" element={<ProtectedRoute allowedRoles={['training_manager']}><TrainingPortal /></ProtectedRoute>} />
       <Route path="/attendance/scan" element={<ProtectedRoute allowedRoles={['employee', 'station_manager', 'area_manager', 'department_manager', 'station_hr', 'admin', 'hr']}><AttendanceScan /></ProtectedRoute>} />
       <Route path="/attendance/kiosk" element={<ProtectedRoute allowedRoles={['admin', 'station_manager', 'area_manager', 'department_manager', 'station_hr', 'kiosk']}><AttendanceKiosk /></ProtectedRoute>} />

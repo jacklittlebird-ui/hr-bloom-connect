@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!['admin', 'station_manager', 'employee', 'kiosk', 'training_manager', 'hr', 'area_manager', 'department_manager', 'station_hr'].includes(role)) {
+    if (!['admin', 'station_manager', 'employee', 'kiosk', 'training_manager', 'hr', 'area_manager', 'department_manager', 'station_hr', 'station_vehicle_manager'].includes(role)) {
       return new Response(JSON.stringify({ error: 'Invalid role' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -143,7 +143,7 @@ Deno.serve(async (req) => {
     let employeeId: string | null = null;
     let resolvedDepartmentId: string | null = null;
 
-    if ((role === 'station_manager' || role === 'department_manager' || role === 'station_hr') && station_code) {
+    if ((role === 'station_manager' || role === 'department_manager' || role === 'station_hr' || role === 'station_vehicle_manager') && station_code) {
       const { data: station } = await supabaseAdmin
         .from('stations')
         .select('id')
