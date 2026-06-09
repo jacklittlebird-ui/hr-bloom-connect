@@ -404,7 +404,7 @@ const Users = () => {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters', variant: 'destructive' });
       return;
     }
-    if (form.role === 'station_manager' && !form.station_code) {
+    if ((form.role === 'station_manager' || form.role === 'station_vehicle_manager') && !form.station_code) {
       toast({ title: isAr ? 'خطأ' : 'Error', description: isAr ? 'يرجى اختيار المحطة' : 'Please select a station', variant: 'destructive' });
       return;
     }
