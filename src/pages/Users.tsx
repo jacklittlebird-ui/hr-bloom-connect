@@ -720,6 +720,7 @@ const Users = () => {
       case 'hr': return <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">{isAr ? 'موارد بشرية' : 'HR'}</Badge>;
       case 'station_hr': return <Badge className="bg-teal-500/10 text-teal-600 border-teal-500/30">{isAr ? 'موارد بشرية محطات' : 'Station HR'}</Badge>;
       case 'station_manager': return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/30">{isAr ? 'مدير محطة' : 'Station Manager'}</Badge>;
+      case 'station_vehicle_manager': return <Badge className="bg-indigo-500/10 text-indigo-600 border-indigo-500/30">{isAr ? 'مدير سيارات محطة' : 'Station Vehicle Mgr'}</Badge>;
       case 'department_manager': return <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/30">{isAr ? 'مدير قسم' : 'Department Manager'}</Badge>;
       case 'employee': return <Badge className="bg-sky-500/10 text-sky-600 border-sky-500/30">{isAr ? 'موظف' : 'Employee'}</Badge>;
       case 'training_manager': return <Badge className="bg-violet-500/10 text-violet-600 border-violet-500/30">{isAr ? 'مدير التدريب' : 'Training Manager'}</Badge>;
