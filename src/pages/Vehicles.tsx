@@ -88,12 +88,12 @@ const Vehicles = () => {
           ))}
         </TabsList>
 
-        <TabsContent value="by-station"><FleetByStation key={`fbs-${refreshKey}`} /></TabsContent>
-        <TabsContent value="reports"><VehicleReports key={`vrep-${refreshKey}`} /></TabsContent>
-        <TabsContent value="alerts"><LicenseAlerts key={`la-${refreshKey}`} /></TabsContent>
-        <TabsContent value="registry"><VehicleRegistry key={`vr-${refreshKey}`} readOnly={registryReadOnly} /></TabsContent>
-        <TabsContent value="licenses"><VehicleLicenseTracking key={`vl-${refreshKey}`} /></TabsContent>
-        <TabsContent value="maintenance"><VehicleMaintenance key={`vm-${refreshKey}`} /></TabsContent>
+        <TabsContent value="by-station"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><FleetByStation key={`fbs-${refreshKey}`} /></div></TabsContent>
+        <TabsContent value="reports"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleReports key={`vrep-${refreshKey}`} /></div></TabsContent>
+        <TabsContent value="alerts"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><LicenseAlerts key={`la-${refreshKey}`} /></div></TabsContent>
+        <TabsContent value="registry"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleRegistry key={`vr-${refreshKey}`} readOnly={registryReadOnly} /></div></TabsContent>
+        <TabsContent value="licenses"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleLicenseTracking key={`vl-${refreshKey}`} /></div></TabsContent>
+        <TabsContent value="maintenance"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleMaintenance key={`vm-${refreshKey}`} /></div></TabsContent>
       </Tabs>
     </DashboardLayout>
   );
