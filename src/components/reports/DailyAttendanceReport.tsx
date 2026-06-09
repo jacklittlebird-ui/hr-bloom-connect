@@ -353,6 +353,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
   // Cell shape for a single (employee, day) intersection.
   type DayCell = {
     record: AttendanceRow | null;
+    records: AttendanceRow[];
     hours: number;
     matchesStatus: boolean;
     kind: 'present' | 'late' | 'absent' | 'auto-closed' | 'mission-day' | 'none';
@@ -363,14 +364,17 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
     stamps?: StampEvent[];
   };
 
-  // Map: employee_id -> date -> record
+  // Map: employee_id -> date -> records. A day can have multiple check-in/out intervals.
   const recordIndex = useMemo(() => {
-    const m = new Map<string, Map<string, AttendanceRow>>();
+    const m = new Map<string, Map<string, AttendanceRow[]>>();
     records.forEach(r => {
       let inner = m.get(r.employee_id);
       if (!inner) { inner = new Map(); m.set(r.employee_id, inner); }
-      inner.set(r.date, r);
+      const dayRecords = inner.get(r.date) || [];
+      dayRecords.push(r);
+      inner.set(r.date, dayRecords);
     });
+    m.forEach(inner => inner.forEach(dayRecords => dayRecords.sort((a, b) => String(a.check_in || '').localeCompare(String(b.check_in || '')))));
     return m;
   }, [records]);
 
