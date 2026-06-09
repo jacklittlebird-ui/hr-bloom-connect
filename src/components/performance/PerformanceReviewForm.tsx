@@ -633,7 +633,7 @@ export const PerformanceReviewForm = () => {
                     <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
                       <Clock className="w-4 h-4 text-stat-blue" />
                       <span className="text-muted-foreground">{ar ? 'ساعات العمل:' : 'Work hours:'}</span>
-                      <span className="font-bold text-stat-blue ms-auto">{m.hours.toFixed(1)} {ar ? 'ساعة' : 'h'}</span>
+                      <span className="font-bold text-stat-blue ms-auto">{fmtHoursHM(m.hours)} {ar ? 'س' : 'h'}</span>
                     </div>
                     <div className={cn("flex items-center gap-2 text-sm", isRTL && "flex-row-reverse")}>
                       <AlertTriangle className="w-4 h-4 text-destructive" />
