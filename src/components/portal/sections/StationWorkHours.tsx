@@ -90,7 +90,7 @@ export const StationWorkHours = ({ employeeIds: legacyIds, stationEmployees }: S
       while (hasMore) {
         const { data: page, error } = await supabase
           .from('attendance_records')
-          .select(`id, employee_id, work_hours, work_minutes, employees!attendance_records_employee_id_fkey(employee_code, name_ar, name_en)`)
+          .select(`id, employee_id, check_in, check_out, work_hours, work_minutes, employees!attendance_records_employee_id_fkey(employee_code, name_ar, name_en)`)
           .in('employee_id', employeeIds)
           .gte('date', startDate)
           .lte('date', endDate)
