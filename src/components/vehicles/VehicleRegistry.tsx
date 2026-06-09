@@ -14,11 +14,12 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Crosshair, X, Loader2, FilterX, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Crosshair, X, Loader2, FilterX, Eye, FileSpreadsheet, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { exportToXLSX } from '@/lib/leavesExport';
 
 interface Vehicle {
   id: string;
@@ -45,6 +46,10 @@ interface Vehicle {
   cylinders_count: number | null;
   passengers_count: number | null;
   inspection_year: number | null;
+  license_alert_days_before: number;
+  maintenance_km_interval: number;
+  maintenance_month_interval: number;
+  current_odometer: number;
 }
 
 const emptyForm = {
@@ -59,6 +64,10 @@ const emptyForm = {
   cylinders_count: '' as string | number,
   passengers_count: '' as string | number,
   inspection_year: '' as string | number,
+  license_alert_days_before: 30 as number,
+  maintenance_km_interval: 5000 as number,
+  maintenance_month_interval: 6 as number,
+  current_odometer: 0 as number,
 };
 
 export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allowedStationIds?: string[] | null; readOnly?: boolean } = {}) => {
@@ -161,6 +170,10 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
         cylinders_count: form.cylinders_count === '' ? null : Number(form.cylinders_count),
         passengers_count: form.passengers_count === '' ? null : Number(form.passengers_count),
         inspection_year: form.inspection_year === '' ? null : Number(form.inspection_year),
+        license_alert_days_before: Number(form.license_alert_days_before) || 30,
+        maintenance_km_interval: Number(form.maintenance_km_interval) || 5000,
+        maintenance_month_interval: Number(form.maintenance_month_interval) || 6,
+        current_odometer: Number(form.current_odometer) || 0,
       };
 
       if (editingId) {
@@ -196,6 +209,10 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
       cylinders_count: v.cylinders_count ?? '',
       passengers_count: v.passengers_count ?? '',
       inspection_year: v.inspection_year ?? '',
+      license_alert_days_before: v.license_alert_days_before ?? 30,
+      maintenance_km_interval: v.maintenance_km_interval ?? 5000,
+      maintenance_month_interval: v.maintenance_month_interval ?? 6,
+      current_odometer: v.current_odometer ?? 0,
     });
     setDialogOpen(true);
   };
@@ -294,6 +311,47 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
     a.click(); URL.revokeObjectURL(url);
   };
 
+  const exportXlsx = () => {
+    if (filtered.length === 0) {
+      toast.error(isAr ? 'لا توجد بيانات للتصدير' : 'No data to export');
+      return;
+    }
+    const columns = [
+      { header: isAr ? 'كود السيارة' : 'Code', accessor: (v: Vehicle) => v.vehicle_code },
+      { header: isAr ? 'الماركة' : 'Brand', accessor: (v: Vehicle) => v.brand },
+      { header: isAr ? 'الموديل' : 'Model', accessor: (v: Vehicle) => v.model },
+      { header: isAr ? 'سنة الصنع' : 'Year', accessor: (v: Vehicle) => v.year },
+      { header: isAr ? 'رقم اللوحة' : 'Plate', accessor: (v: Vehicle) => v.plate_number },
+      { header: isAr ? 'اللون' : 'Color', accessor: (v: Vehicle) => v.color || '' },
+      { header: isAr ? 'المحطة' : 'Station', accessor: (v: Vehicle) => {
+        const st = v.station_id ? stationMap[v.station_id] : null;
+        return st ? (isAr ? st.name_ar : st.name_en) : (isAr ? 'غير مخصص' : 'Unassigned');
+      }},
+      { header: isAr ? 'السائق' : 'Driver', accessor: (v: Vehicle) => v.insured_driver_name || '' },
+      { header: isAr ? 'رقم التأمين' : 'Insurance #', accessor: (v: Vehicle) => v.insurance_number || '' },
+      { header: isAr ? 'رقم الماتور' : 'Engine #', accessor: (v: Vehicle) => v.engine_number || '' },
+      { header: isAr ? 'رقم الشاسيه' : 'Chassis #', accessor: (v: Vehicle) => v.chassis_number || '' },
+      { header: isAr ? 'السعة (سي سي)' : 'Engine (CC)', accessor: (v: Vehicle) => v.engine_capacity_liters ?? '' },
+      { header: isAr ? 'عدد السلندر' : 'Cylinders', accessor: (v: Vehicle) => v.cylinders_count ?? '' },
+      { header: isAr ? 'عدد الركاب' : 'Passengers', accessor: (v: Vehicle) => v.passengers_count ?? '' },
+      { header: isAr ? 'سنة الفحص' : 'Inspection Yr', accessor: (v: Vehicle) => v.inspection_year ?? '' },
+      { header: isAr ? 'القراءة الحالية (كم)' : 'Current Odo (KM)', accessor: (v: Vehicle) => v.current_odometer ?? 0 },
+      { header: isAr ? 'بداية الترخيص' : 'License Start', accessor: (v: Vehicle) => v.license_start_date || '' },
+      { header: isAr ? 'نهاية الترخيص' : 'License End', accessor: (v: Vehicle) => v.license_end_date || '' },
+      { header: isAr ? 'نهاية ترخيص الستائر' : 'Curtains End', accessor: (v: Vehicle) => v.curtains_license_end || '' },
+      { header: isAr ? 'نهاية ترخيص النقل' : 'Transport End', accessor: (v: Vehicle) => v.transport_license_end || '' },
+      { header: isAr ? 'تنبيه قبل (يوم)' : 'Alert Days', accessor: (v: Vehicle) => v.license_alert_days_before ?? 30 },
+      { header: isAr ? 'فترة الصيانة (كم)' : 'Maint Interval KM', accessor: (v: Vehicle) => v.maintenance_km_interval ?? 5000 },
+      { header: isAr ? 'فترة الصيانة (شهر)' : 'Maint Interval Months', accessor: (v: Vehicle) => v.maintenance_month_interval ?? 6 },
+      { header: isAr ? 'الحالة' : 'Status', accessor: (v: Vehicle) => v.status },
+    ];
+    exportToXLSX(filtered, columns as any, 'vehicles_registry', isAr ? 'سجل السيارات' : 'Vehicle Registry', {
+      title: isAr ? 'سجل السيارات - تقرير تفصيلي' : 'Vehicle Registry - Detailed Report',
+      isRTL: true,
+    });
+    toast.success(isAr ? `تم تصدير ${filtered.length} سيارة` : `Exported ${filtered.length} vehicles`);
+  };
+
   const statusBadge = (s: string) => {
     const map: Record<string, string> = {
       active: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300',
@@ -387,7 +445,8 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
               <FilterX className="w-4 h-4 me-1" />{isAr ? 'إعادة ضبط' : 'Reset'}
             </Button>
           )}
-          <Button size="sm" variant="outline" onClick={exportCsv} aria-label={isAr ? 'تصدير CSV' : 'Export CSV'}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
+          <Button size="sm" variant="outline" onClick={exportCsv} aria-label={isAr ? 'تصدير CSV' : 'Export CSV'}><Download className="w-4 h-4 me-1" />CSV</Button>
+          <Button size="sm" variant="outline" onClick={exportXlsx} aria-label={isAr ? 'تصدير Excel' : 'Export Excel'} className="border-green-700 text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30"><FileSpreadsheet className="w-4 h-4 me-1" />Excel ({filtered.length})</Button>
           {!readOnly && (
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
@@ -456,6 +515,41 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
                 {renderField(isAr ? 'بداية ترخيص النقل البري' : 'Transport License Start', 'transport_license_start', 'date')}
                 {renderField(isAr ? 'نهاية ترخيص النقل البري' : 'Transport License End', 'transport_license_end', 'date')}
               </div>
+
+              {/* Alert & Maintenance configuration */}
+              <div className="mt-4 p-3 rounded-lg border border-primary/20 bg-primary/5">
+                <div className={cn('flex items-center gap-2 mb-3 text-sm font-semibold text-primary', isRTL && 'flex-row-reverse')}>
+                  <Settings2 className="w-4 h-4" />
+                  {isAr ? 'إعدادات التنبيهات والصيانة الدورية' : 'Alerts & Maintenance Schedule'}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? 'تنبيه قبل انتهاء الترخيص (يوم)' : 'License alert before (days)'}</Label>
+                    <Input type="number" min={1} max={365} value={form.license_alert_days_before}
+                      onChange={(e) => setForm((p) => ({ ...p, license_alert_days_before: Math.max(1, Number(e.target.value) || 30) }))}
+                      className="h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? 'فترة الصيانة (كم)' : 'Maintenance interval (km)'}</Label>
+                    <Input type="number" min={500} step={500} value={form.maintenance_km_interval}
+                      onChange={(e) => setForm((p) => ({ ...p, maintenance_km_interval: Math.max(500, Number(e.target.value) || 5000) }))}
+                      className="h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? 'فترة الصيانة (شهر)' : 'Maintenance interval (months)'}</Label>
+                    <Input type="number" min={1} max={36} value={form.maintenance_month_interval}
+                      onChange={(e) => setForm((p) => ({ ...p, maintenance_month_interval: Math.max(1, Number(e.target.value) || 6) }))}
+                      className="h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{isAr ? 'قراءة العداد الحالية (كم)' : 'Current odometer (km)'}</Label>
+                    <Input type="number" min={0} value={form.current_odometer}
+                      onChange={(e) => setForm((p) => ({ ...p, current_odometer: Math.max(0, Number(e.target.value) || 0) }))}
+                      className="h-9" />
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-3">
                 <Label className="text-xs">{isAr ? 'ملاحظات' : 'Notes'}</Label>
                 <Input value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} />
