@@ -174,7 +174,7 @@ export const PerformanceReviewForm = () => {
             .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate)
             .order('date', { ascending: false }),
           supabase.from('attendance_records')
-            .select('date, work_hours')
+            .select('date, work_hours, work_minutes, check_in, check_out')
             .eq('employee_id', selectedEmployee).gte('date', startDate).lte('date', endDate),
         ]);
         if (cancelled) return;
@@ -191,11 +191,12 @@ export const PerformanceReviewForm = () => {
           }
         }
 
-        const hoursByKey: Record<string, number> = {};
+        const minutesByKey: Record<string, number> = {};
         const daysByKey: Record<string, Set<string>> = {};
         (attRes.data || []).forEach((r: any) => {
           const k = (r.date as string).slice(0, 7); // YYYY-MM
-          hoursByKey[k] = (hoursByKey[k] || 0) + Number(r.work_hours || 0);
+          const mins = computeWorkMinutes(r).minutes;
+          minutesByKey[k] = (minutesByKey[k] || 0) + mins;
           if (!daysByKey[k]) daysByKey[k] = new Set();
           daysByKey[k].add(r.date as string);
         });
@@ -212,7 +213,7 @@ export const PerformanceReviewForm = () => {
           const k = `${year}-${key}`;
           return {
             month: key,
-            hours: Math.round((hoursByKey[k] || 0) * 10) / 10,
+            hours: (minutesByKey[k] || 0) / 60,
             days: daysByKey[k]?.size || 0,
             violations: violByKey[k] || [],
           };
