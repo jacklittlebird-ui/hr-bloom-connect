@@ -20,7 +20,7 @@ const isClockSkewAuthError = (msg?: string | null): boolean => {
   );
 };
 
-export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager' | 'department_manager' | 'station_hr';
+export type UserRole = 'admin' | 'employee' | 'station_manager' | 'kiosk' | 'training_manager' | 'hr' | 'area_manager' | 'department_manager' | 'station_hr' | 'station_vehicle_manager';
 
 // Statuses that are blocked from accessing the employee portal
 const BLOCKED_EMPLOYEE_STATUSES = new Set(['suspended', 'stopped', 'absent', 'resigned']);
