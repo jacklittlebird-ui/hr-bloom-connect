@@ -675,6 +675,9 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
             <Button size="sm" variant="outline" onClick={exportCsv} disabled={filtered.length === 0}>
               <Download className="w-4 h-4 me-1" />CSV ({filtered.length})
             </Button>
+            <Button size="sm" onClick={exportExcel} disabled={filtered.length === 0} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <FileSpreadsheet className="w-4 h-4 me-1" />Excel ({filtered.length})
+            </Button>
             <Button size="sm" onClick={exportPdf} disabled={filtered.length === 0} className="bg-primary text-primary-foreground">
               <FileDown className="w-4 h-4 me-1" />PDF ({filtered.length})
             </Button>
