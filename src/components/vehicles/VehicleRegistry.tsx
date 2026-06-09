@@ -205,6 +205,10 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
       cylinders_count: v.cylinders_count ?? '',
       passengers_count: v.passengers_count ?? '',
       inspection_year: v.inspection_year ?? '',
+      license_alert_days_before: v.license_alert_days_before ?? 30,
+      maintenance_km_interval: v.maintenance_km_interval ?? 5000,
+      maintenance_month_interval: v.maintenance_month_interval ?? 6,
+      current_odometer: v.current_odometer ?? 0,
     });
     setDialogOpen(true);
   };
