@@ -73,10 +73,10 @@ const VehiclePortal = () => {
   const displayName = isAr ? (user?.nameAr || '') : (user?.name || '');
 
   return (
-    <div ref={containerRef} className="min-h-dvh bg-background pb-24" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div ref={containerRef} className="h-dvh flex flex-col bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <header className="shrink-0 z-30 border-b bg-card/95 backdrop-blur">
+        <div className="w-full px-4 py-3 flex items-center justify-between gap-3">
           <div className={cn('flex items-center gap-3', isRTL && 'flex-row-reverse')}>
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <Car className="w-5 h-5" />
@@ -104,7 +104,7 @@ const VehiclePortal = () => {
       </header>
 
       {/* Welcome banner */}
-      <div className="container mx-auto px-4 pt-4">
+      <div className="shrink-0 w-full px-4 pt-4">
         <Card className="p-4 sm:p-5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
           <div className={cn('flex items-center justify-between gap-3 flex-wrap', isRTL && 'flex-row-reverse')}>
             <div className={cn(isRTL && 'text-end')}>
@@ -120,7 +120,7 @@ const VehiclePortal = () => {
       </div>
 
       {refreshing && (
-        <div className="container mx-auto px-4 mt-3">
+        <div className="shrink-0 w-full px-4 mt-3">
           <div role="status" aria-live="polite" className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>{isAr ? 'جاري تحديث بيانات السيارات...' : 'Refreshing vehicle data...'}</span>
@@ -128,9 +128,9 @@ const VehiclePortal = () => {
         </div>
       )}
 
-      <main className="container mx-auto px-4 py-4 sm:py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
-          <TabsList className="w-full justify-start mb-6 flex-wrap h-auto gap-1 bg-muted/50 p-1">
+      <main className="flex-1 min-h-0 w-full px-4 py-2 sm:py-3 flex flex-col overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+          <TabsList className="shrink-0 w-full justify-start mb-2 flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {tabs.map((tab) => (
               <TabsTrigger key={tab.id} value={tab.id} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 {tab.label}
@@ -139,10 +139,9 @@ const VehiclePortal = () => {
           </TabsList>
 
           {tabs.map((tab) => (
-            <TabsContent key={tab.id} value={tab.id}>
+            <TabsContent key={tab.id} value={tab.id} className="flex-1 min-h-0 !mt-0">
               <div
-                className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3"
-                style={{ maxHeight: 'calc(100dvh - 280px)' }}
+                className="h-full overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3"
                 dir={isRTL ? 'rtl' : 'ltr'}
               >
                 {tab.id === 'by-station' && <FleetByStation key={`fbs-${refreshKey}`} />}
