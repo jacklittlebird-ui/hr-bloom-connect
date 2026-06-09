@@ -503,7 +503,8 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       let present = 0, late = 0, absent = 0, hours = 0, matched = 0;
       let leavesCount = 0, missionsCount = 0, permissionsCount = 0, overtimeHours = 0;
       const cells: DayCell[] = dateRange.map(d => {
-        const rec = inner?.get(d) || null;
+        const dayRecords = inner?.get(d) || [];
+        const rec = dayRecords[0] || null;
         const leave = lvInner?.get(d) || null;
         const mission = msInner?.get(d) || null;
         const permission = prInner?.get(d) || null;
@@ -513,17 +514,24 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         let kind: DayCell['kind'] = 'none';
         let h = 0;
         if (rec) {
-          h = computeWorkMinutes(rec as any).minutes / 60;
+          h = dayRecords.reduce((sum, r) => sum + computeWorkMinutes(r as any).minutes / 60, 0);
 
-          const s = String(rec.status || '').toLowerCase().replace(/_/g, '-');
-          const autoClosed = s === 'auto-closed' || (!!rec.notes && AUTO_CLOSED_RE.test(rec.notes));
-          const isMission = s === 'mission';
-          if (autoClosed) kind = 'auto-closed';
-          else if (isMission) kind = 'mission-day';
-          else if (s === 'present' && !rec.is_late) kind = 'present';
-          else if (s === 'present' && !!rec.is_late) kind = 'late';
-          else if (s === 'absent') kind = 'absent';
-          else if (rec.check_in) kind = rec.is_late ? 'late' : 'present';
+          const hasAutoClosed = dayRecords.some(r => {
+            const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+            return s === 'auto-closed' || (!!r.notes && AUTO_CLOSED_RE.test(r.notes));
+          });
+          const hasMission = dayRecords.some(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'mission');
+          const hasLate = dayRecords.some(r => !!r.is_late);
+          const hasPresent = dayRecords.some(r => {
+            const s = String(r.status || '').toLowerCase().replace(/_/g, '-');
+            return s === 'present' || !!r.check_in;
+          });
+          const allAbsent = dayRecords.every(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'absent');
+          if (hasAutoClosed) kind = 'auto-closed';
+          else if (hasMission) kind = 'mission-day';
+          else if (hasLate) kind = 'late';
+          else if (hasPresent) kind = 'present';
+          else if (allAbsent) kind = 'absent';
         } else {
           // Infer absent: no record, not weekend/holiday/leave/mission/permission, and date already passed
           const dow = new Date(d + 'T00:00:00').getDay();
@@ -549,9 +557,11 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
         if (matchesStatus) {
           matched++;
         }
-        // Unified totals: sum every record's computed work minutes regardless of status filter
+        // Unified totals: sum every attendance interval in the day regardless of status filter
         if (rec) hours += h;
-        return { record: rec, hours: h, matchesStatus, kind, leave, mission, permission, overtime, stamps: dayStamps };
+        const lastWithCheckout = [...dayRecords].reverse().find(r => !!r.check_out) || dayRecords[dayRecords.length - 1];
+        const displayRecord = rec ? { ...rec, check_out: lastWithCheckout?.check_out ?? rec.check_out } : null;
+        return { record: displayRecord, records: dayRecords, hours: h, matchesStatus, kind, leave, mission, permission, overtime, stamps: dayStamps };
       });
       if (globalStatusFilter !== 'all' && matched === 0) return;
       rows.push({
