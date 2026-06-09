@@ -3087,6 +3087,7 @@ export type Database = {
           chassis_number: string | null
           color: string | null
           created_at: string
+          current_odometer: number
           curtains_license_end: string | null
           curtains_license_start: string | null
           cylinders_count: number | null
@@ -3096,8 +3097,12 @@ export type Database = {
           inspection_year: number | null
           insurance_number: string | null
           insured_driver_name: string | null
+          last_alert_sent_at: string | null
+          license_alert_days_before: number
           license_end_date: string | null
           license_start_date: string | null
+          maintenance_km_interval: number
+          maintenance_month_interval: number
           model: string
           notes: string | null
           passengers_count: number | null
@@ -3115,6 +3120,7 @@ export type Database = {
           chassis_number?: string | null
           color?: string | null
           created_at?: string
+          current_odometer?: number
           curtains_license_end?: string | null
           curtains_license_start?: string | null
           cylinders_count?: number | null
@@ -3124,8 +3130,12 @@ export type Database = {
           inspection_year?: number | null
           insurance_number?: string | null
           insured_driver_name?: string | null
+          last_alert_sent_at?: string | null
+          license_alert_days_before?: number
           license_end_date?: string | null
           license_start_date?: string | null
+          maintenance_km_interval?: number
+          maintenance_month_interval?: number
           model: string
           notes?: string | null
           passengers_count?: number | null
@@ -3143,6 +3153,7 @@ export type Database = {
           chassis_number?: string | null
           color?: string | null
           created_at?: string
+          current_odometer?: number
           curtains_license_end?: string | null
           curtains_license_start?: string | null
           cylinders_count?: number | null
@@ -3152,8 +3163,12 @@ export type Database = {
           inspection_year?: number | null
           insurance_number?: string | null
           insured_driver_name?: string | null
+          last_alert_sent_at?: string | null
+          license_alert_days_before?: number
           license_end_date?: string | null
           license_start_date?: string | null
+          maintenance_km_interval?: number
+          maintenance_month_interval?: number
           model?: string
           notes?: string | null
           passengers_count?: number | null
