@@ -22,7 +22,7 @@ import { ALL_MODULES, MODULE_LABELS, ModuleKey } from '@/hooks/useModulePermissi
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from '@/components/ui/command';
 import {
-  Plus, Search, Shield, Users as UsersIcon, UserCheck, MapPin, User,
+  Plus, Search, Shield, Users as UsersIcon, UserCheck, MapPin, User, Car,
   RefreshCw, Eye, EyeOff, Edit, Trash2, Layers, ShieldCheck, Lock, Settings2, Upload, Check, ChevronsUpDown, History,
 } from 'lucide-react';
 import AuditLogs, { SECURITY_TABLES } from '@/components/security/AuditLogs';
