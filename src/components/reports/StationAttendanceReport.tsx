@@ -727,7 +727,7 @@ export const StationAttendanceReport = () => {
                                               </thead>
                                               <tbody>
                                                 {filtered.map((rec, i) => {
-                                                  const hours = Number(rec.work_hours || (rec.work_minutes ? rec.work_minutes / 60 : 0)) || 0;
+                                                  const hours = recHoursFromRow(rec);
                                                   const dateObj = new Date(rec.date + 'T00:00:00');
                                                   const dayLabel = dateObj.toLocaleDateString(ar ? 'ar-EG' : 'en-GB', { weekday: 'short', day: '2-digit', month: '2-digit' });
                                                   return (
