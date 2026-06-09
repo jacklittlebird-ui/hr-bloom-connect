@@ -594,7 +594,7 @@ export const StationAttendanceReport = () => {
                         const dept = r.employee.department_id ? deptMap.get(r.employee.department_id) : null;
                         const isOpen = expandedEmp.has(r.employee.id);
                         return (
-                          <>
+                          <Fragment key={r.employee.id}>
                             <TableRow key={r.employee.id} className={cn('hover:bg-muted/30', isOpen && 'bg-primary/5')}>
                               <TableCell className="text-center text-muted-foreground">{idx + 1}</TableCell>
                               <TableCell className="font-mono text-xs">{r.employee.employee_code}</TableCell>
@@ -790,7 +790,7 @@ export const StationAttendanceReport = () => {
                                 </TableCell>
                               </TableRow>
                             )}
-                          </>
+                          </Fragment>
                         );
                       })}
                       <TableRow className="bg-primary/10 font-bold">
