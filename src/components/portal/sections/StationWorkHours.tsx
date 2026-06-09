@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Clock, Users, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { computeWorkMinutes } from '@/lib/attendanceClassification';
 
 const months = [
   { value: '01', ar: 'يناير', en: 'January' },
