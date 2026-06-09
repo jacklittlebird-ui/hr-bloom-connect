@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -87,8 +87,10 @@ function getWeekRangeLabel(weekIdx: number, year: number, month: number, weekSta
 }
 
 function fmtHours(h: number): string {
-  if (!h || h <= 0) return '0';
-  return (Math.round(h * 100) / 100).toFixed(2);
+  const totalMinutes = Math.max(0, Math.round((Number(h) || 0) * 60));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
 export const StationAttendanceReport = () => {
@@ -173,22 +175,25 @@ export const StationAttendanceReport = () => {
         const empList = (emps as EmployeeRow[]) || [];
         setEmployees(empList);
 
-        // Fetch attendance records for the month using pagination (.range) up to 10k
+        // Fetch all attendance records for the month using pagination (.range)
         const recs: AttendanceRow[] = [];
         const pageSize = 1000;
-        for (let i = 0; i < 10; i++) {
-          const from = i * pageSize;
+        let from = 0;
+        while (true) {
           const to = from + pageSize - 1;
           const { data, error } = await supabase
             .from('attendance_records')
             .select('employee_id,date,check_in,check_out,work_hours,work_minutes,status,is_late')
             .gte('date', startDate)
             .lte('date', endDate)
+            .order('date', { ascending: true })
+            .order('check_in', { ascending: true, nullsFirst: true })
             .range(from, to);
           if (error) throw error;
           const rows = (data as AttendanceRow[]) || [];
           recs.push(...rows);
           if (rows.length < pageSize) break;
+          from += pageSize;
         }
         setRecords(recs);
       } catch (e) {
