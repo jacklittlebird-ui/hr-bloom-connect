@@ -33,7 +33,7 @@ interface SystemUser {
   user_id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'station_manager' | 'area_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk' | 'department_manager' | 'station_hr';
+  role: 'admin' | 'station_manager' | 'area_manager' | 'employee' | 'training_manager' | 'hr' | 'kiosk' | 'department_manager' | 'station_hr' | 'station_vehicle_manager';
   station_code?: string;
   station_name?: string;
   /** For station_hr (multi-station) */
