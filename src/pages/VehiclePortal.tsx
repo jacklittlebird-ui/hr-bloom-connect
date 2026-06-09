@@ -129,8 +129,8 @@ const VehiclePortal = () => {
       )}
 
       <main className="flex-1 min-h-0 w-full px-4 py-2 sm:py-3 flex flex-col overflow-hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
-          <TabsList className="w-full justify-start mb-6 flex-wrap h-auto gap-1 bg-muted/50 p-1">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+          <TabsList className="shrink-0 w-full justify-start mb-2 flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {tabs.map((tab) => (
               <TabsTrigger key={tab.id} value={tab.id} className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 {tab.label}
@@ -139,10 +139,9 @@ const VehiclePortal = () => {
           </TabsList>
 
           {tabs.map((tab) => (
-            <TabsContent key={tab.id} value={tab.id}>
+            <TabsContent key={tab.id} value={tab.id} className="flex-1 min-h-0 !mt-0">
               <div
-                className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3"
-                style={{ maxHeight: 'calc(100dvh - 280px)' }}
+                className="h-full overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3"
                 dir={isRTL ? 'rtl' : 'ltr'}
               >
                 {tab.id === 'by-station' && <FleetByStation key={`fbs-${refreshKey}`} />}
