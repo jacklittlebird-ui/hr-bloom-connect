@@ -822,6 +822,7 @@ const Users = () => {
                     <SelectItem value="hr">{isAr ? 'موارد بشرية' : 'HR'}</SelectItem>
                     <SelectItem value="area_manager">{isAr ? 'مدير منطقة' : 'Area Manager'}</SelectItem>
                     <SelectItem value="station_manager">{isAr ? 'مدير محطة' : 'Station Manager'}</SelectItem>
+                    <SelectItem value="station_vehicle_manager">{isAr ? 'مدير سيارات محطة' : 'Station Vehicle Manager'}</SelectItem>
                     <SelectItem value="station_hr">{isAr ? 'موارد بشرية محطات' : 'Station HR'}</SelectItem>
                     <SelectItem value="department_manager">{isAr ? 'مدير قسم' : 'Department Manager'}</SelectItem>
                     <SelectItem value="training_manager">{isAr ? 'مدير التدريب' : 'Training Manager'}</SelectItem>
