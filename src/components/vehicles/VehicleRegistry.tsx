@@ -46,6 +46,10 @@ interface Vehicle {
   cylinders_count: number | null;
   passengers_count: number | null;
   inspection_year: number | null;
+  license_alert_days_before: number;
+  maintenance_km_interval: number;
+  maintenance_month_interval: number;
+  current_odometer: number;
 }
 
 const emptyForm = {
@@ -60,6 +64,10 @@ const emptyForm = {
   cylinders_count: '' as string | number,
   passengers_count: '' as string | number,
   inspection_year: '' as string | number,
+  license_alert_days_before: 30 as number,
+  maintenance_km_interval: 5000 as number,
+  maintenance_month_interval: 6 as number,
+  current_odometer: 0 as number,
 };
 
 export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allowedStationIds?: string[] | null; readOnly?: boolean } = {}) => {
