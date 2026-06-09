@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
 import { exportVehiclePdf } from '@/lib/vehiclePdfExport';
 import { exportVehicleWord } from '@/lib/vehicleWordExport';
+import { exportVehicleMaintenanceXLSX } from '@/lib/vehicleMaintenanceExcel';
 import { usePersistedState } from '@/hooks/usePersistedState';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
