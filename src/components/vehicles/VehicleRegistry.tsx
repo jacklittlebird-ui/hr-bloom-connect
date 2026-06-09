@@ -14,11 +14,12 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Crosshair, X, Loader2, FilterX, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Car, Building2, Download, AlertTriangle, Crosshair, X, Loader2, FilterX, Eye, FileSpreadsheet, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
 import { usePersistedState } from '@/hooks/usePersistedState';
+import { exportToXLSX } from '@/lib/leavesExport';
 
 interface Vehicle {
   id: string;
