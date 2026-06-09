@@ -89,7 +89,7 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
   let stationCodes: string[] | undefined;
   let stationUuids: string[] | undefined;
 
-  if ((role === 'station_manager' || role === 'station_hr') && userRole.station_id) {
+  if ((role === 'station_manager' || role === 'station_hr' || role === 'station_vehicle_manager') && userRole.station_id) {
     const { data: station } = await supabase
       .from('stations')
       .select('code, name_ar')
@@ -98,6 +98,8 @@ async function fetchUserProfile(supabaseUser: User): Promise<AuthUser | null> {
     stationCode = station?.code;
     if (role === 'station_hr') {
       nameAr = station?.name_ar ? `موارد بشرية ${station.name_ar}` : nameAr;
+    } else if (role === 'station_vehicle_manager') {
+      nameAr = station?.name_ar ? `سيارات ${station.name_ar}` : nameAr;
     } else {
       nameAr = station?.name_ar ? `مدير محطة ${station.name_ar}` : nameAr;
     }
