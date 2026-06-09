@@ -104,7 +104,7 @@ const VehiclePortal = () => {
       </header>
 
       {/* Welcome banner */}
-      <div className="container mx-auto px-4 pt-4">
+      <div className="w-full px-4 pt-4">
         <Card className="p-4 sm:p-5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/20">
           <div className={cn('flex items-center justify-between gap-3 flex-wrap', isRTL && 'flex-row-reverse')}>
             <div className={cn(isRTL && 'text-end')}>
@@ -120,7 +120,7 @@ const VehiclePortal = () => {
       </div>
 
       {refreshing && (
-        <div className="container mx-auto px-4 mt-3">
+        <div className="w-full px-4 mt-3">
           <div role="status" aria-live="polite" className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>{isAr ? 'جاري تحديث بيانات السيارات...' : 'Refreshing vehicle data...'}</span>
@@ -128,7 +128,7 @@ const VehiclePortal = () => {
         </div>
       )}
 
-      <main className="container mx-auto px-4 py-4 sm:py-6">
+      <main className="flex-1 min-h-0 w-full px-4 py-2 sm:py-3 flex flex-col overflow-hidden">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
           <TabsList className="w-full justify-start mb-6 flex-wrap h-auto gap-1 bg-muted/50 p-1">
             {tabs.map((tab) => (
