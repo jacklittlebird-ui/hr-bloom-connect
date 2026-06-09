@@ -441,7 +441,8 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
               <FilterX className="w-4 h-4 me-1" />{isAr ? 'إعادة ضبط' : 'Reset'}
             </Button>
           )}
-          <Button size="sm" variant="outline" onClick={exportCsv} aria-label={isAr ? 'تصدير CSV' : 'Export CSV'}><Download className="w-4 h-4 me-1" />{isAr ? 'تصدير' : 'Export'}</Button>
+          <Button size="sm" variant="outline" onClick={exportCsv} aria-label={isAr ? 'تصدير CSV' : 'Export CSV'}><Download className="w-4 h-4 me-1" />CSV</Button>
+          <Button size="sm" variant="outline" onClick={exportXlsx} aria-label={isAr ? 'تصدير Excel' : 'Export Excel'} className="border-green-700 text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30"><FileSpreadsheet className="w-4 h-4 me-1" />Excel ({filtered.length})</Button>
           {!readOnly && (
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingId(null); setForm(emptyForm); } }}>
             <DialogTrigger asChild>
