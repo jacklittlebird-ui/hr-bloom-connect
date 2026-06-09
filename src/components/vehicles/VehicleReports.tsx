@@ -46,9 +46,10 @@ const monthsAgoISO = (n: number) => {
   return d.toISOString().slice(0, 10);
 };
 
-export const VehicleReports = () => {
+export const VehicleReports = ({ allowedStationIds }: { allowedStationIds?: string[] | null } = {}) => {
   const { language, isRTL } = useLanguage();
   const isAr = language === 'ar';
+  const scopeIds = allowedStationIds && allowedStationIds.length ? allowedStationIds : null;
 
   const [fromDate, setFromDate] = useState(monthsAgoISO(6));
   const [toDate, setToDate] = useState(todayISO());
@@ -60,8 +61,10 @@ export const VehicleReports = () => {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      let vq = supabase.from('vehicles').select('id, vehicle_code, brand, model, plate_number, status, station_id, license_end_date, curtains_license_end, transport_license_end, license_alert_days_before, maintenance_km_interval, maintenance_month_interval, current_odometer');
+      if (scopeIds) vq = vq.in('station_id', scopeIds);
       const [{ data: v }, { data: m }] = await Promise.all([
-        supabase.from('vehicles').select('id, vehicle_code, brand, model, plate_number, status, license_end_date, curtains_license_end, transport_license_end, license_alert_days_before, maintenance_km_interval, maintenance_month_interval, current_odometer'),
+        vq,
         supabase.from('vehicle_maintenance')
           .select('id, vehicle_id, maintenance_type, maintenance_date, next_maintenance_date, odometer_reading, cost, status')
           .gte('maintenance_date', fromDate)
@@ -69,12 +72,14 @@ export const VehicleReports = () => {
           .order('maintenance_date', { ascending: false }),
       ]);
       if (cancelled) return;
-      setVehicles((v as Vehicle[]) || []);
-      setMaint((m as MaintRow[]) || []);
+      const vList = (v as any[]) || [];
+      const allowedVehicleIds = new Set(vList.map((x) => x.id));
+      setVehicles(vList as Vehicle[]);
+      setMaint(((m as MaintRow[]) || []).filter((r) => allowedVehicleIds.has(r.vehicle_id)));
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [fromDate, toDate]);
+  }, [fromDate, toDate, scopeIds?.join(',')]);
 
   const summary = useMemo(() => {
     let expired = 0, soon = 0, valid = 0, missing = 0;
