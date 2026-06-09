@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { RefreshCw, Loader2, LogOut, Globe, Car, Clock } from 'lucide-react';
+import { RefreshCw, Loader2, LogOut, Globe, Car, Clock, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
@@ -55,6 +55,7 @@ const VehiclePortal = () => {
 
   const tabs = [
     { id: 'by-station', label: isAr ? 'سيارات المحطة' : 'Station Vehicles' },
+    { id: 'reports', label: isAr ? 'التقارير' : 'Reports' },
     { id: 'alerts', label: isAr ? 'تنبيهات التراخيص' : 'License Alerts' },
     { id: 'registry', label: isAr ? 'سجل السيارات' : 'Vehicle Registry' },
     { id: 'licenses', label: isAr ? 'متابعة التراخيص' : 'License Tracking' },
@@ -72,7 +73,7 @@ const VehiclePortal = () => {
   const displayName = isAr ? (user?.nameAr || '') : (user?.name || '');
 
   return (
-    <div ref={containerRef} className="min-h-dvh bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div ref={containerRef} className="min-h-dvh bg-background pb-24" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-3">
@@ -138,6 +139,7 @@ const VehiclePortal = () => {
           </TabsList>
 
           <TabsContent value="by-station"><FleetByStation key={`fbs-${refreshKey}`} /></TabsContent>
+          <TabsContent value="reports"><VehicleReports key={`vrep-${refreshKey}`} /></TabsContent>
           <TabsContent value="alerts"><LicenseAlerts key={`la-${refreshKey}`} /></TabsContent>
           <TabsContent value="registry"><VehicleRegistry key={`vr-${refreshKey}`} /></TabsContent>
           <TabsContent value="licenses"><VehicleLicenseTracking key={`vl-${refreshKey}`} /></TabsContent>
