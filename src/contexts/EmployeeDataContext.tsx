@@ -16,6 +16,25 @@ const TRAINING_MANAGER_LIST_SELECT = 'id, employee_code, name_ar, name_en, phone
 const stationCodeIdCache = new Map<string, string>();
 const EMPLOYEES_TTL_MS = 5 * 60_000; // 5 minutes
 
+// Paginated fetch — bypasses Supabase 1000-row default cap by looping in chunks
+const PAGE_SIZE = 1000;
+async function fetchAllPaginated<T = any>(
+  buildQuery: () => any
+): Promise<{ data: T[]; error: any }> {
+  const all: T[] = [];
+  let from = 0;
+  // Safety cap: 50 pages = 50,000 employees
+  for (let page = 0; page < 50; page++) {
+    const { data, error } = await buildQuery().range(from, from + PAGE_SIZE - 1);
+    if (error) return { data: all, error };
+    if (!data || data.length === 0) break;
+    all.push(...(data as T[]));
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return { data: all, error: null };
+}
+
 interface EmployeeDataContextType {
   employees: Employee[];
   loading: boolean;
