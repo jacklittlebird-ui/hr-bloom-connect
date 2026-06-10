@@ -42,7 +42,7 @@ const REPORT_COLUMNS = [
   { headerAr: 'المحطة', headerEn: 'Station', key: 'station_name' },
   { headerAr: 'القسم', headerEn: 'Department', key: 'department_name' },
   { headerAr: 'الوظيفة', headerEn: 'Job Title', key: 'job_title' },
-  { headerAr: 'المستوى', headerEn: 'Level', key: 'job_level' },
+  { headerAr: 'الدرجة الوظيفية', headerEn: 'Job Degree', key: 'job_level' },
   { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hire_date' },
   { headerAr: 'رقم الحساب', headerEn: 'Account No.', key: 'bank_account_number' },
   { headerAr: 'ID البنكي', headerEn: 'Bank ID', key: 'bank_id_number' },
