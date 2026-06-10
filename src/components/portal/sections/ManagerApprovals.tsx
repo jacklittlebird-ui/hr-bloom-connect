@@ -61,7 +61,7 @@ export const ManagerApprovals = ({ stationEmployees }: ManagerApprovalsProps) =>
   const [overtimeRequests, setOvertimeRequests] = useState<any[]>([]);
   const [missionRequests, setMissionRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState('pending');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
 
@@ -226,10 +226,10 @@ export const ManagerApprovals = ({ stationEmployees }: ManagerApprovalsProps) =>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">{t('الكل', 'All')}</SelectItem>
             <SelectItem value="pending">{t('معلق', 'Pending')}</SelectItem>
             <SelectItem value="approved">{t('موافق', 'Approved')}</SelectItem>
             <SelectItem value="rejected">{t('مرفوض', 'Rejected')}</SelectItem>
-            <SelectItem value="all">{t('الكل', 'All')}</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={fetchAll} disabled={loading}>
