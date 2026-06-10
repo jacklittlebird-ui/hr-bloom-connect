@@ -200,6 +200,16 @@ export const PerformanceBonuses = () => {
 
   useEffect(() => { handleRun(); /* eslint-disable-next-line */ }, []);
 
+  // Inline edit: update a single employee's percentage and recompute amount
+  const updateRowPercentage = (employeeId: string, newPct: number) => {
+    setRows(prev => prev.map(r => {
+      if (r.employee_id !== employeeId) return r;
+      const pct = Math.max(0, Math.min(100, isNaN(newPct) ? 0 : newPct));
+      const amount = Math.round((r.gross_salary * pct / 100) * 100) / 100;
+      return { ...r, percentage: pct, amount };
+    }));
+  };
+
   // Unique filter options
   const stations = useMemo(() => [...new Set(rows.map(r => r.station_name).filter(Boolean))].sort(), [rows]);
   const departments = useMemo(() => [...new Set(rows.map(r => r.department_name).filter(Boolean))].sort(), [rows]);
