@@ -204,14 +204,122 @@ export const PerformanceBonuses = () => {
 
   useEffect(() => { handleRun(); /* eslint-disable-next-line */ }, []);
 
-  // Inline edit: update a single employee's percentage and recompute amount
+  // Reload when period changes — prefer saved snapshot if exists, otherwise recalculate from reviews
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('performance_bonus_records')
+        .select('*')
+        .eq('year', year).eq('quarter', quarter);
+      if (data && data.length > 0) {
+        setRows(data.map((r: any) => ({
+          employee_id: r.employee_id,
+          employee_name: r.employee_name || '',
+          employee_name_en: '',
+          employee_code: r.employee_code || '',
+          station_name: r.station_name || '',
+          department_name: r.department_name || '',
+          job_title: r.job_title || '',
+          job_level: r.job_level || '',
+          hire_date: r.hire_date || '',
+          bank_account_number: r.bank_account_number || '',
+          bank_id_number: r.bank_id_number || '',
+          bank_name: r.bank_name || '',
+          bank_account_type: r.bank_account_type || '',
+          percentage: Number(r.percentage || 0),
+          score: Number(r.score || 0),
+          gross_salary: Number(r.gross_salary || 0),
+          amount: Number(r.amount || 0),
+        })));
+        setHasSaved(true);
+      } else {
+        setHasSaved(false);
+      }
+    })();
+    // eslint-disable-next-line
+  }, [year, quarter]);
+
+  // Inline edit: update a single employee's percentage, recompute amount, and auto-save to performance_reviews (debounced)
   const updateRowPercentage = (employeeId: string, newPct: number) => {
+    const pct = Math.max(0, Math.min(100, isNaN(newPct) ? 0 : newPct));
     setRows(prev => prev.map(r => {
       if (r.employee_id !== employeeId) return r;
-      const pct = Math.max(0, Math.min(100, isNaN(newPct) ? 0 : newPct));
       const amount = Math.round((r.gross_salary * pct / 100) * 100) / 100;
       return { ...r, percentage: pct, amount };
     }));
+
+    // Debounce per-employee save
+    const existing = pctSaveTimers.current.get(employeeId);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(async () => {
+      if (pctSavingSet.current.has(employeeId)) return;
+      pctSavingSet.current.add(employeeId);
+      try {
+        const { error } = await supabase
+          .from('performance_reviews')
+          .update({ bonus_percentage: pct })
+          .eq('employee_id', employeeId)
+          .eq('year', year)
+          .eq('quarter', quarter);
+        if (error) throw error;
+      } catch (err: any) {
+        toast.error((ar ? 'فشل حفظ النسبة: ' : 'Failed to save rate: ') + (err.message || ''));
+      } finally {
+        pctSavingSet.current.delete(employeeId);
+        pctSaveTimers.current.delete(employeeId);
+      }
+    }, 600);
+    pctSaveTimers.current.set(employeeId, timer);
+  };
+
+  // Save the generated report to performance_bonus_records (delete-and-replace by year+quarter)
+  const handleSaveReport = async () => {
+    if (rows.length === 0) {
+      toast.info(ar ? 'لا توجد بيانات للحفظ' : 'No data to save');
+      return;
+    }
+    setSavingReport(true);
+    try {
+      const { error: delErr } = await supabase
+        .from('performance_bonus_records')
+        .delete()
+        .eq('year', year).eq('quarter', quarter);
+      if (delErr) throw delErr;
+
+      const payload = rows.map(r => ({
+        employee_id: r.employee_id,
+        year, quarter,
+        percentage: r.percentage,
+        score: r.score,
+        gross_salary: r.gross_salary,
+        amount: r.amount,
+        job_level: r.job_level || null,
+        employee_name: r.employee_name || null,
+        employee_code: r.employee_code || null,
+        station_name: r.station_name || null,
+        department_name: r.department_name || null,
+        job_title: r.job_title || null,
+        hire_date: r.hire_date || null,
+        bank_account_number: r.bank_account_number || null,
+        bank_id_number: r.bank_id_number || null,
+        bank_name: r.bank_name || null,
+        bank_account_type: r.bank_account_type || null,
+      }));
+
+      const BATCH = 100;
+      for (let i = 0; i < payload.length; i += BATCH) {
+        const { error: insErr } = await supabase
+          .from('performance_bonus_records')
+          .insert(payload.slice(i, i + BATCH));
+        if (insErr) throw insErr;
+      }
+      setHasSaved(true);
+      toast.success(ar ? `تم حفظ التقرير (${rows.length} موظف)` : `Report saved (${rows.length} employees)`);
+    } catch (err: any) {
+      toast.error(err.message || 'Error');
+    } finally {
+      setSavingReport(false);
+    }
   };
 
   // Unique filter options
