@@ -511,6 +511,7 @@ export const PerformanceBonuses = () => {
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'الإجمالي' : 'Gross'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'التقييم' : 'Score'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'النسبة' : 'Rate'}</TableHead>
+                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'تفاصيل الحساب' : 'Calculation'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'المبلغ' : 'Amount'}</TableHead>
                   </TableRow>
                 </TableHeader>
