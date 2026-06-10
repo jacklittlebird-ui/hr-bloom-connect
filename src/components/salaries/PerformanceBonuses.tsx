@@ -64,6 +64,7 @@ export const PerformanceBonuses = () => {
   const [year, setYear] = useState(String(currentYear));
   const [quarter, setQuarter] = useState('Q1');
   const [minMonths, setMinMonths] = useState('6');
+  const [calcDate, setCalcDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingReport, setSavingReport] = useState(false);
@@ -146,11 +147,12 @@ export const PerformanceBonuses = () => {
         });
       }
 
-      // Min-months cutoff (same approach as BonusManagement: minus 10 days grace)
+      // Min-months cutoff from selected calculation date (minus 10 days grace)
       const monthsInt = parseInt(minMonths) || 0;
       let cutoffStr: string | null = null;
       if (monthsInt > 0) {
-        const cutoff = new Date();
+        const base = calcDate ? new Date(calcDate) : new Date();
+        const cutoff = new Date(base);
         cutoff.setMonth(cutoff.getMonth() - monthsInt);
         cutoff.setDate(cutoff.getDate() + 10);
         cutoffStr = cutoff.toISOString().split('T')[0];
@@ -422,7 +424,7 @@ export const PerformanceBonuses = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4")}>
+          <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4")}>
             <div className="space-y-2">
               <Label className={cn(isRTL && "text-right block")}>{ar ? 'السنة' : 'Year'}</Label>
               <Select value={year} onValueChange={setYear}>
@@ -457,6 +459,18 @@ export const PerformanceBonuses = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className={cn(isRTL && "text-right block")}>{ar ? 'تاريخ الاحتساب' : 'Calculation Date'}</Label>
+              <Input
+                type="date"
+                value={calcDate}
+                onChange={(e) => setCalcDate(e.target.value)}
+                dir="ltr"
+              />
+              <p className="text-[10px] text-muted-foreground leading-tight">
+                {ar ? 'يُستبعد من لم يتم المدة المحددة إلا 10 أيام من هذا التاريخ' : 'Excludes employees who have not completed the period (minus 10 days) from this date'}
+              </p>
             </div>
             <div className="flex items-end gap-2 flex-wrap">
               <Button onClick={handleRun} disabled={loading} className="gap-2 min-w-[160px]">
