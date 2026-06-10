@@ -119,7 +119,7 @@ export const PerformanceBonuses = () => {
         const { data } = await supabase
           .from('employees')
           .select(`
-            id, name_ar, name_en, employee_code, job_level, job_title_ar, job_title_en, basic_salary,
+            id, name_ar, name_en, employee_code, job_level, job_degree, job_title_ar, job_title_en, basic_salary,
             hire_date, bank_account_number, bank_id_number, bank_name, bank_account_type,
             station_id, department_id,
             stations:station_id (name_ar, name_en),
