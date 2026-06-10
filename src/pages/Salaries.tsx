@@ -36,6 +36,7 @@ const Salaries = () => {
     { id: 'transfer', label: isRTL ? 'تحويل الرواتب' : 'Salary Transfer' },
     { id: 'eid-bonuses', label: isRTL ? 'العيديات' : 'Eid Bonuses' },
     { id: 'bonus', label: isRTL ? 'المكافأة' : 'Bonus' },
+    { id: 'performance-bonus', label: isRTL ? 'مكافآت دورية (تقييم)' : 'Periodic Bonus (Eval)' },
     { id: 'non-recurring-bonuses', label: isRTL ? 'مكافآت غير دورية' : 'Non-Recurring Bonuses' },
   ];
 
