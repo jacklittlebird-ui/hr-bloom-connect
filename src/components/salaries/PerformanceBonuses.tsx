@@ -424,7 +424,7 @@ export const PerformanceBonuses = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4")}>
+          <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4")}>
             <div className="space-y-2">
               <Label className={cn(isRTL && "text-right block")}>{ar ? 'السنة' : 'Year'}</Label>
               <Select value={year} onValueChange={setYear}>
