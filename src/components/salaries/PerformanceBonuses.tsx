@@ -479,7 +479,7 @@ export const PerformanceBonuses = () => {
       </Card>
 
       {rows.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {statsCards.map((stat, i) => (
             <Card key={i}>
               <CardContent className="p-4">
