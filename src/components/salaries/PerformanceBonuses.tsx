@@ -147,11 +147,12 @@ export const PerformanceBonuses = () => {
         });
       }
 
-      // Min-months cutoff (same approach as BonusManagement: minus 10 days grace)
+      // Min-months cutoff from selected calculation date (minus 10 days grace)
       const monthsInt = parseInt(minMonths) || 0;
       let cutoffStr: string | null = null;
       if (monthsInt > 0) {
-        const cutoff = new Date();
+        const base = calcDate ? new Date(calcDate) : new Date();
+        const cutoff = new Date(base);
         cutoff.setMonth(cutoff.getMonth() - monthsInt);
         cutoff.setDate(cutoff.getDate() + 10);
         cutoffStr = cutoff.toISOString().split('T')[0];
