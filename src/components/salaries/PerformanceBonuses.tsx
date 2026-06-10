@@ -51,6 +51,7 @@ const REPORT_COLUMNS = [
   { headerAr: 'الراتب الإجمالي', headerEn: 'Gross Salary', key: 'gross_salary' },
   { headerAr: 'التقييم', headerEn: 'Score', key: 'score' },
   { headerAr: 'النسبة %', headerEn: 'Rate %', key: 'percentage' },
+  { headerAr: 'تفاصيل الحساب', headerEn: 'Calculation', key: 'calc_details' },
   { headerAr: 'المبلغ', headerEn: 'Amount', key: 'amount' },
 ];
 
