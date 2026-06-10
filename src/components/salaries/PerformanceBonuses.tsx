@@ -63,6 +63,7 @@ export const PerformanceBonuses = () => {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(String(currentYear));
   const [quarter, setQuarter] = useState('Q1');
+  const [minMonths, setMinMonths] = useState('6');
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
 
