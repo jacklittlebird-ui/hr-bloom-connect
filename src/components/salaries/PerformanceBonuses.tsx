@@ -295,13 +295,21 @@ export const PerformanceBonuses = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-            <Award className="w-5 h-5 text-primary" />
-            {ar ? 'مكافأة التقييم الدورية' : 'Periodic Performance Bonus'}
-          </CardTitle>
+          <div className={cn("flex items-center justify-between flex-wrap gap-3", isRTL && "flex-row-reverse")}>
+            <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Award className="w-5 h-5 text-primary" />
+              {ar ? 'مكافأة التقييم الدورية' : 'Periodic Performance Bonus'}
+            </CardTitle>
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
+              <Link to="/performance">
+                <ExternalLink className="w-4 h-4" />
+                {ar ? 'إدارة التقييمات' : 'Manage Evaluations'}
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4")}>
+          <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4")}>
             <div className="space-y-2">
               <Label className={cn(isRTL && "text-right block")}>{ar ? 'السنة' : 'Year'}</Label>
               <Select value={year} onValueChange={setYear}>
@@ -320,6 +328,20 @@ export const PerformanceBonuses = () => {
                   <SelectItem value="Q2">{ar ? 'الربع الثاني' : 'Q2'}</SelectItem>
                   <SelectItem value="Q3">{ar ? 'الربع الثالث' : 'Q3'}</SelectItem>
                   <SelectItem value="Q4">{ar ? 'الربع الرابع' : 'Q4'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className={cn(isRTL && "text-right block")}>{ar ? 'استبعاد من لم يتم' : 'Exclude employees under'}</Label>
+              <Select value={minMonths} onValueChange={setMinMonths}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">{ar ? 'لا استبعاد' : 'No exclusion'}</SelectItem>
+                  {[1, 2, 3, 4, 5, 6, 9, 12].map(m => (
+                    <SelectItem key={m} value={String(m)}>
+                      {m} {ar ? (m === 1 ? 'شهر' : 'أشهر') : (m === 1 ? 'month' : 'months')}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
