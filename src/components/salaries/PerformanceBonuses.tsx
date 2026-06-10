@@ -590,7 +590,7 @@ export const PerformanceBonuses = () => {
                   </Select>
                 </div>
                 <div className="space-y-1 min-w-[130px]">
-                  <Label className="text-xs text-muted-foreground">{ar ? 'المستوى' : 'Level'}</Label>
+                  <Label className="text-xs text-muted-foreground">{ar ? 'الدرجة الوظيفية' : 'Job Degree'}</Label>
                   <Select value={filterLevel} onValueChange={setFilterLevel}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                     <SelectContent>
