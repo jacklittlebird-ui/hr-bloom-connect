@@ -458,11 +458,18 @@ export const PerformanceBonuses = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end">
-              <Button onClick={handleRun} disabled={loading} className="gap-2 w-full md:w-auto min-w-[180px]">
+            <div className="flex items-end gap-2 flex-wrap">
+              <Button onClick={handleRun} disabled={loading} className="gap-2 min-w-[160px]">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                 {ar ? 'احتساب المكافآت' : 'Calculate Bonuses'}
               </Button>
+              <Button onClick={handleSaveReport} disabled={savingReport || rows.length === 0} variant="secondary" className="gap-2 min-w-[140px]">
+                {savingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {ar ? 'حفظ التقرير' : 'Save Report'}
+              </Button>
+              {hasSaved && (
+                <Badge variant="outline" className="h-9 px-2 text-xs">{ar ? 'محفوظ' : 'Saved'}</Badge>
+              )}
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
