@@ -142,10 +142,21 @@ export const PerformanceBonuses = () => {
         });
       }
 
+      // Min-months cutoff (same approach as BonusManagement: minus 10 days grace)
+      const monthsInt = parseInt(minMonths) || 0;
+      let cutoffStr: string | null = null;
+      if (monthsInt > 0) {
+        const cutoff = new Date();
+        cutoff.setMonth(cutoff.getMonth() - monthsInt);
+        cutoff.setDate(cutoff.getDate() + 10);
+        cutoffStr = cutoff.toISOString().split('T')[0];
+      }
+
       const out: Row[] = [];
       for (const emp of employees) {
         const review = reviewMap.get(emp.id);
         if (!review) continue;
+        if (cutoffStr && emp.hire_date && emp.hire_date > cutoffStr) continue;
         const pct = review.percentage;
         if (!pct || pct <= 0) continue;
 
