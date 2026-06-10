@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, Users, Building2, Wallet, Landmark, Star } from 'lucide-react';
+import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, Users, Building2, Wallet, Star, ExternalLink, Calculator } from 'lucide-react';
 import { useReportExport } from '@/hooks/useReportExport';
 import { buildStationGroupRows, buildStationSubtotalExportRows } from '@/lib/stationReportGrouping';
 
@@ -50,6 +51,7 @@ const REPORT_COLUMNS = [
   { headerAr: 'الراتب الإجمالي', headerEn: 'Gross Salary', key: 'gross_salary' },
   { headerAr: 'التقييم', headerEn: 'Score', key: 'score' },
   { headerAr: 'النسبة %', headerEn: 'Rate %', key: 'percentage' },
+  { headerAr: 'تفاصيل الحساب', headerEn: 'Calculation', key: 'calc_details' },
   { headerAr: 'المبلغ', headerEn: 'Amount', key: 'amount' },
 ];
 
@@ -61,6 +63,7 @@ export const PerformanceBonuses = () => {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(String(currentYear));
   const [quarter, setQuarter] = useState('Q1');
+  const [minMonths, setMinMonths] = useState('6');
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -139,10 +142,21 @@ export const PerformanceBonuses = () => {
         });
       }
 
+      // Min-months cutoff (same approach as BonusManagement: minus 10 days grace)
+      const monthsInt = parseInt(minMonths) || 0;
+      let cutoffStr: string | null = null;
+      if (monthsInt > 0) {
+        const cutoff = new Date();
+        cutoff.setMonth(cutoff.getMonth() - monthsInt);
+        cutoff.setDate(cutoff.getDate() + 10);
+        cutoffStr = cutoff.toISOString().split('T')[0];
+      }
+
       const out: Row[] = [];
       for (const emp of employees) {
         const review = reviewMap.get(emp.id);
         if (!review) continue;
+        if (cutoffStr && emp.hire_date && emp.hire_date > cutoffStr) continue;
         const pct = review.percentage;
         if (!pct || pct <= 0) continue;
 
@@ -185,6 +199,16 @@ export const PerformanceBonuses = () => {
   };
 
   useEffect(() => { handleRun(); /* eslint-disable-next-line */ }, []);
+
+  // Inline edit: update a single employee's percentage and recompute amount
+  const updateRowPercentage = (employeeId: string, newPct: number) => {
+    setRows(prev => prev.map(r => {
+      if (r.employee_id !== employeeId) return r;
+      const pct = Math.max(0, Math.min(100, isNaN(newPct) ? 0 : newPct));
+      const amount = Math.round((r.gross_salary * pct / 100) * 100) / 100;
+      return { ...r, percentage: pct, amount };
+    }));
+  };
 
   // Unique filter options
   const stations = useMemo(() => [...new Set(rows.map(r => r.station_name).filter(Boolean))].sort(), [rows]);
@@ -239,7 +263,11 @@ export const PerformanceBonuses = () => {
   const stationGroupedRows = useMemo(() => buildStationGroupRows(filteredRecords as any), [filteredRecords]);
 
   const getExportData = () => buildStationSubtotalExportRows(
-    filteredRecords.map((r) => ({ ...r, employee_name: ar ? r.employee_name : (r.employee_name_en || r.employee_name) })) as any,
+    filteredRecords.map((r) => ({
+      ...r,
+      employee_name: ar ? r.employee_name : (r.employee_name_en || r.employee_name),
+      calc_details: `${r.gross_salary.toLocaleString()} × ${r.percentage}% = ${r.amount.toLocaleString()}`,
+    })) as any,
     { isArabic: ar, includeGrossSalary: true },
   );
 
@@ -267,13 +295,21 @@ export const PerformanceBonuses = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-            <Award className="w-5 h-5 text-primary" />
-            {ar ? 'مكافأة التقييم الدورية' : 'Periodic Performance Bonus'}
-          </CardTitle>
+          <div className={cn("flex items-center justify-between flex-wrap gap-3", isRTL && "flex-row-reverse")}>
+            <CardTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Award className="w-5 h-5 text-primary" />
+              {ar ? 'مكافأة التقييم الدورية' : 'Periodic Performance Bonus'}
+            </CardTitle>
+            <Button asChild variant="outline" size="sm" className="gap-1.5">
+              <Link to="/performance">
+                <ExternalLink className="w-4 h-4" />
+                {ar ? 'إدارة التقييمات' : 'Manage Evaluations'}
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4")}>
+          <div className={cn("grid grid-cols-1 md:grid-cols-4 gap-4")}>
             <div className="space-y-2">
               <Label className={cn(isRTL && "text-right block")}>{ar ? 'السنة' : 'Year'}</Label>
               <Select value={year} onValueChange={setYear}>
@@ -292,6 +328,20 @@ export const PerformanceBonuses = () => {
                   <SelectItem value="Q2">{ar ? 'الربع الثاني' : 'Q2'}</SelectItem>
                   <SelectItem value="Q3">{ar ? 'الربع الثالث' : 'Q3'}</SelectItem>
                   <SelectItem value="Q4">{ar ? 'الربع الرابع' : 'Q4'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className={cn(isRTL && "text-right block")}>{ar ? 'استبعاد من لم يتم' : 'Exclude employees under'}</Label>
+              <Select value={minMonths} onValueChange={setMinMonths}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">{ar ? 'لا استبعاد' : 'No exclusion'}</SelectItem>
+                  {[1, 2, 3, 4, 5, 6, 9, 12].map(m => (
+                    <SelectItem key={m} value={String(m)}>
+                      {m} {ar ? (m === 1 ? 'شهر' : 'أشهر') : (m === 1 ? 'month' : 'months')}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -461,6 +511,7 @@ export const PerformanceBonuses = () => {
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'الإجمالي' : 'Gross'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'التقييم' : 'Score'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'النسبة' : 'Rate'}</TableHead>
+                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'تفاصيل الحساب' : 'Calculation'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'المبلغ' : 'Amount'}</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -475,6 +526,7 @@ export const PerformanceBonuses = () => {
                               {ar ? `مجموع ${row.stationName || 'بدون محطة'}` : `${row.stationName || 'No Station'} Subtotal`} ({row.count})
                             </TableCell>
                             <TableCell>{row.grossSalary.toLocaleString()}</TableCell>
+                            <TableCell></TableCell>
                             <TableCell></TableCell>
                             <TableCell></TableCell>
                             <TableCell className="font-semibold">{row.amount.toLocaleString()}</TableCell>
@@ -504,14 +556,34 @@ export const PerformanceBonuses = () => {
                               {r.score.toFixed(2)}/5
                             </span>
                           </TableCell>
-                          <TableCell>{r.percentage}%</TableCell>
+                          <TableCell>
+                            <div className="relative w-24">
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.5"
+                                value={r.percentage}
+                                onChange={(e) => updateRowPercentage(r.employee_id, parseFloat(e.target.value))}
+                                className="h-8 pe-6 text-sm"
+                                aria-label={ar ? 'نسبة المكافأة' : 'Bonus rate'}
+                              />
+                              <span className="absolute top-1/2 -translate-y-1/2 end-2 text-xs text-muted-foreground pointer-events-none">%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs whitespace-nowrap" dir="ltr">
+                            <span className="inline-flex items-center gap-1">
+                              <Calculator className="w-3 h-3 text-muted-foreground" />
+                              {r.gross_salary.toLocaleString()} × {r.percentage}% = <span className="font-semibold text-primary">{r.amount.toLocaleString()}</span>
+                            </span>
+                          </TableCell>
                           <TableCell className="font-semibold">{r.amount.toLocaleString()}</TableCell>
                         </TableRow>
                       );
                     });
                   })()}
                   <TableRow className="bg-muted/70 font-bold border-t-2">
-                    <TableCell colSpan={15} className={cn(isRTL ? "text-right" : "text-left")}>
+                    <TableCell colSpan={16} className={cn(isRTL ? "text-right" : "text-left")}>
                       {ar ? 'الإجمالي الكلي' : 'Grand Total'}
                     </TableCell>
                     <TableCell className="font-bold">{totalAmount.toLocaleString()}</TableCell>
