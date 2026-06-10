@@ -182,7 +182,7 @@ export const PerformanceBonuses = () => {
           station_name: station ? (ar ? station.name_ar : station.name_en) : '',
           department_name: dept ? (ar ? dept.name_ar : dept.name_en) : '',
           job_title: ar ? (emp.job_title_ar || '') : (emp.job_title_en || ''),
-          job_level: emp.job_level || '',
+          job_level: emp.job_degree || emp.job_level || '',
           hire_date: emp.hire_date || '',
           bank_account_number: emp.bank_account_number || '',
           bank_id_number: emp.bank_id_number || '',
