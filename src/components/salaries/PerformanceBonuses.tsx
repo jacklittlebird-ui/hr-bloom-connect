@@ -370,7 +370,8 @@ export const PerformanceBonuses = () => {
     { label: ar ? 'إجمالي المكافآت' : 'Total Bonuses', value: totalAmount.toLocaleString() + (ar ? ' ج.م' : ' EGP'), icon: Wallet, color: 'text-green-600', bg: 'bg-green-100' },
     { label: ar ? 'متوسط التقييم' : 'Avg Score', value: avgScore.toFixed(2) + ' / 5', icon: Star, color: 'text-amber-600', bg: 'bg-amber-100' },
     { label: ar ? 'عدد المحطات' : 'Stations', value: String(uniqueStationsCount), icon: Building2, color: 'text-blue-600', bg: 'bg-blue-100' },
-  ], [filteredRecords, totalAmount, avgScore, uniqueStationsCount, ar]);
+    { label: ar ? 'عدد البنوك' : 'Banks', value: String(uniqueBanksCount), icon: Landmark, color: 'text-amber-600', bg: 'bg-amber-100' },
+  ], [filteredRecords, totalAmount, avgScore, uniqueStationsCount, uniqueBanksCount, ar]);
 
   const stationGroupedRows = useMemo(() => buildStationGroupRows(filteredRecords as any), [filteredRecords]);
 
