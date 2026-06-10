@@ -263,7 +263,11 @@ export const PerformanceBonuses = () => {
   const stationGroupedRows = useMemo(() => buildStationGroupRows(filteredRecords as any), [filteredRecords]);
 
   const getExportData = () => buildStationSubtotalExportRows(
-    filteredRecords.map((r) => ({ ...r, employee_name: ar ? r.employee_name : (r.employee_name_en || r.employee_name) })) as any,
+    filteredRecords.map((r) => ({
+      ...r,
+      employee_name: ar ? r.employee_name : (r.employee_name_en || r.employee_name),
+      calc_details: `${r.gross_salary.toLocaleString()} × ${r.percentage}% = ${r.amount.toLocaleString()}`,
+    })) as any,
     { isArabic: ar, includeGrossSalary: true },
   );
 
