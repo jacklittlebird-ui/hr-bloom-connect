@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, Users, Building2, Wallet, Star, ExternalLink, Calculator } from 'lucide-react';
+import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, Users, Building2, Wallet, Star, ExternalLink, Calculator, Save, Landmark } from 'lucide-react';
 import { useReportExport } from '@/hooks/useReportExport';
 import { buildStationGroupRows, buildStationSubtotalExportRows } from '@/lib/stationReportGrouping';
 
@@ -66,6 +66,10 @@ export const PerformanceBonuses = () => {
   const [minMonths, setMinMonths] = useState('6');
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
+  const [savingReport, setSavingReport] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
+  const pctSaveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const pctSavingSet = useRef<Set<string>>(new Set());
 
   // Filters
   const [searchText, setSearchText] = useState('');
@@ -200,14 +204,122 @@ export const PerformanceBonuses = () => {
 
   useEffect(() => { handleRun(); /* eslint-disable-next-line */ }, []);
 
-  // Inline edit: update a single employee's percentage and recompute amount
+  // Reload when period changes — prefer saved snapshot if exists, otherwise recalculate from reviews
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('performance_bonus_records')
+        .select('*')
+        .eq('year', year).eq('quarter', quarter);
+      if (data && data.length > 0) {
+        setRows(data.map((r: any) => ({
+          employee_id: r.employee_id,
+          employee_name: r.employee_name || '',
+          employee_name_en: '',
+          employee_code: r.employee_code || '',
+          station_name: r.station_name || '',
+          department_name: r.department_name || '',
+          job_title: r.job_title || '',
+          job_level: r.job_level || '',
+          hire_date: r.hire_date || '',
+          bank_account_number: r.bank_account_number || '',
+          bank_id_number: r.bank_id_number || '',
+          bank_name: r.bank_name || '',
+          bank_account_type: r.bank_account_type || '',
+          percentage: Number(r.percentage || 0),
+          score: Number(r.score || 0),
+          gross_salary: Number(r.gross_salary || 0),
+          amount: Number(r.amount || 0),
+        })));
+        setHasSaved(true);
+      } else {
+        setHasSaved(false);
+      }
+    })();
+    // eslint-disable-next-line
+  }, [year, quarter]);
+
+  // Inline edit: update a single employee's percentage, recompute amount, and auto-save to performance_reviews (debounced)
   const updateRowPercentage = (employeeId: string, newPct: number) => {
+    const pct = Math.max(0, Math.min(100, isNaN(newPct) ? 0 : newPct));
     setRows(prev => prev.map(r => {
       if (r.employee_id !== employeeId) return r;
-      const pct = Math.max(0, Math.min(100, isNaN(newPct) ? 0 : newPct));
       const amount = Math.round((r.gross_salary * pct / 100) * 100) / 100;
       return { ...r, percentage: pct, amount };
     }));
+
+    // Debounce per-employee save
+    const existing = pctSaveTimers.current.get(employeeId);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(async () => {
+      if (pctSavingSet.current.has(employeeId)) return;
+      pctSavingSet.current.add(employeeId);
+      try {
+        const { error } = await supabase
+          .from('performance_reviews')
+          .update({ bonus_percentage: pct })
+          .eq('employee_id', employeeId)
+          .eq('year', year)
+          .eq('quarter', quarter);
+        if (error) throw error;
+      } catch (err: any) {
+        toast.error((ar ? 'فشل حفظ النسبة: ' : 'Failed to save rate: ') + (err.message || ''));
+      } finally {
+        pctSavingSet.current.delete(employeeId);
+        pctSaveTimers.current.delete(employeeId);
+      }
+    }, 600);
+    pctSaveTimers.current.set(employeeId, timer);
+  };
+
+  // Save the generated report to performance_bonus_records (delete-and-replace by year+quarter)
+  const handleSaveReport = async () => {
+    if (rows.length === 0) {
+      toast.info(ar ? 'لا توجد بيانات للحفظ' : 'No data to save');
+      return;
+    }
+    setSavingReport(true);
+    try {
+      const { error: delErr } = await supabase
+        .from('performance_bonus_records')
+        .delete()
+        .eq('year', year).eq('quarter', quarter);
+      if (delErr) throw delErr;
+
+      const payload = rows.map(r => ({
+        employee_id: r.employee_id,
+        year, quarter,
+        percentage: r.percentage,
+        score: r.score,
+        gross_salary: r.gross_salary,
+        amount: r.amount,
+        job_level: r.job_level || null,
+        employee_name: r.employee_name || null,
+        employee_code: r.employee_code || null,
+        station_name: r.station_name || null,
+        department_name: r.department_name || null,
+        job_title: r.job_title || null,
+        hire_date: r.hire_date || null,
+        bank_account_number: r.bank_account_number || null,
+        bank_id_number: r.bank_id_number || null,
+        bank_name: r.bank_name || null,
+        bank_account_type: r.bank_account_type || null,
+      }));
+
+      const BATCH = 100;
+      for (let i = 0; i < payload.length; i += BATCH) {
+        const { error: insErr } = await supabase
+          .from('performance_bonus_records')
+          .insert(payload.slice(i, i + BATCH));
+        if (insErr) throw insErr;
+      }
+      setHasSaved(true);
+      toast.success(ar ? `تم حفظ التقرير (${rows.length} موظف)` : `Report saved (${rows.length} employees)`);
+    } catch (err: any) {
+      toast.error(err.message || 'Error');
+    } finally {
+      setSavingReport(false);
+    }
   };
 
   // Unique filter options
@@ -258,7 +370,8 @@ export const PerformanceBonuses = () => {
     { label: ar ? 'إجمالي المكافآت' : 'Total Bonuses', value: totalAmount.toLocaleString() + (ar ? ' ج.م' : ' EGP'), icon: Wallet, color: 'text-green-600', bg: 'bg-green-100' },
     { label: ar ? 'متوسط التقييم' : 'Avg Score', value: avgScore.toFixed(2) + ' / 5', icon: Star, color: 'text-amber-600', bg: 'bg-amber-100' },
     { label: ar ? 'عدد المحطات' : 'Stations', value: String(uniqueStationsCount), icon: Building2, color: 'text-blue-600', bg: 'bg-blue-100' },
-  ], [filteredRecords, totalAmount, avgScore, uniqueStationsCount, ar]);
+    { label: ar ? 'عدد البنوك' : 'Banks', value: String(uniqueBanksCount), icon: Landmark, color: 'text-amber-600', bg: 'bg-amber-100' },
+  ], [filteredRecords, totalAmount, avgScore, uniqueStationsCount, uniqueBanksCount, ar]);
 
   const stationGroupedRows = useMemo(() => buildStationGroupRows(filteredRecords as any), [filteredRecords]);
 
@@ -345,11 +458,18 @@ export const PerformanceBonuses = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end">
-              <Button onClick={handleRun} disabled={loading} className="gap-2 w-full md:w-auto min-w-[180px]">
+            <div className="flex items-end gap-2 flex-wrap">
+              <Button onClick={handleRun} disabled={loading} className="gap-2 min-w-[160px]">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                 {ar ? 'احتساب المكافآت' : 'Calculate Bonuses'}
               </Button>
+              <Button onClick={handleSaveReport} disabled={savingReport || rows.length === 0} variant="secondary" className="gap-2 min-w-[140px]">
+                {savingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {ar ? 'حفظ التقرير' : 'Save Report'}
+              </Button>
+              {hasSaved && (
+                <Badge variant="outline" className="h-9 px-2 text-xs">{ar ? 'محفوظ' : 'Saved'}</Badge>
+              )}
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -359,7 +479,7 @@ export const PerformanceBonuses = () => {
       </Card>
 
       {rows.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {statsCards.map((stat, i) => (
             <Card key={i}>
               <CardContent className="p-4">

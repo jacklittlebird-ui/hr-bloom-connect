@@ -1891,6 +1891,93 @@ export type Database = {
           },
         ]
       }
+      performance_bonus_records: {
+        Row: {
+          amount: number
+          bank_account_number: string | null
+          bank_account_type: string | null
+          bank_id_number: string | null
+          bank_name: string | null
+          created_at: string
+          department_name: string | null
+          employee_code: string | null
+          employee_id: string
+          employee_name: string | null
+          gross_salary: number
+          hire_date: string | null
+          id: string
+          job_level: string | null
+          job_title: string | null
+          percentage: number
+          quarter: string
+          score: number
+          station_name: string | null
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          amount?: number
+          bank_account_number?: string | null
+          bank_account_type?: string | null
+          bank_id_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          department_name?: string | null
+          employee_code?: string | null
+          employee_id: string
+          employee_name?: string | null
+          gross_salary?: number
+          hire_date?: string | null
+          id?: string
+          job_level?: string | null
+          job_title?: string | null
+          percentage?: number
+          quarter: string
+          score?: number
+          station_name?: string | null
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          amount?: number
+          bank_account_number?: string | null
+          bank_account_type?: string | null
+          bank_id_number?: string | null
+          bank_name?: string | null
+          created_at?: string
+          department_name?: string | null
+          employee_code?: string | null
+          employee_id?: string
+          employee_name?: string | null
+          gross_salary?: number
+          hire_date?: string | null
+          id?: string
+          job_level?: string | null
+          job_title?: string | null
+          percentage?: number
+          quarter?: string
+          score?: number
+          station_name?: string | null
+          updated_at?: string
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_bonus_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_bonus_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       performance_reviews: {
         Row: {
           bonus_percentage: number | null
