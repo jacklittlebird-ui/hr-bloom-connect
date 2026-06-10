@@ -16,6 +16,25 @@ const TRAINING_MANAGER_LIST_SELECT = 'id, employee_code, name_ar, name_en, phone
 const stationCodeIdCache = new Map<string, string>();
 const EMPLOYEES_TTL_MS = 5 * 60_000; // 5 minutes
 
+// Paginated fetch — bypasses Supabase 1000-row default cap by looping in chunks
+const PAGE_SIZE = 1000;
+async function fetchAllPaginated<T = any>(
+  buildQuery: () => any
+): Promise<{ data: T[]; error: any }> {
+  const all: T[] = [];
+  let from = 0;
+  // Safety cap: 50 pages = 50,000 employees
+  for (let page = 0; page < 50; page++) {
+    const { data, error } = await buildQuery().range(from, from + PAGE_SIZE - 1);
+    if (error) return { data: all, error };
+    if (!data || data.length === 0) break;
+    all.push(...(data as T[]));
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return { data: all, error: null };
+}
+
 interface EmployeeDataContextType {
   employees: Employee[];
   loading: boolean;
@@ -300,18 +319,22 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         // Station / department / area managers + station HR get limited view
         if (user?.role === 'station_manager' || user?.role === 'department_manager' || user?.role === 'area_manager' || user?.role === 'station_hr') {
-          const { data, error } = await supabase
-            .from('employee_limited_view' as any)
-            .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
-            .eq('status', 'active')
-            .order('employee_code', { ascending: true });
+          const { data, error } = await fetchAllPaginated(() =>
+            supabase
+              .from('employee_limited_view' as any)
+              .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+              .eq('status', 'active')
+              .order('employee_code', { ascending: true })
+          );
 
           if (error) {
-            const { data: viewData, error: viewError } = await supabase
-              .from('employee_limited_view' as any)
-              .select('id, employee_code, name_ar, name_en, department_id, station_id, status, job_title_ar, phone, avatar')
-              .eq('status', 'active')
-              .order('employee_code', { ascending: true });
+            const { data: viewData, error: viewError } = await fetchAllPaginated(() =>
+              supabase
+                .from('employee_limited_view' as any)
+                .select('id, employee_code, name_ar, name_en, department_id, station_id, status, job_title_ar, phone, avatar')
+                .eq('status', 'active')
+                .order('employee_code', { ascending: true })
+            );
 
 
             if (viewError) { console.error('Error fetching limited employees:', viewError); return []; }
@@ -338,7 +361,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // Training manager: use a lean employee list without large photo/bank fields to avoid request timeouts in the training portal.
         if (user?.role === 'training_manager') {
           const [empRes, deptsRes, stationsRes] = await Promise.all([
-            supabase.from('employees').select(TRAINING_MANAGER_LIST_SELECT).eq('status', 'active').order('employee_code', { ascending: true }),
+            fetchAllPaginated(() => supabase.from('employees').select(TRAINING_MANAGER_LIST_SELECT).eq('status', 'active').order('employee_code', { ascending: true })),
             supabase.from('departments').select('id, name_ar, name_en'),
             supabase.from('stations').select('id, code, name_ar, name_en'),
           ]);
@@ -356,7 +379,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         // Admin/HR: fast list load with essential columns + parallel join (faster than nested PostgREST joins on large tables)
         const [empRes, deptsRes, stationsRes] = await Promise.all([
-          supabase.from('employees').select(LIST_SELECT).order('employee_code', { ascending: true }),
+          fetchAllPaginated(() => supabase.from('employees').select(LIST_SELECT).order('employee_code', { ascending: true })),
           supabase.from('departments').select('id, name_ar, name_en'),
           supabase.from('stations').select('id, code, name_ar, name_en'),
         ]);
