@@ -528,6 +528,7 @@ export const PerformanceBonuses = () => {
                             <TableCell>{row.grossSalary.toLocaleString()}</TableCell>
                             <TableCell></TableCell>
                             <TableCell></TableCell>
+                            <TableCell></TableCell>
                             <TableCell className="font-semibold">{row.amount.toLocaleString()}</TableCell>
                           </TableRow>
                         );
