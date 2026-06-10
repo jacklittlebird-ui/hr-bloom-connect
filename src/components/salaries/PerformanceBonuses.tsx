@@ -206,8 +206,18 @@ export const PerformanceBonuses = () => {
 
   useEffect(() => { handleRun(); /* eslint-disable-next-line */ }, []);
 
+  // Auto-save calc date per (year, quarter) so it stays stable when switching periods
+  const calcDateStorageKey = (y: string, q: string) => `perf_bonus_calc_date_${y}_${q}`;
+
   // Reload when period changes — prefer saved snapshot if exists, otherwise recalculate from reviews
   useEffect(() => {
+    // Load persisted calc date for this period (fallback to today)
+    try {
+      const saved = localStorage.getItem(calcDateStorageKey(year, quarter));
+      if (saved) setCalcDate(saved);
+      else setCalcDate(new Date().toISOString().split('T')[0]);
+    } catch {}
+
     (async () => {
       const { data } = await supabase
         .from('performance_bonus_records')
@@ -240,6 +250,12 @@ export const PerformanceBonuses = () => {
     })();
     // eslint-disable-next-line
   }, [year, quarter]);
+
+  // Persist calc date whenever it changes (scoped to year/quarter)
+  useEffect(() => {
+    if (!calcDate) return;
+    try { localStorage.setItem(calcDateStorageKey(year, quarter), calcDate); } catch {}
+  }, [calcDate, year, quarter]);
 
   // Inline edit: update a single employee's percentage, recompute amount, and auto-save to performance_reviews (debounced)
   const updateRowPercentage = (employeeId: string, newPct: number) => {
