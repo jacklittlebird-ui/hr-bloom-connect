@@ -556,14 +556,34 @@ export const PerformanceBonuses = () => {
                               {r.score.toFixed(2)}/5
                             </span>
                           </TableCell>
-                          <TableCell>{r.percentage}%</TableCell>
+                          <TableCell>
+                            <div className="relative w-24">
+                              <Input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.5"
+                                value={r.percentage}
+                                onChange={(e) => updateRowPercentage(r.employee_id, parseFloat(e.target.value))}
+                                className="h-8 pe-6 text-sm"
+                                aria-label={ar ? 'نسبة المكافأة' : 'Bonus rate'}
+                              />
+                              <span className="absolute top-1/2 -translate-y-1/2 end-2 text-xs text-muted-foreground pointer-events-none">%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs whitespace-nowrap" dir="ltr">
+                            <span className="inline-flex items-center gap-1">
+                              <Calculator className="w-3 h-3 text-muted-foreground" />
+                              {r.gross_salary.toLocaleString()} × {r.percentage}% = <span className="font-semibold text-primary">{r.amount.toLocaleString()}</span>
+                            </span>
+                          </TableCell>
                           <TableCell className="font-semibold">{r.amount.toLocaleString()}</TableCell>
                         </TableRow>
                       );
                     });
                   })()}
                   <TableRow className="bg-muted/70 font-bold border-t-2">
-                    <TableCell colSpan={15} className={cn(isRTL ? "text-right" : "text-left")}>
+                    <TableCell colSpan={16} className={cn(isRTL ? "text-right" : "text-left")}>
                       {ar ? 'الإجمالي الكلي' : 'Grand Total'}
                     </TableCell>
                     <TableCell className="font-bold">{totalAmount.toLocaleString()}</TableCell>
