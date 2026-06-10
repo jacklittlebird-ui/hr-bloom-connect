@@ -319,18 +319,22 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
         // Station / department / area managers + station HR get limited view
         if (user?.role === 'station_manager' || user?.role === 'department_manager' || user?.role === 'area_manager' || user?.role === 'station_hr') {
-          const { data, error } = await supabase
-            .from('employee_limited_view' as any)
-            .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
-            .eq('status', 'active')
-            .order('employee_code', { ascending: true });
+          const { data, error } = await fetchAllPaginated(() =>
+            supabase
+              .from('employee_limited_view' as any)
+              .select('*, departments(name_ar, name_en), stations(code, name_ar, name_en)')
+              .eq('status', 'active')
+              .order('employee_code', { ascending: true })
+          );
 
           if (error) {
-            const { data: viewData, error: viewError } = await supabase
-              .from('employee_limited_view' as any)
-              .select('id, employee_code, name_ar, name_en, department_id, station_id, status, job_title_ar, phone, avatar')
-              .eq('status', 'active')
-              .order('employee_code', { ascending: true });
+            const { data: viewData, error: viewError } = await fetchAllPaginated(() =>
+              supabase
+                .from('employee_limited_view' as any)
+                .select('id, employee_code, name_ar, name_en, department_id, station_id, status, job_title_ar, phone, avatar')
+                .eq('status', 'active')
+                .order('employee_code', { ascending: true })
+            );
 
 
             if (viewError) { console.error('Error fetching limited employees:', viewError); return []; }
