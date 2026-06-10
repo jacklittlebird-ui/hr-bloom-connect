@@ -460,6 +460,18 @@ export const PerformanceBonuses = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label className={cn(isRTL && "text-right block")}>{ar ? 'تاريخ الاحتساب' : 'Calculation Date'}</Label>
+              <Input
+                type="date"
+                value={calcDate}
+                onChange={(e) => setCalcDate(e.target.value)}
+                dir="ltr"
+              />
+              <p className="text-[10px] text-muted-foreground leading-tight">
+                {ar ? 'يُستبعد من لم يتم المدة المحددة إلا 10 أيام من هذا التاريخ' : 'Excludes employees who have not completed the period (minus 10 days) from this date'}
+              </p>
+            </div>
             <div className="flex items-end gap-2 flex-wrap">
               <Button onClick={handleRun} disabled={loading} className="gap-2 min-w-[160px]">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
