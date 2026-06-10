@@ -226,10 +226,10 @@ export const ManagerApprovals = ({ stationEmployees }: ManagerApprovalsProps) =>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">{t('الكل', 'All')}</SelectItem>
             <SelectItem value="pending">{t('معلق', 'Pending')}</SelectItem>
             <SelectItem value="approved">{t('موافق', 'Approved')}</SelectItem>
             <SelectItem value="rejected">{t('مرفوض', 'Rejected')}</SelectItem>
-            <SelectItem value="all">{t('الكل', 'All')}</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={fetchAll} disabled={loading}>
