@@ -42,7 +42,7 @@ const REPORT_COLUMNS = [
   { headerAr: 'المحطة', headerEn: 'Station', key: 'station_name' },
   { headerAr: 'القسم', headerEn: 'Department', key: 'department_name' },
   { headerAr: 'الوظيفة', headerEn: 'Job Title', key: 'job_title' },
-  { headerAr: 'المستوى', headerEn: 'Level', key: 'job_level' },
+  { headerAr: 'الدرجة الوظيفية', headerEn: 'Job Degree', key: 'job_level' },
   { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hire_date' },
   { headerAr: 'رقم الحساب', headerEn: 'Account No.', key: 'bank_account_number' },
   { headerAr: 'ID البنكي', headerEn: 'Bank ID', key: 'bank_id_number' },
@@ -119,7 +119,7 @@ export const PerformanceBonuses = () => {
         const { data } = await supabase
           .from('employees')
           .select(`
-            id, name_ar, name_en, employee_code, job_level, job_title_ar, job_title_en, basic_salary,
+            id, name_ar, name_en, employee_code, job_level, job_degree, job_title_ar, job_title_en, basic_salary,
             hire_date, bank_account_number, bank_id_number, bank_name, bank_account_type,
             station_id, department_id,
             stations:station_id (name_ar, name_en),
@@ -182,7 +182,7 @@ export const PerformanceBonuses = () => {
           station_name: station ? (ar ? station.name_ar : station.name_en) : '',
           department_name: dept ? (ar ? dept.name_ar : dept.name_en) : '',
           job_title: ar ? (emp.job_title_ar || '') : (emp.job_title_en || ''),
-          job_level: emp.job_level || '',
+          job_level: emp.job_degree || emp.job_level || '',
           hire_date: emp.hire_date || '',
           bank_account_number: emp.bank_account_number || '',
           bank_id_number: emp.bank_id_number || '',
@@ -206,8 +206,18 @@ export const PerformanceBonuses = () => {
 
   useEffect(() => { handleRun(); /* eslint-disable-next-line */ }, []);
 
+  // Auto-save calc date per (year, quarter) so it stays stable when switching periods
+  const calcDateStorageKey = (y: string, q: string) => `perf_bonus_calc_date_${y}_${q}`;
+
   // Reload when period changes — prefer saved snapshot if exists, otherwise recalculate from reviews
   useEffect(() => {
+    // Load persisted calc date for this period (fallback to today)
+    try {
+      const saved = localStorage.getItem(calcDateStorageKey(year, quarter));
+      if (saved) setCalcDate(saved);
+      else setCalcDate(new Date().toISOString().split('T')[0]);
+    } catch {}
+
     (async () => {
       const { data } = await supabase
         .from('performance_bonus_records')
@@ -240,6 +250,12 @@ export const PerformanceBonuses = () => {
     })();
     // eslint-disable-next-line
   }, [year, quarter]);
+
+  // Persist calc date whenever it changes (scoped to year/quarter)
+  useEffect(() => {
+    if (!calcDate) return;
+    try { localStorage.setItem(calcDateStorageKey(year, quarter), calcDate); } catch {}
+  }, [calcDate, year, quarter]);
 
   // Inline edit: update a single employee's percentage, recompute amount, and auto-save to performance_reviews (debounced)
   const updateRowPercentage = (employeeId: string, newPct: number) => {
@@ -590,7 +606,7 @@ export const PerformanceBonuses = () => {
                   </Select>
                 </div>
                 <div className="space-y-1 min-w-[130px]">
-                  <Label className="text-xs text-muted-foreground">{ar ? 'المستوى' : 'Level'}</Label>
+                  <Label className="text-xs text-muted-foreground">{ar ? 'الدرجة الوظيفية' : 'Job Degree'}</Label>
                   <Select value={filterLevel} onValueChange={setFilterLevel}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -636,7 +652,7 @@ export const PerformanceBonuses = () => {
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'القسم' : 'Department'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'الوظيفة' : 'Job Title'}</TableHead>
-                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'المستوى' : 'Level'}</TableHead>
+                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'الدرجة الوظيفية' : 'Job Degree'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'رقم الحساب' : 'Account No.'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'ID البنكي' : 'Bank ID'}</TableHead>
