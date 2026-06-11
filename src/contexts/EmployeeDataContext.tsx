@@ -10,7 +10,7 @@ const LIST_COLUMNS = 'id, employee_code, name_ar, name_en, phone, status, avatar
 
 // Lighter select WITHOUT nested joins — joins are resolved client-side via maps for speed
 const LIST_SELECT = LIST_COLUMNS;
-const TRAINING_MANAGER_LIST_SELECT = 'id, employee_code, name_ar, name_en, phone, status, station_id, department_id, job_title_ar, job_title_en, dept_code, hire_date, national_id';
+const TRAINING_MANAGER_LIST_SELECT = 'id, employee_code, name_ar, name_en, phone, status, station_id, department_id, job_title_ar, job_title_en, dept_code, hire_date, national_id, avatar';
 
 // Cache for station code → id (avoids extra roundtrip in updateEmployee)
 const stationCodeIdCache = new Map<string, string>();
