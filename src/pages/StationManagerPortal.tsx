@@ -1908,27 +1908,25 @@ const StationManagerPortal = () => {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs">{t('القسم', 'Department')}</Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs whitespace-nowrap min-w-[60px]">{t('القسم', 'Department')}</Label>
                           <Select value={newEvalDeptFilter} onValueChange={setNewEvalDeptFilter}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">{t('جميع الأقسام', 'All Departments')}</SelectItem>
                               {stationDepartments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">{t('السنة', 'Year')}</Label>
+                        <div className="flex items-center gap-2">
+                          <Label className="text-xs whitespace-nowrap min-w-[60px]">{t('السنة', 'Year')}</Label>
                           <Select value={newEvalYear} onValueChange={setNewEvalYear}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
                             <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
                           </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">{t('الربع', 'Quarter')}</Label>
+                          <Label className="text-xs whitespace-nowrap">{t('الربع', 'Quarter')}</Label>
                           <Select value={newEvalQuarter} onValueChange={setNewEvalQuarter}>
-                            <SelectTrigger><SelectValue placeholder={t('اختر الربع', 'Select quarter')} /></SelectTrigger>
+                            <SelectTrigger className="flex-1"><SelectValue placeholder={t('اختر', 'Select')} /></SelectTrigger>
                             <SelectContent>{quarters.map(q => <SelectItem key={q} value={q}>{getQuarterLabel(q)}</SelectItem>)}</SelectContent>
                           </Select>
                         </div>
