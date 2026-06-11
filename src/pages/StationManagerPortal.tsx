@@ -454,7 +454,7 @@ const StationManagerPortal = () => {
     return parseFloat((weightedSum / totalWeight).toFixed(2));
   }, [evalCriteria]);
 
-  const BONUS_OPTIONS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100];
+  const BONUS_OPTIONS = Array.from({ length: 41 }, (_, i) => i * 2.5);
   const evalSuggestedBonus = useMemo(() => {
     const clamped = Math.min(5, Math.max(1, evalOverallScore || 1));
     return Math.round((clamped - 1) * 12.5 * 10) / 10;
@@ -2198,7 +2198,7 @@ const StationManagerPortal = () => {
                                   {BONUS_OPTIONS.map(p => (
                                     <CommandItem key={p} value={String(p)} onSelect={() => { setEvalBonusPercentage(String(p)); setBonusSearch(''); setBonusOpen(false); }}>
                                       <Check className={cn("me-2 h-4 w-4", evalBonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
-                                      {p}%
+                                      {p.toFixed(2)}%
                                     </CommandItem>
                                   ))}
                                 </CommandGroup>
@@ -2745,7 +2745,7 @@ const StationManagerPortal = () => {
                           {BONUS_OPTIONS.map(p => (
                             <CommandItem key={p} value={String(p)} onSelect={() => { setEvalBonusPercentage(String(p)); setBonusSearch(''); setBonusOpen(false); }}>
                               <Check className={cn("me-2 h-4 w-4", evalBonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
-                              {p}%
+                              {p.toFixed(2)}%
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -2968,7 +2968,7 @@ const StationManagerPortal = () => {
                           {BONUS_OPTIONS.map(p => (
                             <CommandItem key={p} value={String(p)} onSelect={() => { setEditEvalBonusPercentage(String(p)); setEditBonusSearch(''); setEditBonusOpen(false); }}>
                               <Check className={cn("me-2 h-4 w-4", editEvalBonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
-                              {p}%
+                              {p.toFixed(2)}%
                             </CommandItem>
                           ))}
                         </CommandGroup>
