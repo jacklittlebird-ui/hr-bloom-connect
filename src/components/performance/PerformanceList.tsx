@@ -28,6 +28,11 @@ const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 export const PerformanceList = () => {
   const { t, isRTL, language } = useLanguage();
   const { reviews, updateReview, deleteReview } = usePerformanceData();
+  const { employees } = useEmployeeData();
+  const getHireDate = (review: PerformanceReview) => {
+    const emp = employees.find(e => e.id === review.employeeId || e.employeeId === review.employeeId);
+    return emp?.hireDate ? formatDate(emp.hireDate) : '-';
+  };
   const { exportToCSV, exportToPDF, handlePrint, reportRef } = useReportExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
