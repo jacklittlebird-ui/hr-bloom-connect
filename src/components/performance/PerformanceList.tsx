@@ -13,13 +13,14 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Search, Eye, Edit, Star, FileText, Printer, Download, FileSpreadsheet, Save, Send, Target, TrendingUp, Lightbulb, MessageSquare, Trash2, RotateCcw, Loader2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
 import { initialDepartments } from '@/data/departments';
+import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { toast } from 'sonner';
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
