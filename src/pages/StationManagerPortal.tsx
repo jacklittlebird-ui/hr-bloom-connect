@@ -454,7 +454,7 @@ const StationManagerPortal = () => {
     return parseFloat((weightedSum / totalWeight).toFixed(2));
   }, [evalCriteria]);
 
-  const BONUS_OPTIONS = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100];
+  const BONUS_OPTIONS = Array.from({ length: 41 }, (_, i) => i * 2.5);
   const evalSuggestedBonus = useMemo(() => {
     const clamped = Math.min(5, Math.max(1, evalOverallScore || 1));
     return Math.round((clamped - 1) * 12.5 * 10) / 10;
