@@ -582,16 +582,26 @@ export const PerformanceReviewForm = () => {
 
           {selectedEmp && (
             <div className={cn("p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm", isRTL && "text-right")}>
-              <span className="font-medium">{ar ? 'الموظف المحدد:' : 'Selected:'}</span>{' '}
-              <span className="text-primary font-semibold">{ar ? selectedEmp.nameAr : selectedEmp.nameEn}</span>
-              {' - '}{selectedEmp.department}
-              {' - '}
-              <span className="text-muted-foreground">{ar ? 'تاريخ التعيين:' : 'Hire Date:'}</span>{' '}
-              <span className="font-medium">{selectedEmp.hireDate ? formatDate(selectedEmp.hireDate) : '-'}</span>
+              <div className="font-medium">{ar ? 'الموظف المحدد:' : 'Selected:'}{' '}
+                <span className="text-primary font-semibold">{ar ? selectedEmp.nameAr : selectedEmp.nameEn}</span>
+              </div>
+              <div className="mt-1">
+                <span className="text-muted-foreground">{ar ? 'الرقم:' : 'ID:'}</span>{' '}
+                <span className="font-medium">{selectedEmp.employeeId || '-'}</span>
+                {' · '}
+                <span className="text-muted-foreground">{ar ? 'القسم:' : 'Dept:'}</span>{' '}
+                <span className="font-medium">{selectedEmp.department || '-'}</span>
+              </div>
+              <div className="mt-1">
+                <span className="text-muted-foreground">{ar ? 'تاريخ التعيين:' : 'Hire Date:'}</span>{' '}
+                <span className="font-medium">{selectedEmp.hireDate ? formatDate(selectedEmp.hireDate) : '-'}</span>
+              </div>
               {existingReview && (
-                <Badge variant="outline" className="ml-2 bg-stat-yellow/10 text-stat-yellow border-stat-yellow">
-                  {ar ? `تقييم موجود (${existingReview.status === 'draft' ? 'مسودة' : existingReview.status === 'submitted' ? 'مرسل' : 'معتمد'})` : `Existing (${existingReview.status})`}
-                </Badge>
+                <div className="mt-1">
+                  <Badge variant="outline" className="bg-stat-yellow/10 text-stat-yellow border-stat-yellow">
+                    {ar ? `تقييم موجود (${existingReview.status === 'draft' ? 'مسودة' : existingReview.status === 'submitted' ? 'مرسل' : 'معتمد'})` : `Existing (${existingReview.status})`}
+                  </Badge>
+                </div>
               )}
             </div>
           )}

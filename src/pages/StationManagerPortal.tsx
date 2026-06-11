@@ -2007,15 +2007,26 @@ const StationManagerPortal = () => {
                         const selEmp = stationEmployees.find(e => e.id === newEvalSelectedEmp);
                         return selEmp ? (
                           <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm">
-                            <span className="font-medium">{t('الموظف المحدد:', 'Selected:')}</span>{' '}
-                            <span className="text-primary font-semibold">{ar ? selEmp.nameAr : selEmp.nameEn}</span> - {selEmp.department}
-                            {' - '}
-                            <span className="text-muted-foreground">{t('تاريخ التعيين:', 'Hire Date:')}</span>{' '}
-                            <span className="font-medium">{selEmp.hireDate ? formatDate(selEmp.hireDate) : '-'}</span>
+                            <div className="font-medium">{t('الموظف المحدد:', 'Selected:')}{' '}
+                              <span className="text-primary font-semibold">{ar ? selEmp.nameAr : selEmp.nameEn}</span>
+                            </div>
+                            <div className="mt-1">
+                              <span className="text-muted-foreground">{t('الرقم:', 'ID:')}</span>{' '}
+                              <span className="font-medium">{selEmp.employeeId || '-'}</span>
+                              {' · '}
+                              <span className="text-muted-foreground">{t('القسم:', 'Dept:')}</span>{' '}
+                              <span className="font-medium">{selEmp.department || '-'}</span>
+                            </div>
+                            <div className="mt-1">
+                              <span className="text-muted-foreground">{t('تاريخ التعيين:', 'Hire Date:')}</span>{' '}
+                              <span className="font-medium">{selEmp.hireDate ? formatDate(selEmp.hireDate) : '-'}</span>
+                            </div>
                             {newEvalExisting && (
-                              <Badge variant="outline" className="ms-2 bg-[hsl(var(--stat-yellow))]/10 text-[hsl(var(--stat-yellow))] border-[hsl(var(--stat-yellow))]">
-                                {t(`تقييم موجود (${newEvalExisting.status === 'draft' ? 'مسودة' : newEvalExisting.status === 'submitted' ? 'مرسل' : 'معتمد'})`, `Existing (${newEvalExisting.status})`)}
-                              </Badge>
+                              <div className="mt-1">
+                                <Badge variant="outline" className="bg-[hsl(var(--stat-yellow))]/10 text-[hsl(var(--stat-yellow))] border-[hsl(var(--stat-yellow))]">
+                                  {t(`تقييم موجود (${newEvalExisting.status === 'draft' ? 'مسودة' : newEvalExisting.status === 'submitted' ? 'مرسل' : 'معتمد'})`, `Existing (${newEvalExisting.status})`)}
+                                </Badge>
+                              </div>
                             )}
                           </div>
 
