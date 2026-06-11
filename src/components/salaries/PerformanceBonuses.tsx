@@ -259,7 +259,8 @@ export const PerformanceBonuses = () => {
 
   // Inline edit: update a single employee's percentage, recompute amount, and auto-save to performance_reviews (debounced)
   const updateRowPercentage = (employeeId: string, newPct: number) => {
-    const pct = Math.max(0, Math.min(100, isNaN(newPct) ? 0 : newPct));
+    const raw = Math.max(0, Math.min(100, isNaN(newPct) ? 0 : newPct));
+    const pct = Math.round(raw / 2.5) * 2.5;
     setRows(prev => prev.map(r => {
       if (r.employee_id !== employeeId) return r;
       const amount = Math.round((r.gross_salary * pct / 100) * 100) / 100;
@@ -712,7 +713,7 @@ export const PerformanceBonuses = () => {
                                 type="number"
                                 min="0"
                                 max="100"
-                                step="0.5"
+                                step="2.5"
                                 value={r.percentage}
                                 onChange={(e) => updateRowPercentage(r.employee_id, parseFloat(e.target.value))}
                                 className="h-8 pe-6 text-sm"
