@@ -585,6 +585,9 @@ export const PerformanceReviewForm = () => {
               <span className="font-medium">{ar ? 'الموظف المحدد:' : 'Selected:'}</span>{' '}
               <span className="text-primary font-semibold">{ar ? selectedEmp.nameAr : selectedEmp.nameEn}</span>
               {' - '}{selectedEmp.department}
+              {' - '}
+              <span className="text-muted-foreground">{ar ? 'تاريخ التعيين:' : 'Hire Date:'}</span>{' '}
+              <span className="font-medium">{selectedEmp.hireDate ? formatDate(selectedEmp.hireDate) : '-'}</span>
               {existingReview && (
                 <Badge variant="outline" className="ml-2 bg-stat-yellow/10 text-stat-yellow border-stat-yellow">
                   {ar ? `تقييم موجود (${existingReview.status === 'draft' ? 'مسودة' : existingReview.status === 'submitted' ? 'مرسل' : 'معتمد'})` : `Existing (${existingReview.status})`}
