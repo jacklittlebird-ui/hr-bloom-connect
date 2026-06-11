@@ -259,11 +259,29 @@ const Users = () => {
         return all;
       };
 
+      // Paginate employees to bypass PostgREST's default 1000-row limit
+      const fetchAllEmployees = async () => {
+        const pageSize = 1000;
+        const all: any[] = [];
+        for (let from = 0; ; from += pageSize) {
+          const { data, error } = await supabase
+            .from('employees')
+            .select('id, employee_code, name_ar, name_en')
+            .order('employee_code')
+            .range(from, from + pageSize - 1);
+          if (error) { console.warn('employees fetch error:', error); break; }
+          if (!data || data.length === 0) break;
+          all.push(...data);
+          if (data.length < pageSize) break;
+        }
+        return { data: all } as { data: any[] };
+      };
+
       const [roles, profilesRes, stationsRes, empsRes, deptsRes, dmDeptsRes, shrStationsRes] = await Promise.all([
         fetchAllRoles(),
         supabase.from('permission_profiles' as any).select('*'),
         supabase.from('stations').select('id, code, name_ar, name_en'),
-        supabase.from('employees').select('id, employee_code, name_ar, name_en').order('employee_code').range(0, 9999),
+        fetchAllEmployees(),
         supabase.from('departments').select('id, name_ar, name_en').order('name_ar'),
         supabase.from('department_manager_departments' as any).select('user_id, department_id'),
         supabase.from('station_hr_stations' as any).select('user_id, station_id'),
