@@ -13,13 +13,14 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { Search, Eye, Edit, Star, FileText, Printer, Download, FileSpreadsheet, Save, Send, Target, TrendingUp, Lightbulb, MessageSquare, Trash2, RotateCcw, Loader2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
 import { initialDepartments } from '@/data/departments';
+import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { toast } from 'sonner';
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
@@ -27,6 +28,11 @@ const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 export const PerformanceList = () => {
   const { t, isRTL, language } = useLanguage();
   const { reviews, updateReview, deleteReview } = usePerformanceData();
+  const { employees } = useEmployeeData();
+  const getHireDate = (review: PerformanceReview) => {
+    const emp = employees.find(e => e.id === review.employeeId || e.employeeId === review.employeeId);
+    return emp?.hireDate ? formatDate(emp.hireDate) : '-';
+  };
   const { exportToCSV, exportToPDF, handlePrint, reportRef } = useReportExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -303,6 +309,7 @@ export const PerformanceList = () => {
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.employee')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.department')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
+                  <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'الفترة' : 'Period'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.score')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.status')}</TableHead>
@@ -316,6 +323,7 @@ export const PerformanceList = () => {
                     <TableCell className="font-medium">{review.employeeName}</TableCell>
                     <TableCell>{review.department}</TableCell>
                     <TableCell>{getStationLabel(review.station)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">{getHireDate(review)}</TableCell>
                     <TableCell>{review.quarter} {review.year}</TableCell>
                     <TableCell>
                       <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
