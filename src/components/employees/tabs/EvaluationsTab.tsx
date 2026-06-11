@@ -68,7 +68,7 @@ export const EvaluationsTab = ({ employee }: EvaluationsTabProps) => {
           <TableBody>
             {empEvals.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   <Star className="w-8 h-8 mx-auto mb-2 opacity-30" />
                   {ar ? 'لا توجد تقييمات' : 'No evaluations'}
                 </TableCell>
@@ -77,6 +77,7 @@ export const EvaluationsTab = ({ employee }: EvaluationsTabProps) => {
               empEvals.map(ev => (
                 <TableRow key={ev.id}>
                   <TableCell>{formatDate(ev.reviewDate)}</TableCell>
+                  <TableCell className="whitespace-nowrap">{employee.hireDate ? formatDate(employee.hireDate) : '-'}</TableCell>
                   <TableCell>{ev.quarter}</TableCell>
                   <TableCell>{ev.year}</TableCell>
                   <TableCell>
