@@ -2204,8 +2204,8 @@ const StationManagerPortal = () => {
                                 <span className="text-primary font-semibold">{ar ? selEmp.nameAr : selEmp.nameEn}</span>
                               </div>
                               <div className="mt-1">
-                                <span className="text-muted-foreground">{t('الرقم:', 'ID:')}</span>{' '}
-                                <span className="font-medium">{selEmp.employeeId || '-'}</span>
+                                <span className="text-muted-foreground">{t('الوظيفة:', 'Job:')}</span>{' '}
+                                <span className="font-medium">{selEmp.jobTitle || '-'}</span>
                                 {' · '}
                                 <span className="text-muted-foreground">{t('القسم:', 'Dept:')}</span>{' '}
                                 <span className="font-medium">{selEmp.department || '-'}</span>
