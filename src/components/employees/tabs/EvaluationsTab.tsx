@@ -56,6 +56,7 @@ export const EvaluationsTab = ({ employee }: EvaluationsTabProps) => {
           <TableHeader>
             <TableRow className="bg-primary text-primary-foreground">
               <TableHead className="text-primary-foreground">{ar ? 'التاريخ' : 'Date'}</TableHead>
+              <TableHead className="text-primary-foreground">{ar ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
               <TableHead className="text-primary-foreground">{ar ? 'الربع' : 'Quarter'}</TableHead>
               <TableHead className="text-primary-foreground">{ar ? 'السنة' : 'Year'}</TableHead>
               <TableHead className="text-primary-foreground">{ar ? 'الدرجة' : 'Score'}</TableHead>
