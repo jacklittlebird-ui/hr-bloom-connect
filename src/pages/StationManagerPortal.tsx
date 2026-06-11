@@ -2198,7 +2198,7 @@ const StationManagerPortal = () => {
                                   {BONUS_OPTIONS.map(p => (
                                     <CommandItem key={p} value={String(p)} onSelect={() => { setEvalBonusPercentage(String(p)); setBonusSearch(''); setBonusOpen(false); }}>
                                       <Check className={cn("me-2 h-4 w-4", evalBonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
-                                      {p}%
+                                      {p.toFixed(2)}%
                                     </CommandItem>
                                   ))}
                                 </CommandGroup>
@@ -2745,7 +2745,7 @@ const StationManagerPortal = () => {
                           {BONUS_OPTIONS.map(p => (
                             <CommandItem key={p} value={String(p)} onSelect={() => { setEvalBonusPercentage(String(p)); setBonusSearch(''); setBonusOpen(false); }}>
                               <Check className={cn("me-2 h-4 w-4", evalBonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
-                              {p}%
+                              {p.toFixed(2)}%
                             </CommandItem>
                           ))}
                         </CommandGroup>
@@ -2968,7 +2968,7 @@ const StationManagerPortal = () => {
                           {BONUS_OPTIONS.map(p => (
                             <CommandItem key={p} value={String(p)} onSelect={() => { setEditEvalBonusPercentage(String(p)); setEditBonusSearch(''); setEditBonusOpen(false); }}>
                               <Check className={cn("me-2 h-4 w-4", editEvalBonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
-                              {p}%
+                              {p.toFixed(2)}%
                             </CommandItem>
                           ))}
                         </CommandGroup>
