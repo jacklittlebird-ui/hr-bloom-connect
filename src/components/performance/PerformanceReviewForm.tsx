@@ -828,7 +828,7 @@ export const PerformanceReviewForm = () => {
                             }}
                           >
                             <Check className={cn("me-2 h-4 w-4", bonusPercentage === String(p) ? "opacity-100" : "opacity-0")} />
-                            {p}%
+                            {p.toFixed(2)}%
                           </CommandItem>
                         ))}
                       </CommandGroup>
