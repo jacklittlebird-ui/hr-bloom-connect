@@ -309,6 +309,7 @@ export const PerformanceList = () => {
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.employee')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.department')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
+                  <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'الفترة' : 'Period'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.score')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.status')}</TableHead>
@@ -322,6 +323,7 @@ export const PerformanceList = () => {
                     <TableCell className="font-medium">{review.employeeName}</TableCell>
                     <TableCell>{review.department}</TableCell>
                     <TableCell>{getStationLabel(review.station)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">{getHireDate(review)}</TableCell>
                     <TableCell>{review.quarter} {review.year}</TableCell>
                     <TableCell>
                       <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
