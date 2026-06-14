@@ -57,15 +57,15 @@ interface PerformanceDataContextType {
 const PerformanceDataContext = createContext<PerformanceDataContextType | undefined>(undefined);
 
 // Specific columns - no SELECT *
-const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, bonus_percentage, employees(name_ar)';
+const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, bonus_percentage, employees(name_ar, stations(code), departments(name_ar))';
 const EMPLOYEE_PERF_COLS = 'id, employee_id, quarter, year, score, status, review_date, strengths, improvements, bonus_percentage';
 
 const mapRow = (r: any): PerformanceReview => ({
   id: r.id,
   employeeId: r.employee_id,
   employeeName: (r.employees as any)?.name_ar || '',
-  department: '',
-  station: '',
+  department: (r.employees as any)?.departments?.name_ar || '',
+  station: (r.employees as any)?.stations?.code || '',
   quarter: r.quarter,
   year: r.year,
   score: r.score ?? 0,
@@ -79,6 +79,7 @@ const mapRow = (r: any): PerformanceReview => ({
   criteria: r.criteria ? (r.criteria as CriteriaItem[]) : undefined,
   bonusPercentage: r.bonus_percentage != null ? Number(r.bonus_percentage) : undefined,
 });
+
 
 export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [reviews, setReviews] = useState<PerformanceReview[]>([]);
