@@ -291,8 +291,16 @@ const StationManagerPortal = () => {
         scoped = scoped.filter(e => e.department && allowedNames.has(e.department));
       }
     }
+    // Station managers of these stations cannot see the "Administration" department
+    const RESTRICTED_STATIONS = new Set(['marsa', 'aswan', 'luxor', 'sohag', 'asyut']);
+    if (user?.role === 'station_manager' && RESTRICTED_STATIONS.has(activeStation || '')) {
+      scoped = scoped.filter(e => {
+        const d = (e.department || '').trim();
+        return d !== 'الإدارة' && d.toLowerCase() !== 'administration';
+      });
+    }
     return scoped;
-  }, [employees, activeStation, isAreaManager, selectedStation, user?.stations, isDepartmentManager, user?.departmentId, user?.departmentName, user?.departmentNameAr, user?.departmentIds, user?.departmentNames, user?.departmentNamesAr]);
+  }, [employees, activeStation, isAreaManager, selectedStation, user?.stations, user?.role, isDepartmentManager, user?.departmentId, user?.departmentName, user?.departmentNameAr, user?.departmentIds, user?.departmentNames, user?.departmentNamesAr]);
 
   // === Today's attendance for stat cards ===
   const [todayAttRecords, setTodayAttRecords] = useState<any[]>([]);
