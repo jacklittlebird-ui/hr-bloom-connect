@@ -126,6 +126,7 @@ export const EmployeeTable = ({ employees, onDelete, currentPage = 1, pageSize =
               </TableCell>
               <TableCell className={cn(isRTL && "text-right")}>
                 {(() => {
+                  if (employee.stationName) return employee.stationName;
                   const st = stationLocations.find(s => s.value === employee.stationLocation);
                   return st ? (language === 'ar' ? st.labelAr : st.labelEn) : (employee.stationLocation || '-');
                 })()}
