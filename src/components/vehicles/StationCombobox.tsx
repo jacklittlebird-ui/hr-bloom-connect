@@ -71,7 +71,6 @@ export const StationCombobox = ({
                   >
                     <Check className={cn('me-2 h-4 w-4', value === s.id ? 'opacity-100' : 'opacity-0')} />
                     <span className="truncate">{label}</span>
-                    {s.code && <span className="ms-auto text-xs text-muted-foreground font-mono">{s.code}</span>}
                   </CommandItem>
                 );
               })}
