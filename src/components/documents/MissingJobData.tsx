@@ -39,7 +39,7 @@ export const MissingJobData = () => {
   const missingEmployees = useMemo(() => {
     return employees
       .filter(e => e.status === 'active')
-      .filter(e => !e.hireDate || !e.jobLevel)
+      .filter(e => !e.hireDate || !e.jobLevel || !e.jobDegree)
       .filter(e => {
         if (search && !e.nameAr.includes(search) && !e.nameEn.toLowerCase().includes(search.toLowerCase()) && !e.employeeId.includes(search)) return false;
         if (selectedStation !== 'all' && e.stationName !== selectedStation) return false;
@@ -59,12 +59,14 @@ export const MissingJobData = () => {
       { headerAr: 'الوظيفة', headerEn: 'Job Title', key: 'jobTitle' },
       { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hireDate' },
       { headerAr: 'المستوى الوظيفي', headerEn: 'Job Level', key: 'jobLevel' },
+      { headerAr: 'الدرجة الوظيفية', headerEn: 'Job Degree', key: 'jobDegree' },
     ];
     const data = missingEmployees.map(e => ({
       code: e.employeeId, nameAr: e.nameAr, nameEn: e.nameEn,
       station: e.stationName || '—', jobTitle: e.jobTitle || '—',
       hireDate: e.hireDate || (ar ? 'غير محدد' : 'Missing'),
       jobLevel: e.jobLevel || (ar ? 'غير محدد' : 'Missing'),
+      jobDegree: e.jobDegree || (ar ? 'غير محدد' : 'Missing'),
     }));
     exportBilingualCSV({ titleAr: 'الموظفين بدون بيانات تعيين', titleEn: 'Employees Missing Job Data', data, columns, fileName: 'Missing_Job_Data',
       summaryCards: [{ label: ar ? 'بدون بيانات تعيين' : 'Missing Job Data', value: String(missingEmployees.length) }],
@@ -74,8 +76,8 @@ export const MissingJobData = () => {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-destructive/10"><AlertTriangle className="w-5 h-5 text-destructive" /></div><div><p className="text-2xl font-bold">{missingEmployees.length}</p><p className="text-xs text-muted-foreground">{ar ? 'موظف بدون تاريخ تعيين أو مستوى وظيفي' : 'Missing hire date or job level'}</p></div></CardContent></Card>
-        <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Briefcase className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold">{employees.filter(e => e.status === 'active' && e.hireDate && e.jobLevel).length}</p><p className="text-xs text-muted-foreground">{ar ? 'موظف مكتمل البيانات' : 'Employees with complete data'}</p></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-destructive/10"><AlertTriangle className="w-5 h-5 text-destructive" /></div><div><p className="text-2xl font-bold">{missingEmployees.length}</p><p className="text-xs text-muted-foreground">{ar ? 'موظف بدون تاريخ تعيين أو مستوى أو درجة وظيفية' : 'Missing hire date, job level or job degree'}</p></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-3"><div className="p-2 rounded-lg bg-primary/10"><Briefcase className="w-5 h-5 text-primary" /></div><div><p className="text-2xl font-bold">{employees.filter(e => e.status === 'active' && e.hireDate && e.jobLevel && e.jobDegree).length}</p><p className="text-xs text-muted-foreground">{ar ? 'موظف مكتمل البيانات' : 'Employees with complete data'}</p></div></CardContent></Card>
       </div>
 
       <div className={cn("flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3", isRTL && "sm:flex-row-reverse")}>
@@ -119,6 +121,7 @@ export const MissingJobData = () => {
                   <TableHead>{ar ? 'الوظيفة' : 'Job Title'}</TableHead>
                   <TableHead>{ar ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                   <TableHead>{ar ? 'المستوى الوظيفي' : 'Job Level'}</TableHead>
+                  <TableHead>{ar ? 'الدرجة الوظيفية' : 'Job Degree'}</TableHead>
                   <TableHead className="print:hidden">{ar ? 'الإجراءات' : 'Actions'}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -131,13 +134,14 @@ export const MissingJobData = () => {
                     <TableCell>{emp.jobTitle || '—'}</TableCell>
                     <TableCell>{emp.hireDate ? emp.hireDate : <Badge variant="destructive" className="text-xs">{ar ? 'غير محدد' : 'Missing'}</Badge>}</TableCell>
                     <TableCell>{emp.jobLevel ? emp.jobLevel : <Badge variant="destructive" className="text-xs">{ar ? 'غير محدد' : 'Missing'}</Badge>}</TableCell>
+                    <TableCell>{emp.jobDegree ? emp.jobDegree : <Badge variant="destructive" className="text-xs">{ar ? 'غير محدد' : 'Missing'}</Badge>}</TableCell>
                     <TableCell className="print:hidden">
                       <Button size="sm" variant="outline" onClick={() => navigate(`/employees/${emp.id}`)}>{ar ? 'تعديل' : 'Edit'}</Button>
                     </TableCell>
                   </TableRow>
                 ))}
                 {paginatedItems.length === 0 && (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{ar ? 'جميع الموظفين لديهم بيانات مكتملة' : 'All employees have complete data'}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'جميع الموظفين لديهم بيانات مكتملة' : 'All employees have complete data'}</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
