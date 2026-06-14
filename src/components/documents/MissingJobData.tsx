@@ -158,20 +158,55 @@ export const MissingJobData = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedItems.map(emp => (
+                {paginatedItems.map(emp => {
+                  const draft = edits[emp.id] || {};
+                  const hireVal = draft.hireDate ?? emp.hireDate ?? '';
+                  const levelVal = draft.jobLevel ?? emp.jobLevel ?? '';
+                  const degreeVal = draft.jobDegree ?? emp.jobDegree ?? '';
+                  const dirty = !!edits[emp.id] && (
+                    (draft.hireDate !== undefined && draft.hireDate !== (emp.hireDate || '')) ||
+                    (draft.jobLevel !== undefined && draft.jobLevel !== (emp.jobLevel || '')) ||
+                    (draft.jobDegree !== undefined && draft.jobDegree !== (emp.jobDegree || ''))
+                  );
+                  return (
                   <TableRow key={emp.id}>
                     <TableCell className="font-mono text-sm">{emp.employeeId}</TableCell>
                     <TableCell className="font-medium">{ar ? emp.nameAr : emp.nameEn}</TableCell>
                     <TableCell>{emp.stationName || '—'}</TableCell>
                     <TableCell>{emp.jobTitle || '—'}</TableCell>
-                    <TableCell>{emp.hireDate ? emp.hireDate : <Badge variant="destructive" className="text-xs">{ar ? 'غير محدد' : 'Missing'}</Badge>}</TableCell>
-                    <TableCell>{emp.jobLevel ? emp.jobLevel : <Badge variant="destructive" className="text-xs">{ar ? 'غير محدد' : 'Missing'}</Badge>}</TableCell>
-                    <TableCell>{emp.jobDegree ? emp.jobDegree : <Badge variant="destructive" className="text-xs">{ar ? 'غير محدد' : 'Missing'}</Badge>}</TableCell>
+                    <TableCell className="min-w-[150px]">
+                      <Input type="date" value={hireVal} onChange={e => setField(emp.id, 'hireDate', e.target.value)} className="h-9" />
+                      {!emp.hireDate && !draft.hireDate && <Badge variant="destructive" className="text-[10px] mt-1">{ar ? 'غير محدد' : 'Missing'}</Badge>}
+                    </TableCell>
+                    <TableCell className="min-w-[140px]">
+                      <Select value={levelVal} onValueChange={v => setField(emp.id, 'jobLevel', v)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder={ar ? 'اختر' : 'Select'} /></SelectTrigger>
+                        <SelectContent>
+                          {JOB_LEVELS.map(l => <SelectItem key={l} value={l}>{t(`employees.jobLevel.${l}`)}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {!emp.jobLevel && !draft.jobLevel && <Badge variant="destructive" className="text-[10px] mt-1">{ar ? 'غير محدد' : 'Missing'}</Badge>}
+                    </TableCell>
+                    <TableCell className="min-w-[110px]">
+                      <Select value={degreeVal} onValueChange={v => setField(emp.id, 'jobDegree', v)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder={ar ? 'اختر' : 'Select'} /></SelectTrigger>
+                        <SelectContent>
+                          {JOB_DEGREES.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {!emp.jobDegree && !draft.jobDegree && <Badge variant="destructive" className="text-[10px] mt-1">{ar ? 'غير محدد' : 'Missing'}</Badge>}
+                    </TableCell>
                     <TableCell className="print:hidden">
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/employees/${emp.id}`)}>{ar ? 'تعديل' : 'Edit'}</Button>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant={dirty ? 'default' : 'outline'} disabled={!dirty || savingId === emp.id} onClick={() => handleSave(emp)}>
+                          {savingId === emp.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => navigate(`/employees/${emp.id}`)}>{ar ? 'الملف' : 'Profile'}</Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
                 {paginatedItems.length === 0 && (
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'جميع الموظفين لديهم بيانات مكتملة' : 'All employees have complete data'}</TableCell></TableRow>
                 )}
