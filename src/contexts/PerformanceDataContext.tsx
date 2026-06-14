@@ -56,9 +56,55 @@ interface PerformanceDataContextType {
 
 const PerformanceDataContext = createContext<PerformanceDataContextType | undefined>(undefined);
 
-// Specific columns - no SELECT *
-const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, bonus_percentage, employees(name_ar, stations(code), departments(name_ar))';
-const EMPLOYEE_PERF_COLS = 'id, employee_id, quarter, year, score, status, review_date, strengths, improvements, bonus_percentage';
+// Specific columns - no SELECT * and no embedded joins because this schema has no FK relationships
+const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, bonus_percentage, created_at';
+const EMPLOYEE_PERF_COLS = 'id, employee_id, quarter, year, score, status, review_date, strengths, improvements, bonus_percentage, created_at';
+const PERF_PAGE_SIZE = 1000;
+
+const fetchAllPerformanceRows = async (buildQuery: () => any) => {
+  const rows: any[] = [];
+  let from = 0;
+  for (let page = 0; page < 50; page++) {
+    const { data, error } = await buildQuery().range(from, from + PERF_PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    rows.push(...data);
+    if (data.length < PERF_PAGE_SIZE) break;
+    from += PERF_PAGE_SIZE;
+  }
+  return rows;
+};
+
+const hydrateRows = async (rows: any[]) => {
+  const employeeIds = Array.from(new Set(rows.map(r => r.employee_id).filter(Boolean)));
+  if (employeeIds.length === 0) return rows;
+
+  const { data: employees, error: employeesError } = await supabase
+    .from('employees')
+    .select('id, name_ar, station_id, department_id')
+    .in('id', employeeIds);
+  if (employeesError) throw employeesError;
+
+  const stationIds = Array.from(new Set((employees || []).map((e: any) => e.station_id).filter(Boolean)));
+  const departmentIds = Array.from(new Set((employees || []).map((e: any) => e.department_id).filter(Boolean)));
+
+  const [{ data: stations, error: stationsError }, { data: departments, error: departmentsError }] = await Promise.all([
+    stationIds.length ? supabase.from('stations').select('id, code').in('id', stationIds) : Promise.resolve({ data: [], error: null }),
+    departmentIds.length ? supabase.from('departments').select('id, name_ar').in('id', departmentIds) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (stationsError) throw stationsError;
+  if (departmentsError) throw departmentsError;
+
+  const stationById = new Map((stations || []).map((s: any) => [s.id, s.code]));
+  const departmentById = new Map((departments || []).map((d: any) => [d.id, d.name_ar]));
+  const employeeById = new Map((employees || []).map((e: any) => [e.id, {
+    name_ar: e.name_ar,
+    stations: { code: stationById.get(e.station_id) || '' },
+    departments: { name_ar: departmentById.get(e.department_id) || '' },
+  }]));
+
+  return rows.map(row => ({ ...row, employees: employeeById.get(row.employee_id) || null }));
+};
 
 const mapRow = (r: any): PerformanceReview => ({
   id: r.id,
@@ -91,15 +137,15 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
     const cacheKey = `performance_${scopedEmployeeId || 'all'}`;
     
     const result = await debouncedFetch(cacheKey, async () => {
-      let query;
+      let rows;
       if (isEmployee && scopedEmployeeId) {
-        query = supabase.from('performance_reviews').select(EMPLOYEE_PERF_COLS).eq('employee_id', scopedEmployeeId).order('created_at', { ascending: false }).limit(20);
+        rows = await fetchAllPerformanceRows(() => supabase.from('performance_reviews').select(EMPLOYEE_PERF_COLS).eq('employee_id', scopedEmployeeId).order('created_at', { ascending: false }).limit(20));
       } else {
-        query = supabase.from('performance_reviews').select(ADMIN_PERF_COLS).order('created_at', { ascending: false });
+        rows = await fetchAllPerformanceRows(() => supabase.from('performance_reviews').select(ADMIN_PERF_COLS).order('created_at', { ascending: false }));
       }
-      const { data } = await query;
-      trackQuery('performance', data?.length || 0);
-      return (data || []).map(mapRow);
+      const data = await hydrateRows(rows);
+      trackQuery('performance', data.length || 0);
+      return data.map(mapRow);
     }, { ttlMs: 60_000 });
 
     setReviews(result);
