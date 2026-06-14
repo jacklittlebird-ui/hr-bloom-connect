@@ -40,6 +40,7 @@ interface ResignedEmployee {
   social_insurance_start_date: string | null;
   social_insurance_end_date: string | null;
   social_insurance_closed: boolean | null;
+  social_insurance_closed_date: string | null;
   documents_originals_received: boolean | null;
   national_id: string | null;
   education_ar: string | null;
@@ -84,7 +85,7 @@ export const ResignedInsuranceRenewals = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('employees')
-      .select('id, employee_code, name_ar, name_en, status, social_insurance_no, social_insurance_start_date, social_insurance_end_date, social_insurance_closed, documents_originals_received, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, resignation_date, station_id, department_id')
+      .select('id, employee_code, name_ar, name_en, status, social_insurance_no, social_insurance_start_date, social_insurance_end_date, social_insurance_closed, social_insurance_closed_date, documents_originals_received, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, resignation_date, station_id, department_id')
       .in('status', RESIGNED_STATUSES as unknown as ResignedStatus[])
       .order('resignation_date', { ascending: false, nullsFirst: false });
 
