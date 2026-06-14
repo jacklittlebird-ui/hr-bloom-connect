@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { StationCombobox, StationOption } from '@/components/vehicles/StationCombobox';
 
 interface JobInfoTabProps {
   employee: Employee;
@@ -19,13 +20,18 @@ export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) =>
   const { t, isRTL } = useLanguage();
 
   const [departments, setDepartments] = useState<{ id: string; name_ar: string; name_en: string }[]>([]);
+  const [stations, setStations] = useState<StationOption[]>([]);
   useEffect(() => {
     supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true).then(({ data }) => {
       if (data) setDepartments(data);
     });
+    supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar').then(({ data }) => {
+      if (data) setStations(data);
+    });
   }, []);
 
   const [formData, setFormData] = useState({
+    stationLocation: employee.stationId || employee.stationLocation || '',
     departmentId: employee.departmentId || '',
     jobTitleAr: employee.jobTitleAr || employee.jobTitle || '',
     jobTitleEn: employee.jobTitleEn || '',
@@ -51,6 +57,17 @@ export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) =>
   return (
     <div className="p-6 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <div className="space-y-2">
+          <Label className={cn(isRTL && "text-right block")}>{t('employees.fields.stationLocation')}</Label>
+          <StationCombobox
+            stations={stations}
+            value={formData.stationLocation || null}
+            onChange={(stationId) => updateField('stationLocation', stationId || '')}
+            isAr={isRTL}
+            placeholder={isRTL ? 'اختر المحطة' : 'Select station'}
+            className="w-full"
+          />
+        </div>
         <div className="space-y-2">
           <Label className={cn(isRTL && "text-right block")}>{t('employees.fields.department')}</Label>
           <Select value={formData.departmentId} onValueChange={v => {
