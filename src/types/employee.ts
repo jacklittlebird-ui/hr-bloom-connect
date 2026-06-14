@@ -55,6 +55,7 @@ export interface Employee {
   hasGovernmentHealthInsurance?: boolean;
   hasSocialInsurance?: boolean;
   socialInsuranceClosed?: boolean;
+  socialInsuranceClosedDate?: string;
   documentsOriginalsReceived?: boolean;
   contractType?: string;
   resigned?: boolean;
