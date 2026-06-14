@@ -80,15 +80,20 @@ export const AddEmployeeDialog = ({ open, onClose }: AddEmployeeDialogProps) => 
 
     setSaving(true);
     try {
-      // Resolve station_id from stationLocation code
+      // Resolve station_id from stationLocation (UUID from dynamic stations list, with legacy code fallback)
       let stationId: string | null = null;
       if (data.stationLocation) {
-        const { data: stationRow } = await supabase
-          .from('stations')
-          .select('id')
-          .eq('code', data.stationLocation)
-          .single();
-        stationId = stationRow?.id || null;
+        const stationValue = data.stationLocation.trim();
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(stationValue)) {
+          stationId = stationValue;
+        } else {
+          const { data: stationRow } = await supabase
+            .from('stations')
+            .select('id')
+            .eq('code', stationValue)
+            .single();
+          stationId = stationRow?.id || null;
+        }
       }
 
       const row: Record<string, any> = {
