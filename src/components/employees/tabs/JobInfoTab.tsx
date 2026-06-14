@@ -39,6 +39,7 @@ export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) =>
     resignationReason: employee.resignationReason || '',
     hasSpecialNeeds: employee.hasSpecialNeeds || false,
     socialInsuranceClosed: employee.socialInsuranceClosed || false,
+    socialInsuranceClosedDate: employee.socialInsuranceClosedDate || '',
     documentsOriginalsReceived: employee.documentsOriginalsReceived || false,
   });
 
@@ -155,6 +156,10 @@ export const JobInfoTab = ({ employee, onUpdate, readOnly }: JobInfoTabProps) =>
         <div className="flex items-center gap-2">
           <Checkbox id="socialInsuranceClosed" checked={formData.socialInsuranceClosed as boolean} onCheckedChange={v => updateField('socialInsuranceClosed', !!v)} disabled={readOnly} />
           <Label htmlFor="socialInsuranceClosed">{isRTL ? 'تم اغلاق التأمين الإجتماعي' : 'Social Insurance Closed'}</Label>
+        </div>
+        <div className="space-y-2">
+          <Label className={cn(isRTL && "text-right block")}>{isRTL ? 'تاريخ اغلاق التأمينات' : 'Insurance Closure Date'}</Label>
+          <Input type="date" value={formData.socialInsuranceClosedDate} onChange={e => updateField('socialInsuranceClosedDate', e.target.value)} className={cn(isRTL && "text-right")} disabled={readOnly} />
         </div>
         <div className="flex items-center gap-2">
           <Checkbox id="documentsOriginalsReceived" checked={formData.documentsOriginalsReceived as boolean} onCheckedChange={v => updateField('documentsOriginalsReceived', !!v)} disabled={readOnly} />

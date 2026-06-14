@@ -949,6 +949,7 @@ export type Database = {
           resigned: boolean | null
           sick_leave_balance: number | null
           social_insurance_closed: boolean
+          social_insurance_closed_date: string | null
           social_insurance_end_date: string | null
           social_insurance_no: string | null
           social_insurance_start_date: string | null
@@ -1041,6 +1042,7 @@ export type Database = {
           resigned?: boolean | null
           sick_leave_balance?: number | null
           social_insurance_closed?: boolean
+          social_insurance_closed_date?: string | null
           social_insurance_end_date?: string | null
           social_insurance_no?: string | null
           social_insurance_start_date?: string | null
@@ -1133,6 +1135,7 @@ export type Database = {
           resigned?: boolean | null
           sick_leave_balance?: number | null
           social_insurance_closed?: boolean
+          social_insurance_closed_date?: string | null
           social_insurance_end_date?: string | null
           social_insurance_no?: string | null
           social_insurance_start_date?: string | null

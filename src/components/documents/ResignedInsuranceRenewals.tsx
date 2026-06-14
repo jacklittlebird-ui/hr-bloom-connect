@@ -40,6 +40,7 @@ interface ResignedEmployee {
   social_insurance_start_date: string | null;
   social_insurance_end_date: string | null;
   social_insurance_closed: boolean | null;
+  social_insurance_closed_date: string | null;
   documents_originals_received: boolean | null;
   national_id: string | null;
   education_ar: string | null;
@@ -76,6 +77,7 @@ export const ResignedInsuranceRenewals = () => {
   const [editDialog, setEditDialog] = useState<ResignedEmployee | null>(null);
   const [newStartDate, setNewStartDate] = useState('');
   const [newEndDate, setNewEndDate] = useState('');
+  const [newClosedDate, setNewClosedDate] = useState('');
   const [newClosed, setNewClosed] = useState(false);
   const [newDocsReceived, setNewDocsReceived] = useState(false);
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
@@ -84,7 +86,7 @@ export const ResignedInsuranceRenewals = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('employees')
-      .select('id, employee_code, name_ar, name_en, status, social_insurance_no, social_insurance_start_date, social_insurance_end_date, social_insurance_closed, documents_originals_received, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, resignation_date, station_id, department_id')
+      .select('id, employee_code, name_ar, name_en, status, social_insurance_no, social_insurance_start_date, social_insurance_end_date, social_insurance_closed, social_insurance_closed_date, documents_originals_received, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, resignation_date, station_id, department_id')
       .in('status', RESIGNED_STATUSES as unknown as ResignedStatus[])
       .order('resignation_date', { ascending: false, nullsFirst: false });
 
@@ -136,6 +138,7 @@ export const ResignedInsuranceRenewals = () => {
     setEditDialog(emp);
     setNewStartDate(emp.social_insurance_start_date || '');
     setNewEndDate(emp.social_insurance_end_date || '');
+    setNewClosedDate(emp.social_insurance_closed_date || '');
     setNewClosed(!!emp.social_insurance_closed);
     setNewDocsReceived(!!emp.documents_originals_received);
   };
@@ -146,6 +149,7 @@ export const ResignedInsuranceRenewals = () => {
       social_insurance_start_date: newStartDate || null,
       social_insurance_end_date: newEndDate || null,
       social_insurance_closed: newClosed,
+      social_insurance_closed_date: newClosedDate || null,
       documents_originals_received: newDocsReceived,
     }).eq('id', editDialog.id);
     if (error) { toast({ title: ar ? 'خطأ' : 'Error', description: error.message, variant: 'destructive' }); return; }
@@ -184,6 +188,7 @@ export const ResignedInsuranceRenewals = () => {
       { headerAr: 'تاريخ الانتهاء', headerEn: 'End Date', key: 'endDate' },
       { headerAr: 'تاريخ الاستقالة', headerEn: 'Resignation Date', key: 'resDate' },
       { headerAr: 'تم اغلاق التأمين', headerEn: 'Insurance Closed', key: 'closed' },
+      { headerAr: 'تاريخ اغلاق التأمينات', headerEn: 'Insurance Closure Date', key: 'closedDate' },
       { headerAr: 'تم استلام أصول المستندات', headerEn: 'Documents Received', key: 'docs' },
     ];
     const data = filtered.map(e => ({
@@ -201,6 +206,7 @@ export const ResignedInsuranceRenewals = () => {
       endDate: e.social_insurance_end_date || '-',
       resDate: e.resignation_date || '-',
       closed: e.social_insurance_closed ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No'),
+      closedDate: e.social_insurance_closed_date || '-',
       docs: e.documents_originals_received ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No'),
     }));
     exportBilingualCSV({
@@ -355,6 +361,7 @@ export const ResignedInsuranceRenewals = () => {
                     <TableHead>{ar ? 'تاريخ الانتهاء' : 'End Date'}</TableHead>
                     <TableHead>{ar ? 'تاريخ الاستقالة' : 'Resignation Date'}</TableHead>
                     <TableHead>{ar ? 'إغلاق التأمين' : 'Insurance Closed'}</TableHead>
+                    <TableHead>{ar ? 'تاريخ اغلاق التأمينات' : 'Closure Date'}</TableHead>
                     <TableHead>{ar ? 'استلام المستندات' : 'Docs Received'}</TableHead>
                     <TableHead className="print:hidden">{ar ? 'إجراءات' : 'Actions'}</TableHead>
                   </TableRow>
@@ -379,6 +386,7 @@ export const ResignedInsuranceRenewals = () => {
                           ? <Badge className="bg-emerald-600 hover:bg-emerald-700">{ar ? 'تم الإغلاق' : 'Closed'}</Badge>
                           : <Badge variant="destructive">{ar ? 'لم يغلق' : 'Not Closed'}</Badge>}
                       </TableCell>
+                      <TableCell>{emp.social_insurance_closed_date || '-'}</TableCell>
                       <TableCell>
                         {emp.documents_originals_received
                           ? <Badge className="bg-emerald-600 hover:bg-emerald-700">{ar ? 'تم الاستلام' : 'Received'}</Badge>
@@ -411,6 +419,7 @@ export const ResignedInsuranceRenewals = () => {
                 <Checkbox id="closedSI" checked={newClosed} onCheckedChange={v => setNewClosed(!!v)} />
                 <Label htmlFor="closedSI">{ar ? 'تم اغلاق التأمين الإجتماعي' : 'Social Insurance Closed'}</Label>
               </div>
+              <div className="space-y-2"><Label>{ar ? 'تاريخ اغلاق التأمينات' : 'Insurance Closure Date'}</Label><Input type="date" value={newClosedDate} onChange={e => setNewClosedDate(e.target.value)} /></div>
               <div className="flex items-center gap-2">
                 <Checkbox id="docsReceived" checked={newDocsReceived} onCheckedChange={v => setNewDocsReceived(!!v)} />
                 <Label htmlFor="docsReceived">{ar ? 'تم استلام أصول مستنداته' : 'Original Documents Received'}</Label>
