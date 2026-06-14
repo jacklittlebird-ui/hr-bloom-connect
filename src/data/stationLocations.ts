@@ -17,4 +17,5 @@ export const stationLocations = [
   { value: 'link_group', labelAr: 'لينك جروب', labelEn: 'Link Group' },
   { value: 'jordan', labelAr: 'الأردن', labelEn: 'Jordan' },
   { value: 'lkcargo_alex', labelAr: 'لينك كارجو - الإسكندرية', labelEn: 'Link Cargo - Alexandria' },
+  { value: 'link_group_stations', labelAr: 'لينك جروب / محطات', labelEn: 'Link Group / Stations' },
 ];
