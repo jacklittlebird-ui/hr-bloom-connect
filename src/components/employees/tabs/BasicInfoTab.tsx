@@ -8,7 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { stationLocations } from '@/data/stationLocations';
+import { supabase } from '@/integrations/supabase/client';
+import { StationCombobox, StationOption } from '@/components/vehicles/StationCombobox';
 
 interface BasicInfoTabProps {
   employee: Employee;
@@ -17,14 +18,14 @@ interface BasicInfoTabProps {
 }
 
 export const BasicInfoTab = ({ employee, onUpdate, readOnly }: BasicInfoTabProps) => {
-  const { t, isRTL, language } = useLanguage();
-  const ar = language === 'ar';
+  const { t, isRTL } = useLanguage();
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(employee.avatar);
+  const [stations, setStations] = useState<StationOption[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const buildFormData = (emp: Employee) => ({
     employeeId: emp.employeeId || '',
-    stationLocation: emp.stationLocation || '',
+    stationLocation: emp.stationId || emp.stationLocation || '',
     nameAr: emp.nameAr || '',
     nameEn: emp.nameEn || '',
     firstName: emp.firstName || '',
@@ -43,6 +44,12 @@ export const BasicInfoTab = ({ employee, onUpdate, readOnly }: BasicInfoTabProps
   });
 
   const [formData, setFormData] = useState(buildFormData(employee));
+
+  useEffect(() => {
+    supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar').then(({ data }) => {
+      if (data) setStations(data);
+    });
+  }, []);
 
   // Sync form when full employee data loads (e.g. ensureFullEmployee)
   useEffect(() => {
@@ -154,16 +161,14 @@ export const BasicInfoTab = ({ employee, onUpdate, readOnly }: BasicInfoTabProps
         </div>
         <div className="space-y-2">
           <Label className={cn(isRTL && "text-right block")}>{t('employees.fields.stationLocation')} *</Label>
-          <Select value={formData.stationLocation} onValueChange={v => updateField('stationLocation', v)}>
-            <SelectTrigger className={cn(isRTL && "text-right")}>
-              <SelectValue placeholder={t('employees.select')} />
-            </SelectTrigger>
-            <SelectContent>
-              {stationLocations.map(s => (
-                <SelectItem key={s.value} value={s.value}>{ar ? s.labelAr : s.labelEn}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <StationCombobox
+            stations={stations}
+            value={formData.stationLocation || null}
+            onChange={(stationId) => updateField('stationLocation', stationId || '')}
+            isAr={isRTL}
+            placeholder={isRTL ? 'اختر المحطة' : 'Select station'}
+            className="w-full"
+          />
         </div>
         <div className="space-y-2">
           <Label className={cn(isRTL && "text-right block")}>{t('employees.fields.enterStation')}</Label>
