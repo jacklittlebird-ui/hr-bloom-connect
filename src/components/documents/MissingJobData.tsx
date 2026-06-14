@@ -8,21 +8,53 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PaginationControls } from '@/components/ui/pagination-controls';
-import { Search, AlertTriangle, Briefcase, Printer, Download, Building2, MapPin } from 'lucide-react';
+import { Search, AlertTriangle, Briefcase, Printer, Download, Building2, MapPin, Save, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePagination } from '@/hooks/usePagination';
 import { useReportExport } from '@/hooks/useReportExport';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+const JOB_LEVELS = ['worker','driver','messenger','junior','mid','senior','shiftLeader','supervisor','manager','director'];
+const JOB_DEGREES = ['AA','A','B','C'];
 
 export const MissingJobData = () => {
-  const { language, isRTL } = useLanguage();
+  const { language, isRTL, t } = useLanguage();
   const ar = language === 'ar';
-  const { employees } = useEmployeeData();
+  const { employees, updateEmployee } = useEmployeeData();
   const [search, setSearch] = useState('');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
+  const [edits, setEdits] = useState<Record<string, { hireDate?: string; jobLevel?: string; jobDegree?: string }>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
+
+  const setField = (id: string, field: 'hireDate'|'jobLevel'|'jobDegree', value: string) => {
+    setEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  };
+
+  const handleSave = async (emp: any) => {
+    const draft = edits[emp.id] || {};
+    const payload: any = {};
+    if (draft.hireDate !== undefined && draft.hireDate !== emp.hireDate) payload.hireDate = draft.hireDate;
+    if (draft.jobLevel !== undefined && draft.jobLevel !== emp.jobLevel) payload.jobLevel = draft.jobLevel;
+    if (draft.jobDegree !== undefined && draft.jobDegree !== emp.jobDegree) payload.jobDegree = draft.jobDegree;
+    if (Object.keys(payload).length === 0) {
+      toast.info(ar ? 'لا توجد تغييرات' : 'No changes');
+      return;
+    }
+    try {
+      setSavingId(emp.id);
+      await updateEmployee(emp.id, payload);
+      toast.success(ar ? 'تم الحفظ' : 'Saved');
+      setEdits(prev => { const n = { ...prev }; delete n[emp.id]; return n; });
+    } catch (e: any) {
+      toast.error(e?.message || (ar ? 'فشل الحفظ' : 'Save failed'));
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   const stations = useMemo(() => {
     const map = new Map<string, string>();
