@@ -8,21 +8,53 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PaginationControls } from '@/components/ui/pagination-controls';
-import { Search, AlertTriangle, Briefcase, Printer, Download, Building2, MapPin } from 'lucide-react';
+import { Search, AlertTriangle, Briefcase, Printer, Download, Building2, MapPin, Save, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePagination } from '@/hooks/usePagination';
 import { useReportExport } from '@/hooks/useReportExport';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+const JOB_LEVELS = ['worker','driver','messenger','junior','mid','senior','shiftLeader','supervisor','manager','director'];
+const JOB_DEGREES = ['AA','A','B','C'];
 
 export const MissingJobData = () => {
-  const { language, isRTL } = useLanguage();
+  const { language, isRTL, t } = useLanguage();
   const ar = language === 'ar';
-  const { employees } = useEmployeeData();
+  const { employees, updateEmployee } = useEmployeeData();
   const [search, setSearch] = useState('');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
+  const [edits, setEdits] = useState<Record<string, { hireDate?: string; jobLevel?: string; jobDegree?: string }>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
+
+  const setField = (id: string, field: 'hireDate'|'jobLevel'|'jobDegree', value: string) => {
+    setEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  };
+
+  const handleSave = async (emp: any) => {
+    const draft = edits[emp.id] || {};
+    const payload: any = {};
+    if (draft.hireDate !== undefined && draft.hireDate !== emp.hireDate) payload.hireDate = draft.hireDate;
+    if (draft.jobLevel !== undefined && draft.jobLevel !== emp.jobLevel) payload.jobLevel = draft.jobLevel;
+    if (draft.jobDegree !== undefined && draft.jobDegree !== emp.jobDegree) payload.jobDegree = draft.jobDegree;
+    if (Object.keys(payload).length === 0) {
+      toast.info(ar ? 'لا توجد تغييرات' : 'No changes');
+      return;
+    }
+    try {
+      setSavingId(emp.id);
+      await updateEmployee(emp.id, payload);
+      toast.success(ar ? 'تم الحفظ' : 'Saved');
+      setEdits(prev => { const n = { ...prev }; delete n[emp.id]; return n; });
+    } catch (e: any) {
+      toast.error(e?.message || (ar ? 'فشل الحفظ' : 'Save failed'));
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   const stations = useMemo(() => {
     const map = new Map<string, string>();
@@ -126,20 +158,55 @@ export const MissingJobData = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedItems.map(emp => (
+                {paginatedItems.map(emp => {
+                  const draft = edits[emp.id] || {};
+                  const hireVal = draft.hireDate ?? emp.hireDate ?? '';
+                  const levelVal = draft.jobLevel ?? emp.jobLevel ?? '';
+                  const degreeVal = draft.jobDegree ?? emp.jobDegree ?? '';
+                  const dirty = !!edits[emp.id] && (
+                    (draft.hireDate !== undefined && draft.hireDate !== (emp.hireDate || '')) ||
+                    (draft.jobLevel !== undefined && draft.jobLevel !== (emp.jobLevel || '')) ||
+                    (draft.jobDegree !== undefined && draft.jobDegree !== (emp.jobDegree || ''))
+                  );
+                  return (
                   <TableRow key={emp.id}>
                     <TableCell className="font-mono text-sm">{emp.employeeId}</TableCell>
                     <TableCell className="font-medium">{ar ? emp.nameAr : emp.nameEn}</TableCell>
                     <TableCell>{emp.stationName || '—'}</TableCell>
                     <TableCell>{emp.jobTitle || '—'}</TableCell>
-                    <TableCell>{emp.hireDate ? emp.hireDate : <Badge variant="destructive" className="text-xs">{ar ? 'غير محدد' : 'Missing'}</Badge>}</TableCell>
-                    <TableCell>{emp.jobLevel ? emp.jobLevel : <Badge variant="destructive" className="text-xs">{ar ? 'غير محدد' : 'Missing'}</Badge>}</TableCell>
-                    <TableCell>{emp.jobDegree ? emp.jobDegree : <Badge variant="destructive" className="text-xs">{ar ? 'غير محدد' : 'Missing'}</Badge>}</TableCell>
+                    <TableCell className="min-w-[150px]">
+                      <Input type="date" value={hireVal} onChange={e => setField(emp.id, 'hireDate', e.target.value)} className="h-9" />
+                      {!emp.hireDate && !draft.hireDate && <Badge variant="destructive" className="text-[10px] mt-1">{ar ? 'غير محدد' : 'Missing'}</Badge>}
+                    </TableCell>
+                    <TableCell className="min-w-[140px]">
+                      <Select value={levelVal} onValueChange={v => setField(emp.id, 'jobLevel', v)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder={ar ? 'اختر' : 'Select'} /></SelectTrigger>
+                        <SelectContent>
+                          {JOB_LEVELS.map(l => <SelectItem key={l} value={l}>{t(`employees.jobLevel.${l}`)}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {!emp.jobLevel && !draft.jobLevel && <Badge variant="destructive" className="text-[10px] mt-1">{ar ? 'غير محدد' : 'Missing'}</Badge>}
+                    </TableCell>
+                    <TableCell className="min-w-[110px]">
+                      <Select value={degreeVal} onValueChange={v => setField(emp.id, 'jobDegree', v)}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder={ar ? 'اختر' : 'Select'} /></SelectTrigger>
+                        <SelectContent>
+                          {JOB_DEGREES.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      {!emp.jobDegree && !draft.jobDegree && <Badge variant="destructive" className="text-[10px] mt-1">{ar ? 'غير محدد' : 'Missing'}</Badge>}
+                    </TableCell>
                     <TableCell className="print:hidden">
-                      <Button size="sm" variant="outline" onClick={() => navigate(`/employees/${emp.id}`)}>{ar ? 'تعديل' : 'Edit'}</Button>
+                      <div className="flex gap-1">
+                        <Button size="sm" variant={dirty ? 'default' : 'outline'} disabled={!dirty || savingId === emp.id} onClick={() => handleSave(emp)}>
+                          {savingId === emp.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => navigate(`/employees/${emp.id}`)}>{ar ? 'الملف' : 'Profile'}</Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
                 {paginatedItems.length === 0 && (
                   <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'جميع الموظفين لديهم بيانات مكتملة' : 'All employees have complete data'}</TableCell></TableRow>
                 )}
