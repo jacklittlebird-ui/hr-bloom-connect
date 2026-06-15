@@ -397,8 +397,9 @@ export const PerformanceReviewForm = () => {
         approved: ar ? 'تم اعتماد التقييم بنجاح' : 'Review approved successfully',
       };
       toast.success(msgs[status]);
-    } catch (err) {
-      toast.error(ar ? 'حدث خطأ أثناء الحفظ' : 'Error saving review');
+    } catch (err: any) {
+      const detail = err?.message || err?.error_description || '';
+      toast.error((ar ? 'حدث خطأ أثناء الحفظ' : 'Error saving review') + (detail ? `: ${detail}` : ''));
       console.error(err);
     } finally {
       setSaving(null);
