@@ -249,6 +249,8 @@ export const PerformanceReviewForm = () => {
           score: c.score,
           weight: c.weight,
         })));
+      } else {
+        setCriteria(initialCriteria.map(c => ({ ...c })));
       }
       setStrengths(existingReview.strengths || '');
       setImprovements(existingReview.improvements || '');
@@ -256,7 +258,7 @@ export const PerformanceReviewForm = () => {
       setManagerComments(existingReview.managerComments || '');
       setBonusPercentage(existingReview.bonusPercentage != null ? String(existingReview.bonusPercentage) : '');
     } else {
-      // Reset form for new evaluation
+      // Reset form for new evaluation (also when switching to another unevaluated employee)
       setCriteria(initialCriteria.map(c => ({ ...c })));
       setStrengths('');
       setImprovements('');
@@ -264,7 +266,7 @@ export const PerformanceReviewForm = () => {
       setManagerComments('');
       setBonusPercentage('');
     }
-  }, [existingReview]);
+  }, [existingReview, selectedEmployee, selectedQuarter, selectedYear]);
 
   const activeEmployees = employees.filter(e => e.status === 'active');
 
