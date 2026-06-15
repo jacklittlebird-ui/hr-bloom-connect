@@ -249,6 +249,8 @@ export const PerformanceReviewForm = () => {
           score: c.score,
           weight: c.weight,
         })));
+      } else {
+        setCriteria(initialCriteria.map(c => ({ ...c })));
       }
       setStrengths(existingReview.strengths || '');
       setImprovements(existingReview.improvements || '');
@@ -256,7 +258,7 @@ export const PerformanceReviewForm = () => {
       setManagerComments(existingReview.managerComments || '');
       setBonusPercentage(existingReview.bonusPercentage != null ? String(existingReview.bonusPercentage) : '');
     } else {
-      // Reset form for new evaluation
+      // Reset form for new evaluation (also when switching to another unevaluated employee)
       setCriteria(initialCriteria.map(c => ({ ...c })));
       setStrengths('');
       setImprovements('');
@@ -264,7 +266,7 @@ export const PerformanceReviewForm = () => {
       setManagerComments('');
       setBonusPercentage('');
     }
-  }, [existingReview]);
+  }, [existingReview, selectedEmployee, selectedQuarter, selectedYear]);
 
   const activeEmployees = employees.filter(e => e.status === 'active');
 
@@ -395,8 +397,9 @@ export const PerformanceReviewForm = () => {
         approved: ar ? 'تم اعتماد التقييم بنجاح' : 'Review approved successfully',
       };
       toast.success(msgs[status]);
-    } catch (err) {
-      toast.error(ar ? 'حدث خطأ أثناء الحفظ' : 'Error saving review');
+    } catch (err: any) {
+      const detail = err?.message || err?.error_description || '';
+      toast.error((ar ? 'حدث خطأ أثناء الحفظ' : 'Error saving review') + (detail ? `: ${detail}` : ''));
       console.error(err);
     } finally {
       setSaving(null);
