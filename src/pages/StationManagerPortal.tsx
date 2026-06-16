@@ -920,8 +920,8 @@ const StationManagerPortal = () => {
   const dashboardQuarter = newEvalQuarter;
   const dashboardReviews = useMemo(() => {
     let list = stationReviews;
-    if (dashboardYear) list = list.filter(r => r.year === dashboardYear);
-    if (dashboardQuarter) list = list.filter(r => r.quarter === dashboardQuarter);
+    if (dashboardYear) list = list.filter(r => normalizeYearValue(r.year) === normalizeYearValue(dashboardYear));
+    if (dashboardQuarter) list = list.filter(r => normalizePeriodValue(r.quarter) === normalizePeriodValue(dashboardQuarter));
     return list;
   }, [stationReviews, dashboardYear, dashboardQuarter]);
 
