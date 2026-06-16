@@ -250,13 +250,21 @@ export const PerformanceDashboard = () => {
           </CardContent>
         </Card>
         {/* Total Not Evaluated */}
-        <Card className="border-destructive/30">
+        <Card
+          className="border-destructive/30 cursor-pointer hover:bg-destructive/5 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/40"
+          role="button"
+          tabIndex={0}
+          onClick={() => setShowNotEvaluated(true)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowNotEvaluated(true); } }}
+          aria-label={ar ? 'عرض الموظفين غير المقيمين' : 'View not-evaluated employees'}
+        >
           <CardContent className="p-4 text-center space-y-1">
             <UserX className="w-6 h-6 mx-auto text-destructive" />
             <p className="text-2xl font-bold text-destructive">{totalNotEvaluated}</p>
             <p className="text-xs text-muted-foreground">{ar ? 'لم يتم تقييمهم' : 'Not Evaluated'}</p>
           </CardContent>
         </Card>
+
         {/* Total Employees */}
         <Card>
           <CardContent className="p-4 text-center space-y-1">
