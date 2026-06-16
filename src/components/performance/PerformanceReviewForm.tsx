@@ -81,8 +81,20 @@ export const PerformanceReviewForm = () => {
   // Filters
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [selectedYear, setSelectedYear] = useState('');
-  const [selectedQuarter, setSelectedQuarter] = useState('');
+  const [selectedYear, setSelectedYear] = useState(() => {
+    try {
+      const v = sessionStorage.getItem('perf_preselect_year');
+      if (v) { sessionStorage.removeItem('perf_preselect_year'); return v; }
+    } catch {}
+    return '';
+  });
+  const [selectedQuarter, setSelectedQuarter] = useState(() => {
+    try {
+      const v = sessionStorage.getItem('perf_preselect_quarter');
+      if (v) { sessionStorage.removeItem('perf_preselect_quarter'); return v; }
+    } catch {}
+    return '';
+  });
   const [selectedEmployee, setSelectedEmployee] = useState(() => {
     try {
       const v = sessionStorage.getItem('perf_preselect_employee');
@@ -93,8 +105,10 @@ export const PerformanceReviewForm = () => {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.employeeId) setSelectedEmployee(detail.employeeId);
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.employeeId) setSelectedEmployee(detail.employeeId);
+      if (detail.year) setSelectedYear(String(detail.year));
+      if (detail.quarter) setSelectedQuarter(String(detail.quarter).toUpperCase());
     };
     window.addEventListener('performance:goto-new-review', handler);
     return () => window.removeEventListener('performance:goto-new-review', handler);
