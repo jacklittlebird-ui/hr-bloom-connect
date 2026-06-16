@@ -1443,8 +1443,8 @@ const StationManagerPortal = () => {
               className="gap-1.5"
               onClick={() => {
                 const rows = stationReviews.filter(r =>
-                  (!dashboardYear || String(r.year) === String(dashboardYear)) &&
-                  (!dashboardQuarter || r.quarter === dashboardQuarter) &&
+                  (!dashboardYear || normalizeYearValue(r.year) === normalizeYearValue(dashboardYear)) &&
+                  (!dashboardQuarter || normalizePeriodValue(r.quarter) === normalizePeriodValue(dashboardQuarter)) &&
                   r.bonusPercentage != null
                 );
                 if (rows.length === 0) {
@@ -1483,8 +1483,8 @@ const StationManagerPortal = () => {
               className="gap-1.5"
               onClick={async () => {
                 const rows = stationReviews.filter(r =>
-                  (!dashboardYear || String(r.year) === String(dashboardYear)) &&
-                  (!dashboardQuarter || r.quarter === dashboardQuarter) &&
+                  (!dashboardYear || normalizeYearValue(r.year) === normalizeYearValue(dashboardYear)) &&
+                  (!dashboardQuarter || normalizePeriodValue(r.quarter) === normalizePeriodValue(dashboardQuarter)) &&
                   r.bonusPercentage != null
                 );
                 if (rows.length === 0) {
@@ -1529,7 +1529,7 @@ const StationManagerPortal = () => {
                 const qs = ['Q1','Q2','Q3','Q4'];
                 const yr = String(new Date().getFullYear());
                 const data = qs.map(q => {
-                  const rs = stationReviews.filter(r => r.quarter === q && String(r.year) === yr && r.bonusPercentage != null);
+                  const rs = stationReviews.filter(r => normalizePeriodValue(r.quarter) === q && normalizeYearValue(r.year) === yr && r.bonusPercentage != null);
                   const avg = rs.length ? rs.reduce((s, r) => s + (r.bonusPercentage || 0), 0) / rs.length : 0;
                   return { name: q, avg: Math.round(avg * 10) / 10, count: rs.length };
                 });
@@ -2252,7 +2252,7 @@ const StationManagerPortal = () => {
                     const qs = ['Q1','Q2','Q3','Q4'];
                     const yr = newEvalYear || String(new Date().getFullYear());
                     const perQuarter = qs.map(q => {
-                      const rs = empReviews.filter(r => r.quarter === q && String(r.year) === String(yr));
+                      const rs = empReviews.filter(r => normalizePeriodValue(r.quarter) === q && normalizeYearValue(r.year) === normalizeYearValue(yr));
                       const avg = rs.length ? rs.reduce((s, r) => s + (r.bonusPercentage || 0), 0) / rs.length : 0;
                       return { q, avg: Math.round(avg * 10) / 10, count: rs.length };
                     });
