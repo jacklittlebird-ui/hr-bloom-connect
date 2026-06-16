@@ -487,6 +487,43 @@ export const PerformanceDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Not Evaluated Employees Dialog */}
+      <Dialog open={showNotEvaluated} onOpenChange={setShowNotEvaluated}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+          <DialogHeader>
+            <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <UserX className="w-5 h-5 text-destructive" />
+              {ar ? `الموظفون غير المقيمين (${notEvaluatedEmployees.length})` : `Not-Evaluated Employees (${notEvaluatedEmployees.length})`}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1 -mx-6 px-6">
+            {notEvaluatedEmployees.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">{ar ? 'تم تقييم جميع الموظفين' : 'All employees have been evaluated'}</p>
+            ) : (
+              <ul className="divide-y">
+                {notEvaluatedEmployees.map(emp => {
+                  const sl = stationLocations.find(s => s.value === emp.stationLocation);
+                  return (
+                    <li key={emp.id} className={cn("flex items-center justify-between gap-3 py-3", isRTL && "flex-row-reverse")}>
+                      <div className={cn("min-w-0 flex-1", isRTL && "text-right")}>
+                        <p className="font-medium truncate">{ar ? emp.nameAr : emp.nameEn}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {emp.employeeId || '-'}{emp.department ? ` • ${emp.department}` : ''}{sl ? ` • ${ar ? sl.labelAr : sl.labelEn}` : ''}
+                        </p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => goToReviewFor(emp.id)}>
+                        {ar ? 'إنشاء تقييم' : 'Create Review'}
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };
