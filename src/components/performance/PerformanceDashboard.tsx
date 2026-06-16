@@ -13,6 +13,7 @@ import { Star, TrendingUp, Users, Target, Award, BarChart3, CheckCircle, Clock, 
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { stationLocations } from '@/data/stationLocations';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export const PerformanceDashboard = () => {
   const { t, isRTL, language } = useLanguage();
@@ -158,6 +159,21 @@ export const PerformanceDashboard = () => {
   const totalEvaluated = evaluatedIds.size;
   const totalNotEvaluated = activeEmployees.length - totalEvaluated;
 
+  const [showNotEvaluated, setShowNotEvaluated] = useState(false);
+  const notEvaluatedEmployees = useMemo(
+    () => activeEmployees
+      .filter(e => !evaluatedIds.has(e.id))
+      .sort((a, b) => (ar ? (a.nameAr || '').localeCompare(b.nameAr || '', 'ar') : (a.nameEn || '').localeCompare(b.nameEn || ''))),
+    [activeEmployees, evaluatedIds, ar]
+  );
+
+  const goToReviewFor = (employeeId: string) => {
+    try { sessionStorage.setItem('perf_preselect_employee', employeeId); } catch {}
+    window.dispatchEvent(new CustomEvent('performance:goto-new-review', { detail: { employeeId } }));
+    setShowNotEvaluated(false);
+  };
+
+
   return (
     <div className="space-y-6">
       {/* Year & Quarter Filter */}
@@ -234,13 +250,21 @@ export const PerformanceDashboard = () => {
           </CardContent>
         </Card>
         {/* Total Not Evaluated */}
-        <Card className="border-destructive/30">
+        <Card
+          className="border-destructive/30 cursor-pointer hover:bg-destructive/5 transition-colors focus:outline-none focus:ring-2 focus:ring-destructive/40"
+          role="button"
+          tabIndex={0}
+          onClick={() => setShowNotEvaluated(true)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowNotEvaluated(true); } }}
+          aria-label={ar ? 'عرض الموظفين غير المقيمين' : 'View not-evaluated employees'}
+        >
           <CardContent className="p-4 text-center space-y-1">
             <UserX className="w-6 h-6 mx-auto text-destructive" />
             <p className="text-2xl font-bold text-destructive">{totalNotEvaluated}</p>
             <p className="text-xs text-muted-foreground">{ar ? 'لم يتم تقييمهم' : 'Not Evaluated'}</p>
           </CardContent>
         </Card>
+
         {/* Total Employees */}
         <Card>
           <CardContent className="p-4 text-center space-y-1">
@@ -463,6 +487,43 @@ export const PerformanceDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Not Evaluated Employees Dialog */}
+      <Dialog open={showNotEvaluated} onOpenChange={setShowNotEvaluated}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+          <DialogHeader>
+            <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <UserX className="w-5 h-5 text-destructive" />
+              {ar ? `الموظفون غير المقيمين (${notEvaluatedEmployees.length})` : `Not-Evaluated Employees (${notEvaluatedEmployees.length})`}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1 -mx-6 px-6">
+            {notEvaluatedEmployees.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">{ar ? 'تم تقييم جميع الموظفين' : 'All employees have been evaluated'}</p>
+            ) : (
+              <ul className="divide-y">
+                {notEvaluatedEmployees.map(emp => {
+                  const sl = stationLocations.find(s => s.value === emp.stationLocation);
+                  return (
+                    <li key={emp.id} className={cn("flex items-center justify-between gap-3 py-3", isRTL && "flex-row-reverse")}>
+                      <div className={cn("min-w-0 flex-1", isRTL && "text-right")}>
+                        <p className="font-medium truncate">{ar ? emp.nameAr : emp.nameEn}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {emp.employeeId || '-'}{emp.department ? ` • ${emp.department}` : ''}{sl ? ` • ${ar ? sl.labelAr : sl.labelEn}` : ''}
+                        </p>
+                      </div>
+                      <Button size="sm" variant="outline" onClick={() => goToReviewFor(emp.id)}>
+                        {ar ? 'إنشاء تقييم' : 'Create Review'}
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 };

@@ -83,7 +83,23 @@ export const PerformanceReviewForm = () => {
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedQuarter, setSelectedQuarter] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState(() => {
+    try {
+      const v = sessionStorage.getItem('perf_preselect_employee');
+      if (v) { sessionStorage.removeItem('perf_preselect_employee'); return v; }
+    } catch {}
+    return '';
+  });
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.employeeId) setSelectedEmployee(detail.employeeId);
+    };
+    window.addEventListener('performance:goto-new-review', handler);
+    return () => window.removeEventListener('performance:goto-new-review', handler);
+  }, []);
+
   const [employeePage, setEmployeePage] = useState(0);
   const [employeeSearch, setEmployeeSearch] = useState('');
   const PAGE_SIZE = 5;
