@@ -105,12 +105,13 @@ export const PerformanceList = () => {
   };
 
   const filteredReviews = reviews.filter(review => {
-    const matchesSearch = review.employeeName.includes(searchQuery) || 
-                         review.department.includes(searchQuery) ||
-                         review.employeeId.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.trim().toLowerCase();
+    const matchesSearch = q === '' || (review.employeeName || '').toLowerCase().includes(q) ||
+                         (review.department || '').toLowerCase().includes(q) ||
+                         (review.employeeId || '').toLowerCase().includes(q);
     const matchesStatus = statusFilter === 'all' || review.status === statusFilter;
-    const matchesQuarter = quarterFilter === 'all' || review.quarter === quarterFilter;
-    const matchesYear = yearFilter === 'all' || review.year === yearFilter;
+    const matchesQuarter = quarterFilter === 'all' || String(review.quarter || '').trim().toUpperCase() === quarterFilter.toUpperCase();
+    const matchesYear = yearFilter === 'all' || String(review.year || '').trim() === String(yearFilter).trim();
     const matchesStation = stationFilter === 'all' || review.station === stationFilter;
     const matchesDepartment = departmentFilter === 'all' || review.department === departmentFilter;
     return matchesSearch && matchesStatus && matchesQuarter && matchesYear && matchesStation && matchesDepartment;
@@ -118,8 +119,8 @@ export const PerformanceList = () => {
     // M3 (3-month post-hire) appears first; then by year desc, then quarter desc
     if (a.quarter === 'M3' && b.quarter !== 'M3') return -1;
     if (b.quarter === 'M3' && a.quarter !== 'M3') return 1;
-    if (a.year !== b.year) return b.year.localeCompare(a.year);
-    return b.quarter.localeCompare(a.quarter);
+    if (a.year !== b.year) return String(b.year).localeCompare(String(a.year));
+    return String(b.quarter).localeCompare(String(a.quarter));
   });
 
   const m3Reviews = filteredReviews.filter(r => r.quarter === 'M3');
