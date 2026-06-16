@@ -47,8 +47,10 @@ export const PerformanceDashboard = () => {
 
   const filteredReviews = useMemo(() => {
     let list = reviews;
-    if (selectedYear) list = list.filter(r => r.year === selectedYear);
-    if (selectedQuarter && selectedQuarter !== 'all') list = list.filter(r => r.quarter === selectedQuarter);
+    const yearNorm = String(selectedYear || '').trim();
+    const quarterNorm = String(selectedQuarter || '').trim().toUpperCase();
+    if (yearNorm) list = list.filter(r => String(r.year || '').trim() === yearNorm);
+    if (quarterNorm && quarterNorm !== 'ALL') list = list.filter(r => String(r.quarter || '').trim().toUpperCase() === quarterNorm);
     if (stationFilter !== 'all' || departmentFilter !== 'all') list = list.filter(r => activeEmployeeIds.has(r.employeeId));
     return list;
   }, [reviews, selectedYear, selectedQuarter, stationFilter, departmentFilter, activeEmployeeIds]);
