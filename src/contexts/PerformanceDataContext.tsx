@@ -60,6 +60,13 @@ const PerformanceDataContext = createContext<PerformanceDataContextType | undefi
 const ADMIN_PERF_COLS = 'id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, manager_comments, criteria, bonus_percentage, created_at';
 const EMPLOYEE_PERF_COLS = 'id, employee_id, quarter, year, score, status, review_date, strengths, improvements, bonus_percentage, created_at';
 const PERF_PAGE_SIZE = 1000;
+const HYDRATE_CHUNK_SIZE = 150;
+
+const chunkArray = <T,>(items: T[], size: number) => {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+  return chunks;
+};
 
 const fetchAllPerformanceRows = async (buildQuery: () => any) => {
   const rows: any[] = [];
@@ -79,11 +86,17 @@ const hydrateRows = async (rows: any[]) => {
   const employeeIds = Array.from(new Set(rows.map(r => r.employee_id).filter(Boolean)));
   if (employeeIds.length === 0) return rows;
 
-  const { data: employees, error: employeesError } = await supabase
-    .from('employees')
-    .select('id, name_ar, station_id, department_id')
-    .in('id', employeeIds);
+  const employeeChunks = await Promise.all(
+    chunkArray(employeeIds, HYDRATE_CHUNK_SIZE).map(chunk =>
+      supabase
+        .from('employees')
+        .select('id, name_ar, station_id, department_id')
+        .in('id', chunk)
+    )
+  );
+  const employeesError = employeeChunks.find(res => res.error)?.error;
   if (employeesError) throw employeesError;
+  const employees = employeeChunks.flatMap(res => res.data || []);
 
   const stationIds = Array.from(new Set((employees || []).map((e: any) => e.station_id).filter(Boolean)));
   const departmentIds = Array.from(new Set((employees || []).map((e: any) => e.department_id).filter(Boolean)));
