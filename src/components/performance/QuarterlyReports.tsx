@@ -16,12 +16,37 @@ export const QuarterlyReports = () => {
   const { t, isRTL, language } = useLanguage();
   const { reviews } = usePerformanceData();
   const { exportToCSV, exportToPDF, handlePrint, reportRef } = useReportExport();
-  const [selectedYear, setSelectedYear] = useState('2025');
-  const [selectedQuarter, setSelectedQuarter] = useState('Q4');
+
+  // Default to the most recent year/quarter that actually has data; fall back to current year
+  const latest = useMemo(() => {
+    const sorted = [...reviews].sort((a, b) => {
+      const yc = String(b.year).localeCompare(String(a.year));
+      if (yc !== 0) return yc;
+      return String(b.quarter).localeCompare(String(a.quarter));
+    });
+    const first = sorted[0];
+    return {
+      year: first ? String(first.year) : String(new Date().getFullYear()),
+      quarter: first ? String(first.quarter) : 'Q1',
+    };
+  }, [reviews]);
+
+  const [selectedYear, setSelectedYear] = useState(latest.year);
+  const [selectedQuarter, setSelectedQuarter] = useState(latest.quarter);
+
+  // Keep defaults in sync once reviews finish loading (only while user hasn't interacted with a non-empty selection)
+  useEffect(() => {
+    if (reviews.length === 0) return;
+    setSelectedYear(prev => (prev && prev !== '2025' ? prev : latest.year));
+    setSelectedQuarter(prev => (prev && prev !== 'Q4' ? prev : latest.quarter));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [latest.year, latest.quarter, reviews.length]);
 
   const { departmentScores, quarterlyComparison, criteriaAverages, radarData, summaryStats } = useMemo(() => {
-    const filtered = reviews.filter(r => r.year === selectedYear);
-    const quarterFiltered = filtered.filter(r => r.quarter === selectedQuarter);
+    const yearNorm = String(selectedYear || '').trim();
+    const quarterNorm = String(selectedQuarter || '').trim().toUpperCase();
+    const filtered = reviews.filter(r => String(r.year || '').trim() === yearNorm);
+    const quarterFiltered = filtered.filter(r => String(r.quarter || '').trim().toUpperCase() === quarterNorm);
 
     // Department scores
     const deptMap: Record<string, { total: number; count: number }> = {};
