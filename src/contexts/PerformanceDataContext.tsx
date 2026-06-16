@@ -51,7 +51,7 @@ interface PerformanceDataContextType {
   addReview: (review: Omit<PerformanceReview, 'id'>) => void;
   updateReview: (id: string, updates: Partial<PerformanceReview>) => void;
   deleteReview: (id: string) => void;
-  ensureLoaded: () => Promise<void>;
+  ensureLoaded: (force?: boolean) => Promise<void>;
 }
 
 const PerformanceDataContext = createContext<PerformanceDataContextType | undefined>(undefined);
@@ -112,8 +112,8 @@ const mapRow = (r: any): PerformanceReview => ({
   employeeName: (r.employees as any)?.name_ar || '',
   department: (r.employees as any)?.departments?.name_ar || '',
   station: (r.employees as any)?.stations?.code || '',
-  quarter: r.quarter,
-  year: r.year,
+  quarter: String(r.quarter || '').trim().toUpperCase(),
+  year: String(r.year || '').trim(),
   score: r.score ?? 0,
   status: r.status as PerformanceReview['status'],
   reviewer: r.reviewer_id || '',
@@ -132,11 +132,18 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
   const { user } = useAuth();
   const isEmployee = user?.role === 'employee';
   const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
+  const performanceCacheKey = `performance_${[
+    user?.supabaseUserId || 'anon',
+    user?.role || 'unknown',
+    scopedEmployeeId || 'all',
+    user?.stationId || 'no-station',
+    (user?.stationIds || []).slice().sort().join('-') || 'no-stations',
+    user?.departmentId || 'no-department',
+    (user?.departmentIds || []).slice().sort().join('-') || 'no-depts',
+  ].join('_')}`;
 
   const fetchReviews = useCallback(async () => {
-    const cacheKey = `performance_${scopedEmployeeId || 'all'}`;
-    
-    const result = await debouncedFetch(cacheKey, async () => {
+    const result = await debouncedFetch(performanceCacheKey, async () => {
       let rows;
       if (isEmployee && scopedEmployeeId) {
         rows = await fetchAllPerformanceRows(() => supabase.from('performance_reviews').select(EMPLOYEE_PERF_COLS).eq('employee_id', scopedEmployeeId).order('created_at', { ascending: false }).limit(20));
@@ -149,7 +156,7 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
     }, { ttlMs: 60_000 });
 
     setReviews(result);
-  }, [isEmployee, scopedEmployeeId]);
+  }, [isEmployee, scopedEmployeeId, performanceCacheKey]);
 
   // Lazy loading: only fetch when accessed
   const hasFetched = useRef(false);
@@ -214,11 +221,17 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
     await fetchReviews();
   }, [fetchReviews]);
 
-  const ensureLoaded = useCallback(async () => {
-    if (hasFetched.current) return;
+  const ensureLoaded = useCallback(async (force = false) => {
+    if (force) invalidateCache('performance_');
+    if (!force && hasFetched.current && reviews.length > 0) return;
     hasFetched.current = true;
-    await fetchReviews();
-  }, [fetchReviews]);
+    try {
+      await fetchReviews();
+    } catch (error) {
+      hasFetched.current = false;
+      throw error;
+    }
+  }, [fetchReviews, reviews.length]);
 
   return (
     <PerformanceDataContext.Provider value={{ reviews, addReview, updateReview, deleteReview, ensureLoaded }}>

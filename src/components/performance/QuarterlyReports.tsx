@@ -11,6 +11,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Line
 import { useReportExport } from '@/hooks/useReportExport';
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
+const normalizePeriodValue = (value: unknown) => String(value || '').trim().toUpperCase();
 
 export const QuarterlyReports = () => {
   const { t, isRTL, language } = useLanguage();
@@ -64,7 +65,7 @@ export const QuarterlyReports = () => {
 
     // Quarterly comparison for the selected year
     const quarterlyComparison = ['Q1', 'Q2', 'Q3', 'Q4'].map(q => {
-      const qReviews = filtered.filter(r => r.quarter === q);
+      const qReviews = filtered.filter(r => normalizePeriodValue(r.quarter) === q);
       const avg = qReviews.length > 0 ? parseFloat((qReviews.reduce((s, r) => s + r.score, 0) / qReviews.length).toFixed(1)) : 0;
       return { quarter: q, score: avg, target: 4.0 };
     });

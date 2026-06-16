@@ -29,6 +29,7 @@ const Performance = () => {
     refreshingRef.current = true;
     setRefreshing(true);
     try {
+      await ensureLoaded(true);
       setRefreshKey(k => k + 1);
       await new Promise(r => setTimeout(r, 350));
       toast.success(ar ? 'تم تحديث بيانات تقييم الأداء' : 'Performance data refreshed');

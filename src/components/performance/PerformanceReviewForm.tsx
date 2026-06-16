@@ -52,6 +52,8 @@ const initialCriteria: CriteriaScore[] = [
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 const quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'M3'];
+const normalizePeriodValue = (value: unknown) => String(value || '').trim().toUpperCase();
+const normalizeYearValue = (value: unknown) => String(value || '').trim();
 
 const normalizeSearchText = (s: string) =>
   (s || '')
@@ -235,7 +237,9 @@ export const PerformanceReviewForm = () => {
   // Find existing review for selected employee+quarter+year
   const existingReview = useMemo(() => {
     if (!selectedEmployee || !selectedQuarter || !selectedYear) return null;
-    return reviews.find(r => r.employeeId === selectedEmployee && r.quarter === selectedQuarter && r.year === selectedYear) || null;
+    const quarter = normalizePeriodValue(selectedQuarter);
+    const year = normalizeYearValue(selectedYear);
+    return reviews.find(r => r.employeeId === selectedEmployee && normalizePeriodValue(r.quarter) === quarter && normalizeYearValue(r.year) === year) || null;
   }, [reviews, selectedEmployee, selectedQuarter, selectedYear]);
 
   // Load existing review data into form when found
@@ -304,7 +308,7 @@ export const PerformanceReviewForm = () => {
     if (!selectedQuarter || !selectedYear) return new Set<string>();
     return new Set(
       reviews
-        .filter(r => r.quarter === selectedQuarter && r.year === selectedYear)
+        .filter(r => normalizePeriodValue(r.quarter) === normalizePeriodValue(selectedQuarter) && normalizeYearValue(r.year) === normalizeYearValue(selectedYear))
         .map(r => r.employeeId)
     );
   }, [reviews, selectedQuarter, selectedYear]);
