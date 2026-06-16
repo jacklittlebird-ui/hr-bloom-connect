@@ -168,8 +168,14 @@ export const PerformanceDashboard = () => {
   );
 
   const goToReviewFor = (employeeId: string) => {
-    try { sessionStorage.setItem('perf_preselect_employee', employeeId); } catch {}
-    window.dispatchEvent(new CustomEvent('performance:goto-new-review', { detail: { employeeId } }));
+    const yearPreset = String(selectedYear || '').trim();
+    const quarterPreset = selectedQuarter && selectedQuarter !== 'all' ? String(selectedQuarter).trim().toUpperCase() : '';
+    try {
+      sessionStorage.setItem('perf_preselect_employee', employeeId);
+      if (yearPreset) sessionStorage.setItem('perf_preselect_year', yearPreset); else sessionStorage.removeItem('perf_preselect_year');
+      if (quarterPreset) sessionStorage.setItem('perf_preselect_quarter', quarterPreset); else sessionStorage.removeItem('perf_preselect_quarter');
+    } catch {}
+    window.dispatchEvent(new CustomEvent('performance:goto-new-review', { detail: { employeeId, year: yearPreset, quarter: quarterPreset } }));
     setShowNotEvaluated(false);
   };
 
