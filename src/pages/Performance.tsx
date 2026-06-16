@@ -24,6 +24,13 @@ const Performance = () => {
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
 
+  useEffect(() => {
+    const handler = () => setActiveTab('newReview');
+    window.addEventListener('performance:goto-new-review', handler);
+    return () => window.removeEventListener('performance:goto-new-review', handler);
+  }, []);
+
+
   const handleRefresh = async () => {
     if (refreshingRef.current) return;
     refreshingRef.current = true;
