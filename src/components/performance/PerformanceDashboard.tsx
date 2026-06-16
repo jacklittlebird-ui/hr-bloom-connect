@@ -159,6 +159,21 @@ export const PerformanceDashboard = () => {
   const totalEvaluated = evaluatedIds.size;
   const totalNotEvaluated = activeEmployees.length - totalEvaluated;
 
+  const [showNotEvaluated, setShowNotEvaluated] = useState(false);
+  const notEvaluatedEmployees = useMemo(
+    () => activeEmployees
+      .filter(e => !evaluatedIds.has(e.id))
+      .sort((a, b) => (ar ? (a.nameAr || '').localeCompare(b.nameAr || '', 'ar') : (a.nameEn || '').localeCompare(b.nameEn || ''))),
+    [activeEmployees, evaluatedIds, ar]
+  );
+
+  const goToReviewFor = (employeeId: string) => {
+    try { sessionStorage.setItem('perf_preselect_employee', employeeId); } catch {}
+    window.dispatchEvent(new CustomEvent('performance:goto-new-review', { detail: { employeeId } }));
+    setShowNotEvaluated(false);
+  };
+
+
   return (
     <div className="space-y-6">
       {/* Year & Quarter Filter */}
