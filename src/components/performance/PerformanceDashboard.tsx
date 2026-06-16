@@ -13,6 +13,7 @@ import { Star, TrendingUp, Users, Target, Award, BarChart3, CheckCircle, Clock, 
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { stationLocations } from '@/data/stationLocations';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export const PerformanceDashboard = () => {
   const { t, isRTL, language } = useLanguage();
