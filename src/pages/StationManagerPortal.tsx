@@ -106,6 +106,8 @@ const initialCriteria: CriteriaScore[] = [
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 const quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'M3'];
+const normalizePeriodValue = (value: unknown) => String(value || '').trim().toUpperCase();
+const normalizeYearValue = (value: unknown) => String(value || '').trim();
 
 // Lazy-loaded leave calendar for station employees
 const StationLeaveCalendar = ({ stationEmployees, language }: { stationEmployees: any[]; language: string }) => {
@@ -688,12 +690,12 @@ const StationManagerPortal = () => {
     let list = stationReviews;
     if (evalFilterEmployee !== 'all') list = list.filter(r => r.employeeId === evalFilterEmployee);
     if (evalFilterDept !== 'all') list = list.filter(r => r.department === evalFilterDept);
-    if (evalFilterQuarter !== 'all') list = list.filter(r => r.quarter === evalFilterQuarter);
-    if (evalFilterYear !== 'all') list = list.filter(r => r.year === evalFilterYear);
+    if (evalFilterQuarter !== 'all') list = list.filter(r => normalizePeriodValue(r.quarter) === normalizePeriodValue(evalFilterQuarter));
+    if (evalFilterYear !== 'all') list = list.filter(r => normalizeYearValue(r.year) === normalizeYearValue(evalFilterYear));
     if (evalFilterStatus !== 'all') list = list.filter(r => r.status === evalFilterStatus);
     if (evalSearch.trim()) {
       const q = evalSearch.trim().toLowerCase();
-      list = list.filter(r => r.employeeName.toLowerCase().includes(q) || r.employeeId.toLowerCase().includes(q) || r.reviewer.toLowerCase().includes(q));
+      list = list.filter(r => (r.employeeName || '').toLowerCase().includes(q) || (r.employeeId || '').toLowerCase().includes(q) || (r.reviewer || '').toLowerCase().includes(q));
     }
     return list;
   }, [stationReviews, evalFilterEmployee, evalFilterDept, evalFilterQuarter, evalFilterYear, evalFilterStatus, evalSearch]);
@@ -731,13 +733,17 @@ const StationManagerPortal = () => {
   // Evaluated IDs for the selected quarter/year
   const newEvalEvaluatedIds = useMemo(() => {
     if (!newEvalQuarter || !newEvalYear) return new Set<string>();
-    return new Set(stationReviews.filter(r => r.quarter === newEvalQuarter && r.year === newEvalYear).map(r => r.employeeId));
+    const quarter = normalizePeriodValue(newEvalQuarter);
+    const year = normalizeYearValue(newEvalYear);
+    return new Set(stationReviews.filter(r => normalizePeriodValue(r.quarter) === quarter && normalizeYearValue(r.year) === year).map(r => r.employeeId));
   }, [stationReviews, newEvalQuarter, newEvalYear]);
 
   // Existing review for selected emp+quarter+year
   const newEvalExisting = useMemo(() => {
     if (!newEvalSelectedEmp || !newEvalQuarter || !newEvalYear) return null;
-    return stationReviews.find(r => r.employeeId === newEvalSelectedEmp && r.quarter === newEvalQuarter && r.year === newEvalYear) || null;
+    const quarter = normalizePeriodValue(newEvalQuarter);
+    const year = normalizeYearValue(newEvalYear);
+    return stationReviews.find(r => r.employeeId === newEvalSelectedEmp && normalizePeriodValue(r.quarter) === quarter && normalizeYearValue(r.year) === year) || null;
   }, [stationReviews, newEvalSelectedEmp, newEvalQuarter, newEvalYear]);
 
   // Load existing into eval form
