@@ -686,6 +686,16 @@ export const PerformanceReviewForm = () => {
                 <Loader2 className="w-4 h-4 animate-spin" />
                 {ar ? 'جاري التحميل...' : 'Loading...'}
               </div>
+            ) : quarterError ? (
+              <div className="flex flex-col items-center justify-center py-6 gap-3">
+                <div className="flex items-center gap-2 text-destructive text-sm">
+                  <AlertTriangle className="w-4 h-4" />
+                  {ar ? 'فشل تحميل بيانات الحضور' : 'Failed to load attendance data'}
+                </div>
+                <Button variant="outline" size="sm" onClick={() => setQuarterReloadKey(k => k + 1)}>
+                  {ar ? 'إعادة المحاولة' : 'Retry'}
+                </Button>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {quarterMonthly.map(m => (
