@@ -340,7 +340,7 @@ export const PerformanceList = () => {
                         <div className={cn("flex gap-1", isRTL && "flex-row-reverse")}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewReview(review)} aria-label={ar ? 'عرض التقييم' : 'View review'}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openFullReview(review)} aria-label={ar ? 'عرض التقييم' : 'View review'}>
                                 <Eye className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
@@ -348,7 +348,7 @@ export const PerformanceList = () => {
                           </Tooltip>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(review)} aria-label={ar ? 'تعديل التقييم' : 'Edit review'}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openFullReview(review)} aria-label={ar ? 'تعديل التقييم' : 'Edit review'}>
                                 <Edit className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
