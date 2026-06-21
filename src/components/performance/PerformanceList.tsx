@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn, formatDate } from '@/lib/utils';
-import { Search, Eye, Edit, Star, FileText, Printer, Download, FileSpreadsheet, Save, Send, Target, TrendingUp, Lightbulb, MessageSquare, Trash2, RotateCcw, Loader2 } from 'lucide-react';
+import { Search, Eye, Edit, Star, FileText, Printer, Download, FileSpreadsheet, Save, Send, Target, TrendingUp, Lightbulb, MessageSquare, Trash2, RotateCcw, Loader2, X } from 'lucide-react';
+import { PerformanceReviewForm } from '@/components/performance/PerformanceReviewForm';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useReportExport } from '@/hooks/useReportExport';
@@ -42,6 +43,8 @@ export const PerformanceList = () => {
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [viewReview, setViewReview] = useState<PerformanceReview | null>(null);
   const [editReview, setEditReview] = useState<PerformanceReview | null>(null);
+  const [inlineReview, setInlineReview] = useState<PerformanceReview | null>(null);
+  const [inlineKey, setInlineKey] = useState(0);
   const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -74,18 +77,17 @@ export const PerformanceList = () => {
     setEditManagerComments(review.managerComments || '');
   };
 
-  // Open the full evaluation form (New Review tab) preloaded with this review's
-  // employee/year/quarter. The form already loads existing data, attendance cards,
-  // violations and bonus percentage — matching the Station Manager Portal view.
+  // Open the full evaluation form INLINE within the Reviews tab (in a dialog),
+  // preloaded with this review's employee/year/quarter — keeps the user on the
+  // same tab while exposing attendance cards, violations and bonus percentage.
   const openFullReview = (review: PerformanceReview) => {
     try {
       sessionStorage.setItem('perf_preselect_employee', review.employeeId);
       sessionStorage.setItem('perf_preselect_year', String(review.year));
       sessionStorage.setItem('perf_preselect_quarter', String(review.quarter).toUpperCase());
     } catch {}
-    window.dispatchEvent(new CustomEvent('performance:goto-new-review', {
-      detail: { employeeId: review.employeeId, year: review.year, quarter: review.quarter },
-    }));
+    setInlineReview(review);
+    setInlineKey(k => k + 1);
   };
 
   const handleSaveEdit = async () => {
@@ -396,6 +398,24 @@ export const PerformanceList = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Inline Full Evaluation Form Dialog — same tab, full Station-Manager-Portal layout */}
+      <Dialog open={!!inlineReview} onOpenChange={(o) => { if (!o) setInlineReview(null); }}>
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Edit className="w-5 h-5 text-primary" />
+              {ar ? 'تقييم الأداء' : 'Performance Review'}
+              {inlineReview && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  — {inlineReview.employeeName} · {inlineReview.quarter} {inlineReview.year}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {inlineReview && <PerformanceReviewForm key={`inline-${inlineKey}`} />}
+        </DialogContent>
+      </Dialog>
 
       {/* View Review Dialog */}
       <Dialog open={!!viewReview} onOpenChange={() => setViewReview(null)}>
