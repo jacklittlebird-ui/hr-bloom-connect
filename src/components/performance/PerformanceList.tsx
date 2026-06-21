@@ -399,6 +399,24 @@ export const PerformanceList = () => {
         </CardContent>
       </Card>
 
+      {/* Inline Full Evaluation Form Dialog — same tab, full Station-Manager-Portal layout */}
+      <Dialog open={!!inlineReview} onOpenChange={(o) => { if (!o) setInlineReview(null); }}>
+        <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <Edit className="w-5 h-5 text-primary" />
+              {ar ? 'تقييم الأداء' : 'Performance Review'}
+              {inlineReview && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  — {inlineReview.employeeName} · {inlineReview.quarter} {inlineReview.year}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {inlineReview && <PerformanceReviewForm key={`inline-${inlineKey}`} />}
+        </DialogContent>
+      </Dialog>
+
       {/* View Review Dialog */}
       <Dialog open={!!viewReview} onOpenChange={() => setViewReview(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
