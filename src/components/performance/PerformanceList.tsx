@@ -329,6 +329,7 @@ export const PerformanceList = () => {
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'الفترة' : 'Period'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.score')}</TableHead>
+                  <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'نسبة المكافأة' : 'Bonus %'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.status')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.reviewer')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.actions')}</TableHead>
@@ -348,6 +349,15 @@ export const PerformanceList = () => {
                         <span className={cn("font-bold", getScoreColor(review.score))}>{review.score}</span>
                         <Progress value={review.score * 20} className="w-16 h-2" />
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {review.bonusPercentage != null ? (
+                        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 font-bold">
+                          {review.bonusPercentage}%
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
                     </TableCell>
                     <TableCell>{getStatusBadge(review.status)}</TableCell>
                     <TableCell>{review.reviewer}</TableCell>
