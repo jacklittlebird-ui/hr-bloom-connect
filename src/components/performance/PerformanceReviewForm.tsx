@@ -189,14 +189,19 @@ export const PerformanceReviewForm = () => {
     };
   }, [selectedQuarter, selectedYear, quarterMonths, selectedEmpForMonths]);
 
+  const [quarterError, setQuarterError] = useState<string | null>(null);
+  const [quarterReloadKey, setQuarterReloadKey] = useState(0);
+
   useEffect(() => {
     if (!selectedEmployee || !periodRange) {
       setQuarterMonthly([]);
+      setQuarterError(null);
       return;
     }
     let cancelled = false;
-    (async () => {
+    const fetchWithRetry = async (attempt = 0): Promise<void> => {
       setQuarterLoading(true);
+      setQuarterError(null);
       try {
         const { start: startDate, end: endDate, months } = periodRange;
 
@@ -211,7 +216,6 @@ export const PerformanceReviewForm = () => {
         ]);
         if (cancelled) return;
 
-        // RLS denial detection: log when violations query fails for permission reasons
         if (violRes.error) {
           const msg = (violRes.error.message || '').toLowerCase();
           if (msg.includes('permission') || msg.includes('rls') || msg.includes('policy')) {
@@ -220,13 +224,16 @@ export const PerformanceReviewForm = () => {
               p_resource_id: selectedEmployee,
             }).then(() => {}, () => {});
             console.warn('[RLS] violations access denied for employee', selectedEmployee, violRes.error);
+          } else {
+            throw violRes.error;
           }
         }
+        if (attRes.error) throw attRes.error;
 
         const minutesByKey: Record<string, number> = {};
         const daysByKey: Record<string, Set<string>> = {};
         (attRes.data || []).forEach((r: any) => {
-          const k = (r.date as string).slice(0, 7); // YYYY-MM
+          const k = (r.date as string).slice(0, 7);
           const mins = computeWorkMinutes(r).minutes;
           minutesByKey[k] = (minutesByKey[k] || 0) + mins;
           if (!daysByKey[k]) daysByKey[k] = new Set();
@@ -250,12 +257,24 @@ export const PerformanceReviewForm = () => {
             violations: violByKey[k] || [],
           };
         }));
+      } catch (err: any) {
+        if (cancelled) return;
+        if (attempt < 2) {
+          const backoff = 500 * Math.pow(2, attempt);
+          await new Promise(r => setTimeout(r, backoff));
+          if (!cancelled) return fetchWithRetry(attempt + 1);
+        }
+        console.error('[performance] quarter data fetch failed after retries', err);
+        setQuarterError(err?.message || 'fetch_failed');
+        setQuarterMonthly([]);
       } finally {
         if (!cancelled) setQuarterLoading(false);
       }
-    })();
+    };
+    fetchWithRetry();
     return () => { cancelled = true; };
-  }, [selectedEmployee, periodRange]);
+  }, [selectedEmployee, periodRange, quarterReloadKey]);
+
 
   const monthLabel = (m: string) => {
     const ar_m = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
