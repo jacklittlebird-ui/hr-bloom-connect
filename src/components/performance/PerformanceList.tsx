@@ -77,18 +77,17 @@ export const PerformanceList = () => {
     setEditManagerComments(review.managerComments || '');
   };
 
-  // Open the full evaluation form (New Review tab) preloaded with this review's
-  // employee/year/quarter. The form already loads existing data, attendance cards,
-  // violations and bonus percentage — matching the Station Manager Portal view.
+  // Open the full evaluation form INLINE within the Reviews tab (in a dialog),
+  // preloaded with this review's employee/year/quarter — keeps the user on the
+  // same tab while exposing attendance cards, violations and bonus percentage.
   const openFullReview = (review: PerformanceReview) => {
     try {
       sessionStorage.setItem('perf_preselect_employee', review.employeeId);
       sessionStorage.setItem('perf_preselect_year', String(review.year));
       sessionStorage.setItem('perf_preselect_quarter', String(review.quarter).toUpperCase());
     } catch {}
-    window.dispatchEvent(new CustomEvent('performance:goto-new-review', {
-      detail: { employeeId: review.employeeId, year: review.year, quarter: review.quarter },
-    }));
+    setInlineReview(review);
+    setInlineKey(k => k + 1);
   };
 
   const handleSaveEdit = async () => {
