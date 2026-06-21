@@ -363,7 +363,7 @@ export const EmployeeDataProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // Training manager: use a lean employee list without large photo/bank fields to avoid request timeouts in the training portal.
         if (user?.role === 'training_manager') {
           const [empRes, deptsRes, stationsRes] = await Promise.all([
-            fetchAllPaginated(() => supabase.from('employees').select(TRAINING_MANAGER_LIST_SELECT).in('status', ['active', 'pending_hire']).order('employee_code', { ascending: true })),
+            fetchAllPaginated(() => supabase.from('employees').select(TRAINING_MANAGER_LIST_SELECT).in('status', ['active', 'pending_hire', 'external_stations']).order('employee_code', { ascending: true })),
             supabase.from('departments').select('id, name_ar, name_en'),
             supabase.from('stations').select('id, code, name_ar, name_en'),
           ]);
