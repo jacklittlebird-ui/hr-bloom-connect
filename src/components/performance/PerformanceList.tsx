@@ -228,7 +228,12 @@ export const PerformanceList = () => {
       return;
     }
     const title = ar ? 'تقييمات M3 — بعد 3 أشهر من التعيين' : 'M3 Reviews — Post-Hire 3-Month';
-    const data = m3Reviews.map(r => ({ ...r, station: getStationLabel(r.station), statusLabel: t(`performance.status.${r.status}`) }));
+    const data = m3Reviews.map(r => ({
+      ...r,
+      station: getStationLabel(r.station),
+      statusLabel: t(`performance.status.${r.status}`),
+      bonusPercentageLabel: r.bonusPercentage != null ? `${r.bonusPercentage}%` : '-'
+    }));
     if (fmt === 'csv') {
       exportToCSV({ title, columns: m3Columns, data, fileName: 'm3_performance_reviews' });
     } else {
