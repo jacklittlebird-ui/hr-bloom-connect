@@ -74,6 +74,20 @@ export const PerformanceList = () => {
     setEditManagerComments(review.managerComments || '');
   };
 
+  // Open the full evaluation form (New Review tab) preloaded with this review's
+  // employee/year/quarter. The form already loads existing data, attendance cards,
+  // violations and bonus percentage — matching the Station Manager Portal view.
+  const openFullReview = (review: PerformanceReview) => {
+    try {
+      sessionStorage.setItem('perf_preselect_employee', review.employeeId);
+      sessionStorage.setItem('perf_preselect_year', String(review.year));
+      sessionStorage.setItem('perf_preselect_quarter', String(review.quarter).toUpperCase());
+    } catch {}
+    window.dispatchEvent(new CustomEvent('performance:goto-new-review', {
+      detail: { employeeId: review.employeeId, year: review.year, quarter: review.quarter },
+    }));
+  };
+
   const handleSaveEdit = async () => {
     if (!editReview) return;
     setSaving(true);
@@ -340,7 +354,7 @@ export const PerformanceList = () => {
                         <div className={cn("flex gap-1", isRTL && "flex-row-reverse")}>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setViewReview(review)} aria-label={ar ? 'عرض التقييم' : 'View review'}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openFullReview(review)} aria-label={ar ? 'عرض التقييم' : 'View review'}>
                                 <Eye className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
@@ -348,7 +362,7 @@ export const PerformanceList = () => {
                           </Tooltip>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(review)} aria-label={ar ? 'تعديل التقييم' : 'Edit review'}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openFullReview(review)} aria-label={ar ? 'تعديل التقييم' : 'Edit review'}>
                                 <Edit className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
