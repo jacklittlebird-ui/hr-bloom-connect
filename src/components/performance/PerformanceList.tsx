@@ -175,10 +175,16 @@ export const PerformanceList = () => {
         { header: t('performance.list.quarter'), key: 'quarter' },
         { header: language === 'ar' ? 'السنة' : 'Year', key: 'year' },
         { header: t('performance.list.score'), key: 'score' },
+        { header: language === 'ar' ? 'نسبة المكافأة' : 'Bonus %', key: 'bonusPercentageLabel' },
         { header: t('performance.list.status'), key: 'statusLabel' },
         { header: t('performance.list.reviewer'), key: 'reviewer' },
       ],
-      data: filteredReviews.map(r => ({ ...r, station: getStationLabel(r.station), statusLabel: t(`performance.status.${r.status}`) })),
+      data: filteredReviews.map(r => ({
+        ...r,
+        station: getStationLabel(r.station),
+        statusLabel: t(`performance.status.${r.status}`),
+        bonusPercentageLabel: r.bonusPercentage != null ? `${r.bonusPercentage}%` : '-'
+      })),
       fileName: 'performance_reviews',
     });
   };
@@ -191,9 +197,15 @@ export const PerformanceList = () => {
         { header: t('performance.list.department'), key: 'department' },
         { header: language === 'ar' ? 'المحطة' : 'Station', key: 'station' },
         { header: t('performance.list.score'), key: 'score' },
+        { header: language === 'ar' ? 'نسبة المكافأة' : 'Bonus %', key: 'bonusPercentageLabel' },
         { header: t('performance.list.status'), key: 'statusLabel' },
       ],
-      data: filteredReviews.map(r => ({ ...r, station: getStationLabel(r.station), statusLabel: t(`performance.status.${r.status}`) })),
+      data: filteredReviews.map(r => ({
+        ...r,
+        station: getStationLabel(r.station),
+        statusLabel: t(`performance.status.${r.status}`),
+        bonusPercentageLabel: r.bonusPercentage != null ? `${r.bonusPercentage}%` : '-'
+      })),
       fileName: 'performance_reviews',
     });
   };
@@ -205,6 +217,7 @@ export const PerformanceList = () => {
     { header: language === 'ar' ? 'السنة' : 'Year', key: 'year' },
     { header: language === 'ar' ? 'تاريخ التقييم' : 'Review Date', key: 'reviewDate' },
     { header: t('performance.list.score'), key: 'score' },
+    { header: language === 'ar' ? 'نسبة المكافأة' : 'Bonus %', key: 'bonusPercentageLabel' },
     { header: t('performance.list.status'), key: 'statusLabel' },
     { header: t('performance.list.reviewer'), key: 'reviewer' },
   ];
