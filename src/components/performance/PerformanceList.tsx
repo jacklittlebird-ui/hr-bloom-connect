@@ -465,13 +465,22 @@ export const PerformanceList = () => {
                 <div className={cn(isRTL && "text-right")}><p className="text-sm text-muted-foreground">{t('performance.list.status')}</p>{getStatusBadge(viewReview.status)}</div>
               </div>
 
-              <div className={cn("flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>
-                <span className="font-semibold text-lg">{language === 'ar' ? 'التقييم الإجمالي' : 'Overall Score'}</span>
-                <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <Star key={s} className={cn("w-5 h-5", s <= Math.floor(viewReview.score) ? "text-stat-yellow fill-stat-yellow" : "text-muted")} />
-                  ))}
-                  <span className={cn("font-bold text-2xl ms-2", getScoreColor(viewReview.score))}>{viewReview.score}/5</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className={cn("flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>
+                  <span className="font-semibold text-base">{language === 'ar' ? 'التقييم الإجمالي' : 'Overall Score'}</span>
+                  <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} className={cn("w-4 h-4", s <= Math.floor(viewReview.score) ? "text-stat-yellow fill-stat-yellow" : "text-muted")} />
+                    ))}
+                    <span className={cn("font-bold text-xl ms-1", getScoreColor(viewReview.score))}>{viewReview.score}/5</span>
+                  </div>
+                </div>
+
+                <div className={cn("flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>
+                  <span className="font-semibold text-base">{language === 'ar' ? 'نسبة المكافأة المقترحة' : 'Suggested Bonus %'}</span>
+                  <span className="font-bold text-xl text-primary">
+                    {viewReview.bonusPercentage != null ? `${viewReview.bonusPercentage}%` : '-'}
+                  </span>
                 </div>
               </div>
 
