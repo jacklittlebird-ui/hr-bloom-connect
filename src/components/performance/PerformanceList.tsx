@@ -43,6 +43,8 @@ export const PerformanceList = () => {
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [viewReview, setViewReview] = useState<PerformanceReview | null>(null);
   const [editReview, setEditReview] = useState<PerformanceReview | null>(null);
+  const [inlineReview, setInlineReview] = useState<PerformanceReview | null>(null);
+  const [inlineKey, setInlineKey] = useState(0);
   const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
