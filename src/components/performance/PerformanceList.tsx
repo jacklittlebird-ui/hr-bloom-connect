@@ -175,10 +175,16 @@ export const PerformanceList = () => {
         { header: t('performance.list.quarter'), key: 'quarter' },
         { header: language === 'ar' ? 'السنة' : 'Year', key: 'year' },
         { header: t('performance.list.score'), key: 'score' },
+        { header: language === 'ar' ? 'نسبة المكافأة' : 'Bonus %', key: 'bonusPercentageLabel' },
         { header: t('performance.list.status'), key: 'statusLabel' },
         { header: t('performance.list.reviewer'), key: 'reviewer' },
       ],
-      data: filteredReviews.map(r => ({ ...r, station: getStationLabel(r.station), statusLabel: t(`performance.status.${r.status}`) })),
+      data: filteredReviews.map(r => ({
+        ...r,
+        station: getStationLabel(r.station),
+        statusLabel: t(`performance.status.${r.status}`),
+        bonusPercentageLabel: r.bonusPercentage != null ? `${r.bonusPercentage}%` : '-'
+      })),
       fileName: 'performance_reviews',
     });
   };
@@ -191,9 +197,15 @@ export const PerformanceList = () => {
         { header: t('performance.list.department'), key: 'department' },
         { header: language === 'ar' ? 'المحطة' : 'Station', key: 'station' },
         { header: t('performance.list.score'), key: 'score' },
+        { header: language === 'ar' ? 'نسبة المكافأة' : 'Bonus %', key: 'bonusPercentageLabel' },
         { header: t('performance.list.status'), key: 'statusLabel' },
       ],
-      data: filteredReviews.map(r => ({ ...r, station: getStationLabel(r.station), statusLabel: t(`performance.status.${r.status}`) })),
+      data: filteredReviews.map(r => ({
+        ...r,
+        station: getStationLabel(r.station),
+        statusLabel: t(`performance.status.${r.status}`),
+        bonusPercentageLabel: r.bonusPercentage != null ? `${r.bonusPercentage}%` : '-'
+      })),
       fileName: 'performance_reviews',
     });
   };
@@ -205,6 +217,7 @@ export const PerformanceList = () => {
     { header: language === 'ar' ? 'السنة' : 'Year', key: 'year' },
     { header: language === 'ar' ? 'تاريخ التقييم' : 'Review Date', key: 'reviewDate' },
     { header: t('performance.list.score'), key: 'score' },
+    { header: language === 'ar' ? 'نسبة المكافأة' : 'Bonus %', key: 'bonusPercentageLabel' },
     { header: t('performance.list.status'), key: 'statusLabel' },
     { header: t('performance.list.reviewer'), key: 'reviewer' },
   ];
@@ -215,7 +228,12 @@ export const PerformanceList = () => {
       return;
     }
     const title = ar ? 'تقييمات M3 — بعد 3 أشهر من التعيين' : 'M3 Reviews — Post-Hire 3-Month';
-    const data = m3Reviews.map(r => ({ ...r, station: getStationLabel(r.station), statusLabel: t(`performance.status.${r.status}`) }));
+    const data = m3Reviews.map(r => ({
+      ...r,
+      station: getStationLabel(r.station),
+      statusLabel: t(`performance.status.${r.status}`),
+      bonusPercentageLabel: r.bonusPercentage != null ? `${r.bonusPercentage}%` : '-'
+    }));
     if (fmt === 'csv') {
       exportToCSV({ title, columns: m3Columns, data, fileName: 'm3_performance_reviews' });
     } else {
@@ -329,6 +347,7 @@ export const PerformanceList = () => {
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'الفترة' : 'Period'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.score')}</TableHead>
+                  <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'نسبة المكافأة' : 'Bonus %'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.status')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.reviewer')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.actions')}</TableHead>
@@ -348,6 +367,15 @@ export const PerformanceList = () => {
                         <span className={cn("font-bold", getScoreColor(review.score))}>{review.score}</span>
                         <Progress value={review.score * 20} className="w-16 h-2" />
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {review.bonusPercentage != null ? (
+                        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 font-bold">
+                          {review.bonusPercentage}%
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">-</span>
+                      )}
                     </TableCell>
                     <TableCell>{getStatusBadge(review.status)}</TableCell>
                     <TableCell>{review.reviewer}</TableCell>
@@ -437,13 +465,22 @@ export const PerformanceList = () => {
                 <div className={cn(isRTL && "text-right")}><p className="text-sm text-muted-foreground">{t('performance.list.status')}</p>{getStatusBadge(viewReview.status)}</div>
               </div>
 
-              <div className={cn("flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>
-                <span className="font-semibold text-lg">{language === 'ar' ? 'التقييم الإجمالي' : 'Overall Score'}</span>
-                <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <Star key={s} className={cn("w-5 h-5", s <= Math.floor(viewReview.score) ? "text-stat-yellow fill-stat-yellow" : "text-muted")} />
-                  ))}
-                  <span className={cn("font-bold text-2xl ms-2", getScoreColor(viewReview.score))}>{viewReview.score}/5</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className={cn("flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>
+                  <span className="font-semibold text-base">{language === 'ar' ? 'التقييم الإجمالي' : 'Overall Score'}</span>
+                  <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} className={cn("w-4 h-4", s <= Math.floor(viewReview.score) ? "text-stat-yellow fill-stat-yellow" : "text-muted")} />
+                    ))}
+                    <span className={cn("font-bold text-xl ms-1", getScoreColor(viewReview.score))}>{viewReview.score}/5</span>
+                  </div>
+                </div>
+
+                <div className={cn("flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>
+                  <span className="font-semibold text-base">{language === 'ar' ? 'نسبة المكافأة المقترحة' : 'Suggested Bonus %'}</span>
+                  <span className="font-bold text-xl text-primary">
+                    {viewReview.bonusPercentage != null ? `${viewReview.bonusPercentage}%` : '-'}
+                  </span>
                 </div>
               </div>
 
