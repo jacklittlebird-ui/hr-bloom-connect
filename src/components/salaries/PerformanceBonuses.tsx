@@ -533,9 +533,12 @@ export const PerformanceBonuses = () => {
                   <div className={cn("p-2.5 rounded-lg", stat.bg)}>
                     <stat.icon className={cn("w-5 h-5", stat.color)} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs text-muted-foreground">{stat.label}</p>
                     <p className="text-lg font-bold">{stat.value}</p>
+                    {(stat as any).sub && (
+                      <p className="text-[11px] font-semibold text-green-700 mt-0.5">{(stat as any).sub}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
