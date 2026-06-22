@@ -39,6 +39,7 @@ export const MODULE_LABELS: Record<ModuleKey, { ar: string; en: string }> = {
   'vehicles': { ar: 'السيارات', en: 'Vehicles' },
   'property-taxes': { ar: 'الضرائب العقارية', en: 'Property Taxes' },
   'salaries-performance-bonus': { ar: 'الرواتب - مكافآت دورية (تقييم) فقط', en: 'Salaries - Periodic Bonus (Eval) only' },
+  'salaries-non-recurring-bonus': { ar: 'الرواتب - مكافآت غير دورية فقط', en: 'Salaries - Non-Recurring Bonuses only' },
 };
 
 // Map route paths to module keys
