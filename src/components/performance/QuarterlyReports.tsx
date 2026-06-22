@@ -119,7 +119,7 @@ export const QuarterlyReports = () => {
     ];
 
     return { departmentScores, quarterlyComparison, criteriaAverages, radarData, summaryStats };
-  }, [reviews, selectedYear, selectedQuarter, language, t]);
+  }, [reviews, selectedYear, selectedQuarter, jobDegreeFilter, employeeDegreeMap, language, t]);
 
   const handleExportCSV = () => {
     exportToCSV({
@@ -170,6 +170,13 @@ export const QuarterlyReports = () => {
                   <SelectItem value="Q3">Q3</SelectItem>
                   <SelectItem value="Q2">Q2</SelectItem>
                   <SelectItem value="Q1">Q1</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={jobDegreeFilter} onValueChange={setJobDegreeFilter}>
+                <SelectTrigger className="w-32"><SelectValue placeholder={language === 'ar' ? 'الدرجة الوظيفية' : 'Job Degree'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{language === 'ar' ? 'كل الدرجات' : 'All Degrees'}</SelectItem>
+                  {JOB_DEGREES.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Button variant="outline" size="sm" onClick={() => handlePrint(language === 'ar' ? 'التقارير الربع سنوية' : 'Quarterly Reports')} className="gap-1.5">
