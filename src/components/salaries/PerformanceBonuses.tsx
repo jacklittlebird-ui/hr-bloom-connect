@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { getJobDegreeBadgeClass } from '@/lib/jobDegreeColors';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, Users, Building2, Wallet, Star, ExternalLink, Calculator, Save, Landmark } from 'lucide-react';

@@ -4,6 +4,7 @@ import { usePerformanceData, defaultCriteria, calculateScore, CriteriaItem } fro
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getJobDegreeBadgeClass } from '@/lib/jobDegreeColors';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
