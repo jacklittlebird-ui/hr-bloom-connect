@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getJobDegreeBadgeClass } from '@/lib/jobDegreeColors';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
@@ -383,7 +384,7 @@ export const PerformanceList = () => {
                     <TableCell className="font-medium">{review.employeeName}</TableCell>
                     <TableCell>{review.department}</TableCell>
                     <TableCell>{getStationLabel(review.station)}</TableCell>
-                    <TableCell><Badge variant="outline" className="font-mono text-xs">{getJobDegree(review)}</Badge></TableCell>
+                    <TableCell><Badge variant="outline" className={cn("font-mono text-xs font-bold", getJobDegreeBadgeClass(getJobDegree(review)))}>{getJobDegree(review)}</Badge></TableCell>
                     <TableCell className="whitespace-nowrap text-xs">{getHireDate(review)}</TableCell>
                     <TableCell>{review.quarter} {review.year}</TableCell>
                     <TableCell>
