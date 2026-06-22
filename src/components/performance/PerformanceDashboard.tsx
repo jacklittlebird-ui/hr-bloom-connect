@@ -75,8 +75,11 @@ export const PerformanceDashboard = () => {
     return { draft, submitted, approved, total: filteredReviews.length };
   }, [filteredReviews]);
 
-  // Evaluated employee IDs
-  const evaluatedIds = useMemo(() => new Set(filteredReviews.map(r => r.employeeId)), [filteredReviews]);
+  // Evaluated employee IDs (restricted to currently active/filtered employees to avoid negative counts)
+  const evaluatedIds = useMemo(
+    () => new Set(filteredReviews.map(r => r.employeeId).filter(id => activeEmployeeIds.has(id))),
+    [filteredReviews, activeEmployeeIds]
+  );
 
   // Station breakdown
   const stationBreakdown = useMemo(() => {
