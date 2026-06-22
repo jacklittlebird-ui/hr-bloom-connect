@@ -756,10 +756,20 @@ export const PerformanceBonuses = () => {
                     });
                   })()}
                   <TableRow className="bg-muted/70 font-bold border-t-2">
-                    <TableCell colSpan={16} className={cn(isRTL ? "text-right" : "text-left")}>
+                    <TableCell colSpan={8} className={cn(isRTL ? "text-right" : "text-left")}>
                       {ar ? 'الإجمالي الكلي' : 'Grand Total'}
                     </TableCell>
+                    <TableCell className="font-bold">{totalGrossSalary.toLocaleString()}</TableCell>
+                    <TableCell></TableCell>
+                    <TableCell className="font-bold text-green-700">{totalGrossSalary > 0 ? bonusToGrossPct.toFixed(2) + '%' : '-'}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground" dir="ltr">
+                      {ar ? 'المكافآت / الرواتب' : 'Bonuses / Salaries'}
+                    </TableCell>
                     <TableCell className="font-bold">{totalAmount.toLocaleString()}</TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
