@@ -731,9 +731,10 @@ export const PerformanceBonuses = () => {
                                 type="number"
                                 min="0"
                                 max="100"
-                                step="2.5"
+                                step="0.5"
                                 value={r.percentage}
                                 onChange={(e) => updateRowPercentage(r.employee_id, parseFloat(e.target.value))}
+                                onBlur={(e) => updateRowPercentage(r.employee_id, parseFloat(e.target.value), true)}
                                 className="h-8 pe-6 text-sm"
                                 aria-label={ar ? 'نسبة المكافأة' : 'Bonus rate'}
                               />
