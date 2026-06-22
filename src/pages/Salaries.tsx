@@ -25,17 +25,28 @@ const TabFallback = () => <div className="space-y-4"><Skeleton className="h-10 w
 const Salaries = () => {
   const { t, isRTL } = useLanguage();
   const { allowedModules } = useModulePermissions();
-  // Users that have ONLY the sub-permission see only the Periodic Bonus (Eval) tab
+  // Users that have ONLY sub-permissions see only the matching tabs
   const evalOnly = useMemo(
-    () => allowedModules.includes('salaries-performance-bonus') && !allowedModules.includes('salaries'),
+    () => !allowedModules.includes('salaries')
+      && (allowedModules.includes('salaries-performance-bonus')
+        || allowedModules.includes('salaries-non-recurring-bonus')),
     [allowedModules]
   );
-  const [activeTab, setActiveTab] = useState(evalOnly ? 'performance-bonus' : 'payroll');
+  const allowedSubTabs = useMemo(() => {
+    const ids: string[] = [];
+    if (allowedModules.includes('salaries-performance-bonus')) ids.push('performance-bonus');
+    if (allowedModules.includes('salaries-non-recurring-bonus')) ids.push('non-recurring-bonuses');
+    return ids;
+  }, [allowedModules]);
+  const defaultTab = evalOnly ? (allowedSubTabs[0] ?? 'performance-bonus') : 'payroll';
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (evalOnly && activeTab !== 'performance-bonus') setActiveTab('performance-bonus');
-  }, [evalOnly, activeTab]);
+    if (evalOnly && !allowedSubTabs.includes(activeTab)) {
+      setActiveTab(allowedSubTabs[0] ?? 'performance-bonus');
+    }
+  }, [evalOnly, activeTab, allowedSubTabs]);
 
   const allTabs = [
     { id: 'payroll', label: t('salaries.tabs.payroll') },
@@ -51,7 +62,7 @@ const Salaries = () => {
     { id: 'non-recurring-bonuses', label: isRTL ? 'مكافآت غير دورية' : 'Non-Recurring Bonuses' },
   ];
 
-  const tabs = evalOnly ? allTabs.filter(t => t.id === 'performance-bonus') : allTabs;
+  const tabs = evalOnly ? allTabs.filter(t => allowedSubTabs.includes(t.id)) : allTabs;
 
   return (
     <DashboardLayout>
