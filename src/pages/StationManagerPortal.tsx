@@ -210,7 +210,14 @@ const StationManagerPortal = () => {
   const [evalDialog, setEvalDialog] = useState(false);
   const [evalEmployeeId, setEvalEmployeeId] = useState('');
   const [evalYear, setEvalYear] = useState('');
-  const [evalQuarter, setEvalQuarter] = useState('');
+  const getCurrentQuarter = () => {
+    const month = new Date().getMonth();
+    if (month >= 0 && month <= 2) return 'Q1';
+    if (month >= 3 && month <= 5) return 'Q2';
+    if (month >= 6 && month <= 8) return 'Q3';
+    return 'Q4';
+  };
+  const [evalQuarter, setEvalQuarter] = useState(getCurrentQuarter());
   const [evalCriteria, setEvalCriteria] = useState<CriteriaScore[]>(initialCriteria.map(c => ({ ...c })));
   const [evalStrengths, setEvalStrengths] = useState('');
   const [evalImprovements, setEvalImprovements] = useState('');
@@ -702,7 +709,7 @@ const StationManagerPortal = () => {
 
   // === New Eval Form State (inline, not dialog) ===
   const [newEvalYear, setNewEvalYear] = useState(String(new Date().getFullYear()));
-  const [newEvalQuarter, setNewEvalQuarter] = useState('');
+  const [newEvalQuarter, setNewEvalQuarter] = useState(getCurrentQuarter());
   const [newEvalDeptFilter, setNewEvalDeptFilter] = useState('all');
   const [newEvalSelectedEmp, setNewEvalSelectedEmp] = useState('');
   const [newEvalPage, setNewEvalPage] = useState(0);

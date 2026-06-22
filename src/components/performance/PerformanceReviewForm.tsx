@@ -93,7 +93,11 @@ export const PerformanceReviewForm = () => {
       const v = sessionStorage.getItem('perf_preselect_quarter');
       if (v) { sessionStorage.removeItem('perf_preselect_quarter'); return v; }
     } catch {}
-    return '';
+    const month = new Date().getMonth();
+    if (month >= 0 && month <= 2) return 'Q1';
+    if (month >= 3 && month <= 5) return 'Q2';
+    if (month >= 6 && month <= 8) return 'Q3';
+    return 'Q4';
   });
   const [selectedEmployee, setSelectedEmployee] = useState(() => {
     try {

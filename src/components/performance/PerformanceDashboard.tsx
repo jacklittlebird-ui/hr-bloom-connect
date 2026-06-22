@@ -21,8 +21,16 @@ export const PerformanceDashboard = () => {
   const { employees } = useEmployeeData();
   const ar = language === 'ar';
 
+  const getCurrentQuarter = () => {
+    const month = new Date().getMonth();
+    if (month >= 0 && month <= 2) return 'Q1';
+    if (month >= 3 && month <= 5) return 'Q2';
+    if (month >= 6 && month <= 8) return 'Q3';
+    return 'Q4';
+  };
+
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
-  const [selectedQuarter, setSelectedQuarter] = useState('');
+  const [selectedQuarter, setSelectedQuarter] = useState(getCurrentQuarter());
   const [stationFilter, setStationFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
 
