@@ -45,15 +45,15 @@ const REPORT_COLUMNS = [
   { headerAr: 'الوظيفة', headerEn: 'Job Title', key: 'job_title' },
   { headerAr: 'الدرجة الوظيفية', headerEn: 'Job Degree', key: 'job_level' },
   { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hire_date' },
-  { headerAr: 'رقم الحساب', headerEn: 'Account No.', key: 'bank_account_number' },
-  { headerAr: 'ID البنكي', headerEn: 'Bank ID', key: 'bank_id_number' },
-  { headerAr: 'اسم البنك', headerEn: 'Bank Name', key: 'bank_name' },
-  { headerAr: 'نوع الحساب', headerEn: 'Account Type', key: 'bank_account_type' },
   { headerAr: 'الراتب الإجمالي', headerEn: 'Gross Salary', key: 'gross_salary' },
   { headerAr: 'التقييم', headerEn: 'Score', key: 'score' },
   { headerAr: 'النسبة %', headerEn: 'Rate %', key: 'percentage' },
   { headerAr: 'تفاصيل الحساب', headerEn: 'Calculation', key: 'calc_details' },
   { headerAr: 'المبلغ', headerEn: 'Amount', key: 'amount' },
+  { headerAr: 'رقم الحساب', headerEn: 'Account No.', key: 'bank_account_number' },
+  { headerAr: 'ID البنكي', headerEn: 'Bank ID', key: 'bank_id_number' },
+  { headerAr: 'اسم البنك', headerEn: 'Bank Name', key: 'bank_name' },
+  { headerAr: 'نوع الحساب', headerEn: 'Account Type', key: 'bank_account_type' },
 ];
 
 export const PerformanceBonuses = () => {
@@ -663,15 +663,15 @@ export const PerformanceBonuses = () => {
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'الوظيفة' : 'Job Title'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'الدرجة الوظيفية' : 'Job Degree'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
-                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'رقم الحساب' : 'Account No.'}</TableHead>
-                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'ID البنكي' : 'Bank ID'}</TableHead>
-                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'اسم البنك' : 'Bank Name'}</TableHead>
-                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'نوع الحساب' : 'Account Type'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'الإجمالي' : 'Gross'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'التقييم' : 'Score'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'النسبة' : 'Rate'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'تفاصيل الحساب' : 'Calculation'}</TableHead>
                     <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'المبلغ' : 'Amount'}</TableHead>
+                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'رقم الحساب' : 'Account No.'}</TableHead>
+                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'ID البنكي' : 'Bank ID'}</TableHead>
+                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'اسم البنك' : 'Bank Name'}</TableHead>
+                    <TableHead className={cn("whitespace-nowrap", isRTL && "text-right")}>{ar ? 'نوع الحساب' : 'Account Type'}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -681,7 +681,7 @@ export const PerformanceBonuses = () => {
                       if (row.type === 'subtotal') {
                         return (
                           <TableRow key={row.key} className="bg-primary/5 font-semibold border-t-2 border-primary/20">
-                            <TableCell colSpan={12} className={cn(isRTL ? 'text-right' : 'text-left')}>
+                            <TableCell colSpan={8} className={cn(isRTL ? 'text-right' : 'text-left')}>
                               {ar ? `مجموع ${row.stationName || 'بدون محطة'}` : `${row.stationName || 'No Station'} Subtotal`} ({row.count})
                             </TableCell>
                             <TableCell>{row.grossSalary.toLocaleString()}</TableCell>
@@ -689,6 +689,10 @@ export const PerformanceBonuses = () => {
                             <TableCell></TableCell>
                             <TableCell></TableCell>
                             <TableCell className="font-semibold">{row.amount.toLocaleString()}</TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
+                            <TableCell></TableCell>
                           </TableRow>
                         );
                       }
@@ -704,10 +708,6 @@ export const PerformanceBonuses = () => {
                           <TableCell>{r.job_title}</TableCell>
                           <TableCell>{r.job_level ? <Badge variant="outline" className={cn("font-mono text-xs font-bold", getJobDegreeBadgeClass(r.job_level))}>{r.job_level}</Badge> : '-'}</TableCell>
                           <TableCell dir="ltr">{r.hire_date}</TableCell>
-                          <TableCell>{r.bank_account_number}</TableCell>
-                          <TableCell>{r.bank_id_number}</TableCell>
-                          <TableCell>{r.bank_name}</TableCell>
-                          <TableCell>{r.bank_account_type}</TableCell>
                           <TableCell>{r.gross_salary.toLocaleString()}</TableCell>
                           <TableCell>
                             <span className="inline-flex items-center gap-1">
@@ -737,6 +737,10 @@ export const PerformanceBonuses = () => {
                             </span>
                           </TableCell>
                           <TableCell className="font-semibold">{r.amount.toLocaleString()}</TableCell>
+                          <TableCell>{r.bank_account_number}</TableCell>
+                          <TableCell>{r.bank_id_number}</TableCell>
+                          <TableCell>{r.bank_name}</TableCell>
+                          <TableCell>{r.bank_account_type}</TableCell>
                         </TableRow>
                       );
                     });
