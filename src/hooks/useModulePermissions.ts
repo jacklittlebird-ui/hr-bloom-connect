@@ -9,8 +9,9 @@ export const ALL_MODULES = [
   'performance', 'assets', 'uniforms', 'documents', 'reports',
   'training', 'notifications', 'users', 'settings', 'vehicles',
   'property-taxes',
-  // Sub-permission: grants entry to /salaries but only the "Periodic Bonus (Eval)" tab
+  // Sub-permissions: grant entry to /salaries but only specific tabs
   'salaries-performance-bonus',
+  'salaries-non-recurring-bonus',
 ] as const;
 
 export type ModuleKey = typeof ALL_MODULES[number];
@@ -38,6 +39,7 @@ export const MODULE_LABELS: Record<ModuleKey, { ar: string; en: string }> = {
   'vehicles': { ar: 'السيارات', en: 'Vehicles' },
   'property-taxes': { ar: 'الضرائب العقارية', en: 'Property Taxes' },
   'salaries-performance-bonus': { ar: 'الرواتب - مكافآت دورية (تقييم) فقط', en: 'Salaries - Periodic Bonus (Eval) only' },
+  'salaries-non-recurring-bonus': { ar: 'الرواتب - مكافآت غير دورية فقط', en: 'Salaries - Non-Recurring Bonuses only' },
 };
 
 // Map route paths to module keys
@@ -170,19 +172,27 @@ export function useModulePermissions() {
   // A scoped admin is an admin whose allowedModules has been narrowed below full set.
   const isScopedAdmin = userRole === 'admin' && allowedModules.length < ALL_MODULES.length;
 
+  const hasSalarySubPermission = useCallback((): boolean => {
+    return allowedModules.includes('salaries-performance-bonus')
+      || allowedModules.includes('salaries-non-recurring-bonus');
+  }, [allowedModules]);
+
   const hasAccess = useCallback((moduleKey: ModuleKey): boolean => {
     if (userRole === 'admin' && !isScopedAdmin) return true;
-    return allowedModules.includes(moduleKey);
-  }, [allowedModules, userRole, isScopedAdmin]);
+    if (allowedModules.includes(moduleKey)) return true;
+    // Show Salaries sidebar entry when any salary sub-permission is granted
+    if (moduleKey === 'salaries' && hasSalarySubPermission()) return true;
+    return false;
+  }, [allowedModules, userRole, isScopedAdmin, hasSalarySubPermission]);
 
   const hasPathAccess = useCallback((path: string): boolean => {
     if (userRole === 'admin' && !isScopedAdmin) return true;
     const moduleKey = PATH_TO_MODULE[path];
     if (!moduleKey) return true;
     if (allowedModules.includes(moduleKey)) return true;
-    if (moduleKey === 'salaries' && allowedModules.includes('salaries-performance-bonus')) return true;
+    if (moduleKey === 'salaries' && hasSalarySubPermission()) return true;
     return false;
-  }, [allowedModules, userRole, isScopedAdmin]);
+  }, [allowedModules, userRole, isScopedAdmin, hasSalarySubPermission]);
 
   return { allowedModules, loading, hasAccess, hasPathAccess, refetch: fetchPermissions };
 }
