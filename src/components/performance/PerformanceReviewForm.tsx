@@ -52,6 +52,7 @@ const initialCriteria: CriteriaScore[] = [
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
 const quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'M3'];
+const JOB_DEGREES = ['AA', 'A', 'B', 'C'];
 const normalizePeriodValue = (value: unknown) => String(value || '').trim().toUpperCase();
 const normalizeYearValue = (value: unknown) => String(value || '').trim();
 
@@ -81,6 +82,7 @@ export const PerformanceReviewForm = () => {
   // Filters
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [jobDegreeFilter, setJobDegreeFilter] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState(() => {
     try {
       const v = sessionStorage.getItem('perf_preselect_year');
@@ -338,6 +340,7 @@ export const PerformanceReviewForm = () => {
     let list = activeEmployees;
     if (stationFilter !== 'all') list = list.filter(e => e.stationLocation === stationFilter);
     if (departmentFilter !== 'all') list = list.filter(e => e.department === departmentFilter);
+    if (jobDegreeFilter !== 'all') list = list.filter(e => (e.jobDegree || '') === jobDegreeFilter);
     if (employeeSearch.trim()) {
       const query = normalizeSearchText(employeeSearch);
       list = list.filter(e => {
@@ -348,10 +351,10 @@ export const PerformanceReviewForm = () => {
       });
     }
     return list;
-  }, [activeEmployees, stationFilter, departmentFilter, employeeSearch]);
+  }, [activeEmployees, stationFilter, departmentFilter, jobDegreeFilter, employeeSearch]);
 
   // Reset page when filters change
-  useEffect(() => { setEmployeePage(0); }, [stationFilter, departmentFilter, employeeSearch]);
+  useEffect(() => { setEmployeePage(0); }, [stationFilter, departmentFilter, jobDegreeFilter, employeeSearch]);
 
   const totalPages = Math.max(1, Math.ceil(filteredEmployees.length / PAGE_SIZE));
   const paginatedEmployees = filteredEmployees.slice(employeePage * PAGE_SIZE, (employeePage + 1) * PAGE_SIZE);
@@ -492,7 +495,7 @@ export const PerformanceReviewForm = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Station */}
             <div className="space-y-2">
               <Label>{ar ? 'المحطة' : 'Station'}</Label>
@@ -525,6 +528,17 @@ export const PerformanceReviewForm = () => {
               <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger><SelectValue placeholder={ar ? 'اختر السنة...' : 'Select year...'} /></SelectTrigger>
                 <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            {/* Job Degree */}
+            <div className="space-y-2">
+              <Label>{ar ? 'الدرجة الوظيفية' : 'Job Degree'}</Label>
+              <Select value={jobDegreeFilter} onValueChange={setJobDegreeFilter}>
+                <SelectTrigger><SelectValue placeholder={ar ? 'اختر الدرجة...' : 'Select degree...'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'كل الدرجات' : 'All Degrees'}</SelectItem>
+                  {JOB_DEGREES.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                </SelectContent>
               </Select>
             </div>
             {/* Quarter */}
