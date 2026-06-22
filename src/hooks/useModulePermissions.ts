@@ -167,20 +167,22 @@ export function useModulePermissions() {
     fetchPermissions();
   }, [fetchPermissions]);
 
+  // A scoped admin is an admin whose allowedModules has been narrowed below full set.
+  const isScopedAdmin = userRole === 'admin' && allowedModules.length < ALL_MODULES.length;
+
   const hasAccess = useCallback((moduleKey: ModuleKey): boolean => {
-    if (userRole === 'admin') return true;
+    if (userRole === 'admin' && !isScopedAdmin) return true;
     return allowedModules.includes(moduleKey);
-  }, [allowedModules, userRole]);
+  }, [allowedModules, userRole, isScopedAdmin]);
 
   const hasPathAccess = useCallback((path: string): boolean => {
-    if (userRole === 'admin') return true;
+    if (userRole === 'admin' && !isScopedAdmin) return true;
     const moduleKey = PATH_TO_MODULE[path];
-    if (!moduleKey) return true; // Unknown paths are allowed
+    if (!moduleKey) return true;
     if (allowedModules.includes(moduleKey)) return true;
-    // Sub-permission: 'salaries-performance-bonus' grants entry to /salaries (single tab only)
     if (moduleKey === 'salaries' && allowedModules.includes('salaries-performance-bonus')) return true;
     return false;
-  }, [allowedModules, userRole]);
+  }, [allowedModules, userRole, isScopedAdmin]);
 
   return { allowedModules, loading, hasAccess, hasPathAccess, refetch: fetchPermissions };
 }
