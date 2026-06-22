@@ -36,6 +36,7 @@ export const MODULE_LABELS: Record<ModuleKey, { ar: string; en: string }> = {
   'settings': { ar: 'الإعدادات', en: 'Settings' },
   'vehicles': { ar: 'السيارات', en: 'Vehicles' },
   'property-taxes': { ar: 'الضرائب العقارية', en: 'Property Taxes' },
+  'salaries-performance-bonus': { ar: 'الرواتب - مكافآت دورية (تقييم) فقط', en: 'Salaries - Periodic Bonus (Eval) only' },
 };
 
 // Map route paths to module keys
