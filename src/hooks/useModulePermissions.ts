@@ -9,6 +9,8 @@ export const ALL_MODULES = [
   'performance', 'assets', 'uniforms', 'documents', 'reports',
   'training', 'notifications', 'users', 'settings', 'vehicles',
   'property-taxes',
+  // Sub-permission: grants entry to /salaries but only the "Periodic Bonus (Eval)" tab
+  'salaries-performance-bonus',
 ] as const;
 
 export type ModuleKey = typeof ALL_MODULES[number];
@@ -35,6 +37,7 @@ export const MODULE_LABELS: Record<ModuleKey, { ar: string; en: string }> = {
   'settings': { ar: 'الإعدادات', en: 'Settings' },
   'vehicles': { ar: 'السيارات', en: 'Vehicles' },
   'property-taxes': { ar: 'الضرائب العقارية', en: 'Property Taxes' },
+  'salaries-performance-bonus': { ar: 'الرواتب - مكافآت دورية (تقييم) فقط', en: 'Salaries - Periodic Bonus (Eval) only' },
 };
 
 // Map route paths to module keys
@@ -158,7 +161,10 @@ export function useModulePermissions() {
     if (userRole === 'admin') return true;
     const moduleKey = PATH_TO_MODULE[path];
     if (!moduleKey) return true; // Unknown paths are allowed
-    return allowedModules.includes(moduleKey);
+    if (allowedModules.includes(moduleKey)) return true;
+    // Sub-permission: 'salaries-performance-bonus' grants entry to /salaries (single tab only)
+    if (moduleKey === 'salaries' && allowedModules.includes('salaries-performance-bonus')) return true;
+    return false;
   }, [allowedModules, userRole]);
 
   return { allowedModules, loading, hasAccess, hasPathAccess, refetch: fetchPermissions };
