@@ -191,6 +191,15 @@ export function useModulePermissions() {
     if (!moduleKey) return true;
     if (allowedModules.includes(moduleKey)) return true;
     if (moduleKey === 'salaries' && hasSalarySubPermission()) return true;
+    // Log denial for diagnostics
+    console.warn(
+      '[Permissions] Access denied to path',
+      path,
+      '→ moduleKey:', moduleKey,
+      '| role:', userRole,
+      '| isScopedAdmin:', isScopedAdmin,
+      '| allowedModules:', allowedModules
+    );
     return false;
   }, [allowedModules, userRole, isScopedAdmin, hasSalarySubPermission]);
 
