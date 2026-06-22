@@ -212,12 +212,12 @@ export const PerformanceBonuses = () => {
     }
   };
 
-  useEffect(() => { handleRun(); /* eslint-disable-next-line */ }, []);
-
   // Auto-save calc date per (year, quarter) so it stays stable when switching periods
   const calcDateStorageKey = (y: string, q: string) => `perf_bonus_calc_date_${y}_${q}`;
 
-  // Reload when period changes — prefer saved snapshot if exists, otherwise recalculate from reviews
+  // Reload when period changes — prefer saved snapshot if exists, otherwise recalculate from reviews.
+  // IMPORTANT: do NOT run handleRun() on mount; it would overwrite the saved snapshot with freshly
+  // calculated rows from performance_reviews and lose edits made directly to the snapshot.
   useEffect(() => {
     // Load persisted calc date for this period (fallback to today)
     try {
@@ -226,11 +226,13 @@ export const PerformanceBonuses = () => {
       else setCalcDate(new Date().toISOString().split('T')[0]);
     } catch {}
 
+    let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from('performance_bonus_records')
         .select('*')
         .eq('year', year).eq('quarter', quarter);
+      if (cancelled) return;
       if (data && data.length > 0) {
         setRows(data.map((r: any) => ({
           employee_id: r.employee_id,
@@ -254,8 +256,11 @@ export const PerformanceBonuses = () => {
         setHasSaved(true);
       } else {
         setHasSaved(false);
+        // No saved snapshot for this period — auto-calculate from reviews so the table isn't empty.
+        handleRun();
       }
     })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line
   }, [year, quarter]);
 
