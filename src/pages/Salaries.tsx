@@ -122,7 +122,7 @@ const Salaries = () => {
         {activeTab === 'performance-bonus' && (
           <TabsContent value="performance-bonus"><Suspense fallback={<TabFallback />}><PerformanceBonuses /></Suspense></TabsContent>
         )}
-        {!evalOnly && activeTab === 'non-recurring-bonuses' && (
+        {activeTab === 'non-recurring-bonuses' && (!evalOnly || allowedSubTabs.includes('non-recurring-bonuses')) && (
           <TabsContent value="non-recurring-bonuses"><Suspense fallback={<TabFallback />}><NonRecurringBonuses /></Suspense></TabsContent>
         )}
       </Tabs>
