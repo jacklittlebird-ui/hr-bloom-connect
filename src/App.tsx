@@ -15,6 +15,7 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { PdfPreviewProvider } from "@/contexts/PdfPreviewContext";
 import { PerformanceDataProvider } from "@/contexts/PerformanceDataContext";
+import { useModulePermissions } from "@/hooks/useModulePermissions";
 import React, { Suspense } from "react";
 
 const LoginPage = React.lazy(() => import("./pages/LoginPage"));
