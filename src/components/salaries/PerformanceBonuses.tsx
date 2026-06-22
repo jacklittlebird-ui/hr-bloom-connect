@@ -77,8 +77,8 @@ export const PerformanceBonuses = () => {
   const [loading, setLoading] = useState(false);
   const [savingReport, setSavingReport] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
-  const pctSaveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const pctSavingSet = useRef<Set<string>>(new Set());
+  const [pctDrafts, setPctDrafts] = useState<Record<string, string>>({});
 
   // Filters
   const [searchText, setSearchText] = useState('');
