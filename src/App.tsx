@@ -61,11 +61,21 @@ const LoadingScreen = () => (
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) => {
   const { user, isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+  const { hasPathAccess, loading: permsLoading } = useModulePermissions();
 
   if (loading) return <LoadingScreen />;
   if (!isAuthenticated || !user) return <Navigate to="/login" replace />;
   if (user.role === 'employee' && ['suspended', 'stopped', 'absent', 'resigned'].includes(String(user.employeeStatus || '').toLowerCase())) return <Navigate to="/login" replace />;
   if (!allowedRoles.includes(user.role)) return <Navigate to="/login" replace />;
+
+  // Block scoped users (custom_modules) from reaching paths they don't have access to,
+  // even via direct URL. Wait for permissions to resolve before deciding.
+  if (permsLoading) return <LoadingScreen />;
+  if (!hasPathAccess(location.pathname)) {
+    console.warn('[ProtectedRoute] Blocked', location.pathname, 'for user', user.email, 'role', user.role);
+    return <Navigate to="/" replace />;
+  }
 
   return <>{children}</>;
 };
