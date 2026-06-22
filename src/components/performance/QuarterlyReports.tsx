@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePerformanceData } from '@/contexts/PerformanceDataContext';
+import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -11,11 +12,13 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Line
 import { useReportExport } from '@/hooks/useReportExport';
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
+const JOB_DEGREES = ['AA', 'A', 'B', 'C'];
 const normalizePeriodValue = (value: unknown) => String(value || '').trim().toUpperCase();
 
 export const QuarterlyReports = () => {
   const { t, isRTL, language } = useLanguage();
   const { reviews } = usePerformanceData();
+  const { employees } = useEmployeeData();
   const { exportToCSV, exportToPDF, handlePrint, reportRef } = useReportExport();
 
   // Default to the most recent year/quarter that actually has data; fall back to current year
@@ -34,6 +37,17 @@ export const QuarterlyReports = () => {
 
   const [selectedYear, setSelectedYear] = useState(latest.year);
   const [selectedQuarter, setSelectedQuarter] = useState(latest.quarter);
+  const [jobDegreeFilter, setJobDegreeFilter] = useState<string>('all');
+
+  const employeeDegreeMap = useMemo(() => {
+    const m = new Map<string, string>();
+    employees.forEach(e => {
+      const deg = e.jobDegree || '';
+      if (e.id) m.set(e.id, deg);
+      if (e.employeeId) m.set(e.employeeId, deg);
+    });
+    return m;
+  }, [employees]);
 
   // Keep defaults in sync once reviews finish loading (only while user hasn't interacted with a non-empty selection)
   useEffect(() => {
@@ -46,7 +60,8 @@ export const QuarterlyReports = () => {
   const { departmentScores, quarterlyComparison, criteriaAverages, radarData, summaryStats } = useMemo(() => {
     const yearNorm = String(selectedYear || '').trim();
     const quarterNorm = String(selectedQuarter || '').trim().toUpperCase();
-    const filtered = reviews.filter(r => String(r.year || '').trim() === yearNorm);
+    const matchesDegree = (r: any) => jobDegreeFilter === 'all' || employeeDegreeMap.get(r.employeeId) === jobDegreeFilter;
+    const filtered = reviews.filter(r => String(r.year || '').trim() === yearNorm && matchesDegree(r));
     const quarterFiltered = filtered.filter(r => String(r.quarter || '').trim().toUpperCase() === quarterNorm);
 
     // Department scores
@@ -104,7 +119,7 @@ export const QuarterlyReports = () => {
     ];
 
     return { departmentScores, quarterlyComparison, criteriaAverages, radarData, summaryStats };
-  }, [reviews, selectedYear, selectedQuarter, language, t]);
+  }, [reviews, selectedYear, selectedQuarter, jobDegreeFilter, employeeDegreeMap, language, t]);
 
   const handleExportCSV = () => {
     exportToCSV({
@@ -155,6 +170,13 @@ export const QuarterlyReports = () => {
                   <SelectItem value="Q3">Q3</SelectItem>
                   <SelectItem value="Q2">Q2</SelectItem>
                   <SelectItem value="Q1">Q1</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={jobDegreeFilter} onValueChange={setJobDegreeFilter}>
+                <SelectTrigger className="w-32"><SelectValue placeholder={language === 'ar' ? 'الدرجة الوظيفية' : 'Job Degree'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{language === 'ar' ? 'كل الدرجات' : 'All Degrees'}</SelectItem>
+                  {JOB_DEGREES.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Button variant="outline" size="sm" onClick={() => handlePrint(language === 'ar' ? 'التقارير الربع سنوية' : 'Quarterly Reports')} className="gap-1.5">

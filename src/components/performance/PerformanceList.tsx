@@ -25,6 +25,7 @@ import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { toast } from 'sonner';
 
 const years = Array.from({ length: 11 }, (_, i) => String(2025 + i));
+const JOB_DEGREES = ['AA', 'A', 'B', 'C'];
 
 export const PerformanceList = () => {
   const { t, isRTL, language } = useLanguage();
@@ -34,6 +35,10 @@ export const PerformanceList = () => {
     const emp = employees.find(e => e.id === review.employeeId || e.employeeId === review.employeeId);
     return emp?.hireDate ? formatDate(emp.hireDate) : '-';
   };
+  const getJobDegree = (review: PerformanceReview) => {
+    const emp = employees.find(e => e.id === review.employeeId || e.employeeId === review.employeeId);
+    return emp?.jobDegree || '-';
+  };
   const { exportToCSV, exportToPDF, handlePrint, reportRef } = useReportExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -41,6 +46,7 @@ export const PerformanceList = () => {
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [jobDegreeFilter, setJobDegreeFilter] = useState<string>('all');
   const [viewReview, setViewReview] = useState<PerformanceReview | null>(null);
   const [editReview, setEditReview] = useState<PerformanceReview | null>(null);
   const [inlineReview, setInlineReview] = useState<PerformanceReview | null>(null);
@@ -56,7 +62,7 @@ export const PerformanceList = () => {
   const [editManagerComments, setEditManagerComments] = useState('');
 
   const ar = language === 'ar';
-  const filtersActive = searchQuery !== '' || statusFilter !== 'all' || quarterFilter !== 'all' || yearFilter !== 'all' || stationFilter !== 'all' || departmentFilter !== 'all';
+  const filtersActive = searchQuery !== '' || statusFilter !== 'all' || quarterFilter !== 'all' || yearFilter !== 'all' || stationFilter !== 'all' || departmentFilter !== 'all' || jobDegreeFilter !== 'all';
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -65,6 +71,7 @@ export const PerformanceList = () => {
     setYearFilter('all');
     setStationFilter('all');
     setDepartmentFilter('all');
+    setJobDegreeFilter('all');
     toast.success(ar ? 'تمت إعادة ضبط الفلاتر' : 'Filters reset');
   };
 
@@ -138,7 +145,8 @@ export const PerformanceList = () => {
     const matchesYear = yearFilter === 'all' || String(review.year || '').trim() === String(yearFilter).trim();
     const matchesStation = stationFilter === 'all' || review.station === stationFilter;
     const matchesDepartment = departmentFilter === 'all' || review.department === departmentFilter;
-    return matchesSearch && matchesStatus && matchesQuarter && matchesYear && matchesStation && matchesDepartment;
+    const matchesJobDegree = jobDegreeFilter === 'all' || (employees.find(e => e.id === review.employeeId || e.employeeId === review.employeeId)?.jobDegree === jobDegreeFilter);
+    return matchesSearch && matchesStatus && matchesQuarter && matchesYear && matchesStation && matchesDepartment && matchesJobDegree;
   }).sort((a, b) => {
     // M3 (3-month post-hire) appears first; then by year desc, then quarter desc
     if (a.quarter === 'M3' && b.quarter !== 'M3') return -1;
@@ -336,6 +344,13 @@ export const PerformanceList = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={jobDegreeFilter} onValueChange={setJobDegreeFilter}>
+              <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder={ar ? 'الدرجة الوظيفية' : 'Job Degree'} /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{ar ? 'كل الدرجات' : 'All Degrees'}</SelectItem>
+                {JOB_DEGREES.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+              </SelectContent>
+            </Select>
             {filtersActive && (
               <Button variant="outline" size="sm" onClick={handleResetFilters} className="gap-1.5" aria-label={ar ? 'إعادة ضبط الفلاتر' : 'Reset filters'}>
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -352,6 +367,7 @@ export const PerformanceList = () => {
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.employee')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.department')}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'المحطة' : 'Station'}</TableHead>
+                  <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'الدرجة الوظيفية' : 'Job Degree'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{language === 'ar' ? 'الفترة' : 'Period'}</TableHead>
                   <TableHead className={isRTL ? "text-right" : ""}>{t('performance.list.score')}</TableHead>
@@ -367,6 +383,7 @@ export const PerformanceList = () => {
                     <TableCell className="font-medium">{review.employeeName}</TableCell>
                     <TableCell>{review.department}</TableCell>
                     <TableCell>{getStationLabel(review.station)}</TableCell>
+                    <TableCell><Badge variant="outline" className="font-mono text-xs">{getJobDegree(review)}</Badge></TableCell>
                     <TableCell className="whitespace-nowrap text-xs">{getHireDate(review)}</TableCell>
                     <TableCell>{review.quarter} {review.year}</TableCell>
                     <TableCell>
