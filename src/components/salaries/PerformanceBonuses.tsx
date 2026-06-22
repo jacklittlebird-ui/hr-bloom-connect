@@ -62,7 +62,14 @@ export const PerformanceBonuses = () => {
 
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(String(currentYear));
-  const [quarter, setQuarter] = useState('Q1');
+  const getCurrentQuarter = () => {
+    const month = new Date().getMonth();
+    if (month >= 0 && month <= 2) return 'Q1';
+    if (month >= 3 && month <= 5) return 'Q2';
+    if (month >= 6 && month <= 8) return 'Q3';
+    return 'Q4';
+  };
+  const [quarter, setQuarter] = useState(getCurrentQuarter());
   const [minMonths, setMinMonths] = useState('6');
   const [calcDate, setCalcDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [rows, setRows] = useState<Row[]>([]);
