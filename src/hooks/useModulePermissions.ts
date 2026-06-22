@@ -9,6 +9,7 @@ export const ALL_MODULES = [
   'performance', 'assets', 'uniforms', 'documents', 'reports',
   'training', 'notifications', 'users', 'settings', 'vehicles',
   'property-taxes',
+  'salaries-performance-bonus',
 ] as const;
 
 export type ModuleKey = typeof ALL_MODULES[number];
