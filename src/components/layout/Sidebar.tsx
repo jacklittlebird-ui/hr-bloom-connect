@@ -60,10 +60,13 @@ export const Sidebar = ({ open, onOpenChange, collapsed, onToggleCollapse }: Sid
   const { t, isRTL } = useLanguage();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const { hasAccess } = useModulePermissions();
+  const { hasAccess, loading: permsLoading } = useModulePermissions();
 
-  const visibleMainItems = mainNavItems.filter(item => hasAccess(item.moduleKey));
-  const visibleConfigItems = configNavItems.filter(item => hasAccess(item.moduleKey));
+  // Until permissions resolve, render NOTHING for nav items to avoid the
+  // "all modules flash then disappear" effect and prevent navigation to
+  // unauthorized sections via long-press / quick clicks before load completes.
+  const visibleMainItems = permsLoading ? [] : mainNavItems.filter(item => hasAccess(item.moduleKey));
+  const visibleConfigItems = permsLoading ? [] : configNavItems.filter(item => hasAccess(item.moduleKey));
 
   const navContent = (
     <>

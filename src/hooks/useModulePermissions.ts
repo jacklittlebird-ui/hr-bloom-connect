@@ -75,7 +75,8 @@ const HR_BLOCKED_MODULES: ModuleKey[] = ['salaries', 'salary-reports', 'property
 export function useModulePermissions() {
   const { session, user } = useAuth();
   const userRole = user?.role;
-  const [allowedModules, setAllowedModules] = useState<ModuleKey[]>([...ALL_MODULES]);
+  // Start empty until we know — prevents UI flashing all modules then hiding them
+  const [allowedModules, setAllowedModules] = useState<ModuleKey[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchPermissions = useCallback(async () => {
