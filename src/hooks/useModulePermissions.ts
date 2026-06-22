@@ -180,6 +180,8 @@ export function useModulePermissions() {
 
   const hasAccess = useCallback((moduleKey: ModuleKey): boolean => {
     if (userRole === 'admin' && !isScopedAdmin) return true;
+    // Employees always have access to their own portal regardless of stored permissions
+    if (userRole === 'employee' && (moduleKey === 'employee-portal' || moduleKey === 'dashboard')) return true;
     if (allowedModules.includes(moduleKey)) return true;
     // Show Salaries sidebar entry when any salary sub-permission is granted
     if (moduleKey === 'salaries' && hasSalarySubPermission()) return true;
@@ -190,6 +192,8 @@ export function useModulePermissions() {
     if (userRole === 'admin' && !isScopedAdmin) return true;
     const moduleKey = PATH_TO_MODULE[path];
     if (!moduleKey) return true;
+    // Employees always have access to their own portal regardless of stored permissions
+    if (userRole === 'employee' && (moduleKey === 'employee-portal' || moduleKey === 'dashboard')) return true;
     if (allowedModules.includes(moduleKey)) return true;
     if (moduleKey === 'salaries' && hasSalarySubPermission()) return true;
     // Log denial for diagnostics
@@ -203,6 +207,7 @@ export function useModulePermissions() {
     );
     return false;
   }, [allowedModules, userRole, isScopedAdmin, hasSalarySubPermission]);
+
 
   return { allowedModules, loading, hasAccess, hasPathAccess, refetch: fetchPermissions };
 }
