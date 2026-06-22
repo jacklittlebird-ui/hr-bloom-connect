@@ -295,11 +295,15 @@ export const PerformanceBonuses = () => {
     }));
   };
 
-  // Persist a single employee's percentage to performance_reviews (called on blur).
+  // Persist a single employee's percentage to performance_reviews AND the snapshot
+  // (performance_bonus_records) if a snapshot exists, so values survive reloads.
   const savePercentage = async (employeeId: string, pct: number) => {
     if (pctSavingSet.current.has(employeeId)) return;
     pctSavingSet.current.add(employeeId);
     try {
+      const row = rows.find(r => r.employee_id === employeeId);
+      const amount = row ? Math.round((row.gross_salary * pct / 100) * 100) / 100 : 0;
+
       const { error } = await supabase
         .from('performance_reviews')
         .update({ bonus_percentage: pct })
@@ -307,6 +311,17 @@ export const PerformanceBonuses = () => {
         .eq('year', year)
         .eq('quarter', quarter);
       if (error) throw error;
+
+      if (hasSaved) {
+        const { error: snapErr } = await supabase
+          .from('performance_bonus_records')
+          .update({ percentage: pct, amount })
+          .eq('employee_id', employeeId)
+          .eq('year', year)
+          .eq('quarter', quarter);
+        if (snapErr) throw snapErr;
+      }
+      toast.success(ar ? 'تم حفظ النسبة' : 'Rate saved');
     } catch (err: any) {
       toast.error((ar ? 'فشل حفظ النسبة: ' : 'Failed to save rate: ') + (err.message || ''));
     } finally {
@@ -325,11 +340,10 @@ export const PerformanceBonuses = () => {
 
   // Handle blur — validate, snap formatting, save, clear draft.
   const handlePctBlur = (employeeId: string, raw: string) => {
-    const current = rows.find(r => r.employee_id === employeeId);
+    const hadDraft = pctDrafts[employeeId] !== undefined;
     const parsed = parsePctInput(raw);
     if (isNaN(parsed) || parsed < 0 || parsed > 100) {
       toast.error(ar ? 'النسبة يجب أن تكون رقماً بين 0 و 100' : 'Rate must be a number between 0 and 100');
-      // revert draft to last valid value
       setPctDrafts(prev => {
         const next = { ...prev };
         delete next[employeeId];
@@ -344,7 +358,8 @@ export const PerformanceBonuses = () => {
       delete next[employeeId];
       return next;
     });
-    if (!current || current.percentage !== normalized) {
+    // Always save when the user edited the field (draft existed during this focus session).
+    if (hadDraft) {
       void savePercentage(employeeId, normalized);
     }
   };
