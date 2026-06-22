@@ -33,9 +33,11 @@ export const PerformanceDashboard = () => {
   const [selectedQuarter, setSelectedQuarter] = useState(getCurrentQuarter());
   const [stationFilter, setStationFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [jobDegreeFilter, setJobDegreeFilter] = useState('all');
 
   const years = useMemo(() => Array.from({ length: 11 }, (_, i) => String(2025 + i)), []);
   const quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'M3'];
+  const JOB_DEGREES = ['AA', 'A', 'B', 'C'];
 
   const allActiveEmployees = useMemo(() => employees.filter(e => e.status === 'active'), [employees]);
 
@@ -48,8 +50,9 @@ export const PerformanceDashboard = () => {
     let list = allActiveEmployees;
     if (stationFilter !== 'all') list = list.filter(e => e.stationLocation === stationFilter);
     if (departmentFilter !== 'all') list = list.filter(e => e.department === departmentFilter);
+    if (jobDegreeFilter !== 'all') list = list.filter(e => (e.jobDegree || '') === jobDegreeFilter);
     return list;
-  }, [allActiveEmployees, stationFilter, departmentFilter]);
+  }, [allActiveEmployees, stationFilter, departmentFilter, jobDegreeFilter]);
 
   // Filter reviews by selected year, quarter & station/department employees
   const activeEmployeeIds = useMemo(() => new Set(activeEmployees.map(e => e.id)), [activeEmployees]);
@@ -60,9 +63,9 @@ export const PerformanceDashboard = () => {
     const quarterNorm = String(selectedQuarter || '').trim().toUpperCase();
     if (yearNorm) list = list.filter(r => String(r.year || '').trim() === yearNorm);
     if (quarterNorm && quarterNorm !== 'ALL') list = list.filter(r => String(r.quarter || '').trim().toUpperCase() === quarterNorm);
-    if (stationFilter !== 'all' || departmentFilter !== 'all') list = list.filter(r => activeEmployeeIds.has(r.employeeId));
+    if (stationFilter !== 'all' || departmentFilter !== 'all' || jobDegreeFilter !== 'all') list = list.filter(r => activeEmployeeIds.has(r.employeeId));
     return list;
-  }, [reviews, selectedYear, selectedQuarter, stationFilter, departmentFilter, activeEmployeeIds]);
+  }, [reviews, selectedYear, selectedQuarter, stationFilter, departmentFilter, jobDegreeFilter, activeEmployeeIds]);
 
   // Status counts
   const statusCounts = useMemo(() => {
@@ -231,7 +234,17 @@ export const PerformanceDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-            {(selectedQuarter !== '' || stationFilter !== 'all' || departmentFilter !== 'all' || selectedYear !== String(new Date().getFullYear())) && (
+            <div className="space-y-1">
+              <Label className="text-xs">{ar ? 'الدرجة الوظيفية' : 'Job Degree'}</Label>
+              <Select value={jobDegreeFilter} onValueChange={setJobDegreeFilter}>
+                <SelectTrigger className="w-[140px]" aria-label={ar ? 'الدرجة الوظيفية' : 'Job Degree'}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{ar ? 'كل الدرجات' : 'All Degrees'}</SelectItem>
+                  {JOB_DEGREES.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            {(selectedQuarter !== '' || stationFilter !== 'all' || departmentFilter !== 'all' || jobDegreeFilter !== 'all' || selectedYear !== String(new Date().getFullYear())) && (
               <Button
                 variant="outline"
                 size="sm"
@@ -241,6 +254,7 @@ export const PerformanceDashboard = () => {
                   setSelectedQuarter('');
                   setStationFilter('all');
                   setDepartmentFilter('all');
+                  setJobDegreeFilter('all');
                   toast.success(ar ? 'تمت إعادة ضبط الفلاتر' : 'Filters reset');
                 }}
                 aria-label={ar ? 'إعادة ضبط الفلاتر' : 'Reset filters'}
