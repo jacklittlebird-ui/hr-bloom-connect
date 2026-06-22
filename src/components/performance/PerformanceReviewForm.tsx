@@ -611,7 +611,7 @@ export const PerformanceReviewForm = () => {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{ar ? emp.nameAr : emp.nameEn}</p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {emp.employeeId} • {emp.department} {stationLabel ? `• ${ar ? stationLabel.labelAr : stationLabel.labelEn}` : ''}
+                            {emp.employeeId} • {emp.department} {stationLabel ? `• ${ar ? stationLabel.labelAr : stationLabel.labelEn}` : ''} {emp.jobDegree ? `• ${ar ? 'الدرجة' : 'Degree'}: ${emp.jobDegree}` : ''}
                           </p>
                         </div>
                         {isSelected && (
