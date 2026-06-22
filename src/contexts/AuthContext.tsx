@@ -468,7 +468,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .then(m => m.loadAndApplyUserThemePrefs())
         .catch(() => undefined);
 
-      return { success: true, redirectTo: getRoleRedirectPath(profile.role) };
+      // Default redirect by role; overridden below if the user has a custom-modules
+      // permission set that should land them on the main dashboard instead of a
+      // role-specific portal (e.g. an evaluations-only manager).
+      let redirectTo = getRoleRedirectPath(profile.role);
+      try {
+        const { data: permRow } = await supabase
+          .from('user_module_permissions' as any)
+          .select('custom_modules')
+          .eq('user_id', data.session.user.id)
+          .maybeSingle();
+        const cm = (permRow as any)?.custom_modules;
+        if (Array.isArray(cm) && cm.length > 0 && cm.includes('dashboard')) {
+          // If the custom modules do not include any of the role-portal modules,
+          // send them to the main dashboard so they can navigate via the sidebar.
+          const portalModules = ['employees', 'attendance', 'leaves'];
+          const hasPortalModule = portalModules.some((m) => cm.includes(m));
+          if (!hasPortalModule) {
+            redirectTo = '/';
+          }
+        }
+      } catch { /* ignore */ }
+      return { success: true, redirectTo };
     }
 
     return { success: true };
