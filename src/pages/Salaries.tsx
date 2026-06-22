@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,6 +7,7 @@ import { PayrollProcessing } from '@/components/salaries/PayrollProcessing';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useModulePermissions } from '@/hooks/useModulePermissions';
 
 const SalarySlips = lazy(() => import('@/components/salaries/SalarySlips').then(m => ({ default: m.SalarySlips })));
 const AllowancesDeductions = lazy(() => import('@/components/salaries/AllowancesDeductions').then(m => ({ default: m.AllowancesDeductions })));
@@ -23,10 +24,20 @@ const TabFallback = () => <div className="space-y-4"><Skeleton className="h-10 w
 
 const Salaries = () => {
   const { t, isRTL } = useLanguage();
-  const [activeTab, setActiveTab] = useState('payroll');
+  const { allowedModules } = useModulePermissions();
+  // Users that have ONLY the sub-permission see only the Periodic Bonus (Eval) tab
+  const evalOnly = useMemo(
+    () => allowedModules.includes('salaries-performance-bonus') && !allowedModules.includes('salaries'),
+    [allowedModules]
+  );
+  const [activeTab, setActiveTab] = useState(evalOnly ? 'performance-bonus' : 'payroll');
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const tabs = [
+  useEffect(() => {
+    if (evalOnly && activeTab !== 'performance-bonus') setActiveTab('performance-bonus');
+  }, [evalOnly, activeTab]);
+
+  const allTabs = [
     { id: 'payroll', label: t('salaries.tabs.payroll') },
     { id: 'slips', label: t('salaries.tabs.slips') },
     { id: 'allowances', label: t('salaries.tabs.allowances') },
@@ -39,6 +50,8 @@ const Salaries = () => {
     { id: 'performance-bonus', label: isRTL ? 'مكافآت دورية (تقييم)' : 'Periodic Bonus (Eval)' },
     { id: 'non-recurring-bonuses', label: isRTL ? 'مكافآت غير دورية' : 'Non-Recurring Bonuses' },
   ];
+
+  const tabs = evalOnly ? allTabs.filter(t => t.id === 'performance-bonus') : allTabs;
 
   return (
     <DashboardLayout>
@@ -65,38 +78,40 @@ const Salaries = () => {
           ))}
         </TabsList>
 
-        <TabsContent value="payroll">
-          <PayrollProcessing />
-        </TabsContent>
+        {!evalOnly && (
+          <TabsContent value="payroll">
+            <PayrollProcessing />
+          </TabsContent>
+        )}
 
-        {activeTab === 'slips' && (
+        {!evalOnly && activeTab === 'slips' && (
           <TabsContent value="slips"><Suspense fallback={<TabFallback />}><SalarySlips /></Suspense></TabsContent>
         )}
-        {activeTab === 'allowances' && (
+        {!evalOnly && activeTab === 'allowances' && (
           <TabsContent value="allowances"><Suspense fallback={<TabFallback />}><AllowancesDeductions /></Suspense></TabsContent>
         )}
-        {activeTab === 'structure' && (
+        {!evalOnly && activeTab === 'structure' && (
           <TabsContent value="structure"><Suspense fallback={<TabFallback />}><SalaryStructure /></Suspense></TabsContent>
         )}
-        {activeTab === 'history' && (
+        {!evalOnly && activeTab === 'history' && (
           <TabsContent value="history"><Suspense fallback={<TabFallback />}><PayrollHistory /></Suspense></TabsContent>
         )}
-        {activeTab === 'mobile-bills' && (
+        {!evalOnly && activeTab === 'mobile-bills' && (
           <TabsContent value="mobile-bills"><Suspense fallback={<TabFallback />}><MobileBills /></Suspense></TabsContent>
         )}
-        {activeTab === 'transfer' && (
+        {!evalOnly && activeTab === 'transfer' && (
           <TabsContent value="transfer"><Suspense fallback={<TabFallback />}><SalaryTransfer /></Suspense></TabsContent>
         )}
-        {activeTab === 'eid-bonuses' && (
+        {!evalOnly && activeTab === 'eid-bonuses' && (
           <TabsContent value="eid-bonuses"><Suspense fallback={<TabFallback />}><EidBonuses /></Suspense></TabsContent>
         )}
-        {activeTab === 'bonus' && (
+        {!evalOnly && activeTab === 'bonus' && (
           <TabsContent value="bonus"><Suspense fallback={<TabFallback />}><BonusManagement /></Suspense></TabsContent>
         )}
         {activeTab === 'performance-bonus' && (
           <TabsContent value="performance-bonus"><Suspense fallback={<TabFallback />}><PerformanceBonuses /></Suspense></TabsContent>
         )}
-        {activeTab === 'non-recurring-bonuses' && (
+        {!evalOnly && activeTab === 'non-recurring-bonuses' && (
           <TabsContent value="non-recurring-bonuses"><Suspense fallback={<TabFallback />}><NonRecurringBonuses /></Suspense></TabsContent>
         )}
       </Tabs>
