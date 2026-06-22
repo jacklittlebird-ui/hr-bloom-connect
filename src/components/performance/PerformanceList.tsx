@@ -383,7 +383,7 @@ export const PerformanceList = () => {
                     <TableCell className="font-medium">{review.employeeName}</TableCell>
                     <TableCell>{review.department}</TableCell>
                     <TableCell>{getStationLabel(review.station)}</TableCell>
-                    <TableCell><Badge variant="outline" className="font-mono text-xs">{getJobDegree(review)}</Badge></TableCell>
+                    <TableCell><Badge variant="outline" className={cn("font-mono text-xs font-bold", getJobDegreeBadgeClass(getJobDegree(review)))}>{getJobDegree(review)}</Badge></TableCell>
                     <TableCell className="whitespace-nowrap text-xs">{getHireDate(review)}</TableCell>
                     <TableCell>{review.quarter} {review.year}</TableCell>
                     <TableCell>

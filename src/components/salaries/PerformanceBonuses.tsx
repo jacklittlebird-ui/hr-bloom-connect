@@ -701,7 +701,7 @@ export const PerformanceBonuses = () => {
                           <TableCell>{r.station_name}</TableCell>
                           <TableCell>{r.department_name}</TableCell>
                           <TableCell>{r.job_title}</TableCell>
-                          <TableCell>{r.job_level}</TableCell>
+                          <TableCell>{r.job_level ? <Badge variant="outline" className={cn("font-mono text-xs font-bold", getJobDegreeBadgeClass(r.job_level))}>{r.job_level}</Badge> : '-'}</TableCell>
                           <TableCell dir="ltr">{r.hire_date}</TableCell>
                           <TableCell>{r.bank_account_number}</TableCell>
                           <TableCell>{r.bank_id_number}</TableCell>

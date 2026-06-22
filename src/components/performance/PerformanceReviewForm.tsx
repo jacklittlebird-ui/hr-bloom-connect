@@ -609,9 +609,16 @@ export const PerformanceReviewForm = () => {
                           {(ar ? emp.nameAr : emp.nameEn).split(' ').map(w => w[0]).join('').slice(0, 2)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{ar ? emp.nameAr : emp.nameEn}</p>
+                          <div className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+                            <p className="font-medium truncate">{ar ? emp.nameAr : emp.nameEn}</p>
+                            {emp.jobDegree && (
+                              <Badge variant="outline" className={cn("font-mono text-[10px] font-bold px-1.5 py-0 shrink-0", getJobDegreeBadgeClass(emp.jobDegree))}>
+                                {emp.jobDegree}
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-xs text-muted-foreground truncate">
-                            {emp.employeeId} • {emp.department} {stationLabel ? `• ${ar ? stationLabel.labelAr : stationLabel.labelEn}` : ''} {emp.jobDegree ? `• ${ar ? 'الدرجة' : 'Degree'}: ${emp.jobDegree}` : ''}
+                            {emp.employeeId} • {emp.department} {stationLabel ? `• ${ar ? stationLabel.labelAr : stationLabel.labelEn}` : ''}
                           </p>
                         </div>
                         {isSelected && (
