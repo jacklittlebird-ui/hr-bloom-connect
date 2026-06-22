@@ -9,8 +9,9 @@ export const ALL_MODULES = [
   'performance', 'assets', 'uniforms', 'documents', 'reports',
   'training', 'notifications', 'users', 'settings', 'vehicles',
   'property-taxes',
-  // Sub-permission: grants entry to /salaries but only the "Periodic Bonus (Eval)" tab
+  // Sub-permissions: grant entry to /salaries but only specific tabs
   'salaries-performance-bonus',
+  'salaries-non-recurring-bonus',
 ] as const;
 
 export type ModuleKey = typeof ALL_MODULES[number];
