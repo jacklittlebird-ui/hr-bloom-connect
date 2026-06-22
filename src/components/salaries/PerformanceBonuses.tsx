@@ -265,38 +265,88 @@ export const PerformanceBonuses = () => {
     try { localStorage.setItem(calcDateStorageKey(year, quarter), calcDate); } catch {}
   }, [calcDate, year, quarter]);
 
-  // Inline edit: update a single employee's percentage, recompute amount, and auto-save to performance_reviews (debounced)
-  const updateRowPercentage = (employeeId: string, newPct: number, snap = false) => {
-    const raw = Math.max(0, Math.min(100, isNaN(newPct) ? 0 : newPct));
-    const pct = snap ? Math.round(raw / 2.5) * 2.5 : raw;
+  // Format a numeric percentage for display: strip trailing zeros, max 2 decimals, no value change.
+  const formatPct = (n: number): string => {
+    if (!isFinite(n)) return '0';
+    const rounded = Math.round(n * 100) / 100;
+    return String(rounded);
+  };
+
+  // Parse a raw string from the input (handles paste of "12,5", "12.5%", spaces, RTL marks, etc.)
+  const parsePctInput = (raw: string): number => {
+    if (!raw) return NaN;
+    const cleaned = raw
+      .replace(/[\u200E\u200F\u202A-\u202E]/g, '')
+      .replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+      .replace(/[،,]/g, '.')
+      .replace(/[%\s]/g, '')
+      .trim();
+    if (cleaned === '' || cleaned === '.' || cleaned === '-') return NaN;
+    const n = Number(cleaned);
+    return isFinite(n) ? n : NaN;
+  };
+
+  // Live update during typing — recomputes amount so stats/totals reflect immediately.
+  const setRowPercentageLive = (employeeId: string, pct: number) => {
     setRows(prev => prev.map(r => {
       if (r.employee_id !== employeeId) return r;
       const amount = Math.round((r.gross_salary * pct / 100) * 100) / 100;
       return { ...r, percentage: pct, amount };
     }));
+  };
 
-    // Debounce per-employee save
-    const existing = pctSaveTimers.current.get(employeeId);
-    if (existing) clearTimeout(existing);
-    const timer = setTimeout(async () => {
-      if (pctSavingSet.current.has(employeeId)) return;
-      pctSavingSet.current.add(employeeId);
-      try {
-        const { error } = await supabase
-          .from('performance_reviews')
-          .update({ bonus_percentage: pct })
-          .eq('employee_id', employeeId)
-          .eq('year', year)
-          .eq('quarter', quarter);
-        if (error) throw error;
-      } catch (err: any) {
-        toast.error((ar ? 'فشل حفظ النسبة: ' : 'Failed to save rate: ') + (err.message || ''));
-      } finally {
-        pctSavingSet.current.delete(employeeId);
-        pctSaveTimers.current.delete(employeeId);
-      }
-    }, 600);
-    pctSaveTimers.current.set(employeeId, timer);
+  // Persist a single employee's percentage to performance_reviews (called on blur).
+  const savePercentage = async (employeeId: string, pct: number) => {
+    if (pctSavingSet.current.has(employeeId)) return;
+    pctSavingSet.current.add(employeeId);
+    try {
+      const { error } = await supabase
+        .from('performance_reviews')
+        .update({ bonus_percentage: pct })
+        .eq('employee_id', employeeId)
+        .eq('year', year)
+        .eq('quarter', quarter);
+      if (error) throw error;
+    } catch (err: any) {
+      toast.error((ar ? 'فشل حفظ النسبة: ' : 'Failed to save rate: ') + (err.message || ''));
+    } finally {
+      pctSavingSet.current.delete(employeeId);
+    }
+  };
+
+  // Handle typing inside the rate input — keep raw draft for display, update row live when value is valid.
+  const handlePctChange = (employeeId: string, raw: string) => {
+    setPctDrafts(prev => ({ ...prev, [employeeId]: raw }));
+    const parsed = parsePctInput(raw);
+    if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+      setRowPercentageLive(employeeId, parsed);
+    }
+  };
+
+  // Handle blur — validate, snap formatting, save, clear draft.
+  const handlePctBlur = (employeeId: string, raw: string) => {
+    const current = rows.find(r => r.employee_id === employeeId);
+    const parsed = parsePctInput(raw);
+    if (isNaN(parsed) || parsed < 0 || parsed > 100) {
+      toast.error(ar ? 'النسبة يجب أن تكون رقماً بين 0 و 100' : 'Rate must be a number between 0 and 100');
+      // revert draft to last valid value
+      setPctDrafts(prev => {
+        const next = { ...prev };
+        delete next[employeeId];
+        return next;
+      });
+      return;
+    }
+    const normalized = Math.round(parsed * 100) / 100;
+    setRowPercentageLive(employeeId, normalized);
+    setPctDrafts(prev => {
+      const next = { ...prev };
+      delete next[employeeId];
+      return next;
+    });
+    if (!current || current.percentage !== normalized) {
+      void savePercentage(employeeId, normalized);
+    }
   };
 
   // Save the generated report to performance_bonus_records (delete-and-replace by year+quarter)
