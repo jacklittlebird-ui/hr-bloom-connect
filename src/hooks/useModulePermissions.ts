@@ -83,8 +83,23 @@ export function useModulePermissions() {
       return;
     }
 
-    // Admins get everything by default
+    // Admins get everything by default UNLESS an explicit custom_modules row
+    // exists for this user (used for "scoped admin" accounts like an evaluations
+    // manager). When present, honor the custom list.
     if (userRole === 'admin') {
+      try {
+        const { data: adminPerm } = await supabase
+          .from('user_module_permissions' as any)
+          .select('custom_modules')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        const cm = (adminPerm as any)?.custom_modules;
+        if (Array.isArray(cm) && cm.length > 0) {
+          setAllowedModules(cm as ModuleKey[]);
+          setLoading(false);
+          return;
+        }
+      } catch { /* fall through to full access */ }
       setAllowedModules([...ALL_MODULES]);
       setLoading(false);
       return;
