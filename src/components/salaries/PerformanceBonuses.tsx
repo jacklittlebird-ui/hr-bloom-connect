@@ -778,13 +778,12 @@ export const PerformanceBonuses = () => {
                           <TableCell>
                             <div className="relative w-24">
                               <Input
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.5"
-                                value={r.percentage}
-                                onChange={(e) => updateRowPercentage(r.employee_id, parseFloat(e.target.value))}
-                                onBlur={(e) => updateRowPercentage(r.employee_id, parseFloat(e.target.value), true)}
+                                type="text"
+                                inputMode="decimal"
+                                value={pctDrafts[r.employee_id] ?? formatPct(r.percentage)}
+                                onChange={(e) => handlePctChange(r.employee_id, e.target.value)}
+                                onBlur={(e) => handlePctBlur(r.employee_id, e.target.value)}
+                                onFocus={(e) => e.target.select()}
                                 className="h-8 pe-6 text-sm"
                                 aria-label={ar ? 'نسبة المكافأة' : 'Bonus rate'}
                               />
