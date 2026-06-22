@@ -378,6 +378,8 @@ export const PerformanceBonuses = () => {
   const clearFilters = () => { setSearchText(''); setFilterStation('all'); setFilterDepartment('all'); setFilterLevel('all'); setFilterBank('all'); };
 
   const totalAmount = useMemo(() => filteredRecords.reduce((s, r) => s + r.amount, 0), [filteredRecords]);
+  const totalGrossSalary = useMemo(() => filteredRecords.reduce((s, r) => s + (r.gross_salary || 0), 0), [filteredRecords]);
+  const bonusToGrossPct = useMemo(() => totalGrossSalary > 0 ? (totalAmount / totalGrossSalary) * 100 : 0, [totalAmount, totalGrossSalary]);
   const avgScore = useMemo(() => filteredRecords.length ? (filteredRecords.reduce((s, r) => s + r.score, 0) / filteredRecords.length) : 0, [filteredRecords]);
   const uniqueStationsCount = useMemo(() => new Set(filteredRecords.map(r => r.station_name).filter(Boolean)).size, [filteredRecords]);
   const uniqueBanksCount = useMemo(() => new Set(filteredRecords.map(r => r.bank_name).filter(Boolean)).size, [filteredRecords]);
@@ -394,11 +396,16 @@ export const PerformanceBonuses = () => {
 
   const statsCards = useMemo(() => [
     { label: ar ? 'عدد الموظفين' : 'Employees', value: String(filteredRecords.length), icon: Users, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: ar ? 'إجمالي المكافآت' : 'Total Bonuses', value: totalAmount.toLocaleString() + (ar ? ' ج.م' : ' EGP'), icon: Wallet, color: 'text-green-600', bg: 'bg-green-100' },
+    {
+      label: ar ? 'إجمالي المكافآت' : 'Total Bonuses',
+      value: totalAmount.toLocaleString() + (ar ? ' ج.م' : ' EGP'),
+      sub: totalGrossSalary > 0 ? `${bonusToGrossPct.toFixed(2)}% ${ar ? 'من إجمالي الرواتب' : 'of Total Salaries'}` : undefined,
+      icon: Wallet, color: 'text-green-600', bg: 'bg-green-100',
+    },
     { label: ar ? 'متوسط التقييم' : 'Avg Score', value: avgScore.toFixed(2) + ' / 5', icon: Star, color: 'text-amber-600', bg: 'bg-amber-100' },
     { label: ar ? 'عدد المحطات' : 'Stations', value: String(uniqueStationsCount), icon: Building2, color: 'text-blue-600', bg: 'bg-blue-100' },
     { label: ar ? 'عدد البنوك' : 'Banks', value: String(uniqueBanksCount), icon: Landmark, color: 'text-amber-600', bg: 'bg-amber-100' },
-  ], [filteredRecords, totalAmount, avgScore, uniqueStationsCount, uniqueBanksCount, ar]);
+  ], [filteredRecords, totalAmount, totalGrossSalary, bonusToGrossPct, avgScore, uniqueStationsCount, uniqueBanksCount, ar]);
 
   const stationGroupedRows = useMemo(() => buildStationGroupRows(filteredRecords as any), [filteredRecords]);
 
