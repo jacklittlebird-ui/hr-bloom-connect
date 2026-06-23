@@ -275,6 +275,22 @@ export const PortalLeaves = () => {
       toast.error(ar ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
     }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (otDate < today) {
+      const diffDays = differenceInDays(today, otDate);
+      if (diffDays > 30) {
+        toast.error(
+          ar
+            ? 'لا يمكن تسجيل عمل إضافي لتاريخ سابق يتجاوز 30 يوماً'
+            : 'Cannot register overtime for a date older than 30 days'
+        );
+        return;
+      }
+    }
+
     try {
       await addOvertimeDay({
         employeeId: PORTAL_EMPLOYEE_ID,
