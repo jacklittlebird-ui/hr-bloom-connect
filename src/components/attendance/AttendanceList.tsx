@@ -73,14 +73,17 @@ interface AttendanceRecord {
 
 const PAGE_SIZE = 50;
 
+const cairoTimeFmt = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Africa/Cairo',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
 const formatTime = (ts: string | null): string | null => {
   if (!ts) return null;
   try {
-    // Always read in Cairo fixed offset (+02:00) to match how times are stored.
-    // Using device-local getHours() would shift by ±1h depending on DST/timezone.
-    const d = new Date(ts);
-    const cairo = new Date(d.getTime() + 2 * 60 * 60 * 1000);
-    return `${cairo.getUTCHours().toString().padStart(2, '0')}:${cairo.getUTCMinutes().toString().padStart(2, '0')}`;
+    // Use IANA Africa/Cairo to respect DST automatically.
+    return cairoTimeFmt.format(new Date(ts));
   } catch { return null; }
 };
 

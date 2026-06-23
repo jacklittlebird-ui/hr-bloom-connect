@@ -43,11 +43,16 @@ const LEAVE_LABEL_EN: Record<string, string> = {
   study: 'Study', compensatory: 'Compensatory', other: 'Other',
 };
 
+const cairoTimeFmt = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Africa/Cairo',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
 const formatTime = (ts: string | null): string | null => {
   if (!ts) return null;
   try {
-    const d = new Date(ts);
-    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    return cairoTimeFmt.format(new Date(ts));
   } catch { return null; }
 };
 
