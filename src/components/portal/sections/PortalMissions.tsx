@@ -49,8 +49,8 @@ export const PortalMissions = () => {
   };
 
   const missionOptions = [
-    { value: 'morning', labelAr: 'مأمورية صباحية (تسجيل تلقائي 09:00)', labelEn: 'Morning Mission (auto check-in 09:00)' },
-    { value: 'evening', labelAr: 'مأمورية مسائية (تسجيل تلقائي 14:00)', labelEn: 'Evening Mission (auto check-in 14:00)' },
+    { value: 'morning', labelAr: 'مأمورية صباحية (09:00 إلى 13:00)', labelEn: 'Morning Mission (09:00 to 13:00)' },
+    { value: 'evening', labelAr: 'مأمورية مسائية (13:00 إلى 17:00)', labelEn: 'Evening Mission (13:00 to 17:00)' },
     { value: 'full_day', labelAr: 'مأمورية يوم كامل (09:00 إلى 17:00)', labelEn: 'Full Day Mission (09:00 to 17:00)' },
   ];
 
