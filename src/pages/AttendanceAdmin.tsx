@@ -421,6 +421,10 @@ const AttendanceAdmin = () => {
               <AlertTriangle className="h-4 w-4" />
               {ar ? "تحتاج مراجعة" : "Anomalies"}
             </TabsTrigger>
+            <TabsTrigger value="missions-audit" className="gap-1.5">
+              <Wrench className="h-4 w-4" />
+              {ar ? "مراجعة المأموريات" : "Missions Audit"}
+            </TabsTrigger>
           </TabsList>
 
           {/* Search Bar */}
