@@ -24,12 +24,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Shield, AlertTriangle, MapPin, Plus, RefreshCw, Smartphone,
-  Trash2, Edit2, Search, ChevronLeft, ChevronRight, Loader2,
+  Trash2, Edit2, Search, ChevronLeft, ChevronRight, Loader2, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CronHealthBanner } from "@/components/dashboard/CronHealthBanner";
 import { AttendanceAnomaliesTab } from "@/components/attendance/AttendanceAnomaliesTab";
+import { MissionsAudit } from "@/components/attendance/MissionsAudit";
 
 const PER_PAGE = 20;
 
