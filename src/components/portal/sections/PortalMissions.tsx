@@ -60,6 +60,15 @@ export const PortalMissions = () => {
       toast.error(ar ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
     }
+    // Defensive guard: only allow the three predefined Cairo-local windows.
+    // Morning 09:00–13:00 / Evening 13:00–17:00 / Full day 09:00–17:00.
+    const allowed: PortalMissionType[] = ['morning', 'evening', 'full_day'];
+    if (!allowed.includes(missionType as PortalMissionType)) {
+      toast.error(ar
+        ? 'ساعات المأمورية يجب أن تكون ضمن النطاق المسموح: صباحية 09:00–13:00، مسائية 13:00–17:00، أو يوم كامل 09:00–17:00'
+        : 'Mission hours must be within the allowed window: morning 09:00–13:00, evening 13:00–17:00, or full day 09:00–17:00');
+      return;
+    }
     addMission({
       employeeId: PORTAL_EMPLOYEE_ID,
       missionType: missionType as PortalMissionType,
