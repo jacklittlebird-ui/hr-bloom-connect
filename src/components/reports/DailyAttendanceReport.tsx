@@ -608,9 +608,9 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
           return s === 'present' || !!r.check_in;
         });
         const allAbsent = dayRecords.every(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'absent');
-        if (hasAutoClosed || hasMission || (hasPresent && !hasLate)) present++;
-        else if (hasLate) late++;
-        else if (allAbsent) absent++;
+        if (hasAutoClosed || hasMission || hasPresent || hasLate) present++;
+        if (hasLate) late++;
+        if (!hasAutoClosed && !hasMission && !hasPresent && !hasLate && allAbsent) absent++;
       });
     });
     return { present, late, absent, total: present + late + absent };
