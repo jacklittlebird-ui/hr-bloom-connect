@@ -18,8 +18,8 @@ import { format } from 'date-fns';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
 
 const missionTypeLabels: Record<PortalMissionType, { ar: string; en: string; timeAr: string; timeEn: string }> = {
-  morning: { ar: 'مأمورية صباحية', en: 'Morning Mission', timeAr: 'تسجيل تلقائي 09:00', timeEn: 'Auto check-in 09:00' },
-  evening: { ar: 'مأمورية مسائية', en: 'Evening Mission', timeAr: 'تسجيل تلقائي 14:00', timeEn: 'Auto check-in 14:00' },
+  morning: { ar: 'مأمورية صباحية', en: 'Morning Mission', timeAr: '09:00 إلى 13:00', timeEn: '09:00 to 13:00' },
+  evening: { ar: 'مأمورية مسائية', en: 'Evening Mission', timeAr: '13:00 إلى 17:00', timeEn: '13:00 to 17:00' },
   full_day: { ar: 'مأمورية يوم كامل', en: 'Full Day Mission', timeAr: '09:00 إلى 17:00', timeEn: '09:00 to 17:00' },
 };
 
