@@ -547,9 +547,10 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
           globalStatusFilter === 'all'
             ? kind !== 'none' || !!leave || !!mission || !!permission || !!overtime
             : (globalStatusFilter === 'present' ? (kind === 'present' || kind === 'auto-closed' || kind === 'mission-day') : kind === globalStatusFilter);
-        if (kind === 'present' || kind === 'auto-closed' || kind === 'mission-day') present++;
-        else if (kind === 'late') late++;
-        else if (kind === 'absent') absent++;
+        // Match Monthly Stations Report: "أيام الحضور" includes late, auto-closed, and mission days
+        if (kind === 'present' || kind === 'auto-closed' || kind === 'mission-day' || kind === 'late') present++;
+        if (kind === 'late') late++;
+        if (kind === 'absent') absent++;
         if (leave) leavesCount++;
         if (mission) missionsCount++;
         if (permission) permissionsCount++;
@@ -607,9 +608,9 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
           return s === 'present' || !!r.check_in;
         });
         const allAbsent = dayRecords.every(r => String(r.status || '').toLowerCase().replace(/_/g, '-') === 'absent');
-        if (hasAutoClosed || hasMission || (hasPresent && !hasLate)) present++;
-        else if (hasLate) late++;
-        else if (allAbsent) absent++;
+        if (hasAutoClosed || hasMission || hasPresent || hasLate) present++;
+        if (hasLate) late++;
+        if (!hasAutoClosed && !hasMission && !hasPresent && !hasLate && allAbsent) absent++;
       });
     });
     return { present, late, absent, total: present + late + absent };
