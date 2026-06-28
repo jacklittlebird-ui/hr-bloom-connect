@@ -35,7 +35,7 @@ describe('mission time / Africa/Cairo', () => {
     const co = '2026-06-17T20:00:00.000Z';
     const r = validateMissionWindow('evening', ci, co);
     expect(r.ok).toBe(false);
-    if (!r.ok) {
+    if (r.ok === false) {
       expect(r.expected).toEqual(MISSION_WINDOWS.evening);
       expect(r.actual.checkIn).not.toBe('13:00');
     }
