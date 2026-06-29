@@ -338,7 +338,7 @@ export const PerformanceBonuses = () => {
   const handlePctChange = (employeeId: string, raw: string) => {
     setPctDrafts(prev => ({ ...prev, [employeeId]: raw }));
     const parsed = parsePctInput(raw);
-    if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+    if (!isNaN(parsed) && parsed >= 0 && parsed <= 1000) {
       setRowPercentageLive(employeeId, parsed);
     }
   };
@@ -347,8 +347,8 @@ export const PerformanceBonuses = () => {
   const handlePctBlur = (employeeId: string, raw: string) => {
     const hadDraft = pctDrafts[employeeId] !== undefined;
     const parsed = parsePctInput(raw);
-    if (isNaN(parsed) || parsed < 0 || parsed > 100) {
-      toast.error(ar ? 'النسبة يجب أن تكون رقماً بين 0 و 100' : 'Rate must be a number between 0 and 100');
+    if (isNaN(parsed) || parsed < 0 || parsed > 1000) {
+      toast.error(ar ? 'النسبة يجب أن تكون رقماً بين 0 و 1000' : 'Rate must be a number between 0 and 1000');
       setPctDrafts(prev => {
         const next = { ...prev };
         delete next[employeeId];
