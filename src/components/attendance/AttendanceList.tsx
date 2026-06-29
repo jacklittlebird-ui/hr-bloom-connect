@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { getCairoOffsetString } from '@/lib/cairoDate';
 
 const months = [
   { value: '01', ar: 'يناير', en: 'January' },
@@ -147,10 +148,11 @@ export const AttendanceList = () => {
     setEditNotes(r.notes || '');
   };
 
-  // Build Cairo (+02:00) ISO timestamp from date + HH:MM
+  // Build Cairo ISO timestamp from date + HH:MM (DST-aware: +02:00 winter, +03:00 summer)
   const buildCairoIso = (date: string, hhmm: string): string | null => {
     if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return null;
-    return `${date}T${hhmm}:00+02:00`;
+    const offset = getCairoOffsetString(new Date(`${date}T${hhmm}:00Z`));
+    return `${date}T${hhmm}:00${offset}`;
   };
 
   const handleSaveEdit = async () => {
