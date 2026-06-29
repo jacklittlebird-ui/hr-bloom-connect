@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { getCairoOffsetString } from '@/lib/cairoDate';
 
 const months = [
   { value: '01', ar: 'يناير', en: 'January' },
