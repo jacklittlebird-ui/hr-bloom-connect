@@ -392,11 +392,30 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [addNotification, fetchEntries]);
 
   const savePayrollEntries = useCallback(async (entries: ProcessedPayroll[]) => {
-    for (const entry of entries) {
-      await upsertEntry(entry);
+    // Bulk upsert in chunks — far faster and more reliable than sequential select+update/insert.
+    // Previous sequential approach caused partial processing (e.g. only 482 of 851 saved)
+    // when the user navigated away during the long-running loop.
+    const CHUNK = 200;
+    let saved = 0;
+    let failed = 0;
+    for (let i = 0; i < entries.length; i += CHUNK) {
+      const slice = entries.slice(i, i + CHUNK).map(entryToPayload);
+      const { error } = await supabase
+        .from('payroll_entries')
+        .upsert(slice, { onConflict: 'employee_id,month,year' });
+      if (error) {
+        console.error('Bulk payroll upsert error (chunk', i, '):', error);
+        failed += slice.length;
+      } else {
+        saved += slice.length;
+      }
     }
     await fetchEntries();
-    addNotification({ titleAr: `تم معالجة مسير الرواتب لـ ${entries.length} موظف`, titleEn: `Payroll processed for ${entries.length} employees`, type: 'success', module: 'payroll' });
+    if (failed > 0) {
+      addNotification({ titleAr: `تم حفظ ${saved} وفشل ${failed}`, titleEn: `Saved ${saved}, failed ${failed}`, type: 'warning', module: 'payroll' });
+    } else {
+      addNotification({ titleAr: `تم معالجة مسير الرواتب لـ ${saved} موظف`, titleEn: `Payroll processed for ${saved} employees`, type: 'success', module: 'payroll' });
+    }
   }, [addNotification, fetchEntries]);
 
   const getPayrollEntry = useCallback((employeeId: string, month: string, year: string) => {
