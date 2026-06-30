@@ -429,6 +429,35 @@ export const PerformanceBonuses = () => {
     }
   };
 
+  const handleSendToEmployees = async () => {
+    if (rows.length === 0) {
+      toast.info(ar ? 'لا توجد بيانات للإرسال' : 'No data to send');
+      return;
+    }
+    if (!hasSaved) {
+      toast.info(ar ? 'احفظ التقرير أولاً ثم أرسله للموظفين' : 'Save the report first, then send it to employees');
+      return;
+    }
+
+    setSendingReport(true);
+    try {
+      const sentAt = new Date().toISOString();
+      const { error } = await supabase
+        .from('performance_bonus_records')
+        .update({ sent_to_employee: true, sent_at: sentAt })
+        .eq('year', year)
+        .eq('quarter', quarter);
+      if (error) throw error;
+
+      setRows(prev => prev.map(r => ({ ...r, sent_to_employee: true, sent_at: sentAt })));
+      toast.success(ar ? `تم إرسال المكافآت للموظفين (${rows.length} موظف)` : `Bonuses sent to employees (${rows.length} employees)`);
+    } catch (err: any) {
+      toast.error((ar ? 'فشل الإرسال: ' : 'Failed to send: ') + (err.message || ''));
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
   // Unique filter options
   const stations = useMemo(() => [...new Set(rows.map(r => r.station_name).filter(Boolean))].sort(), [rows]);
   const departments = useMemo(() => [...new Set(rows.map(r => r.department_name).filter(Boolean))].sort(), [rows]);
@@ -458,6 +487,7 @@ export const PerformanceBonuses = () => {
   const clearFilters = () => { setSearchText(''); setFilterStation('all'); setFilterDepartment('all'); setFilterLevel('all'); setFilterBank('all'); };
 
   const totalAmount = useMemo(() => filteredRecords.reduce((s, r) => s + r.amount, 0), [filteredRecords]);
+  const sentCount = useMemo(() => rows.filter(r => r.sent_to_employee).length, [rows]);
   const totalGrossSalary = useMemo(() => filteredRecords.reduce((s, r) => s + (r.gross_salary || 0), 0), [filteredRecords]);
   const bonusToGrossPct = useMemo(() => totalGrossSalary > 0 ? (totalAmount / totalGrossSalary) * 100 : 0, [totalAmount, totalGrossSalary]);
   const avgScore = useMemo(() => filteredRecords.length ? (filteredRecords.reduce((s, r) => s + r.score, 0) / filteredRecords.length) : 0, [filteredRecords]);
