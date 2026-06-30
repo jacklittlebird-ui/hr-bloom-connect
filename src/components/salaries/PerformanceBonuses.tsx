@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { getJobDegreeBadgeClass } from '@/lib/jobDegreeColors';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, Users, Building2, Wallet, Star, ExternalLink, Calculator, Save, Landmark } from 'lucide-react';
+import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, Users, Building2, Wallet, Star, ExternalLink, Calculator, Save, Landmark, Send } from 'lucide-react';
 import { useReportExport } from '@/hooks/useReportExport';
 import { buildStationGroupRows, buildStationSubtotalExportRows } from '@/lib/stationReportGrouping';
 
@@ -34,6 +34,8 @@ interface Row {
   score: number;
   gross_salary: number;
   amount: number;
+  sent_to_employee?: boolean;
+  sent_at?: string | null;
 }
 
 const REPORT_COLUMNS = [
@@ -76,6 +78,7 @@ export const PerformanceBonuses = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingReport, setSavingReport] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
   const pctSavingSet = useRef<Set<string>>(new Set());
   const [pctDrafts, setPctDrafts] = useState<Record<string, string>>({});
