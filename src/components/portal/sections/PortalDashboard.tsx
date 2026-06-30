@@ -48,6 +48,8 @@ export const PortalDashboard = () => {
   const { records, refresh: refreshAttendance } = useAttendanceData();
   const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, getOvertimeDays, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
   useEffect(() => { ensureLeaves(); }, [ensureLeaves]);
+  useEffect(() => { ensureEvaluations(); }, [ensureEvaluations]);
+  useEffect(() => { ensureMissions(); }, [ensureMissions]);
 
   // Today, computed in Cairo timezone — never the device-local timezone, so
   // an employee whose phone is set to a different region still sees the
