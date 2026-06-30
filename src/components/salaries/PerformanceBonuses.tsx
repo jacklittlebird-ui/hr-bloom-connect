@@ -325,11 +325,12 @@ export const PerformanceBonuses = () => {
       if (hasSaved) {
         const { error: snapErr } = await supabase
           .from('performance_bonus_records')
-          .update({ percentage: pct, amount })
+          .update({ percentage: pct, amount, sent_to_employee: false, sent_at: null, sent_by: null })
           .eq('employee_id', employeeId)
           .eq('year', year)
           .eq('quarter', quarter);
         if (snapErr) throw snapErr;
+        setRows(prev => prev.map(r => r.employee_id === employeeId ? { ...r, sent_to_employee: false, sent_at: null } : r));
       }
       toast.success(ar ? 'تم حفظ النسبة' : 'Rate saved');
     } catch (err: any) {
