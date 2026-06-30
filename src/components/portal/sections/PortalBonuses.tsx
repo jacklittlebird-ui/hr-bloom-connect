@@ -130,7 +130,7 @@ export const PortalBonuses = () => {
                   <TableCell>{r.percentage}%</TableCell>
                   <TableCell className="font-semibold text-primary">{r.amount.toLocaleString()}</TableCell>
                   <TableCell>{r.station_name || '-'}</TableCell>
-                  <TableCell>{formatDate(r.created_at)}</TableCell>
+                  <TableCell>{formatDate(r.sent_at || r.created_at)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
