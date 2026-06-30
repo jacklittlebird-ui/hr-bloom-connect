@@ -1914,6 +1914,9 @@ export type Database = {
           percentage: number
           quarter: string
           score: number
+          sent_at: string | null
+          sent_by: string | null
+          sent_to_employee: boolean
           station_name: string | null
           updated_at: string
           year: string
@@ -1937,6 +1940,9 @@ export type Database = {
           percentage?: number
           quarter: string
           score?: number
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_to_employee?: boolean
           station_name?: string | null
           updated_at?: string
           year: string
@@ -1960,6 +1966,9 @@ export type Database = {
           percentage?: number
           quarter?: string
           score?: number
+          sent_at?: string | null
+          sent_by?: string | null
+          sent_to_employee?: boolean
           station_name?: string | null
           updated_at?: string
           year?: string
