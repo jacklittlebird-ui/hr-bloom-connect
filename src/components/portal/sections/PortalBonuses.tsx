@@ -9,12 +9,15 @@ import { Badge } from '@/components/ui/badge';
 
 interface BonusRecord {
   id: string;
+  type: 'regular' | 'performance';
   year: string;
-  bonus_number: number;
+  bonus_number?: number;
+  quarter?: string;
   amount: number;
   percentage: number;
   station_name: string | null;
   created_at: string;
+  sent_at?: string | null;
 }
 
 export const PortalBonuses = () => {
@@ -28,13 +31,43 @@ export const PortalBonuses = () => {
     if (!employeeId) return;
     const fetch = async () => {
       setLoading(true);
-      const { data } = await supabase
+      const [{ data: regularData, error: regularError }, { data: performanceData, error: performanceError }] = await Promise.all([
+        supabase
         .from('bonus_records')
         .select('id, year, bonus_number, amount, percentage, station_name, created_at')
         .eq('employee_id', employeeId)
         .order('year', { ascending: false })
-        .order('bonus_number', { ascending: false });
-      setRecords(data || []);
+          .order('bonus_number', { ascending: false }),
+        supabase.rpc('get_my_performance_bonuses'),
+      ]);
+
+      if (regularError) console.error('Portal regular bonuses fetch error:', regularError);
+      if (performanceError) console.error('Portal performance bonuses fetch error:', performanceError);
+
+      const regular: BonusRecord[] = (regularData || []).map((r: any) => ({
+        id: r.id,
+        type: 'regular',
+        year: r.year,
+        bonus_number: r.bonus_number,
+        amount: Number(r.amount || 0),
+        percentage: Number(r.percentage || 0),
+        station_name: r.station_name,
+        created_at: r.created_at,
+      }));
+
+      const performance: BonusRecord[] = (performanceData || []).map((r: any) => ({
+        id: r.id,
+        type: 'performance',
+        year: r.year,
+        quarter: r.quarter,
+        amount: Number(r.amount || 0),
+        percentage: Number(r.percentage || 0),
+        station_name: r.station_name,
+        created_at: r.created_at,
+        sent_at: r.sent_at,
+      }));
+
+      setRecords([...regular, ...performance].sort((a, b) => String(b.sent_at || b.created_at).localeCompare(String(a.sent_at || a.created_at))));
       setLoading(false);
     };
     fetch();
@@ -65,7 +98,7 @@ export const PortalBonuses = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>{isAr ? 'السنة' : 'Year'}</TableHead>
-                <TableHead>{isAr ? 'رقم المنحة' : 'Bonus #'}</TableHead>
+                <TableHead>{isAr ? 'النوع / الفترة' : 'Type / Period'}</TableHead>
                 <TableHead>{isAr ? 'النسبة' : 'Percentage'}</TableHead>
                 <TableHead>{isAr ? 'المبلغ' : 'Amount'}</TableHead>
                 <TableHead>{isAr ? 'المحطة' : 'Station'}</TableHead>
@@ -76,7 +109,13 @@ export const PortalBonuses = () => {
               {records.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.year}</TableCell>
-                  <TableCell><Badge variant="outline">{r.bonus_number}</Badge></TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {r.type === 'performance'
+                        ? (isAr ? `مكافأة تقييم ${r.quarter || ''}` : `Performance ${r.quarter || ''}`)
+                        : (isAr ? `منحة رقم ${r.bonus_number}` : `Bonus #${r.bonus_number}`)}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{r.percentage}%</TableCell>
                   <TableCell className="font-semibold text-primary">{r.amount.toLocaleString()}</TableCell>
                   <TableCell>{r.station_name || '-'}</TableCell>
