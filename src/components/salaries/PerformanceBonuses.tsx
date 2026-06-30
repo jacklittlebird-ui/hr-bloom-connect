@@ -255,6 +255,8 @@ export const PerformanceBonuses = () => {
           score: Number(r.score || 0),
           gross_salary: Number(r.gross_salary || 0),
           amount: Number(r.amount || 0),
+          sent_to_employee: Boolean(r.sent_to_employee),
+          sent_at: r.sent_at || null,
         })));
         setHasSaved(true);
       } else {
