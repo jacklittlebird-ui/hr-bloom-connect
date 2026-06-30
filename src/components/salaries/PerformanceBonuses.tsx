@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { getJobDegreeBadgeClass } from '@/lib/jobDegreeColors';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, Users, Building2, Wallet, Star, ExternalLink, Calculator, Save, Landmark } from 'lucide-react';
+import { Play, Loader2, Award, Printer, FileText, FileSpreadsheet, Search, X, Users, Building2, Wallet, Star, ExternalLink, Calculator, Save, Landmark, Send } from 'lucide-react';
 import { useReportExport } from '@/hooks/useReportExport';
 import { buildStationGroupRows, buildStationSubtotalExportRows } from '@/lib/stationReportGrouping';
 
@@ -34,6 +34,8 @@ interface Row {
   score: number;
   gross_salary: number;
   amount: number;
+  sent_to_employee?: boolean;
+  sent_at?: string | null;
 }
 
 const REPORT_COLUMNS = [
@@ -76,6 +78,7 @@ export const PerformanceBonuses = () => {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingReport, setSavingReport] = useState(false);
+  const [sendingReport, setSendingReport] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
   const pctSavingSet = useRef<Set<string>>(new Set());
   const [pctDrafts, setPctDrafts] = useState<Record<string, string>>({});
@@ -252,6 +255,8 @@ export const PerformanceBonuses = () => {
           score: Number(r.score || 0),
           gross_salary: Number(r.gross_salary || 0),
           amount: Number(r.amount || 0),
+          sent_to_employee: Boolean(r.sent_to_employee),
+          sent_at: r.sent_at || null,
         })));
         setHasSaved(true);
       } else {
@@ -320,11 +325,12 @@ export const PerformanceBonuses = () => {
       if (hasSaved) {
         const { error: snapErr } = await supabase
           .from('performance_bonus_records')
-          .update({ percentage: pct, amount })
+          .update({ percentage: pct, amount, sent_to_employee: false, sent_at: null, sent_by: null })
           .eq('employee_id', employeeId)
           .eq('year', year)
           .eq('quarter', quarter);
         if (snapErr) throw snapErr;
+        setRows(prev => prev.map(r => r.employee_id === employeeId ? { ...r, sent_to_employee: false, sent_at: null } : r));
       }
       toast.success(ar ? 'تم حفظ النسبة' : 'Rate saved');
     } catch (err: any) {
@@ -401,6 +407,9 @@ export const PerformanceBonuses = () => {
         bank_id_number: r.bank_id_number || null,
         bank_name: r.bank_name || null,
         bank_account_type: r.bank_account_type || null,
+        sent_to_employee: false,
+        sent_at: null,
+        sent_by: null,
       }));
 
       const BATCH = 100;
@@ -411,11 +420,41 @@ export const PerformanceBonuses = () => {
         if (insErr) throw insErr;
       }
       setHasSaved(true);
+      setRows(prev => prev.map(r => ({ ...r, sent_to_employee: false, sent_at: null })));
       toast.success(ar ? `تم حفظ التقرير (${rows.length} موظف)` : `Report saved (${rows.length} employees)`);
     } catch (err: any) {
       toast.error(err.message || 'Error');
     } finally {
       setSavingReport(false);
+    }
+  };
+
+  const handleSendToEmployees = async () => {
+    if (rows.length === 0) {
+      toast.info(ar ? 'لا توجد بيانات للإرسال' : 'No data to send');
+      return;
+    }
+    if (!hasSaved) {
+      toast.info(ar ? 'احفظ التقرير أولاً ثم أرسله للموظفين' : 'Save the report first, then send it to employees');
+      return;
+    }
+
+    setSendingReport(true);
+    try {
+      const sentAt = new Date().toISOString();
+      const { error } = await supabase
+        .from('performance_bonus_records')
+        .update({ sent_to_employee: true, sent_at: sentAt })
+        .eq('year', year)
+        .eq('quarter', quarter);
+      if (error) throw error;
+
+      setRows(prev => prev.map(r => ({ ...r, sent_to_employee: true, sent_at: sentAt })));
+      toast.success(ar ? `تم إرسال المكافآت للموظفين (${rows.length} موظف)` : `Bonuses sent to employees (${rows.length} employees)`);
+    } catch (err: any) {
+      toast.error((ar ? 'فشل الإرسال: ' : 'Failed to send: ') + (err.message || ''));
+    } finally {
+      setSendingReport(false);
     }
   };
 
@@ -448,6 +487,7 @@ export const PerformanceBonuses = () => {
   const clearFilters = () => { setSearchText(''); setFilterStation('all'); setFilterDepartment('all'); setFilterLevel('all'); setFilterBank('all'); };
 
   const totalAmount = useMemo(() => filteredRecords.reduce((s, r) => s + r.amount, 0), [filteredRecords]);
+  const sentCount = useMemo(() => rows.filter(r => r.sent_to_employee).length, [rows]);
   const totalGrossSalary = useMemo(() => filteredRecords.reduce((s, r) => s + (r.gross_salary || 0), 0), [filteredRecords]);
   const bonusToGrossPct = useMemo(() => totalGrossSalary > 0 ? (totalAmount / totalGrossSalary) * 100 : 0, [totalAmount, totalGrossSalary]);
   const avgScore = useMemo(() => filteredRecords.length ? (filteredRecords.reduce((s, r) => s + r.score, 0) / filteredRecords.length) : 0, [filteredRecords]);
@@ -583,8 +623,14 @@ export const PerformanceBonuses = () => {
                 {savingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {ar ? 'حفظ التقرير' : 'Save Report'}
               </Button>
+              <Button onClick={handleSendToEmployees} disabled={sendingReport || !hasSaved || rows.length === 0} variant="default" className="gap-2 min-w-[160px]">
+                {sendingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {ar ? 'إرسال للموظف' : 'Send to Employee'}
+              </Button>
               {hasSaved && (
-                <Badge variant="outline" className="h-9 px-2 text-xs">{ar ? 'محفوظ' : 'Saved'}</Badge>
+                <Badge variant="outline" className="h-9 px-2 text-xs">
+                  {sentCount > 0 ? (ar ? `مرسل ${sentCount}` : `Sent ${sentCount}`) : (ar ? 'محفوظ' : 'Saved')}
+                </Badge>
               )}
             </div>
           </div>

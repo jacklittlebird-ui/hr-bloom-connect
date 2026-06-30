@@ -4,7 +4,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Star } from 'lucide-react';
-import { usePortalEmployee } from '@/hooks/usePortalEmployee';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -23,7 +22,6 @@ interface PortalReview {
 }
 
 export const PortalEvaluations = () => {
-  const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { loading: authLoading, session } = useAuth();
   const { language } = useLanguage();
   const ar = language === 'ar';
@@ -33,7 +31,7 @@ export const PortalEvaluations = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!session?.user || !PORTAL_EMPLOYEE_ID) {
+    if (!session?.user) {
       setMyReviews([]);
       setLoading(false);
       return;
@@ -43,13 +41,7 @@ export const PortalEvaluations = () => {
     const loadReviews = async () => {
       setLoading(true);
       setError(null);
-      const { data, error: fetchError } = await supabase
-        .from('performance_reviews')
-        .select('id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, created_at')
-        .eq('employee_id', PORTAL_EMPLOYEE_ID)
-        .in('status', ['submitted', 'approved', 'completed'])
-        .order('created_at', { ascending: false })
-        .range(0, 99);
+      const { data, error: fetchError } = await supabase.rpc('get_my_performance_reviews');
 
       if (cancelled) return;
 
@@ -65,7 +57,7 @@ export const PortalEvaluations = () => {
           year: String(r.year || '').trim(),
           score: Number(r.score || 0),
           status: r.status || 'submitted',
-          reviewer: r.reviewer_id || '',
+          reviewer: '',
           reviewDate: r.review_date || '',
           strengths: r.strengths || undefined,
           improvements: r.improvements || undefined,
@@ -77,7 +69,7 @@ export const PortalEvaluations = () => {
 
     void loadReviews();
     return () => { cancelled = true; };
-  }, [authLoading, session?.user, PORTAL_EMPLOYEE_ID]);
+  }, [authLoading, session?.user]);
 
   const statusLabel = (status: string) => {
     if (status === 'approved') return ar ? 'معتمد' : 'Approved';
@@ -110,7 +102,6 @@ export const PortalEvaluations = () => {
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
                     <h3 className="font-semibold text-lg">{r.quarter} {r.year}</h3>
-                    <p className="text-sm text-muted-foreground">{ar ? 'المقيّم:' : 'Reviewer:'} {r.reviewer}</p>
                     <p className="text-sm text-muted-foreground">{ar ? 'التاريخ:' : 'Date:'} {r.reviewDate}</p>
                     {r.strengths && <p className="text-sm mt-2"><span className="font-medium">{ar ? 'نقاط القوة:' : 'Strengths:'}</span> {r.strengths}</p>}
                     {r.improvements && <p className="text-sm"><span className="font-medium">{ar ? 'التحسينات:' : 'Improvements:'}</span> {r.improvements}</p>}
