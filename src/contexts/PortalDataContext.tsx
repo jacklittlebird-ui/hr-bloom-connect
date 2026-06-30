@@ -345,10 +345,18 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     loaded.current.add('evaluations');
 
     await debouncedFetch(`portal_evals_${scopedEmployeeId || 'all'}`, async () => {
-      const q = supabase.from('performance_reviews').select('id, employee_id, quarter, year, score, status, strengths').order('created_at', { ascending: false }).limit(20);
-      if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
       try {
-        const { data } = await q;
+        let data: any[] | null = null;
+        if (isEmployee && scopedEmployeeId) {
+          const { data: rpcData, error: rpcErr } = await supabase.rpc('get_my_performance_reviews');
+          if (rpcErr) throw rpcErr;
+          data = rpcData as any[];
+        } else {
+          const q = supabase.from('performance_reviews').select('id, employee_id, quarter, year, score, status, strengths').order('created_at', { ascending: false }).limit(20);
+          if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
+          const { data: qData } = await q;
+          data = qData as any[];
+        }
         trackQuery('portal_evals', data?.length || 0);
         if (data) {
           setEvaluations(data.map((e: any) => ({
@@ -365,6 +373,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
       return true;
     }, { ttlMs: 120_000 });
+
   }, [isEmployee, scopedEmployeeId]);
 
   const ensureTraining = useCallback(async () => {
