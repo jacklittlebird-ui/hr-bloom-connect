@@ -1,33 +1,93 @@
-import { useMemo, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { usePerformanceData } from '@/contexts/PerformanceDataContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Star } from 'lucide-react';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+
+interface PortalReview {
+  id: string;
+  employeeId: string;
+  quarter: string;
+  year: string;
+  score: number;
+  status: string;
+  reviewer: string;
+  reviewDate: string;
+  strengths?: string;
+  improvements?: string;
+  goals?: string;
+}
 
 export const PortalEvaluations = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
+  const { loading: authLoading, session } = useAuth();
   const { language } = useLanguage();
   const ar = language === 'ar';
-  const { reviews, ensureLoaded } = usePerformanceData();
+  const [myReviews, setMyReviews] = useState<PortalReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { ensureLoaded(true); }, [ensureLoaded]);
+  useEffect(() => {
+    if (authLoading) return;
+    if (!session?.user || !PORTAL_EMPLOYEE_ID) {
+      setMyReviews([]);
+      setLoading(false);
+      return;
+    }
 
-  const myReviews = useMemo(
-    () => reviews.filter(r => r.employeeId === PORTAL_EMPLOYEE_ID),
-    [reviews, PORTAL_EMPLOYEE_ID]
-  );
+    let cancelled = false;
+    const loadReviews = async () => {
+      setLoading(true);
+      setError(null);
+      const { data, error: fetchError } = await supabase
+        .from('performance_reviews')
+        .select('id, employee_id, quarter, year, score, status, reviewer_id, review_date, strengths, improvements, goals, created_at')
+        .eq('employee_id', PORTAL_EMPLOYEE_ID)
+        .in('status', ['submitted', 'approved', 'completed'])
+        .order('created_at', { ascending: false })
+        .range(0, 99);
+
+      if (cancelled) return;
+
+      if (fetchError) {
+        console.error('Portal evaluations fetch error:', fetchError);
+        setError(fetchError.message);
+        setMyReviews([]);
+      } else {
+        setMyReviews((data || []).map((r: any) => ({
+          id: r.id,
+          employeeId: r.employee_id,
+          quarter: String(r.quarter || '').trim().toUpperCase(),
+          year: String(r.year || '').trim(),
+          score: Number(r.score || 0),
+          status: r.status || 'submitted',
+          reviewer: r.reviewer_id || '',
+          reviewDate: r.review_date || '',
+          strengths: r.strengths || undefined,
+          improvements: r.improvements || undefined,
+          goals: r.goals || undefined,
+        })));
+      }
+      setLoading(false);
+    };
+
+    void loadReviews();
+    return () => { cancelled = true; };
+  }, [authLoading, session?.user, PORTAL_EMPLOYEE_ID]);
 
   const statusLabel = (status: string) => {
     if (status === 'approved') return ar ? 'معتمد' : 'Approved';
     if (status === 'submitted') return ar ? 'مقدّم' : 'Submitted';
+    if (status === 'completed') return ar ? 'مكتمل' : 'Completed';
     return ar ? 'مسودة' : 'Draft';
   };
 
   const statusColor = (status: string) => {
-    if (status === 'approved') return 'bg-success/10 text-success border-success';
+    if (status === 'approved' || status === 'completed') return 'bg-success/10 text-success border-success';
     if (status === 'submitted') return 'bg-warning/10 text-warning border-warning';
     return 'bg-muted text-muted-foreground border-muted';
   };
@@ -36,7 +96,11 @@ export const PortalEvaluations = () => {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{ar ? 'تقييماتي' : 'My Evaluations'}</h1>
 
-      {myReviews.length === 0 ? (
+      {loading ? (
+        <Card><CardContent className="p-10 text-center text-muted-foreground">{ar ? 'جاري تحميل التقييمات...' : 'Loading evaluations...'}</CardContent></Card>
+      ) : error ? (
+        <Card><CardContent className="p-10 text-center text-destructive">{ar ? 'تعذر تحميل التقييمات' : 'Unable to load evaluations'}</CardContent></Card>
+      ) : myReviews.length === 0 ? (
         <Card><CardContent className="p-10 text-center text-muted-foreground">{ar ? 'لا توجد تقييمات' : 'No evaluations'}</CardContent></Card>
       ) : (
         <div className="grid gap-4">
