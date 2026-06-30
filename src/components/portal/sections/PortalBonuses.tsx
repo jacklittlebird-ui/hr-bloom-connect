@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDate } from '@/lib/utils';
 import { Award } from 'lucide-react';
@@ -22,22 +23,32 @@ interface BonusRecord {
 
 export const PortalBonuses = () => {
   const { language } = useLanguage();
+  const { loading: authLoading, session } = useAuth();
   const isAr = language === 'ar';
   const employeeId = usePortalEmployee();
   const [records, setRecords] = useState<BonusRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!employeeId) return;
+    if (authLoading) return;
+    if (!session?.user) {
+      setRecords([]);
+      setLoading(false);
+      return;
+    }
     const fetch = async () => {
       setLoading(true);
+      const regularPromise = employeeId
+        ? supabase
+            .from('bonus_records')
+            .select('id, year, bonus_number, amount, percentage, station_name, created_at')
+            .eq('employee_id', employeeId)
+            .order('year', { ascending: false })
+            .order('bonus_number', { ascending: false })
+        : Promise.resolve({ data: [], error: null });
+
       const [{ data: regularData, error: regularError }, { data: performanceData, error: performanceError }] = await Promise.all([
-        supabase
-        .from('bonus_records')
-        .select('id, year, bonus_number, amount, percentage, station_name, created_at')
-        .eq('employee_id', employeeId)
-        .order('year', { ascending: false })
-          .order('bonus_number', { ascending: false }),
+        regularPromise,
         supabase.rpc('get_my_performance_bonuses'),
       ]);
 
@@ -71,7 +82,7 @@ export const PortalBonuses = () => {
       setLoading(false);
     };
     fetch();
-  }, [employeeId]);
+  }, [authLoading, session?.user, employeeId]);
 
   if (loading) {
     return (
