@@ -623,8 +623,14 @@ export const PerformanceBonuses = () => {
                 {savingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {ar ? 'حفظ التقرير' : 'Save Report'}
               </Button>
+              <Button onClick={handleSendToEmployees} disabled={sendingReport || !hasSaved || rows.length === 0} variant="default" className="gap-2 min-w-[160px]">
+                {sendingReport ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {ar ? 'إرسال للموظف' : 'Send to Employee'}
+              </Button>
               {hasSaved && (
-                <Badge variant="outline" className="h-9 px-2 text-xs">{ar ? 'محفوظ' : 'Saved'}</Badge>
+                <Badge variant="outline" className="h-9 px-2 text-xs">
+                  {sentCount > 0 ? (ar ? `مرسل ${sentCount}` : `Sent ${sentCount}`) : (ar ? 'محفوظ' : 'Saved')}
+                </Badge>
               )}
             </div>
           </div>
