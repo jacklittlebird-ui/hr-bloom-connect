@@ -407,6 +407,9 @@ export const PerformanceBonuses = () => {
         bank_id_number: r.bank_id_number || null,
         bank_name: r.bank_name || null,
         bank_account_type: r.bank_account_type || null,
+        sent_to_employee: false,
+        sent_at: null,
+        sent_by: null,
       }));
 
       const BATCH = 100;
@@ -417,6 +420,7 @@ export const PerformanceBonuses = () => {
         if (insErr) throw insErr;
       }
       setHasSaved(true);
+      setRows(prev => prev.map(r => ({ ...r, sent_to_employee: false, sent_at: null })));
       toast.success(ar ? `تم حفظ التقرير (${rows.length} موظف)` : `Report saved (${rows.length} employees)`);
     } catch (err: any) {
       toast.error(err.message || 'Error');
