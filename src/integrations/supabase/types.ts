@@ -3470,6 +3470,42 @@ export type Database = {
       }
       get_cron_last_success: { Args: { p_job_name: string }; Returns: string }
       get_dm_department_ids: { Args: { _user_id: string }; Returns: string[] }
+      get_my_performance_bonuses: {
+        Args: never
+        Returns: {
+          amount: number
+          created_at: string
+          department_name: string
+          employee_id: string
+          gross_salary: number
+          id: string
+          job_title: string
+          percentage: number
+          quarter: string
+          score: number
+          sent_at: string
+          sent_to_employee: boolean
+          station_name: string
+          year: string
+        }[]
+      }
+      get_my_performance_reviews: {
+        Args: never
+        Returns: {
+          bonus_percentage: number
+          created_at: string
+          employee_id: string
+          goals: string
+          id: string
+          improvements: string
+          quarter: string
+          review_date: string
+          score: number
+          status: string
+          strengths: string
+          year: string
+        }[]
+      }
       get_station_hr_station_ids: {
         Args: { _user_id: string }
         Returns: string[]
