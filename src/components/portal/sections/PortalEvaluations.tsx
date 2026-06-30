@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePerformanceData } from '@/contexts/PerformanceDataContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,7 +11,9 @@ export const PortalEvaluations = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
   const { language } = useLanguage();
   const ar = language === 'ar';
-  const { reviews } = usePerformanceData();
+  const { reviews, ensureLoaded } = usePerformanceData();
+
+  useEffect(() => { ensureLoaded(true); }, [ensureLoaded]);
 
   const myReviews = useMemo(
     () => reviews.filter(r => r.employeeId === PORTAL_EMPLOYEE_ID),
