@@ -61,6 +61,15 @@ export const LeaveApprovals = ({
   const [selectedItem, setSelectedItem] = useState<{ id: string; type: 'leave' | 'permission' | 'mission' | 'overtime' } | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [filter, setFilter] = useState<'all' | 'leave' | 'permission' | 'mission' | 'overtime'>('all');
+  const [selectedLeaveTypes, setSelectedLeaveTypes] = useState<string[]>([]);
+
+  const LEAVE_TYPE_OPTIONS: { value: string; ar: string; en: string }[] = [
+    { value: 'annual', ar: 'سنوية', en: 'Annual' },
+    { value: 'sick', ar: 'مرضية', en: 'Sick' },
+    { value: 'casual', ar: 'عارضة', en: 'Casual' },
+    { value: 'unpaid', ar: 'بدون راتب', en: 'Unpaid' },
+    { value: 'marriage', ar: 'زواج', en: 'Marriage' },
+  ];
 
   const unifiedRequests: UnifiedRequest[] = [
     ...leaveRequests.map((r): UnifiedRequest => ({
