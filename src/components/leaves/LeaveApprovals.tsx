@@ -57,6 +57,7 @@ export const LeaveApprovals = ({
   onRejectOvertime,
 }: AllApprovalsProps) => {
   const { t, isRTL, language } = useLanguage();
+  const ar = language === 'ar';
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ id: string; type: 'leave' | 'permission' | 'mission' | 'overtime' } | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
