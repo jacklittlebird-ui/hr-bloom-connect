@@ -75,6 +75,7 @@ export const LeaveApprovals = ({
       details: `${formatDate(r.startDate)} → ${formatDate(r.endDate)} (${r.days} ${t('leaves.days')})`,
       badgeLabel: t(`leaves.types.${r.leaveType}`),
       badgeColor: 'bg-blue-500',
+      leaveType: r.leaveType,
     })),
     ...permissionRequests.map((r): UnifiedRequest => ({
       id: r.id,
