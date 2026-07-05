@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, User, Calendar, FileText, ShieldCheck, Briefcase, PlusCircle, Clock } from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CheckCircle, XCircle, User, Calendar, FileText, ShieldCheck, Briefcase, PlusCircle, Clock, ListFilter, Check } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { LeaveRequest, PermissionRequest, MissionRequest, OvertimeRequest } from '@/types/leaves';
 import { toast } from '@/hooks/use-toast';
@@ -22,6 +24,7 @@ type UnifiedRequest = {
   details: string;
   badgeLabel: string;
   badgeColor: string;
+  leaveType?: string;
 };
 
 interface AllApprovalsProps {
@@ -54,10 +57,20 @@ export const LeaveApprovals = ({
   onRejectOvertime,
 }: AllApprovalsProps) => {
   const { t, isRTL, language } = useLanguage();
+  const ar = language === 'ar';
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<{ id: string; type: 'leave' | 'permission' | 'mission' | 'overtime' } | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [filter, setFilter] = useState<'all' | 'leave' | 'permission' | 'mission' | 'overtime'>('all');
+  const [selectedLeaveTypes, setSelectedLeaveTypes] = useState<string[]>([]);
+
+  const LEAVE_TYPE_OPTIONS: { value: string; ar: string; en: string }[] = [
+    { value: 'annual', ar: 'سنوية', en: 'Annual' },
+    { value: 'sick', ar: 'مرضية', en: 'Sick' },
+    { value: 'casual', ar: 'عارضة', en: 'Casual' },
+    { value: 'unpaid', ar: 'بدون راتب', en: 'Unpaid' },
+    { value: 'marriage', ar: 'زواج', en: 'Marriage' },
+  ];
 
   const unifiedRequests: UnifiedRequest[] = [
     ...leaveRequests.map((r): UnifiedRequest => ({
@@ -72,6 +85,7 @@ export const LeaveApprovals = ({
       details: `${formatDate(r.startDate)} → ${formatDate(r.endDate)} (${r.days} ${t('leaves.days')})`,
       badgeLabel: t(`leaves.types.${r.leaveType}`),
       badgeColor: 'bg-blue-500',
+      leaveType: r.leaveType,
     })),
     ...permissionRequests.map((r): UnifiedRequest => ({
       id: r.id,
@@ -122,7 +136,15 @@ export const LeaveApprovals = ({
     })),
   ];
 
-  const filteredRequests = filter === 'all' ? unifiedRequests : unifiedRequests.filter(r => r.type === filter);
+  const filteredRequests = unifiedRequests.filter(r => {
+    const matchType = filter === 'all' || r.type === filter;
+    const matchLeaveType = selectedLeaveTypes.length === 0 || (r.type === 'leave' && r.leaveType && selectedLeaveTypes.includes(r.leaveType));
+    // leave type filter only applies when filter is 'leave' or 'all' and there are selected types
+    if (selectedLeaveTypes.length > 0 && r.type === 'leave') {
+      return matchType && matchLeaveType;
+    }
+    return matchType;
+  });
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -207,7 +229,7 @@ export const LeaveApprovals = ({
                 </Badge>
               )}
             </CardTitle>
-            <div className={cn("flex flex-wrap gap-2", isRTL && "flex-row-reverse")}>
+            <div className={cn("flex flex-wrap gap-2 items-center", isRTL && "flex-row-reverse")}>
               {filterButtons.map((btn) => (
                 <Button
                   key={btn.key}
@@ -227,6 +249,61 @@ export const LeaveApprovals = ({
                   )}
                 </Button>
               ))}
+              {/* Leave Type Filter */}
+              {(filter === 'all' || filter === 'leave') && leaveRequests.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "gap-1.5 h-9",
+                        selectedLeaveTypes.length > 0 && "border-primary bg-primary/5"
+                      )}
+                    >
+                      <ListFilter className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm">{ar ? 'نوع الإجازة' : 'Leave Type'}</span>
+                      {selectedLeaveTypes.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 min-w-[20px] justify-center">
+                          {selectedLeaveTypes.length}
+                        </Badge>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-0" align={isRTL ? 'end' : 'start'}>
+                    <div className="p-2 border-b flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">{ar ? 'نوع الإجازة' : 'Leave Type'}</span>
+                      {selectedLeaveTypes.length > 0 && (
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedLeaveTypes([])}>
+                          {ar ? 'مسح' : 'Clear'}
+                        </Button>
+                      )}
+                    </div>
+                    <div className="p-1">
+                      {LEAVE_TYPE_OPTIONS.map(opt => {
+                        const checked = selectedLeaveTypes.includes(opt.value);
+                        return (
+                          <label
+                            key={opt.value}
+                            className={cn(
+                              "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer hover:bg-accent text-sm",
+                              isRTL && "flex-row-reverse text-right"
+                            )}
+                          >
+                            <Checkbox checked={checked} onCheckedChange={() => {
+                              setSelectedLeaveTypes(prev =>
+                                prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                              );
+                            }} />
+                            <span>{ar ? opt.ar : opt.en}</span>
+                            {checked && <Check className="w-3.5 h-3.5 text-primary ms-auto" />}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           </div>
         </CardHeader>
