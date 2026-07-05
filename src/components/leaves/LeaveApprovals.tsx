@@ -24,6 +24,7 @@ type UnifiedRequest = {
   details: string;
   badgeLabel: string;
   badgeColor: string;
+  leaveType?: string;
 };
 
 interface AllApprovalsProps {
