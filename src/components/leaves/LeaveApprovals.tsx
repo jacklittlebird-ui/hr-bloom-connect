@@ -135,7 +135,15 @@ export const LeaveApprovals = ({
     })),
   ];
 
-  const filteredRequests = filter === 'all' ? unifiedRequests : unifiedRequests.filter(r => r.type === filter);
+  const filteredRequests = unifiedRequests.filter(r => {
+    const matchType = filter === 'all' || r.type === filter;
+    const matchLeaveType = selectedLeaveTypes.length === 0 || (r.type === 'leave' && r.leaveType && selectedLeaveTypes.includes(r.leaveType));
+    // leave type filter only applies when filter is 'leave' or 'all' and there are selected types
+    if (selectedLeaveTypes.length > 0 && r.type === 'leave') {
+      return matchType && matchLeaveType;
+    }
+    return matchType;
+  });
 
   const getTypeIcon = (type: string) => {
     switch (type) {
