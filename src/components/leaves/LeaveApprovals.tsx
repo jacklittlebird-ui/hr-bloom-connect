@@ -228,7 +228,7 @@ export const LeaveApprovals = ({
                 </Badge>
               )}
             </CardTitle>
-            <div className={cn("flex flex-wrap gap-2", isRTL && "flex-row-reverse")}>
+            <div className={cn("flex flex-wrap gap-2 items-center", isRTL && "flex-row-reverse")}>
               {filterButtons.map((btn) => (
                 <Button
                   key={btn.key}
@@ -248,6 +248,61 @@ export const LeaveApprovals = ({
                   )}
                 </Button>
               ))}
+              {/* Leave Type Filter */}
+              {(filter === 'all' || filter === 'leave') && leaveRequests.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "gap-1.5 h-9",
+                        selectedLeaveTypes.length > 0 && "border-primary bg-primary/5"
+                      )}
+                    >
+                      <ListFilter className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm">{ar ? 'نوع الإجازة' : 'Leave Type'}</span>
+                      {selectedLeaveTypes.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 min-w-[20px] justify-center">
+                          {selectedLeaveTypes.length}
+                        </Badge>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-0" align={isRTL ? 'end' : 'start'}>
+                    <div className="p-2 border-b flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">{ar ? 'نوع الإجازة' : 'Leave Type'}</span>
+                      {selectedLeaveTypes.length > 0 && (
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedLeaveTypes([])}>
+                          {ar ? 'مسح' : 'Clear'}
+                        </Button>
+                      )}
+                    </div>
+                    <div className="p-1">
+                      {LEAVE_TYPE_OPTIONS.map(opt => {
+                        const checked = selectedLeaveTypes.includes(opt.value);
+                        return (
+                          <label
+                            key={opt.value}
+                            className={cn(
+                              "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer hover:bg-accent text-sm",
+                              isRTL && "flex-row-reverse text-right"
+                            )}
+                          >
+                            <Checkbox checked={checked} onCheckedChange={() => {
+                              setSelectedLeaveTypes(prev =>
+                                prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                              );
+                            }} />
+                            <span>{ar ? opt.ar : opt.en}</span>
+                            {checked && <Check className="w-3.5 h-3.5 text-primary ms-auto" />}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           </div>
         </CardHeader>
