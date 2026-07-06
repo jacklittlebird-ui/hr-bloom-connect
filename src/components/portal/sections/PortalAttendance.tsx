@@ -126,7 +126,7 @@ export const PortalAttendance = () => {
         .gte('end_date', dateFrom),
       supabase
         .from('missions')
-        .select('id, date, start_date, end_date, status, location')
+        .select('id, date, start_date, end_date, status, destination')
         .eq('employee_id', PORTAL_EMPLOYEE_ID)
         .eq('status', 'approved')
         .or(`and(start_date.lte.${dateTo},end_date.gte.${dateFrom}),and(start_date.is.null,date.gte.${dateFrom},date.lte.${dateTo})`),
@@ -178,7 +178,7 @@ export const PortalAttendance = () => {
         holidayNameAr: holiday?.name_ar,
         holidayNameEn: holiday?.name_en,
         leaveType: onLeave ? leaveByDate.get(r.date) : undefined,
-        missionLocation: audit.status === 'mission' ? missionByDate.get(r.date)?.location : undefined,
+        missionLocation: audit.status === 'mission' ? missionByDate.get(r.date)?.destination : undefined,
         audit,
       };
     });
