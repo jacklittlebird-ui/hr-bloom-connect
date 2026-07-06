@@ -178,7 +178,7 @@ export const PortalAttendance = () => {
         holidayNameAr: holiday?.name_ar,
         holidayNameEn: holiday?.name_en,
         leaveType: onLeave ? leaveByDate.get(r.date) : undefined,
-        missionLocation: audit.status === 'mission' ? missionByDate.get(r.date)?.location : undefined,
+        missionLocation: audit.status === 'mission' ? missionByDate.get(r.date)?.destination : undefined,
         audit,
       };
     });
