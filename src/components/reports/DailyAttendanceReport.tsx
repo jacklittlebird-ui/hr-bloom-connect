@@ -1202,9 +1202,11 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                             );
                           }
                           if (c.permission) {
+                            const win = permissionWindow(c.permission);
                             overlayBadges.push(
                               <span key="pr" className="inline-flex items-center gap-0.5 px-1 rounded bg-cyan-100 text-cyan-800 text-[9px] font-semibold" title={ar ? 'إذن' : 'Permission'}>
-                                <FileClock className="w-2.5 h-2.5" aria-hidden />{ar ? 'إذن' : 'Perm'} {permissionHoursFor(c.permission)}{ar ? 'س' : 'h'}
+                                <FileClock className="w-2.5 h-2.5" aria-hidden />
+                                {ar ? 'إذن' : 'Perm'} {win || `${permissionHoursFor(c.permission)}${ar ? 'س' : 'h'}`}
                               </span>
                             );
                           }
