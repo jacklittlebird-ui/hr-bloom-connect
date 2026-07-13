@@ -686,7 +686,13 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       if (holiday) extras.push((ar ? 'عطلة رسمية: ' : 'Holiday: ') + (ar ? holiday.name_ar : holiday.name_en));
       if (c.leave) extras.push((ar ? 'إجازة ' : 'Leave ') + (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)));
       if (c.mission) extras.push(ar ? `مأمورية (${c.mission.hours || 0}س)` : `Mission (${c.mission.hours || 0}h)`);
-      if (c.permission) extras.push(ar ? `إذن (${permissionHoursFor(c.permission)}س)` : `Permission (${permissionHoursFor(c.permission)}h)`);
+      if (c.permission) {
+        const win = permissionWindow(c.permission);
+        const hrs = permissionHoursFor(c.permission);
+        extras.push(ar
+          ? `إذن${win ? ' ' + win : ''} (${hrs}س)`
+          : `Permission${win ? ' ' + win : ''} (${hrs}h)`);
+      }
       if (c.overtime) extras.push(ar ? `إضافي (${c.overtime.hours || 0}س)` : `Overtime (${c.overtime.hours || 0}h)`);
       const baseStatus = c.kind === 'present' ? (ar ? 'حاضر' : 'P')
         : c.kind === 'late' ? (ar ? 'متأخر' : 'L')
