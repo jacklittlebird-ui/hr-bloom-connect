@@ -944,7 +944,14 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                         isOff,
                         leave: leaveLbl,
                         mission: c.mission ? (ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`) : null,
-                        permission: c.permission ? (ar ? `${permissionHoursFor(c.permission)}س` : `${permissionHoursFor(c.permission)}h`) : null,
+                        permission: c.permission
+                          ? (() => {
+                              const win = permissionWindow(c.permission);
+                              const hrs = permissionHoursFor(c.permission);
+                              const suffix = ar ? `${hrs}س` : `${hrs}h`;
+                              return win ? `${win} (${suffix})` : suffix;
+                            })()
+                          : null,
                         overtime: c.overtime ? (ar ? `${c.overtime.hours || 0}س` : `${c.overtime.hours || 0}h`) : null,
                         holiday: holiday ? (ar ? holiday.name_ar : holiday.name_en) : null,
                       };
