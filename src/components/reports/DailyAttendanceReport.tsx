@@ -97,6 +97,20 @@ function permissionHoursFor(p: { hours: number | null; start_time: string | null
   return 0;
 }
 
+function fmtHm(t: string | null): string {
+  if (!t) return '';
+  const parts = String(t).split(':');
+  if (parts.length < 2) return String(t);
+  return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+}
+
+function permissionWindow(p: { start_time: string | null; end_time: string | null }): string {
+  const s = fmtHm(p.start_time);
+  const e = fmtHm(p.end_time);
+  if (s && e) return `${s}–${e}`;
+  return s || e || '';
+}
+
 export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds?: string[] } = {}) => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
@@ -672,7 +686,13 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       if (holiday) extras.push((ar ? 'عطلة رسمية: ' : 'Holiday: ') + (ar ? holiday.name_ar : holiday.name_en));
       if (c.leave) extras.push((ar ? 'إجازة ' : 'Leave ') + (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)));
       if (c.mission) extras.push(ar ? `مأمورية (${c.mission.hours || 0}س)` : `Mission (${c.mission.hours || 0}h)`);
-      if (c.permission) extras.push(ar ? `إذن (${permissionHoursFor(c.permission)}س)` : `Permission (${permissionHoursFor(c.permission)}h)`);
+      if (c.permission) {
+        const win = permissionWindow(c.permission);
+        const hrs = permissionHoursFor(c.permission);
+        extras.push(ar
+          ? `إذن${win ? ' ' + win : ''} (${hrs}س)`
+          : `Permission${win ? ' ' + win : ''} (${hrs}h)`);
+      }
       if (c.overtime) extras.push(ar ? `إضافي (${c.overtime.hours || 0}س)` : `Overtime (${c.overtime.hours || 0}h)`);
       const baseStatus = c.kind === 'present' ? (ar ? 'حاضر' : 'P')
         : c.kind === 'late' ? (ar ? 'متأخر' : 'L')
@@ -924,7 +944,14 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                         isOff,
                         leave: leaveLbl,
                         mission: c.mission ? (ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`) : null,
-                        permission: c.permission ? (ar ? `${permissionHoursFor(c.permission)}س` : `${permissionHoursFor(c.permission)}h`) : null,
+                        permission: c.permission
+                          ? (() => {
+                              const win = permissionWindow(c.permission);
+                              const hrs = permissionHoursFor(c.permission);
+                              const suffix = ar ? `${hrs}س` : `${hrs}h`;
+                              return win ? `${win} (${suffix})` : suffix;
+                            })()
+                          : null,
                         overtime: c.overtime ? (ar ? `${c.overtime.hours || 0}س` : `${c.overtime.hours || 0}h`) : null,
                         holiday: holiday ? (ar ? holiday.name_ar : holiday.name_en) : null,
                       };
@@ -1188,9 +1215,11 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                             );
                           }
                           if (c.permission) {
+                            const win = permissionWindow(c.permission);
                             overlayBadges.push(
                               <span key="pr" className="inline-flex items-center gap-0.5 px-1 rounded bg-cyan-100 text-cyan-800 text-[9px] font-semibold" title={ar ? 'إذن' : 'Permission'}>
-                                <FileClock className="w-2.5 h-2.5" aria-hidden />{ar ? 'إذن' : 'Perm'} {permissionHoursFor(c.permission)}{ar ? 'س' : 'h'}
+                                <FileClock className="w-2.5 h-2.5" aria-hidden />
+                                {ar ? 'إذن' : 'Perm'} {win || `${permissionHoursFor(c.permission)}${ar ? 'س' : 'h'}`}
                               </span>
                             );
                           }
