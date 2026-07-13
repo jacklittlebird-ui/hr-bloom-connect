@@ -97,6 +97,20 @@ function permissionHoursFor(p: { hours: number | null; start_time: string | null
   return 0;
 }
 
+function fmtHm(t: string | null): string {
+  if (!t) return '';
+  const parts = String(t).split(':');
+  if (parts.length < 2) return String(t);
+  return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+}
+
+function permissionWindow(p: { start_time: string | null; end_time: string | null }): string {
+  const s = fmtHm(p.start_time);
+  const e = fmtHm(p.end_time);
+  if (s && e) return `${s}–${e}`;
+  return s || e || '';
+}
+
 export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds?: string[] } = {}) => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
