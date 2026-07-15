@@ -156,7 +156,7 @@ export const EmployeeAssignment = () => {
   };
 
   const filteredEmployeesForForm = useMemo(() => {
-    let list = contextEmployees.filter(e => e.status === 'active');
+    let list = contextEmployees.filter(e => e.status === 'active' || e.status === 'pending_hire');
     if (formData.stationId && formData.stationId !== 'all') {
       list = list.filter(e => e.stationId === formData.stationId);
     }
@@ -176,7 +176,7 @@ export const EmployeeAssignment = () => {
   }, [contextEmployees, formData.stationId, empSearch]);
 
   const bulkEmployees = useMemo(() => {
-    let list = contextEmployees.filter(e => e.status === 'active');
+    let list = contextEmployees.filter(e => e.status === 'active' || e.status === 'pending_hire');
     if (bulkData.bulkStationId && bulkData.bulkStationId !== 'all') {
       list = list.filter(e => e.stationId === bulkData.bulkStationId);
     }
