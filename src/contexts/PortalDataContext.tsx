@@ -213,9 +213,13 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // ─── Lazy Section Fetchers ─────────────────────────────────────────────
 
-  const ensureLeaves = useCallback(async () => {
-    if (loaded.current.has(LEAVES_LOADED_KEY) || (isEmployee && !scopedEmployeeId)) return;
+  const ensureLeaves = useCallback(async (force = false) => {
+    if (isEmployee && !scopedEmployeeId) return;
+    if (!force && loaded.current.has(LEAVES_LOADED_KEY)) return;
     loaded.current.add(LEAVES_LOADED_KEY);
+    if (force) {
+      invalidateCache(`portal_leaves_${LEAVES_CACHE_VERSION}_${scopedEmployeeId || 'all'}`);
+    }
 
     await debouncedFetch(`portal_leaves_${LEAVES_CACHE_VERSION}_${scopedEmployeeId || 'all'}`, async () => {
       const currentYear = new Date().getFullYear();
