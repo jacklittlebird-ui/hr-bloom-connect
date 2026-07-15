@@ -269,8 +269,11 @@ const Documents = () => {
                 const Icon = item.icon;
                 const isActive = activeMainTab === item.key;
                 const stat = item.statKey ? alertStats[item.statKey] : null;
-                const count = stat?.total ?? 0;
-                const hasExpired = (stat?.expired ?? 0) > 0;
+                const isReminders = item.key === 'reminders';
+                const count = isReminders ? activeRemindersCount : (stat?.total ?? 0);
+                const hasExpired = isReminders
+                  ? reminders.some(r => !r.completed && daysUntil(r.date) < 0)
+                  : (stat?.expired ?? 0) > 0;
                 return (
                   <button
                     key={item.key}
