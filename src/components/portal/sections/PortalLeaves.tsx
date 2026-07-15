@@ -24,7 +24,19 @@ export const PortalLeaves = () => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const { getLeaveBalances, getLeaveRequests, addLeaveRequest, getPermissions, addPermission, getOvertimeDays, addOvertimeDay, ensureLeaves } = usePortalData();
-  useEffect(() => { ensureLeaves(); }, [ensureLeaves]);
+  useEffect(() => {
+    ensureLeaves(true);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') ensureLeaves(true);
+    };
+    const onFocus = () => ensureLeaves(true);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [ensureLeaves]);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showPermDialog, setShowPermDialog] = useState(false);
   const [showOvertimeDialog, setShowOvertimeDialog] = useState(false);
