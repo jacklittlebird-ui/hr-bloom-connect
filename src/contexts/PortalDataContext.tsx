@@ -350,6 +350,8 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return true;
     }, { ttlMs: 30_000 });
   }, [isEmployee, scopedEmployeeId]);
+  ensureLeavesRef.current = ensureLeaves;
+
 
   const ensureLoans = useCallback(async () => {
     if (loaded.current.has('loans') || (isEmployee && !scopedEmployeeId)) return;
