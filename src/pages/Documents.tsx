@@ -26,7 +26,6 @@ import { UnpaidLeavesAlert } from '@/components/documents/UnpaidLeavesAlert';
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
 import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
-import { usePersistedState as useReminderState } from '@/hooks/usePersistedState';
 
 interface Document {
   id: string;
