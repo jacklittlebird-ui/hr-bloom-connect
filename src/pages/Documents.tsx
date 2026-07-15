@@ -289,7 +289,7 @@ const Documents = () => {
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span className="whitespace-nowrap">{isAr ? item.ar : item.en}</span>
-                    {item.statKey && count > 0 && (
+                    {(item.statKey || isReminders) && count > 0 && (
                       <Badge
                         variant={hasExpired && !isActive ? 'destructive' : isActive ? 'secondary' : 'outline'}
                         className={cn(
