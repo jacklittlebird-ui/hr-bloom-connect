@@ -148,6 +148,12 @@ const permTypeMap: Record<string, { ar: string; en: string }> = {
   personal: { ar: 'شخصي', en: 'Personal' },
 };
 
+const EID_FIRST_DAY_TYPES = new Set(['eid_first_day', 'eid_first_day_adha_fitr']);
+
+const getAddedLeaveDays = (overtimeType?: string | null) => (
+  EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
+);
+
 interface PortalDataContextType {
   getLeaveBalances: (employeeId: string) => LeaveBalance[];
   getLeaveRequests: (employeeId: string) => LeaveRequest[];
@@ -242,7 +248,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           // portal balance drifts from the admin panel.
           const approvedOtMap = new Map<string, number>();
           (otAggRes.data || []).forEach((o: any) => {
-            const days = o.overtime_type === 'eid_first_day' ? 2 : 1;
+            const days = getAddedLeaveDays(o.overtime_type);
             approvedOtMap.set(o.employee_id, (approvedOtMap.get(o.employee_id) || 0) + days);
           });
 
