@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
 import { UpcomingEvents } from '@/components/dashboard/UpcomingEvents';
+import { UpcomingReminderWidget } from '@/components/dashboard/UpcomingReminderWidget';
 import { Announcements } from '@/components/dashboard/Announcements';
 import { StationCards } from '@/components/dashboard/StationCards';
 
