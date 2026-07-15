@@ -326,6 +326,8 @@ const Documents = () => {
           <UnpaidLeavesAlert />
         ) : activeMainTab === 'penaltyDeductions' ? (
           <PenaltyDeductionsAlert />
+        ) : activeMainTab === 'reminders' ? (
+          <GeneralReminders />
         ) : (
         <>
 
