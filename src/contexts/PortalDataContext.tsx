@@ -209,20 +209,30 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     await debouncedFetch(`portal_leaves_${scopedEmployeeId || 'all'}`, async () => {
       const currentYear = new Date().getFullYear();
+      const yearStart = `${currentYear}-01-01`;
+      const yearEnd = `${currentYear}-12-31`;
       const lbQuery = supabase.from('leave_balances').select('employee_id, annual_total, annual_used, sick_total, sick_used, casual_total, casual_used, permissions_total, permissions_used').eq('year', currentYear);
       const lrQuery = supabase.from('leave_requests').select('id, employee_id, leave_type, start_date, end_date, days, status').order('created_at', { ascending: false }).limit(LIMIT);
       const pQuery = supabase.from('permission_requests').select('id, employee_id, permission_type, date, start_time, end_time, reason, status').neq('permission_type', 'no_deduction').order('created_at', { ascending: false }).limit(LIMIT);
       const otQuery = supabase.from('overtime_requests').select('id, employee_id, date, overtime_type, reason, status').order('created_at', { ascending: false }).limit(LIMIT);
+
+      // Full-year approved aggregates for accurate balance calc (matches admin panel — must NOT be limited to 30 rows)
+      const lrAggQuery = supabase.from('leave_requests').select('employee_id, leave_type, days').eq('status', 'approved').gte('start_date', yearStart).lte('start_date', yearEnd).limit(2000);
+      const pAggQuery = supabase.from('permission_requests').select('employee_id, start_time, end_time, hours').eq('status', 'approved').neq('permission_type', 'no_deduction').gte('date', yearStart).lte('date', yearEnd).limit(2000);
+      const otAggQuery = supabase.from('overtime_requests').select('employee_id, overtime_type').eq('status', 'approved').gte('date', yearStart).lte('date', yearEnd).limit(2000);
 
       if (scopedEmployeeId) {
         lbQuery.eq('employee_id', scopedEmployeeId);
         lrQuery.eq('employee_id', scopedEmployeeId);
         pQuery.eq('employee_id', scopedEmployeeId);
         otQuery.eq('employee_id', scopedEmployeeId);
+        lrAggQuery.eq('employee_id', scopedEmployeeId);
+        pAggQuery.eq('employee_id', scopedEmployeeId);
+        otAggQuery.eq('employee_id', scopedEmployeeId);
       }
 
       try {
-        const [lbRes, lrRes, pRes, otRes] = await Promise.all([lbQuery, lrQuery, pQuery, otQuery]);
+        const [lbRes, lrRes, pRes, otRes, lrAggRes, pAggRes, otAggRes] = await Promise.all([lbQuery, lrQuery, pQuery, otQuery, lrAggQuery, pAggQuery, otAggQuery]);
         trackQuery('portal_leaves', (lbRes.data?.length || 0) + (lrRes.data?.length || 0) + (pRes.data?.length || 0) + (otRes.data?.length || 0));
 
         if (lbRes.data) {
