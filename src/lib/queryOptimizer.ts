@@ -33,10 +33,14 @@ export function setCache<T>(key: string, data: T): void {
 export function invalidateCache(keyPrefix?: string): void {
   if (!keyPrefix) {
     cache.clear();
+    inFlight.clear();
     return;
   }
   for (const k of cache.keys()) {
     if (k.startsWith(keyPrefix)) cache.delete(k);
+  }
+  for (const k of inFlight.keys()) {
+    if (k.startsWith(keyPrefix)) inFlight.delete(k);
   }
 }
 
