@@ -154,7 +154,25 @@ const getAddedLeaveDays = (overtimeType?: string | null) => (
   EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
 );
 
-const LEAVES_CACHE_VERSION = 'full_year_balance_v3_all_records';
+const getPermissionHours = (startTime?: string | null, endTime?: string | null, savedHours?: number | string | null) => {
+  const persisted = Number(savedHours || 0);
+  if (persisted > 0) return persisted;
+  if (!startTime || !endTime) return 0;
+
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+  if ([startHour, startMinute, endHour, endMinute].some(Number.isNaN)) return 0;
+
+  let diffMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+  if (diffMinutes < 0) diffMinutes += 24 * 60;
+  return Math.round((diffMinutes / 60) * 10) / 10;
+};
+
+const getCurrentYear = () => new Date().getFullYear();
+const getYearStart = (year: number) => `${year}-01-01`;
+const getYearEnd = (year: number) => `${year}-12-31`;
+
+const LEAVES_CACHE_VERSION = 'full_year_balance_v4_date_ordered_full_records';
 const LEAVES_LOADED_KEY = `leaves_${LEAVES_CACHE_VERSION}`;
 
 interface PortalDataContextType {
@@ -239,13 +257,13 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     await debouncedFetch(`portal_leaves_${LEAVES_CACHE_VERSION}_${scopedEmployeeId || 'all'}`, async () => {
-      const currentYear = new Date().getFullYear();
-      const yearStart = `${currentYear}-01-01`;
-      const yearEnd = `${currentYear}-12-31`;
+      const currentYear = getCurrentYear();
+      const yearStart = getYearStart(currentYear);
+      const yearEnd = getYearEnd(currentYear);
       const lbQuery = supabase.from('leave_balances').select('employee_id, annual_total, annual_used, sick_total, sick_used, casual_total, casual_used, permissions_total, permissions_used').eq('year', currentYear);
-      const lrQuery = supabase.from('leave_requests').select('id, employee_id, leave_type, start_date, end_date, days, status').order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
-      const pQuery = supabase.from('permission_requests').select('id, employee_id, permission_type, date, start_time, end_time, reason, status').neq('permission_type', 'no_deduction').order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
-      const otQuery = supabase.from('overtime_requests').select('id, employee_id, date, overtime_type, reason, status').order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
+      const lrQuery = supabase.from('leave_requests').select('id, employee_id, leave_type, start_date, end_date, days, status').gte('start_date', yearStart).lte('start_date', yearEnd).order('start_date', { ascending: false }).order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
+      const pQuery = supabase.from('permission_requests').select('id, employee_id, permission_type, date, start_time, end_time, reason, status').neq('permission_type', 'no_deduction').gte('date', yearStart).lte('date', yearEnd).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
+      const otQuery = supabase.from('overtime_requests').select('id, employee_id, date, overtime_type, reason, status').gte('date', yearStart).lte('date', yearEnd).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
 
       // Full-year approved aggregates for accurate balance calc (matches admin panel — must NOT be limited to 30 rows)
       const lrAggQuery = supabase.from('leave_requests').select('employee_id, leave_type, days').eq('status', 'approved').gte('start_date', yearStart).lte('start_date', yearEnd).limit(2000);
@@ -291,9 +309,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           (pAggRes.data || []).forEach((p: any) => {
             let hours = Number(p.hours || 0);
             if (!hours && p.start_time && p.end_time) {
-              const start = new Date(`1970-01-01T${p.start_time}`).getTime();
-              const end = new Date(`1970-01-01T${p.end_time}`).getTime();
-              hours = end > start ? (end - start) / 3_600_000 : 0;
+              hours = getPermissionHours(p.start_time, p.end_time, p.hours);
             }
             permsUsedMap.set(p.employee_id, (permsUsedMap.get(p.employee_id) || 0) + hours);
           });
