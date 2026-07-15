@@ -25,6 +25,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { LiveStatus } from '@/components/dashboard/LiveStatus';
 import { UpcomingEvents } from '@/components/dashboard/UpcomingEvents';
+import { UpcomingReminderWidget } from '@/components/dashboard/UpcomingReminderWidget';
 import { Announcements } from '@/components/dashboard/Announcements';
 import { StationCards } from '@/components/dashboard/StationCards';
 
@@ -166,8 +167,9 @@ const Index = () => {
         <RecentActivity />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
         <UpcomingEvents />
+        <UpcomingReminderWidget />
         <Announcements />
       </div>
     </DashboardLayout>

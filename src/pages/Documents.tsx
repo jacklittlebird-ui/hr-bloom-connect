@@ -25,6 +25,7 @@ import { EmployeeDirectory } from '@/components/documents/EmployeeDirectory';
 import { UnpaidLeavesAlert } from '@/components/documents/UnpaidLeavesAlert';
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
 import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
+import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
 
 interface Document {
   id: string;
@@ -63,7 +64,9 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance'>('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders'>('renewals');
+  const [reminders] = usePersistedState<Reminder[]>('hr_general_reminders', []);
+  const activeRemindersCount = reminders.filter(r => !r.completed).length;
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -147,6 +150,7 @@ const Documents = () => {
     {
       title: { ar: 'الإدارة', en: 'Management' },
       items: [
+        { key: 'reminders', ar: 'تنبيهات عامة', en: 'General Reminders', icon: Bell },
         { key: 'directory', ar: 'دليل الموظفين', en: 'Directory', icon: Users },
         { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
       ],
@@ -265,8 +269,11 @@ const Documents = () => {
                 const Icon = item.icon;
                 const isActive = activeMainTab === item.key;
                 const stat = item.statKey ? alertStats[item.statKey] : null;
-                const count = stat?.total ?? 0;
-                const hasExpired = (stat?.expired ?? 0) > 0;
+                const isReminders = item.key === 'reminders';
+                const count = isReminders ? activeRemindersCount : (stat?.total ?? 0);
+                const hasExpired = isReminders
+                  ? reminders.some(r => !r.completed && daysUntil(r.date) < 0)
+                  : (stat?.expired ?? 0) > 0;
                 return (
                   <button
                     key={item.key}
@@ -282,7 +289,7 @@ const Documents = () => {
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span className="whitespace-nowrap">{isAr ? item.ar : item.en}</span>
-                    {item.statKey && count > 0 && (
+                    {(item.statKey || isReminders) && count > 0 && (
                       <Badge
                         variant={hasExpired && !isActive ? 'destructive' : isActive ? 'secondary' : 'outline'}
                         className={cn(
@@ -319,6 +326,8 @@ const Documents = () => {
           <UnpaidLeavesAlert />
         ) : activeMainTab === 'penaltyDeductions' ? (
           <PenaltyDeductionsAlert />
+        ) : activeMainTab === 'reminders' ? (
+          <GeneralReminders />
         ) : (
         <>
 
