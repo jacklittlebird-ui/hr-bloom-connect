@@ -210,6 +210,23 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Track which sections have been loaded
   const loaded = useRef<Set<string>>(new Set());
+  const ensureLeavesRef = useRef<((force?: boolean) => Promise<void>) | null>(null);
+
+  // Realtime subscription: refetch portal leaves whenever admin/HR mutates
+  // leave_requests / permission_requests / overtime_requests for this employee.
+  useEffect(() => {
+    if (!scopedEmployeeId) return;
+    const refetch = () => ensureLeavesRef.current?.(true);
+    const channel = supabase
+      .channel(`portal_leaves_${scopedEmployeeId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_requests', filter: `employee_id=eq.${scopedEmployeeId}` }, refetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'permission_requests', filter: `employee_id=eq.${scopedEmployeeId}` }, refetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'overtime_requests', filter: `employee_id=eq.${scopedEmployeeId}` }, refetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leave_balances', filter: `employee_id=eq.${scopedEmployeeId}` }, refetch)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [scopedEmployeeId]);
+
 
   // ─── Lazy Section Fetchers ─────────────────────────────────────────────
 
