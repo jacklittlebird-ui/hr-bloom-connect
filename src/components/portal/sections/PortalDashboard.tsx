@@ -47,7 +47,17 @@ export const PortalDashboard = () => {
   const { getEmployeePayroll, refreshPayroll } = usePayrollData();
   const { records, refresh: refreshAttendance } = useAttendanceData();
   const { getLeaveBalances, getEvaluations, getLeaveRequests, getMissions, getRequests, getOvertimeDays, ensureLeaves, ensureEvaluations, ensureMissions } = usePortalData();
-  useEffect(() => { ensureLeaves(); }, [ensureLeaves]);
+  useEffect(() => {
+    ensureLeaves(true);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') ensureLeaves(true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', () => ensureLeaves(true));
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [ensureLeaves]);
   useEffect(() => { ensureEvaluations(); }, [ensureEvaluations]);
   useEffect(() => { ensureMissions(); }, [ensureMissions]);
 
