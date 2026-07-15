@@ -154,7 +154,25 @@ const getAddedLeaveDays = (overtimeType?: string | null) => (
   EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
 );
 
-const LEAVES_CACHE_VERSION = 'full_year_balance_v3_all_records';
+const getPermissionHours = (startTime?: string | null, endTime?: string | null, savedHours?: number | string | null) => {
+  const persisted = Number(savedHours || 0);
+  if (persisted > 0) return persisted;
+  if (!startTime || !endTime) return 0;
+
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+  if ([startHour, startMinute, endHour, endMinute].some(Number.isNaN)) return 0;
+
+  let diffMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+  if (diffMinutes < 0) diffMinutes += 24 * 60;
+  return Math.round((diffMinutes / 60) * 10) / 10;
+};
+
+const getCurrentYear = () => new Date().getFullYear();
+const getYearStart = (year: number) => `${year}-01-01`;
+const getYearEnd = (year: number) => `${year}-12-31`;
+
+const LEAVES_CACHE_VERSION = 'full_year_balance_v4_date_ordered_full_records';
 const LEAVES_LOADED_KEY = `leaves_${LEAVES_CACHE_VERSION}`;
 
 interface PortalDataContextType {
