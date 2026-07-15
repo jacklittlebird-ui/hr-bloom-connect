@@ -177,7 +177,7 @@ interface PortalDataContextType {
   getDocuments: (employeeId: string) => PortalDocument[];
   addDocument: (doc: Omit<PortalDocument, 'id'>) => void;
   // Lazy loaders — call to fetch data for a specific section
-  ensureLeaves: () => Promise<void>;
+  ensureLeaves: (force?: boolean) => Promise<void>;
   ensureLoans: () => Promise<void>;
   ensureEvaluations: () => Promise<void>;
   ensureTraining: () => Promise<void>;
