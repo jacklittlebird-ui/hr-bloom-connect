@@ -525,12 +525,22 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   const addPermission = useCallback(async (req: Omit<PermissionRequest, 'id' | 'status'>) => {
     const permType = Object.entries(permTypeMap).find(([, v]) => v.ar === req.typeAr || v.en === req.typeEn)?.[0] || 'personal';
+    // Compute hours from time range so DB always stores accurate duration
+    let computedHours = 0;
+    if (req.fromTime && req.toTime) {
+      const [fH, fM] = req.fromTime.split(':').map(Number);
+      const [tH, tM] = req.toTime.split(':').map(Number);
+      let diff = (tH * 60 + tM) - (fH * 60 + fM);
+      if (diff < 0) diff += 24 * 60;
+      computedHours = Math.round((diff / 60) * 10) / 10;
+    }
     const { error } = await supabase.from('permission_requests').insert({
       employee_id: req.employeeId,
       permission_type: permType,
       date: req.date,
       start_time: req.fromTime,
       end_time: req.toTime,
+      hours: computedHours,
       reason: req.reason,
     });
     if (error) {
