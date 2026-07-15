@@ -315,42 +315,12 @@ export const PortalDashboard = () => {
     });
   };
 
-  // Available Leave Balance — computed live from actual records, NOT from
-  // leave_balances.*_used (which is now opening-balance only).
-  // Formula: AnnualOpening + CasualOpening - AnnualUsed - CasualUsed + AddedDays
+  // Available Leave Balance — use the full-year aggregate already prepared by
+  // PortalDataContext. Do NOT recompute from the dashboard display lists because
+  // those lists are intentionally limited for performance and can miss older rows.
   const annualBal = leaveBalances.find(b => b.typeEn === 'Annual');
   const casualBal = leaveBalances.find(b => b.typeEn === 'Casual');
-  const annualOpening = annualBal?.baseTotal ?? annualBal?.total ?? 0;
-  const casualOpening = casualBal?.total ?? 0;
-  const currentYearForBalance = new Date().getFullYear();
-  const portalLeaveRequests = useMemo(
-    () => getLeaveRequests(PORTAL_EMPLOYEE_ID),
-    [getLeaveRequests, PORTAL_EMPLOYEE_ID]
-  );
-  const portalOvertime = useMemo(
-    () => getOvertimeDays(PORTAL_EMPLOYEE_ID),
-    [getOvertimeDays, PORTAL_EMPLOYEE_ID]
-  );
-  const annualUsedLive = useMemo(
-    () => portalLeaveRequests
-      .filter(r => r.status === 'approved' && r.typeEn === 'Annual' && new Date(r.from).getFullYear() === currentYearForBalance)
-      .reduce((s, r) => s + Number(r.days || 0), 0),
-    [portalLeaveRequests, currentYearForBalance]
-  );
-  const casualUsedLive = useMemo(
-    () => portalLeaveRequests
-      .filter(r => r.status === 'approved' && r.typeEn === 'Casual' && new Date(r.from).getFullYear() === currentYearForBalance)
-      .reduce((s, r) => s + Number(r.days || 0), 0),
-    [portalLeaveRequests, currentYearForBalance]
-  );
-  const overtimeAddedLive = useMemo(
-    () => portalOvertime
-      .filter(o => o.status === 'approved' && new Date(o.date).getFullYear() === currentYearForBalance)
-      .reduce((s, o) => s + (o.overtimeType === 'eid_first_day' ? 2 : 1), 0),
-    [portalOvertime, currentYearForBalance]
-  );
-  const annualCasualRemaining =
-    annualOpening + casualOpening - annualUsedLive - casualUsedLive + overtimeAddedLive;
+  const annualCasualRemaining = (annualBal?.remaining ?? 0) + (casualBal?.remaining ?? 0);
 
   const stats = [
     { icon: Clock, labelAr: 'أيام الحضور هذا الشهر', labelEn: 'Attendance Days', value: String(monthlyStats.present), gradient: 'from-blue-500 to-cyan-500', bg: 'bg-blue-50 dark:bg-blue-950/40' },
