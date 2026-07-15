@@ -154,6 +154,8 @@ const getAddedLeaveDays = (overtimeType?: string | null) => (
   EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
 );
 
+const LEAVES_CACHE_VERSION = 'full_year_balance_v2';
+
 interface PortalDataContextType {
   getLeaveBalances: (employeeId: string) => LeaveBalance[];
   getLeaveRequests: (employeeId: string) => LeaveRequest[];
@@ -210,10 +212,11 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ─── Lazy Section Fetchers ─────────────────────────────────────────────
 
   const ensureLeaves = useCallback(async () => {
-    if (loaded.current.has('leaves') || (isEmployee && !scopedEmployeeId)) return;
-    loaded.current.add('leaves');
+    const leavesLoadKey = `leaves_${LEAVES_CACHE_VERSION}`;
+    if (loaded.current.has(leavesLoadKey) || (isEmployee && !scopedEmployeeId)) return;
+    loaded.current.add(leavesLoadKey);
 
-    await debouncedFetch(`portal_leaves_${scopedEmployeeId || 'all'}`, async () => {
+    await debouncedFetch(`portal_leaves_${LEAVES_CACHE_VERSION}_${scopedEmployeeId || 'all'}`, async () => {
       const currentYear = new Date().getFullYear();
       const yearStart = `${currentYear}-01-01`;
       const yearEnd = `${currentYear}-12-31`;
@@ -320,7 +323,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       } catch (err) {
         console.error('Portal leaves fetch error:', err);
-        loaded.current.delete('leaves');
+        loaded.current.delete(leavesLoadKey);
       }
       return true;
     }, { ttlMs: 30_000 });
