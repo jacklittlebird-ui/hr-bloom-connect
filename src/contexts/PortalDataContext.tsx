@@ -154,7 +154,8 @@ const getAddedLeaveDays = (overtimeType?: string | null) => (
   EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
 );
 
-const LEAVES_CACHE_VERSION = 'full_year_balance_v2';
+const LEAVES_CACHE_VERSION = 'full_year_balance_v3_all_records';
+const LEAVES_LOADED_KEY = `leaves_${LEAVES_CACHE_VERSION}`;
 
 interface PortalDataContextType {
   getLeaveBalances: (employeeId: string) => LeaveBalance[];
@@ -193,6 +194,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const isEmployee = user?.role === 'employee';
   const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
   const LIMIT = 30;
+  const PORTAL_RECORDS_LIMIT = 2000;
 
   const [leaveBalances, setLeaveBalances] = useState<Record<string, LeaveBalance[]>>({});
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
@@ -212,18 +214,17 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // ─── Lazy Section Fetchers ─────────────────────────────────────────────
 
   const ensureLeaves = useCallback(async () => {
-    const leavesLoadKey = `leaves_${LEAVES_CACHE_VERSION}`;
-    if (loaded.current.has(leavesLoadKey) || (isEmployee && !scopedEmployeeId)) return;
-    loaded.current.add(leavesLoadKey);
+    if (loaded.current.has(LEAVES_LOADED_KEY) || (isEmployee && !scopedEmployeeId)) return;
+    loaded.current.add(LEAVES_LOADED_KEY);
 
     await debouncedFetch(`portal_leaves_${LEAVES_CACHE_VERSION}_${scopedEmployeeId || 'all'}`, async () => {
       const currentYear = new Date().getFullYear();
       const yearStart = `${currentYear}-01-01`;
       const yearEnd = `${currentYear}-12-31`;
       const lbQuery = supabase.from('leave_balances').select('employee_id, annual_total, annual_used, sick_total, sick_used, casual_total, casual_used, permissions_total, permissions_used').eq('year', currentYear);
-      const lrQuery = supabase.from('leave_requests').select('id, employee_id, leave_type, start_date, end_date, days, status').order('created_at', { ascending: false }).limit(LIMIT);
-      const pQuery = supabase.from('permission_requests').select('id, employee_id, permission_type, date, start_time, end_time, reason, status').neq('permission_type', 'no_deduction').order('created_at', { ascending: false }).limit(LIMIT);
-      const otQuery = supabase.from('overtime_requests').select('id, employee_id, date, overtime_type, reason, status').order('created_at', { ascending: false }).limit(LIMIT);
+      const lrQuery = supabase.from('leave_requests').select('id, employee_id, leave_type, start_date, end_date, days, status').order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
+      const pQuery = supabase.from('permission_requests').select('id, employee_id, permission_type, date, start_time, end_time, reason, status').neq('permission_type', 'no_deduction').order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
+      const otQuery = supabase.from('overtime_requests').select('id, employee_id, date, overtime_type, reason, status').order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
 
       // Full-year approved aggregates for accurate balance calc (matches admin panel — must NOT be limited to 30 rows)
       const lrAggQuery = supabase.from('leave_requests').select('employee_id, leave_type, days').eq('status', 'approved').gte('start_date', yearStart).lte('start_date', yearEnd).limit(2000);
@@ -323,7 +324,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       } catch (err) {
         console.error('Portal leaves fetch error:', err);
-        loaded.current.delete(leavesLoadKey);
+          loaded.current.delete(LEAVES_LOADED_KEY);
       }
       return true;
     }, { ttlMs: 30_000 });
@@ -516,7 +517,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       days: req.days,
     });
     invalidateCache('portal_leaves');
-    loaded.current.delete('leaves');
+    loaded.current.delete(LEAVES_LOADED_KEY);
     await ensureLeaves();
   }, [ensureLeaves]);
 
@@ -537,7 +538,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       throw error;
     }
     invalidateCache('portal_leaves');
-    loaded.current.delete('leaves');
+    loaded.current.delete(LEAVES_LOADED_KEY);
     await ensureLeaves();
   }, [ensureLeaves]);
 
@@ -584,7 +585,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       overtime_type: req.overtimeType,
     } as any);
     invalidateCache('portal_leaves');
-    loaded.current.delete('leaves');
+    loaded.current.delete(LEAVES_LOADED_KEY);
     await ensureLeaves();
   }, [ensureLeaves]);
 
