@@ -174,6 +174,7 @@ export const TrainingQualificationReport = () => {
     { headerAr: 'اسم الموظف', headerEn: 'Employee Name', key: 'employeeName' },
     { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hireDate' },
     { headerAr: 'الوظيفة', headerEn: 'Job Title', key: 'jobTitle' },
+    { headerAr: 'المؤهل الدراسي', headerEn: 'Education', key: 'education' },
     { headerAr: 'كود القسم', headerEn: 'Dept Code', key: 'deptCode' },
     { headerAr: 'اسم الدورة', headerEn: 'Course Name', key: 'courseName' },
     { headerAr: 'الجهة المقدمة', headerEn: 'Provider', key: 'provider' },
