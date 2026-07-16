@@ -261,6 +261,8 @@ export const TrainingQualificationReport = () => {
         `<span style="font-family:monospace;font-size:10px;margin:0 4px;">${code} ${empCodes.includes(code) ? '☑' : '☐'}</span>`
       ).join('');
       bodyRows += `<tr><td colspan="5" style="background:#f5f5f5;padding:4px 8px;border:1px solid #ddd;font-size:10px;">${deptRow}</td></tr>`;
+      // Education row
+      bodyRows += `<tr><td colspan="5" style="background:#fafafa;padding:4px 8px;border:1px solid #ddd;font-size:11px;"><strong>${ar ? 'المؤهل الدراسي' : 'Education'}:</strong> ${emp.education || '-'}</td></tr>`;
 
       // Course rows
       for (const c of emp.courses) {
