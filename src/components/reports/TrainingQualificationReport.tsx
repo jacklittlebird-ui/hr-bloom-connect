@@ -20,6 +20,7 @@ interface EmployeeTrainingGroup {
   employeeCode: string;
   hireDate: string;
   jobTitle: string;
+  education: string;
   deptCode: string;
   courses: {
     id: string;
@@ -104,6 +105,7 @@ export const TrainingQualificationReport = () => {
           employeeCode: emp.employeeId || '',
           hireDate: emp.hireDate || '',
           jobTitle: ar ? (emp.jobTitleAr || '') : (emp.jobTitleEn || ''),
+          education: emp.educationAr || '',
           deptCode: emp.deptCode || '',
           courses: [],
         });
@@ -172,6 +174,7 @@ export const TrainingQualificationReport = () => {
     { headerAr: 'اسم الموظف', headerEn: 'Employee Name', key: 'employeeName' },
     { headerAr: 'تاريخ التعيين', headerEn: 'Hire Date', key: 'hireDate' },
     { headerAr: 'الوظيفة', headerEn: 'Job Title', key: 'jobTitle' },
+    { headerAr: 'المؤهل الدراسي', headerEn: 'Education', key: 'education' },
     { headerAr: 'كود القسم', headerEn: 'Dept Code', key: 'deptCode' },
     { headerAr: 'اسم الدورة', headerEn: 'Course Name', key: 'courseName' },
     { headerAr: 'الجهة المقدمة', headerEn: 'Provider', key: 'provider' },
@@ -185,7 +188,7 @@ export const TrainingQualificationReport = () => {
     if (title) {
       rows.push({
         employeeName: `${ar ? 'الموقع' : 'Location'}: ${title}`,
-        hireDate: '', jobTitle: '', deptCode: '', courseName: '', provider: '', trainingDate: '', certLabel: '',
+        hireDate: '', jobTitle: '', education: '', deptCode: '', courseName: '', provider: '', trainingDate: '', certLabel: '',
       });
     }
     for (const emp of groupedData) {
@@ -194,6 +197,7 @@ export const TrainingQualificationReport = () => {
           employeeName: idx === 0 ? emp.employeeName : '',
           hireDate: idx === 0 ? emp.hireDate : '',
           jobTitle: idx === 0 ? emp.jobTitle : '',
+          education: idx === 0 ? emp.education : '',
           deptCode: idx === 0 ? emp.deptCode : '',
           courseName: c.courseName,
           provider: c.provider,
@@ -257,6 +261,8 @@ export const TrainingQualificationReport = () => {
         `<span style="font-family:monospace;font-size:10px;margin:0 4px;">${code} ${empCodes.includes(code) ? '☑' : '☐'}</span>`
       ).join('');
       bodyRows += `<tr><td colspan="5" style="background:#f5f5f5;padding:4px 8px;border:1px solid #ddd;font-size:10px;">${deptRow}</td></tr>`;
+      // Education row
+      bodyRows += `<tr><td colspan="5" style="background:#fafafa;padding:4px 8px;border:1px solid #ddd;font-size:11px;"><strong>${ar ? 'المؤهل الدراسي' : 'Education'}:</strong> ${emp.education || '-'}</td></tr>`;
 
       // Course rows
       for (const c of emp.courses) {
@@ -380,6 +386,7 @@ export const TrainingQualificationReport = () => {
         `<span style="font-family:monospace;font-size:10px;margin:0 4px;">${code} ${empCodesPdf.includes(code) ? '☑' : '☐'}</span>`
       ).join('');
       bodyRows += `<tr><td colspan="5" style="background:#f5f5f5;padding:4px 8px;border:1px solid #ddd;font-size:10px;">${deptRow}</td></tr>`;
+      bodyRows += `<tr><td colspan="5" style="background:#fafafa;padding:4px 8px;border:1px solid #ddd;font-size:11px;"><strong>${ar ? 'المؤهل الدراسي' : 'Education'}:</strong> ${emp.education || '-'}</td></tr>`;
 
       for (const c of emp.courses) {
         bodyRows += `
@@ -649,6 +656,13 @@ export const TrainingQualificationReport = () => {
                     })()}
                   </div>
                 </div>
+
+                {/* Education Row */}
+                <div className="bg-gray-50/60 border-b border-gray-200 px-3 py-1.5 text-xs">
+                  <span className="font-semibold text-foreground">{ar ? 'المؤهل الدراسي: ' : 'Education: '}</span>
+                  <span className="text-muted-foreground">{emp.education || '-'}</span>
+                </div>
+
 
                 {/* Course Rows */}
                 {emp.courses.map(c => (
