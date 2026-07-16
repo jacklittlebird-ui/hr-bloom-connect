@@ -657,6 +657,13 @@ export const TrainingQualificationReport = () => {
                   </div>
                 </div>
 
+                {/* Education Row */}
+                <div className="bg-gray-50/60 border-b border-gray-200 px-3 py-1.5 text-xs">
+                  <span className="font-semibold text-foreground">{ar ? 'المؤهل الدراسي: ' : 'Education: '}</span>
+                  <span className="text-muted-foreground">{emp.education || '-'}</span>
+                </div>
+
+
                 {/* Course Rows */}
                 {emp.courses.map(c => (
                   <div key={c.id} className="grid grid-cols-[25%_30%_25%_12%_8%] border-b border-gray-200 hover:bg-blue-50/30">
