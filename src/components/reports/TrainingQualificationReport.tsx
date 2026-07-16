@@ -20,6 +20,7 @@ interface EmployeeTrainingGroup {
   employeeCode: string;
   hireDate: string;
   jobTitle: string;
+  education: string;
   deptCode: string;
   courses: {
     id: string;
