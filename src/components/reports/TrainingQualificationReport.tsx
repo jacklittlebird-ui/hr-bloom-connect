@@ -188,7 +188,7 @@ export const TrainingQualificationReport = () => {
     if (title) {
       rows.push({
         employeeName: `${ar ? 'الموقع' : 'Location'}: ${title}`,
-        hireDate: '', jobTitle: '', deptCode: '', courseName: '', provider: '', trainingDate: '', certLabel: '',
+        hireDate: '', jobTitle: '', education: '', deptCode: '', courseName: '', provider: '', trainingDate: '', certLabel: '',
       });
     }
     for (const emp of groupedData) {
@@ -197,6 +197,7 @@ export const TrainingQualificationReport = () => {
           employeeName: idx === 0 ? emp.employeeName : '',
           hireDate: idx === 0 ? emp.hireDate : '',
           jobTitle: idx === 0 ? emp.jobTitle : '',
+          education: idx === 0 ? emp.education : '',
           deptCode: idx === 0 ? emp.deptCode : '',
           courseName: c.courseName,
           provider: c.provider,
