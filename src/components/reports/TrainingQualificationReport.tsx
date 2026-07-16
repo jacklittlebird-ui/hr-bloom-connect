@@ -105,6 +105,7 @@ export const TrainingQualificationReport = () => {
           employeeCode: emp.employeeId || '',
           hireDate: emp.hireDate || '',
           jobTitle: ar ? (emp.jobTitleAr || '') : (emp.jobTitleEn || ''),
+          education: emp.educationAr || '',
           deptCode: emp.deptCode || '',
           courses: [],
         });
