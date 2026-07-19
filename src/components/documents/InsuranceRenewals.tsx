@@ -69,7 +69,7 @@ export const InsuranceRenewals = () => {
 
     const { data, error } = await supabase
       .from('employees')
-      .select('id, employee_code, name_ar, name_en, social_insurance_no, social_insurance_start_date, social_insurance_end_date, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, station_id, department_id')
+      .select('id, employee_code, name_ar, name_en, social_insurance_no, social_insurance_start_date, social_insurance_end_date, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, contract_type, station_id, department_id')
       .not('social_insurance_end_date', 'is', null)
       .lte('social_insurance_end_date', cutoffDate)
       .eq('status', 'active')
