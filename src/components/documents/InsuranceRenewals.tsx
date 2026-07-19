@@ -102,6 +102,7 @@ export const InsuranceRenewals = () => {
       job_title_ar: e.job_title_ar, job_title_en: e.job_title_en,
       phone: e.phone,
       station_id: e.station_id, department_id: e.department_id,
+      contract_type: e.contract_type,
       station_name: e.station_id ? stationMap.get(e.station_id) || '' : '',
       department_name: e.department_id ? deptMap.get(e.department_id) || '' : '',
     })));
