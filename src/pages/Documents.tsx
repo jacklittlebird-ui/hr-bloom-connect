@@ -138,6 +138,7 @@ const Documents = () => {
       items: [
         { key: 'bankData', ar: 'البيانات البنكية', en: 'Bank Data', icon: Landmark, statKey: 'bankData' },
         { key: 'missingJob', ar: 'بيانات التعيين', en: 'Job Data', icon: Briefcase, statKey: 'missingJob' },
+        { key: 'missingInsuranceStart', ar: 'بدون تاريخ بدء التأمين', en: 'Missing Insurance Start', icon: ShieldAlert },
       ],
     },
     {
