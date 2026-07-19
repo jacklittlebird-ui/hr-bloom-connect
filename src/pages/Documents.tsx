@@ -23,6 +23,7 @@ import { MissingJobData } from '@/components/documents/MissingJobData';
 import { LeaveBalancesAlert } from '@/components/documents/LeaveBalancesAlert';
 import { EmployeeDirectory } from '@/components/documents/EmployeeDirectory';
 import { UnpaidLeavesAlert } from '@/components/documents/UnpaidLeavesAlert';
+import { MissingInsuranceStart } from '@/components/documents/MissingInsuranceStart';
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
 import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
