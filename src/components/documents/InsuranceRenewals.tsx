@@ -57,6 +57,7 @@ export const InsuranceRenewals = () => {
   const [editDialog, setEditDialog] = useState<ExpiringEmployee | null>(null);
   const [newStartDate, setNewStartDate] = useState('');
   const [newEndDate, setNewEndDate] = useState('');
+  const [newContractType, setNewContractType] = useState('');
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
 
   const fetchExpiring = useCallback(async () => {
