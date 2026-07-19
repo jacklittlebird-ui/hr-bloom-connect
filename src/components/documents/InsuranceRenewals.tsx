@@ -35,6 +35,7 @@ interface ExpiringEmployee {
   department_name?: string;
   station_id?: string | null;
   department_id?: string | null;
+  contract_type?: string | null;
 }
 
 interface StationDept {
