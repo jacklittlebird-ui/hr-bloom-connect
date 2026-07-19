@@ -35,6 +35,7 @@ interface ExpiringEmployee {
   department_name?: string;
   station_id?: string | null;
   department_id?: string | null;
+  contract_type?: string | null;
 }
 
 interface StationDept {
@@ -56,6 +57,7 @@ export const InsuranceRenewals = () => {
   const [editDialog, setEditDialog] = useState<ExpiringEmployee | null>(null);
   const [newStartDate, setNewStartDate] = useState('');
   const [newEndDate, setNewEndDate] = useState('');
+  const [newContractType, setNewContractType] = useState('');
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
 
   const fetchExpiring = useCallback(async () => {
@@ -67,7 +69,7 @@ export const InsuranceRenewals = () => {
 
     const { data, error } = await supabase
       .from('employees')
-      .select('id, employee_code, name_ar, name_en, social_insurance_no, social_insurance_start_date, social_insurance_end_date, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, station_id, department_id')
+      .select('id, employee_code, name_ar, name_en, social_insurance_no, social_insurance_start_date, social_insurance_end_date, national_id, education_ar, address, city, job_title_ar, job_title_en, phone, contract_type, station_id, department_id')
       .not('social_insurance_end_date', 'is', null)
       .lte('social_insurance_end_date', cutoffDate)
       .eq('status', 'active')
@@ -100,6 +102,7 @@ export const InsuranceRenewals = () => {
       job_title_ar: e.job_title_ar, job_title_en: e.job_title_en,
       phone: e.phone,
       station_id: e.station_id, department_id: e.department_id,
+      contract_type: e.contract_type,
       station_name: e.station_id ? stationMap.get(e.station_id) || '' : '',
       department_name: e.department_id ? deptMap.get(e.department_id) || '' : '',
     })));
@@ -129,11 +132,16 @@ export const InsuranceRenewals = () => {
     setEditDialog(emp);
     setNewStartDate(emp.social_insurance_start_date || '');
     setNewEndDate(emp.social_insurance_end_date || '');
+    setNewContractType(emp.contract_type || '');
   };
 
   const handleSave = async () => {
     if (!editDialog || !newStartDate || !newEndDate) return;
-    const { error } = await supabase.from('employees').update({ social_insurance_start_date: newStartDate, social_insurance_end_date: newEndDate }).eq('id', editDialog.id);
+    const { error } = await supabase.from('employees').update({
+      social_insurance_start_date: newStartDate,
+      social_insurance_end_date: newEndDate,
+      contract_type: newContractType || null,
+    }).eq('id', editDialog.id);
     if (error) { toast({ title: ar ? 'خطأ' : 'Error', description: error.message, variant: 'destructive' }); return; }
     toast({ title: ar ? 'تم التحديث بنجاح' : 'Updated successfully' });
     setEditDialog(null);
@@ -315,6 +323,18 @@ export const InsuranceRenewals = () => {
               <p className="text-sm text-muted-foreground font-medium">{ar ? editDialog.name_ar : editDialog.name_en}</p>
               <div className="space-y-2"><Label>{ar ? 'تاريخ بدء التأمين الاجتماعي' : 'Social Insurance Start Date'}</Label><Input type="date" value={newStartDate} onChange={e => setNewStartDate(e.target.value)} /></div>
               <div className="space-y-2"><Label>{ar ? 'تاريخ انتهاء التأمين الاجتماعي' : 'Social Insurance End Date'}</Label><Input type="date" value={newEndDate} onChange={e => setNewEndDate(e.target.value)} /></div>
+              <div className="space-y-2">
+                <Label>{ar ? 'نوع العقد' : 'Contract Type'}</Label>
+                <Select value={newContractType} onValueChange={setNewContractType}>
+                  <SelectTrigger><SelectValue placeholder={ar ? 'اختر نوع العقد' : 'Select contract type'} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="permanent">{ar ? 'دائم' : 'Permanent'}</SelectItem>
+                    <SelectItem value="sixMonths">{ar ? '6 أشهر' : '6 Months'}</SelectItem>
+                    <SelectItem value="oneYear">{ar ? 'سنة' : '1 Year'}</SelectItem>
+                    <SelectItem value="fourYears">{ar ? '4 سنوات' : '4 Years'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
           <DialogFooter>

@@ -23,6 +23,7 @@ import { MissingJobData } from '@/components/documents/MissingJobData';
 import { LeaveBalancesAlert } from '@/components/documents/LeaveBalancesAlert';
 import { EmployeeDirectory } from '@/components/documents/EmployeeDirectory';
 import { UnpaidLeavesAlert } from '@/components/documents/UnpaidLeavesAlert';
+import { MissingInsuranceStart } from '@/components/documents/MissingInsuranceStart';
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
 import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
@@ -64,7 +65,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders'>('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders' | 'missingInsuranceStart'>('renewals');
   const [reminders] = usePersistedState<Reminder[]>('hr_general_reminders', []);
   const activeRemindersCount = reminders.filter(r => !r.completed).length;
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
@@ -137,6 +138,7 @@ const Documents = () => {
       items: [
         { key: 'bankData', ar: 'البيانات البنكية', en: 'Bank Data', icon: Landmark, statKey: 'bankData' },
         { key: 'missingJob', ar: 'بيانات التعيين', en: 'Job Data', icon: Briefcase, statKey: 'missingJob' },
+        { key: 'missingInsuranceStart', ar: 'بدون تاريخ بدء التأمين', en: 'Missing Insurance Start', icon: ShieldAlert },
       ],
     },
     {
@@ -318,6 +320,8 @@ const Documents = () => {
           <MissingBankData />
         ) : activeMainTab === 'missingJob' ? (
           <MissingJobData />
+        ) : activeMainTab === 'missingInsuranceStart' ? (
+          <MissingInsuranceStart />
         ) : activeMainTab === 'directory' ? (
           <EmployeeDirectory />
         ) : activeMainTab === 'leaveBalances' ? (
