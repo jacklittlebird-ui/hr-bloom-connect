@@ -320,6 +320,8 @@ const Documents = () => {
           <MissingBankData />
         ) : activeMainTab === 'missingJob' ? (
           <MissingJobData />
+        ) : activeMainTab === 'missingInsuranceStart' ? (
+          <MissingInsuranceStart />
         ) : activeMainTab === 'directory' ? (
           <EmployeeDirectory />
         ) : activeMainTab === 'leaveBalances' ? (
