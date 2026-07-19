@@ -323,6 +323,18 @@ export const InsuranceRenewals = () => {
               <p className="text-sm text-muted-foreground font-medium">{ar ? editDialog.name_ar : editDialog.name_en}</p>
               <div className="space-y-2"><Label>{ar ? 'تاريخ بدء التأمين الاجتماعي' : 'Social Insurance Start Date'}</Label><Input type="date" value={newStartDate} onChange={e => setNewStartDate(e.target.value)} /></div>
               <div className="space-y-2"><Label>{ar ? 'تاريخ انتهاء التأمين الاجتماعي' : 'Social Insurance End Date'}</Label><Input type="date" value={newEndDate} onChange={e => setNewEndDate(e.target.value)} /></div>
+              <div className="space-y-2">
+                <Label>{ar ? 'نوع العقد' : 'Contract Type'}</Label>
+                <Select value={newContractType} onValueChange={setNewContractType}>
+                  <SelectTrigger><SelectValue placeholder={ar ? 'اختر نوع العقد' : 'Select contract type'} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="permanent">{ar ? 'دائم' : 'Permanent'}</SelectItem>
+                    <SelectItem value="sixMonths">{ar ? '6 أشهر' : '6 Months'}</SelectItem>
+                    <SelectItem value="oneYear">{ar ? 'سنة' : '1 Year'}</SelectItem>
+                    <SelectItem value="fourYears">{ar ? '4 سنوات' : '4 Years'}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
           <DialogFooter>
