@@ -132,11 +132,16 @@ export const InsuranceRenewals = () => {
     setEditDialog(emp);
     setNewStartDate(emp.social_insurance_start_date || '');
     setNewEndDate(emp.social_insurance_end_date || '');
+    setNewContractType(emp.contract_type || '');
   };
 
   const handleSave = async () => {
     if (!editDialog || !newStartDate || !newEndDate) return;
-    const { error } = await supabase.from('employees').update({ social_insurance_start_date: newStartDate, social_insurance_end_date: newEndDate }).eq('id', editDialog.id);
+    const { error } = await supabase.from('employees').update({
+      social_insurance_start_date: newStartDate,
+      social_insurance_end_date: newEndDate,
+      contract_type: newContractType || null,
+    }).eq('id', editDialog.id);
     if (error) { toast({ title: ar ? 'خطأ' : 'Error', description: error.message, variant: 'destructive' }); return; }
     toast({ title: ar ? 'تم التحديث بنجاح' : 'Updated successfully' });
     setEditDialog(null);
