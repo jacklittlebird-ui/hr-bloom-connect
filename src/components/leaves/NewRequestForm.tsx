@@ -316,11 +316,14 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
   const [endDate, setEndDate] = useState<Date>();
   const [destination, setDestination] = useState('');
   const [reason, setReason] = useState('');
+  const [otherCheckIn, setOtherCheckIn] = useState('');
+  const [otherCheckOut, setOtherCheckOut] = useState('');
 
   const missionOptions = [
     { value: 'morning', labelAr: 'مأمورية صباحية (تسجيل تلقائي 09:00)', labelEn: 'Morning Mission (auto check-in 09:00)' },
     { value: 'evening', labelAr: 'مأمورية مسائية (تسجيل تلقائي 17:00)', labelEn: 'Evening Mission (auto check-in 14:00)' },
     { value: 'full_day', labelAr: 'مأمورية يوم كامل (09:00 إلى 17:00)', labelEn: 'Full Day Mission (09:00 to 17:00)' },
+    { value: 'other', labelAr: 'أخرى (تحديد وقت البداية والنهاية)', labelEn: 'Other (custom start/end time)' },
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -328,6 +331,16 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
     if (!employeeId || !missionType || !startDate || !reason) {
       toast({ title: t('leaves.form.error'), description: t('leaves.form.fillAllFields'), variant: 'destructive' });
       return;
+    }
+    if (missionType === 'other') {
+      if (!otherCheckIn || !otherCheckOut) {
+        toast({ title: t('leaves.form.error'), description: ar ? 'يجب تحديد وقت البداية والنهاية' : 'Start and end time are required', variant: 'destructive' });
+        return;
+      }
+      if (otherCheckOut <= otherCheckIn) {
+        toast({ title: t('leaves.form.error'), description: ar ? 'وقت النهاية يجب أن يكون بعد وقت البداية' : 'End time must be after start time', variant: 'destructive' });
+        return;
+      }
     }
     const effectiveEnd = endDate || startDate;
     if (effectiveEnd < startDate) {
@@ -346,9 +359,10 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
       endDate: format(effectiveEnd, 'yyyy-MM-dd'),
       destination,
       reason,
+      ...(missionType === 'other' ? { checkIn: otherCheckIn, checkOut: otherCheckOut } : {}),
     });
     toast({ title: t('leaves.form.success'), description: t('leaves.missions.requestSubmitted') });
-    setEmployeeId(''); setMissionType(''); setStartDate(undefined); setEndDate(undefined); setDestination(''); setReason('');
+    setEmployeeId(''); setMissionType(''); setStartDate(undefined); setEndDate(undefined); setDestination(''); setReason(''); setOtherCheckIn(''); setOtherCheckOut('');
   };
 
   return (
