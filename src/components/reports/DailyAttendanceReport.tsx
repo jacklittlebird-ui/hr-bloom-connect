@@ -411,7 +411,17 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
     missions.forEach(ms => {
       let inner = m.get(ms.employee_id);
       if (!inner) { inner = new Map(); m.set(ms.employee_id, inner); }
-      inner.set(ms.date, ms);
+      const s = ms.start_date || ms.date;
+      const e = ms.end_date || ms.date;
+      if (s && e) {
+        const start = new Date(s + 'T00:00:00');
+        const end = new Date(e + 'T00:00:00');
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          inner.set(toIsoDate(d), ms);
+        }
+      } else if (ms.date) {
+        inner.set(ms.date, ms);
+      }
     });
     return m;
   }, [missions]);
