@@ -1227,7 +1227,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                           if (c.mission) {
                             overlayBadges.push(
                               <span key="ms" className="inline-flex items-center gap-0.5 px-1 rounded bg-purple-100 text-purple-800 text-[9px] font-semibold" title={ar ? 'مأمورية' : 'Mission'}>
-                                <Briefcase className="w-2.5 h-2.5" aria-hidden />{ar ? 'مأمورية' : 'Mission'} {c.mission.hours || 0}{ar ? 'س' : 'h'}
+                                <Briefcase className="w-2.5 h-2.5" aria-hidden />{ar ? 'مأمورية' : 'Mission'} {missionWindow(c.mission) || `${c.mission.hours || 0}${ar ? 'س' : 'h'}`}
                               </span>
                             );
                           }
