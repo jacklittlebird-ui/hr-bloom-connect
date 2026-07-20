@@ -960,7 +960,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                         kind: c.kind,
                         isOff,
                         leave: leaveLbl,
-                        mission: c.mission ? (ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`) : null,
+                        mission: c.mission ? (() => { const w = missionWindow(c.mission); const s = ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`; return w ? `${w} (${s})` : s; })() : null,
                         permission: c.permission
                           ? (() => {
                               const win = permissionWindow(c.permission);
