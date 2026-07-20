@@ -702,7 +702,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       const extras: string[] = [];
       if (holiday) extras.push((ar ? 'عطلة رسمية: ' : 'Holiday: ') + (ar ? holiday.name_ar : holiday.name_en));
       if (c.leave) extras.push((ar ? 'إجازة ' : 'Leave ') + (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)));
-      if (c.mission) extras.push(ar ? `مأمورية (${c.mission.hours || 0}س)` : `Mission (${c.mission.hours || 0}h)`);
+      if (c.mission) { const w = missionWindow(c.mission); extras.push(ar ? `مأمورية${w ? ' ' + w : ''} (${c.mission.hours || 0}س)` : `Mission${w ? ' ' + w : ''} (${c.mission.hours || 0}h)`); }
       if (c.permission) {
         const win = permissionWindow(c.permission);
         const hrs = permissionHoursFor(c.permission);
