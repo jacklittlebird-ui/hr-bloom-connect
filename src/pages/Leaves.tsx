@@ -514,16 +514,19 @@ const Leaves = () => {
     if (!uuid) { toast.error(language === 'ar' ? 'تعذّر العثور على بيانات الموظف' : 'Employee not found'); return; }
     const startDate = data.startDate || data.date;
     const endDate = data.endDate || data.date;
+    const payload: Record<string, unknown> = {
+      employee_id: uuid,
+      mission_type: data.missionType,
+      date: startDate,
+      start_date: startDate,
+      end_date: endDate,
+      destination: data.destination,
+      reason: data.reason,
+    };
+    if (data.checkIn) payload.check_in = data.checkIn;
+    if (data.checkOut) payload.check_out = data.checkOut;
     const ok = await runMutation(
-      () => supabase.from('missions').insert({
-        employee_id: uuid,
-        mission_type: data.missionType,
-        date: startDate,
-        start_date: startDate,
-        end_date: endDate,
-        destination: data.destination,
-        reason: data.reason,
-      } as any),
+      () => supabase.from('missions').insert(payload as any),
       language === 'ar' ? 'تم تسجيل طلب المأمورية' : 'Mission request submitted',
       { key: 'new-mission' },
     );
