@@ -36,9 +36,9 @@ export interface PermissionRequest {
   submittedDate: string;
 }
 
-export type MissionType = 'morning' | 'evening' | 'full_day';
+export type MissionType = 'morning' | 'evening' | 'full_day' | 'other';
 
-export const MISSION_TIME_CONFIG: Record<MissionType, { checkIn: string; checkOut: string; hours: number; labelAr: string; labelEn: string }> = {
+export const MISSION_TIME_CONFIG: Record<Exclude<MissionType, 'other'>, { checkIn: string; checkOut: string; hours: number; labelAr: string; labelEn: string }> = {
   morning: { checkIn: '09:00', checkOut: '14:00', hours: 5, labelAr: 'مأمورية صباحية', labelEn: 'Morning Mission' },
   evening: { checkIn: '14:00', checkOut: '17:00', hours: 3, labelAr: 'مأمورية مسائية', labelEn: 'Evening Mission' },
   full_day: { checkIn: '09:00', checkOut: '17:00', hours: 8, labelAr: 'مأمورية يوم كامل', labelEn: 'Full Day Mission' },
@@ -58,6 +58,8 @@ export interface MissionRequest {
   endDate?: string;
   destination?: string;
   reason: string;
+  checkIn?: string;
+  checkOut?: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedDate: string;
 }

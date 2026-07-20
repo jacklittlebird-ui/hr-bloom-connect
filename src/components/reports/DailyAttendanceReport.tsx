@@ -41,7 +41,7 @@ interface AttendanceRow {
   notes?: string | null;
 }
 interface LeaveRow { employee_id: string; leave_type: string; start_date: string; end_date: string; }
-interface MissionRow { employee_id: string; date: string; mission_type: string; hours: number | null; }
+interface MissionRow { employee_id: string; date: string; mission_type: string; hours: number | null; check_in: string | null; check_out: string | null; start_date: string | null; end_date: string | null; }
 interface PermissionRow { employee_id: string; date: string; hours: number | null; permission_type: string; start_time: string | null; end_time: string | null; }
 interface OvertimeRow { employee_id: string; date: string; hours: number; overtime_type: string; }
 interface StampEvent { employee_id: string; scan_time: string; event_type: string; }
@@ -110,6 +110,14 @@ function permissionWindow(p: { start_time: string | null; end_time: string | nul
   if (s && e) return `${s}–${e}`;
   return s || e || '';
 }
+
+function missionWindow(m: { check_in: string | null; check_out: string | null }): string {
+  const s = fmtHm(m.check_in);
+  const e = fmtHm(m.check_out);
+  if (s && e) return `${s}–${e}`;
+  return s || e || '';
+}
+
 
 export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds?: string[] } = {}) => {
   const { isRTL, language } = useLanguage();
@@ -221,10 +229,9 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
             .lte('start_date', endDate)
             .gte('end_date', startDate),
           supabase.from('missions')
-            .select('employee_id,date,mission_type,hours,status')
+            .select('employee_id,date,mission_type,hours,status,check_in,check_out,start_date,end_date')
             .eq('status', 'approved')
-            .gte('date', startDate)
-            .lte('date', endDate),
+            .or(`and(start_date.lte.${endDate},end_date.gte.${startDate}),and(date.gte.${startDate},date.lte.${endDate})`),
           supabase.from('permission_requests')
             .select('employee_id,date,hours,permission_type,start_time,end_time,status')
             .eq('status', 'approved')
@@ -412,7 +419,17 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
     missions.forEach(ms => {
       let inner = m.get(ms.employee_id);
       if (!inner) { inner = new Map(); m.set(ms.employee_id, inner); }
-      inner.set(ms.date, ms);
+      const s = ms.start_date || ms.date;
+      const e = ms.end_date || ms.date;
+      if (s && e) {
+        const start = new Date(s + 'T00:00:00');
+        const end = new Date(e + 'T00:00:00');
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          inner.set(toIsoDate(d), ms);
+        }
+      } else if (ms.date) {
+        inner.set(ms.date, ms);
+      }
     });
     return m;
   }, [missions]);
@@ -685,7 +702,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
       const extras: string[] = [];
       if (holiday) extras.push((ar ? 'عطلة رسمية: ' : 'Holiday: ') + (ar ? holiday.name_ar : holiday.name_en));
       if (c.leave) extras.push((ar ? 'إجازة ' : 'Leave ') + (ar ? (LEAVE_LABEL_AR[c.leave.leave_type] || c.leave.leave_type) : (LEAVE_LABEL_EN[c.leave.leave_type] || c.leave.leave_type)));
-      if (c.mission) extras.push(ar ? `مأمورية (${c.mission.hours || 0}س)` : `Mission (${c.mission.hours || 0}h)`);
+      if (c.mission) { const w = missionWindow(c.mission); extras.push(ar ? `مأمورية${w ? ' ' + w : ''} (${c.mission.hours || 0}س)` : `Mission${w ? ' ' + w : ''} (${c.mission.hours || 0}h)`); }
       if (c.permission) {
         const win = permissionWindow(c.permission);
         const hrs = permissionHoursFor(c.permission);
@@ -943,7 +960,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                         kind: c.kind,
                         isOff,
                         leave: leaveLbl,
-                        mission: c.mission ? (ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`) : null,
+                        mission: c.mission ? (() => { const w = missionWindow(c.mission); const s = ar ? `${c.mission.hours || 0}س` : `${c.mission.hours || 0}h`; return w ? `${w} (${s})` : s; })() : null,
                         permission: c.permission
                           ? (() => {
                               const win = permissionWindow(c.permission);
@@ -1210,7 +1227,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                           if (c.mission) {
                             overlayBadges.push(
                               <span key="ms" className="inline-flex items-center gap-0.5 px-1 rounded bg-purple-100 text-purple-800 text-[9px] font-semibold" title={ar ? 'مأمورية' : 'Mission'}>
-                                <Briefcase className="w-2.5 h-2.5" aria-hidden />{ar ? 'مأمورية' : 'Mission'} {c.mission.hours || 0}{ar ? 'س' : 'h'}
+                                <Briefcase className="w-2.5 h-2.5" aria-hidden />{ar ? 'مأمورية' : 'Mission'} {missionWindow(c.mission) || `${c.mission.hours || 0}${ar ? 'س' : 'h'}`}
                               </span>
                             );
                           }
@@ -1255,7 +1272,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                                   <td colSpan={3} className={cn(baseCell, 'bg-purple-100 text-purple-800 font-semibold')} title={ar ? 'مأمورية' : 'Mission'}>
                                     <span className="inline-flex items-center justify-center gap-1">
                                       <Briefcase className="w-3.5 h-3.5" aria-hidden />
-                                      {ar ? 'مأمورية' : 'Mission'} ({c.mission.hours || 0}{ar ? 'س' : 'h'})
+                                      {ar ? 'مأمورية' : 'Mission'} {missionWindow(c.mission) || `(${c.mission.hours || 0}${ar ? 'س' : 'h'})`}
                                     </span>
                                   </td>
                                 </Fragment>
