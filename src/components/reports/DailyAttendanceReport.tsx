@@ -1272,7 +1272,7 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
                                   <td colSpan={3} className={cn(baseCell, 'bg-purple-100 text-purple-800 font-semibold')} title={ar ? 'مأمورية' : 'Mission'}>
                                     <span className="inline-flex items-center justify-center gap-1">
                                       <Briefcase className="w-3.5 h-3.5" aria-hidden />
-                                      {ar ? 'مأمورية' : 'Mission'} ({c.mission.hours || 0}{ar ? 'س' : 'h'})
+                                      {ar ? 'مأمورية' : 'Mission'} {missionWindow(c.mission) || `(${c.mission.hours || 0}${ar ? 'س' : 'h'})`}
                                     </span>
                                   </td>
                                 </Fragment>
