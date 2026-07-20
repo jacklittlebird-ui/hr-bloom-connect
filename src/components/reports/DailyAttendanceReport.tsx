@@ -41,7 +41,7 @@ interface AttendanceRow {
   notes?: string | null;
 }
 interface LeaveRow { employee_id: string; leave_type: string; start_date: string; end_date: string; }
-interface MissionRow { employee_id: string; date: string; mission_type: string; hours: number | null; }
+interface MissionRow { employee_id: string; date: string; mission_type: string; hours: number | null; check_in: string | null; check_out: string | null; start_date: string | null; end_date: string | null; }
 interface PermissionRow { employee_id: string; date: string; hours: number | null; permission_type: string; start_time: string | null; end_time: string | null; }
 interface OvertimeRow { employee_id: string; date: string; hours: number; overtime_type: string; }
 interface StampEvent { employee_id: string; scan_time: string; event_type: string; }
