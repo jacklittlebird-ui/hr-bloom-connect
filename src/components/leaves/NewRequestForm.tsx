@@ -385,6 +385,22 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
         <div className="hidden md:block" />
         <DatePickerField label={ar ? 'تاريخ البداية' : 'Start Date'} date={startDate} onSelect={setStartDate} />
         <DatePickerField label={ar ? 'تاريخ النهاية' : 'End Date'} date={endDate} onSelect={setEndDate} />
+        {missionType === 'other' && (
+          <>
+            <div className="space-y-2">
+              <Label className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                {ar ? 'وقت البداية' : 'Start Time'} <span className="text-destructive">*</span>
+              </Label>
+              <Input type="time" value={otherCheckIn} onChange={(e) => setOtherCheckIn(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                {ar ? 'وقت النهاية' : 'End Time'} <span className="text-destructive">*</span>
+              </Label>
+              <Input type="time" value={otherCheckOut} onChange={(e) => setOtherCheckOut(e.target.value)} />
+            </div>
+          </>
+        )}
         <div className="space-y-2 md:col-span-2">
           <Label>{t('leaves.missions.destination')}</Label>
           <Input value={destination} onChange={(e) => setDestination(e.target.value)} placeholder={t('leaves.missions.destinationPlaceholder')} />
