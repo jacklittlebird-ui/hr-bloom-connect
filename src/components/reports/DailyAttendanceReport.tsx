@@ -111,6 +111,14 @@ function permissionWindow(p: { start_time: string | null; end_time: string | nul
   return s || e || '';
 }
 
+function missionWindow(m: { check_in: string | null; check_out: string | null }): string {
+  const s = fmtHm(m.check_in);
+  const e = fmtHm(m.check_out);
+  if (s && e) return `${s}–${e}`;
+  return s || e || '';
+}
+
+
 export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds?: string[] } = {}) => {
   const { isRTL, language } = useLanguage();
   const ar = language === 'ar';
