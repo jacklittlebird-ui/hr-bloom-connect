@@ -221,10 +221,9 @@ export const DailyAttendanceReport = ({ allowedStationIds }: { allowedStationIds
             .lte('start_date', endDate)
             .gte('end_date', startDate),
           supabase.from('missions')
-            .select('employee_id,date,mission_type,hours,status')
+            .select('employee_id,date,mission_type,hours,status,check_in,check_out,start_date,end_date')
             .eq('status', 'approved')
-            .gte('date', startDate)
-            .lte('date', endDate),
+            .or(`and(start_date.lte.${endDate},end_date.gte.${startDate}),and(date.gte.${startDate},date.lte.${endDate})`),
           supabase.from('permission_requests')
             .select('employee_id,date,hours,permission_type,start_time,end_time,status')
             .eq('status', 'approved')
