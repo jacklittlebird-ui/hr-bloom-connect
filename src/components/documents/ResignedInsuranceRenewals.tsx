@@ -301,6 +301,17 @@ export const ResignedInsuranceRenewals = () => {
             <SelectItem value="closed">{ar ? 'مكتمل بالكامل' : 'Fully Completed'}</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={insuranceClosedFilter} onValueChange={v => setInsuranceClosedFilter(v as any)}>
+          <SelectTrigger className="w-full sm:w-[200px] h-10">
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{ar ? 'إغلاق التأمين: الكل' : 'Insurance Closure: All'}</SelectItem>
+            <SelectItem value="closed">{ar ? 'تم إغلاق التأمين' : 'Insurance Closed'}</SelectItem>
+            <SelectItem value="not_closed">{ar ? 'لم يتم إغلاق التأمين' : 'Insurance Not Closed'}</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={selectedStation} onValueChange={setSelectedStation}>
           <SelectTrigger className="w-full sm:w-[200px] h-10">
             <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
