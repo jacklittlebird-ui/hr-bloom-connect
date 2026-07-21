@@ -130,6 +130,8 @@ export const ResignedInsuranceRenewals = () => {
     // "open" means employee still pending closure: either insurance not closed OR docs not received
     if (closedFilter === 'closed' && (!e.social_insurance_closed || !e.documents_originals_received)) return false;
     if (closedFilter === 'open' && e.social_insurance_closed && e.documents_originals_received) return false;
+    if (insuranceClosedFilter === 'closed' && !e.social_insurance_closed) return false;
+    if (insuranceClosedFilter === 'not_closed' && e.social_insurance_closed) return false;
     return true;
   });
 
