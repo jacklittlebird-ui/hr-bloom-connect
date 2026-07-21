@@ -72,6 +72,7 @@ export const ResignedInsuranceRenewals = () => {
   const [selectedDept, setSelectedDept] = useState('all');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [closedFilter, setClosedFilter] = useState<'all' | 'open' | 'closed'>('open');
+  const [insuranceClosedFilter, setInsuranceClosedFilter] = useState<'all' | 'closed' | 'not_closed'>('all');
   const [stations, setStations] = useState<StationDept[]>([]);
   const [departments, setDepartments] = useState<StationDept[]>([]);
   const [editDialog, setEditDialog] = useState<ResignedEmployee | null>(null);
@@ -129,6 +130,8 @@ export const ResignedInsuranceRenewals = () => {
     // "open" means employee still pending closure: either insurance not closed OR docs not received
     if (closedFilter === 'closed' && (!e.social_insurance_closed || !e.documents_originals_received)) return false;
     if (closedFilter === 'open' && e.social_insurance_closed && e.documents_originals_received) return false;
+    if (insuranceClosedFilter === 'closed' && !e.social_insurance_closed) return false;
+    if (insuranceClosedFilter === 'not_closed' && e.social_insurance_closed) return false;
     return true;
   });
 
@@ -296,6 +299,17 @@ export const ResignedInsuranceRenewals = () => {
             <SelectItem value="all">{ar ? 'كل الحالات' : 'All'}</SelectItem>
             <SelectItem value="open">{ar ? 'لم يكتمل (تأمين أو مستندات)' : 'Pending (Insurance or Docs)'}</SelectItem>
             <SelectItem value="closed">{ar ? 'مكتمل بالكامل' : 'Fully Completed'}</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={insuranceClosedFilter} onValueChange={v => setInsuranceClosedFilter(v as any)}>
+          <SelectTrigger className="w-full sm:w-[200px] h-10">
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{ar ? 'إغلاق التأمين: الكل' : 'Insurance Closure: All'}</SelectItem>
+            <SelectItem value="closed">{ar ? 'تم إغلاق التأمين' : 'Insurance Closed'}</SelectItem>
+            <SelectItem value="not_closed">{ar ? 'لم يتم إغلاق التأمين' : 'Insurance Not Closed'}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={selectedStation} onValueChange={setSelectedStation}>
