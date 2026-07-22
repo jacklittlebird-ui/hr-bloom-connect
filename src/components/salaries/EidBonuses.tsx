@@ -230,14 +230,20 @@ export const EidBonuses = () => {
         return;
       }
 
-      // Delete old records for this bonus_number and year first
-      const { error: deleteErr } = await supabase
-        .from('eid_bonuses')
-        .delete()
-        .eq('bonus_number', parseInt(bonusNumber))
-        .eq('year', currentYear);
-
-      if (deleteErr) throw deleteErr;
+      // Delete only records for currently-eligible employees; keep previously
+      // issued rows for employees who are no longer active (e.g. resigned).
+      const eligibleIds = bonusRecords.map(r => r.employee_id);
+      const DELETE_BATCH = 200;
+      for (let i = 0; i < eligibleIds.length; i += DELETE_BATCH) {
+        const chunk = eligibleIds.slice(i, i + DELETE_BATCH);
+        const { error: deleteErr } = await supabase
+          .from('eid_bonuses')
+          .delete()
+          .eq('bonus_number', parseInt(bonusNumber))
+          .eq('year', currentYear)
+          .in('employee_id', chunk);
+        if (deleteErr) throw deleteErr;
+      }
 
       // Insert new records in batches
       const BATCH = 100;
