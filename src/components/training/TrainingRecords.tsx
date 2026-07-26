@@ -35,6 +35,7 @@ interface Employee {
   avatar?: string;
   nationalId?: string;
   status?: string;
+  educationAr?: string;
 }
 
 interface TrainingRecord {
@@ -155,6 +156,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     avatar: emp.avatar || undefined,
     nationalId: (emp as any).nationalId || '',
     status: emp.status || 'active',
+    educationAr: (emp as any).educationAr || '',
   })), [contextEmployees]);
 
   const selectedEmployee = useMemo(
@@ -502,6 +504,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                       <div><span className="text-muted-foreground">{t('training.station')}: </span><span className="font-medium">{selectedEmployee.station}</span></div>
                       <div><span className="text-muted-foreground">{t('training.hireDate')}: </span><span className="font-medium">{selectedEmployee.hireDate}</span></div>
                       <div><span className="text-muted-foreground">{t('training.mobile')}: </span><span className="font-medium">{selectedEmployee.mobile}</span></div>
+                      <div><span className="text-muted-foreground">{ar ? 'المؤهل الدراسي' : 'Education'}: </span><span className="font-medium">{selectedEmployee.educationAr || '-'}</span></div>
                       <div><span className="text-muted-foreground">{ar ? 'الوظيفة' : 'Job Title'}: </span><span className="font-medium">{ar ? selectedEmployee.jobTitleAr : selectedEmployee.jobTitleEn || '-'}</span></div>
                       <div><span className="text-muted-foreground">{ar ? 'الرقم القومي' : 'National ID'}: </span><span className="font-medium">{selectedEmployee.nationalId || '-'}</span></div>
                     </div>
