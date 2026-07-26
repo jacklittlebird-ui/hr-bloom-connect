@@ -35,6 +35,7 @@ interface Employee {
   avatar?: string;
   nationalId?: string;
   status?: string;
+  educationAr?: string;
 }
 
 interface TrainingRecord {
