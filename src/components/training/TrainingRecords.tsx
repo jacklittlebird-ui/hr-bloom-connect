@@ -156,6 +156,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     avatar: emp.avatar || undefined,
     nationalId: (emp as any).nationalId || '',
     status: emp.status || 'active',
+    educationAr: (emp as any).educationAr || '',
   })), [contextEmployees]);
 
   const selectedEmployee = useMemo(
