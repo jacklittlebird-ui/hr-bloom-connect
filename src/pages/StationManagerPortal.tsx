@@ -418,24 +418,30 @@ const StationManagerPortal = () => {
         arr.push({ time: new Date(ev.scan_time).getTime(), name });
         byKey.set(key, arr);
       }
-      const pick = (empId: string, type: 'in' | 'out', iso: string | null): string | undefined => {
-        if (!iso) return undefined;
+      const pick = (empId: string, type: 'in' | 'out', iso: string | null, recDate: string): string | undefined => {
         const list = byKey.get(`${empId}|${type}`);
         if (!list || list.length === 0) return undefined;
-        const target = new Date(iso).getTime();
-        let best = list[0];
-        let bestDiff = Math.abs(list[0].time - target);
-        for (let i = 1; i < list.length; i++) {
-          const d = Math.abs(list[i].time - target);
-          if (d < bestDiff) { bestDiff = d; best = list[i]; }
+        if (iso) {
+          const target = new Date(iso).getTime();
+          let best = list[0];
+          let bestDiff = Math.abs(list[0].time - target);
+          for (let i = 1; i < list.length; i++) {
+            const d = Math.abs(list[i].time - target);
+            if (d < bestDiff) { bestDiff = d; best = list[i]; }
+          }
+          if (bestDiff <= 6 * 60 * 60 * 1000) return best.name;
         }
-        return bestDiff <= 10 * 60 * 1000 ? best.name : undefined;
+        const dayStart = new Date(`${recDate}T00:00:00`).getTime() - 3 * 60 * 60 * 1000;
+        const dayEnd = dayStart + 30 * 60 * 60 * 1000;
+        const sameDay = list.filter(e => e.time >= dayStart && e.time <= dayEnd);
+        if (sameDay.length === 0) return undefined;
+        return type === 'in' ? sameDay[0].name : sameDay[sameDay.length - 1].name;
       };
       const locMap = new Map<string, { in?: string; out?: string }>();
       for (const r of all) {
         locMap.set(r.id, {
-          in: pick(r.employee_id, 'in', r.check_in),
-          out: pick(r.employee_id, 'out', r.check_out),
+          in: pick(r.employee_id, 'in', r.check_in, r.date),
+          out: pick(r.employee_id, 'out', r.check_out, r.date),
         });
       }
       if (reqId !== attReqIdRef.current) return;

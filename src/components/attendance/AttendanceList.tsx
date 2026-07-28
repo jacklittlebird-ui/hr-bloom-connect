@@ -234,26 +234,32 @@ export const AttendanceList = () => {
       byKey.set(key, arr);
     }
 
-    const pick = (empId: string, type: 'in' | 'out', iso: string | null): string | null => {
-      if (!iso) return null;
+    const pick = (empId: string, type: 'in' | 'out', iso: string | null, recDate: string): string | null => {
       const list = byKey.get(`${empId}|${type}`);
       if (!list || list.length === 0) return null;
-      const target = new Date(iso).getTime();
-      let best = list[0];
-      let bestDiff = Math.abs(list[0].time - target);
-      for (let i = 1; i < list.length; i++) {
-        const d = Math.abs(list[i].time - target);
-        if (d < bestDiff) { bestDiff = d; best = list[i]; }
+      if (iso) {
+        const target = new Date(iso).getTime();
+        let best = list[0];
+        let bestDiff = Math.abs(list[0].time - target);
+        for (let i = 1; i < list.length; i++) {
+          const d = Math.abs(list[i].time - target);
+          if (d < bestDiff) { bestDiff = d; best = list[i]; }
+        }
+        if (bestDiff <= 6 * 60 * 60 * 1000) return best.name;
       }
-      // Accept if within 10 minutes
-      return bestDiff <= 10 * 60 * 1000 ? best.name : null;
+      const dayStart = new Date(`${recDate}T00:00:00`).getTime() - 3 * 60 * 60 * 1000;
+      const dayEnd = dayStart + 30 * 60 * 60 * 1000;
+      const sameDay = list.filter(e => e.time >= dayStart && e.time <= dayEnd);
+      if (sameDay.length === 0) return null;
+      return type === 'in' ? sameDay[0].name : sameDay[sameDay.length - 1].name;
     };
 
     for (const r of rows) {
-      r.checkInLocation = pick(r.employeeId, 'in', r.checkInIso);
-      r.checkOutLocation = pick(r.employeeId, 'out', r.checkOutIso);
+      r.checkInLocation = pick(r.employeeId, 'in', r.checkInIso, r.date);
+      r.checkOutLocation = pick(r.employeeId, 'out', r.checkOutIso, r.date);
     }
   };
+
 
 
 
