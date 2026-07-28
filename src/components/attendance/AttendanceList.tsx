@@ -65,6 +65,10 @@ interface AttendanceRecord {
   date: string;
   checkIn: string | null;
   checkOut: string | null;
+  checkInIso: string | null;
+  checkOutIso: string | null;
+  checkInLocation?: string | null;
+  checkOutLocation?: string | null;
   status: string;
   workHours: number;
   workMinutes: number;
@@ -192,6 +196,65 @@ export const AttendanceList = () => {
     }
   };
 
+  // Fetch attendance_events and attach check-in / check-out location names
+  const enrichLocations = async (rows: AttendanceRecord[]) => {
+    if (rows.length === 0) return;
+    const empIds = Array.from(new Set(rows.map(r => r.employeeId)));
+    const dates = rows.map(r => r.date).sort();
+    const minDate = dates[0];
+    const maxDate = dates[dates.length - 1];
+    const startIso = `${minDate}T00:00:00Z`;
+    const endIso = `${maxDate}T23:59:59Z`;
+
+    // Chunk employee IDs to avoid URL length issues
+    const CHUNK = 200;
+    const events: Array<{ employee_id: string; event_type: string; scan_time: string; location: { name_ar: string; name_en: string } | null }> = [];
+    for (let i = 0; i < empIds.length; i += CHUNK) {
+      const slice = empIds.slice(i, i + CHUNK);
+      const { data } = await supabase
+        .from('attendance_events')
+        .select('employee_id, event_type, scan_time, location:qr_locations(name_ar, name_en)')
+        .in('employee_id', slice)
+        .gte('scan_time', startIso)
+        .lte('scan_time', endIso);
+      if (data) events.push(...(data as any));
+    }
+
+    // Group events by employee_id + event_type
+    const byKey = new Map<string, Array<{ time: number; name: string }>>();
+    for (const ev of events) {
+      const name = ev.location ? (ar ? ev.location.name_ar : ev.location.name_en) : '';
+      if (!name) continue;
+      const type = ev.event_type === 'check_in' || ev.event_type === 'in' ? 'in'
+        : ev.event_type === 'check_out' || ev.event_type === 'out' ? 'out'
+        : ev.event_type;
+      const key = `${ev.employee_id}|${type}`;
+      const arr = byKey.get(key) || [];
+      arr.push({ time: new Date(ev.scan_time).getTime(), name });
+      byKey.set(key, arr);
+    }
+
+    const pick = (empId: string, type: 'in' | 'out', iso: string | null): string | null => {
+      if (!iso) return null;
+      const list = byKey.get(`${empId}|${type}`);
+      if (!list || list.length === 0) return null;
+      const target = new Date(iso).getTime();
+      let best = list[0];
+      let bestDiff = Math.abs(list[0].time - target);
+      for (let i = 1; i < list.length; i++) {
+        const d = Math.abs(list[i].time - target);
+        if (d < bestDiff) { bestDiff = d; best = list[i]; }
+      }
+      // Accept if within 10 minutes
+      return bestDiff <= 10 * 60 * 1000 ? best.name : null;
+    };
+
+    for (const r of rows) {
+      r.checkInLocation = pick(r.employeeId, 'in', r.checkInIso);
+      r.checkOutLocation = pick(r.employeeId, 'out', r.checkOutIso);
+    }
+  };
+
 
 
   useEffect(() => {
@@ -296,6 +359,8 @@ export const AttendanceList = () => {
           date: r.date,
           checkIn: ci,
           checkOut: co,
+          checkInIso: r.check_in,
+          checkOutIso: r.check_out,
           status: r.status,
           workHours: finalHours,
           workMinutes: finalMinutes,
@@ -303,6 +368,8 @@ export const AttendanceList = () => {
           notes: r.notes || undefined,
         };
       });
+      // Enrich with check-in/out locations from attendance_events
+      await enrichLocations(mapped);
       setRecords(mapped);
       setTotalCount(count ?? 0);
     }
@@ -368,7 +435,9 @@ export const AttendanceList = () => {
     { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
     { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
     { headerAr: 'الحضور', headerEn: 'Check In', key: 'checkIn' },
+    { headerAr: 'مكان الحضور', headerEn: 'Check-In Location', key: 'checkInLocation' },
     { headerAr: 'الانصراف', headerEn: 'Check Out', key: 'checkOut' },
+    { headerAr: 'مكان الانصراف', headerEn: 'Check-Out Location', key: 'checkOutLocation' },
     { headerAr: 'ساعات العمل', headerEn: 'Work Hours', key: 'workTime' },
     { headerAr: 'الحالة', headerEn: 'Status', key: 'status' },
   ];
@@ -381,7 +450,9 @@ export const AttendanceList = () => {
     department: getDeptName(r.employeeId),
     station: getStationName(r.employeeId),
     checkIn: r.checkIn || '-',
+    checkInLocation: r.checkInLocation || '-',
     checkOut: r.checkOut || '-',
+    checkOutLocation: r.checkOutLocation || '-',
     workTime: formatWorkTime(r.workHours, r.workMinutes),
     status: `${getStatusText(r.status)} / ${getStatusTextEn(r.status)}`,
   });
@@ -455,6 +526,8 @@ export const AttendanceList = () => {
           date: r.date,
           checkIn: ci,
           checkOut: co,
+          checkInIso: r.check_in,
+          checkOutIso: r.check_out,
           status: r.status,
           workHours: finalHours,
           workMinutes: finalMinutes,
@@ -466,6 +539,7 @@ export const AttendanceList = () => {
       if (data.length < BATCH) break;
       from += BATCH;
     }
+    await enrichLocations(all);
     return all;
   };
 
@@ -621,7 +695,9 @@ export const AttendanceList = () => {
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'القسم' : 'Department'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحضور' : 'Check In'}</TableHead>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'مكان الحضور' : 'Check-In Location'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الانصراف' : 'Check Out'}</TableHead>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'مكان الانصراف' : 'Check-Out Location'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'ساعات العمل' : 'Work Hours'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'إضافي' : 'Overtime'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحالة' : 'Status'}</TableHead>
@@ -631,13 +707,13 @@ export const AttendanceList = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
                     {ar ? 'جاري التحميل...' : 'Loading...'}
                   </TableCell>
                 </TableRow>
               ) : records.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
                     {ar ? 'لا توجد سجلات حضور' : 'No attendance records'}
                   </TableCell>
                 </TableRow>
@@ -652,7 +728,9 @@ export const AttendanceList = () => {
                     <TableCell>{getDeptName(record.employeeId)}</TableCell>
                     <TableCell>{getStationName(record.employeeId)}</TableCell>
                     <TableCell>{record.checkIn || '-'}</TableCell>
+                    <TableCell className="text-xs">{record.checkInLocation || '-'}</TableCell>
                     <TableCell>{record.checkOut || '-'}</TableCell>
+                    <TableCell className="text-xs">{record.checkOutLocation || '-'}</TableCell>
                     <TableCell>{formatWorkTime(record.workHours, record.workMinutes)}</TableCell>
                     <TableCell>
                       {record.overtime > 0 ? (
