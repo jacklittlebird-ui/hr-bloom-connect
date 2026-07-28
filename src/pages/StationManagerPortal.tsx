@@ -1793,7 +1793,7 @@ const StationManagerPortal = () => {
                       {attLoading ? (
                         <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{t('جاري التحميل...', 'Loading...')}</TableCell></TableRow>
                       ) : filteredAttRecords.length === 0 ? (
-                        <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{t('لا توجد سجلات', 'No records')}</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{t('لا توجد سجلات', 'No records')}</TableCell></TableRow>
                       ) : (
                         attPagination.paginatedItems.map(r => {
                           const emp = stationEmployees.find(e => e.id === r.employee_id);
