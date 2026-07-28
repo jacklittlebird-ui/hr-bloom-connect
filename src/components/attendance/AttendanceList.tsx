@@ -456,9 +456,9 @@ export const AttendanceList = () => {
     department: getDeptName(r.employeeId),
     station: getStationName(r.employeeId),
     checkIn: r.checkIn || '-',
-    checkInLocation: r.checkInLocation || '-',
+    checkInLocation: r.checkInLocation || (r.checkIn ? getStationName(r.employeeId) : '-'),
     checkOut: r.checkOut || '-',
-    checkOutLocation: r.checkOutLocation || '-',
+    checkOutLocation: r.checkOutLocation || (r.checkOut ? getStationName(r.employeeId) : '-'),
     workTime: formatWorkTime(r.workHours, r.workMinutes),
     status: `${getStatusText(r.status)} / ${getStatusTextEn(r.status)}`,
   });
@@ -734,9 +734,10 @@ export const AttendanceList = () => {
                     <TableCell>{getDeptName(record.employeeId)}</TableCell>
                     <TableCell>{getStationName(record.employeeId)}</TableCell>
                     <TableCell>{record.checkIn || '-'}</TableCell>
-                    <TableCell className="text-xs">{record.checkInLocation || '-'}</TableCell>
+                    <TableCell className="text-xs">{record.checkInLocation || (record.checkIn ? getStationName(record.employeeId) : '-')}</TableCell>
+
                     <TableCell>{record.checkOut || '-'}</TableCell>
-                    <TableCell className="text-xs">{record.checkOutLocation || '-'}</TableCell>
+                    <TableCell className="text-xs">{record.checkOutLocation || (record.checkOut ? getStationName(record.employeeId) : '-')}</TableCell>
                     <TableCell>{formatWorkTime(record.workHours, record.workMinutes)}</TableCell>
                     <TableCell>
                       {record.overtime > 0 ? (
