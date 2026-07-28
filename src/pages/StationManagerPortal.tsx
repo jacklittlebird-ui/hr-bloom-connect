@@ -424,7 +424,9 @@ const StationManagerPortal = () => {
       byKey.forEach(list => list.sort((a, b) => a.time - b.time));
       const empStationName = new Map<string, string>();
       for (const e of stationEmployees) {
-        if (e.stationLocation) empStationName.set(e.id, e.stationLocation);
+        if (!e.stationLocation) continue;
+        const loc = stationLocations.find(s => s.value === e.stationLocation);
+        empStationName.set(e.id, loc ? (ar ? loc.labelAr : loc.labelEn) : e.stationLocation);
       }
       const pick = (empId: string, type: 'in' | 'out', iso: string | null, recDate: string): string | undefined => {
         const list = byKey.get(`${empId}|${type}`);
