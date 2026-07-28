@@ -64,6 +64,7 @@ export const InstallmentScheduleDialog = ({ open, onOpenChange, loan }: Installm
         .from('loan_installments')
         .select('id, installment_number, amount, due_date, status')
         .eq('loan_id', loan.id)
+        .order('due_date', { ascending: true })
         .order('installment_number', { ascending: true });
 
       if (!active) return;
