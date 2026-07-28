@@ -456,9 +456,9 @@ export const AttendanceList = () => {
     department: getDeptName(r.employeeId),
     station: getStationName(r.employeeId),
     checkIn: r.checkIn || '-',
-    checkInLocation: r.checkInLocation || '-',
+    checkInLocation: r.checkInLocation || (r.checkIn ? getStationName(r.employeeId) : '-'),
     checkOut: r.checkOut || '-',
-    checkOutLocation: r.checkOutLocation || '-',
+    checkOutLocation: r.checkOutLocation || (r.checkOut ? getStationName(r.employeeId) : '-'),
     workTime: formatWorkTime(r.workHours, r.workMinutes),
     status: `${getStatusText(r.status)} / ${getStatusTextEn(r.status)}`,
   });
