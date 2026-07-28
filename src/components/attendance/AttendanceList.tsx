@@ -65,6 +65,10 @@ interface AttendanceRecord {
   date: string;
   checkIn: string | null;
   checkOut: string | null;
+  checkInIso: string | null;
+  checkOutIso: string | null;
+  checkInLocation?: string | null;
+  checkOutLocation?: string | null;
   status: string;
   workHours: number;
   workMinutes: number;
