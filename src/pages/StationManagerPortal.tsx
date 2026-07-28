@@ -392,18 +392,20 @@ const StationManagerPortal = () => {
     try {
       if (all.length === 0) { setAttLocMap(new Map()); return; }
       const dates = all.map((r: any) => r.date).sort();
-      const startIso = `${dates[0]}T00:00:00Z`;
-      const endIso = `${dates[dates.length - 1]}T23:59:59Z`;
+      // Widen by 1 day on each side to cover Cairo/UTC boundary and overnight shifts
+      const startIso = new Date(new Date(`${dates[0]}T00:00:00Z`).getTime() - 24 * 60 * 60 * 1000).toISOString();
+      const endIso = new Date(new Date(`${dates[dates.length - 1]}T00:00:00Z`).getTime() + 48 * 60 * 60 * 1000).toISOString();
       const events: any[] = [];
       const EV_CHUNK = 200;
       for (let i = 0; i < empIds.length; i += EV_CHUNK) {
         const slice = empIds.slice(i, i + EV_CHUNK);
-        const { data: evs } = await supabase
+        const { data: evs, error: evErr } = await supabase
           .from('attendance_events')
           .select('employee_id, event_type, scan_time, location:qr_locations(name_ar, name_en)')
           .in('employee_id', slice)
           .gte('scan_time', startIso)
           .lte('scan_time', endIso);
+        if (evErr) console.error('attendance_events fetch error:', evErr);
         if (evs) events.push(...evs);
       }
       if (reqId !== attReqIdRef.current) return;
@@ -418,32 +420,43 @@ const StationManagerPortal = () => {
         arr.push({ time: new Date(ev.scan_time).getTime(), name });
         byKey.set(key, arr);
       }
+      // Sort each list by time asc
+      byKey.forEach(list => list.sort((a, b) => a.time - b.time));
+      const empStationName = new Map<string, string>();
+      for (const e of stationEmployees) {
+        if (e.stationLocation) empStationName.set(e.id, e.stationLocation);
+      }
       const pick = (empId: string, type: 'in' | 'out', iso: string | null, recDate: string): string | undefined => {
         const list = byKey.get(`${empId}|${type}`);
-        if (!list || list.length === 0) return undefined;
-        if (iso) {
-          const target = new Date(iso).getTime();
-          let best = list[0];
-          let bestDiff = Math.abs(list[0].time - target);
-          for (let i = 1; i < list.length; i++) {
-            const d = Math.abs(list[i].time - target);
-            if (d < bestDiff) { bestDiff = d; best = list[i]; }
+        if (list && list.length > 0) {
+          if (iso) {
+            const target = new Date(iso).getTime();
+            let best = list[0];
+            let bestDiff = Math.abs(list[0].time - target);
+            for (let i = 1; i < list.length; i++) {
+              const d = Math.abs(list[i].time - target);
+              if (d < bestDiff) { bestDiff = d; best = list[i]; }
+            }
+            if (bestDiff <= 12 * 60 * 60 * 1000) return best.name;
           }
-          if (bestDiff <= 6 * 60 * 60 * 1000) return best.name;
+          const dayStart = new Date(`${recDate}T00:00:00`).getTime() - 6 * 60 * 60 * 1000;
+          const dayEnd = dayStart + 36 * 60 * 60 * 1000;
+          const sameDay = list.filter(e => e.time >= dayStart && e.time <= dayEnd);
+          if (sameDay.length > 0) {
+            return type === 'in' ? sameDay[0].name : sameDay[sameDay.length - 1].name;
+          }
         }
-        const dayStart = new Date(`${recDate}T00:00:00`).getTime() - 3 * 60 * 60 * 1000;
-        const dayEnd = dayStart + 30 * 60 * 60 * 1000;
-        const sameDay = list.filter(e => e.time >= dayStart && e.time <= dayEnd);
-        if (sameDay.length === 0) return undefined;
-        return type === 'in' ? sameDay[0].name : sameDay[sameDay.length - 1].name;
+        // Fallback: employee's assigned station name
+        return empStationName.get(empId);
       };
       const locMap = new Map<string, { in?: string; out?: string }>();
       for (const r of all) {
         locMap.set(r.id, {
-          in: pick(r.employee_id, 'in', r.check_in, r.date),
-          out: pick(r.employee_id, 'out', r.check_out, r.date),
+          in: r.check_in ? pick(r.employee_id, 'in', r.check_in, r.date) : undefined,
+          out: r.check_out ? pick(r.employee_id, 'out', r.check_out, r.date) : undefined,
         });
       }
+
       if (reqId !== attReqIdRef.current) return;
       setAttLocMap(locMap);
     } catch (e) {
