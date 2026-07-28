@@ -535,6 +535,7 @@ export const AttendanceList = () => {
       if (data.length < BATCH) break;
       from += BATCH;
     }
+    await enrichLocations(all);
     return all;
   };
 
