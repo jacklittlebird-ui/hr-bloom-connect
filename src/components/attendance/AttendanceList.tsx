@@ -737,7 +737,7 @@ export const AttendanceList = () => {
                     <TableCell className="text-xs">{record.checkInLocation || (record.checkIn ? getStationName(record.employeeId) : '-')}</TableCell>
 
                     <TableCell>{record.checkOut || '-'}</TableCell>
-                    <TableCell className="text-xs">{record.checkOutLocation || '-'}</TableCell>
+                    <TableCell className="text-xs">{record.checkOutLocation || (record.checkOut ? getStationName(record.employeeId) : '-')}</TableCell>
                     <TableCell>{formatWorkTime(record.workHours, record.workMinutes)}</TableCell>
                     <TableCell>
                       {record.overtime > 0 ? (
