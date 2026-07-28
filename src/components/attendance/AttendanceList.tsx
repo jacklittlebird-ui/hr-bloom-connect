@@ -522,6 +522,8 @@ export const AttendanceList = () => {
           date: r.date,
           checkIn: ci,
           checkOut: co,
+          checkInIso: r.check_in,
+          checkOutIso: r.check_out,
           status: r.status,
           workHours: finalHours,
           workMinutes: finalMinutes,
