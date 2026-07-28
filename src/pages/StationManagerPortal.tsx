@@ -1782,7 +1782,9 @@ const StationManagerPortal = () => {
                         <TableHead>{t('التاريخ', 'Date')}</TableHead>
                         <TableHead>{t('اليوم', 'Day')}</TableHead>
                         <TableHead>{t('الحضور', 'In')}</TableHead>
+                        <TableHead>{t('مكان الحضور', 'Check-In Location')}</TableHead>
                         <TableHead>{t('الانصراف', 'Out')}</TableHead>
+                        <TableHead>{t('مكان الانصراف', 'Check-Out Location')}</TableHead>
                         <TableHead>{t('الساعات', 'Hours')}</TableHead>
                         <TableHead>{t('الحالة', 'Status')}</TableHead>
                       </TableRow>
