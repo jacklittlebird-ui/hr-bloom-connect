@@ -435,7 +435,9 @@ export const AttendanceList = () => {
     { headerAr: 'القسم', headerEn: 'Department', key: 'department' },
     { headerAr: 'المحطة', headerEn: 'Station', key: 'station' },
     { headerAr: 'الحضور', headerEn: 'Check In', key: 'checkIn' },
+    { headerAr: 'مكان الحضور', headerEn: 'Check-In Location', key: 'checkInLocation' },
     { headerAr: 'الانصراف', headerEn: 'Check Out', key: 'checkOut' },
+    { headerAr: 'مكان الانصراف', headerEn: 'Check-Out Location', key: 'checkOutLocation' },
     { headerAr: 'ساعات العمل', headerEn: 'Work Hours', key: 'workTime' },
     { headerAr: 'الحالة', headerEn: 'Status', key: 'status' },
   ];
@@ -448,7 +450,9 @@ export const AttendanceList = () => {
     department: getDeptName(r.employeeId),
     station: getStationName(r.employeeId),
     checkIn: r.checkIn || '-',
+    checkInLocation: r.checkInLocation || '-',
     checkOut: r.checkOut || '-',
+    checkOutLocation: r.checkOutLocation || '-',
     workTime: formatWorkTime(r.workHours, r.workMinutes),
     status: `${getStatusText(r.status)} / ${getStatusTextEn(r.status)}`,
   });
