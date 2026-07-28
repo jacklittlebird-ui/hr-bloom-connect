@@ -422,34 +422,26 @@ const StationManagerPortal = () => {
       }
       // Sort each list by time asc
       byKey.forEach(list => list.sort((a, b) => a.time - b.time));
-      const empStationName = new Map<string, string>();
-      for (const e of stationEmployees) {
-        if (!e.stationLocation) continue;
-        const loc = stationLocations.find(s => s.value === e.stationLocation);
-        empStationName.set(e.id, loc ? (ar ? loc.labelAr : loc.labelEn) : e.stationLocation);
-      }
       const pick = (empId: string, type: 'in' | 'out', iso: string | null, recDate: string): string | undefined => {
         const list = byKey.get(`${empId}|${type}`);
-        if (list && list.length > 0) {
-          if (iso) {
-            const target = new Date(iso).getTime();
-            let best = list[0];
-            let bestDiff = Math.abs(list[0].time - target);
-            for (let i = 1; i < list.length; i++) {
-              const d = Math.abs(list[i].time - target);
-              if (d < bestDiff) { bestDiff = d; best = list[i]; }
-            }
-            if (bestDiff <= 12 * 60 * 60 * 1000) return best.name;
+        if (!list || list.length === 0) return undefined;
+        if (iso) {
+          const target = new Date(iso).getTime();
+          let best = list[0];
+          let bestDiff = Math.abs(list[0].time - target);
+          for (let i = 1; i < list.length; i++) {
+            const d = Math.abs(list[i].time - target);
+            if (d < bestDiff) { bestDiff = d; best = list[i]; }
           }
-          const dayStart = new Date(`${recDate}T00:00:00`).getTime() - 6 * 60 * 60 * 1000;
-          const dayEnd = dayStart + 36 * 60 * 60 * 1000;
-          const sameDay = list.filter(e => e.time >= dayStart && e.time <= dayEnd);
-          if (sameDay.length > 0) {
-            return type === 'in' ? sameDay[0].name : sameDay[sameDay.length - 1].name;
-          }
+          if (bestDiff <= 12 * 60 * 60 * 1000) return best.name;
         }
-        // Fallback: employee's assigned station name
-        return empStationName.get(empId);
+        const dayStart = new Date(`${recDate}T00:00:00`).getTime() - 6 * 60 * 60 * 1000;
+        const dayEnd = dayStart + 36 * 60 * 60 * 1000;
+        const sameDay = list.filter(e => e.time >= dayStart && e.time <= dayEnd);
+        if (sameDay.length > 0) {
+          return type === 'in' ? sameDay[0].name : sameDay[sameDay.length - 1].name;
+        }
+        return undefined;
       };
       const locMap = new Map<string, { in?: string; out?: string }>();
       for (const r of all) {
