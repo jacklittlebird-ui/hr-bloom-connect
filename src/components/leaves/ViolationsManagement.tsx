@@ -95,7 +95,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
     const { data: stations } = await supabase.from('stations').select('id, name_ar, name_en');
     const { data: viols } = await supabase.from('violations').select('*').order('created_at', { ascending: false });
 
-    const empMap = new Map(employees?.map(e => [e.id, e]) || []);
+    const empMap = new Map(employees.map(e => [e.id, e]));
     const deptMap = new Map(depts?.map(d => [d.id, d]) || []);
     const stMap = new Map(stations?.map(s => [s.id, s]) || []);
 
