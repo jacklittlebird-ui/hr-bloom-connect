@@ -78,12 +78,24 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
   };
 
   const fetchViolations = useCallback(async () => {
-    const { data: employees } = await supabase.from('employees').select('id, employee_code, name_en, name_ar, department_id, station_id').order('employee_code');
+    // Paginate employees to bypass the 1000-row default limit
+    const employees: Array<{ id: string; employee_code: string; name_en: string; name_ar: string; department_id: string | null; station_id: string | null }> = [];
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('id, employee_code, name_en, name_ar, department_id, station_id')
+        .order('employee_code')
+        .range(from, from + PAGE - 1);
+      if (error || !data || data.length === 0) break;
+      employees.push(...data);
+      if (data.length < PAGE) break;
+    }
     const { data: depts } = await supabase.from('departments').select('id, name_ar, name_en');
     const { data: stations } = await supabase.from('stations').select('id, name_ar, name_en');
     const { data: viols } = await supabase.from('violations').select('*').order('created_at', { ascending: false });
 
-    const empMap = new Map(employees?.map(e => [e.id, e]) || []);
+    const empMap = new Map(employees.map(e => [e.id, e]));
     const deptMap = new Map(depts?.map(d => [d.id, d]) || []);
     const stMap = new Map(stations?.map(s => [s.id, s]) || []);
 
