@@ -387,7 +387,63 @@ const StationManagerPortal = () => {
     if (reqId !== attReqIdRef.current) return;
     setAttRecords(all);
     setAttLoading(false);
-  }, [stationEmployees, attDateFrom, attDateTo]);
+
+    // Enrich with check-in/out location names from attendance_events
+    try {
+      if (all.length === 0) { setAttLocMap(new Map()); return; }
+      const dates = all.map((r: any) => r.date).sort();
+      const startIso = `${dates[0]}T00:00:00Z`;
+      const endIso = `${dates[dates.length - 1]}T23:59:59Z`;
+      const events: any[] = [];
+      const EV_CHUNK = 200;
+      for (let i = 0; i < empIds.length; i += EV_CHUNK) {
+        const slice = empIds.slice(i, i + EV_CHUNK);
+        const { data: evs } = await supabase
+          .from('attendance_events')
+          .select('employee_id, event_type, scan_time, location:qr_locations(name_ar, name_en)')
+          .in('employee_id', slice)
+          .gte('scan_time', startIso)
+          .lte('scan_time', endIso);
+        if (evs) events.push(...evs);
+      }
+      if (reqId !== attReqIdRef.current) return;
+      const byKey = new Map<string, Array<{ time: number; name: string }>>();
+      for (const ev of events) {
+        const name = ev.location ? (ar ? ev.location.name_ar : ev.location.name_en) : '';
+        if (!name) continue;
+        const type = ev.event_type === 'check_in' || ev.event_type === 'in' ? 'in'
+          : ev.event_type === 'check_out' || ev.event_type === 'out' ? 'out' : ev.event_type;
+        const key = `${ev.employee_id}|${type}`;
+        const arr = byKey.get(key) || [];
+        arr.push({ time: new Date(ev.scan_time).getTime(), name });
+        byKey.set(key, arr);
+      }
+      const pick = (empId: string, type: 'in' | 'out', iso: string | null): string | undefined => {
+        if (!iso) return undefined;
+        const list = byKey.get(`${empId}|${type}`);
+        if (!list || list.length === 0) return undefined;
+        const target = new Date(iso).getTime();
+        let best = list[0];
+        let bestDiff = Math.abs(list[0].time - target);
+        for (let i = 1; i < list.length; i++) {
+          const d = Math.abs(list[i].time - target);
+          if (d < bestDiff) { bestDiff = d; best = list[i]; }
+        }
+        return bestDiff <= 10 * 60 * 1000 ? best.name : undefined;
+      };
+      const locMap = new Map<string, { in?: string; out?: string }>();
+      for (const r of all) {
+        locMap.set(r.id, {
+          in: pick(r.employee_id, 'in', r.check_in),
+          out: pick(r.employee_id, 'out', r.check_out),
+        });
+      }
+      if (reqId !== attReqIdRef.current) return;
+      setAttLocMap(locMap);
+    } catch (e) {
+      console.error('Location enrich error:', e);
+    }
+  }, [stationEmployees, attDateFrom, attDateTo, ar]);
 
   // Lazy: only fetch attendance when tab is active; refetch on date range change
   useEffect(() => {
