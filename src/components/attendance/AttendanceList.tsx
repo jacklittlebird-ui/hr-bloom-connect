@@ -300,6 +300,8 @@ export const AttendanceList = () => {
           date: r.date,
           checkIn: ci,
           checkOut: co,
+          checkInIso: r.check_in,
+          checkOutIso: r.check_out,
           status: r.status,
           workHours: finalHours,
           workMinutes: finalMinutes,
@@ -307,6 +309,8 @@ export const AttendanceList = () => {
           notes: r.notes || undefined,
         };
       });
+      // Enrich with check-in/out locations from attendance_events
+      await enrichLocations(mapped);
       setRecords(mapped);
       setTotalCount(count ?? 0);
     }
