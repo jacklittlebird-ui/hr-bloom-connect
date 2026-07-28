@@ -707,13 +707,13 @@ export const AttendanceList = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
                     {ar ? 'جاري التحميل...' : 'Loading...'}
                   </TableCell>
                 </TableRow>
               ) : records.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
                     {ar ? 'لا توجد سجلات حضور' : 'No attendance records'}
                   </TableCell>
                 </TableRow>
