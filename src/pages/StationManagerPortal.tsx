@@ -1820,7 +1820,9 @@ const StationManagerPortal = () => {
                               <TableCell className="text-sm">{r.date}</TableCell>
                               <TableCell className="text-sm">{format(new Date(r.date), 'EEEE', { locale: ar ? arLocale : enUS })}</TableCell>
                               <TableCell className="font-mono text-sm">{checkInTime}</TableCell>
+                              <TableCell className="text-xs">{attLocMap.get(r.id)?.in || '-'}</TableCell>
                               <TableCell className="font-mono text-sm">{checkOutTime}</TableCell>
+                              <TableCell className="text-xs">{attLocMap.get(r.id)?.out || '-'}</TableCell>
                               <TableCell className="text-sm">{workH}</TableCell>
                               <TableCell>
                                 <Badge variant="outline" className={displayStatus.cls}>
