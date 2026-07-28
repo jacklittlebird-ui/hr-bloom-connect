@@ -349,6 +349,7 @@ const StationManagerPortal = () => {
   const [attDeptFilter, setAttDeptFilter] = useState('all');
   const [attRecords, setAttRecords] = useState<any[]>([]);
   const [attLoading, setAttLoading] = useState(false);
+  const [attLocMap, setAttLocMap] = useState<Map<string, { in?: string; out?: string }>>(new Map());
 
   const attReqIdRef = useRef(0);
   const fetchAttendance = useCallback(async () => {
