@@ -695,7 +695,9 @@ export const AttendanceList = () => {
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'القسم' : 'Department'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحضور' : 'Check In'}</TableHead>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'مكان الحضور' : 'Check-In Location'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الانصراف' : 'Check Out'}</TableHead>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'مكان الانصراف' : 'Check-Out Location'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'ساعات العمل' : 'Work Hours'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'إضافي' : 'Overtime'}</TableHead>
                 <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحالة' : 'Status'}</TableHead>
