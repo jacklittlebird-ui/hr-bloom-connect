@@ -479,13 +479,13 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
                 </div>
                 <div className={cn("flex gap-3", isRTL && "flex-row-reverse")}>
                   {!selectedEmpTodayRecord?.checkIn && (
-                    <Button size="lg" className="bg-success hover:bg-success/90 h-14 text-lg gap-2 shadow-lg" onClick={handleDirectCheckIn}>
+                    <Button size="lg" disabled={!directLocationId} className="bg-success hover:bg-success/90 h-14 text-lg gap-2 shadow-lg" onClick={handleDirectCheckIn}>
                       <LogIn className="w-5 h-5" />
                       {t('attendance.checkin.button')}
                     </Button>
                   )}
                   {isCheckedIn && (
-                    <Button size="lg" variant="destructive" className="h-14 text-lg gap-2 shadow-lg" onClick={handleDirectCheckOut}>
+                    <Button size="lg" variant="destructive" disabled={!directLocationId} className="h-14 text-lg gap-2 shadow-lg" onClick={handleDirectCheckOut}>
                       <LogOut className="w-5 h-5" />
                       {t('attendance.checkout.button')}
                     </Button>
