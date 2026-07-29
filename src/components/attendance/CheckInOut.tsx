@@ -128,29 +128,44 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const [manualEmployeeSearch, setManualEmployeeSearch] = useState('');
   const [manualLocationId, setManualLocationId] = useState<string>('');
   const [availableLocations, setAvailableLocations] = useState<Array<{ id: string; name_ar: string; name_en: string }>>([]);
+  const [directLocationId, setDirectLocationId] = useState<string>('');
+  const [directLocations, setDirectLocations] = useState<Array<{ id: string; name_ar: string; name_en: string }>>([]);
 
-  // Load QR locations linked to the selected employee's station
+  const loadLocationsForEmployee = useCallback(async (employeeId: string) => {
+    const emp = contextEmployees.find(e => e.employeeId === employeeId);
+    const stationId = emp?.stationId;
+    if (!stationId) return [] as Array<{ id: string; name_ar: string; name_en: string }>;
+    const { data: junction } = await supabase
+      .from('qr_location_stations')
+      .select('location_id')
+      .eq('station_id', stationId);
+    const junctionIds = (junction || []).map((r: any) => r.location_id);
+    const { data: locs } = await supabase
+      .from('qr_locations')
+      .select('id, name_ar, name_en, station_id')
+      .eq('is_active', true);
+    return (locs || []).filter((l: any) => l.station_id === stationId || junctionIds.includes(l.id));
+  }, [contextEmployees]);
+
+  // Load QR locations linked to the selected employee's station (manual entry)
   useEffect(() => {
     (async () => {
       setManualLocationId('');
       setAvailableLocations([]);
       if (!manualEmployee) return;
-      const emp = contextEmployees.find(e => e.employeeId === manualEmployee);
-      const stationId = emp?.stationId;
-      if (!stationId) return;
-      const { data: junction } = await supabase
-        .from('qr_location_stations')
-        .select('location_id')
-        .eq('station_id', stationId);
-      const junctionIds = (junction || []).map((r: any) => r.location_id);
-      const { data: locs } = await supabase
-        .from('qr_locations')
-        .select('id, name_ar, name_en, station_id')
-        .eq('is_active', true);
-      const filtered = (locs || []).filter((l: any) => l.station_id === stationId || junctionIds.includes(l.id));
-      setAvailableLocations(filtered);
+      setAvailableLocations(await loadLocationsForEmployee(manualEmployee));
     })();
-  }, [manualEmployee, contextEmployees]);
+  }, [manualEmployee, loadLocationsForEmployee]);
+
+  // Load QR locations for the direct check-in/out employee
+  useEffect(() => {
+    (async () => {
+      setDirectLocationId('');
+      setDirectLocations([]);
+      if (!selectedEmployee) return;
+      setDirectLocations(await loadLocationsForEmployee(selectedEmployee));
+    })();
+  }, [selectedEmployee, loadLocationsForEmployee]);
 
   const manualDepartments = useMemo(() => getDepartmentsForStation(manualStation), [contextEmployees, manualStation]);
 
@@ -302,18 +317,48 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const isCheckedIn = selectedEmpTodayRecord?.checkIn && !selectedEmpTodayRecord?.checkOut;
   const isFullyDone = selectedEmpTodayRecord?.checkIn && selectedEmpTodayRecord?.checkOut;
 
-  const handleDirectCheckIn = () => {
+  const insertDirectEvent = async (eventType: 'check_in' | 'check_out') => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+      if (!currentUserId) return;
+      const nowIso = new Date().toISOString();
+      await supabase.from('attendance_events').insert({
+        user_id: currentUserId,
+        employee_id: selectedEmployee,
+        event_type: eventType,
+        device_id: 'manual-direct',
+        location_id: directLocationId,
+        token_ts: nowIso,
+        scan_time: nowIso,
+      });
+    } catch (e) {
+      console.warn('[CheckInOut] Failed to record attendance_event:', e);
+    }
+  };
+
+  const handleDirectCheckIn = async () => {
     if (!selectedEmployee || !selectedEmpData) return;
+    if (!directLocationId) {
+      toast({ title: ar ? 'يجب اختيار الموقع لتسجيل الحضور' : 'Location is required to check in', variant: 'destructive' });
+      return;
+    }
     onCheckIn(selectedEmpData.id, selectedEmpData.name, selectedEmpData.nameAr, selectedEmpData.department);
+    await insertDirectEvent('check_in');
     toast({
       title: t('attendance.checkin.success'),
       description: `${language === 'ar' ? selectedEmpData.nameAr : selectedEmpData.name} - ${currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}`,
     });
   };
 
-  const handleDirectCheckOut = () => {
+  const handleDirectCheckOut = async () => {
     if (!selectedEmployee || !selectedEmpTodayRecord) return;
+    if (!directLocationId) {
+      toast({ title: ar ? 'يجب اختيار الموقع لتسجيل الانصراف' : 'Location is required to check out', variant: 'destructive' });
+      return;
+    }
     onCheckOut(selectedEmpTodayRecord.id);
+    await insertDirectEvent('check_out');
     const emp = selectedEmpData;
     toast({
       title: t('attendance.checkout.success'),
@@ -395,7 +440,32 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
 
           {/* Employee Status & Action Buttons */}
           {selectedEmployee && selectedEmpData && (
-            <div className="p-4 rounded-xl border border-border/30 bg-background/50 mb-4">
+            <div className="p-4 rounded-xl border border-border/30 bg-background/50 mb-4 space-y-4">
+              {/* Required Location */}
+              <div>
+                <Label className="mb-2 block text-sm font-medium">
+                  <MapPin className="w-4 h-4 inline-block mr-1" />
+                  {language === 'ar' ? 'الموقع (مطلوب)' : 'Location (required)'}
+                </Label>
+                <Select value={directLocationId} onValueChange={setDirectLocationId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر الموقع' : 'Select location'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {directLocations.length === 0 ? (
+                      <div className="p-4 text-center text-muted-foreground text-sm">
+                        {language === 'ar' ? 'لا يوجد مواقع مرتبطة بمحطة الموظف' : 'No locations linked to employee station'}
+                      </div>
+                    ) : (
+                      directLocations.map(l => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {language === 'ar' ? l.name_ar : l.name_en}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className={cn("flex items-center justify-between flex-wrap gap-4", isRTL && "flex-row-reverse")}>
                 <div>
                   <p className="text-lg font-bold">{language === 'ar' ? selectedEmpData.nameAr : selectedEmpData.name}</p>
@@ -409,13 +479,13 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
                 </div>
                 <div className={cn("flex gap-3", isRTL && "flex-row-reverse")}>
                   {!selectedEmpTodayRecord?.checkIn && (
-                    <Button size="lg" className="bg-success hover:bg-success/90 h-14 text-lg gap-2 shadow-lg" onClick={handleDirectCheckIn}>
+                    <Button size="lg" disabled={!directLocationId} className="bg-success hover:bg-success/90 h-14 text-lg gap-2 shadow-lg" onClick={handleDirectCheckIn}>
                       <LogIn className="w-5 h-5" />
                       {t('attendance.checkin.button')}
                     </Button>
                   )}
                   {isCheckedIn && (
-                    <Button size="lg" variant="destructive" className="h-14 text-lg gap-2 shadow-lg" onClick={handleDirectCheckOut}>
+                    <Button size="lg" variant="destructive" disabled={!directLocationId} className="h-14 text-lg gap-2 shadow-lg" onClick={handleDirectCheckOut}>
                       <LogOut className="w-5 h-5" />
                       {t('attendance.checkout.button')}
                     </Button>
