@@ -203,6 +203,10 @@ export const AttendanceList = () => {
 
   const handleSaveEdit = async () => {
     if (!editTarget) return;
+    if (!editLocationId) {
+      toast.error(ar ? 'يجب اختيار الموقع' : 'Location is required');
+      return;
+    }
     setSavingEdit(true);
     try {
       const ciIso = buildCairoIso(editTarget.date, editCheckIn);
@@ -219,11 +223,51 @@ export const AttendanceList = () => {
       };
       const { error } = await supabase.from('attendance_records').update(payload).eq('id', editTarget.id);
       if (error) throw error;
+
+      // Upsert attendance_events so location is visible in list
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+      if (currentUserId) {
+        const startIso = `${editTarget.date}T00:00:00Z`;
+        const endIso = `${editTarget.date}T23:59:59Z`;
+        await supabase
+          .from('attendance_events')
+          .delete()
+          .eq('employee_id', editTarget.employeeId)
+          .gte('scan_time', startIso)
+          .lte('scan_time', endIso)
+          .eq('device_id', 'manual-edit');
+        const events: any[] = [];
+        if (ciIso) events.push({
+          user_id: currentUserId,
+          employee_id: editTarget.employeeId,
+          event_type: 'check_in',
+          device_id: 'manual-edit',
+          location_id: editLocationId,
+          token_ts: ciIso,
+          scan_time: ciIso,
+        });
+        if (coIso) events.push({
+          user_id: currentUserId,
+          employee_id: editTarget.employeeId,
+          event_type: 'check_out',
+          device_id: 'manual-edit',
+          location_id: editLocationId,
+          token_ts: coIso,
+          scan_time: coIso,
+        });
+        if (events.length) await supabase.from('attendance_events').insert(events);
+      }
+
+      const locName = editLocations.find(l => l.id === editLocationId);
+      const locLabel = locName ? (ar ? locName.name_ar : locName.name_en) : null;
       toast.success(ar ? 'تم تحديث السجل بنجاح' : 'Record updated');
       setRecords(prev => prev.map(r => r.id === editTarget.id ? {
         ...r,
         checkIn: editCheckIn || null,
         checkOut: editCheckOut || null,
+        checkInLocation: editCheckIn ? locLabel : r.checkInLocation,
+        checkOutLocation: editCheckOut ? locLabel : r.checkOutLocation,
         status: editStatus,
         notes: editNotes || undefined,
         workHours: wt.hours,
