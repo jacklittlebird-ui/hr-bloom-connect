@@ -128,29 +128,44 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const [manualEmployeeSearch, setManualEmployeeSearch] = useState('');
   const [manualLocationId, setManualLocationId] = useState<string>('');
   const [availableLocations, setAvailableLocations] = useState<Array<{ id: string; name_ar: string; name_en: string }>>([]);
+  const [directLocationId, setDirectLocationId] = useState<string>('');
+  const [directLocations, setDirectLocations] = useState<Array<{ id: string; name_ar: string; name_en: string }>>([]);
 
-  // Load QR locations linked to the selected employee's station
+  const loadLocationsForEmployee = useCallback(async (employeeId: string) => {
+    const emp = contextEmployees.find(e => e.employeeId === employeeId);
+    const stationId = emp?.stationId;
+    if (!stationId) return [] as Array<{ id: string; name_ar: string; name_en: string }>;
+    const { data: junction } = await supabase
+      .from('qr_location_stations')
+      .select('location_id')
+      .eq('station_id', stationId);
+    const junctionIds = (junction || []).map((r: any) => r.location_id);
+    const { data: locs } = await supabase
+      .from('qr_locations')
+      .select('id, name_ar, name_en, station_id')
+      .eq('is_active', true);
+    return (locs || []).filter((l: any) => l.station_id === stationId || junctionIds.includes(l.id));
+  }, [contextEmployees]);
+
+  // Load QR locations linked to the selected employee's station (manual entry)
   useEffect(() => {
     (async () => {
       setManualLocationId('');
       setAvailableLocations([]);
       if (!manualEmployee) return;
-      const emp = contextEmployees.find(e => e.employeeId === manualEmployee);
-      const stationId = emp?.stationId;
-      if (!stationId) return;
-      const { data: junction } = await supabase
-        .from('qr_location_stations')
-        .select('location_id')
-        .eq('station_id', stationId);
-      const junctionIds = (junction || []).map((r: any) => r.location_id);
-      const { data: locs } = await supabase
-        .from('qr_locations')
-        .select('id, name_ar, name_en, station_id')
-        .eq('is_active', true);
-      const filtered = (locs || []).filter((l: any) => l.station_id === stationId || junctionIds.includes(l.id));
-      setAvailableLocations(filtered);
+      setAvailableLocations(await loadLocationsForEmployee(manualEmployee));
     })();
-  }, [manualEmployee, contextEmployees]);
+  }, [manualEmployee, loadLocationsForEmployee]);
+
+  // Load QR locations for the direct check-in/out employee
+  useEffect(() => {
+    (async () => {
+      setDirectLocationId('');
+      setDirectLocations([]);
+      if (!selectedEmployee) return;
+      setDirectLocations(await loadLocationsForEmployee(selectedEmployee));
+    })();
+  }, [selectedEmployee, loadLocationsForEmployee]);
 
   const manualDepartments = useMemo(() => getDepartmentsForStation(manualStation), [contextEmployees, manualStation]);
 
