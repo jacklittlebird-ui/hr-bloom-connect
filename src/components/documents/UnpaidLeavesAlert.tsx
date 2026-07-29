@@ -50,24 +50,34 @@ export const UnpaidLeavesAlert = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const { data: leaves, error } = await supabase
-      .from('leave_requests')
-      .select('id, employee_id, leave_type, start_date, end_date, days, reason, status')
-      .eq('leave_type', 'unpaid')
-      .eq('status', 'approved')
-      .order('start_date', { ascending: false });
+    const PAGE = 1000;
+    const leaves: any[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabase
+        .from('leave_requests')
+        .select('id, employee_id, leave_type, start_date, end_date, days, reason, status')
+        .eq('leave_type', 'unpaid')
+        .eq('status', 'approved')
+        .order('start_date', { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) { setRows([]); setLoading(false); return; }
+      leaves.push(...(data || []));
+      if (!data || data.length < PAGE) break;
+    }
 
-    if (error) { setRows([]); setLoading(false); return; }
-
-    const empIds = Array.from(new Set((leaves || []).map(l => l.employee_id))).filter(Boolean);
+    const empIds = Array.from(new Set(leaves.map(l => l.employee_id))).filter(Boolean);
     let empMap: Record<string, any> = {};
     if (empIds.length) {
-      const { data: emps } = await supabase
-        .from('employees')
-        .select('id, employee_code, name_ar, name_en, station_id, department_id')
-        .in('id', empIds);
-      (emps || []).forEach(e => { empMap[e.id] = e; });
+      const CHUNK = 200;
+      for (let i = 0; i < empIds.length; i += CHUNK) {
+        const { data: emps } = await supabase
+          .from('employees')
+          .select('id, employee_code, name_ar, name_en, station_id, department_id')
+          .in('id', empIds.slice(i, i + CHUNK));
+        (emps || []).forEach(e => { empMap[e.id] = e; });
+      }
     }
+
 
     const stationIds = Array.from(new Set(Object.values(empMap).map((e: any) => e.station_id).filter(Boolean)));
     const deptIds = Array.from(new Set(Object.values(empMap).map((e: any) => e.department_id).filter(Boolean)));
@@ -84,7 +94,7 @@ export const UnpaidLeavesAlert = () => {
       (ds || []).forEach((d: any) => { deptMap[d.id] = ar ? d.name_ar : d.name_en; });
     }
 
-    const mapped: UnpaidLeaveRow[] = (leaves || []).map(l => {
+    const mapped: UnpaidLeaveRow[] = leaves.map(l => {
       const emp = empMap[l.employee_id] || {};
       return {
         id: l.id,
