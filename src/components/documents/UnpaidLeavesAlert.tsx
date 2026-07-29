@@ -124,7 +124,9 @@ export const UnpaidLeavesAlert = () => {
 
     return rows.filter(r => {
       const startTs = new Date(r.start_date).getTime();
-      if (!(startTs >= fromTs && startTs <= toTs)) return false;
+      const endTs = new Date(r.end_date || r.start_date).getTime();
+      // Overlap: leave intersects [from, to] if start <= to AND end >= from
+      if (!(startTs <= toTs && endTs >= fromTs)) return false;
       if (!q) return true;
       return (
         r.employee_code.toLowerCase().includes(q) ||
