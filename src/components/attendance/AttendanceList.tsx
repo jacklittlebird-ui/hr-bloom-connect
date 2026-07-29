@@ -143,13 +143,55 @@ export const AttendanceList = () => {
   const [editStatus, setEditStatus] = useState('present');
   const [editNotes, setEditNotes] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [editLocationId, setEditLocationId] = useState<string>('');
+  const [editLocations, setEditLocations] = useState<Array<{ id: string; name_ar: string; name_en: string }>>([]);
 
-  const openEdit = (r: AttendanceRecord) => {
+  const openEdit = async (r: AttendanceRecord) => {
     setEditTarget(r);
     setEditCheckIn(r.checkIn || '');
     setEditCheckOut(r.checkOut || '');
     setEditStatus(r.status || 'present');
     setEditNotes(r.notes || '');
+    setEditLocationId('');
+    setEditLocations([]);
+
+    const stationId = employeeStationMap[r.employeeId];
+    if (!stationId) return;
+    const { data: junction } = await supabase
+      .from('qr_location_stations')
+      .select('location_id')
+      .eq('station_id', stationId);
+    const junctionIds = (junction || []).map((j: any) => j.location_id);
+    const { data: direct } = await supabase
+      .from('qr_locations')
+      .select('id, name_ar, name_en, is_active')
+      .eq('station_id', stationId)
+      .eq('is_active', true);
+    const allLocs: any[] = [...(direct || [])];
+    if (junctionIds.length > 0) {
+      const { data: jLocs } = await supabase
+        .from('qr_locations')
+        .select('id, name_ar, name_en, is_active')
+        .in('id', junctionIds)
+        .eq('is_active', true);
+      const seen = new Set(allLocs.map(l => l.id));
+      for (const l of (jLocs || [])) if (!seen.has((l as any).id)) allLocs.push(l);
+    }
+    setEditLocations(allLocs.map(l => ({ id: l.id, name_ar: l.name_ar, name_en: l.name_en })));
+
+    const startIso = `${r.date}T00:00:00Z`;
+    const endIso = `${r.date}T23:59:59Z`;
+    const { data: existing } = await supabase
+      .from('attendance_events')
+      .select('location_id, scan_time')
+      .eq('employee_id', r.employeeId)
+      .gte('scan_time', startIso)
+      .lte('scan_time', endIso)
+      .not('location_id', 'is', null)
+      .limit(1);
+    if (existing && existing[0]?.location_id) {
+      setEditLocationId(existing[0].location_id as string);
+    }
   };
 
   // Build Cairo ISO timestamp from date + HH:MM (DST-aware: +02:00 winter, +03:00 summer)
@@ -161,6 +203,10 @@ export const AttendanceList = () => {
 
   const handleSaveEdit = async () => {
     if (!editTarget) return;
+    if (!editLocationId) {
+      toast.error(ar ? 'يجب اختيار الموقع' : 'Location is required');
+      return;
+    }
     setSavingEdit(true);
     try {
       const ciIso = buildCairoIso(editTarget.date, editCheckIn);
@@ -177,11 +223,51 @@ export const AttendanceList = () => {
       };
       const { error } = await supabase.from('attendance_records').update(payload).eq('id', editTarget.id);
       if (error) throw error;
+
+      // Upsert attendance_events so location is visible in list
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+      if (currentUserId) {
+        const startIso = `${editTarget.date}T00:00:00Z`;
+        const endIso = `${editTarget.date}T23:59:59Z`;
+        await supabase
+          .from('attendance_events')
+          .delete()
+          .eq('employee_id', editTarget.employeeId)
+          .gte('scan_time', startIso)
+          .lte('scan_time', endIso)
+          .eq('device_id', 'manual-edit');
+        const events: any[] = [];
+        if (ciIso) events.push({
+          user_id: currentUserId,
+          employee_id: editTarget.employeeId,
+          event_type: 'check_in',
+          device_id: 'manual-edit',
+          location_id: editLocationId,
+          token_ts: ciIso,
+          scan_time: ciIso,
+        });
+        if (coIso) events.push({
+          user_id: currentUserId,
+          employee_id: editTarget.employeeId,
+          event_type: 'check_out',
+          device_id: 'manual-edit',
+          location_id: editLocationId,
+          token_ts: coIso,
+          scan_time: coIso,
+        });
+        if (events.length) await supabase.from('attendance_events').insert(events);
+      }
+
+      const locName = editLocations.find(l => l.id === editLocationId);
+      const locLabel = locName ? (ar ? locName.name_ar : locName.name_en) : null;
       toast.success(ar ? 'تم تحديث السجل بنجاح' : 'Record updated');
       setRecords(prev => prev.map(r => r.id === editTarget.id ? {
         ...r,
         checkIn: editCheckIn || null,
         checkOut: editCheckOut || null,
+        checkInLocation: editCheckIn ? locLabel : r.checkInLocation,
+        checkOutLocation: editCheckOut ? locLabel : r.checkOutLocation,
         status: editStatus,
         notes: editNotes || undefined,
         workHours: wt.hours,
@@ -867,6 +953,24 @@ export const AttendanceList = () => {
               </Select>
             </div>
             <div className="space-y-1.5">
+              <Label>{ar ? 'الموقع *' : 'Location *'}</Label>
+              <Select value={editLocationId} onValueChange={setEditLocationId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={ar ? 'اختر الموقع' : 'Select location'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {editLocations.map(l => (
+                    <SelectItem key={l.id} value={l.id}>{ar ? l.name_ar : l.name_en}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {editLocations.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {ar ? 'لا توجد مواقع مرتبطة بمحطة الموظف' : 'No locations linked to employee station'}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
               <Label>{ar ? 'ملاحظات' : 'Notes'}</Label>
               <Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={3} className="whitespace-pre-wrap break-words" />
             </div>
@@ -875,7 +979,7 @@ export const AttendanceList = () => {
             <Button variant="outline" onClick={() => setEditTarget(null)} disabled={savingEdit}>
               {ar ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button onClick={handleSaveEdit} disabled={savingEdit}>
+            <Button onClick={handleSaveEdit} disabled={savingEdit || !editLocationId}>
               {savingEdit ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ التعديلات' : 'Save Changes')}
             </Button>
           </DialogFooter>
