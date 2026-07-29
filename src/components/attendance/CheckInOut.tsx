@@ -126,6 +126,31 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const [manualNotes, setManualNotes] = useState('');
   const [manualSaving, setManualSaving] = useState(false);
   const [manualEmployeeSearch, setManualEmployeeSearch] = useState('');
+  const [manualLocationId, setManualLocationId] = useState<string>('');
+  const [availableLocations, setAvailableLocations] = useState<Array<{ id: string; name_ar: string; name_en: string }>>([]);
+
+  // Load QR locations linked to the selected employee's station
+  useEffect(() => {
+    (async () => {
+      setManualLocationId('');
+      setAvailableLocations([]);
+      if (!manualEmployee) return;
+      const emp = contextEmployees.find(e => e.employeeId === manualEmployee);
+      const stationId = emp?.stationId;
+      if (!stationId) return;
+      const { data: junction } = await supabase
+        .from('qr_location_stations')
+        .select('location_id')
+        .eq('station_id', stationId);
+      const junctionIds = (junction || []).map((r: any) => r.location_id);
+      const { data: locs } = await supabase
+        .from('qr_locations')
+        .select('id, name_ar, name_en, station_id')
+        .eq('is_active', true);
+      const filtered = (locs || []).filter((l: any) => l.station_id === stationId || junctionIds.includes(l.id));
+      setAvailableLocations(filtered);
+    })();
+  }, [manualEmployee, contextEmployees]);
 
   const manualDepartments = useMemo(() => getDepartmentsForStation(manualStation), [contextEmployees, manualStation]);
 
