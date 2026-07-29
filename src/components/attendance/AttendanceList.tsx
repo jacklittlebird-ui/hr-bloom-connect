@@ -143,13 +143,55 @@ export const AttendanceList = () => {
   const [editStatus, setEditStatus] = useState('present');
   const [editNotes, setEditNotes] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [editLocationId, setEditLocationId] = useState<string>('');
+  const [editLocations, setEditLocations] = useState<Array<{ id: string; name_ar: string; name_en: string }>>([]);
 
-  const openEdit = (r: AttendanceRecord) => {
+  const openEdit = async (r: AttendanceRecord) => {
     setEditTarget(r);
     setEditCheckIn(r.checkIn || '');
     setEditCheckOut(r.checkOut || '');
     setEditStatus(r.status || 'present');
     setEditNotes(r.notes || '');
+    setEditLocationId('');
+    setEditLocations([]);
+
+    const stationId = employeeStationMap[r.employeeId];
+    if (!stationId) return;
+    const { data: junction } = await supabase
+      .from('qr_location_stations')
+      .select('location_id')
+      .eq('station_id', stationId);
+    const junctionIds = (junction || []).map((j: any) => j.location_id);
+    const { data: direct } = await supabase
+      .from('qr_locations')
+      .select('id, name_ar, name_en, is_active')
+      .eq('station_id', stationId)
+      .eq('is_active', true);
+    const allLocs: any[] = [...(direct || [])];
+    if (junctionIds.length > 0) {
+      const { data: jLocs } = await supabase
+        .from('qr_locations')
+        .select('id, name_ar, name_en, is_active')
+        .in('id', junctionIds)
+        .eq('is_active', true);
+      const seen = new Set(allLocs.map(l => l.id));
+      for (const l of (jLocs || [])) if (!seen.has((l as any).id)) allLocs.push(l);
+    }
+    setEditLocations(allLocs.map(l => ({ id: l.id, name_ar: l.name_ar, name_en: l.name_en })));
+
+    const startIso = `${r.date}T00:00:00Z`;
+    const endIso = `${r.date}T23:59:59Z`;
+    const { data: existing } = await supabase
+      .from('attendance_events')
+      .select('location_id, scan_time')
+      .eq('employee_id', r.employeeId)
+      .gte('scan_time', startIso)
+      .lte('scan_time', endIso)
+      .not('location_id', 'is', null)
+      .limit(1);
+    if (existing && existing[0]?.location_id) {
+      setEditLocationId(existing[0].location_id as string);
+    }
   };
 
   // Build Cairo ISO timestamp from date + HH:MM (DST-aware: +02:00 winter, +03:00 summer)
