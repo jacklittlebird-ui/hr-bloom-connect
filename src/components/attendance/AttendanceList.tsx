@@ -953,6 +953,24 @@ export const AttendanceList = () => {
               </Select>
             </div>
             <div className="space-y-1.5">
+              <Label>{ar ? 'الموقع *' : 'Location *'}</Label>
+              <Select value={editLocationId} onValueChange={setEditLocationId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={ar ? 'اختر الموقع' : 'Select location'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {editLocations.map(l => (
+                    <SelectItem key={l.id} value={l.id}>{ar ? l.name_ar : l.name_en}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {editLocations.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {ar ? 'لا توجد مواقع مرتبطة بمحطة الموظف' : 'No locations linked to employee station'}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
               <Label>{ar ? 'ملاحظات' : 'Notes'}</Label>
               <Textarea value={editNotes} onChange={e => setEditNotes(e.target.value)} rows={3} className="whitespace-pre-wrap break-words" />
             </div>
