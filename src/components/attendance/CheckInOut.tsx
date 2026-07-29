@@ -178,6 +178,10 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
       toast({ title: ar ? 'يرجى تعبئة الموظف والتاريخ ووقت الحضور أو الانصراف على الأقل' : 'Please fill employee, date, and at least check-in or check-out time', variant: 'destructive' });
       return;
     }
+    if (!manualLocationId) {
+      toast({ title: ar ? 'يجب اختيار الموقع لتسجيل الحضور والانصراف' : 'Location is required to record check-in/out', variant: 'destructive' });
+      return;
+    }
     setManualSaving(true);
     try {
       // Use Africa/Cairo offset dynamically (handles DST: +02:00 winter, +03:00 summer)
@@ -240,19 +244,48 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
         if (error) throw error;
       }
 
+      // Record attendance_events so location shows up in reports
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+      if (currentUserId) {
+        const events: any[] = [];
+        if (ciTs) events.push({
+          user_id: currentUserId,
+          employee_id: manualEmployee,
+          event_type: 'check_in',
+          device_id: 'manual-entry',
+          location_id: manualLocationId,
+          token_ts: ciTs,
+          scan_time: ciTs,
+        });
+        if (finalCoTs) events.push({
+          user_id: currentUserId,
+          employee_id: manualEmployee,
+          event_type: 'check_out',
+          device_id: 'manual-entry',
+          location_id: manualLocationId,
+          token_ts: finalCoTs,
+          scan_time: finalCoTs,
+        });
+        if (events.length) {
+          await supabase.from('attendance_events').insert(events);
+        }
+      }
+
       toast({ title: ar ? 'تم حفظ التسجيل اليدوي بنجاح' : 'Manual entry saved successfully' });
       setManualCheckIn('');
       setManualCheckOut('');
       setManualNotes('');
       setManualEmployee('');
       setManualEmployeeSearch('');
+      setManualLocationId('');
       if (onRefresh) await onRefresh();
     } catch (e: any) {
       toast({ title: ar ? 'خطأ في الحفظ' : 'Save failed', description: e.message, variant: 'destructive' });
     } finally {
       setManualSaving(false);
     }
-  }, [manualEmployee, manualDate, manualCheckIn, manualCheckOut, manualNotes, ar, onRefresh]);
+  }, [manualEmployee, manualDate, manualCheckIn, manualCheckOut, manualNotes, manualLocationId, ar, onRefresh]);
 
   const mainDepartments = useMemo(() => getDepartmentsForStation(selectedStation), [contextEmployees, selectedStation]);
   
