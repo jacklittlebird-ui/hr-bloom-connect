@@ -317,18 +317,48 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const isCheckedIn = selectedEmpTodayRecord?.checkIn && !selectedEmpTodayRecord?.checkOut;
   const isFullyDone = selectedEmpTodayRecord?.checkIn && selectedEmpTodayRecord?.checkOut;
 
-  const handleDirectCheckIn = () => {
+  const insertDirectEvent = async (eventType: 'check_in' | 'check_out') => {
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+      if (!currentUserId) return;
+      const nowIso = new Date().toISOString();
+      await supabase.from('attendance_events').insert({
+        user_id: currentUserId,
+        employee_id: selectedEmployee,
+        event_type: eventType,
+        device_id: 'manual-direct',
+        location_id: directLocationId,
+        token_ts: nowIso,
+        scan_time: nowIso,
+      });
+    } catch (e) {
+      console.warn('[CheckInOut] Failed to record attendance_event:', e);
+    }
+  };
+
+  const handleDirectCheckIn = async () => {
     if (!selectedEmployee || !selectedEmpData) return;
+    if (!directLocationId) {
+      toast({ title: ar ? 'يجب اختيار الموقع لتسجيل الحضور' : 'Location is required to check in', variant: 'destructive' });
+      return;
+    }
     onCheckIn(selectedEmpData.id, selectedEmpData.name, selectedEmpData.nameAr, selectedEmpData.department);
+    await insertDirectEvent('check_in');
     toast({
       title: t('attendance.checkin.success'),
       description: `${language === 'ar' ? selectedEmpData.nameAr : selectedEmpData.name} - ${currentTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}`,
     });
   };
 
-  const handleDirectCheckOut = () => {
+  const handleDirectCheckOut = async () => {
     if (!selectedEmployee || !selectedEmpTodayRecord) return;
+    if (!directLocationId) {
+      toast({ title: ar ? 'يجب اختيار الموقع لتسجيل الانصراف' : 'Location is required to check out', variant: 'destructive' });
+      return;
+    }
     onCheckOut(selectedEmpTodayRecord.id);
+    await insertDirectEvent('check_out');
     const emp = selectedEmpData;
     toast({
       title: t('attendance.checkout.success'),
