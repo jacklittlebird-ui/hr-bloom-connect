@@ -440,7 +440,32 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
 
           {/* Employee Status & Action Buttons */}
           {selectedEmployee && selectedEmpData && (
-            <div className="p-4 rounded-xl border border-border/30 bg-background/50 mb-4">
+            <div className="p-4 rounded-xl border border-border/30 bg-background/50 mb-4 space-y-4">
+              {/* Required Location */}
+              <div>
+                <Label className="mb-2 block text-sm font-medium">
+                  <MapPin className="w-4 h-4 inline-block mr-1" />
+                  {language === 'ar' ? 'الموقع (مطلوب)' : 'Location (required)'}
+                </Label>
+                <Select value={directLocationId} onValueChange={setDirectLocationId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر الموقع' : 'Select location'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {directLocations.length === 0 ? (
+                      <div className="p-4 text-center text-muted-foreground text-sm">
+                        {language === 'ar' ? 'لا يوجد مواقع مرتبطة بمحطة الموظف' : 'No locations linked to employee station'}
+                      </div>
+                    ) : (
+                      directLocations.map(l => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {language === 'ar' ? l.name_ar : l.name_en}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className={cn("flex items-center justify-between flex-wrap gap-4", isRTL && "flex-row-reverse")}>
                 <div>
                   <p className="text-lg font-bold">{language === 'ar' ? selectedEmpData.nameAr : selectedEmpData.name}</p>
