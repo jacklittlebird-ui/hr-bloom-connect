@@ -979,7 +979,7 @@ export const AttendanceList = () => {
             <Button variant="outline" onClick={() => setEditTarget(null)} disabled={savingEdit}>
               {ar ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button onClick={handleSaveEdit} disabled={savingEdit}>
+            <Button onClick={handleSaveEdit} disabled={savingEdit || !editLocationId}>
               {savingEdit ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ التعديلات' : 'Save Changes')}
             </Button>
           </DialogFooter>
