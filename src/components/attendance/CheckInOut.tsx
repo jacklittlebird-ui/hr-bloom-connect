@@ -626,6 +626,28 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
               </div>
             </div>
 
+            {/* Location (required) */}
+            <div>
+              <Label className="mb-1 block text-sm">
+                <MapPin className="w-3.5 h-3.5 inline-block mr-1" />
+                {ar ? 'الموقع (إلزامي)' : 'Location (required)'} <span className="text-destructive">*</span>
+              </Label>
+              <Select value={manualLocationId} onValueChange={setManualLocationId} disabled={!manualEmployee}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={!manualEmployee ? (ar ? 'اختر الموظف أولاً' : 'Select employee first') : (ar ? 'اختر الموقع' : 'Select location')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLocations.length === 0 ? (
+                    <div className="p-3 text-center text-muted-foreground text-sm">{ar ? 'لا توجد مواقع مرتبطة بمحطة الموظف' : 'No locations linked to employee station'}</div>
+                  ) : (
+                    availableLocations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>{ar ? loc.name_ar : loc.name_en}</SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Notes */}
             <div>
               <Label className="mb-1 block text-sm">{ar ? 'ملاحظات' : 'Notes'}</Label>
