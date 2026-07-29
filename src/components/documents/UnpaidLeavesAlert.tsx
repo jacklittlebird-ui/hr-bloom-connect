@@ -94,7 +94,7 @@ export const UnpaidLeavesAlert = () => {
       (ds || []).forEach((d: any) => { deptMap[d.id] = ar ? d.name_ar : d.name_en; });
     }
 
-    const mapped: UnpaidLeaveRow[] = (leaves || []).map(l => {
+    const mapped: UnpaidLeaveRow[] = leaves.map(l => {
       const emp = empMap[l.employee_id] || {};
       return {
         id: l.id,
