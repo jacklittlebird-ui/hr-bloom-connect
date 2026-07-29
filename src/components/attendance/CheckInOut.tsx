@@ -126,6 +126,31 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const [manualNotes, setManualNotes] = useState('');
   const [manualSaving, setManualSaving] = useState(false);
   const [manualEmployeeSearch, setManualEmployeeSearch] = useState('');
+  const [manualLocationId, setManualLocationId] = useState<string>('');
+  const [availableLocations, setAvailableLocations] = useState<Array<{ id: string; name_ar: string; name_en: string }>>([]);
+
+  // Load QR locations linked to the selected employee's station
+  useEffect(() => {
+    (async () => {
+      setManualLocationId('');
+      setAvailableLocations([]);
+      if (!manualEmployee) return;
+      const emp = contextEmployees.find(e => e.employeeId === manualEmployee);
+      const stationId = emp?.stationId;
+      if (!stationId) return;
+      const { data: junction } = await supabase
+        .from('qr_location_stations')
+        .select('location_id')
+        .eq('station_id', stationId);
+      const junctionIds = (junction || []).map((r: any) => r.location_id);
+      const { data: locs } = await supabase
+        .from('qr_locations')
+        .select('id, name_ar, name_en, station_id')
+        .eq('is_active', true);
+      const filtered = (locs || []).filter((l: any) => l.station_id === stationId || junctionIds.includes(l.id));
+      setAvailableLocations(filtered);
+    })();
+  }, [manualEmployee, contextEmployees]);
 
   const manualDepartments = useMemo(() => getDepartmentsForStation(manualStation), [contextEmployees, manualStation]);
 
@@ -151,6 +176,10 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
   const handleManualSave = useCallback(async () => {
     if (!manualEmployee || !manualDate || (!manualCheckIn && !manualCheckOut)) {
       toast({ title: ar ? 'يرجى تعبئة الموظف والتاريخ ووقت الحضور أو الانصراف على الأقل' : 'Please fill employee, date, and at least check-in or check-out time', variant: 'destructive' });
+      return;
+    }
+    if (!manualLocationId) {
+      toast({ title: ar ? 'يجب اختيار الموقع لتسجيل الحضور والانصراف' : 'Location is required to record check-in/out', variant: 'destructive' });
       return;
     }
     setManualSaving(true);
@@ -215,19 +244,48 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
         if (error) throw error;
       }
 
+      // Record attendance_events so location shows up in reports
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+      if (currentUserId) {
+        const events: any[] = [];
+        if (ciTs) events.push({
+          user_id: currentUserId,
+          employee_id: manualEmployee,
+          event_type: 'check_in',
+          device_id: 'manual-entry',
+          location_id: manualLocationId,
+          token_ts: ciTs,
+          scan_time: ciTs,
+        });
+        if (finalCoTs) events.push({
+          user_id: currentUserId,
+          employee_id: manualEmployee,
+          event_type: 'check_out',
+          device_id: 'manual-entry',
+          location_id: manualLocationId,
+          token_ts: finalCoTs,
+          scan_time: finalCoTs,
+        });
+        if (events.length) {
+          await supabase.from('attendance_events').insert(events);
+        }
+      }
+
       toast({ title: ar ? 'تم حفظ التسجيل اليدوي بنجاح' : 'Manual entry saved successfully' });
       setManualCheckIn('');
       setManualCheckOut('');
       setManualNotes('');
       setManualEmployee('');
       setManualEmployeeSearch('');
+      setManualLocationId('');
       if (onRefresh) await onRefresh();
     } catch (e: any) {
       toast({ title: ar ? 'خطأ في الحفظ' : 'Save failed', description: e.message, variant: 'destructive' });
     } finally {
       setManualSaving(false);
     }
-  }, [manualEmployee, manualDate, manualCheckIn, manualCheckOut, manualNotes, ar, onRefresh]);
+  }, [manualEmployee, manualDate, manualCheckIn, manualCheckOut, manualNotes, manualLocationId, ar, onRefresh]);
 
   const mainDepartments = useMemo(() => getDepartmentsForStation(selectedStation), [contextEmployees, selectedStation]);
   
@@ -568,13 +626,35 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
               </div>
             </div>
 
+            {/* Location (required) */}
+            <div>
+              <Label className="mb-1 block text-sm">
+                <MapPin className="w-3.5 h-3.5 inline-block mr-1" />
+                {ar ? 'الموقع (إلزامي)' : 'Location (required)'} <span className="text-destructive">*</span>
+              </Label>
+              <Select value={manualLocationId} onValueChange={setManualLocationId} disabled={!manualEmployee}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={!manualEmployee ? (ar ? 'اختر الموظف أولاً' : 'Select employee first') : (ar ? 'اختر الموقع' : 'Select location')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLocations.length === 0 ? (
+                    <div className="p-3 text-center text-muted-foreground text-sm">{ar ? 'لا توجد مواقع مرتبطة بمحطة الموظف' : 'No locations linked to employee station'}</div>
+                  ) : (
+                    availableLocations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>{ar ? loc.name_ar : loc.name_en}</SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Notes */}
             <div>
               <Label className="mb-1 block text-sm">{ar ? 'ملاحظات' : 'Notes'}</Label>
               <Textarea value={manualNotes} onChange={e => setManualNotes(e.target.value)} placeholder={ar ? 'سبب التسجيل اليدوي...' : 'Reason for manual entry...'} rows={2} />
             </div>
 
-            <Button onClick={handleManualSave} disabled={manualSaving || !manualEmployee || (!manualCheckIn && !manualCheckOut)} className="gap-2 w-full md:w-auto">
+            <Button onClick={handleManualSave} disabled={manualSaving || !manualEmployee || !manualLocationId || (!manualCheckIn && !manualCheckOut)} className="gap-2 w-full md:w-auto">
               <Save className="w-4 h-4" />
               {manualSaving ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ التسجيل اليدوي' : 'Save Manual Entry')}
             </Button>
