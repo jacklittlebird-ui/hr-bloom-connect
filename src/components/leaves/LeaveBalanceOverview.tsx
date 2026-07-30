@@ -173,6 +173,7 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.balance.employee')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.balance.department')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{isAr ? 'المكان' : 'Station'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{isAr ? 'الحالة' : 'Status'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{isAr ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                   <TableHead className={cn("text-center", isRTL && "text-right")}>{t('leaves.balance.annualLeave')}</TableHead>
                   <TableHead className={cn("text-center", isRTL && "text-right")}>{t('leaves.balance.sickLeave')}</TableHead>
