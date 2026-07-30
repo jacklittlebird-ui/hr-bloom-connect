@@ -81,7 +81,7 @@ const Leaves = () => {
   const [empStationMap, setEmpStationMap] = useState<Map<string, string>>(new Map());
 
   const fetchData = async () => {
-    const employees = await fetchAllRows<any>((from, to) => supabase.from('employees').select('id, employee_code, name_en, name_ar, department_id, station_id, annual_leave_balance, sick_leave_balance, hire_date').order('employee_code').range(from, to));
+    const employees = await fetchAllRows<any>((from, to) => supabase.from('employees').select('id, employee_code, name_en, name_ar, department_id, station_id, status, annual_leave_balance, sick_leave_balance, hire_date').order('employee_code').range(from, to));
     const { data: deptData } = await supabase.from('departments').select('id, name_ar, name_en');
     const { data: stationData } = await supabase.from('stations').select('id, name_ar, name_en');
 
@@ -187,12 +187,11 @@ const Leaves = () => {
       };
     }));
 
-    // Leave balances - read from leave_balances table for current year
+    // Leave balances - read from leave_balances table for current year (paginated: >1000 rows)
     const currentYear = new Date().getFullYear();
-    const { data: dbBalances } = await supabase
-      .from('leave_balances')
-      .select('*')
-      .eq('year', currentYear);
+    const dbBalances = await fetchAllRows<any>((from, to) =>
+      supabase.from('leave_balances').select('*').eq('year', currentYear).order('employee_id').range(from, to)
+    );
 
     const [approvedYearLeaves, approvedYearPerms, approvedOt] = await Promise.all([
       fetchAllRows<ApprovedLeaveRow>((from, to) => supabase.from('leave_requests').select('employee_id, leave_type, days, start_date').eq('status', 'approved').gte('start_date', `${currentYear}-01-01`).lte('start_date', `${currentYear}-12-31`).range(from, to)),
@@ -246,6 +245,7 @@ const Leaves = () => {
       const permissionsUsed = permsUsedByEmp.get(e.id) || 0;
       return {
         employeeId: e.id, employeeCode: e.employee_code, employeeName: e.name_en, employeeNameAr: e.name_ar,
+        status: e.status || '',
         department: d ? (language === 'ar' ? d.name_ar : d.name_en) : '',
         station: s ? (language === 'ar' ? s.name_ar : s.name_en) : '',
         hireDate: e.hire_date || '',

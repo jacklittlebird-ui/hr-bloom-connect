@@ -13,6 +13,11 @@ import { EmployeeLeaveBalance } from '@/types/leaves';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+const STATUS_AR: Record<string, string> = {
+  active: 'نشط', inactive: 'غير نشط', suspended: 'موقوف', external_stations: 'محطات خارجية',
+  stopped: 'متوقف', absent: 'غائب', pending_hire: 'تحت التعيين', resigned: 'مستقيل', under_resignation: 'تحت الاستقالة',
+};
+
 interface LeaveBalanceOverviewProps {
   balances: EmployeeLeaveBalance[];
   onRefresh?: () => void;
@@ -173,6 +178,7 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.balance.employee')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.balance.department')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{isAr ? 'المكان' : 'Station'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{isAr ? 'الحالة' : 'Status'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{isAr ? 'تاريخ التعيين' : 'Hire Date'}</TableHead>
                   <TableHead className={cn("text-center", isRTL && "text-right")}>{t('leaves.balance.annualLeave')}</TableHead>
                   <TableHead className={cn("text-center", isRTL && "text-right")}>{t('leaves.balance.sickLeave')}</TableHead>
@@ -190,6 +196,9 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
                     </TableCell>
                     <TableCell>{t(`dept.${balance.department.toLowerCase()}`)}</TableCell>
                     <TableCell>{balance.station}</TableCell>
+                    <TableCell className={cn("text-xs", balance.status && balance.status !== 'active' && "text-destructive font-medium")}>
+                      {balance.status ? (isAr ? (STATUS_AR[balance.status] || balance.status) : balance.status) : '—'}
+                    </TableCell>
                     <TableCell>{balance.hireDate ? balance.hireDate.split('-').reverse().join('/') : '—'}</TableCell>
                     <TableCell>
                       <div className="flex flex-col items-center">
