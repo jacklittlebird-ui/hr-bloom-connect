@@ -33,6 +33,18 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
   const [editingBalance, setEditingBalance] = useState<EmployeeLeaveBalance | null>(null);
   const [form, setForm] = useState({ annualTotal: 0, sickTotal: 0, casualTotal: 0, permissionsTotal: 0 });
   const [saving, setSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const statusOptions = useMemo(() => {
+    const set = new Set<string>();
+    balances.forEach((b) => { if (b.status) set.add(b.status); });
+    return Array.from(set).sort();
+  }, [balances]);
+
+  const filteredBalances = useMemo(
+    () => (statusFilter === 'all' ? balances : balances.filter((b) => (b.status || '') === statusFilter)),
+    [balances, statusFilter]
+  );
 
   const openEdit = (balance: EmployeeLeaveBalance) => {
     setEditingBalance(balance);
