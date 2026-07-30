@@ -295,15 +295,23 @@ export const AttendanceList = () => {
     // Chunk employee IDs to avoid URL length issues
     const CHUNK = 200;
     const events: Array<{ employee_id: string; event_type: string; scan_time: string; location: { name_ar: string; name_en: string } | null }> = [];
+    const PAGE = 1000;
+    const MAX_PAGES = 30;
     for (let i = 0; i < empIds.length; i += CHUNK) {
       const slice = empIds.slice(i, i + CHUNK);
-      const { data } = await supabase
-        .from('attendance_events')
-        .select('employee_id, event_type, scan_time, location:qr_locations(name_ar, name_en)')
-        .in('employee_id', slice)
-        .gte('scan_time', startIso)
-        .lte('scan_time', endIso);
-      if (data) events.push(...(data as any));
+      for (let p = 0; p < MAX_PAGES; p++) {
+        const { data } = await supabase
+          .from('attendance_events')
+          .select('employee_id, event_type, scan_time, location:qr_locations(name_ar, name_en)')
+          .in('employee_id', slice)
+          .gte('scan_time', startIso)
+          .lte('scan_time', endIso)
+          .order('scan_time', { ascending: true })
+          .range(p * PAGE, p * PAGE + PAGE - 1);
+        if (!data || data.length === 0) break;
+        events.push(...(data as any));
+        if (data.length < PAGE) break;
+      }
     }
 
     // Group events by employee_id + event_type
