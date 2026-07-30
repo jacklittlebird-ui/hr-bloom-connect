@@ -410,7 +410,7 @@ const Leaves = () => {
         return (h || 0) * 60 + (m || 0);
       };
       const diff = toMin(co) - toMin(ci);
-      const hrs = cfg?.hours ?? Math.max(0, Math.round((diff < 0 ? diff + 1440 : diff) / 60 * 100) / 100);
+      const hrs = Math.max(0, Math.round((diff < 0 ? diff + 1440 : diff) / 60 * 100) / 100) || cfg?.hours || 0;
       const config = { checkIn: ci, checkOut: co, hours: hrs };
       const start = mission.startDate || mission.date;
       const end = mission.endDate || mission.date;
