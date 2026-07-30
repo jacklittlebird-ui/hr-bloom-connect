@@ -176,11 +176,30 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
 
       {/* Detailed Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
             {t('leaves.balance.detailedBalance')}
           </CardTitle>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">{isAr ? 'الحالة' : 'Status'}</span>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                <SelectItem value="all">{isAr ? 'كل الحالات' : 'All statuses'}</SelectItem>
+                {statusOptions.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {isAr ? (STATUS_AR[s] || s) : s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              ({filteredBalances.length})
+            </span>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-x-auto">
