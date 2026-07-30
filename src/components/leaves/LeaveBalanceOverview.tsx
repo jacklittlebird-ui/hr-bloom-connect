@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -32,6 +33,18 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
   const [editingBalance, setEditingBalance] = useState<EmployeeLeaveBalance | null>(null);
   const [form, setForm] = useState({ annualTotal: 0, sickTotal: 0, casualTotal: 0, permissionsTotal: 0 });
   const [saving, setSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
+  const statusOptions = useMemo(() => {
+    const set = new Set<string>();
+    balances.forEach((b) => { if (b.status) set.add(b.status); });
+    return Array.from(set).sort();
+  }, [balances]);
+
+  const filteredBalances = useMemo(
+    () => (statusFilter === 'all' ? balances : balances.filter((b) => (b.status || '') === statusFilter)),
+    [balances, statusFilter]
+  );
 
   const openEdit = (balance: EmployeeLeaveBalance) => {
     setEditingBalance(balance);
@@ -93,14 +106,14 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
     setSaving(false);
   };
 
-  const totalAnnualUsed = balances.reduce((sum, b) => sum + b.annualUsed, 0);
-  const totalAnnualTotal = balances.reduce((sum, b) => sum + b.annualTotal, 0);
-  const totalSickUsed = balances.reduce((sum, b) => sum + b.sickUsed, 0);
-  const totalSickTotal = balances.reduce((sum, b) => sum + b.sickTotal, 0);
-  const totalCasualUsed = balances.reduce((sum, b) => sum + b.casualUsed, 0);
-  const totalCasualTotal = balances.reduce((sum, b) => sum + b.casualTotal, 0);
-  const totalPermissionsUsed = balances.reduce((sum, b) => sum + b.permissionsUsed, 0);
-  const totalPermissionsTotal = balances.reduce((sum, b) => sum + b.permissionsTotal, 0);
+  const totalAnnualUsed = filteredBalances.reduce((sum, b) => sum + b.annualUsed, 0);
+  const totalAnnualTotal = filteredBalances.reduce((sum, b) => sum + b.annualTotal, 0);
+  const totalSickUsed = filteredBalances.reduce((sum, b) => sum + b.sickUsed, 0);
+  const totalSickTotal = filteredBalances.reduce((sum, b) => sum + b.sickTotal, 0);
+  const totalCasualUsed = filteredBalances.reduce((sum, b) => sum + b.casualUsed, 0);
+  const totalCasualTotal = filteredBalances.reduce((sum, b) => sum + b.casualTotal, 0);
+  const totalPermissionsUsed = filteredBalances.reduce((sum, b) => sum + b.permissionsUsed, 0);
+  const totalPermissionsTotal = filteredBalances.reduce((sum, b) => sum + b.permissionsTotal, 0);
 
   const summaryCards = [
     {
@@ -163,11 +176,30 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
 
       {/* Detailed Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
             {t('leaves.balance.detailedBalance')}
           </CardTitle>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">{isAr ? 'الحالة' : 'Status'}</span>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                <SelectItem value="all">{isAr ? 'كل الحالات' : 'All statuses'}</SelectItem>
+                {statusOptions.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {isAr ? (STATUS_AR[s] || s) : s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              ({filteredBalances.length})
+            </span>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-x-auto">
@@ -188,7 +220,7 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {balances.map((balance) => (
+                {filteredBalances.map((balance) => (
                   <TableRow key={balance.employeeId}>
                     <TableCell className="font-medium">{balance.employeeCode || '—'}</TableCell>
                     <TableCell className="font-medium">
