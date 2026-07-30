@@ -191,6 +191,9 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
                     </TableCell>
                     <TableCell>{t(`dept.${balance.department.toLowerCase()}`)}</TableCell>
                     <TableCell>{balance.station}</TableCell>
+                    <TableCell className={cn("text-xs", balance.status && balance.status !== 'active' && "text-destructive font-medium")}>
+                      {balance.status ? (isAr ? (STATUS_AR[balance.status] || balance.status) : balance.status) : '—'}
+                    </TableCell>
                     <TableCell>{balance.hireDate ? balance.hireDate.split('-').reverse().join('/') : '—'}</TableCell>
                     <TableCell>
                       <div className="flex flex-col items-center">
