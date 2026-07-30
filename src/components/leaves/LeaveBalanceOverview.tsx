@@ -106,14 +106,14 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
     setSaving(false);
   };
 
-  const totalAnnualUsed = balances.reduce((sum, b) => sum + b.annualUsed, 0);
-  const totalAnnualTotal = balances.reduce((sum, b) => sum + b.annualTotal, 0);
-  const totalSickUsed = balances.reduce((sum, b) => sum + b.sickUsed, 0);
-  const totalSickTotal = balances.reduce((sum, b) => sum + b.sickTotal, 0);
-  const totalCasualUsed = balances.reduce((sum, b) => sum + b.casualUsed, 0);
-  const totalCasualTotal = balances.reduce((sum, b) => sum + b.casualTotal, 0);
-  const totalPermissionsUsed = balances.reduce((sum, b) => sum + b.permissionsUsed, 0);
-  const totalPermissionsTotal = balances.reduce((sum, b) => sum + b.permissionsTotal, 0);
+  const totalAnnualUsed = filteredBalances.reduce((sum, b) => sum + b.annualUsed, 0);
+  const totalAnnualTotal = filteredBalances.reduce((sum, b) => sum + b.annualTotal, 0);
+  const totalSickUsed = filteredBalances.reduce((sum, b) => sum + b.sickUsed, 0);
+  const totalSickTotal = filteredBalances.reduce((sum, b) => sum + b.sickTotal, 0);
+  const totalCasualUsed = filteredBalances.reduce((sum, b) => sum + b.casualUsed, 0);
+  const totalCasualTotal = filteredBalances.reduce((sum, b) => sum + b.casualTotal, 0);
+  const totalPermissionsUsed = filteredBalances.reduce((sum, b) => sum + b.permissionsUsed, 0);
+  const totalPermissionsTotal = filteredBalances.reduce((sum, b) => sum + b.permissionsTotal, 0);
 
   const summaryCards = [
     {
@@ -201,7 +201,7 @@ export const LeaveBalanceOverview = ({ balances, onRefresh }: LeaveBalanceOvervi
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {balances.map((balance) => (
+                {filteredBalances.map((balance) => (
                   <TableRow key={balance.employeeId}>
                     <TableCell className="font-medium">{balance.employeeCode || '—'}</TableCell>
                     <TableCell className="font-medium">
