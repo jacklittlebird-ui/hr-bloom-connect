@@ -187,12 +187,11 @@ const Leaves = () => {
       };
     }));
 
-    // Leave balances - read from leave_balances table for current year
+    // Leave balances - read from leave_balances table for current year (paginated: >1000 rows)
     const currentYear = new Date().getFullYear();
-    const { data: dbBalances } = await supabase
-      .from('leave_balances')
-      .select('*')
-      .eq('year', currentYear);
+    const dbBalances = await fetchAllRows<any>((from, to) =>
+      supabase.from('leave_balances').select('*').eq('year', currentYear).order('employee_id').range(from, to)
+    );
 
     const [approvedYearLeaves, approvedYearPerms, approvedOt] = await Promise.all([
       fetchAllRows<ApprovedLeaveRow>((from, to) => supabase.from('leave_requests').select('employee_id, leave_type, days, start_date').eq('status', 'approved').gte('start_date', `${currentYear}-01-01`).lte('start_date', `${currentYear}-12-31`).range(from, to)),
