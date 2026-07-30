@@ -245,6 +245,7 @@ const Leaves = () => {
       const permissionsUsed = permsUsedByEmp.get(e.id) || 0;
       return {
         employeeId: e.id, employeeCode: e.employee_code, employeeName: e.name_en, employeeNameAr: e.name_ar,
+        status: e.status || '',
         department: d ? (language === 'ar' ? d.name_ar : d.name_en) : '',
         station: s ? (language === 'ar' ? s.name_ar : s.name_en) : '',
         hireDate: e.hire_date || '',
