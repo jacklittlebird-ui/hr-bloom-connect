@@ -402,7 +402,16 @@ const Leaves = () => {
     if (!ok) return;
     const mission = missionRequests.find(r => r.id === id);
     if (mission) {
-      const config = MISSION_TIME_CONFIG[mission.missionType];
+      const cfg = (MISSION_TIME_CONFIG as any)[mission.missionType];
+      const ci = mission.checkIn || cfg?.checkIn || '09:00';
+      const co = mission.checkOut || cfg?.checkOut || '17:00';
+      const toMin = (t: string) => {
+        const [h, m] = t.split(':').map(Number);
+        return (h || 0) * 60 + (m || 0);
+      };
+      const diff = toMin(co) - toMin(ci);
+      const hrs = cfg?.hours ?? Math.max(0, Math.round((diff < 0 ? diff + 1440 : diff) / 60 * 100) / 100);
+      const config = { checkIn: ci, checkOut: co, hours: hrs };
       const start = mission.startDate || mission.date;
       const end = mission.endDate || mission.date;
       const startD = new Date(start + 'T00:00:00');
