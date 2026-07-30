@@ -397,16 +397,24 @@ const StationManagerPortal = () => {
       const endIso = new Date(new Date(`${dates[dates.length - 1]}T00:00:00Z`).getTime() + 48 * 60 * 60 * 1000).toISOString();
       const events: any[] = [];
       const EV_CHUNK = 200;
+      const EV_PAGE = 1000;
+      const EV_MAX_PAGES = 30;
       for (let i = 0; i < empIds.length; i += EV_CHUNK) {
         const slice = empIds.slice(i, i + EV_CHUNK);
-        const { data: evs, error: evErr } = await supabase
-          .from('attendance_events')
-          .select('employee_id, event_type, scan_time, location:qr_locations(name_ar, name_en)')
-          .in('employee_id', slice)
-          .gte('scan_time', startIso)
-          .lte('scan_time', endIso);
-        if (evErr) console.error('attendance_events fetch error:', evErr);
-        if (evs) events.push(...evs);
+        for (let p = 0; p < EV_MAX_PAGES; p++) {
+          const { data: evs, error: evErr } = await supabase
+            .from('attendance_events')
+            .select('employee_id, event_type, scan_time, location:qr_locations(name_ar, name_en)')
+            .in('employee_id', slice)
+            .gte('scan_time', startIso)
+            .lte('scan_time', endIso)
+            .order('scan_time', { ascending: true })
+            .range(p * EV_PAGE, p * EV_PAGE + EV_PAGE - 1);
+          if (evErr) { console.error('attendance_events fetch error:', evErr); break; }
+          if (!evs || evs.length === 0) break;
+          events.push(...evs);
+          if (evs.length < EV_PAGE) break;
+        }
       }
       if (reqId !== attReqIdRef.current) return;
       const byKey = new Map<string, Array<{ time: number; name: string }>>();
