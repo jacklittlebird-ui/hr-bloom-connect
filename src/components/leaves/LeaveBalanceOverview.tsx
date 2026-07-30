@@ -13,6 +13,11 @@ import { EmployeeLeaveBalance } from '@/types/leaves';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+const STATUS_AR: Record<string, string> = {
+  active: 'نشط', inactive: 'غير نشط', suspended: 'موقوف', external_stations: 'محطات خارجية',
+  stopped: 'متوقف', absent: 'غائب', pending_hire: 'تحت التعيين', resigned: 'مستقيل', under_resignation: 'تحت الاستقالة',
+};
+
 interface LeaveBalanceOverviewProps {
   balances: EmployeeLeaveBalance[];
   onRefresh?: () => void;
