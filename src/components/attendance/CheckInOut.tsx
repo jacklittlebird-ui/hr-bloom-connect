@@ -258,7 +258,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
       // Record attendance_events so location shows up in reports
       const { data: authData } = await supabase.auth.getUser();
       const currentUserId = authData?.user?.id;
-      if (currentUserId) {
+      if (currentUserId && manualLocationId) {
         const events: any[] = [];
         if (ciTs) events.push({
           user_id: currentUserId,
