@@ -193,10 +193,6 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
       toast({ title: ar ? 'يرجى تعبئة الموظف والتاريخ ووقت الحضور أو الانصراف على الأقل' : 'Please fill employee, date, and at least check-in or check-out time', variant: 'destructive' });
       return;
     }
-    if (!manualLocationId) {
-      toast({ title: ar ? 'يجب اختيار الموقع لتسجيل الحضور والانصراف' : 'Location is required to record check-in/out', variant: 'destructive' });
-      return;
-    }
     setManualSaving(true);
     try {
       // Use Africa/Cairo offset dynamically (handles DST: +02:00 winter, +03:00 summer)
