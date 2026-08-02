@@ -692,11 +692,11 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
               </div>
             </div>
 
-            {/* Location (required) */}
+            {/* Location (optional) */}
             <div>
               <Label className="mb-1 block text-sm">
                 <MapPin className="w-3.5 h-3.5 inline-block mr-1" />
-                {ar ? 'الموقع (إلزامي)' : 'Location (required)'} <span className="text-destructive">*</span>
+                {ar ? 'الموقع (اختياري)' : 'Location (optional)'}
               </Label>
               <Select value={manualLocationId} onValueChange={setManualLocationId} disabled={!manualEmployee}>
                 <SelectTrigger className="w-full">
