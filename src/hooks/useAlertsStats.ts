@@ -106,8 +106,6 @@ export function useAlertsStats() {
         if (!e.job_title_ar || !e.basic_salary || !e.hire_date) j_total++;
       }
 
-      // Leave balances exhausted (any of annual/casual/sick == 0)
-      let lb_total = 0, lb_urgent = 0;
       // Leave balances: active employees with 6+ months who have no balance
       // record for the current year (or all totals = 0) — matches the tab list.
       const balanceMap = new Map((balances as any[]).map((b: any) => [b.employee_id, b]));
