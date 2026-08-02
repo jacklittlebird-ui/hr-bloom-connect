@@ -51,11 +51,28 @@ export function useAlertsStats() {
 
   const fetchAll = useCallback(async () => {
     try {
+      // leave_balances can exceed the 1000-row API cap → page through it
+      const fetchAllBalances = async () => {
+        const rows: any[] = [];
+        const PAGE = 1000;
+        for (let from = 0; ; from += PAGE) {
+          const { data, error } = await supabase
+            .from('leave_balances')
+            .select('employee_id, annual_total, casual_total, sick_total, permissions_total')
+            .eq('year', new Date().getFullYear())
+            .range(from, from + PAGE - 1);
+          if (error || !data) break;
+          rows.push(...data);
+          if (data.length < PAGE) break;
+        }
+        return rows;
+      };
+
       const [
         empRes,
         unpaidRes,
         penaltyRes,
-        balRes,
+        balances,
       ] = await Promise.all([
         supabase
           .from('employees')
@@ -70,12 +87,9 @@ export function useAlertsStats() {
         supabase
           .from('violations')
           .select('id, status, penalty, date'),
-        supabase
-          .from('leave_balances')
-          .select('employee_id, annual_total, casual_total, sick_total, permissions_total')
-          .eq('year', new Date().getFullYear())
-          .range(0, 4999),
+        fetchAllBalances(),
       ]);
+
 
       const employees = empRes.data || [];
       const unpaid = unpaidRes.data || [];
