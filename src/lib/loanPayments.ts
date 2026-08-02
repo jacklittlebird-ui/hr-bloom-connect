@@ -13,6 +13,12 @@ const getPeriodBounds = (year: string, month: string) => {
 };
 
 
+const chunk = <T,>(arr: T[], size: number): T[][] => {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+};
+
 const updateInstallmentsStatus = async (installmentIds: string[], status: 'paid' | 'pending') => {
   if (installmentIds.length === 0) return;
 
@@ -20,12 +26,14 @@ const updateInstallmentsStatus = async (installmentIds: string[], status: 'paid'
     ? { status: 'paid', paid_at: new Date().toISOString() }
     : { status: 'pending', paid_at: null };
 
-  const { error } = await supabase
-    .from('loan_installments')
-    .update(payload)
-    .in('id', installmentIds);
+  for (const ids of chunk(installmentIds, 200)) {
+    const { error } = await supabase
+      .from('loan_installments')
+      .update(payload)
+      .in('id', ids);
 
-  if (error) throw error;
+    if (error) throw error;
+  }
 };
 
 export const recalculateLoanSummary = async (loanId: string) => {
@@ -95,21 +103,38 @@ export const markLoanInstallmentsPaidForPeriod = async (employeeIds: string[], m
   if (uniqueEmployeeIds.length === 0) return;
 
   const { start, endExclusive } = getPeriodBounds(year, month);
-  const { data: installments, error } = await supabase
-    .from('loan_installments')
-    .select('id, loan_id')
-    .in('employee_id', uniqueEmployeeIds)
-    .gte('due_date', start)
-    .lt('due_date', endExclusive)
-    .eq('status', 'pending');
 
-  if (error) throw error;
-  if (!installments || installments.length === 0) return;
+  // Chunk employee ids: a single .in() with hundreds of UUIDs exceeds the URL
+  // limit and silently fails, leaving installments unmarked after payroll.
+  const installments: { id: string; loan_id: string }[] = [];
+  for (const ids of chunk(uniqueEmployeeIds, 100)) {
+    let from = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data, error } = await supabase
+        .from('loan_installments')
+        .select('id, loan_id')
+        .in('employee_id', ids)
+        .gte('due_date', start)
+        .lt('due_date', endExclusive)
+        .eq('status', 'pending')
+        .range(from, from + pageSize - 1);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      installments.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+  }
+
+  if (installments.length === 0) return;
 
   await updateInstallmentsStatus(installments.map((installment) => installment.id), 'paid');
 
   const loanIds = Array.from(new Set(installments.map((installment) => installment.loan_id)));
-  await Promise.all(loanIds.map(recalculateLoanSummary));
+  for (const batch of chunk(loanIds, 20)) {
+    await Promise.all(batch.map(recalculateLoanSummary));
+  }
 };
 
 export const revertLoanPaymentsForPeriod = async (employeeId: string, month: string, year: string) => {
