@@ -94,7 +94,7 @@ export function useAlertsStats() {
       const employees = empRes.data || [];
       const unpaid = unpaidRes.data || [];
       const penalties = penaltyRes.data || [];
-      const balances = balRes.data || [];
+      
 
       // Insurance renewals
       let r_total = 0, r_urgent = 0, r_expired = 0;
