@@ -193,10 +193,6 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
       toast({ title: ar ? 'يرجى تعبئة الموظف والتاريخ ووقت الحضور أو الانصراف على الأقل' : 'Please fill employee, date, and at least check-in or check-out time', variant: 'destructive' });
       return;
     }
-    if (!manualLocationId) {
-      toast({ title: ar ? 'يجب اختيار الموقع لتسجيل الحضور والانصراف' : 'Location is required to record check-in/out', variant: 'destructive' });
-      return;
-    }
     setManualSaving(true);
     try {
       // Use Africa/Cairo offset dynamically (handles DST: +02:00 winter, +03:00 summer)
@@ -262,7 +258,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
       // Record attendance_events so location shows up in reports
       const { data: authData } = await supabase.auth.getUser();
       const currentUserId = authData?.user?.id;
-      if (currentUserId) {
+      if (currentUserId && manualLocationId) {
         const events: any[] = [];
         if (ciTs) events.push({
           user_id: currentUserId,
@@ -696,11 +692,11 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
               </div>
             </div>
 
-            {/* Location (required) */}
+            {/* Location (optional) */}
             <div>
               <Label className="mb-1 block text-sm">
                 <MapPin className="w-3.5 h-3.5 inline-block mr-1" />
-                {ar ? 'الموقع (إلزامي)' : 'Location (required)'} <span className="text-destructive">*</span>
+                {ar ? 'الموقع (اختياري)' : 'Location (optional)'}
               </Label>
               <Select value={manualLocationId} onValueChange={setManualLocationId} disabled={!manualEmployee}>
                 <SelectTrigger className="w-full">
@@ -724,7 +720,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
               <Textarea value={manualNotes} onChange={e => setManualNotes(e.target.value)} placeholder={ar ? 'سبب التسجيل اليدوي...' : 'Reason for manual entry...'} rows={2} />
             </div>
 
-            <Button onClick={handleManualSave} disabled={manualSaving || !manualEmployee || !manualLocationId || (!manualCheckIn && !manualCheckOut)} className="gap-2 w-full md:w-auto">
+            <Button onClick={handleManualSave} disabled={manualSaving || !manualEmployee || (!manualCheckIn && !manualCheckOut)} className="gap-2 w-full md:w-auto">
               <Save className="w-4 h-4" />
               {manualSaving ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ التسجيل اليدوي' : 'Save Manual Entry')}
             </Button>
