@@ -108,17 +108,25 @@ export function useAlertsStats() {
 
       // Leave balances exhausted (any of annual/casual/sick == 0)
       let lb_total = 0, lb_urgent = 0;
-      for (const b of balances) {
-        const a = Number(b.annual_total ?? 0);
-        const c = Number(b.casual_total ?? 0);
-        const s = Number(b.sick_total ?? 0);
-        if (a <= 0 || c <= 0 || s <= 0) {
-          lb_total++;
-          if (a <= 0 && c <= 0) lb_urgent++;
-        }
+      // Leave balances: active employees with 6+ months who have no balance
+      // record for the current year (or all totals = 0) — matches the tab list.
+      const balanceMap = new Map((balances as any[]).map((b: any) => [b.employee_id, b]));
+      const now = Date.now();
+      let lb_total = 0, lb_urgent = 0;
+      for (const e of employees as any[]) {
+        if (!e.hire_date) continue;
+        const months = (now - new Date(e.hire_date).getTime()) / (1000 * 60 * 60 * 24 * 30.44);
+        if (months < 6) continue;
+        const b = balanceMap.get(e.id);
+        const empty = !b || (
+          Number(b.annual_total ?? 0) === 0 &&
+          Number(b.casual_total ?? 0) === 0 &&
+          Number(b.sick_total ?? 0) === 0 &&
+          Number(b.permissions_total ?? 0) === 0
+        );
+        if (empty) { lb_total++; lb_urgent++; }
       }
 
-      // Unpaid leaves
       const ul_total = unpaid.length;
       const ul_urgent = unpaid.filter((u: any) => u.status === 'pending').length;
 
