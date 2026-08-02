@@ -720,7 +720,7 @@ export const CheckInOut = ({ records, onCheckIn, onCheckOut, onRefresh }: CheckI
               <Textarea value={manualNotes} onChange={e => setManualNotes(e.target.value)} placeholder={ar ? 'سبب التسجيل اليدوي...' : 'Reason for manual entry...'} rows={2} />
             </div>
 
-            <Button onClick={handleManualSave} disabled={manualSaving || !manualEmployee || !manualLocationId || (!manualCheckIn && !manualCheckOut)} className="gap-2 w-full md:w-auto">
+            <Button onClick={handleManualSave} disabled={manualSaving || !manualEmployee || (!manualCheckIn && !manualCheckOut)} className="gap-2 w-full md:w-auto">
               <Save className="w-4 h-4" />
               {manualSaving ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ التسجيل اليدوي' : 'Save Manual Entry')}
             </Button>
