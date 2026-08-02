@@ -60,7 +60,7 @@ export function useAlertsStats() {
         supabase
           .from('employees')
           .select(
-            'social_insurance_end_date, id_expiry_date, bank_account_number, bank_id_number, bank_name, job_title_ar, basic_salary, hire_date, status',
+            'id, social_insurance_end_date, id_expiry_date, bank_account_number, bank_id_number, bank_name, job_title_ar, basic_salary, hire_date, status',
           )
           .eq('status', 'active'),
         supabase
@@ -72,7 +72,9 @@ export function useAlertsStats() {
           .select('id, status, penalty, date'),
         supabase
           .from('leave_balances')
-          .select('annual_total, casual_total, sick_total'),
+          .select('employee_id, annual_total, casual_total, sick_total, permissions_total')
+          .eq('year', new Date().getFullYear())
+          .range(0, 4999),
       ]);
 
       const employees = empRes.data || [];
