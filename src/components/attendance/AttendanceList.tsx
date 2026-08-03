@@ -203,10 +203,13 @@ export const AttendanceList = () => {
 
   const handleSaveEdit = async () => {
     if (!editTarget) return;
-    if (!editLocationId) {
+    // Location is only required when the employee's station actually has
+    // linked QR locations to choose from — otherwise saving would be impossible.
+    if (!editLocationId && editLocations.length > 0) {
       toast.error(ar ? 'يجب اختيار الموقع' : 'Location is required');
       return;
     }
+
     setSavingEdit(true);
     try {
       const ciIso = buildCairoIso(editTarget.date, editCheckIn);
@@ -227,7 +230,7 @@ export const AttendanceList = () => {
       // Upsert attendance_events so location is visible in list
       const { data: authData } = await supabase.auth.getUser();
       const currentUserId = authData?.user?.id;
-      if (currentUserId) {
+      if (currentUserId && editLocationId) {
         const startIso = `${editTarget.date}T00:00:00Z`;
         const endIso = `${editTarget.date}T23:59:59Z`;
         await supabase
