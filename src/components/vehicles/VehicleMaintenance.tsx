@@ -14,7 +14,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar, Download, FileDown, FileType2, FileSpreadsheet, Loader2, FilterX, Layers, Pencil } from 'lucide-react';
+import { Plus, Search, Wrench, Trash2, Building2, AlertCircle, Calendar, Download, FileDown, FileType2, FileSpreadsheet, Loader2, FilterX, Layers, Pencil, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { StationCombobox, StationOption } from './StationCombobox';
@@ -203,6 +203,23 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
       fetchData();
     } finally {
       setSaving(false);
+    }
+  };
+
+  const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
+
+  const handleMarkDone = async (r: MaintenanceRecord) => {
+    setMarkingDoneId(r.id);
+    try {
+      const { error } = await supabase
+        .from('vehicle_maintenance')
+        .update({ next_maintenance_odometer: null })
+        .eq('id', r.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success(isAr ? 'تم إزالة تنبيه الصيانة القادمة' : 'Upcoming maintenance alert cleared');
+      fetchData(false);
+    } finally {
+      setMarkingDoneId(null);
     }
   };
 
@@ -599,6 +616,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                 const v = vehicleMap[r.vehicle_id];
                 const overdue = (remaining ?? 0) <= 0;
                 const close = (remaining ?? 0) <= 200;
+                const isMarking = markingDoneId === r.id;
                 return (
                   <div key={r.id} className="border rounded p-2 bg-background">
                     <div className="flex items-center justify-between gap-2">
@@ -614,6 +632,20 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                       <Wrench className="w-3 h-3" />
                       {isAr ? 'العداد:' : 'Odo:'} {latest?.toLocaleString() ?? '—'} → {r.next_maintenance_odometer?.toLocaleString()} {isAr ? 'كم' : 'km'}
                     </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full mt-2 h-8 text-xs border-green-600 text-green-700 hover:bg-green-50 hover:text-green-800"
+                      onClick={() => handleMarkDone(r)}
+                      disabled={isMarking}
+                    >
+                      {isMarking ? (
+                        <Loader2 className="w-3 h-3 me-1 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-3 h-3 me-1" />
+                      )}
+                      {isAr ? 'تم الانتهاء' : 'Done'}
+                    </Button>
                   </div>
                 );
               })}
