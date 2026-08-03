@@ -5,12 +5,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { usePagination } from '@/hooks/usePagination';
 import { Search, MinusCircle, AlertCircle, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ExportButton } from '@/components/leaves/ExportButton';
 import type { ExportColumn } from '@/lib/leavesExport';
+
+const EMP_STATUS_AR: Record<string, string> = {
+  active: 'نشط', inactive: 'غير نشط', suspended: 'موقوف', external_stations: 'محطات خارجية',
+  stopped: 'متوقف', absent: 'غائب', pending_hire: 'تحت التعيين', resigned: 'مستقيل', under_resignation: 'تحت الاستقالة',
+};
+
+const EMP_STATUS_OPTIONS = ['active', 'inactive', 'suspended', 'resigned', 'absent', 'pending_hire', 'under_resignation', 'external_stations', 'stopped'];
+
 
 interface ViolationRow {
   id: string;
@@ -26,8 +35,10 @@ interface ViolationRow {
   penalty?: string;
   penalty_amount: number;
   status: string;
+  employee_status?: string;
   created_by_name?: string;
 }
+
 
 const statusBadge = (s: string, ar: boolean) => {
   if (s === 'approved') return { label: ar ? 'معتمد' : 'Approved', cls: 'bg-emerald-100 text-emerald-700 border-emerald-300' };
@@ -55,6 +66,8 @@ export const PenaltyDeductionsAlert = () => {
   const todayStr = now.toISOString().slice(0, 10);
   const [fromDate, setFromDate] = useState(firstOfYear);
   const [toDate, setToDate] = useState(todayStr);
+  const [statusFilter, setStatusFilter] = useState('all');
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -72,10 +85,11 @@ export const PenaltyDeductionsAlert = () => {
     if (empIds.length) {
       const { data: emps } = await supabase
         .from('employees')
-        .select('id, employee_code, name_ar, name_en, station_id, department_id')
+        .select('id, employee_code, name_ar, name_en, station_id, department_id, status')
         .in('id', empIds);
       (emps || []).forEach(e => { empMap[e.id] = e; });
     }
+
 
     const stationIds = Array.from(new Set(Object.values(empMap).map((e: any) => e.station_id).filter(Boolean)));
     const deptIds = Array.from(new Set(Object.values(empMap).map((e: any) => e.department_id).filter(Boolean)));
@@ -113,9 +127,11 @@ export const PenaltyDeductionsAlert = () => {
         penalty: v.penalty,
         penalty_amount: parsePenaltyAmount(v.penalty),
         status: v.status,
+        employee_status: emp.status || '',
         created_by_name: v.created_by ? userMap[v.created_by] : '-',
       };
     });
+
 
     setRows(mapped);
     setLoading(false);
@@ -127,6 +143,7 @@ export const PenaltyDeductionsAlert = () => {
     const q = search.trim().toLowerCase();
     return rows.filter(r => {
       if (r.date < fromDate || r.date > toDate) return false;
+      if (statusFilter !== 'all' && r.employee_status !== statusFilter) return false;
       if (!q) return true;
       return (
         r.employee_code.toLowerCase().includes(q) ||
@@ -138,7 +155,8 @@ export const PenaltyDeductionsAlert = () => {
         (r.description || '').toLowerCase().includes(q)
       );
     });
-  }, [rows, search, fromDate, toDate]);
+  }, [rows, search, fromDate, toDate, statusFilter]);
+
 
   const totalAmount = filtered.reduce((s, r) => s + r.penalty_amount, 0);
   const totalEmployees = new Set(filtered.map(r => r.employee_id)).size;
@@ -200,6 +218,21 @@ export const PenaltyDeductionsAlert = () => {
           <label className="text-xs text-muted-foreground">{ar ? 'إلى تاريخ' : 'To'}</label>
           <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="h-10 w-44" />
         </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground">{ar ? 'حالة الموظف' : 'Employee Status'}</label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-10 w-44">
+              <SelectValue placeholder={ar ? 'الحالة' : 'Status'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{ar ? 'كل الحالات' : 'All Statuses'}</SelectItem>
+              {EMP_STATUS_OPTIONS.map(s => (
+                <SelectItem key={s} value={s}>{ar ? (EMP_STATUS_AR[s] || s) : s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <ExportButton
           rows={filtered}
           columns={[
@@ -207,6 +240,7 @@ export const PenaltyDeductionsAlert = () => {
             { header: ar ? 'اسم الموظف' : 'Employee Name', accessor: r => ar ? r.employee_name_ar : r.employee_name_en },
             { header: ar ? 'المحطة' : 'Station', accessor: r => r.station_name || '-' },
             { header: ar ? 'القسم' : 'Department', accessor: r => r.department_name || '-' },
+            { header: ar ? 'حالة الموظف' : 'Employee Status', accessor: r => ar ? (EMP_STATUS_AR[r.employee_status || ''] || r.employee_status || '-') : (r.employee_status || '-') },
             { header: ar ? 'التاريخ' : 'Date', accessor: r => formatDate(r.date) },
             { header: ar ? 'النوع' : 'Type', accessor: r => r.type },
             { header: ar ? 'الوصف' : 'Description', accessor: r => r.description || '-' },
@@ -217,6 +251,7 @@ export const PenaltyDeductionsAlert = () => {
           filenameBase={ar ? 'الخصومات_والجزاءات' : 'penalties_deductions'}
           title={ar ? 'تقرير الخصومات والجزاءات' : 'Penalties & Deductions Report'}
         />
+
       </div>
 
       <Card>
@@ -228,6 +263,7 @@ export const PenaltyDeductionsAlert = () => {
                 <TableHead>{ar ? 'اسم الموظف' : 'Employee Name'}</TableHead>
                 <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead>{ar ? 'القسم' : 'Department'}</TableHead>
+                <TableHead>{ar ? 'حالة الموظف' : 'Employee Status'}</TableHead>
                 <TableHead>{ar ? 'التاريخ' : 'Date'}</TableHead>
                 <TableHead>{ar ? 'النوع' : 'Type'}</TableHead>
                 <TableHead>{ar ? 'الوصف' : 'Description'}</TableHead>
@@ -238,9 +274,9 @@ export const PenaltyDeductionsAlert = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
               ) : paginatedItems.length === 0 ? (
-                <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد خصومات مسجلة في هذه الفترة' : 'No penalties registered in this period'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد خصومات مسجلة في هذه الفترة' : 'No penalties registered in this period'}</TableCell></TableRow>
               ) : paginatedItems.map(r => {
                 const sb = statusBadge(r.status, ar);
                 return (
@@ -249,10 +285,16 @@ export const PenaltyDeductionsAlert = () => {
                     <TableCell className="font-medium">{ar ? r.employee_name_ar : r.employee_name_en}</TableCell>
                     <TableCell>{r.station_name || '-'}</TableCell>
                     <TableCell>{r.department_name || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={r.employee_status === 'active' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : r.employee_status ? 'bg-amber-100 text-amber-700 border-amber-300' : ''}>
+                        {ar ? (EMP_STATUS_AR[r.employee_status || ''] || r.employee_status || '-') : (r.employee_status || '-')}
+                      </Badge>
+                    </TableCell>
                     <TableCell>{formatDate(r.date)}</TableCell>
                     <TableCell>{r.type}</TableCell>
                     <TableCell className="max-w-xs truncate" title={r.description || ''}>{r.description || '-'}</TableCell>
                     <TableCell>
+
                       <Badge className="bg-red-100 text-red-700 border-red-300">
                         {r.penalty || '-'}
                       </Badge>

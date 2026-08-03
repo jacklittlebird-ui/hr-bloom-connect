@@ -5,12 +5,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { usePagination } from '@/hooks/usePagination';
 import { Search, Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ExportButton } from '@/components/leaves/ExportButton';
 import type { ExportColumn } from '@/lib/leavesExport';
+
+const STATUS_AR: Record<string, string> = {
+  active: 'نشط', inactive: 'غير نشط', suspended: 'موقوف', external_stations: 'محطات خارجية',
+  stopped: 'متوقف', absent: 'غائب', pending_hire: 'تحت التعيين', resigned: 'مستقيل', under_resignation: 'تحت الاستقالة',
+};
+
+const STATUS_OPTIONS = ['active', 'inactive', 'suspended', 'resigned', 'absent', 'pending_hire', 'under_resignation', 'external_stations', 'stopped'];
+
 
 interface UnpaidLeaveRow {
   id: string;
@@ -24,7 +33,9 @@ interface UnpaidLeaveRow {
   end_date: string;
   days: number;
   reason?: string | null;
+  status?: string;
 }
+
 
 const formatDate = (d: string) => {
   if (!d) return '-';
@@ -47,6 +58,8 @@ export const UnpaidLeavesAlert = () => {
   const yearStartStr = `${new Date().getFullYear()}-01-01`;
   const [fromDate, setFromDate] = useState(yearStartStr);
   const [toDate, setToDate] = useState(todayStr);
+  const [statusFilter, setStatusFilter] = useState('all');
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -72,8 +85,9 @@ export const UnpaidLeavesAlert = () => {
       for (let i = 0; i < empIds.length; i += CHUNK) {
         const { data: emps } = await supabase
           .from('employees')
-          .select('id, employee_code, name_ar, name_en, station_id, department_id')
+          .select('id, employee_code, name_ar, name_en, station_id, department_id, status')
           .in('id', empIds.slice(i, i + CHUNK));
+
         (emps || []).forEach(e => { empMap[e.id] = e; });
       }
     }
@@ -108,8 +122,10 @@ export const UnpaidLeavesAlert = () => {
         end_date: l.end_date,
         days: Number(l.days) || 0,
         reason: l.reason,
+        status: emp.status || '',
       };
     });
+
 
     setRows(mapped);
     setLoading(false);
@@ -127,6 +143,7 @@ export const UnpaidLeavesAlert = () => {
       const endTs = new Date(r.end_date || r.start_date).getTime();
       // Overlap: leave intersects [from, to] if start <= to AND end >= from
       if (!(startTs <= toTs && endTs >= fromTs)) return false;
+      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (!q) return true;
       return (
         r.employee_code.toLowerCase().includes(q) ||
@@ -137,7 +154,8 @@ export const UnpaidLeavesAlert = () => {
         (r.reason || '').toLowerCase().includes(q)
       );
     });
-  }, [rows, search, fromDate, toDate]);
+  }, [rows, search, fromDate, toDate, statusFilter]);
+
 
   const totalDays = filtered.reduce((sum, r) => sum + (r.days || 0), 0);
   const totalEmployees = new Set(filtered.map(r => r.employee_id)).size;
@@ -194,6 +212,21 @@ export const UnpaidLeavesAlert = () => {
           <label className="text-xs text-muted-foreground">{ar ? 'إلى تاريخ' : 'To'}</label>
           <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="w-44" />
         </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground">{ar ? 'حالة الموظف' : 'Employee Status'}</label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder={ar ? 'الحالة' : 'Status'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{ar ? 'كل الحالات' : 'All Statuses'}</SelectItem>
+              {STATUS_OPTIONS.map(s => (
+                <SelectItem key={s} value={s}>{ar ? (STATUS_AR[s] || s) : s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <ExportButton
           rows={filtered}
           columns={[
@@ -201,6 +234,7 @@ export const UnpaidLeavesAlert = () => {
             { header: ar ? 'اسم الموظف' : 'Employee Name', accessor: r => ar ? r.employee_name_ar : r.employee_name_en },
             { header: ar ? 'المحطة' : 'Station', accessor: r => r.station_name || '-' },
             { header: ar ? 'القسم' : 'Department', accessor: r => r.department_name || '-' },
+            { header: ar ? 'الحالة' : 'Status', accessor: r => ar ? (STATUS_AR[r.status || ''] || r.status || '-') : (r.status || '-') },
             { header: ar ? 'من تاريخ' : 'From Date', accessor: r => formatDate(r.start_date) },
             { header: ar ? 'إلى تاريخ' : 'To Date', accessor: r => formatDate(r.end_date) },
             { header: ar ? 'أيام الخصم' : 'Deduction Days', accessor: r => r.days },
@@ -209,6 +243,7 @@ export const UnpaidLeavesAlert = () => {
           filenameBase={ar ? 'الإجازات_بدون_راتب' : 'unpaid_leaves'}
           title={ar ? 'تقرير الإجازات بدون راتب' : 'Unpaid Leaves Report'}
         />
+
       </div>
 
       <Card>
@@ -220,6 +255,7 @@ export const UnpaidLeavesAlert = () => {
                 <TableHead>{ar ? 'اسم الموظف' : 'Employee Name'}</TableHead>
                 <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead>{ar ? 'القسم' : 'Department'}</TableHead>
+                <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
                 <TableHead>{ar ? 'من تاريخ' : 'From Date'}</TableHead>
                 <TableHead>{ar ? 'إلى تاريخ' : 'To Date'}</TableHead>
                 <TableHead>{ar ? 'أيام الخصم' : 'Deduction Days'}</TableHead>
@@ -228,15 +264,20 @@ export const UnpaidLeavesAlert = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
               ) : paginatedItems.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد إجازات بدون راتب في هذه الفترة' : 'No unpaid leaves in this period'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد إجازات بدون راتب في هذه الفترة' : 'No unpaid leaves in this period'}</TableCell></TableRow>
               ) : paginatedItems.map(r => (
                 <TableRow key={r.id}>
                   <TableCell className="font-mono">{r.employee_code}</TableCell>
                   <TableCell className="font-medium">{ar ? r.employee_name_ar : r.employee_name_en}</TableCell>
                   <TableCell>{r.station_name || '-'}</TableCell>
                   <TableCell>{r.department_name || '-'}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={r.status === 'active' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : r.status ? 'bg-amber-100 text-amber-700 border-amber-300' : ''}>
+                      {ar ? (STATUS_AR[r.status || ''] || r.status || '-') : (r.status || '-')}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{formatDate(r.start_date)}</TableCell>
                   <TableCell>{formatDate(r.end_date)}</TableCell>
                   <TableCell>
@@ -248,6 +289,7 @@ export const UnpaidLeavesAlert = () => {
                 </TableRow>
               ))}
             </TableBody>
+
           </Table>
         </CardContent>
       </Card>
