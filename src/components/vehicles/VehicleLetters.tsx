@@ -60,7 +60,7 @@ const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string, isCa
       <p class="line">تحية طيبة وبعد،،،</p>
       <p class="para">
         نرجو التكرم من سيادتكم بالموافقة على إصدار / تجديد ترخيص النقل البري الخاص بسيارة منشأة
-        لينك إيرو تريدنج إجنسي تحت رقم 1307926، والعاملة بموقع <b>${stationName}</b>، وبياناتها كالتالي :
+        ${entity}، والعاملة بموقع <b>${stationName}</b>، وبياناتها كالتالي :
       </p>
       <p class="para">
         سيارة <b>${v.brand || '—'}</b> موديل <b>${v.year || '—'}</b> لوحات رقم: <b>${v.plate_number || '—'}</b>
