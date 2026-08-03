@@ -218,6 +218,21 @@ export const PenaltyDeductionsAlert = () => {
           <label className="text-xs text-muted-foreground">{ar ? 'إلى تاريخ' : 'To'}</label>
           <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="h-10 w-44" />
         </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-muted-foreground">{ar ? 'حالة الموظف' : 'Employee Status'}</label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-10 w-44">
+              <SelectValue placeholder={ar ? 'الحالة' : 'Status'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{ar ? 'كل الحالات' : 'All Statuses'}</SelectItem>
+              {EMP_STATUS_OPTIONS.map(s => (
+                <SelectItem key={s} value={s}>{ar ? (EMP_STATUS_AR[s] || s) : s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <ExportButton
           rows={filtered}
           columns={[
