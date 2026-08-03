@@ -240,6 +240,7 @@ export const PenaltyDeductionsAlert = () => {
             { header: ar ? 'اسم الموظف' : 'Employee Name', accessor: r => ar ? r.employee_name_ar : r.employee_name_en },
             { header: ar ? 'المحطة' : 'Station', accessor: r => r.station_name || '-' },
             { header: ar ? 'القسم' : 'Department', accessor: r => r.department_name || '-' },
+            { header: ar ? 'حالة الموظف' : 'Employee Status', accessor: r => ar ? (EMP_STATUS_AR[r.employee_status || ''] || r.employee_status || '-') : (r.employee_status || '-') },
             { header: ar ? 'التاريخ' : 'Date', accessor: r => formatDate(r.date) },
             { header: ar ? 'النوع' : 'Type', accessor: r => r.type },
             { header: ar ? 'الوصف' : 'Description', accessor: r => r.description || '-' },
@@ -250,6 +251,7 @@ export const PenaltyDeductionsAlert = () => {
           filenameBase={ar ? 'الخصومات_والجزاءات' : 'penalties_deductions'}
           title={ar ? 'تقرير الخصومات والجزاءات' : 'Penalties & Deductions Report'}
         />
+
       </div>
 
       <Card>
