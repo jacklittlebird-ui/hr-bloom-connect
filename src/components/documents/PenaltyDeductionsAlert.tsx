@@ -5,12 +5,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { usePagination } from '@/hooks/usePagination';
 import { Search, MinusCircle, AlertCircle, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ExportButton } from '@/components/leaves/ExportButton';
 import type { ExportColumn } from '@/lib/leavesExport';
+
+const EMP_STATUS_AR: Record<string, string> = {
+  active: 'نشط', inactive: 'غير نشط', suspended: 'موقوف', external_stations: 'محطات خارجية',
+  stopped: 'متوقف', absent: 'غائب', pending_hire: 'تحت التعيين', resigned: 'مستقيل', under_resignation: 'تحت الاستقالة',
+};
+
+const EMP_STATUS_OPTIONS = ['active', 'inactive', 'suspended', 'resigned', 'absent', 'pending_hire', 'under_resignation', 'external_stations', 'stopped'];
+
 
 interface ViolationRow {
   id: string;
@@ -26,8 +35,10 @@ interface ViolationRow {
   penalty?: string;
   penalty_amount: number;
   status: string;
+  employee_status?: string;
   created_by_name?: string;
 }
+
 
 const statusBadge = (s: string, ar: boolean) => {
   if (s === 'approved') return { label: ar ? 'معتمد' : 'Approved', cls: 'bg-emerald-100 text-emerald-700 border-emerald-300' };
@@ -55,6 +66,8 @@ export const PenaltyDeductionsAlert = () => {
   const todayStr = now.toISOString().slice(0, 10);
   const [fromDate, setFromDate] = useState(firstOfYear);
   const [toDate, setToDate] = useState(todayStr);
+  const [statusFilter, setStatusFilter] = useState('all');
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -72,10 +85,11 @@ export const PenaltyDeductionsAlert = () => {
     if (empIds.length) {
       const { data: emps } = await supabase
         .from('employees')
-        .select('id, employee_code, name_ar, name_en, station_id, department_id')
+        .select('id, employee_code, name_ar, name_en, station_id, department_id, status')
         .in('id', empIds);
       (emps || []).forEach(e => { empMap[e.id] = e; });
     }
+
 
     const stationIds = Array.from(new Set(Object.values(empMap).map((e: any) => e.station_id).filter(Boolean)));
     const deptIds = Array.from(new Set(Object.values(empMap).map((e: any) => e.department_id).filter(Boolean)));
@@ -113,9 +127,11 @@ export const PenaltyDeductionsAlert = () => {
         penalty: v.penalty,
         penalty_amount: parsePenaltyAmount(v.penalty),
         status: v.status,
+        employee_status: emp.status || '',
         created_by_name: v.created_by ? userMap[v.created_by] : '-',
       };
     });
+
 
     setRows(mapped);
     setLoading(false);
