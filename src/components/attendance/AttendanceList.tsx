@@ -203,10 +203,13 @@ export const AttendanceList = () => {
 
   const handleSaveEdit = async () => {
     if (!editTarget) return;
-    if (!editLocationId) {
+    // Location is only required when the employee's station actually has
+    // linked QR locations to choose from — otherwise saving would be impossible.
+    if (!editLocationId && editLocations.length > 0) {
       toast.error(ar ? 'يجب اختيار الموقع' : 'Location is required');
       return;
     }
+
     setSavingEdit(true);
     try {
       const ciIso = buildCairoIso(editTarget.date, editCheckIn);
