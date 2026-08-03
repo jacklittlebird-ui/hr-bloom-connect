@@ -10,6 +10,8 @@ import { VehicleMaintenance } from '@/components/vehicles/VehicleMaintenance';
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
 import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
 import { VehicleReports } from '@/components/vehicles/VehicleReports';
+import { VehicleLetters } from '@/components/vehicles/VehicleLetters';
+
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -40,6 +42,8 @@ const Vehicles = () => {
 
   const tabs = [
     { id: 'by-station', label: isAr ? 'سيارات لكل محطة' : 'Vehicles per Station' },
+    { id: 'letters', label: isAr ? 'خطابات سيارات' : 'Vehicle Letters' },
+
     { id: 'reports', label: isAr ? 'التقارير' : 'Reports' },
     { id: 'alerts', label: isAr ? 'تنبيهات التراخيص' : 'License Alerts' },
     { id: 'registry', label: isAr ? 'سجل السيارات' : 'Vehicle Registry' },
@@ -89,7 +93,9 @@ const Vehicles = () => {
         </TabsList>
 
         <TabsContent value="by-station"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><FleetByStation key={`fbs-${refreshKey}`} /></div></TabsContent>
+        <TabsContent value="letters"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleLetters key={`vlt-${refreshKey}`} /></div></TabsContent>
         <TabsContent value="reports"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleReports key={`vrep-${refreshKey}`} /></div></TabsContent>
+
         <TabsContent value="alerts"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><LicenseAlerts key={`la-${refreshKey}`} /></div></TabsContent>
         <TabsContent value="registry"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleRegistry key={`vr-${refreshKey}`} readOnly={registryReadOnly} /></div></TabsContent>
         <TabsContent value="licenses"><div className="overflow-y-auto overflow-x-auto rounded-md border bg-card/40 p-2 sm:p-3" style={{ maxHeight: 'calc(100dvh - 280px)' }} dir={isRTL ? 'rtl' : 'ltr'}><VehicleLicenseTracking key={`vl-${refreshKey}`} /></div></TabsContent>
