@@ -263,6 +263,7 @@ export const PenaltyDeductionsAlert = () => {
                 <TableHead>{ar ? 'اسم الموظف' : 'Employee Name'}</TableHead>
                 <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead>{ar ? 'القسم' : 'Department'}</TableHead>
+                <TableHead>{ar ? 'حالة الموظف' : 'Employee Status'}</TableHead>
                 <TableHead>{ar ? 'التاريخ' : 'Date'}</TableHead>
                 <TableHead>{ar ? 'النوع' : 'Type'}</TableHead>
                 <TableHead>{ar ? 'الوصف' : 'Description'}</TableHead>
@@ -273,9 +274,9 @@ export const PenaltyDeductionsAlert = () => {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
               ) : paginatedItems.length === 0 ? (
-                <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد خصومات مسجلة في هذه الفترة' : 'No penalties registered in this period'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد خصومات مسجلة في هذه الفترة' : 'No penalties registered in this period'}</TableCell></TableRow>
               ) : paginatedItems.map(r => {
                 const sb = statusBadge(r.status, ar);
                 return (
@@ -284,10 +285,16 @@ export const PenaltyDeductionsAlert = () => {
                     <TableCell className="font-medium">{ar ? r.employee_name_ar : r.employee_name_en}</TableCell>
                     <TableCell>{r.station_name || '-'}</TableCell>
                     <TableCell>{r.department_name || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={r.employee_status === 'active' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : r.employee_status ? 'bg-amber-100 text-amber-700 border-amber-300' : ''}>
+                        {ar ? (EMP_STATUS_AR[r.employee_status || ''] || r.employee_status || '-') : (r.employee_status || '-')}
+                      </Badge>
+                    </TableCell>
                     <TableCell>{formatDate(r.date)}</TableCell>
                     <TableCell>{r.type}</TableCell>
                     <TableCell className="max-w-xs truncate" title={r.description || ''}>{r.description || '-'}</TableCell>
                     <TableCell>
+
                       <Badge className="bg-red-100 text-red-700 border-red-300">
                         {r.penalty || '-'}
                       </Badge>
