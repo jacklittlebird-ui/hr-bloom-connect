@@ -143,6 +143,7 @@ export const PenaltyDeductionsAlert = () => {
     const q = search.trim().toLowerCase();
     return rows.filter(r => {
       if (r.date < fromDate || r.date > toDate) return false;
+      if (statusFilter !== 'all' && r.employee_status !== statusFilter) return false;
       if (!q) return true;
       return (
         r.employee_code.toLowerCase().includes(q) ||
@@ -154,7 +155,8 @@ export const PenaltyDeductionsAlert = () => {
         (r.description || '').toLowerCase().includes(q)
       );
     });
-  }, [rows, search, fromDate, toDate]);
+  }, [rows, search, fromDate, toDate, statusFilter]);
+
 
   const totalAmount = filtered.reduce((s, r) => s + r.penalty_amount, 0);
   const totalEmployees = new Set(filtered.map(r => r.employee_id)).size;
