@@ -10,6 +10,8 @@ import { VehicleMaintenance } from '@/components/vehicles/VehicleMaintenance';
 import { FleetByStation } from '@/components/vehicles/FleetByStation';
 import { LicenseAlerts } from '@/components/vehicles/LicenseAlerts';
 import { VehicleReports } from '@/components/vehicles/VehicleReports';
+import { VehicleLetters } from '@/components/vehicles/VehicleLetters';
+
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
