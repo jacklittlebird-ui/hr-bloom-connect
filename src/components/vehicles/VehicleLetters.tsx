@@ -35,8 +35,23 @@ const todayAr = () => {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 };
 
-const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string, isCargo = false) => {
-  const logo = `${window.location.origin}${isCargo ? '/images/link-cargo-logo.png' : '/images/company-logo.png'}`;
+const toBase64DataUrl = async (path: string) => {
+  try {
+    const res = await fetch(path);
+    if (!res.ok) return path;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(path);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return path;
+  }
+};
+
+const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string, logoUrl: string, isCargo = false) => {
   const entity = isCargo ? 'لينك كارجو تحت رقم 2831694' : 'لينك إيرو تريدنج إجنسي تحت رقم 1307926';
   const isBostanInsurance = v.insured_driver_name === BOSTAN_INSURANCE;
   const body = kind === 'insurance'
@@ -91,7 +106,7 @@ const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string, isCa
   .sign span { display:block; margin-top:48px; }
 </style></head>
 <body>
-  <div class="head"><img src="${logo}" alt="logo" /></div>
+  <div class="head"><img src="${logoUrl}" alt="logo" /></div>
   <div class="date">التاريخ: ${todayAr()}</div>
   ${body}
   <div class="sign">رئيس شؤون العاملين<span>جاك إسحق</span></div>
