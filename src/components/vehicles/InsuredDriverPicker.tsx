@@ -26,16 +26,20 @@ interface Props {
 
 const PAGE = 1000;
 
+export const NO_DRIVER = 'بدون سائق';
+
+const modeOf = (v: string): 'none' | 'bostan' | 'employee' =>
+  !v || v === NO_DRIVER ? 'none' : v === BOSTAN_INSURANCE ? 'bostan' : 'employee';
+
 export const InsuredDriverPicker = ({ isAr, value, insuranceNumber, onChange }: Props) => {
-  const [mode, setMode] = useState<'bostan' | 'employee'>(
-    value === BOSTAN_INSURANCE ? 'bostan' : 'employee'
-  );
+  const [mode, setMode] = useState<'none' | 'bostan' | 'employee'>(modeOf(value));
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setMode(value === BOSTAN_INSURANCE ? 'bostan' : 'employee');
+    setMode((prev) => (prev === 'employee' && !value ? prev : modeOf(value)));
   }, [value]);
+
 
   useEffect(() => {
     let cancelled = false;
