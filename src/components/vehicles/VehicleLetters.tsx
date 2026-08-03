@@ -143,8 +143,15 @@ export const VehicleLetters = ({ allowedStationIds }: { allowedStationIds?: stri
     return s ? (isAr ? s.name_ar : s.name_en) : (isAr ? 'غير مخصص' : 'Unassigned');
   };
 
+  const isCargoStation = (id: string) => {
+    const s = stations.find((x) => x.id === id);
+    if (!s) return false;
+    const code = (s.code || '').toLowerCase();
+    return CARGO_STATION_CODES.includes(code) || /كارجو/.test(s.name_ar || '') || /cargo/i.test(s.name_en || '');
+  };
+
   const openLetter = (v: Vehicle, kind: LetterKind) => {
-    const html = buildLetterHtml(v, kind, stationName(v.station_id || 'unassigned'));
+    const html = buildLetterHtml(v, kind, stationName(v.station_id || 'unassigned'), isCargoStation(v.station_id || ''));
     setPreview({
       html,
       title: `${kind === 'insurance' ? (isAr ? 'خطاب تأمينات' : 'Insurance Letter') : (isAr ? 'خطاب النقل البري' : 'Transport Letter')} — ${v.plate_number}`,
