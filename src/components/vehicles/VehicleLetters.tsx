@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { BOSTAN_INSURANCE } from '@/components/vehicles/InsuredDriverPicker';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,9 +35,10 @@ const todayAr = () => {
 
 const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string) => {
   const logo = `${window.location.origin}/images/company-logo.png`;
+  const isBostanInsurance = v.insured_driver_name === BOSTAN_INSURANCE;
   const body = kind === 'insurance'
     ? `
-      <p class="line">السيد / مدير مكتب تأمينات الزمالك</p>
+      <p class="line">${isBostanInsurance ? 'السيد / مدير مكتب تأمينات البساتين' : 'السيد / مدير مكتب تأمينات الزمالك'}</p>
       <p class="line">تحية طيبة وبعد،،،</p>
       <p class="para">
         نرجو التكرم من سيادتكم بإعطائنا شهادة تأمين مستخرجة من واقع الحاسب الآلي لتقديمها إلى إدارة المرور
