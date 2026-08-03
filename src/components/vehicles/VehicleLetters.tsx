@@ -33,8 +33,9 @@ const todayAr = () => {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 };
 
-const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string) => {
-  const logo = `${window.location.origin}/images/company-logo.png`;
+const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string, isCargo = false) => {
+  const logo = `${window.location.origin}${isCargo ? '/images/link-cargo-logo.png' : '/images/company-logo.png'}`;
+  const entity = isCargo ? 'لينك كارجو تحت رقم 2831694' : 'لينك إيرو تريدنج إجنسي تحت رقم 1307926';
   const isBostanInsurance = v.insured_driver_name === BOSTAN_INSURANCE;
   const body = kind === 'insurance'
     ? `
@@ -42,7 +43,7 @@ const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string) => {
       <p class="line">تحية طيبة وبعد،،،</p>
       <p class="para">
         نرجو التكرم من سيادتكم بإعطائنا شهادة تأمين مستخرجة من واقع الحاسب الآلي لتقديمها إلى إدارة المرور
-        تفيد بأن منشأة لينك إيرو تريدنج إجنسي تحت رقم 1307926 ملتزمة بسداد الإشتراكات الشهرية المستحقة عليها
+        تفيد بأن منشأة ${entity} ملتزمة بسداد الإشتراكات الشهرية المستحقة عليها
         للمكتب حتي تاريخه والرصيد مسدد وأنه مؤمن علي سائق <b>${v.insured_driver_name || '—'}</b>
         رقم تأميني <b>${v.insurance_number || '—'}</b> ، وبيانات السيارة كالتالي :
       </p>
