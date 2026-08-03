@@ -206,6 +206,23 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
     }
   };
 
+  const [markingDoneId, setMarkingDoneId] = useState<string | null>(null);
+
+  const handleMarkDone = async (r: MaintenanceRecord) => {
+    setMarkingDoneId(r.id);
+    try {
+      const { error } = await supabase
+        .from('vehicle_maintenance')
+        .update({ next_maintenance_odometer: null })
+        .eq('id', r.id);
+      if (error) { toast.error(error.message); return; }
+      toast.success(isAr ? 'تم إزالة تنبيه الصيانة القادمة' : 'Upcoming maintenance alert cleared');
+      fetchData(false);
+    } finally {
+      setMarkingDoneId(null);
+    }
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
