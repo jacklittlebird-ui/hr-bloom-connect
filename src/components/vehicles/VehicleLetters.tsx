@@ -22,6 +22,8 @@ interface Vehicle {
 
 type LetterKind = 'insurance' | 'transport';
 
+const CARGO_STATION_CODES = ['capital', 'lkcargo_alex'];
+
 const fmt = (d: string | null) => {
   if (!d) return '—';
   const [y, m, day] = d.split('-');
