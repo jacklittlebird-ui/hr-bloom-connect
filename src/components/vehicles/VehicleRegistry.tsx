@@ -472,6 +472,7 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
                       <SelectItem value="King Long">{isAr ? 'كينج لونج' : 'King Long'}</SelectItem>
                       <SelectItem value="Suzuki">{isAr ? 'سوزوكي' : 'Suzuki'}</SelectItem>
                       <SelectItem value="Mitsubishi">{isAr ? 'متسوبيشي' : 'Mitsubishi'}</SelectItem>
+                      <SelectItem value="LYNK & CO">{isAr ? 'لينك آند كو' : 'LYNK & CO'}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
