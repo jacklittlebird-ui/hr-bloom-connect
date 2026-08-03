@@ -22,6 +22,8 @@ interface Vehicle {
 
 type LetterKind = 'insurance' | 'transport';
 
+const CARGO_STATION_CODES = ['capital', 'lkcargo_alex'];
+
 const fmt = (d: string | null) => {
   if (!d) return '—';
   const [y, m, day] = d.split('-');
@@ -33,8 +35,9 @@ const todayAr = () => {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 };
 
-const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string) => {
-  const logo = `${window.location.origin}/images/company-logo.png`;
+const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string, isCargo = false) => {
+  const logo = `${window.location.origin}${isCargo ? '/images/link-cargo-logo.png' : '/images/company-logo.png'}`;
+  const entity = isCargo ? 'لينك كارجو تحت رقم 2831694' : 'لينك إيرو تريدنج إجنسي تحت رقم 1307926';
   const isBostanInsurance = v.insured_driver_name === BOSTAN_INSURANCE;
   const body = kind === 'insurance'
     ? `
@@ -42,7 +45,7 @@ const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string) => {
       <p class="line">تحية طيبة وبعد،،،</p>
       <p class="para">
         نرجو التكرم من سيادتكم بإعطائنا شهادة تأمين مستخرجة من واقع الحاسب الآلي لتقديمها إلى إدارة المرور
-        تفيد بأن منشأة لينك إيرو تريدنج إجنسي تحت رقم 1307926 ملتزمة بسداد الإشتراكات الشهرية المستحقة عليها
+        تفيد بأن منشأة ${entity} ملتزمة بسداد الإشتراكات الشهرية المستحقة عليها
         للمكتب حتي تاريخه والرصيد مسدد وأنه مؤمن علي سائق <b>${v.insured_driver_name || '—'}</b>
         رقم تأميني <b>${v.insurance_number || '—'}</b> ، وبيانات السيارة كالتالي :
       </p>
@@ -59,7 +62,7 @@ const buildLetterHtml = (v: Vehicle, kind: LetterKind, stationName: string) => {
       <p class="line">تحية طيبة وبعد،،،</p>
       <p class="para">
         نرجو التكرم من سيادتكم بالموافقة على إصدار / تجديد ترخيص النقل البري الخاص بسيارة منشأة
-        لينك إيرو تريدنج إجنسي تحت رقم 1307926، والعاملة بموقع <b>${stationName}</b>، وبياناتها كالتالي :
+        ${entity}، والعاملة بموقع <b>${stationName}</b>، وبياناتها كالتالي :
       </p>
       <p class="para">
         سيارة <b>${v.brand || '—'}</b> موديل <b>${v.year || '—'}</b> لوحات رقم: <b>${v.plate_number || '—'}</b>
@@ -142,8 +145,15 @@ export const VehicleLetters = ({ allowedStationIds }: { allowedStationIds?: stri
     return s ? (isAr ? s.name_ar : s.name_en) : (isAr ? 'غير مخصص' : 'Unassigned');
   };
 
+  const isCargoStation = (id: string) => {
+    const s = stations.find((x) => x.id === id);
+    if (!s) return false;
+    const code = (s.code || '').toLowerCase();
+    return CARGO_STATION_CODES.includes(code) || /كارجو/.test(s.name_ar || '') || /cargo/i.test(s.name_en || '');
+  };
+
   const openLetter = (v: Vehicle, kind: LetterKind) => {
-    const html = buildLetterHtml(v, kind, stationName(v.station_id || 'unassigned'));
+    const html = buildLetterHtml(v, kind, stationName(v.station_id || 'unassigned'), isCargoStation(v.station_id || ''));
     setPreview({
       html,
       title: `${kind === 'insurance' ? (isAr ? 'خطاب تأمينات' : 'Insurance Letter') : (isAr ? 'خطاب النقل البري' : 'Transport Letter')} — ${v.plate_number}`,
