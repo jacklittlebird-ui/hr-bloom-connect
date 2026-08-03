@@ -123,16 +123,23 @@ export const VehicleLetters = ({ allowedStationIds }: { allowedStationIds?: stri
   const [search, setSearch] = useState('');
   const [openIds, setOpenIds] = useState<Set<string>>(new Set());
   const [preview, setPreview] = useState<{ html: string; title: string } | null>(null);
+  const [logoUrls, setLogoUrls] = useState<{ cargo: string; default: string }>({
+    cargo: '/images/link-cargo-logo.png',
+    default: '/images/company-logo.png',
+  });
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [{ data: s }, { data: v }] = await Promise.all([
+      const [{ data: s }, { data: v }, cargoUrl, defaultUrl] = await Promise.all([
         supabase.from('stations').select('id, name_ar, name_en, code').eq('is_active', true).order('name_ar'),
         supabase.from('vehicles').select('id, vehicle_code, brand, model, year, plate_number, color, engine_number, chassis_number, cylinders_count, station_id, insured_driver_name, insurance_number, transport_license_start, transport_license_end').order('vehicle_code'),
+        toBase64DataUrl('/images/link-cargo-logo.png'),
+        toBase64DataUrl('/images/company-logo.png'),
       ]);
       if (s) setStations((scopeIds ? (s as Station[]).filter((x) => scopeIds.has(x.id)) : (s as Station[])));
       if (v) setVehicles((scopeIds ? (v as any[]).filter((x) => x.station_id && scopeIds.has(x.station_id)) : v) as unknown as Vehicle[]);
+      setLogoUrls({ cargo: cargoUrl, default: defaultUrl });
       setLoading(false);
     };
     load();
@@ -168,7 +175,8 @@ export const VehicleLetters = ({ allowedStationIds }: { allowedStationIds?: stri
   };
 
   const openLetter = (v: Vehicle, kind: LetterKind) => {
-    const html = buildLetterHtml(v, kind, stationName(v.station_id || 'unassigned'), isCargoStation(v.station_id || ''));
+    const isCargo = isCargoStation(v.station_id || '');
+    const html = buildLetterHtml(v, kind, stationName(v.station_id || 'unassigned'), isCargo ? logoUrls.cargo : logoUrls.default, isCargo);
     setPreview({
       html,
       title: `${kind === 'insurance' ? (isAr ? 'خطاب تأمينات' : 'Insurance Letter') : (isAr ? 'خطاب النقل البري' : 'Transport Letter')} — ${v.plate_number}`,
