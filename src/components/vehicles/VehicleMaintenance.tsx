@@ -616,6 +616,7 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                 const v = vehicleMap[r.vehicle_id];
                 const overdue = (remaining ?? 0) <= 0;
                 const close = (remaining ?? 0) <= 200;
+                const isMarking = markingDoneId === r.id;
                 return (
                   <div key={r.id} className="border rounded p-2 bg-background">
                     <div className="flex items-center justify-between gap-2">
@@ -631,6 +632,20 @@ export const VehicleMaintenance = ({ allowedStationIds }: { allowedStationIds?: 
                       <Wrench className="w-3 h-3" />
                       {isAr ? 'العداد:' : 'Odo:'} {latest?.toLocaleString() ?? '—'} → {r.next_maintenance_odometer?.toLocaleString()} {isAr ? 'كم' : 'km'}
                     </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full mt-2 h-8 text-xs border-green-600 text-green-700 hover:bg-green-50 hover:text-green-800"
+                      onClick={() => handleMarkDone(r)}
+                      disabled={isMarking}
+                    >
+                      {isMarking ? (
+                        <Loader2 className="w-3 h-3 me-1 animate-spin" />
+                      ) : (
+                        <CheckCircle className="w-3 h-3 me-1" />
+                      )}
+                      {isAr ? 'تم الانتهاء' : 'Done'}
+                    </Button>
                   </div>
                 );
               })}
