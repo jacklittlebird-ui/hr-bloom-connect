@@ -495,7 +495,13 @@ export const VehicleRegistry = ({ allowedStationIds, readOnly = false }: { allow
                     className="w-full"
                   />
                 </div>
-                {renderField(isAr ? 'اسم السائق المؤمن عليه' : 'Insured Driver', 'insured_driver_name', 'text')}
+                <InsuredDriverPicker
+                  isAr={isAr}
+                  value={form.insured_driver_name}
+                  insuranceNumber={form.insurance_number}
+                  onChange={(name, ins) => setForm((p) => ({ ...p, insured_driver_name: name, insurance_number: ins }))}
+                />
+
                 {renderField(isAr ? 'الرقم التأميني' : 'Insurance Number', 'insurance_number', 'text')}
                 <div className="space-y-1">
                   <Label className="text-xs">{isAr ? 'الحالة' : 'Status'}</Label>
