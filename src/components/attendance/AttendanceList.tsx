@@ -230,7 +230,7 @@ export const AttendanceList = () => {
       // Upsert attendance_events so location is visible in list
       const { data: authData } = await supabase.auth.getUser();
       const currentUserId = authData?.user?.id;
-      if (currentUserId) {
+      if (currentUserId && editLocationId) {
         const startIso = `${editTarget.date}T00:00:00Z`;
         const endIso = `${editTarget.date}T23:59:59Z`;
         await supabase
