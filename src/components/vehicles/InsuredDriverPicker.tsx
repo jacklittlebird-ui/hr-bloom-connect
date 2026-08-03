@@ -26,16 +26,20 @@ interface Props {
 
 const PAGE = 1000;
 
+export const NO_DRIVER = 'بدون سائق';
+
+const modeOf = (v: string): 'none' | 'bostan' | 'employee' =>
+  !v || v === NO_DRIVER ? 'none' : v === BOSTAN_INSURANCE ? 'bostan' : 'employee';
+
 export const InsuredDriverPicker = ({ isAr, value, insuranceNumber, onChange }: Props) => {
-  const [mode, setMode] = useState<'bostan' | 'employee'>(
-    value === BOSTAN_INSURANCE ? 'bostan' : 'employee'
-  );
+  const [mode, setMode] = useState<'none' | 'bostan' | 'employee'>(modeOf(value));
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setMode(value === BOSTAN_INSURANCE ? 'bostan' : 'employee');
+    setMode((prev) => (prev === 'employee' && !value ? prev : modeOf(value)));
   }, [value]);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -63,18 +67,21 @@ export const InsuredDriverPicker = ({ isAr, value, insuranceNumber, onChange }: 
       <div className="flex gap-2">
         <Select
           value={mode}
-          onValueChange={(m: 'bostan' | 'employee') => {
+          onValueChange={(m: 'none' | 'bostan' | 'employee') => {
             setMode(m);
             if (m === 'bostan') onChange(BOSTAN_INSURANCE, insuranceNumber);
+            else if (m === 'none') onChange(NO_DRIVER, insuranceNumber);
             else onChange('', insuranceNumber);
           }}
         >
           <SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">{NO_DRIVER}</SelectItem>
             <SelectItem value="bostan">{BOSTAN_INSURANCE}</SelectItem>
             <SelectItem value="employee">{isAr ? 'اختيار موظف' : 'Select employee'}</SelectItem>
           </SelectContent>
         </Select>
+
 
         {mode === 'employee' && (
           <Popover open={open} onOpenChange={setOpen}>
