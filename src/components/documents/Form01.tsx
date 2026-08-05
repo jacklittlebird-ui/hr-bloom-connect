@@ -103,7 +103,7 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .n { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 11px; }
 .note { margin-top: 8px; font-size: 11px; font-weight: bold; }
 .sp { flex: 1; }
-.sec { font-weight: bold; font-size: 17px; text-decoration: underline; margin: 10px 0 6px; text-align: center; }
+.sec { font-weight: bold; font-size: 16px; margin: 10px 0 6px; text-align: center; border: 1.5px solid #000; padding: 3px 6px; background: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
@@ -298,12 +298,19 @@ export const Form01 = () => {
 
   const print = () => {
     if (!html) return;
-    const w = window.open('', '_blank');
-    if (!w) return;
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    setTimeout(() => w.print(), 500);
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+    doc.open();
+    doc.write(html);
+    doc.close();
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => iframe.remove(), 1000);
+    }, 500);
   };
 
   return (
