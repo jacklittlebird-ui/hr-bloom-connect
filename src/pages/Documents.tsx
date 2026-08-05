@@ -326,6 +326,9 @@ const Documents = () => {
           <MissingInsuranceStart />
         ) : activeMainTab === 'directory' ? (
           <EmployeeDirectory />
+        ) : activeMainTab === 'form01' ? (
+          <Form01 />
+
         ) : activeMainTab === 'leaveBalances' ? (
           <LeaveBalancesAlert />
         ) : activeMainTab === 'unpaidLeaves' ? (
