@@ -159,7 +159,7 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">المهـنة :</span>${line(e.job_title_ar)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">تاريــخ بــدء الإشــتراك :</span>${dateBoxes(e.social_insurance_start_date)}</span>
+    <span class="cell"><span class="lbl">تاريــخ بــدء الإشــتراك :</span>${dateBoxes('')}</span>
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">القطــاع :</span>${line(x.sector)}</span>
   </div>
   <div class="row">
