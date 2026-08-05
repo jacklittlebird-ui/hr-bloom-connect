@@ -110,8 +110,8 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .guide { margin: 0; padding-inline-start: 18px; font-size: 14px; line-height: 1.9; text-align: justify; }
 .guide li { margin-bottom: 6px; }
 .guide .sub { margin: 4px 0 4px 0; }
-.sign { text-align: center; font-weight: bold; margin-top: 14px; font-size: 15px; }
-.signline { text-align: center; margin-top: 4px; }
+.sign { text-align: left; font-weight: bold; margin-top: 14px; font-size: 15px; }
+.signline { text-align: left; margin-top: 4px; }
 .signline .fill { display: inline-block; min-width: 70mm; }
 </style></head><body>
 <div class="sheet">
