@@ -410,6 +410,15 @@ export const Form01 = () => {
               <Label className="text-xs">{isAr ? 'تحريراً في' : 'writtenAt'}</Label>
               <Input className="h-9" value={extra.writtenAt} onChange={e => setExtra(p => ({ ...p, writtenAt: e.target.value }))} />
             </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'اسم المنشأة' : 'facilityName'}</Label>
+              <Input className="h-9" value={extra.facilityName} onChange={e => setExtra(p => ({ ...p, facilityName: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'رقم المنشأة' : 'facilityNo'}</Label>
+              <Input className="h-9" value={extra.facilityNo} onChange={e => setExtra(p => ({ ...p, facilityNo: e.target.value }))} />
+            </div>
+
           </div>
         </CardContent>
       </Card>
