@@ -186,10 +186,7 @@ export const Form06 = () => {
   const [selectedId, setSelectedId] = useState('');
   const [emp, setEmp] = useState<Emp | null>(null);
   const [extra, setExtra] = useState<Form06Extra>({
-    office: 'الزمالك', applicant: 'محمود احمد سلامة', applicantRole: 'مندوب',
-    applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '01006676711', applicantTaxNo: '215/137/108',
-    sector: 'خاص', subCode: '',
-    buildingNo: '', village: '',
+    office: 'الزمالك', buildingNo: '', area: '', village: '',
     facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '1307926',
   });
 
@@ -200,7 +197,7 @@ export const Form06 = () => {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from('employees')
-          .select('id, employee_code, name_ar, social_insurance_no, national_id, education_ar, address, city, governorate, job_title_ar, nationality, phone')
+          .select('id, employee_code, name_ar, social_insurance_no, national_id, education_ar, address, city, governorate, job_title_ar, nationality, phone, email')
           .order('employee_code')
           .range(from, from + PAGE - 1);
         if (error || !data?.length) break;
@@ -296,14 +293,6 @@ export const Form06 = () => {
               <Input className="h-9" value={emp?.national_id || ''} onChange={ev => setEmpField('national_id', ev.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'الجنسية' : 'nationality'}</Label>
-              <Input className="h-9" value={emp?.nationality || ''} onChange={ev => setEmpField('nationality', ev.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'المؤهل' : 'education_ar'}</Label>
-              <Input className="h-9" value={emp?.education_ar || ''} onChange={ev => setEmpField('education_ar', ev.target.value)} />
-            </div>
-            <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'شارع' : 'address'}</Label>
               <Input className="h-9" value={emp?.address || ''} onChange={ev => setEmpField('address', ev.target.value)} />
             </div>
@@ -319,6 +308,10 @@ export const Form06 = () => {
               <Label className="text-xs">{isAr ? 'رقم التليفون' : 'phone'}</Label>
               <Input className="h-9" value={emp?.phone || ''} onChange={ev => setEmpField('phone', ev.target.value)} />
             </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'البريد الإلكتروني' : 'email'}</Label>
+              <Input className="h-9" value={emp?.email || ''} onChange={ev => setEmpField('email', ev.target.value)} />
+            </div>
           </div>
           <div className="mb-3 text-sm font-semibold">{isAr ? 'بيانات إضافية للاستمارة' : 'Additional form data'}</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -327,43 +320,11 @@ export const Form06 = () => {
               <Input className="h-9" value={extra.office} onChange={e => setExtra(p => ({ ...p, office: e.target.value }))} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'مقدم الطلب' : 'applicant'}</Label>
-              <Input className="h-9" value={extra.applicant} onChange={e => setExtra(p => ({ ...p, applicant: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'صفة مقدم الطلب' : 'applicantRole'}</Label>
-              <Input className="h-9" value={extra.applicantRole} onChange={e => setExtra(p => ({ ...p, applicantRole: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'الرقم التأمينى لمقدم الطلب' : 'applicantInsuranceNo'}</Label>
-              <Input className="h-9" value={extra.applicantInsuranceNo} onChange={e => setExtra(p => ({ ...p, applicantInsuranceNo: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'الرقم القومى لمقدم الطلب' : 'applicantNationalId'}</Label>
-              <Input className="h-9" value={extra.applicantNationalId} onChange={e => setExtra(p => ({ ...p, applicantNationalId: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'تليفون مقدم الطلب' : 'applicantPhone'}</Label>
-              <Input className="h-9" value={extra.applicantPhone} onChange={e => setExtra(p => ({ ...p, applicantPhone: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'الرقم الضريبى لمقدم الطلب' : 'applicantTaxNo'}</Label>
-              <Input className="h-9" value={extra.applicantTaxNo} onChange={e => setExtra(p => ({ ...p, applicantTaxNo: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'القطاع' : 'sector'}</Label>
-              <Input className="h-9" value={extra.sector} onChange={e => setExtra(p => ({ ...p, sector: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'كود الاشتراك' : 'subCode'}</Label>
-              <Input className="h-9" value={extra.subCode} onChange={e => setExtra(p => ({ ...p, subCode: e.target.value }))} />
-            </div>
-            <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'عقار رقم' : 'buildingNo'}</Label>
               <Input className="h-9" value={extra.buildingNo} onChange={e => setExtra(p => ({ ...p, buildingNo: e.target.value }))} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'قرية' : 'village'}</Label>
+              <Label className="text-xs">{isAr ? 'شياخة / قرية' : 'village'}</Label>
               <Input className="h-9" value={extra.village} onChange={e => setExtra(p => ({ ...p, village: e.target.value }))} />
             </div>
             <div className="space-y-1">
