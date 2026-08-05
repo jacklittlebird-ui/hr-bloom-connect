@@ -240,9 +240,11 @@ export const Form01 = () => {
   const [emp, setEmp] = useState<Emp | null>(null);
   const [extra, setExtra] = useState<Form01Extra>({
     office: 'الزمالك', applicant: 'محمود احمد سلامة', applicantRole: 'مندوب',
+    applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '1006676711',
     sector: 'خاص', subCode: '', periodType: 'مدة اشتراك أساسية', wage: '', totalWage: '',
     buildingNo: '', village: '', writtenAt: new Date().toLocaleDateString('en-GB'),
-    facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '6297031',
+    facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '1307926',
+
 
   });
 
