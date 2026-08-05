@@ -105,8 +105,14 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .sp { flex: 1; }
 .sec { font-weight: bold; font-size: 17px; margin: 10px 0 6px; text-align: center; border: 1.5px solid #000; padding: 3px 6px; background: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .pagebreak { page-break-before: always; break-before: page; height: 0; }
-.decl { margin-top: 18px; font-size: 15px; line-height: 2.4; font-weight: bold; text-align: justify; }
-.page2 h1 { font-size: 20px; margin: 10px 0 18px; }
+.decl { margin-top: 12px; font-size: 14px; line-height: 2.1; text-align: justify; }
+.page2 h1 { font-size: 19px; margin: 8px 0 12px; }
+.guide { margin: 0; padding-inline-start: 18px; font-size: 14px; line-height: 1.9; text-align: justify; }
+.guide li { margin-bottom: 6px; }
+.guide .sub { margin: 4px 0 4px 0; }
+.sign { text-align: center; font-weight: bold; margin-top: 14px; font-size: 15px; }
+.signline { text-align: center; margin-top: 4px; }
+.signline .fill { display: inline-block; min-width: 70mm; }
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
