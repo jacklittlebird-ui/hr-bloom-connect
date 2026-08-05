@@ -183,6 +183,9 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">بيانات المنشأة</div>
+
+
 
   <div class="row">
     <span class="lbl">نوع المنشأة :</span>
