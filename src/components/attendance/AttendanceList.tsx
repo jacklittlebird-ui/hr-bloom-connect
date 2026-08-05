@@ -188,9 +188,10 @@ export const AttendanceList = () => {
         .eq('is_active', true)
         .order('name_ar');
       allLocs.push(...(anyLocs || []));
-
+    }
     setEditLocations(allLocs.map(l => ({ id: l.id, name_ar: l.name_ar, name_en: l.name_en })));
-    if (!stationId) return;
+
+
 
 
     const startIso = `${r.date}T00:00:00Z`;
