@@ -72,7 +72,7 @@ const amountBoxes = (v: string) => {
 };
 
 const buildHtml = (e: Emp, logoUrl: string, x: Form01Extra) => `<!DOCTYPE html>
-<html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>نموذج رقم 1 - ${esc(e.name_ar)}</title>
+<html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
 <style>
 @page { size: A4; margin: 12mm 10mm; }
 * { box-sizing: border-box; }
