@@ -45,7 +45,7 @@ const esc = (s: string | null | undefined) => (s || '').replace(/[<>&]/g, c => (
 
 export interface Form01Extra {
   office: string; applicant: string; applicantRole: string;
-  applicantInsuranceNo: string; applicantNationalId: string; applicantPhone: string;
+  applicantInsuranceNo: string; applicantNationalId: string; applicantPhone: string; applicantTaxNo: string;
   sector: string; subCode: string; periodType: string; wage: string; totalWage: string;
   buildingNo: string; village: string; writtenAt: string;
   facilityName: string; facilityNo: string;
@@ -80,30 +80,30 @@ const buildHtml = (e: Emp, logoUrl: string, x: Form01Extra) => `<!DOCTYPE html>
 <style>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
-body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 12.5px; line-height: 1.6; }
+body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 13.5px; line-height: 1.6; }
 .sheet { width: 190mm; margin: 0 auto; padding: 6mm 5mm; box-sizing: border-box; }
 .hdr { display: flex; align-items: center; gap: 8px; }
 .hdr .side { flex: 1; }
 .hdr img { height: 110px; max-width: 110px; width: auto; display: block; margin: 0 auto; }
-.org { font-size: 16px; font-weight: bold; }
-.formno { font-size: 14px; text-align: left; }
-.office { font-size: 14px; font-weight: bold; margin-top: 2px; }
-h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; letter-spacing: 1px; text-decoration: underline; }
+.org { font-size: 17px; font-weight: bold; }
+.formno { font-size: 15px; text-align: left; }
+.office { font-size: 15px; font-weight: bold; margin-top: 2px; }
+h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; letter-spacing: 1px; text-decoration: underline; }
 .rule { border-top: 1.2px solid #000; margin: 8px 0; }
 .row { display: flex; align-items: center; gap: 6px; margin: 5px 0; }
 .cell { display: flex; align-items: center; gap: 5px; }
 .cell.grow { flex: 1; }
 .lbl { font-weight: bold; white-space: nowrap; }
-.fill { flex: 1; border-bottom: 1px dotted #000; padding: 0 4px; min-height: 17px; font-weight: bold; }
+.fill { flex: 1; border-bottom: 1px dotted #000; padding: 0 4px; min-height: 18px; font-weight: bold; }
 .boxes { display: inline-flex; direction: ltr; }
-.box { width: 18px; height: 20px; border: 1px solid #000; margin-inline-start: -1px; text-align: center; font-size: 12px; line-height: 19px; font-weight: bold; }
+.box { width: 19px; height: 21px; border: 1px solid #000; margin-inline-start: -1px; text-align: center; font-size: 13px; line-height: 20px; font-weight: bold; }
 .slash { font-weight: bold; margin: 0 2px; }
 .opt { display: inline-flex; align-items: center; gap: 4px; margin-inline-end: 16px; white-space: nowrap; font-weight: bold; }
 .chk { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 12px; }
 .n { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 11px; }
-.note { margin-top: 8px; font-size: 11px; font-weight: bold; }
+.note { margin-top: 8px; font-size: 12px; font-weight: bold; }
 .sp { flex: 1; }
-.sec { font-weight: bold; font-size: 16px; margin: 10px 0 6px; text-align: center; border: 1.5px solid #000; padding: 3px 6px; background: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.sec { font-weight: bold; font-size: 17px; margin: 10px 0 6px; text-align: center; border: 1.5px solid #000; padding: 3px 6px; background: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
@@ -141,8 +141,8 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">رقم التليفون :</span>${line(x.applicantPhone)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">الرقم قومى</span>${boxesRev(x.applicantNationalId, 14)}</span>
-    <span class="sp"></span>
+    <span class="cell"><span class="lbl">الرقم القومى</span>${boxesRev(x.applicantNationalId, 14)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">الرقم الضريبى :</span>${line(x.applicantTaxNo)}</span>
   </div>
 
   <div class="rule"></div>
@@ -259,12 +259,10 @@ export const Form01 = () => {
   const [emp, setEmp] = useState<Emp | null>(null);
   const [extra, setExtra] = useState<Form01Extra>({
     office: 'الزمالك', applicant: 'محمود احمد سلامة', applicantRole: 'مندوب',
-    applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '01006676711',
+    applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '01006676711', applicantTaxNo: '215/137/108',
     sector: 'خاص', subCode: '', periodType: '', wage: '', totalWage: '',
     buildingNo: '', village: '', writtenAt: '',
     facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '1307926',
-
-
   });
 
   useEffect(() => {
@@ -430,6 +428,10 @@ export const Form01 = () => {
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'تليفون مقدم الطلب' : 'applicantPhone'}</Label>
               <Input className="h-9" value={extra.applicantPhone} onChange={e => setExtra(p => ({ ...p, applicantPhone: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'الرقم الضريبى لمقدم الطلب' : 'applicantTaxNo'}</Label>
+              <Input className="h-9" value={extra.applicantTaxNo} onChange={e => setExtra(p => ({ ...p, applicantTaxNo: e.target.value }))} />
             </div>
 
             <div className="space-y-1">
