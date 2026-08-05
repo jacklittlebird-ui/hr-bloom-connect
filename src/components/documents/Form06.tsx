@@ -118,8 +118,12 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="lbl">الفئة</span>
     <span class="opt"><span class="n">1</span>عاملين لدى الغير<span class="chk">√</span></span>
     <span class="opt"><span class="n">2</span>أصحاب أعمال لهم منشآت<span class="chk"></span></span>
+  </div>
+  <div class="row">
+    <span class="lbl" style="visibility:hidden">الفئة</span>
     <span class="opt"><span class="n">3</span>العاملين بالمخابز<span class="chk"></span></span>
   </div>
+
 
   <div class="rule"></div>
   <div class="sec">بيانات مقدم الطلب</div>
