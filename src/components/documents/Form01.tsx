@@ -289,29 +289,8 @@ export const Form01 = () => {
   const setEmpField = (k: keyof Emp, v: string) => setEmp(p => (p ? { ...p, [k]: v } : p));
   const html = emp ? buildHtml(emp, nosiLogo.url, extra) : '';
 
-  // Auto-fill wages from the latest salary record
-  useEffect(() => {
-    if (!selectedId) return;
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from('salary_records')
-        .select('basic_salary, transport_allowance, incentives, living_allowance, station_allowance, mobile_allowance, year')
-        .eq('employee_id', selectedId)
-        .order('year', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (cancelled || !data) return;
-      const n = (v: unknown) => Number(v || 0);
-      const gross = n(data.basic_salary) + n(data.transport_allowance) + n(data.incentives) + n(data.living_allowance) + n(data.station_allowance) + n(data.mobile_allowance);
-      setExtra(p => ({
-        ...p,
-        wage: n(data.basic_salary) ? String(Math.round(n(data.basic_salary))) : p.wage,
-        totalWage: gross ? String(Math.round(gross)) : p.totalWage,
-      }));
-    })();
-    return () => { cancelled = true; };
-  }, [selectedId]);
+
+
 
   const print = () => {
     if (!html) return;
