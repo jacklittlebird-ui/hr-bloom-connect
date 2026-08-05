@@ -208,6 +208,8 @@ export const Form01 = () => {
     office: 'الزمالك', applicant: 'محمود احمد سلامة', applicantRole: 'مندوب',
     sector: 'خاص', subCode: '', periodType: 'مدة اشتراك أساسية', wage: '', totalWage: '',
     buildingNo: '', village: '', writtenAt: new Date().toLocaleDateString('en-GB'),
+    facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '6297031',
+
   });
 
   useEffect(() => {
