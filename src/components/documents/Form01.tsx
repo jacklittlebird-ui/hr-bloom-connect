@@ -72,7 +72,7 @@ const amountBoxes = (v: string) => {
 };
 
 const buildHtml = (e: Emp, logoUrl: string, x: Form01Extra) => `<!DOCTYPE html>
-<html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>نموذج رقم 1 - ${esc(e.name_ar)}</title>
+<html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
 <style>
 @page { size: A4; margin: 12mm 10mm; }
 * { box-sizing: border-box; }
@@ -99,6 +99,7 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .n { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 11px; }
 .note { margin-top: 8px; font-size: 11px; font-weight: bold; }
 .sp { flex: 1; }
+.sec { font-weight: bold; font-size: 13px; text-decoration: underline; margin: 8px 0 4px; }
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
@@ -123,6 +124,9 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">بيانات مقدم الطلب</div>
+
+
 
   <div class="row">
     <span class="cell grow"><span class="lbl">مقدم الطلب :</span>${line(x.applicant)}</span>
@@ -138,6 +142,9 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">بيانات المؤمن عليه</div>
+
+
 
   <div class="row">
     <span class="cell"><span class="lbl">الرقم التأمينى</span>${boxes(e.social_insurance_no, 9)}</span>
@@ -152,7 +159,7 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">المهـنة :</span>${line(e.job_title_ar)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">تاريــخ بــدء الإشــتراك :</span>${dateBoxes(e.social_insurance_start_date)}</span>
+    <span class="cell"><span class="lbl">تاريــخ بــدء الإشــتراك :</span>${dateBoxes('')}</span>
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">القطــاع :</span>${line(x.sector)}</span>
   </div>
   <div class="row">
@@ -176,6 +183,9 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">بيانات المنشأة</div>
+
+
 
   <div class="row">
     <span class="lbl">نوع المنشأة :</span>
@@ -190,6 +200,9 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">بيانات محل إقامة المؤمن عليه</div>
+
+
 
   <div class="row">
     <span class="cell"><span class="lbl">عقار رقم :</span>${line(x.buildingNo, '25mm')}</span>
@@ -202,8 +215,9 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">التوقيع</div>
 
-  <div class="row" style="margin-top:14px">
+  <div class="row" style="margin-top:6px">
     <span class="cell grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span>
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">توقيع صاحب العمل / المدير المسئول</span></span>
   </div>
@@ -217,10 +231,11 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">مطابقة التوقيع</div>
 
   <div class="row">
     <span class="cell grow"><span class="lbl">توقيع الموظف المختص بالمطابقة :</span>${line('')}</span>
-    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">تاريخ المطابقة :</span>${line('&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;/')}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">تاريخ المطابقة :</span>${line('')}</span>
   </div>
 
   <div class="note">ملحوظة: على صاحب العمل والعامل الإطلاع على التوجيهات الموضحة خلف النموذج مع التوقيع على الإقرار.&nbsp;&nbsp;&nbsp; (انظر خلفه)</div>
@@ -241,8 +256,8 @@ export const Form01 = () => {
   const [extra, setExtra] = useState<Form01Extra>({
     office: 'الزمالك', applicant: 'محمود احمد سلامة', applicantRole: 'مندوب',
     applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '1006676711',
-    sector: 'خاص', subCode: '', periodType: 'مدة اشتراك أساسية', wage: '', totalWage: '',
-    buildingNo: '', village: '', writtenAt: new Date().toLocaleDateString('en-GB'),
+    sector: 'خاص', subCode: '', periodType: '', wage: '', totalWage: '',
+    buildingNo: '', village: '', writtenAt: '',
     facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '1307926',
 
 
@@ -274,29 +289,8 @@ export const Form01 = () => {
   const setEmpField = (k: keyof Emp, v: string) => setEmp(p => (p ? { ...p, [k]: v } : p));
   const html = emp ? buildHtml(emp, nosiLogo.url, extra) : '';
 
-  // Auto-fill wages from the latest salary record
-  useEffect(() => {
-    if (!selectedId) return;
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
-        .from('salary_records')
-        .select('basic_salary, transport_allowance, incentives, living_allowance, station_allowance, mobile_allowance, year')
-        .eq('employee_id', selectedId)
-        .order('year', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (cancelled || !data) return;
-      const n = (v: unknown) => Number(v || 0);
-      const gross = n(data.basic_salary) + n(data.transport_allowance) + n(data.incentives) + n(data.living_allowance) + n(data.station_allowance) + n(data.mobile_allowance);
-      setExtra(p => ({
-        ...p,
-        wage: n(data.basic_salary) ? String(Math.round(n(data.basic_salary))) : p.wage,
-        totalWage: gross ? String(Math.round(gross)) : p.totalWage,
-      }));
-    })();
-    return () => { cancelled = true; };
-  }, [selectedId]);
+
+
 
   const print = () => {
     if (!html) return;
