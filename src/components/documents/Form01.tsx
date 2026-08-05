@@ -244,7 +244,45 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 
   <div class="note">ملحوظة: على صاحب العمل والعامل الإطلاع على التوجيهات الموضحة خلف النموذج مع التوقيع على الإقرار.&nbsp;&nbsp;&nbsp; (انظر خلفه)</div>
 </div>
+
+<div class="pagebreak"></div>
+
+<div class="sheet page2">
+  <div class="hdr">
+    <div class="side"></div>
+    <img src="${logoUrl}" alt="" />
+    <div class="side"></div>
+  </div>
+
+  <h1>إقــــــــــرار</h1>
+
+  <div class="row">
+    <span class="cell grow"><span class="lbl">اسم المنشأة :</span>${line(x.facilityName)}</span>
+    <span class="cell" style="margin-inline-start:12px"><span class="lbl">رقمها التأمينى :</span>${boxes(x.facilityNo, 7)}</span>
+  </div>
+
+  <div class="decl">
+    أقر أنا / ${line(e.full_name_ar || e.full_name, '80mm')} بأننى قد اطلعت على التوجيهات الموضحة بهذا النموذج،
+    وأن جميع البيانات الواردة به صحيحة ومطابقة للواقع، وأتحمل كامل المسئولية القانونية عن صحتها،
+    وألتزم بإخطار الهيئة القومية للتأمين الاجتماعى بأى تغيير يطرأ عليها خلال المواعيد المقررة قانوناً.
+  </div>
+
+  <div class="row" style="margin-top:14px">
+    <span class="cell grow"><span class="lbl">الرقم التأمينى :</span>${boxes(e.insurance_number, 9)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">الرقم القومى :</span>${boxes(e.national_id, 14)}</span>
+  </div>
+
+  <div class="row" style="margin-top:18px">
+    <span class="cell grow"><span class="lbl">اسم المقر :</span>${line(e.full_name_ar || e.full_name)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">التوقيع :</span>${line('')}</span>
+  </div>
+  <div class="row">
+    <span class="cell grow"><span class="lbl">تحـــريراً في :</span>${line(x.writtenAt)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">توقيع صاحب العمل / المدير المسئول :</span>${line('')}</span>
+  </div>
+</div>
 </body></html>`;
+
 
 
 
