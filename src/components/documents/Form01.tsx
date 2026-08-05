@@ -78,10 +78,10 @@ const amountBoxes = (v: string) => {
 const buildHtml = (e: Emp, logoUrl: string, x: Form01Extra) => `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
 <style>
-@page { size: A4; margin: 12mm 10mm; }
+@page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
 body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 12.5px; line-height: 1.6; }
-.sheet { width: 190mm; margin: 0 auto; }
+.sheet { width: 190mm; margin: 0 auto; padding: 6mm 5mm; box-sizing: border-box; }
 .hdr { display: flex; align-items: center; gap: 8px; }
 .hdr .side { flex: 1; }
 .hdr img { height: 62px; display: block; margin: 0 auto; }
