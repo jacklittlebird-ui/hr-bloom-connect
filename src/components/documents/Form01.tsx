@@ -231,10 +231,11 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">مطابقة التوقيع</div>
 
   <div class="row">
     <span class="cell grow"><span class="lbl">توقيع الموظف المختص بالمطابقة :</span>${line('')}</span>
-    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">تاريخ المطابقة :</span>${line('&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;/')}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">تاريخ المطابقة :</span>${line('')}</span>
   </div>
 
   <div class="note">ملحوظة: على صاحب العمل والعامل الإطلاع على التوجيهات الموضحة خلف النموذج مع التوقيع على الإقرار.&nbsp;&nbsp;&nbsp; (انظر خلفه)</div>
