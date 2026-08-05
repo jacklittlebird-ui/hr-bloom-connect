@@ -259,12 +259,10 @@ export const Form01 = () => {
   const [emp, setEmp] = useState<Emp | null>(null);
   const [extra, setExtra] = useState<Form01Extra>({
     office: 'الزمالك', applicant: 'محمود احمد سلامة', applicantRole: 'مندوب',
-    applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '01006676711',
+    applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '01006676711', applicantTaxNo: '215/137/108',
     sector: 'خاص', subCode: '', periodType: '', wage: '', totalWage: '',
     buildingNo: '', village: '', writtenAt: '',
     facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '1307926',
-
-
   });
 
   useEffect(() => {
