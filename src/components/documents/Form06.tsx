@@ -157,12 +157,25 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">القطــاع :</span>${line(x.sector)}</span>
   </div>
   <div class="row">
-    <span class="cell grow"><span class="lbl">سبب انتهاء الإشتراك :</span>${line('')}</span>
+    <span class="cell grow"><span class="lbl">كـود الاشــتراك :</span>${line(x.subCode)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">سبب انتهاء الإشتراك :</span>${line('')}</span>
   </div>
   <div class="row">
-    <span class="cell grow"><span class="lbl">كـود الاشــتراك :</span>${line(x.subCode)}</span>
-    <span class="cell" style="margin-inline-start:12px"><span class="lbl">الأجر الأخير :</span>${emptyAmountBoxes()}<span class="lbl">جنيــه</span></span>
+    <span class="cell"><span class="lbl">أجر / دخل الإشتراك :</span>${emptyAmountBoxes()}<span class="lbl">جنيــه</span></span>
+    <span class="cell" style="margin-inline-start:12px"><span class="lbl">الأجر الشامل :</span>${emptyAmountBoxes()}<span class="lbl">جنيــه</span></span>
+    <span class="sp"></span>
   </div>
+  <div class="row">
+    <span class="cell"><span class="lbl">بيانات العجز إن وجدت : تاريخ بداية العجز :</span>${emptyDateBoxes()}</span>
+    <span class="cell" style="margin-inline-start:12px"><span class="lbl">نسبة العجز :</span><span class="boxes"><span class="box"></span><span class="box"></span><span class="box"></span></span><span class="lbl">%</span></span>
+    <span class="sp"></span>
+  </div>
+  <div class="row">
+    <span class="lbl">استيفاء الكشف الطبي الإبتدائى :</span>
+    <span class="opt">نعم<span class="chk">√</span></span>
+    <span class="opt">لا<span class="chk"></span></span>
+  </div>
+
 
   <div class="rule"></div>
   <div class="sec">بيانات المنشأة</div>
