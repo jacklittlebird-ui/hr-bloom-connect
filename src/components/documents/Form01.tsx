@@ -215,8 +215,9 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">التوقيع</div>
 
-  <div class="row" style="margin-top:14px">
+  <div class="row" style="margin-top:6px">
     <span class="cell grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span>
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">توقيع صاحب العمل / المدير المسئول</span></span>
   </div>
