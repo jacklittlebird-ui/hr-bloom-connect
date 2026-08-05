@@ -429,6 +429,10 @@ export const Form01 = () => {
               <Label className="text-xs">{isAr ? 'تليفون مقدم الطلب' : 'applicantPhone'}</Label>
               <Input className="h-9" value={extra.applicantPhone} onChange={e => setExtra(p => ({ ...p, applicantPhone: e.target.value }))} />
             </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'الرقم الضريبى لمقدم الطلب' : 'applicantTaxNo'}</Label>
+              <Input className="h-9" value={extra.applicantTaxNo} onChange={e => setExtra(p => ({ ...p, applicantTaxNo: e.target.value }))} />
+            </div>
 
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'القطاع' : 'sector'}</Label>
