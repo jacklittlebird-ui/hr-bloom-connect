@@ -155,6 +155,7 @@ const Documents = () => {
       items: [
         { key: 'reminders', ar: 'تنبيهات عامة', en: 'General Reminders', icon: Bell },
         { key: 'directory', ar: 'دليل الموظفين', en: 'Directory', icon: Users },
+        { key: 'form01', ar: 'استمارة واحد', en: 'Form 1', icon: File },
         { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
       ],
     },
