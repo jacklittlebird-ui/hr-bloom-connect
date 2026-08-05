@@ -415,6 +415,19 @@ export const Form01 = () => {
               <Input className="h-9" value={extra.applicantRole} onChange={e => setExtra(p => ({ ...p, applicantRole: e.target.value }))} />
             </div>
             <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'الرقم التأمينى لمقدم الطلب' : 'applicantInsuranceNo'}</Label>
+              <Input className="h-9" value={extra.applicantInsuranceNo} onChange={e => setExtra(p => ({ ...p, applicantInsuranceNo: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'الرقم القومى لمقدم الطلب' : 'applicantNationalId'}</Label>
+              <Input className="h-9" value={extra.applicantNationalId} onChange={e => setExtra(p => ({ ...p, applicantNationalId: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'تليفون مقدم الطلب' : 'applicantPhone'}</Label>
+              <Input className="h-9" value={extra.applicantPhone} onChange={e => setExtra(p => ({ ...p, applicantPhone: e.target.value }))} />
+            </div>
+
+            <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'القطاع' : 'sector'}</Label>
               <Input className="h-9" value={extra.sector} onChange={e => setExtra(p => ({ ...p, sector: e.target.value }))} />
             </div>
