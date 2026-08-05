@@ -262,18 +262,18 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="decl">
-    أقر أنا / ${line(e.full_name_ar || e.full_name, '80mm')} بأننى قد اطلعت على التوجيهات الموضحة بهذا النموذج،
+    أقر أنا / ${line(e.name_ar, '80mm')} بأننى قد اطلعت على التوجيهات الموضحة بهذا النموذج،
     وأن جميع البيانات الواردة به صحيحة ومطابقة للواقع، وأتحمل كامل المسئولية القانونية عن صحتها،
     وألتزم بإخطار الهيئة القومية للتأمين الاجتماعى بأى تغيير يطرأ عليها خلال المواعيد المقررة قانوناً.
   </div>
 
   <div class="row" style="margin-top:14px">
-    <span class="cell grow"><span class="lbl">الرقم التأمينى :</span>${boxes(e.insurance_number, 9)}</span>
+    <span class="cell grow"><span class="lbl">الرقم التأمينى :</span>${boxes(e.social_insurance_no, 9)}</span>
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">الرقم القومى :</span>${boxes(e.national_id, 14)}</span>
   </div>
 
   <div class="row" style="margin-top:18px">
-    <span class="cell grow"><span class="lbl">اسم المقر :</span>${line(e.full_name_ar || e.full_name)}</span>
+    <span class="cell grow"><span class="lbl">اسم المقر :</span>${line(e.name_ar)}</span>
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">التوقيع :</span>${line('')}</span>
   </div>
   <div class="row">
