@@ -27,6 +27,7 @@ import { MissingInsuranceStart } from '@/components/documents/MissingInsuranceSt
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
 import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
+import { Form01 } from '@/components/documents/Form01';
 
 interface Document {
   id: string;
@@ -65,7 +66,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders' | 'missingInsuranceStart'>('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders' | 'missingInsuranceStart' | 'form01'>('renewals');
   const [reminders] = usePersistedState<Reminder[]>('hr_general_reminders', []);
   const activeRemindersCount = reminders.filter(r => !r.completed).length;
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
@@ -154,6 +155,7 @@ const Documents = () => {
       items: [
         { key: 'reminders', ar: 'تنبيهات عامة', en: 'General Reminders', icon: Bell },
         { key: 'directory', ar: 'دليل الموظفين', en: 'Directory', icon: Users },
+        { key: 'form01', ar: 'استمارة واحد', en: 'Form 1', icon: File },
         { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
       ],
     },
@@ -324,6 +326,9 @@ const Documents = () => {
           <MissingInsuranceStart />
         ) : activeMainTab === 'directory' ? (
           <EmployeeDirectory />
+        ) : activeMainTab === 'form01' ? (
+          <Form01 />
+
         ) : activeMainTab === 'leaveBalances' ? (
           <LeaveBalancesAlert />
         ) : activeMainTab === 'unpaidLeaves' ? (
