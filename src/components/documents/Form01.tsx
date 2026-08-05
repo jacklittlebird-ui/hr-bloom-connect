@@ -124,6 +124,9 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="rule"></div>
+  <div class="sec">بيانات مقدم الطلب</div>
+
+
 
   <div class="row">
     <span class="cell grow"><span class="lbl">مقدم الطلب :</span>${line(x.applicant)}</span>
