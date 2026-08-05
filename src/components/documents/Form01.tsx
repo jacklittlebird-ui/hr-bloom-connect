@@ -37,6 +37,10 @@ const digits = (v: string | null | undefined, len: number) => {
 const boxes = (v: string | null | undefined, len: number) =>
   `<span class="boxes">${digits(v, len).map(d => `<span class="box">${d}</span>`).join('')}</span>`;
 
+// Same boxes but digits laid out in reversed order
+const boxesRev = (v: string | null | undefined, len: number) =>
+  `<span class="boxes">${digits(v, len).reverse().map(d => `<span class="box">${d}</span>`).join('')}</span>`;
+
 const esc = (s: string | null | undefined) => (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string));
 
 export interface Form01Extra {
