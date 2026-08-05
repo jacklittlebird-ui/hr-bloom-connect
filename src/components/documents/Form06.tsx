@@ -97,6 +97,8 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .page2 h1 { font-size: 20px; margin: 8px 0 12px; }
 .guide { margin: 0; padding-inline-start: 18px; font-size: 15px; line-height: 1.9; text-align: justify; }
 .guide li { margin-bottom: 6px; }
+.guide .sub { margin: 4px 0 4px 0; font-size: 14.5px; }
+
 .sign { text-align: left; font-weight: bold; margin-top: 14px; font-size: 16px; }
 .signline { text-align: left; margin-top: 4px; font-size: 15px; }
 .signline .fill { display: inline-block; min-width: 70mm; }
@@ -118,8 +120,12 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="lbl">الفئة</span>
     <span class="opt"><span class="n">1</span>عاملين لدى الغير<span class="chk">√</span></span>
     <span class="opt"><span class="n">2</span>أصحاب أعمال لهم منشآت<span class="chk"></span></span>
+  </div>
+  <div class="row">
+    <span class="lbl" style="visibility:hidden">الفئة</span>
     <span class="opt"><span class="n">3</span>العاملين بالمخابز<span class="chk"></span></span>
   </div>
+
 
   <div class="rule"></div>
   <div class="sec">بيانات مقدم الطلب</div>
@@ -157,12 +163,25 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">القطــاع :</span>${line(x.sector)}</span>
   </div>
   <div class="row">
-    <span class="cell grow"><span class="lbl">سبب انتهاء الإشتراك :</span>${line('')}</span>
+    <span class="cell grow"><span class="lbl">كـود الاشــتراك :</span>${line(x.subCode)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">سبب انتهاء الإشتراك :</span>${line('')}</span>
   </div>
   <div class="row">
-    <span class="cell grow"><span class="lbl">كـود الاشــتراك :</span>${line(x.subCode)}</span>
-    <span class="cell" style="margin-inline-start:12px"><span class="lbl">الأجر الأخير :</span>${emptyAmountBoxes()}<span class="lbl">جنيــه</span></span>
+    <span class="cell"><span class="lbl">أجر / دخل الإشتراك :</span>${emptyAmountBoxes()}<span class="lbl">جنيــه</span></span>
+    <span class="cell" style="margin-inline-start:12px"><span class="lbl">الأجر الشامل :</span>${emptyAmountBoxes()}<span class="lbl">جنيــه</span></span>
+    <span class="sp"></span>
   </div>
+  <div class="row">
+    <span class="cell"><span class="lbl">بيانات العجز إن وجدت : تاريخ بداية العجز :</span>${emptyDateBoxes()}</span>
+    <span class="cell" style="margin-inline-start:12px"><span class="lbl">نسبة العجز :</span><span class="boxes"><span class="box"></span><span class="box"></span><span class="box"></span></span><span class="lbl">%</span></span>
+    <span class="sp"></span>
+  </div>
+  <div class="row">
+    <span class="lbl">استيفاء الكشف الطبي الإبتدائى :</span>
+    <span class="opt">نعم<span class="chk">√</span></span>
+    <span class="opt">لا<span class="chk"></span></span>
+  </div>
+
 
   <div class="rule"></div>
   <div class="sec">بيانات المنشأة</div>
@@ -225,10 +244,14 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   <h1>إرشـــــادات</h1>
 
   <ol class="guide">
-    <li>على صاحب العمل أن يرسل هذا النموذج إلى مكتب التأمينات الاجتماعية المختص خلال أسبوعين على الأكثر من تاريخ انتهاء خدمة المؤمن عليه.</li>
-    <li>يجب استيفاء جميع بيانات النموذج بدقة ووضوح، مع بيان سبب انتهاء الخدمة بشكل صريح.</li>
-    <li>التوقيع على هذا النموذج يفيد الإطلاع والموافقة على جميع البيانات الواردة به ولا يجوز لمن وقَّع عليه أن يعارض في تلك البيانات أمام الهيئة، وله أن يلجأ إلى مكتب علاقات العمل المختص أو القضاء.</li>
-    <li>يترتب على التأخير في الإخطار عن انتهاء الخدمة تحمل صاحب العمل للاشتراكات المستحقة عن مدة التأخير طبقاً لأحكام القانون.</li>
+    <li>على صاحب العمل أن يرسل هذا النموذج مع طلب اشتراكه في الهيئة لأول مرة وخلال أسبوعين على الأكثر من تاريخ التحاق أي عامل جديد بالعمل لديه سواء كان التحاقاً نهائياً أو تحت الاختبار.</li>
+    <li>التوقيع على هذا النموذج بما يفيد الإطلاع والموافقة على جميع البيانات الواردة به ولا يجوز لمن وقَّع عليه أن يعارض في تلك البيانات أمام الهيئة وله أن يلجأ إلى مكتب علاقات العمل المختص أو القضاء.</li>
+    <li>يستخدم هذا النموذج كطلب اشتراك في تأمين إصابات العمل فقط بالنسبة للفئات التالية:
+      <div class="sub">(أ) من تجاوز سن الشيخوخة وأوقف انتفاعه بتأمين الشيخوخة والعجز والوفاة.</div>
+      <div class="sub">(ب) العاملون الذين يخضعون لأحكام قانون العمل ممن تقل أعمارهم عن 18 سنة.</div>
+      <div class="sub">(ج) العاملون المتدرجون والتلاميذ الصناعيون والطلاب المشتغلون في مشروعات التشغيل الصيفي والخدمة العامة، ويشترط اعتماد النموذج المحرر لهم من المدير المسئول بالهيئة التي تشرف على التلمذة الصناعية، والتدريب مع ختمها بخاتم هذه الجهة مع إرفاق نسخة من عقد عمل المتدرب أو المستند المثبت لنوع العمل في جميع هذه الحالات.</div>
+      <div class="sub">(د) يقتصر استيفاء الأجر على الفئات التي يتقاضى فيها المؤمن عليه أجراً من صاحب العمل.</div>
+    </li>
   </ol>
 
   <h1 style="margin-top:14px">إقـــــــرار</h1>
@@ -242,18 +265,23 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
 
   <div class="decl">
-    أقر أنا الموقِّع على هذا النموذج بصحة جميع البيانات الواردة به الخاصة بانتهاء خدمة المؤمن عليه المذكور اسمه عاليه،
-    وأتحمل كامل المسئولية القانونية عن صحة هذه البيانات، وألتزم بسداد كافة الاشتراكات والمستحقات التأمينية المقررة
-    حتى تاريخ انتهاء الخدمة.
+    أقر أنا الموقِّع على هذا النموذج بالالتزام بعرض المؤمن عليه على اللجنة الطبية المختصة بالهيئة المعنية بالتأمين الصحي
+    أو الجهة الطبية المختصة لإجراء الفحص الطبي الأولي وإثبات حالته الصحية وقت توقيع الكشف الطبي مع الالتزام بموافاة الهيئة
+    بتقرير اللياقة الطبية الصادر من الجهة الطبية المختصة عن حالته الصحية خلال أسبوعين على الأكثر من تاريخ التحاقه بالعمل
+    تطبيقاً لأحكام قانون العمل.
   </div>
 
   <div class="sign">توقيع صاحب العمل / المدير المسئول</div>
   <div class="signline">(&nbsp;${line('', '70mm')}&nbsp;)</div>
 
   <div class="decl">
-    أقر أنا / ${line(e.name_ar, '70mm')} العامل بالمنشأة عاليه بعلمي بانتهاء خدمتي واشتراكي التأميني لدى المنشأة
-    المذكورة، وبصحة البيانات الواردة بهذا النموذج.
+    أقر أنا / ${line(e.name_ar, '70mm')} العامل بالمنشأة عاليه بأن أثبت حالتي الصحية أمام اللجنة الطبية المختصة
+    بالهيئة المعنية بالتأمين الصحي أو الجهة الطبية المختصة وموافاة الهيئة بالتقرير الطبي عن حالتي الصحية خلال أسبوعين
+    من تاريخ التحاقي بالعمل وفي حالة عدم قيامي بذلك فإن الهيئة القومية للتأمين الاجتماعي ليس عليها أدنى التزام قانوني
+    بعرضي على اللجان الطبية لاثبات العجز أو صرف أية مستحقات تأمينية تترتب على العجز أياً كان نوعه السابق أو المعاصر
+    لتاريخ الالتحاق بالعمل.
   </div>
+
 
   <div class="sign">توقيع المؤمن عليه</div>
   <div class="signline">(&nbsp;${line('', '70mm')}&nbsp;)</div>
