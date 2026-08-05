@@ -156,28 +156,42 @@ export const AttendanceList = () => {
     setEditLocations([]);
 
     const stationId = employeeStationMap[r.employeeId];
-    if (!stationId) return;
-    const { data: junction } = await supabase
-      .from('qr_location_stations')
-      .select('location_id')
-      .eq('station_id', stationId);
-    const junctionIds = (junction || []).map((j: any) => j.location_id);
-    const { data: direct } = await supabase
-      .from('qr_locations')
-      .select('id, name_ar, name_en, is_active')
-      .eq('station_id', stationId)
-      .eq('is_active', true);
-    const allLocs: any[] = [...(direct || [])];
-    if (junctionIds.length > 0) {
-      const { data: jLocs } = await supabase
+    const allLocs: any[] = [];
+    if (stationId) {
+      const { data: junction } = await supabase
+        .from('qr_location_stations')
+        .select('location_id')
+        .eq('station_id', stationId);
+      const junctionIds = (junction || []).map((j: any) => j.location_id);
+      const { data: direct } = await supabase
         .from('qr_locations')
         .select('id, name_ar, name_en, is_active')
-        .in('id', junctionIds)
+        .eq('station_id', stationId)
         .eq('is_active', true);
-      const seen = new Set(allLocs.map(l => l.id));
-      for (const l of (jLocs || [])) if (!seen.has((l as any).id)) allLocs.push(l);
+      allLocs.push(...(direct || []));
+      if (junctionIds.length > 0) {
+        const { data: jLocs } = await supabase
+          .from('qr_locations')
+          .select('id, name_ar, name_en, is_active')
+          .in('id', junctionIds)
+          .eq('is_active', true);
+        const seen = new Set(allLocs.map(l => l.id));
+        for (const l of (jLocs || [])) if (!seen.has((l as any).id)) allLocs.push(l);
+      }
+    }
+    // Fallback: if the employee has no station mapped or the station has no
+    // linked sites, offer every active site so the edit is never blocked.
+    if (allLocs.length === 0) {
+      const { data: anyLocs } = await supabase
+        .from('qr_locations')
+        .select('id, name_ar, name_en')
+        .eq('is_active', true)
+        .order('name_ar');
+      allLocs.push(...(anyLocs || []));
     }
     setEditLocations(allLocs.map(l => ({ id: l.id, name_ar: l.name_ar, name_en: l.name_en })));
+    if (!stationId) return;
+
 
     const startIso = `${r.date}T00:00:00Z`;
     const endIso = `${r.date}T23:59:59Z`;
