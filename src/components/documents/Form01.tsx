@@ -40,114 +40,142 @@ const boxes = (v: string | null | undefined, len: number) =>
 const esc = (s: string | null | undefined) => (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string));
 
 export interface Form01Extra {
-  office: string; applicant: string; applicantRole: string; sector: string;
-  subCode: string; periodType: string; wage: string; totalWage: string;
+  office: string; applicant: string; applicantRole: string;
+  applicantInsuranceNo: string; applicantNationalId: string; applicantPhone: string;
+  sector: string; subCode: string; periodType: string; wage: string; totalWage: string;
   buildingNo: string; village: string; writtenAt: string;
   facilityName: string; facilityNo: string;
 }
 
-const line = (v: string | null | undefined, w = '100%') =>
+const line = (v: string | null | undefined, w = 'auto') =>
   `<span class="fill" style="min-width:${w}">${esc(v) || '&nbsp;'}</span>`;
+
+const dateBoxes = (iso: string | null | undefined) => {
+  let d = '';
+  if (iso) {
+    const dt = new Date(iso);
+    if (!isNaN(dt.getTime())) {
+      d = `${String(dt.getDate()).padStart(2, '0')}${String(dt.getMonth() + 1).padStart(2, '0')}${dt.getFullYear()}`;
+    }
+  }
+  const c = (i: number) => d[i] || '';
+  return `<span class="boxes">${[0, 1].map(i => `<span class="box">${c(i)}</span>`).join('')}</span>
+    <span class="slash">/</span>
+    <span class="boxes">${[2, 3].map(i => `<span class="box">${c(i)}</span>`).join('')}</span>
+    <span class="slash">/</span>
+    <span class="boxes">${[4, 5, 6, 7].map(i => `<span class="box">${c(i)}</span>`).join('')}</span>`;
+};
+
+const amountBoxes = (v: string) => {
+  const d = (v || '').replace(/\D/g, '').slice(-6).padStart(6, ' ');
+  return `<span class="boxes">${Array.from(d).map(c => `<span class="box">${c.trim()}</span>`).join('')}</span>`;
+};
 
 const buildHtml = (e: Emp, logoUrl: string, x: Form01Extra) => `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>نموذج رقم 1 - ${esc(e.name_ar)}</title>
 <style>
-@page { size: A4; margin: 10mm; }
+@page { size: A4; margin: 12mm 10mm; }
 * { box-sizing: border-box; }
-body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 13px; line-height: 1.9; }
+body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 12.5px; line-height: 1.6; }
 .sheet { width: 190mm; margin: 0 auto; }
-.hdr { display: flex; align-items: flex-start; gap: 10px; }
-.hdr img { height: 70px; }
-.hdr .mid { flex: 1; text-align: center; }
-.org { font-size: 17px; font-weight: bold; }
-.formno { border: 1px solid #000; padding: 2px 10px; font-weight: bold; font-size: 13px; white-space: nowrap; }
-h1 { font-size: 17px; font-weight: bold; text-align: center; margin: 10px 0 14px; text-decoration: underline; }
-.row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 9px; flex-wrap: nowrap; }
-.row > .grow { flex: 1; display: flex; align-items: baseline; gap: 6px; }
+.hdr { display: flex; align-items: center; gap: 8px; }
+.hdr .side { flex: 1; }
+.hdr img { height: 62px; display: block; margin: 0 auto; }
+.org { font-size: 16px; font-weight: bold; }
+.formno { font-size: 14px; text-align: left; }
+.office { font-size: 14px; font-weight: bold; margin-top: 2px; }
+h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; letter-spacing: 1px; text-decoration: underline; }
+.rule { border-top: 1.2px solid #000; margin: 8px 0; }
+.row { display: flex; align-items: center; gap: 6px; margin: 5px 0; }
+.cell { display: flex; align-items: center; gap: 5px; }
+.cell.grow { flex: 1; }
 .lbl { font-weight: bold; white-space: nowrap; }
-.fill { flex: 1; border-bottom: 1px dotted #000; padding: 0 4px; min-height: 18px; font-weight: bold; }
+.fill { flex: 1; border-bottom: 1px dotted #000; padding: 0 4px; min-height: 17px; font-weight: bold; }
 .boxes { display: inline-flex; direction: ltr; }
-.box { width: 19px; height: 22px; border: 1px solid #000; margin-inline-start: -1px; text-align: center; font-size: 13px; line-height: 21px; font-weight: bold; }
-.opt { display: inline-flex; align-items: center; gap: 4px; margin-inline-end: 18px; white-space: nowrap; }
-.chk { display: inline-block; width: 14px; height: 14px; border: 1px solid #000; text-align: center; line-height: 13px; font-size: 11px; }
-.num { font-weight: bold; margin-inline-end: 2px; }
-.sep { border: 0; border-top: 1px solid #000; margin: 12px 0; }
-.note { margin-top: 10px; font-size: 11px; font-weight: bold; }
+.box { width: 18px; height: 20px; border: 1px solid #000; margin-inline-start: -1px; text-align: center; font-size: 12px; line-height: 19px; font-weight: bold; }
+.slash { font-weight: bold; margin: 0 2px; }
+.opt { display: inline-flex; align-items: center; gap: 4px; margin-inline-end: 16px; white-space: nowrap; font-weight: bold; }
+.chk { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 12px; }
+.n { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 11px; }
+.note { margin-top: 8px; font-size: 11px; font-weight: bold; }
+.sp { flex: 1; }
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
+    <div class="side">
+      <div class="org">الهيئة القومية للتأمين الاجتماعى</div>
+      <div class="office">مكتب : ${esc(x.office)}</div>
+    </div>
     <img src="${logoUrl}" alt="" />
-    <div class="mid"><div class="org">الهيئة القومية للتأمين الاجتماعى</div></div>
-    <div class="formno">نموذج رقم ( 1 )</div>
-  </div>
-
-  <div class="row" style="margin-top:6px">
-    <span class="lbl">مكتب :</span>${line(x.office, '60mm')}
-    <span style="flex:1"></span>
+    <div class="side formno">نموذج رقم ( 1 )</div>
   </div>
 
   <h1>طلــــــب اشتراك مــؤمــــن عليـــــــه</h1>
 
   <div class="row">
-    <span class="lbl">الفئة :</span>
-    <span class="opt"><span class="num">1</span><span class="chk">√</span>عاملين لدى الغير</span>
-    <span class="opt"><span class="num">2</span><span class="chk"></span>أصحاب أعمال لهم منشآت</span>
-    <span class="opt"><span class="num">3</span><span class="chk"></span>العاملين بالمخابز</span>
+    <span class="lbl">الفئة</span>
+    <span class="opt"><span class="n">1</span>عاملين لدى الغير<span class="chk">√</span></span>
+    <span class="opt"><span class="n">2</span>أصحاب أعمال لهم منشآت<span class="chk"></span></span>
   </div>
+  <div class="row">
+    <span class="lbl" style="visibility:hidden">الفئة</span>
+    <span class="opt"><span class="n">3</span>العاملين بالمخابز<span class="chk"></span></span>
+  </div>
+
+  <div class="rule"></div>
 
   <div class="row">
-    <span class="grow"><span class="lbl">مقدم الطلب :</span>${line(x.applicant)}</span>
-    <span class="grow"><span class="lbl">صفة مقدم الطلب :</span>${line(x.applicantRole)}</span>
+    <span class="cell grow"><span class="lbl">مقدم الطلب :</span>${line(x.applicant)}</span>
+    <span class="cell grow"><span class="lbl">صفة مقدم الطلب :</span>${line(x.applicantRole)}</span>
+  </div>
+  <div class="row">
+    <span class="cell"><span class="lbl">الرقم التأمينى</span>${boxes(x.applicantInsuranceNo, 9)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">رقم التليفون :</span>${line(x.applicantPhone)}</span>
+  </div>
+  <div class="row">
+    <span class="cell"><span class="lbl">الرقم قومى</span>${boxes(x.applicantNationalId, 14)}</span>
+    <span class="sp"></span>
   </div>
 
-  <hr class="sep" />
+  <div class="rule"></div>
 
   <div class="row">
-    <span class="lbl">الرقم التأمينى :</span>${boxes(e.social_insurance_no, 9)}
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">رقم التليفون :</span>${line(e.phone)}</span>
+    <span class="cell"><span class="lbl">الرقم التأمينى</span>${boxes(e.social_insurance_no, 9)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">اسم المؤمن عليه :</span>${line(e.name_ar)}</span>
   </div>
-
   <div class="row">
-    <span class="lbl">الرقم القومى :</span>${boxes(e.national_id, 14)}
+    <span class="cell"><span class="lbl">الرقم القومى</span>${boxes(e.national_id, 14)}</span>
+    <span class="cell" style="margin-inline-start:12px"><span class="lbl">الجنسية :</span>${line(e.nationality || 'مصري', '35mm')}</span>
   </div>
-
   <div class="row">
-    <span class="grow"><span class="lbl">اسم المؤمن عليه :</span>${line(e.name_ar)}</span>
-    <span class="lbl" style="margin-inline-start:16px">الجنسية :</span>${line(e.nationality || 'مصري', '30mm')}
+    <span class="cell grow"><span class="lbl">المؤهل :</span>${line(e.education_ar)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">المهـنة :</span>${line(e.job_title_ar)}</span>
   </div>
-
   <div class="row">
-    <span class="grow"><span class="lbl">المؤهل :</span>${line(e.education_ar)}</span>
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">المهـنة :</span>${line(e.job_title_ar)}</span>
+    <span class="cell"><span class="lbl">تاريــخ بــدء الإشــتراك :</span>${dateBoxes(e.social_insurance_start_date)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">القطــاع :</span>${line(x.sector)}</span>
   </div>
-
   <div class="row">
-    <span class="grow"><span class="lbl">تاريــخ بــدء الإشــتراك :</span>${line(e.social_insurance_start_date ? new Date(e.social_insurance_start_date).toLocaleDateString('en-GB') : '')}</span>
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">القطــاع :</span>${line(x.sector)}</span>
+    <span class="cell grow"><span class="lbl">كـود الاشــتراك :</span>${line(x.subCode)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">نوع المــدة :</span>${line(x.periodType)}</span>
   </div>
-
   <div class="row">
-    <span class="grow"><span class="lbl">كـود الاشــتراك :</span>${line(x.subCode)}</span>
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">نوع المــدة :</span>${line(x.periodType)}</span>
+    <span class="cell"><span class="lbl">أجر / دخل الإشتراك :</span>${amountBoxes(x.wage)}<span class="lbl">جنيــه</span></span>
+    <span class="cell" style="margin-inline-start:12px"><span class="lbl">الأجر الشامل :</span>${amountBoxes(x.totalWage)}<span class="lbl">جنيــه</span></span>
+    <span class="sp"></span>
   </div>
-
   <div class="row">
-    <span class="grow"><span class="lbl">أجر / دخل الإشتراك :</span>${line(x.wage)}<span class="lbl">جنيــه</span></span>
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">الأجر الشامل :</span>${line(x.totalWage)}<span class="lbl">جنيــه</span></span>
+    <span class="cell"><span class="lbl">بيانات العجز إن وجدت : تاريخ بداية العجز :</span>${dateBoxes('')}</span>
+    <span class="cell" style="margin-inline-start:12px"><span class="lbl">نسبة العجز :</span><span class="boxes"><span class="box"></span><span class="box"></span><span class="box"></span></span><span class="lbl">%</span></span>
+    <span class="sp"></span>
   </div>
-
-  <div class="row">
-    <span class="grow"><span class="lbl">بيانات العجز إن وجدت : تاريخ بداية العجز :</span>${line('')}</span>
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">نسبة العجز :</span>${line('')}<span class="lbl">%</span></span>
-  </div>
-
   <div class="row">
     <span class="lbl">استيفاء الكشف الطبي الإبتدائى :</span>
     <span class="opt">نعم<span class="chk">√</span></span>
     <span class="opt">لا<span class="chk"></span></span>
   </div>
 
-  <hr class="sep" />
+  <div class="rule"></div>
 
   <div class="row">
     <span class="lbl">نوع المنشأة :</span>
@@ -156,43 +184,49 @@ h1 { font-size: 17px; font-weight: bold; text-align: center; margin: 10px 0 14px
     <span class="opt">مركب صيد<span class="chk"></span></span>
     <span class="opt">مخابز بلدية<span class="chk"></span></span>
   </div>
+  <div class="row">
+    <span class="cell grow"><span class="lbl">اسم المنشأة :</span>${line(x.facilityName)}</span>
+    <span class="cell" style="margin-inline-start:12px"><span class="lbl">رقم المنشأة :</span>${boxes(x.facilityNo, 7)}</span>
+  </div>
+
+  <div class="rule"></div>
 
   <div class="row">
-    <span class="grow"><span class="lbl">اسم المنشأة :</span>${line(x.facilityName)}</span>
-    <span class="lbl" style="margin-inline-start:16px">رقم المنشأة :</span>${boxes(x.facilityNo, 9)}
+    <span class="cell"><span class="lbl">عقار رقم :</span>${line(x.buildingNo, '25mm')}</span>
+    <span class="cell grow"><span class="lbl">شارع :</span>${line(e.address)}</span>
+    <span class="cell grow"><span class="lbl">قرية :</span>${line(x.village)}</span>
   </div>
-
   <div class="row">
-    <span class="lbl">عقار رقم :</span>${line(x.buildingNo, '25mm')}
-    <span class="grow"><span class="lbl">شارع :</span>${line(e.address)}</span>
-    <span class="grow"><span class="lbl">قرية :</span>${line(x.village)}</span>
+    <span class="cell grow"><span class="lbl">قسم / مركز :</span>${line(e.city)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">محافظة :</span>${line(e.governorate)}</span>
   </div>
 
-  <div class="row">
-    <span class="grow"><span class="lbl">قسم / مركز :</span>${line(e.city)}</span>
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">محافظة :</span>${line(e.governorate)}</span>
-  </div>
-
-  <hr class="sep" />
-
-  <div class="row" style="margin-top:16px">
-    <span class="grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span>
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">توقيع صاحب العمل / المدير المسئول :</span>${line('')}</span>
-  </div>
-
-  <div class="row">
-    <span class="grow"><span class="lbl">رقم التليفــون :</span>${line(e.phone)}</span>
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">تحـــريراً في :</span>${line(x.writtenAt)}</span>
-  </div>
+  <div class="rule"></div>
 
   <div class="row" style="margin-top:14px">
-    <span class="grow"><span class="lbl">توقيع الموظف المختص بالمطابقة :</span>${line('')}</span>
-    <span class="grow" style="margin-inline-start:16px"><span class="lbl">تاريخ المطابقة :</span>${line('&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;/')}</span>
+    <span class="cell grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">توقيع صاحب العمل / المدير المسئول</span></span>
+  </div>
+  <div class="row">
+    <span class="cell grow"><span class="lbl">رقم التليفــون :</span>${line(e.phone)}</span>
+    <span class="cell grow" style="margin-inline-start:12px">${line('')}</span>
+  </div>
+  <div class="row">
+    <span class="cell grow"><span class="lbl">تحـــريراً في :</span>${line(x.writtenAt)}</span>
+    <span class="sp"></span>
+  </div>
+
+  <div class="rule"></div>
+
+  <div class="row">
+    <span class="cell grow"><span class="lbl">توقيع الموظف المختص بالمطابقة :</span>${line('')}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">تاريخ المطابقة :</span>${line('&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;/')}</span>
   </div>
 
   <div class="note">ملحوظة: على صاحب العمل والعامل الإطلاع على التوجيهات الموضحة خلف النموذج مع التوقيع على الإقرار.&nbsp;&nbsp;&nbsp; (انظر خلفه)</div>
 </div>
 </body></html>`;
+
 
 
 
