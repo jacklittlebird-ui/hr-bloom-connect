@@ -104,6 +104,9 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .note { margin-top: 8px; font-size: 12px; font-weight: bold; }
 .sp { flex: 1; }
 .sec { font-weight: bold; font-size: 17px; margin: 10px 0 6px; text-align: center; border: 1.5px solid #000; padding: 3px 6px; background: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.pagebreak { page-break-before: always; break-before: page; height: 0; }
+.decl { margin-top: 18px; font-size: 15px; line-height: 2.4; font-weight: bold; text-align: justify; }
+.page2 h1 { font-size: 20px; margin: 10px 0 18px; }
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
