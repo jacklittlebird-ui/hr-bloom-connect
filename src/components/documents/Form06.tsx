@@ -97,6 +97,8 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .page2 h1 { font-size: 20px; margin: 8px 0 12px; }
 .guide { margin: 0; padding-inline-start: 18px; font-size: 15px; line-height: 1.9; text-align: justify; }
 .guide li { margin-bottom: 6px; }
+.guide .sub { margin: 4px 0 4px 0; font-size: 14.5px; }
+
 .sign { text-align: left; font-weight: bold; margin-top: 14px; font-size: 16px; }
 .signline { text-align: left; margin-top: 4px; font-size: 15px; }
 .signline .fill { display: inline-block; min-width: 70mm; }
