@@ -84,7 +84,7 @@ body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; 
 .sheet { width: 190mm; margin: 0 auto; padding: 6mm 5mm; box-sizing: border-box; }
 .hdr { display: flex; align-items: center; gap: 8px; }
 .hdr .side { flex: 1; }
-.hdr img { height: 62px; display: block; margin: 0 auto; }
+.hdr img { height: 110px; max-width: 110px; width: auto; display: block; margin: 0 auto; }
 .org { font-size: 16px; font-weight: bold; }
 .formno { font-size: 14px; text-align: left; }
 .office { font-size: 14px; font-weight: bold; margin-top: 2px; }
