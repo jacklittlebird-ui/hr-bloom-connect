@@ -103,7 +103,7 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .n { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 11px; }
 .note { margin-top: 8px; font-size: 11px; font-weight: bold; }
 .sp { flex: 1; }
-.sec { font-weight: bold; font-size: 13px; text-decoration: underline; margin: 8px 0 4px; }
+.sec { font-weight: bold; font-size: 17px; text-decoration: underline; margin: 10px 0 6px; text-align: center; }
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
@@ -137,11 +137,11 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow"><span class="lbl">صفة مقدم الطلب :</span>${line(x.applicantRole)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">الرقم التأمينى</span>${boxes(x.applicantInsuranceNo, 9)}</span>
+    <span class="cell"><span class="lbl">الرقم التأمينى</span>${boxesRev(x.applicantInsuranceNo, 9)}</span>
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">رقم التليفون :</span>${line(x.applicantPhone)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">الرقم قومى</span>${boxes(x.applicantNationalId, 14)}</span>
+    <span class="cell"><span class="lbl">الرقم قومى</span>${boxesRev(x.applicantNationalId, 14)}</span>
     <span class="sp"></span>
   </div>
 
@@ -160,7 +160,7 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
   </div>
   <div class="row">
     <span class="cell grow"><span class="lbl">المؤهل :</span>${line(e.education_ar)}</span>
-    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">المهـنة :</span>${line(e.job_title_ar)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">المهـنة :</span>${line('')}</span>
   </div>
   <div class="row">
     <span class="cell"><span class="lbl">تاريــخ بــدء الإشــتراك :</span>${dateBoxes('')}</span>
@@ -259,7 +259,7 @@ export const Form01 = () => {
   const [emp, setEmp] = useState<Emp | null>(null);
   const [extra, setExtra] = useState<Form01Extra>({
     office: 'الزمالك', applicant: 'محمود احمد سلامة', applicantRole: 'مندوب',
-    applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '1006676711',
+    applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '01006676711',
     sector: 'خاص', subCode: '', periodType: '', wage: '', totalWage: '',
     buildingNo: '', village: '', writtenAt: '',
     facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '1307926',
