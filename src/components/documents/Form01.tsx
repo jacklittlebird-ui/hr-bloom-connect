@@ -45,7 +45,7 @@ const esc = (s: string | null | undefined) => (s || '').replace(/[<>&]/g, c => (
 
 export interface Form01Extra {
   office: string; applicant: string; applicantRole: string;
-  applicantInsuranceNo: string; applicantNationalId: string; applicantPhone: string;
+  applicantInsuranceNo: string; applicantNationalId: string; applicantPhone: string; applicantTaxNo: string;
   sector: string; subCode: string; periodType: string; wage: string; totalWage: string;
   buildingNo: string; village: string; writtenAt: string;
   facilityName: string; facilityNo: string;
