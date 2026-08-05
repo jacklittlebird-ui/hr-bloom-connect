@@ -66,7 +66,7 @@ const buildHtml = (e: Emp, logoUrl: string, x: Form06Extra) => `<!DOCTYPE html>
 <style>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
-body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 13px; line-height: 1.45; }
+body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 14.5px; line-height: 1.5; }
 .sheet { width: 200mm; min-height: 297mm; margin: 0 auto; padding: 5mm 6mm; }
 .hdr { display: flex; align-items: center; gap: 8px; }
 .hdr .side { flex: 1; }
@@ -85,15 +85,15 @@ h1 { font-size: 19px; font-weight: bold; text-align: center; margin: 3px 0 8px; 
 .box { width: 22px; height: 24px; border: 1px solid #000; margin-inline-start: -1px; text-align: center; font-size: 14px; line-height: 23px; font-weight: bold; }
 .slash { font-weight: bold; margin: 0 2px; }
 .chk { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 12px; }
-.note { margin-top: 8px; font-size: 12px; font-weight: bold; }
+.note { margin-top: 8px; font-size: 13.5px; font-weight: bold; }
 .sp { flex: 1; }
 .secwrap { display:flex; align-items:center; gap:0; margin:8px 0; }
 .secwrap:before,.secwrap:after { content:""; border-top:1.5px solid #000; flex:1; }
 .sec { font-weight:bold; font-size:16px; text-align:center; border:1.5px solid #000; border-radius:7px; padding:3px 18px; }
 .pagebreak { page-break-before: always; break-before: page; height: 0; }
-.decl { margin-top: 12px; font-size: 14px; line-height: 2; text-align: justify; }
+.decl { margin-top: 12px; font-size: 15px; line-height: 2; text-align: justify; }
 .page2 h1 { font-size: 19px; margin: 4px 0 10px; }
-.guide { margin:0; padding-inline-start:20px; font-size:14px; line-height:1.9; text-align:justify; }
+.guide { margin:0; padding-inline-start:20px; font-size:15px; line-height:1.9; text-align:justify; }
 .guide li { margin-bottom:8px; }
 .signs { display:flex; justify-content:space-around; margin-top:10px; font-weight:bold; text-align:center; }
 .signline { margin-top:5px; font-weight:normal; }
@@ -136,17 +136,20 @@ h1 { font-size: 19px; font-weight: bold; text-align: center; margin: 3px 0 8px; 
   <div class="row"><span class="cell grow"><span class="lbl">رقم المحمول أو التليفون الأرضى :</span>${line(e.phone)}</span></div>
   <div class="row"><span class="cell grow"><span class="lbl">البريد الإلكترونى :</span>${line(e.email)}</span></div>
 
-  <div class="secwrap"><div class="sec">إقرار المؤمن عليه والمدير المسئول</div></div>
-  <div class="decl">أقر أن البيانات بعاليه صحيحة وأن المؤمن عليه تسلم صورة من هذا الإخطار.</div>
-  <div class="row"><span class="cell grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span><span class="cell grow"><span class="lbl">توقيع المدير المسئول :</span>${line('')}</span></div>
-  <div class="row"><span class="cell grow"><span class="lbl">تم مطابقة التوقيع بمعرفتي :</span>${line('')}</span></div>
+  <div class="secwrap"><div class="sec">إقرار المؤمن عليه</div></div>
+  <div class="decl">أقر أنا / ${line(e.name_ar, '70mm')} بأن جميع البيانات الواردة بهذا الإخطار صحيحة، وأنني تسلمت صورة منه، وأتحمل المسئولية القانونية عن صحة هذه البيانات.</div>
+  <div class="row"><span class="cell grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span><span class="cell grow"><span class="lbl">تم مطابقة التوقيع بمعرفتي :</span>${line('')}</span></div>
 
   <div class="secwrap"><div class="sec">إقرار المدير المسئول في حالة وجود نزاع</div></div>
-  <div class="decl">أقر أن البيانات بعاليه صحيحة وأنني أرسلت صورة من هذا الإخطار إلى المؤمن عليه بخطاب موصى عليه بعلم الوصول برقم ${line('', '40mm')}.</div>
-  <div class="row"><span class="cell grow"><span class="lbl">توقيع المدير المسئول :</span>${line('')}</span><span class="cell grow"><span class="lbl">خاتم الجهة :</span>${line('')}</span></div>
+  <div class="decl">أقر أنا المدير المسئول عن منشأة / ${line(x.facilityName, '60mm')} بأن البيانات الواردة بهذا الإخطار صحيحة، وأن المؤمن عليه قد امتنع عن التوقيع، وقد قمت بإرسال صورة من هذا الإخطار إليه بخطاب موصى عليه بعلم الوصول رقم ${line('', '35mm')} بتاريخ ${emptyDateBoxes()} من مكتب بريد ${line('', '40mm')}.</div>
+  <div class="row"><span class="cell grow"><span class="lbl">اسم المدير المسئول :</span>${line('')}</span><span class="cell grow"><span class="lbl">التوقيع :</span>${line('')}</span><span class="cell grow"><span class="lbl">خاتم المنشأة :</span>${line('')}</span></div>
+
+  <div class="secwrap"><div class="sec">إقرار المؤمن عليه في حالة وجود نزاع</div></div>
+  <div class="decl">أقر أنا / ${line(e.name_ar, '70mm')} بأنني غير موافق على البيانات الواردة بهذا الإخطار للأسباب الآتية : ${line('', '60mm')} ${line('')}</div>
+  <div class="row"><span class="cell grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span><span class="cell grow"><span class="lbl">تم مطابقة التوقيع بمعرفتي :</span>${line('')}</span></div>
 
   <table class="table"><tr><th>البيان</th><th>مستلم الإخطار</th><th>المراجع</th><th>مسجل آلي</th><th>مراجع آلي</th></tr><tr><th>الاسم</th><td></td><td></td><td></td><td></td></tr><tr><th>التوقيع</th><td></td><td></td><td></td><td></td></tr><tr><th>التاريخ</th><td></td><td></td><td></td><td></td></tr></table>
-  <div class="note">ملحوظة: يلزم التأكد من توقيع كل من العامل وصاحب العمل على الإقرار الموضح خلف النموذج. (انظر خلفه)</div>
+  <div class="note">ملحوظة : يلزم التأكد من توقيع كل من المؤمن عليه وصاحب العمل على الإقرارات الموضحة بالنموذج، وفي حالة رفض المؤمن عليه التوقيع يتم إرسال صورة من الإخطار إليه بخطاب موصى عليه بعلم الوصول خلال ٢٤ ساعة. (انظر خلفه)</div>
 </div>
 
 <div class="pagebreak"></div>
