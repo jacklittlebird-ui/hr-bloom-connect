@@ -168,6 +168,7 @@ export const Form01 = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState('');
+  const [emp, setEmp] = useState<Emp | null>(null);
   const [extra, setExtra] = useState<Form01Extra>({
     office: 'الزمالك', applicant: 'محمود احمد سلامة', applicantRole: 'مندوب',
     sector: 'خاص', subCode: '', periodType: 'مدة اشتراك أساسية', wage: '', totalWage: '',
@@ -194,7 +195,11 @@ export const Form01 = () => {
   }, []);
 
   const selected = useMemo(() => employees.find(e => e.id === selectedId) || null, [employees, selectedId]);
-  const html = selected ? buildHtml(selected, nosiLogo.url, extra) : '';
+
+  useEffect(() => { setEmp(selected ? { ...selected } : null); }, [selected]);
+
+  const setEmpField = (k: keyof Emp, v: string) => setEmp(p => (p ? { ...p, [k]: v } : p));
+  const html = emp ? buildHtml(emp, nosiLogo.url, extra) : '';
 
   // Auto-fill wages from the latest salary record
   useEffect(() => {
@@ -267,7 +272,7 @@ export const Form01 = () => {
               </PopoverContent>
             </Popover>
           </div>
-          <Button onClick={print} disabled={!selected} className="gap-2">
+          <Button onClick={print} disabled={!emp} className="gap-2">
             <Printer className="h-4 w-4" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}
           </Button>
         </CardContent>
@@ -275,6 +280,53 @@ export const Form01 = () => {
 
       <Card>
         <CardContent className="p-4">
+          <div className="mb-3 text-sm font-semibold">{isAr ? 'بيانات الموظف (قابلة للتعديل قبل الطباعة)' : 'Employee data (editable)'}</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'اسم المؤمن عليه' : 'name_ar'}</Label>
+              <Input className="h-9" value={emp?.name_ar || ''} onChange={ev => setEmpField('name_ar', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'الرقم التأمينى' : 'social_insurance_no'}</Label>
+              <Input className="h-9" value={emp?.social_insurance_no || ''} onChange={ev => setEmpField('social_insurance_no', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'الرقم القومى' : 'national_id'}</Label>
+              <Input className="h-9" value={emp?.national_id || ''} onChange={ev => setEmpField('national_id', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'الجنسية' : 'nationality'}</Label>
+              <Input className="h-9" value={emp?.nationality || ''} onChange={ev => setEmpField('nationality', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'المؤهل' : 'education_ar'}</Label>
+              <Input className="h-9" value={emp?.education_ar || ''} onChange={ev => setEmpField('education_ar', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'المهنة' : 'job_title_ar'}</Label>
+              <Input className="h-9" value={emp?.job_title_ar || ''} onChange={ev => setEmpField('job_title_ar', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'تاريخ بدء الاشتراك' : 'social_insurance_start_date'}</Label>
+              <Input className="h-9" value={emp?.social_insurance_start_date || ''} onChange={ev => setEmpField('social_insurance_start_date', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'شارع' : 'address'}</Label>
+              <Input className="h-9" value={emp?.address || ''} onChange={ev => setEmpField('address', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'قسم / مركز' : 'city'}</Label>
+              <Input className="h-9" value={emp?.city || ''} onChange={ev => setEmpField('city', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'محافظة' : 'governorate'}</Label>
+              <Input className="h-9" value={emp?.governorate || ''} onChange={ev => setEmpField('governorate', ev.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'رقم التليفون' : 'phone'}</Label>
+              <Input className="h-9" value={emp?.phone || ''} onChange={ev => setEmpField('phone', ev.target.value)} />
+            </div>
+          </div>
           <div className="mb-3 text-sm font-semibold">{isAr ? 'بيانات إضافية للاستمارة' : 'Additional form data'}</div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="space-y-1">
@@ -331,7 +383,7 @@ export const Form01 = () => {
             <div className="flex h-full items-center justify-center gap-2 text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />{isAr ? 'جاري التحميل...' : 'Loading...'}
             </div>
-          ) : selected ? (
+          ) : emp ? (
             <iframe srcDoc={html} title="form-01" className="w-full h-full bg-white rounded-md border" />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
