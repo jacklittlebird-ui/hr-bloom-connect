@@ -27,6 +27,7 @@ import { MissingInsuranceStart } from '@/components/documents/MissingInsuranceSt
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
 import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
+import { Form01 } from '@/components/documents/Form01';
 
 interface Document {
   id: string;
