@@ -99,6 +99,7 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .n { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 11px; }
 .note { margin-top: 8px; font-size: 11px; font-weight: bold; }
 .sp { flex: 1; }
+.sec { font-weight: bold; font-size: 13px; text-decoration: underline; margin: 8px 0 4px; }
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
