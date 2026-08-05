@@ -141,8 +141,8 @@ h1 { font-size: 14px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">رقم التليفون :</span>${line(x.applicantPhone)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">الرقم قومى</span>${boxesRev(x.applicantNationalId, 14)}</span>
-    <span class="sp"></span>
+    <span class="cell"><span class="lbl">الرقم القومى</span>${boxesRev(x.applicantNationalId, 14)}</span>
+    <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">الرقم الضريبى :</span>${line(x.applicantTaxNo)}</span>
   </div>
 
   <div class="rule"></div>
