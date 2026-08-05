@@ -48,118 +48,130 @@ export interface Form01Extra {
 const buildHtml = (e: Emp, logoUrl: string, x: Form01Extra) => `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>نموذج رقم 1 - ${esc(e.name_ar)}</title>
 <style>
-@page { size: A4; margin: 10mm; }
-body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; }
-.sheet { width: 190mm; margin: 0 auto; border: 2px solid #000; padding: 6mm; box-sizing: border-box; }
-.head { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 2px solid #000; padding-bottom: 4px; }
-.head img { height: 70px; }
-.head .c { text-align: center; flex: 1; }
-.head .t1 { font-size: 15px; font-weight: bold; }
-.head .t2 { font-size: 13px; margin-top: 4px; }
-h1 { font-size: 16px; text-align: center; margin: 8px 0; text-decoration: underline; }
-.row { display: flex; align-items: center; gap: 6px; margin: 5px 0; font-size: 12.5px; }
-.lbl { font-weight: bold; white-space: nowrap; }
-.val { border-bottom: 1px dotted #000; flex: 1; min-height: 18px; padding: 0 4px; font-weight: bold; }
+@page { size: A4; margin: 8mm; }
+* { box-sizing: border-box; }
+body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 12px; }
+.sheet { width: 194mm; margin: 0 auto; border: 2px solid #000; padding: 4mm; }
+table { width: 100%; border-collapse: collapse; }
+.head td { vertical-align: middle; padding: 2px 4px; }
+.head img { height: 68px; }
+.t1 { font-size: 15px; font-weight: bold; text-align: center; }
+.t2 { font-size: 12.5px; text-align: center; margin-top: 3px; }
+.formno { border: 1.5px solid #000; padding: 4px 8px; font-weight: bold; font-size: 13px; white-space: nowrap; }
+h1 { font-size: 15px; text-align: center; margin: 6px 0; text-decoration: underline; }
+.grid { border: 1.5px solid #000; }
+.grid td { border: 1px solid #000; padding: 3px 5px; vertical-align: middle; height: 22px; }
+.lbl { font-weight: bold; white-space: nowrap; background: #f2f2f2; width: 1%; }
+.val { font-weight: bold; }
+.band { background: #e6e6e6; font-weight: bold; text-align: center; }
 .boxes { display: inline-flex; direction: ltr; }
-.box { width: 17px; height: 21px; border: 1px solid #000; margin-inline-start: -1px; text-align: center; font-size: 12px; line-height: 21px; font-weight: bold; }
-.sec { border: 1px solid #000; padding: 5px 7px; margin-top: 7px; }
-.sec-title { font-weight: bold; font-size: 12.5px; margin-bottom: 4px; }
-.chk { display: inline-block; width: 13px; height: 13px; border: 1px solid #000; margin-inline-end: 4px; text-align: center; line-height: 13px; font-size: 11px; vertical-align: middle; }
-.grid2 { display: flex; gap: 14px; }
-.grid2 > * { flex: 1; }
-.sign { display: flex; justify-content: space-between; margin-top: 18px; font-size: 12.5px; font-weight: bold; }
-.note { margin-top: 12px; font-size: 11px; font-weight: bold; border-top: 1px solid #000; padding-top: 5px; }
+.box { width: 16px; height: 20px; border: 1px solid #000; margin-inline-start: -1px; text-align: center; font-size: 12px; line-height: 20px; font-weight: bold; }
+.chk { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; margin-inline-end: 3px; text-align: center; line-height: 12px; font-size: 10px; vertical-align: middle; }
+.opt { margin-inline-end: 14px; white-space: nowrap; }
+.sign td { padding: 16px 6px 4px; font-weight: bold; font-size: 12px; }
+.note { margin-top: 8px; font-size: 10.5px; font-weight: bold; border-top: 1px solid #000; padding-top: 4px; }
 </style></head><body>
 <div class="sheet">
-  <div class="head">
-    <img src="${logoUrl}" alt="" />
-    <div class="c">
+  <table class="head"><tr>
+    <td style="width:80px"><img src="${logoUrl}" alt="" /></td>
+    <td>
       <div class="t1">الهيئة القومية للتأمين الاجتماعى</div>
       <div class="t2">مكتب : ${esc(x.office)}</div>
-    </div>
-    <div style="font-size:13px;font-weight:bold;border:1px solid #000;padding:4px 8px;">نموذج رقم ( 1 )</div>
-  </div>
+    </td>
+    <td style="width:110px;text-align:left"><span class="formno">نموذج رقم ( 1 )</span></td>
+  </tr></table>
 
   <h1>طلــــب اشتراك مــؤمــن عليــه</h1>
 
-  <div class="sec">
-    <div class="sec-title">الفئة</div>
-    <div class="row">
-      <span><span class="chk">√</span>عاملين لدى الغير</span>
-      <span><span class="chk"></span>أصحاب أعمال لهم منشآت</span>
-      <span><span class="chk"></span>العاملين بالمخابز</span>
-    </div>
-  </div>
+  <table class="grid">
+    <tr><td class="band" colspan="4">الفئـــة</td></tr>
+    <tr><td colspan="4">
+      <span class="opt"><span class="chk">√</span>عاملين لدى الغير</span>
+      <span class="opt"><span class="chk"></span>أصحاب أعمال لهم منشآت</span>
+      <span class="opt"><span class="chk"></span>العاملين بالمخابز</span>
+    </td></tr>
+    <tr>
+      <td class="lbl">مقدم الطلب</td><td class="val">${esc(x.applicant)}</td>
+      <td class="lbl">صفة مقدم الطلب</td><td class="val">${esc(x.applicantRole)}</td>
+    </tr>
 
-  <div class="sec">
-    <div class="grid2">
-      <div class="row"><span class="lbl">مقدم الطلب :</span><span class="val">${esc(x.applicant)}</span></div>
-      <div class="row"><span class="lbl">صفة مقدم الطلب :</span><span class="val">${esc(x.applicantRole)}</span></div>
-    </div>
-  </div>
+    <tr><td class="band" colspan="4">أولاً : بيانات المؤمن عليه</td></tr>
+    <tr>
+      <td class="lbl">اسم المؤمن عليه</td><td class="val" colspan="3">${esc(e.name_ar)}</td>
+    </tr>
+    <tr>
+      <td class="lbl">الرقم التأمينى</td><td>${boxes(e.social_insurance_no, 9)}</td>
+      <td class="lbl">الرقم القومى</td><td>${boxes(e.national_id, 14)}</td>
+    </tr>
+    <tr>
+      <td class="lbl">الجنسية</td><td class="val">${esc(e.nationality) || 'مصري'}</td>
+      <td class="lbl">المؤهل</td><td class="val">${esc(e.education_ar)}</td>
+    </tr>
+    <tr>
+      <td class="lbl">المهنة</td><td class="val">${esc(e.job_title_ar)}</td>
+      <td class="lbl">رقم التليفون</td><td class="val">${esc(e.phone)}</td>
+    </tr>
+    <tr>
+      <td class="lbl">تاريخ بدء الاشتراك</td><td class="val">${e.social_insurance_start_date ? new Date(e.social_insurance_start_date).toLocaleDateString('en-GB') : ''}</td>
+      <td class="lbl">القطاع</td><td class="val">${esc(x.sector)}</td>
+    </tr>
+    <tr>
+      <td class="lbl">كود الاشتراك</td><td class="val">${esc(x.subCode)}</td>
+      <td class="lbl">نوع المدة</td><td class="val">${esc(x.periodType)}</td>
+    </tr>
+    <tr>
+      <td class="lbl">أجر / دخل الاشتراك</td><td class="val">${esc(x.wage)} جنيه</td>
+      <td class="lbl">الأجر الشامل</td><td class="val">${esc(x.totalWage)} جنيه</td>
+    </tr>
+    <tr>
+      <td class="lbl">تاريخ بداية العجز</td><td class="val"></td>
+      <td class="lbl">نسبة العجز</td><td class="val">%</td>
+    </tr>
+    <tr>
+      <td class="lbl">استيفاء الكشف الطبى الابتدائى</td>
+      <td colspan="3"><span class="opt"><span class="chk"></span>نعم</span><span class="opt"><span class="chk"></span>لا</span></td>
+    </tr>
 
-  <div class="sec">
-    <div class="row"><span class="lbl">اسم المؤمن عليه :</span><span class="val">${esc(e.name_ar)}</span></div>
-    <div class="row"><span class="lbl">الرقم التأمينى :</span>${boxes(e.social_insurance_no, 9)}<span style="flex:1"></span><span class="lbl">رقم التليفون :</span><span class="val">${esc(e.phone)}</span></div>
-    <div class="row"><span class="lbl">الرقم القومى :</span>${boxes(e.national_id, 14)}</div>
-    <div class="grid2">
-      <div class="row"><span class="lbl">الجنسية :</span><span class="val">${esc(e.nationality) || 'مصري'}</span></div>
-      <div class="row"><span class="lbl">المؤهل :</span><span class="val">${esc(e.education_ar)}</span></div>
-      <div class="row"><span class="lbl">المهـنة :</span><span class="val">${esc(e.job_title_ar)}</span></div>
-    </div>
-    <div class="grid2">
-      <div class="row"><span class="lbl">تاريــخ بــدء الإشــتراك :</span><span class="val">${e.social_insurance_start_date ? new Date(e.social_insurance_start_date).toLocaleDateString('en-GB') : ''}</span></div>
-      <div class="row"><span class="lbl">القطــاع :</span><span class="val">${esc(x.sector)}</span></div>
-      <div class="row"><span class="lbl">كـود الاشــتراك :</span><span class="val">${esc(x.subCode)}</span></div>
-    </div>
-    <div class="grid2">
-      <div class="row"><span class="lbl">نوع المــدة :</span><span class="val">${esc(x.periodType)}</span></div>
-      <div class="row"><span class="lbl">أجر / دخل الإشتراك :</span><span class="val">${esc(x.wage)}</span><span>جنيــه</span></div>
-      <div class="row"><span class="lbl">الأجر الشامل :</span><span class="val">${esc(x.totalWage)}</span></div>
-    </div>
-    <div class="grid2">
-      <div class="row"><span class="lbl">بيانات العجز إن وجدت : تاريخ بداية العجز :</span><span class="val"></span></div>
-      <div class="row"><span class="lbl">نسبة العجز :</span><span class="val"></span><span>%</span></div>
-    </div>
-    <div class="row"><span class="lbl">استيفاء الكشف الطبي الإبتدائى :</span><span><span class="chk"></span>نعم</span><span><span class="chk"></span>لا</span></div>
-  </div>
+    <tr><td class="band" colspan="4">ثانياً : بيانات المنشأة</td></tr>
+    <tr><td colspan="4">
+      <span class="opt"><span class="chk">√</span>نمطى</span>
+      <span class="opt"><span class="chk"></span>سيارة</span>
+      <span class="opt"><span class="chk"></span>مركب صيد</span>
+      <span class="opt"><span class="chk"></span>مخابز بلدية</span>
+    </td></tr>
+    <tr>
+      <td class="lbl">اسم المنشأة</td><td class="val">لينك أيرو تريدنج أجنسي</td>
+      <td class="lbl">رقم المنشأة</td><td class="val">1307926</td>
+    </tr>
+    <tr>
+      <td class="lbl">عقار رقم</td><td class="val">${esc(x.buildingNo)}</td>
+      <td class="lbl">شارع</td><td class="val">${esc(e.address)}</td>
+    </tr>
+    <tr>
+      <td class="lbl">قرية</td><td class="val">${esc(x.village)}</td>
+      <td class="lbl">قسم / مركز</td><td class="val">${esc(e.city)}</td>
+    </tr>
+    <tr>
+      <td class="lbl">محافظة</td><td class="val">${esc(e.governorate)}</td>
+      <td class="lbl">رقم تليفون المنشأة</td><td class="val">${esc(e.phone)}</td>
+    </tr>
+  </table>
 
-  <div class="sec">
-    <div class="row">
-      <span class="lbl">نوع المنشأة :</span>
-      <span><span class="chk">√</span>نمطى</span>
-      <span><span class="chk"></span>سيارة</span>
-      <span><span class="chk"></span>مركب صيد</span>
-      <span><span class="chk"></span>مخابز بلدية</span>
-    </div>
-    <div class="grid2">
-      <div class="row"><span class="lbl">اسم المنشأة :</span><span class="val">لينك أيرو تريدنج أجنسي</span></div>
-      <div class="row"><span class="lbl">رقم المنشأة :</span><span class="val">1307926</span></div>
-    </div>
-    <div class="grid2">
-      <div class="row"><span class="lbl">عقار رقم :</span><span class="val">${esc(x.buildingNo)}</span></div>
-      <div class="row"><span class="lbl">شارع :</span><span class="val">${esc(e.address)}</span></div>
-      <div class="row"><span class="lbl">قرية :</span><span class="val">${esc(x.village)}</span></div>
-    </div>
-    <div class="grid2">
-      <div class="row"><span class="lbl">قسم / مركز :</span><span class="val">${esc(e.city)}</span></div>
-      <div class="row"><span class="lbl">محافظة :</span><span class="val">${esc(e.governorate)}</span></div>
-      <div class="row"><span class="lbl">رقم التليفــون :</span><span class="val">${esc(e.phone)}</span></div>
-    </div>
-  </div>
+  <table class="sign">
+    <tr>
+      <td style="width:50%">توقيع المؤمن عليه : ..............................</td>
+      <td style="width:50%">توقيع صاحب العمل / المدير المسئول : ..............................</td>
+    </tr>
+    <tr>
+      <td>تحريراً في : ${esc(x.writtenAt)}</td>
+      <td>توقيع الموظف المختص بالمطابقة : .................. تاريخ المطابقة : &nbsp;&nbsp;/&nbsp;&nbsp;/</td>
+    </tr>
+  </table>
 
-  <div class="sign">
-    <span>توقيع المؤمن عليه : ..........................</span>
-    <span>توقيع صاحب العمل / المدير المسئول : ..........................</span>
-  </div>
-  <div class="row" style="margin-top:14px;"><span class="lbl">تحـريراً في :</span><span class="val" style="max-width:120px">${esc(x.writtenAt)}</span>
-    <span style="flex:1"></span>
-    <span class="lbl">توقيع الموظف المختص بالمطابقة :</span><span class="val" style="max-width:150px"></span>
-    <span class="lbl">تاريخ المطابقة :</span><span class="val" style="max-width:120px">/        /</span>
-  </div>
   <div class="note">ملحوظة: على صاحب العمل والعامل الإطلاع على التوجيهات الموضحة خلف النموذج مع التوقيع على الإقرار. (انظر خلفه)</div>
 </div>
 </body></html>`;
+
 
 export const Form01 = () => {
   const { language } = useLanguage();
