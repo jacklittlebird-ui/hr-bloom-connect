@@ -59,6 +59,8 @@ const emptyAmountBoxes = () =>
 export interface Form06Extra {
   office: string; buildingNo: string; area: string; village: string;
   facilityName: string; facilityNo: string;
+  applicantName: string; applicantRole: string; applicantInsNo: string;
+  applicantPhone: string; applicantNid: string; address: string;
 }
 
 const buildHtml = (e: Emp, logoUrl: string, x: Form06Extra) => `<!DOCTYPE html>
@@ -66,119 +68,140 @@ const buildHtml = (e: Emp, logoUrl: string, x: Form06Extra) => `<!DOCTYPE html>
 <style>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
-body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 14.5px; line-height: 1.5; }
-.sheet { width: 200mm; min-height: 297mm; margin: 0 auto; padding: 5mm 6mm; }
-.hdr { display: flex; align-items: center; gap: 8px; }
+body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 15px; line-height: 1.6; }
+.sheet { width: 200mm; min-height: 297mm; margin: 0 auto; padding: 6mm 8mm; }
+.hdr { display: flex; align-items: flex-start; gap: 8px; }
 .hdr .side { flex: 1; }
-.hdr img { height: 82px; max-width: 90px; width: auto; display: block; margin: 0 auto; }
+.hdr img { height: 76px; max-width: 90px; width: auto; display: block; margin: 0 auto; }
 .org { font-size: 16px; font-weight: bold; }
-.formno { font-size: 13px; text-align: left; }
-.office { font-size: 14px; font-weight: bold; }
-h1 { font-size: 19px; font-weight: bold; text-align: center; margin: 3px 0 8px; text-decoration: underline; }
-.rule { border-top: 1.5px solid #000; margin: 7px 0; }
-.row { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+.formno { font-size: 16px; font-weight: bold; text-align: left; }
+.office { font-size: 15px; font-weight: bold; }
+.rule { border-top: 2px solid #000; margin: 6px 0 10px; }
+h1 { font-size: 20px; font-weight: bold; text-align: center; margin: 4px 0 10px; text-decoration: underline; }
+.row { display: flex; align-items: center; gap: 8px; margin: 9px 0; }
 .cell { display: flex; align-items: center; gap: 5px; }
 .cell.grow { flex: 1; }
 .lbl { font-weight: bold; white-space: nowrap; }
 .fill { flex: 1; border-bottom: 1px dotted #000; padding: 0 4px; min-height: 18px; font-weight: bold; }
 .boxes { display: inline-flex; direction: ltr; }
-.box { width: 22px; height: 24px; border: 1px solid #000; margin-inline-start: -1px; text-align: center; font-size: 14px; line-height: 23px; font-weight: bold; }
+.box { width: 23px; height: 25px; border: 1px solid #000; margin-inline-start: -1px; text-align: center; font-size: 14px; line-height: 24px; font-weight: bold; }
 .slash { font-weight: bold; margin: 0 2px; }
-.chk { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; text-align: center; line-height: 15px; font-size: 12px; }
-.note { margin-top: 8px; font-size: 13.5px; font-weight: bold; }
-.sp { flex: 1; }
-.secwrap { display:flex; align-items:center; gap:0; margin:8px 0; }
+.note { margin-top: 12px; font-size: 15px; font-weight: bold; }
+.secwrap { display:flex; align-items:center; gap:0; margin:14px 0 10px; }
 .secwrap:before,.secwrap:after { content:""; border-top:1.5px solid #000; flex:1; }
-.sec { font-weight:bold; font-size:16px; text-align:center; border:1.5px solid #000; border-radius:7px; padding:3px 18px; }
+.sec { font-weight:bold; font-size:17px; text-align:center; border:1.5px solid #000; border-radius:9px; padding:4px 22px; }
 .pagebreak { page-break-before: always; break-before: page; height: 0; }
-.decl { margin-top: 12px; font-size: 15px; line-height: 2; text-align: justify; }
-.page2 h1 { font-size: 19px; margin: 4px 0 10px; }
-.guide { margin:0; padding-inline-start:20px; font-size:15px; line-height:1.9; text-align:justify; }
-.guide li { margin-bottom:8px; }
-.signs { display:flex; justify-content:space-around; margin-top:10px; font-weight:bold; text-align:center; }
-.signline { margin-top:5px; font-weight:normal; }
-.table { width:100%; border-collapse:collapse; margin-top:8px; text-align:center; }
-.table th,.table td { border:1px solid #000; height:24px; }
+.decl { margin-top: 10px; font-size: 15.5px; line-height: 2; text-align: justify; }
+.page2 h1 { font-size: 20px; margin: 6px 0 10px; }
+.guide { margin:0; padding-inline-start:20px; font-size:15.5px; line-height:2; text-align:justify; }
+.guide li { margin-bottom:10px; }
+.signs { display:flex; justify-content:space-around; margin-top:12px; font-weight:bold; text-align:center; }
+.signline { margin-top:6px; font-weight:normal; }
+.stamp { border:1px solid #000; border-radius:50%; padding:10px 24px; font-weight:bold; font-size:14px; display:inline-block; }
+.dt { font-weight:bold; white-space:nowrap; }
+.hr { border-top:1.5px solid #000; margin:14px 0 8px; }
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
     <div class="side">
-      <div class="org">الهيئة القومية للتأمين الاجتماعى</div>
-      <div class="office">مكتب : ${esc(x.office)}</div>
+      <div class="org">الهيئة القومية للتأمين الاجتماعي</div>
+      <div class="office">مكتب ${esc(x.office) ? ': ' + esc(x.office) : '.............................'}</div>
     </div>
     <img src="${logoUrl}" alt="" />
-    <div class="side formno">نموذج رقم (٦)<br><small>مصلحة التأمينات العامة</small></div>
+    <div class="side formno">نموذج رقم ( ٦ )</div>
   </div>
+  <div class="rule"></div>
   <h1>إخطار بإنتهاء اشتراك مؤمن عليه</h1>
-  <div class="row"><span class="cell"><span class="lbl">رقم المنشأة :</span>${boxes(x.facilityNo, 11)}</span><span class="cell grow"><span class="lbl">اسم المنشأة :</span>${line(x.facilityName)}</span></div>
-  <div class="secwrap"><div class="sec">بيانات المؤمن عليه</div></div>
 
+  <div class="secwrap"><div class="sec">بيانات مقدم الطلب</div></div>
+  <div class="row">
+    <span class="cell grow"><span class="lbl">مقدم الطلب :</span>${line(x.applicantName)}</span>
+    <span class="cell grow"><span class="lbl">صفة مقدم الطلب :</span>${line(x.applicantRole)}</span>
+  </div>
+  <div class="row">
+    <span class="cell"><span class="lbl">رقم تأمينى :</span>${boxes(x.applicantInsNo, 9)}</span>
+    <span class="cell grow"><span class="lbl">رقم التليفون :</span>${line(x.applicantPhone)}</span>
+  </div>
+  <div class="row">
+    <span class="cell"><span class="lbl">رقم القومى :</span>${boxes(x.applicantNid, 14)}</span>
+  </div>
+
+  <div class="secwrap"><div class="sec">بيانات المؤمن عليه</div></div>
   <div class="row">
     <span class="cell"><span class="lbl">الرقم التأمينى :</span>${boxes(e.social_insurance_no, 9)}</span>
+    <span class="cell grow"><span class="lbl">الاســـــم :</span>${line(e.name_ar)}</span>
   </div>
   <div class="row">
     <span class="cell"><span class="lbl">الرقم القومى :</span>${boxes(e.national_id, 14)}</span>
   </div>
-  <div class="row"><span class="cell grow"><span class="lbl">الإسم :</span>${line(e.name_ar)}</span></div>
-  <div class="row"><span class="cell"><span class="lbl">تاريخ إنتهاء الإشتراك :</span>${emptyDateBoxes()}</span><span class="cell grow"><span class="lbl">سبب إنتهاء الإشتراك :</span>${line('')}</span><span class="chk"></span></div>
-
-  <div class="secwrap"><div class="sec">بيانات محل إقامة المؤمن عليه</div></div>
-
   <div class="row">
-    <span class="cell"><span class="lbl">عقار رقم :</span>${line(x.buildingNo, '22mm')}</span>
-    <span class="cell grow"><span class="lbl">شارع / حارة :</span>${line(e.address)}</span>
+    <span class="cell"><span class="lbl">رقم المنشأة :</span>${boxes(x.facilityNo, 9)}</span>
+    <span class="cell grow"><span class="lbl">اسم المنشأة :</span>${line(x.facilityName)}</span>
   </div>
   <div class="row">
-    <span class="cell grow"><span class="lbl">شياخة / قرية :</span>${line(x.village)}</span>
-    <span class="cell grow"><span class="lbl">قسم / مركز :</span>${line(e.city)}</span>
-    <span class="cell grow"><span class="lbl">محافظة :</span>${line(e.governorate)}</span>
+    <span class="cell"><span class="lbl">تاريخ انتهاء الاشتراك :</span>${emptyDateBoxes()}</span>
+    <span class="cell grow"><span class="lbl">سبب انتهاء الاشتراك :</span>${line('')}</span>
   </div>
-  <div class="row"><span class="cell grow"><span class="lbl">رقم المحمول أو التليفون الأرضى :</span>${line(e.phone)}</span></div>
-  <div class="row"><span class="cell grow"><span class="lbl">البريد الإلكترونى :</span>${line(e.email)}</span></div>
 
-  <div class="secwrap"><div class="sec">إقرار المؤمن عليه</div></div>
-  <div class="decl">أقر أنا / ${line(e.name_ar, '70mm')} بأن جميع البيانات الواردة بهذا الإخطار صحيحة، وأنني تسلمت صورة منه، وأتحمل المسئولية القانونية عن صحة هذه البيانات.</div>
-  <div class="row"><span class="cell grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span><span class="cell grow"><span class="lbl">تم مطابقة التوقيع بمعرفتي :</span>${line('')}</span></div>
+  <div class="secwrap"><div class="sec">إقـرار المؤمن عليه والمدير المسئول</div></div>
+  <div class="decl">أقـر أن البيانات بعاليه صحيحة وأن المؤمن عليه تسلم صورة من هذا الإخطار.</div>
+  <div class="row">
+    <span class="cell grow"><span class="lbl">توقيع المؤمن عليه</span>${line('')}<span class="dt">/ &nbsp; / ٢٠</span></span>
+    <span class="cell grow"><span class="lbl">توقيع المدير المسئول</span>${line('')}<span class="dt">/ &nbsp; / ٢٠ .</span></span>
+  </div>
+  <div class="row"><span class="cell grow"><span class="lbl">تم مطابقة التوقيع بمعرفتي /</span>${line('')}</span></div>
 
-  <div class="secwrap"><div class="sec">إقرار المدير المسئول في حالة وجود نزاع</div></div>
-  <div class="decl">أقر أنا المدير المسئول عن منشأة / ${line(x.facilityName, '60mm')} بأن البيانات الواردة بهذا الإخطار صحيحة، وأن المؤمن عليه قد امتنع عن التوقيع، وقد قمت بإرسال صورة من هذا الإخطار إليه بخطاب موصى عليه بعلم الوصول رقم ${line('', '35mm')} بتاريخ ${emptyDateBoxes()} من مكتب بريد ${line('', '40mm')}.</div>
-  <div class="row"><span class="cell grow"><span class="lbl">اسم المدير المسئول :</span>${line('')}</span><span class="cell grow"><span class="lbl">التوقيع :</span>${line('')}</span><span class="cell grow"><span class="lbl">خاتم المنشأة :</span>${line('')}</span></div>
+  <div class="secwrap"><div class="sec">إقـرار المدير المسئول في حالة وجود نزاع</div></div>
+  <div class="decl">أقـر أن البيانات بعاليه صحيحة وانني أرسلت صورة من هذا الإخطار إلى المؤمن عليه بخطاب موصى عليه بعلـم الوصول برقم ${line('', '60mm')} بتاريخ &nbsp; / &nbsp; / ٢٠ .</div>
+  <div class="row" style="margin-top:14px">
+    <span class="cell"><span class="stamp">خاتـم الجهـة</span></span>
+    <span class="sp" style="flex:1"></span>
+    <span class="cell grow" style="flex-direction:column; align-items:stretch">
+      <div style="text-align:center; font-weight:bold">تم مطابقة التوقيع بمعرفتي</div>
+      <div class="cell"><span class="lbl">توقيع المدير المسئول</span>${line('')}<span class="dt">/ &nbsp; / ٢٠</span></div>
+    </span>
+  </div>
 
-  <div class="secwrap"><div class="sec">إقرار المؤمن عليه في حالة وجود نزاع</div></div>
-  <div class="decl">أقر أنا / ${line(e.name_ar, '70mm')} بأنني غير موافق على البيانات الواردة بهذا الإخطار للأسباب الآتية : ${line('', '60mm')} ${line('')}</div>
-  <div class="row"><span class="cell grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span><span class="cell grow"><span class="lbl">تم مطابقة التوقيع بمعرفتي :</span>${line('')}</span></div>
+  <div class="secwrap"><div class="sec">إقـرار المؤمن عليه في حالة وجود نزاع</div></div>
+  <div class="decl">أقـر أن البيانات بعاليه صحيحة وان صاحب العمل امتنع عن ( توقيع / تقديم ) نموذج انتهاء الخدمه</div>
+  <div class="row"><span class="cell grow"><span class="lbl">توقيع المؤمن عليه</span>${line('')}<span class="dt">/ &nbsp; / ٢٠</span></span></div>
 
-  <table class="table"><tr><th>البيان</th><th>مستلم الإخطار</th><th>المراجع</th><th>مسجل آلي</th><th>مراجع آلي</th></tr><tr><th>الاسم</th><td></td><td></td><td></td><td></td></tr><tr><th>التوقيع</th><td></td><td></td><td></td><td></td></tr><tr><th>التاريخ</th><td></td><td></td><td></td><td></td></tr></table>
-  <div class="note">ملحوظة : يلزم التأكد من توقيع كل من المؤمن عليه وصاحب العمل على الإقرارات الموضحة بالنموذج، وفي حالة رفض المؤمن عليه التوقيع يتم إرسال صورة من الإخطار إليه بخطاب موصى عليه بعلم الوصول خلال ٢٤ ساعة. (انظر خلفه)</div>
+  <div class="hr"></div>
+  <div class="note"><u>ملحوظــة</u> : يلزم التأكد من توقيع كل من العامل أوصاحب العمل على الإقرار الموضح خلف النموذج.</div>
+  <div class="row" style="margin-top:14px"><span class="cell grow"><span class="lbl">توقيع مقدم الطلب</span>${line('')}<span class="dt">/ &nbsp; / ٢٠</span></span></div>
+
+  <div style="margin-top:16px; font-weight:bold">(انظـر خلفه)</div>
 </div>
 
 <div class="pagebreak"></div>
 
 <div class="sheet page2">
   <h1>إرشـــــادات</h1>
-
   <ol class="guide">
-    <li>يحرر هذا النموذج من أصل وصورتين ويرسل الأصل لمكتب الهيئة المختص خلال أسبوع من تاريخ تحقق إحدى الوقائع الآتية:<br>أ- انتهاء خدمة المؤمن عليه.<br>ب- انتهاء مدة التلمذة الصناعية أو التدرج.<br>ج- انتهاء العمل بالمشروع الصيفي للطلبة.<br>ويحتفظ صاحب العمل بصورة ويسلم صورة للعامل بعد توقيعه أو يرسلها له بخطاب مسجل بعلم الوصول خلال ٢٤ ساعة من إرساله لمكتب الهيئة المختص في حالة رفضه التوقيع.</li>
-    <li>في حالة إخلال صاحب العمل بالإخطار في الموعد المشار إليه يلتزم بأداء مبلغ إضافي يقدر بنسبة (٢٠٪) من قيمة الاشتراك المستحق عن الشهر الأخير وذلك عن كل شهر تأخير من تاريخ انتهاء الخدمة حتى تاريخ إرسال النموذج لمكتب الهيئة المختص، وفي حساب مدة التأخير يحذف كسر الشهر.</li>
+    <li>يحرر هذا النموذج ويرسل للهيئة خلال أسبوع من تاريخ تحقق إحدى الوقائع الآتية:<br>أ- انتهاء خدمة المؤمن عليه.<br>ب- انتهاء مدة التلمذة الصناعية أو التدرج.<br>ج- انتهاء العمل بالمشروع الصيفي للطلبة.</li>
+    <li>في حالة إخلال صاحب العمل بالإخطار في الموعد المشار إليه بالنسبة للمؤمن عليهم في البند (أ) من رقم (1) يلتزم بأداء مبلغ إضافي يقدر بنسبة (٢٠٪) من قيمة الاشتراك المستحق عن الشهر الأخير وذلك عن كل شهر تأخير عن المدة من تاريخ انتهاء الخدمة حتى تاريخ إرسال النموذج للهيئة وفي حساب مدة التأخير يحذف كسر الشهر.</li>
   </ol>
 
-  <h1 style="margin-top:14px">إقـــــــرار</h1>
-
+  <h1 style="margin-top:16px">إقـــــرار</h1>
   <div class="row">
     <span class="cell grow"><span class="lbl">اسم المنشأة :</span>${line(x.facilityName)}</span>
-    <span class="cell" style="margin-inline-start:12px"><span class="lbl">رقمها التأمينى :</span>${boxes(x.facilityNo, 7)}</span>
+    <span class="cell"><span class="lbl">رقمها التأمينى :</span>${boxes(x.facilityNo, 10)}</span>
   </div>
+  <div class="row"><span class="cell grow"><span class="lbl">العنــــــوان :</span>${line(x.address)}</span></div>
   <div class="row">
-    <span class="cell grow"><span class="lbl">العنــــــــــوان :</span>${line('10 شارع الجزيرة الوسطى - الزمالك - القاهرة')}</span>
+    <span class="cell grow"><span class="lbl">اسم المؤمن عليه :</span>${line(e.name_ar)}</span>
+    <span class="cell"><span class="lbl">رقمه التأمينى :</span>${boxes(e.social_insurance_no, 10)}</span>
   </div>
-  <div class="row"><span class="cell grow"><span class="lbl">اسم المؤمن عليه :</span>${line(e.name_ar)}</span><span class="cell"><span class="lbl">رقمه التأمينى :</span>${boxes(e.social_insurance_no, 9)}</span></div>
-  <div class="decl">٣- أقر أنا الموقع أدناه بأنني قد قمت بسحب البطاقة العلاجية من المؤمن عليه وتم تسليمها لفرع الهيئة المعنية بالتأمين الصحي، وفي حالة ظهور ما يخالف ذلك أكون مسئولاً بالتضامن مع العامل في مواجهة الهيئة المعنية بالتأمين الصحي عن كافة مصاريف العلاج والرعاية الطبية تعويضاً عن الانتفاع بدون وجه حق بمزايا العلاج والرعاية الطبية بعد انتهاء الخدمة.</div>
+
+  <div class="decl">٣- أقر أنا الموقع أدناه بأنني قد قمت بسحب البطاقة العلاجية من المؤمن عليه وتم تسليمها لفرع الهيئة المعنية بالتأمين الصحي وفي حالة ظهور ما يخالف ذلك أكون مسئولاً بالتضامن مع العامل في مواجهة الهيئة المعنية بالتأمين الصحي عن كافة مصاريف العلاج والرعاية الطبية تعويضاً عن الانتفاع بدون وجه حق بمزايا العلاج والرعاية الطبية بعد انتهاء الخدمة.</div>
   <div class="signs"><div>توقيع المؤمن عليه<div class="signline">(...............................)</div></div><div>توقيع صاحب العمل<div class="signline">(...............................)</div></div></div>
-  <div class="decl">٤- أقر أنا الموقع أدناه بأن المؤمن عليه محل هذا النموذج قد رفض تسليم البطاقات العلاجية وقمت بإخطار الهيئة المعنية بالتأمين الصحي ببيانات المؤمن عليه لإيقاف التعامل معه.</div>
+
+  <div class="decl">٤- أقر أنا الموقع أدناه بأن المؤمن عليه محل هذا النموذج قد رفض تسليم البطاقة العلاجية وقمت بإخطار الهيئة المعنية بالتأمين الصحي ببيانات المؤمن عليه لإيقاف التعامل معه.</div>
   <div class="signs"><div></div><div>توقيع صاحب العمل<div class="signline">(...............................)</div></div></div>
 </div>
 
 </body></html>`;
+
 
 export const Form06 = () => {
   const { language } = useLanguage();
@@ -191,6 +214,9 @@ export const Form06 = () => {
   const [extra, setExtra] = useState<Form06Extra>({
     office: 'الزمالك', buildingNo: '', area: '', village: '',
     facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '1307926',
+    applicantName: '', applicantRole: 'المدير المسئول', applicantInsNo: '',
+    applicantPhone: '01006676711', applicantNid: '',
+    address: '10 شارع الجزيرة الوسطى - الزمالك - القاهرة',
   });
 
   useEffect(() => {
@@ -323,12 +349,28 @@ export const Form06 = () => {
               <Input className="h-9" value={extra.office} onChange={e => setExtra(p => ({ ...p, office: e.target.value }))} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'عقار رقم' : 'buildingNo'}</Label>
-              <Input className="h-9" value={extra.buildingNo} onChange={e => setExtra(p => ({ ...p, buildingNo: e.target.value }))} />
+              <Label className="text-xs">{isAr ? 'مقدم الطلب' : 'applicantName'}</Label>
+              <Input className="h-9" value={extra.applicantName} onChange={e => setExtra(p => ({ ...p, applicantName: e.target.value }))} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'شياخة / قرية' : 'village'}</Label>
-              <Input className="h-9" value={extra.village} onChange={e => setExtra(p => ({ ...p, village: e.target.value }))} />
+              <Label className="text-xs">{isAr ? 'صفة مقدم الطلب' : 'applicantRole'}</Label>
+              <Input className="h-9" value={extra.applicantRole} onChange={e => setExtra(p => ({ ...p, applicantRole: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'رقم تأميني (مقدم الطلب)' : 'applicantInsNo'}</Label>
+              <Input className="h-9" value={extra.applicantInsNo} onChange={e => setExtra(p => ({ ...p, applicantInsNo: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'رقم قومي (مقدم الطلب)' : 'applicantNid'}</Label>
+              <Input className="h-9" value={extra.applicantNid} onChange={e => setExtra(p => ({ ...p, applicantNid: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'رقم التليفون' : 'applicantPhone'}</Label>
+              <Input className="h-9" value={extra.applicantPhone} onChange={e => setExtra(p => ({ ...p, applicantPhone: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'العنوان' : 'address'}</Label>
+              <Input className="h-9" value={extra.address} onChange={e => setExtra(p => ({ ...p, address: e.target.value }))} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'اسم المنشأة' : 'facilityName'}</Label>
