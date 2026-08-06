@@ -214,8 +214,8 @@ export const Form06 = () => {
   const [extra, setExtra] = useState<Form06Extra>({
     office: 'الزمالك', buildingNo: '', area: '', village: '',
     facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '1307926',
-    applicantName: '', applicantRole: 'المدير المسئول', applicantInsNo: '',
-    applicantPhone: '01006676711', applicantNid: '',
+    applicantName: 'محمود احمد سلامة', applicantRole: 'مندوب', applicantInsNo: '12694358',
+    applicantPhone: '01006676711', applicantNid: '99560411050303',
     address: '10 شارع الجزيرة الوسطى - الزمالك - القاهرة',
   });
 
