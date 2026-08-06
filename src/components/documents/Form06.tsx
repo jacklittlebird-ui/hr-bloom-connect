@@ -119,11 +119,11 @@ h1 { font-size: 20px; font-weight: bold; text-align: center; margin: 4px 0 10px;
     <span class="cell grow"><span class="lbl">صفة مقدم الطلب :</span>${line(x.applicantRole)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">رقم تأمينى :</span>${boxes(x.applicantInsNo, 9)}</span>
+    <span class="cell"><span class="lbl">رقم تأمينى :</span>${boxesRev(x.applicantInsNo, 9)}</span>
     <span class="cell grow"><span class="lbl">رقم التليفون :</span>${line(x.applicantPhone)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">رقم القومى :</span>${boxes(x.applicantNid, 14)}</span>
+    <span class="cell"><span class="lbl">رقم القومى :</span>${boxesRev(x.applicantNid, 14)}</span>
   </div>
 
   <div class="secwrap"><div class="sec">بيانات المؤمن عليه</div></div>
