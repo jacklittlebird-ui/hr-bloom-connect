@@ -349,12 +349,28 @@ export const Form06 = () => {
               <Input className="h-9" value={extra.office} onChange={e => setExtra(p => ({ ...p, office: e.target.value }))} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'عقار رقم' : 'buildingNo'}</Label>
-              <Input className="h-9" value={extra.buildingNo} onChange={e => setExtra(p => ({ ...p, buildingNo: e.target.value }))} />
+              <Label className="text-xs">{isAr ? 'مقدم الطلب' : 'applicantName'}</Label>
+              <Input className="h-9" value={extra.applicantName} onChange={e => setExtra(p => ({ ...p, applicantName: e.target.value }))} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'شياخة / قرية' : 'village'}</Label>
-              <Input className="h-9" value={extra.village} onChange={e => setExtra(p => ({ ...p, village: e.target.value }))} />
+              <Label className="text-xs">{isAr ? 'صفة مقدم الطلب' : 'applicantRole'}</Label>
+              <Input className="h-9" value={extra.applicantRole} onChange={e => setExtra(p => ({ ...p, applicantRole: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'رقم تأميني (مقدم الطلب)' : 'applicantInsNo'}</Label>
+              <Input className="h-9" value={extra.applicantInsNo} onChange={e => setExtra(p => ({ ...p, applicantInsNo: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'رقم قومي (مقدم الطلب)' : 'applicantNid'}</Label>
+              <Input className="h-9" value={extra.applicantNid} onChange={e => setExtra(p => ({ ...p, applicantNid: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'رقم التليفون' : 'applicantPhone'}</Label>
+              <Input className="h-9" value={extra.applicantPhone} onChange={e => setExtra(p => ({ ...p, applicantPhone: e.target.value }))} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{isAr ? 'العنوان' : 'address'}</Label>
+              <Input className="h-9" value={extra.address} onChange={e => setExtra(p => ({ ...p, address: e.target.value }))} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'اسم المنشأة' : 'facilityName'}</Label>
