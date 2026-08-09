@@ -58,7 +58,7 @@ const buildHtml = (e: Emp, duration: Duration, logoUrl: string) => {
 html, body { margin:0; padding:0; }
 body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; font-size:13px; line-height:1.85; text-align:justify; background:#e5e7eb; }
 #contract-source { visibility:hidden; position:absolute; width:162mm; }
-.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 4mm; padding:20mm 24mm 26mm; overflow:hidden; background:#fff; break-after:page; page-break-after:always; }
+.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 4mm; padding:20mm 18mm 26mm; overflow:hidden; background:#fff; break-after:page; page-break-after:always; }
 .sheet:last-child { break-after:auto; page-break-after:auto; }
 .page-content { height:251mm; overflow:hidden; }
 .frame { position:absolute; inset:10mm 8mm 12mm; border:1px solid #000; pointer-events:none; }
@@ -123,7 +123,7 @@ p { margin:6px 0; orphans:3; widows:3; }
 <p>(2/3): يحق للطرف الأول نقل الطرف الثانى إلى مقر عمل آخر داخل الشركة أو فروعها داخل جمهورية مصر العربية أو خارجها وبما لا يتعارض مع المسمى الوظيفى للطرف الثانى وفقاً لمتطلبات وحاجة العمل التى يقدرها بمعرفته الشخصية.</p>
 
 <div class="bnd">البند الثالث ـ الأجــر</div>
-<p>(3/1): تحدد الأجر الأساسى للطرف الثانى بمبلغ ${dots(14)} جم (فقط ${dots(40)} جنيهًا لا غير) والأجر المتغير بمبلغ ${dots(14)} جم (فقط ${dots(40)} جنيهًا لا غير) والبدلات بمبلغ ${dots(14)} جم (فقط ${dots(40)} جنيهًا لا غير) شهريًا من العملة المصرية تدفعه الشركة خلال السبعة أيام الأولى من الشهر التالي.</p>
+<p>(3/1): تحدد الأجر الأساسى للطرف الثانى بمبلغ ${dots(14)} جم (فقط ${dots(80)} جنيهًا لا غير) والأجر المتغير بمبلغ ${dots(14)} جم (فقط ${dots(80)} جنيهًا لا غير) والبدلات بمبلغ ${dots(14)} جم (فقط ${dots(80)} جنيهًا لا غير) شهريًا من العملة المصرية تدفعه الشركة خلال السبعة أيام الأولى من الشهر التالي.</p>
 <p>(3/2): يستقطع من الأجر المحدد بالفقرة السابقة – بما في ذلك أي علاوة إضافية أن وجدت – كافة المبالغ التي يوجب القانون خصمها من أجر الطرف الثاني ويشمل ذلك الضرائب والرسوم والاشتراكات أو غير ذلك من الالتزامات التي يفرضها القانون على الطرف الثاني ومن المفهوم أن الأجر المبين عاليه شامل لأعانة غلاء المعيشة وكافة العلاوات التي ينص عليها القانون. وغير شامل لبدل الإنتقال وبدل الملبس وبدل المأكل وبدل التمثيل وإيجار شقة والعهد الثابتة لإكراميات السائقين والعمال.. إلخ حسب ما تقره اللائحة الداخلية للشركة.</p>
 
 <div class="bnd">البند الرابع ـ مدة العقد</div>
