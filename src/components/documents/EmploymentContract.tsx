@@ -41,30 +41,42 @@ const nidBoxes = (v: string | null | undefined) => {
 
 type Duration = 'six_months' | 'year';
 
-const buildHtml = (e: Emp, duration: Duration) => {
+const buildHtml = (e: Emp, duration: Duration, logoUrl: string) => {
   const durationText =
     duration === 'year' ? 'لمدة سنة ميلادية' : 'لمدة ستة أشهر';
   const residence = [e.address, e.city, e.governorate].filter(Boolean).join(' - ');
 
-  return `<!DOCTYPE html>
+  const raw = `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
 <style>
-@page { size: A4; margin: 12mm 14mm; }
+@page { size: A4; margin: 16mm 16mm 18mm; }
 * { box-sizing: border-box; }
-body { font-family: "Arial","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; font-size:13.5px; line-height:1.9; text-align: justify; }
-h1 { font-size:17px; text-align:center; font-weight:bold; text-decoration:underline; margin:0 0 14px; line-height:1.7; }
-.bnd { font-weight:bold; text-align:center; text-decoration:underline; margin:14px 0 6px; font-size:15px; }
-p { margin:7px 0; }
+body { font-family: "Simplified Arabic","Arial","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; font-size:13px; line-height:1.85; text-align: justify; }
+.frame { position: fixed; inset: -8mm -8mm -10mm; border:1px solid #000; z-index:-1; }
+.foot { position: fixed; left:0; right:0; bottom:-9mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
+.hdr { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+.hdr img { width:78px; height:auto; }
+h1 { flex:1; font-size:16px; text-align:center; font-weight:bold; margin:0; line-height:1.8; }
+.bnd { font-weight:bold; text-align:center; margin:14px 0 6px; font-size:14.5px; }
+.bnd span { display:block; }
+p { margin:6px 0; }
 .fill { font-weight:bold; }
 .boxes { display:inline-flex; direction:ltr; margin:4px 0; }
 .box { width:20px; height:24px; border:1px solid #000; margin-inline-start:-1px; text-align:center; font-size:13px; line-height:23px; font-weight:bold; }
 .data p { margin:6px 0; }
+.party { font-weight:bold; text-align:left; margin:2px 0 8px; }
 .sign { display:flex; justify-content:space-between; margin-top:26px; font-weight:bold; }
 .sign > div { width:45%; }
 .sign .l { margin-top:14px; font-weight:normal; }
 </style></head><body>
+<div class="frame"></div>
+<div class="foot"><span>${dots(24)}</span><span>${dots(24)}</span></div>
 
-<h1>عقد عمل فردى محدد المدة وفقاً لأحكام قانون العمـل رقم 14 لسنة 2025</h1>
+<div class="hdr">
+  <img src="${logoUrl}" alt="Link Aero" />
+  <h1>عقد عمل فردى محدد المدة<br/>وفقاً لأحكام قانون العمـــل<br/>رقم 14 لسنــــة 2025</h1>
+</div>
+
 
 <p>إنه فى يوم ${dots(40)} الموافق ${dots(12)} / ${dots(12)} / ${dots(20)}</p>
 <p>بعد أن تم الاتفاق والتراضى بين الطرفين تحرر هذا العقد فيما بين كل من:</p>
