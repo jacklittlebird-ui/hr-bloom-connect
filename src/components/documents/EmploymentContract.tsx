@@ -284,12 +284,15 @@ export const EmploymentContract = () => {
       iframe.contentWindow?.print();
       setTimeout(() => iframe.remove(), 1000);
     };
-    const fonts = (iframe.contentWindow as any)?.document?.fonts;
-    if (fonts?.ready) {
-      fonts.ready.then(() => setTimeout(doPrint, 300));
-    } else {
-      setTimeout(doPrint, 800);
-    }
+    const waitUntilReady = (attempt = 0) => {
+      if ((iframe.contentWindow as Window & { contractReady?: boolean })?.contractReady) {
+        setTimeout(doPrint, 100);
+        return;
+      }
+      if (attempt < 50) setTimeout(() => waitUntilReady(attempt + 1), 100);
+      else doPrint();
+    };
+    waitUntilReady();
   };
 
   return (
