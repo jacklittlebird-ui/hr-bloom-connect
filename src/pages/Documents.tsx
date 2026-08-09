@@ -29,6 +29,7 @@ import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
 import { Form01 } from '@/components/documents/Form01';
 import { Form06 } from '@/components/documents/Form06';
+import { EmploymentContract } from '@/components/documents/EmploymentContract';
 
 interface Document {
   id: string;
@@ -158,6 +159,7 @@ const Documents = () => {
         { key: 'directory', ar: 'دليل الموظفين', en: 'Directory', icon: Users },
         { key: 'form01', ar: 'استمارة (1)', en: 'Form 1', icon: File },
         { key: 'form06', ar: 'استمارة (6)', en: 'Form 6', icon: File },
+        { key: 'contracts', ar: 'عقود العمل', en: 'Employment Contracts', icon: File },
         { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
       ],
     },
