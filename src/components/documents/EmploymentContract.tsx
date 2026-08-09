@@ -209,7 +209,7 @@ export const EmploymentContract = () => {
   }, []);
 
   const selected = useMemo(() => employees.find(e => e.id === selectedId) || null, [employees, selectedId]);
-  const html = selected ? buildHtml(selected, duration) : '';
+  const html = selected ? buildHtml(selected, duration, logoAsset.url) : '';
 
   const print = () => {
     if (!html) return;
