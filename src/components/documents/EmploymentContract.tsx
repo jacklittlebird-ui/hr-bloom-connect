@@ -55,9 +55,9 @@ const buildHtml = (e: Emp, duration: Duration, logoUrl: string) => {
 <style>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
-body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; padding:16mm 20mm 18mm; font-size:13px; line-height:1.85; text-align: justify; }
-.frame { position: fixed; inset: 10mm 12mm; border:1px solid #000; pointer-events:none; }
-.foot { position: fixed; left:12mm; right:12mm; bottom:12mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
+body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; padding:26mm 20mm 28mm; font-size:13px; line-height:1.85; text-align: justify; }
+.frame { position: fixed; inset: 18mm 12mm 20mm; border:1px solid #000; pointer-events:none; }
+.foot { position: fixed; left:12mm; right:12mm; bottom:22mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
 .hdr { display:flex; flex-direction:row-reverse; align-items:center; gap:14px; margin-bottom:12px; }
 .hdr img { width:78px; height:auto; }
 h1 { flex:1; font-size:16px; text-align:center; font-weight:bold; margin:0; line-height:1.8; }
