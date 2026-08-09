@@ -173,6 +173,11 @@ p { margin:6px 0; }
 </div>
 
 </body></html>`;
+
+  return raw.replace(
+    /<div class="bnd">([^<]*?) ـ ([^<]*?)<\/div>/g,
+    '<div class="bnd"><span>$1</span><span>$2</span></div>'
+  );
 };
 
 export const EmploymentContract = () => {
