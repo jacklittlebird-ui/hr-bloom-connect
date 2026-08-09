@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check, ChevronsUpDown, Printer, Loader2, FileSpreadsheet } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import nosiLogo from '@/assets/nosi-logo.png.asset.json';
+import nosiLogo from '@/assets/nosi-logo.png';
 
 interface Emp {
   id: string;
@@ -348,7 +348,7 @@ export const Form01 = () => {
   useEffect(() => { setEmp(selected ? { ...selected } : null); }, [selected]);
 
   const setEmpField = (k: keyof Emp, v: string) => setEmp(p => (p ? { ...p, [k]: v } : p));
-  const html = emp ? buildHtml(emp, nosiLogo.url, extra) : '';
+  const html = emp ? buildHtml(emp, nosiLogo, extra) : '';
 
 
 
