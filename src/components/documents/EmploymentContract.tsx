@@ -9,6 +9,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Check, ChevronsUpDown, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logoAsset from '@/assets/link-aero-logo.png.asset.json';
 
 interface Emp {
   id: string;
