@@ -225,11 +225,17 @@ export const EmploymentContract = () => {
     doc.open();
     doc.write(html);
     doc.close();
-    setTimeout(() => {
+    const doPrint = () => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
       setTimeout(() => iframe.remove(), 1000);
-    }, 500);
+    };
+    const fonts = (iframe.contentWindow as any)?.document?.fonts;
+    if (fonts?.ready) {
+      fonts.ready.then(() => setTimeout(doPrint, 300));
+    } else {
+      setTimeout(doPrint, 800);
+    }
   };
 
   return (
