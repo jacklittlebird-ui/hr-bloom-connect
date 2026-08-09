@@ -9,7 +9,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Check, ChevronsUpDown, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import logoAsset from '@/assets/link-aero-logo.png.asset.json';
+import linkAeroLogo from '@/assets/link-aero-logo.png';
 
 interface Emp {
   id: string;
@@ -267,7 +267,7 @@ export const EmploymentContract = () => {
   }, []);
 
   const selected = useMemo(() => employees.find(e => e.id === selectedId) || null, [employees, selectedId]);
-  const html = selected ? buildHtml(selected, duration, logoAsset.url) : '';
+  const html = selected ? buildHtml(selected, duration, linkAeroLogo) : '';
 
   const print = () => {
     if (!html) return;
