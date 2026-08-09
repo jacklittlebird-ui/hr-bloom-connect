@@ -53,12 +53,16 @@ const buildHtml = (e: Emp, duration: Duration, logoUrl: string) => {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-@page { size: A4; margin: 18mm 20mm 22mm; }
+@page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; }
-body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction: rtl; color:#000; font-size:13px; line-height:1.85; text-align:justify; }
-.frame { position:fixed; top:-10mm; right:-12mm; bottom:-12mm; left:-12mm; border:1px solid #000; pointer-events:none; }
-.foot { position:fixed; right:-8mm; left:-8mm; bottom:-9mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
+body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; font-size:13px; line-height:1.85; text-align:justify; background:#e5e7eb; }
+#contract-source { visibility:hidden; position:absolute; width:162mm; }
+.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 4mm; padding:20mm 24mm 26mm; overflow:hidden; background:#fff; break-after:page; page-break-after:always; }
+.sheet:last-child { break-after:auto; page-break-after:auto; }
+.page-content { height:251mm; overflow:hidden; }
+.frame { position:absolute; inset:10mm 8mm 12mm; border:1px solid #000; pointer-events:none; }
+.foot { position:absolute; right:12mm; left:12mm; bottom:14mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
 .hdr { display:flex; flex-direction:row-reverse; align-items:center; gap:14px; margin-bottom:12px; }
 .hdr img { width:78px; height:auto; }
 h1 { flex:1; font-size:16px; text-align:center; font-weight:bold; margin:0; line-height:1.8; }
@@ -75,9 +79,12 @@ p { margin:6px 0; orphans:3; widows:3; }
 .sign { display:flex; justify-content:space-between; margin-top:26px; font-weight:bold; }
 .sign > div { width:45%; }
 .sign .l { margin-top:14px; font-weight:normal; }
+@media print {
+  body { background:#fff; }
+  .sheet { margin:0; }
+}
 </style></head><body>
-<div class="frame"></div>
-<div class="foot"><span>${dots(24)}</span><span>${dots(24)}</span></div>
+<main id="contract-source">
 
 <div class="hdr">
   <img src="${logoUrl}" alt="Link Aero" />
@@ -179,6 +186,50 @@ p { margin:6px 0; orphans:3; widows:3; }
   </div>
 </div>
 
+</main>
+<div id="print-pages"></div>
+<script>
+(function () {
+  function createPage() {
+    var sheet = document.createElement('section');
+    sheet.className = 'sheet';
+    sheet.innerHTML = '<div class="frame"></div><div class="foot"><span>${dots(24)}</span><span>${dots(24)}</span></div><div class="page-content"></div>';
+    document.getElementById('print-pages').appendChild(sheet);
+    return sheet.querySelector('.page-content');
+  }
+  function paginate() {
+    var source = document.getElementById('contract-source');
+    var nodes = Array.from(source.children);
+    var page = createPage();
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      page.appendChild(node);
+      var next = nodes[i + 1];
+      var headingNeedsNext = node.classList.contains('bnd') && next;
+      var probe = null;
+      if (headingNeedsNext) {
+        probe = next.cloneNode(true);
+        page.appendChild(probe);
+      }
+      var overflows = page.scrollHeight > page.clientHeight + 1;
+      if (probe) probe.remove();
+      if (overflows) {
+        node.remove();
+        page = createPage();
+        page.appendChild(node);
+      }
+    }
+    source.remove();
+    window.contractReady = true;
+  }
+  Promise.all([
+    document.fonts ? document.fonts.ready : Promise.resolve(),
+    Promise.all(Array.from(document.images).map(function (img) {
+      return img.complete ? Promise.resolve() : new Promise(function (resolve) { img.onload = img.onerror = resolve; });
+    }))
+  ]).then(paginate);
+})();
+</script>
 </body></html>`;
 
   return raw.replace(
@@ -233,12 +284,15 @@ export const EmploymentContract = () => {
       iframe.contentWindow?.print();
       setTimeout(() => iframe.remove(), 1000);
     };
-    const fonts = (iframe.contentWindow as any)?.document?.fonts;
-    if (fonts?.ready) {
-      fonts.ready.then(() => setTimeout(doPrint, 300));
-    } else {
-      setTimeout(doPrint, 800);
-    }
+    const waitUntilReady = (attempt = 0) => {
+      if ((iframe.contentWindow as Window & { contractReady?: boolean })?.contractReady) {
+        setTimeout(doPrint, 100);
+        return;
+      }
+      if (attempt < 50) setTimeout(() => waitUntilReady(attempt + 1), 100);
+      else doPrint();
+    };
+    waitUntilReady();
   };
 
   return (
