@@ -177,7 +177,7 @@ p { margin:6px 0; orphans:3; widows:3; }
 <div class="bnd">البند الثانى عشر ـ التوقيعات</div>
 <div class="sign">
   <div>الطرف الأول ـ بصفته
-    <div class="l">الاسـم: ${dots(30)}</div>
+    <div class="l">الاسـم/ <b>جاك إسحق عبد المسيح</b></div>
     <div class="l">التوقيع: ${dots(30)}</div>
   </div>
   <div>الطرف الثانى
