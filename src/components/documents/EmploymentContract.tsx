@@ -49,10 +49,13 @@ const buildHtml = (e: Emp, duration: Duration, logoUrl: string) => {
 
   const raw = `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 @page { size: A4; margin: 18mm 18mm 20mm; }
 * { box-sizing: border-box; }
-body { font-family: "Simplified Arabic","Arial","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; padding:0 4mm; font-size:13px; line-height:1.85; text-align: justify; }
+body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; padding:0 4mm; font-size:13px; line-height:1.85; text-align: justify; }
 .frame { position: fixed; inset: 0; border:1px solid #000; pointer-events:none; }
 .foot { position: fixed; left:0; right:0; bottom:1mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
 .hdr { display:flex; flex-direction:row-reverse; align-items:center; gap:14px; margin-bottom:12px; }
@@ -222,11 +225,17 @@ export const EmploymentContract = () => {
     doc.open();
     doc.write(html);
     doc.close();
-    setTimeout(() => {
+    const doPrint = () => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
       setTimeout(() => iframe.remove(), 1000);
-    }, 500);
+    };
+    const fonts = (iframe.contentWindow as any)?.document?.fonts;
+    if (fonts?.ready) {
+      fonts.ready.then(() => setTimeout(doPrint, 300));
+    } else {
+      setTimeout(doPrint, 800);
+    }
   };
 
   return (
