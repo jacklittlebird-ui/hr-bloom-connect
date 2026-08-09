@@ -52,9 +52,9 @@ const buildHtml = (e: Emp, duration: Duration, logoUrl: string) => {
 <style>
 @page { size: A4; margin: 18mm 18mm 20mm; }
 * { box-sizing: border-box; }
-body { font-family: "Simplified Arabic","Arial","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; font-size:13px; line-height:1.85; text-align: justify; }
-.frame { position: fixed; inset: -5mm -5mm -6mm; border:1px solid #000; pointer-events:none; }
-.foot { position: fixed; left:0; right:0; bottom:-4mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
+body { font-family: "Simplified Arabic","Arial","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; padding:0 4mm; font-size:13px; line-height:1.85; text-align: justify; }
+.frame { position: fixed; inset: 0; border:1px solid #000; pointer-events:none; }
+.foot { position: fixed; left:0; right:0; bottom:1mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
 .hdr { display:flex; flex-direction:row-reverse; align-items:center; gap:14px; margin-bottom:12px; }
 .hdr img { width:78px; height:auto; }
 h1 { flex:1; font-size:16px; text-align:center; font-weight:bold; margin:0; line-height:1.8; }
