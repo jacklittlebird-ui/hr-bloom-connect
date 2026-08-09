@@ -55,19 +55,23 @@ const buildHtml = (e: Emp, duration: Duration, logoUrl: string) => {
 <style>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
-body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; padding:20mm 24mm 22mm; font-size:13px; line-height:1.85; text-align: justify; }
+body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; padding:20mm 24mm 26mm; font-size:13px; line-height:1.85; text-align: justify; }
 .frame { position: fixed; inset: 10mm 8mm 12mm; border:1px solid #000; pointer-events:none; }
-.foot { position: fixed; left:12mm; right:12mm; bottom:22mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
+.foot { position: fixed; left:12mm; right:12mm; bottom:14mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
 .hdr { display:flex; flex-direction:row-reverse; align-items:center; gap:14px; margin-bottom:12px; }
 .hdr img { width:78px; height:auto; }
 h1 { flex:1; font-size:16px; text-align:center; font-weight:bold; margin:0; line-height:1.8; }
 .bnd { font-weight:bold; text-align:center; margin:14px 0 6px; font-size:14.5px; }
 .bnd span { display:block; }
-p { margin:6px 0; }
+p { margin:6px 0; break-inside: avoid; page-break-inside: avoid; }
+.bnd { break-after: avoid; page-break-after: avoid; break-inside: avoid; }
+.boxes, .sign, .party, .data { break-inside: avoid; page-break-inside: avoid; }
 .fill { font-weight:bold; }
 .boxes { display:inline-flex; direction:ltr; margin:4px 0; }
 .box { width:20px; height:24px; border:1px solid #000; margin-inline-start:-1px; text-align:center; font-size:13px; line-height:23px; font-weight:bold; }
-.data p { margin:6px 0; }
+.data p { margin:6px 0; break-inside: avoid; page-break-inside: avoid; }
+.bnd { break-after: avoid; page-break-after: avoid; break-inside: avoid; }
+.boxes, .sign, .party, .data { break-inside: avoid; page-break-inside: avoid; }
 .party { font-weight:bold; text-align:left; margin:2px 0 8px; }
 .sign { display:flex; justify-content:space-between; margin-top:26px; font-weight:bold; }
 .sign > div { width:45%; }
