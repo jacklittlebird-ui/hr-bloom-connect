@@ -53,25 +53,24 @@ const buildHtml = (e: Emp, duration: Duration, logoUrl: string) => {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-@page { size: A4; margin: 0; }
+@page { size: A4; margin: 18mm 20mm 22mm; }
 * { box-sizing: border-box; }
-body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction: rtl; color:#000; margin:0; padding:20mm 24mm 26mm; font-size:13px; line-height:1.85; text-align: justify; }
-.frame { position: fixed; inset: 10mm 8mm 12mm; border:1px solid #000; pointer-events:none; }
-.foot { position: fixed; left:12mm; right:12mm; bottom:14mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
+html, body { margin:0; padding:0; }
+body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction: rtl; color:#000; font-size:13px; line-height:1.85; text-align:justify; }
+.frame { position:fixed; top:-10mm; right:-12mm; bottom:-12mm; left:-12mm; border:1px solid #000; pointer-events:none; }
+.foot { position:fixed; right:-8mm; left:-8mm; bottom:-9mm; display:flex; justify-content:space-around; font-size:11px; letter-spacing:1px; }
 .hdr { display:flex; flex-direction:row-reverse; align-items:center; gap:14px; margin-bottom:12px; }
 .hdr img { width:78px; height:auto; }
 h1 { flex:1; font-size:16px; text-align:center; font-weight:bold; margin:0; line-height:1.8; }
 .bnd { font-weight:bold; text-align:center; margin:14px 0 6px; font-size:14.5px; }
 .bnd span { display:block; }
-p { margin:6px 0; break-inside: avoid; page-break-inside: avoid; }
-.bnd { break-after: avoid; page-break-after: avoid; break-inside: avoid; }
-.boxes, .sign, .party, .data { break-inside: avoid; page-break-inside: avoid; }
+p { margin:6px 0; orphans:3; widows:3; }
+.bnd { break-after:avoid-page; page-break-after:avoid; break-inside:avoid-page; page-break-inside:avoid; }
+.boxes, .sign, .party, .data { break-inside:avoid-page; page-break-inside:avoid; }
 .fill { font-weight:bold; }
 .boxes { display:inline-flex; direction:ltr; margin:4px 0; }
 .box { width:20px; height:24px; border:1px solid #000; margin-inline-start:-1px; text-align:center; font-size:13px; line-height:23px; font-weight:bold; }
-.data p { margin:6px 0; break-inside: avoid; page-break-inside: avoid; }
-.bnd { break-after: avoid; page-break-after: avoid; break-inside: avoid; }
-.boxes, .sign, .party, .data { break-inside: avoid; page-break-inside: avoid; }
+.data p { margin:6px 0; }
 .party { font-weight:bold; text-align:left; margin:2px 0 8px; }
 .sign { display:flex; justify-content:space-between; margin-top:26px; font-weight:bold; }
 .sign > div { width:45%; }
