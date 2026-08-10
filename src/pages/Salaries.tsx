@@ -56,6 +56,8 @@ const Salaries = () => {
     { id: 'structure', label: t('salaries.tabs.structure') },
     { id: 'history', label: t('salaries.tabs.history') },
     { id: 'mobile-bills', label: isRTL ? 'فواتير الموبايل' : 'Mobile Bills' },
+    { id: 'leave-deductions', label: isRTL ? 'الإجازات' : 'Leaves' },
+
     { id: 'transfer', label: isRTL ? 'تحويل الرواتب' : 'Salary Transfer' },
     { id: 'eid-bonuses', label: isRTL ? 'العيديات' : 'Eid Bonuses' },
     { id: 'bonus', label: isRTL ? 'المكافأة' : 'Bonus' },
