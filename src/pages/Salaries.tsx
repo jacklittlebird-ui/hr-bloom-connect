@@ -14,6 +14,7 @@ const AllowancesDeductions = lazy(() => import('@/components/salaries/Allowances
 const SalaryStructure = lazy(() => import('@/components/salaries/SalaryStructure').then(m => ({ default: m.SalaryStructure })));
 const PayrollHistory = lazy(() => import('@/components/salaries/PayrollHistory').then(m => ({ default: m.PayrollHistory })));
 const MobileBills = lazy(() => import('@/components/salaries/MobileBills').then(m => ({ default: m.MobileBills })));
+const LeaveDeductions = lazy(() => import('@/components/salaries/LeaveDeductions').then(m => ({ default: m.LeaveDeductions })));
 const SalaryTransfer = lazy(() => import('@/components/salaries/SalaryTransfer').then(m => ({ default: m.SalaryTransfer })));
 const EidBonuses = lazy(() => import('@/components/salaries/EidBonuses').then(m => ({ default: m.EidBonuses })));
 const BonusManagement = lazy(() => import('@/components/salaries/BonusManagement').then(m => ({ default: m.BonusManagement })));
