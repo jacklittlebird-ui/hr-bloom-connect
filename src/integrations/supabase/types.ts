@@ -1261,6 +1261,51 @@ export type Database = {
           },
         ]
       }
+      leave_deductions: {
+        Row: {
+          created_at: string
+          days: number
+          deduction_month: string
+          employee_id: string
+          id: string
+          status: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          days: number
+          deduction_month: string
+          employee_id: string
+          id?: string
+          status?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          days?: number
+          deduction_month?: string
+          employee_id?: string
+          id?: string
+          status?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_deductions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_deductions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leave_requests: {
         Row: {
           approved_by: string | null

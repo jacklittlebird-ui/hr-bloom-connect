@@ -14,6 +14,7 @@ const AllowancesDeductions = lazy(() => import('@/components/salaries/Allowances
 const SalaryStructure = lazy(() => import('@/components/salaries/SalaryStructure').then(m => ({ default: m.SalaryStructure })));
 const PayrollHistory = lazy(() => import('@/components/salaries/PayrollHistory').then(m => ({ default: m.PayrollHistory })));
 const MobileBills = lazy(() => import('@/components/salaries/MobileBills').then(m => ({ default: m.MobileBills })));
+const LeaveDeductions = lazy(() => import('@/components/salaries/LeaveDeductions').then(m => ({ default: m.LeaveDeductions })));
 const SalaryTransfer = lazy(() => import('@/components/salaries/SalaryTransfer').then(m => ({ default: m.SalaryTransfer })));
 const EidBonuses = lazy(() => import('@/components/salaries/EidBonuses').then(m => ({ default: m.EidBonuses })));
 const BonusManagement = lazy(() => import('@/components/salaries/BonusManagement').then(m => ({ default: m.BonusManagement })));
@@ -55,6 +56,8 @@ const Salaries = () => {
     { id: 'structure', label: t('salaries.tabs.structure') },
     { id: 'history', label: t('salaries.tabs.history') },
     { id: 'mobile-bills', label: isRTL ? 'فواتير الموبايل' : 'Mobile Bills' },
+    { id: 'leave-deductions', label: isRTL ? 'الإجازات' : 'Leaves' },
+
     { id: 'transfer', label: isRTL ? 'تحويل الرواتب' : 'Salary Transfer' },
     { id: 'eid-bonuses', label: isRTL ? 'العيديات' : 'Eid Bonuses' },
     { id: 'bonus', label: isRTL ? 'المكافأة' : 'Bonus' },
@@ -109,6 +112,9 @@ const Salaries = () => {
         )}
         {!evalOnly && activeTab === 'mobile-bills' && (
           <TabsContent value="mobile-bills"><Suspense fallback={<TabFallback />}><MobileBills /></Suspense></TabsContent>
+        )}
+        {!evalOnly && activeTab === 'leave-deductions' && (
+          <TabsContent value="leave-deductions"><Suspense fallback={<TabFallback />}><LeaveDeductions /></Suspense></TabsContent>
         )}
         {!evalOnly && activeTab === 'transfer' && (
           <TabsContent value="transfer"><Suspense fallback={<TabFallback />}><SalaryTransfer /></Suspense></TabsContent>
