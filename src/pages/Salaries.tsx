@@ -113,6 +113,9 @@ const Salaries = () => {
         {!evalOnly && activeTab === 'mobile-bills' && (
           <TabsContent value="mobile-bills"><Suspense fallback={<TabFallback />}><MobileBills /></Suspense></TabsContent>
         )}
+        {!evalOnly && activeTab === 'leave-deductions' && (
+          <TabsContent value="leave-deductions"><Suspense fallback={<TabFallback />}><LeaveDeductions /></Suspense></TabsContent>
+        )}
         {!evalOnly && activeTab === 'transfer' && (
           <TabsContent value="transfer"><Suspense fallback={<TabFallback />}><SalaryTransfer /></Suspense></TabsContent>
         )}
