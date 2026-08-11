@@ -1363,6 +1363,54 @@ export type Database = {
           },
         ]
       }
+      living_allowances: {
+        Row: {
+          allowance_month: string
+          amount: number
+          created_at: string
+          employee_id: string
+          id: string
+          status: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          allowance_month: string
+          amount?: number
+          created_at?: string
+          employee_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          allowance_month?: string
+          amount?: number
+          created_at?: string
+          employee_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "living_allowances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "living_allowances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_installments: {
         Row: {
           amount: number
@@ -1932,6 +1980,54 @@ export type Database = {
           },
           {
             foreignKeyName: "payroll_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      penalty_deductions: {
+        Row: {
+          created_at: string
+          days: number
+          deduction_month: string
+          employee_id: string
+          id: string
+          status: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          days?: number
+          deduction_month: string
+          employee_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          days?: number
+          deduction_month?: string
+          employee_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "penalty_deductions_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "penalty_deductions_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"

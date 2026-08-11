@@ -15,6 +15,8 @@ const SalaryStructure = lazy(() => import('@/components/salaries/SalaryStructure
 const PayrollHistory = lazy(() => import('@/components/salaries/PayrollHistory').then(m => ({ default: m.PayrollHistory })));
 const MobileBills = lazy(() => import('@/components/salaries/MobileBills').then(m => ({ default: m.MobileBills })));
 const LeaveDeductions = lazy(() => import('@/components/salaries/LeaveDeductions').then(m => ({ default: m.LeaveDeductions })));
+const PenaltyDeductionsUpload = lazy(() => import('@/components/salaries/PenaltyDeductionsUpload').then(m => ({ default: m.PenaltyDeductions })));
+const LivingAllowances = lazy(() => import('@/components/salaries/LivingAllowances').then(m => ({ default: m.LivingAllowances })));
 const SalaryTransfer = lazy(() => import('@/components/salaries/SalaryTransfer').then(m => ({ default: m.SalaryTransfer })));
 const EidBonuses = lazy(() => import('@/components/salaries/EidBonuses').then(m => ({ default: m.EidBonuses })));
 const BonusManagement = lazy(() => import('@/components/salaries/BonusManagement').then(m => ({ default: m.BonusManagement })));
@@ -58,6 +60,8 @@ const Salaries = () => {
     { id: 'mobile-bills', label: isRTL ? 'فواتير الموبايل' : 'Mobile Bills' },
     { id: 'leave-deductions', label: isRTL ? 'الإجازات' : 'Leaves' },
 
+    { id: 'penalty-deductions', label: isRTL ? 'الخصومات' : 'Deductions' },
+    { id: 'living-allowances', label: isRTL ? 'بدلات المعيشة' : 'Living Allowances' },
     { id: 'transfer', label: isRTL ? 'تحويل الرواتب' : 'Salary Transfer' },
     { id: 'eid-bonuses', label: isRTL ? 'العيديات' : 'Eid Bonuses' },
     { id: 'bonus', label: isRTL ? 'المكافأة' : 'Bonus' },
@@ -115,6 +119,12 @@ const Salaries = () => {
         )}
         {!evalOnly && activeTab === 'leave-deductions' && (
           <TabsContent value="leave-deductions"><Suspense fallback={<TabFallback />}><LeaveDeductions /></Suspense></TabsContent>
+        )}
+        {!evalOnly && activeTab === 'penalty-deductions' && (
+          <TabsContent value="penalty-deductions"><Suspense fallback={<TabFallback />}><PenaltyDeductionsUpload /></Suspense></TabsContent>
+        )}
+        {!evalOnly && activeTab === 'living-allowances' && (
+          <TabsContent value="living-allowances"><Suspense fallback={<TabFallback />}><LivingAllowances /></Suspense></TabsContent>
         )}
         {!evalOnly && activeTab === 'transfer' && (
           <TabsContent value="transfer"><Suspense fallback={<TabFallback />}><SalaryTransfer /></Suspense></TabsContent>
