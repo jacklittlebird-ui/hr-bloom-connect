@@ -104,8 +104,11 @@ export const EidBonuses = () => {
         return {
           id: r.id,
           employee_id: r.employee_id,
-          employee_name: emp?.name_ar || r.employee_name || '',
-          employee_name_en: emp?.name_en || '',
+          // Snapshot values are authoritative: the saved file must not change
+          // if the employee is later deactivated/moved/edited.
+          employee_name: r.employee_name || emp?.name_ar || '',
+          employee_name_en: emp?.name_en || r.employee_name || '',
+
           employee_code: r.employee_code || '',
           station_name: r.station_name || '',
           department_name: r.department_name || '',
