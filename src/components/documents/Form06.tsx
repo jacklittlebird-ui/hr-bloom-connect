@@ -240,7 +240,19 @@ export const Form06 = () => {
 
   const selected = useMemo(() => employees.find(e => e.id === selectedId) || null, [employees, selectedId]);
 
-  useEffect(() => { setEmp(selected ? { ...selected } : null); }, [selected]);
+  useEffect(() => {
+    setEmp(selected ? { ...selected } : null);
+    if (selected) {
+      setExtra(p => ({
+        ...p,
+        applicantName: selected.name_ar || '',
+        applicantRole: 'الموظف نفسه',
+        applicantInsNo: selected.social_insurance_no || '',
+        applicantNid: selected.national_id || '',
+        applicantPhone: selected.phone || '',
+      }));
+    }
+  }, [selected]);
 
   const setEmpField = (k: keyof Emp, v: string) => setEmp(p => (p ? { ...p, [k]: v } : p));
   const html = emp ? buildHtml(emp, nosiLogo, extra) : '';
