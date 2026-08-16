@@ -37,8 +37,6 @@ const digits = (v: string | null | undefined, len: number) => {
 const boxes = (v: string | null | undefined, len: number) =>
   `<span class="boxes">${digits(v, len).map(d => `<span class="box">${d}</span>`).join('')}</span>`;
 
-const boxesRev = (v: string | null | undefined, len: number) =>
-  `<span class="boxes">${digits(v, len).reverse().map(d => `<span class="box">${d}</span>`).join('')}</span>`;
 
 const esc = (s: string | null | undefined) => (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string));
 
@@ -119,11 +117,11 @@ h1 { font-size: 20px; font-weight: bold; text-align: center; margin: 4px 0 10px;
     <span class="cell grow"><span class="lbl">صفة مقدم الطلب :</span>${line(x.applicantRole)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">رقم تأمينى :</span>${boxesRev(x.applicantInsNo, 9)}</span>
+    <span class="cell"><span class="lbl">رقم تأمينى :</span>${boxes(x.applicantInsNo, 9)}</span>
     <span class="cell grow"><span class="lbl">رقم التليفون :</span>${line(x.applicantPhone)}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">رقم القومى :</span>${boxesRev(x.applicantNid, 14)}</span>
+    <span class="cell"><span class="lbl">رقم القومى :</span>${boxes(x.applicantNid, 14)}</span>
   </div>
 
   <div class="secwrap"><div class="sec">بيانات المؤمن عليه</div></div>
