@@ -224,7 +224,7 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
 
 // ==================== Permission Form ====================
 const PermissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const { employees: allEmployees } = useEmployeeData();
   const [employeeId, setEmployeeId] = useState('');
   const [permissionType, setPermissionType] = useState('');
