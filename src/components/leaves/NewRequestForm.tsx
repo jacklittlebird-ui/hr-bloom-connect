@@ -278,11 +278,9 @@ const PermissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
           <Select value={permissionType} onValueChange={setPermissionType}>
             <SelectTrigger><SelectValue placeholder={t('leaves.permissions.selectType')} /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="early_leave">{t('leaves.permTypes.early_leave')}</SelectItem>
-              <SelectItem value="late_arrival">{t('leaves.permTypes.late_arrival')}</SelectItem>
-              <SelectItem value="personal">{t('leaves.permTypes.personal')}</SelectItem>
-              <SelectItem value="medical">{t('leaves.permTypes.medical')}</SelectItem>
-              <SelectItem value="no_deduction">{t('leaves.permTypes.no_deduction')}</SelectItem>
+              <SelectItem value="late_arrival">{language === 'ar' ? 'تأخير صباحًا' : 'Late Arrival'}</SelectItem>
+              <SelectItem value="early_leave">{language === 'ar' ? 'انصراف مبكر' : 'Early Leave'}</SelectItem>
+              <SelectItem value="midday">{language === 'ar' ? 'في منتصف اليوم' : 'Midday'}</SelectItem>
             </SelectContent>
           </Select>
         </div>
