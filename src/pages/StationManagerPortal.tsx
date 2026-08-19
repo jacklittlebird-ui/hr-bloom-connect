@@ -52,6 +52,7 @@ import type { LeaveRequest } from '@/types/leaves';
 import { ManagerApprovals } from '@/components/portal/sections/ManagerApprovals';
 import { StationWorkHours } from '@/components/portal/sections/StationWorkHours';
 import { StationUniformsTab } from '@/components/portal/sections/StationUniformsTab';
+import { UnauthorizedAbsence } from '@/components/portal/sections/UnauthorizedAbsence';
 import { Tabs as VTabs, TabsContent as VTabsContent, TabsList as VTabsList, TabsTrigger as VTabsTrigger } from '@/components/ui/tabs';
 import { DailyAttendanceReport } from '@/components/reports/DailyAttendanceReport';
 
@@ -168,7 +169,7 @@ const StationManagerPortal = () => {
       case 'area_manager':
         return ['dashboard', 'employees', 'attendance', 'leaveCalendar', 'workHours', 'approvals', 'evaluations', 'uniforms', 'violations', 'vehicles', 'companyCard', 'reports'];
       case 'station_hr':
-        return ['dashboard', 'employees', 'attendance', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles', 'companyCard', 'reports'];
+        return ['dashboard', 'employees', 'attendance', 'absence', 'leaveCalendar', 'workHours', 'uniforms', 'violations', 'vehicles', 'companyCard', 'reports'];
       case 'department_manager':
         return ['dashboard', 'employees', 'attendance', 'leaveCalendar', 'approvals', 'evaluations', 'violations'];
       default:
@@ -1177,6 +1178,7 @@ const StationManagerPortal = () => {
                 {canSee('dashboard') && (<TabsTrigger value="dashboard" className="gap-1.5 text-xs"><BarChart3 className="h-4 w-4" /><span className="hidden sm:inline">{t('لوحة التحكم', 'Dashboard')}</span></TabsTrigger>)}
                 {canSee('employees') && (<TabsTrigger value="employees" className="gap-1.5 text-xs"><Users className="h-4 w-4" /><span className="hidden sm:inline">{t('الموظفين', 'Employees')}</span></TabsTrigger>)}
                 {canSee('attendance') && (<TabsTrigger value="attendance" className="gap-1.5 text-xs"><CalendarDays className="h-4 w-4" /><span className="hidden sm:inline">{t('الحضور', 'Attendance')}</span></TabsTrigger>)}
+                {canSee('absence') && (<TabsTrigger value="absence" className="gap-1.5 text-xs"><UserX className="h-4 w-4" /><span className="hidden sm:inline">{t('غياب بدون إذن', 'Unauthorized Absence')}</span></TabsTrigger>)}
                 {canSee('leaveCalendar') && (<TabsTrigger value="leaveCalendar" className="gap-1.5 text-xs"><CalendarIcon className="h-4 w-4" /><span className="hidden sm:inline">{t('تقويم الإجازات', 'Leave Calendar')}</span></TabsTrigger>)}
                 {canSee('workHours') && (<TabsTrigger value="workHours" className="gap-1.5 text-xs"><Clock className="h-4 w-4" /><span className="hidden sm:inline">{t('ساعات العمل', 'Work Hours')}</span></TabsTrigger>)}
                 {canSee('approvals') && (<TabsTrigger value="approvals" className="gap-1.5 text-xs"><ClipboardCheck className="h-4 w-4" /><span className="hidden sm:inline">{t('الموافقات', 'Approvals')}</span></TabsTrigger>)}
@@ -1192,6 +1194,7 @@ const StationManagerPortal = () => {
               {canSee('dashboard') && (<TabsTrigger value="dashboard" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><BarChart3 className="h-5 w-5 shrink-0" />{t('لوحة التحكم', 'Dashboard')}</TabsTrigger>)}
               {canSee('employees') && (<TabsTrigger value="employees" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><Users className="h-5 w-5 shrink-0" />{t('الموظفين', 'Employees')}</TabsTrigger>)}
               {canSee('attendance') && (<TabsTrigger value="attendance" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><CalendarDays className="h-5 w-5 shrink-0" />{t('الحضور', 'Attendance')}</TabsTrigger>)}
+              {canSee('absence') && (<TabsTrigger value="absence" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><UserX className="h-5 w-5 shrink-0" />{t('غياب بدون إذن', 'Unauthorized Absence')}</TabsTrigger>)}
               {canSee('leaveCalendar') && (<TabsTrigger value="leaveCalendar" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><CalendarIcon className="h-5 w-5 shrink-0" />{t('تقويم الإجازات', 'Leave Calendar')}</TabsTrigger>)}
               {canSee('workHours') && (<TabsTrigger value="workHours" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><Clock className="h-5 w-5 shrink-0" />{t('ساعات العمل', 'Work Hours')}</TabsTrigger>)}
               {canSee('approvals') && (<TabsTrigger value="approvals" className="justify-start gap-3 text-sm h-11 px-3 w-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"><ClipboardCheck className="h-5 w-5 shrink-0" />{t('الموافقات', 'Approvals')}</TabsTrigger>)}
@@ -1871,6 +1874,10 @@ const StationManagerPortal = () => {
           </TabsContent>
 
           {/* Work Hours Tab */}
+          <TabsContent value="absence">
+            <UnauthorizedAbsence employees={stationEmployees.map(e => ({ id: e.id, employeeId: e.employeeId, nameAr: e.nameAr, nameEn: e.nameEn, department: e.department }))} />
+          </TabsContent>
+
           <TabsContent value="workHours">
             <StationWorkHours stationEmployees={stationEmployees.map(e => ({ id: e.id, department: e.department }))} />
           </TabsContent>
