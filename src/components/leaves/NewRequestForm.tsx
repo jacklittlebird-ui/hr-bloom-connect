@@ -230,19 +230,25 @@ const PermissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
   const [permissionType, setPermissionType] = useState('');
   const [date, setDate] = useState<Date>();
   const [fromTime, setFromTime] = useState('');
-  const [toTime, setToTime] = useState('');
+  const [durationSel, setDurationSel] = useState('');
   const [reason, setReason] = useState('');
+
+  const toTime = (() => {
+    if (!fromTime || !durationSel) return '';
+    const [fH, fM] = fromTime.split(':').map(Number);
+    if (Number.isNaN(fH) || Number.isNaN(fM)) return '';
+    const total = (fH * 60 + fM + Number(durationSel) * 60) % (24 * 60);
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+  })();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!employeeId || !permissionType || !date || !fromTime || !toTime || !reason) {
+    if (!employeeId || !permissionType || !date || !fromTime || !durationSel || !toTime || !reason) {
       toast({ title: t('leaves.form.error'), description: t('leaves.form.fillAllFields'), variant: 'destructive' });
       return;
     }
     const emp = allEmployees.find((e: any) => e.employeeId === employeeId);
-    const [fH, fM] = fromTime.split(':').map(Number);
-    const [tH, tM] = toTime.split(':').map(Number);
-    const durationHours = Math.max(0, (tH * 60 + tM - fH * 60 - fM) / 60);
+    const durationHours = Number(durationSel);
     if (permissionType !== 'no_deduction') {
       if (durationHours > 2) {
         toast({ title: t('leaves.form.error'), description: isRTL ? 'الحد الأقصى للإذن ساعتان' : 'Maximum permission duration is 2 hours', variant: 'destructive' });
@@ -266,7 +272,7 @@ const PermissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
       reason,
     });
     toast({ title: t('leaves.form.success'), description: t('leaves.permissions.requestSubmitted') });
-    setEmployeeId(''); setPermissionType(''); setDate(undefined); setFromTime(''); setToTime(''); setReason('');
+    setEmployeeId(''); setPermissionType(''); setDate(undefined); setFromTime(''); setDurationSel(''); setReason('');
   };
 
   return (
@@ -286,12 +292,22 @@ const PermissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
         </div>
         <DatePickerField label={t('leaves.permissions.date')} date={date} onSelect={setDate} />
         <div className="space-y-2">
+          <Label>{language === 'ar' ? 'مدة الإذن' : 'Duration'} <span className="text-destructive">*</span></Label>
+          <Select value={durationSel} onValueChange={setDurationSel}>
+            <SelectTrigger><SelectValue placeholder={language === 'ar' ? 'اختر المدة' : 'Select duration'} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">{language === 'ar' ? 'ساعة' : '1 Hour'}</SelectItem>
+              <SelectItem value="2">{language === 'ar' ? 'ساعتين' : '2 Hours'}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
           <Label>{t('leaves.permissions.fromTime')} <span className="text-destructive">*</span></Label>
           <Input type="time" value={fromTime} onChange={(e) => setFromTime(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>{t('leaves.permissions.toTime')} <span className="text-destructive">*</span></Label>
-          <Input type="time" value={toTime} onChange={(e) => setToTime(e.target.value)} />
+          <Label>{t('leaves.permissions.toTime')}</Label>
+          <Input value={toTime || '—'} readOnly className="bg-muted" />
         </div>
       </div>
       <div className="space-y-2">
