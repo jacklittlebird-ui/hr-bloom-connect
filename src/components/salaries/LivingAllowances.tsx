@@ -196,6 +196,35 @@ export const LivingAllowances = () => {
     }
   };
 
+  const [showApplyAllDialog, setShowApplyAllDialog] = useState(false);
+  const [applyAllMonth, setApplyAllMonth] = useState('');
+
+  const applyAllPending = useMemo(
+    () => entries.filter(e => e.deductionMonth === applyAllMonth && e.status === 'pending'),
+    [entries, applyAllMonth]
+  );
+
+  const handleApplyAllForMonth = async () => {
+    if (!applyAllMonth) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار الشهر' : 'Please select a month', variant: 'destructive' });
+      return;
+    }
+    const ids = applyAllPending.map(e => e.id);
+    if (ids.length === 0) {
+      toast({ title: isRTL ? 'تنبيه' : 'Notice', description: isRTL ? 'لا توجد سجلات معلقة لهذا الشهر' : 'No pending records for this month' });
+      return;
+    }
+    const { error } = await supabase.from('living_allowances').update({ status: 'deducted' }).in('id', ids);
+    if (error) {
+      toast({ title: isRTL ? 'خطأ' : 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setEntries(prev => prev.map(e => ids.includes(e.id) ? { ...e, status: 'deducted' as const } : e));
+    setShowApplyAllDialog(false);
+    setApplyAllMonth('');
+    toast({ title: isRTL ? 'تم التطبيق' : 'Applied', description: isRTL ? `تم تطبيق إضافة على ${ids.length} سجل` : `Add applied to ${ids.length} records` });
+  };
+
   const handleBulkDeduct = async () => {
     if (monthFilter === 'all') {
       toast({ title: isRTL ? 'خطأ' : 'Error', description: isRTL ? 'يرجى اختيار شهر محدد أولاً' : 'Please select a specific month first', variant: 'destructive' });
@@ -326,6 +355,12 @@ export const LivingAllowances = () => {
               <li>{isRTL ? 'رفع نفس الموظف لنفس الشهر يقوم بتحديث عدد الأيام' : 'Re-uploading the same employee for the same month updates the days'}</li>
             </ul>
           </div>
+            <div className={cn("mt-4 flex", isRTL && "flex-row-reverse")}>
+              <Button variant="destructive" size="lg" className="gap-2" onClick={() => setShowApplyAllDialog(true)}>
+                <CalendarDays className="h-5 w-5" />
+                {isRTL ? 'تطبيق الإضافة على كل سجلات الشهر' : 'Apply to All Month Records'}
+              </Button>
+            </div>
         </CardContent>
       </Card>
 
@@ -460,6 +495,52 @@ export const LivingAllowances = () => {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
             <Button onClick={handleEditSave}>{isRTL ? 'حفظ' : 'Save'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={showApplyAllDialog} onOpenChange={setShowApplyAllDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className={cn("flex items-center gap-2", isRTL && "flex-row-reverse")}>
+              <CalendarDays className="h-5 w-5 text-destructive" />
+              {isRTL ? 'تطبيق الإضافة على كل سجلات الشهر' : 'Apply to All Month Records'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{isRTL ? 'اختر الشهر' : 'Select Month'}</Label>
+              <Select value={applyAllMonth} onValueChange={setApplyAllMonth}>
+                <SelectTrigger><SelectValue placeholder={isRTL ? '-- اختر الشهر --' : '-- Select Month --'} /></SelectTrigger>
+                <SelectContent>
+                  {[...new Set(entries.map(e => e.deductionMonth))].sort().map(m => {
+                    const pendingCount = entries.filter(e => e.deductionMonth === m && e.status === 'pending').length;
+                    return (
+                      <SelectItem key={m} value={m}>
+                        {getMonthLabel(m, language)} ({pendingCount} {isRTL ? 'معلق' : 'pending'})
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+            {applyAllMonth && (
+              <div className="rounded-lg border border-border p-4 space-y-2">
+                <div className={cn("flex justify-between text-sm", isRTL && "flex-row-reverse")}>
+                  <span className="text-muted-foreground">{isRTL ? 'عدد السجلات المعلقة' : 'Pending Records'}</span>
+                  <span className="font-semibold">{applyAllPending.length}</span>
+                </div>
+                <div className={cn("flex justify-between text-sm", isRTL && "flex-row-reverse")}>
+                  <span className="text-muted-foreground">{isRTL ? 'إجمالي المبلغ' : 'Total Amount'}</span>
+                  <span className="font-bold text-destructive">{applyAllPending.reduce((s, e) => s + e.amount, 0).toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setShowApplyAllDialog(false); setApplyAllMonth(''); }}>{isRTL ? 'إلغاء' : 'Cancel'}</Button>
+            <Button variant="destructive" disabled={!applyAllMonth || applyAllPending.length === 0} onClick={handleApplyAllForMonth}>
+              {isRTL ? 'تأكيد التطبيق' : 'Confirm'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
