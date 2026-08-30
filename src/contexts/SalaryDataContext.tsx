@@ -70,17 +70,32 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
   const fetchRecords = useCallback(async () => {
-    let query;
     if (isEmployee && scopedEmployeeId) {
-      query = supabase.from('salary_records').select(EMPLOYEE_SALARY_COLS).eq('employee_id', scopedEmployeeId).limit(5);
-    } else {
-      query = supabase.from('salary_records').select(SALARY_COLS).order('year', { ascending: false });
+      const { data, error } = await supabase.from('salary_records').select(EMPLOYEE_SALARY_COLS).eq('employee_id', scopedEmployeeId).limit(5);
+      trackQuery('salary', data?.length || 0);
+      setSalaryRecords(!error && data ? data.map(mapRow) : []);
+      return;
     }
 
-    const { data, error } = await query;
-    trackQuery('salary', data?.length || 0);
-    setSalaryRecords(!error && data ? data.map(mapRow) : []);
+    // Paginate: Supabase caps a single response at 1000 rows
+    const all: any[] = [];
+    const pageSize = 1000;
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from('salary_records')
+        .select(SALARY_COLS)
+        .order('year', { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error || !data || data.length === 0) break;
+      all.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+    trackQuery('salary', all.length);
+    setSalaryRecords(all.map(mapRow));
   }, [isEmployee, scopedEmployeeId]);
+
 
   // Lazy loading: only fetch when first accessed
   const hasFetched = useRef(false);
