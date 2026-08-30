@@ -140,14 +140,20 @@ export const LivingAllowances = () => {
         const payload: any[] = [];
         let skippedCount = 0;
 
+        // Merge duplicate employees in the same file (sum amounts) to avoid
+        // "ON CONFLICT DO UPDATE cannot affect row a second time"
+        const merged = new Map<string, any>();
         for (const row of rows.slice(1)) {
           const empCode = String(row[0] || '').trim();
           const amount = parseFloat(String(row[1] || ''));
           if (!empCode || isNaN(amount) || amount <= 0) { skippedCount++; continue; }
           const employee = empByCode[empCode.toLowerCase()];
           if (!employee?.id) { skippedCount++; continue; }
-          payload.push({ employee_id: employee.id, amount, allowance_month: deductionMonth, status: 'pending', uploaded_by: user?.id || null });
+          const existing = merged.get(employee.id);
+          if (existing) existing.amount += amount;
+          else merged.set(employee.id, { employee_id: employee.id, amount, allowance_month: deductionMonth, status: 'pending', uploaded_by: user?.id || null });
         }
+        payload.push(...merged.values());
 
         if (payload.length === 0) {
           toast({
