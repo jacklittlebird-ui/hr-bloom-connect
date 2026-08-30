@@ -1888,6 +1888,7 @@ export type Database = {
           id: string
           incentives: number | null
           income_tax: number | null
+          is_published: boolean
           leave_days: number | null
           leave_deduction: number | null
           living_allowance: number | null
@@ -1901,6 +1902,7 @@ export type Database = {
           penalty_type: string | null
           penalty_value: number | null
           processed_at: string
+          published_at: string | null
           station_allowance: number | null
           total_deductions: number | null
           transport_allowance: number | null
@@ -1920,6 +1922,7 @@ export type Database = {
           id?: string
           incentives?: number | null
           income_tax?: number | null
+          is_published?: boolean
           leave_days?: number | null
           leave_deduction?: number | null
           living_allowance?: number | null
@@ -1933,6 +1936,7 @@ export type Database = {
           penalty_type?: string | null
           penalty_value?: number | null
           processed_at?: string
+          published_at?: string | null
           station_allowance?: number | null
           total_deductions?: number | null
           transport_allowance?: number | null
@@ -1952,6 +1956,7 @@ export type Database = {
           id?: string
           incentives?: number | null
           income_tax?: number | null
+          is_published?: boolean
           leave_days?: number | null
           leave_deduction?: number | null
           living_allowance?: number | null
@@ -1965,6 +1970,7 @@ export type Database = {
           penalty_type?: string | null
           penalty_value?: number | null
           processed_at?: string
+          published_at?: string | null
           station_allowance?: number | null
           total_deductions?: number | null
           transport_allowance?: number | null
