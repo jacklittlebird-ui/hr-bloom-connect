@@ -235,6 +235,44 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
         : Promise.resolve([]),
     ]);
 
+    // Monthly uploads (الإجازات / الخصومات / بدلات المعيشة) — these are part of the
+    // single source of truth for the payroll figure, so every consumer sees them.
+    const [leaveDeductionRows, penaltyRows, livingRows] = await Promise.all([
+      periods.length
+        ? fetchAllBatches<{ employee_id: string; days: number | null; deduction_month: string }>(async (from, to) => {
+            let query = supabase
+              .from('leave_deductions')
+              .select('employee_id, days, deduction_month')
+              .in('deduction_month', periods)
+              .range(from, to);
+            if (isEmployee && scopedEmployeeId) query = query.eq('employee_id', scopedEmployeeId);
+            return await query;
+          })
+        : Promise.resolve([]),
+      periods.length
+        ? fetchAllBatches<{ employee_id: string; days: number | null; deduction_month: string }>(async (from, to) => {
+            let query = supabase
+              .from('penalty_deductions')
+              .select('employee_id, days, deduction_month')
+              .in('deduction_month', periods)
+              .range(from, to);
+            if (isEmployee && scopedEmployeeId) query = query.eq('employee_id', scopedEmployeeId);
+            return await query;
+          })
+        : Promise.resolve([]),
+      periods.length
+        ? fetchAllBatches<{ employee_id: string; amount: number | null; allowance_month: string }>(async (from, to) => {
+            let query = supabase
+              .from('living_allowances')
+              .select('employee_id, amount, allowance_month')
+              .in('allowance_month', periods)
+              .range(from, to);
+            if (isEmployee && scopedEmployeeId) query = query.eq('employee_id', scopedEmployeeId);
+            return await query;
+          })
+        : Promise.resolve([]),
+    ]);
+
     const loanInstallmentMap = new Map<string, number>();
     loanInstallmentRows.forEach((row) => {
       if (!employeeIds.has(row.employee_id)) return;
@@ -258,27 +296,40 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       mobileBillMap.set(key, (mobileBillMap.get(key) || 0) + (row.amount || 0));
     });
 
+    const sumInto = (map: Map<string, number>, employeeId: string, period: string, value: number) => {
+      if (!employeeIds.has(employeeId)) return;
+      const key = `${employeeId}-${period}`;
+      map.set(key, (map.get(key) || 0) + value);
+    };
+
+    const leaveDaysMap = new Map<string, number>();
+    leaveDeductionRows.forEach((row) => sumInto(leaveDaysMap, row.employee_id, row.deduction_month, row.days || 0));
+
+    const penaltyDaysMap = new Map<string, number>();
+    penaltyRows.forEach((row) => sumInto(penaltyDaysMap, row.employee_id, row.deduction_month, row.days || 0));
+
+    const livingMap = new Map<string, number>();
+    livingRows.forEach((row) => sumInto(livingMap, row.employee_id, row.allowance_month, row.amount || 0));
+
     return entries.map((entry) => {
       const periodKey = `${entry.employeeId}-${entry.year}-${entry.month}`;
-      const liveLoanPayment = loanInstallmentMap.get(periodKey);
       // Prefer live installment data for active/current loans so edits and replacements
       // appear immediately in payroll reports, but fall back to stored history when the
       // loan has since been completed or no live installment exists anymore.
-      const loanPayment = liveLoanPayment ?? entry.loanPayment;
-      const advanceAmount = advanceMap.get(periodKey) ?? 0;
-      const mobileBill = mobileBillMap.get(periodKey) ?? 0;
-      const totalDeductions = entry.employeeInsurance + loanPayment + advanceAmount + mobileBill + entry.leaveDeduction + entry.penaltyAmount;
+      const loanPayment = loanInstallmentMap.get(periodKey) ?? entry.loanPayment;
 
-      return {
-        ...entry,
+      return recomputePayroll(entry, {
         loanPayment,
-        advanceAmount,
-        mobileBill,
-        totalDeductions,
-        netSalary: entry.gross - totalDeductions,
-      };
+        advanceAmount: advanceMap.get(periodKey) ?? 0,
+        mobileBill: mobileBillMap.get(periodKey) ?? 0,
+        leaveDays: leaveDaysMap.get(periodKey),
+        penaltyDays: penaltyDaysMap.get(periodKey),
+        livingAllowance: livingMap.get(periodKey),
+      });
     });
   }, [isEmployee, scopedEmployeeId]);
+
+
 
   const fetchEmployeeMap = useCallback(async () => {
     if (isEmployee) return;
