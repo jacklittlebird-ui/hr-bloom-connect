@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { trackQuery } from '@/lib/queryOptimizer';
 import { revertLoanPaymentsForPeriod } from '@/lib/loanPayments';
+import { recomputePayroll } from '@/lib/payrollCalc';
 
 export interface ProcessedPayroll {
   employeeId: string;
