@@ -148,15 +148,30 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       income_tax: record.incomeTax,
     };
 
-    const existing = salaryRecords.find(r => r.employeeId === record.employeeId && r.year === record.year);
-    
-    if (existing) {
-      const { error } = await supabase.from('salary_records').update(payload).eq('employee_id', record.employeeId).eq('year', record.year);
-      if (error) { console.error('Error updating salary record:', error); return; }
-    } else {
-      const { error } = await supabase.from('salary_records').insert(payload);
-      if (error) { console.error('Error inserting salary record:', error); return; }
+    // Update first; if no row was affected, insert. Avoids silent failures when the
+    // local cache is incomplete (e.g. record exists in DB but was not loaded).
+    const { data: updated, error: updateError } = await supabase
+      .from('salary_records')
+      .update(payload)
+      .eq('employee_id', record.employeeId)
+      .eq('year', record.year)
+      .select('id');
+
+    if (updateError) {
+      console.error('Error updating salary record:', updateError);
+      addNotification({ titleAr: `تعذر حفظ سجل الراتب: ${updateError.message}`, titleEn: `Failed to save salary record: ${updateError.message}`, type: 'error', module: 'salary' });
+      return;
     }
+
+    if (!updated || updated.length === 0) {
+      const { error: insertError } = await supabase.from('salary_records').insert(payload);
+      if (insertError) {
+        console.error('Error inserting salary record:', insertError);
+        addNotification({ titleAr: `تعذر حفظ سجل الراتب: ${insertError.message}`, titleEn: `Failed to save salary record: ${insertError.message}`, type: 'error', module: 'salary' });
+        return;
+      }
+    }
+
 
     await fetchRecords();
     addNotification({ titleAr: `تم حفظ سجل الراتب`, titleEn: `Salary record saved`, type: 'success', module: 'salary' });
