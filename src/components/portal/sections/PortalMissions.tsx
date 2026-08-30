@@ -21,6 +21,7 @@ const missionTypeLabels: Record<PortalMissionType, { ar: string; en: string; tim
   morning: { ar: 'مأمورية صباحية', en: 'Morning Mission', timeAr: '09:00 إلى 13:00', timeEn: '09:00 to 13:00' },
   evening: { ar: 'مأمورية مسائية', en: 'Evening Mission', timeAr: '13:00 إلى 17:00', timeEn: '13:00 to 17:00' },
   full_day: { ar: 'مأمورية يوم كامل', en: 'Full Day Mission', timeAr: '09:00 إلى 17:00', timeEn: '09:00 to 17:00' },
+  other: { ar: 'مأمورية بوقت مخصص', en: 'Custom Time Mission', timeAr: 'وقت مخصص', timeEn: 'Custom time' },
 };
 
 export const PortalMissions = () => {
@@ -34,6 +35,8 @@ export const PortalMissions = () => {
   const [missionType, setMissionType] = useState<string>('');
   const [date, setDate] = useState<Date>();
   const [dest, setDest] = useState('');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const [reason, setReason] = useState('');
 
   const statusCls: Record<string, string> = {
@@ -46,12 +49,14 @@ export const PortalMissions = () => {
     morning: 'bg-blue-100 text-blue-700 border-blue-300',
     evening: 'bg-purple-100 text-purple-700 border-purple-300',
     full_day: 'bg-green-100 text-green-700 border-green-300',
+    other: 'bg-amber-100 text-amber-700 border-amber-300',
   };
 
   const missionOptions = [
     { value: 'morning', labelAr: 'مأمورية صباحية (09:00 إلى 13:00)', labelEn: 'Morning Mission (09:00 to 13:00)' },
     { value: 'evening', labelAr: 'مأمورية مسائية (13:00 إلى 17:00)', labelEn: 'Evening Mission (13:00 to 17:00)' },
     { value: 'full_day', labelAr: 'مأمورية يوم كامل (09:00 إلى 17:00)', labelEn: 'Full Day Mission (09:00 to 17:00)' },
+    { value: 'other', labelAr: 'أخرى (تحديد وقت البداية والنهاية)', labelEn: 'Other (custom start/end time)' },
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,14 +65,20 @@ export const PortalMissions = () => {
       toast.error(ar ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
     }
-    // Defensive guard: only allow the three predefined Cairo-local windows.
-    // Morning 09:00–13:00 / Evening 13:00–17:00 / Full day 09:00–17:00.
-    const allowed: PortalMissionType[] = ['morning', 'evening', 'full_day'];
+    const allowed: PortalMissionType[] = ['morning', 'evening', 'full_day', 'other'];
     if (!allowed.includes(missionType as PortalMissionType)) {
-      toast.error(ar
-        ? 'ساعات المأمورية يجب أن تكون ضمن النطاق المسموح: صباحية 09:00–13:00، مسائية 13:00–17:00، أو يوم كامل 09:00–17:00'
-        : 'Mission hours must be within the allowed window: morning 09:00–13:00, evening 13:00–17:00, or full day 09:00–17:00');
+      toast.error(ar ? 'نوع مأمورية غير صالح' : 'Invalid mission type');
       return;
+    }
+    if (missionType === 'other') {
+      if (!customStart || !customEnd) {
+        toast.error(ar ? 'يجب تحديد وقت البداية ووقت النهاية' : 'Start and end time are required');
+        return;
+      }
+      if (customEnd <= customStart) {
+        toast.error(ar ? 'وقت النهاية يجب أن يكون بعد وقت البداية' : 'End time must be after start time');
+        return;
+      }
     }
     addMission({
       employeeId: PORTAL_EMPLOYEE_ID,
@@ -77,6 +88,7 @@ export const PortalMissions = () => {
       destEn: dest,
       reasonAr: reason,
       reasonEn: reason,
+      ...(missionType === 'other' ? { checkIn: customStart, checkOut: customEnd } : {}),
     });
     toast.success(ar ? 'تم تقديم طلب المأمورية بنجاح' : 'Mission request submitted');
     setShowForm(false);
@@ -84,6 +96,8 @@ export const PortalMissions = () => {
     setDate(undefined);
     setDest('');
     setReason('');
+    setCustomStart('');
+    setCustomEnd('');
   };
 
   const resetForm = () => {
@@ -92,6 +106,8 @@ export const PortalMissions = () => {
     setDate(undefined);
     setDest('');
     setReason('');
+    setCustomStart('');
+    setCustomEnd('');
   };
 
   return (
@@ -147,6 +163,19 @@ export const PortalMissions = () => {
                   </Popover>
                 </div>
 
+                {missionType === 'other' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>{ar ? 'وقت البداية' : 'Start Time'} <span className="text-destructive">*</span></Label>
+                      <Input type="time" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{ar ? 'وقت النهاية' : 'End Time'} <span className="text-destructive">*</span></Label>
+                      <Input type="time" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+                    </div>
+                  </>
+                )}
+
                 <div className="space-y-2 md:col-span-2">
                   <Label>{ar ? 'الوجهة' : 'Destination'}</Label>
                   <Input value={dest} onChange={e => setDest(e.target.value)} placeholder={ar ? 'أدخل الوجهة' : 'Enter destination'} />
@@ -185,6 +214,7 @@ export const PortalMissions = () => {
               <TableRow>
                 <TableHead>{ar ? 'النوع' : 'Type'}</TableHead>
                 <TableHead>{ar ? 'التاريخ' : 'Date'}</TableHead>
+                <TableHead>{ar ? 'التوقيت' : 'Time'}</TableHead>
                 <TableHead>{ar ? 'الوجهة' : 'Destination'}</TableHead>
                 <TableHead>{ar ? 'السبب' : 'Reason'}</TableHead>
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
@@ -199,6 +229,11 @@ export const PortalMissions = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>{m.date}</TableCell>
+                  <TableCell className="whitespace-nowrap" dir="ltr">
+                    {m.checkIn && m.checkOut
+                      ? `${m.checkIn} - ${m.checkOut}`
+                      : (ar ? missionTypeLabels[m.missionType].timeAr : missionTypeLabels[m.missionType].timeEn)}
+                  </TableCell>
                   <TableCell>{ar ? m.destAr : m.destEn}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{ar ? m.reasonAr : m.reasonEn}</TableCell>
                   <TableCell>
@@ -209,7 +244,7 @@ export const PortalMissions = () => {
                 </TableRow>
               ))}
               {missions.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد مأموريات' : 'No missions'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد مأموريات' : 'No missions'}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
