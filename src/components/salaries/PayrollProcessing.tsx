@@ -50,6 +50,9 @@ export const PayrollProcessing = () => {
   const [dbInstallments, setDbInstallments] = useState<{ loan_id: string; employee_id: string; amount: number; due_date: string; status: string }[]>([]);
   const [dbAdvances, setDbAdvances] = useState<{ id: string; employee_id: string; amount: number; deduction_month: string; status: string }[]>([]);
   const [dbMobileBills, setDbMobileBills] = useState<{ employee_id: string; amount: number; deduction_month: string }[]>([]);
+  const [dbLeaveDeductions, setDbLeaveDeductions] = useState<{ employee_id: string; days: number; deduction_month: string }[]>([]);
+  const [dbPenaltyDeductions, setDbPenaltyDeductions] = useState<{ employee_id: string; days: number; deduction_month: string }[]>([]);
+  const [dbLivingAllowances, setDbLivingAllowances] = useState<{ employee_id: string; amount: number; allowance_month: string }[]>([]);
 
   const roundToNearestQuarter = (v: number) => Math.round(v * 4) / 4;
   const roundToNearestEighth = (v: number) => Math.round(v * 8) / 8;
@@ -77,17 +80,24 @@ export const PayrollProcessing = () => {
       return all;
     };
 
-    const [loansRes, installmentsAll, advancesRes, billsRes] = await Promise.all([
+    const [loansRes, installmentsAll, advancesRes, billsRes, leaveDedRes, penaltyDedRes, livingRes] = await Promise.all([
       supabase.from('loans').select('id, employee_id, monthly_installment, installments_count, paid_count, remaining').eq('status', 'active'),
       fetchAllInstallments(),
       supabase.from('advances').select('id, employee_id, amount, deduction_month, status').in('status', ['approved', 'deducted']),
       supabase.from('mobile_bills').select('employee_id, amount, deduction_month'),
+      supabase.from('leave_deductions').select('employee_id, days, deduction_month'),
+      supabase.from('penalty_deductions').select('employee_id, days, deduction_month'),
+      supabase.from('living_allowances').select('employee_id, amount, allowance_month'),
     ]);
     if (loansRes.data) setDbLoans(loansRes.data);
     setDbInstallments(installmentsAll);
     if (advancesRes.data) setDbAdvances(advancesRes.data);
     if (billsRes.data) setDbMobileBills(billsRes.data);
+    if (leaveDedRes.data) setDbLeaveDeductions(leaveDedRes.data as any);
+    if (penaltyDedRes.data) setDbPenaltyDeductions(penaltyDedRes.data as any);
+    if (livingRes.data) setDbLivingAllowances(livingRes.data as any);
   }, []);
+
 
 
   // Sync loan records after payroll: update paid_count, remaining, status, and mark installments
@@ -132,6 +142,23 @@ export const PayrollProcessing = () => {
   const getEmployeeMobileBill = useCallback((empId: string, month: string) => {
     return dbMobileBills.filter(b => b.employee_id === empId && b.deduction_month === month).reduce((s, b) => s + b.amount, 0);
   }, [dbMobileBills]);
+
+  // Uploaded monthly leave days (الرواتب - الإجازات)
+  const getUploadedLeaveDays = useCallback((empId: string, month: string) => {
+    return dbLeaveDeductions.filter(d => d.employee_id === empId && d.deduction_month === month).reduce((s, d) => s + Number(d.days || 0), 0);
+  }, [dbLeaveDeductions]);
+
+  // Uploaded monthly penalty days (الرواتب - الخصومات)
+  const getUploadedPenaltyDays = useCallback((empId: string, month: string) => {
+    return dbPenaltyDeductions.filter(d => d.employee_id === empId && d.deduction_month === month).reduce((s, d) => s + Number(d.days || 0), 0);
+  }, [dbPenaltyDeductions]);
+
+  // Uploaded monthly living allowance (الرواتب - بدلات المعيشة)
+  const getUploadedLivingAllowance = useCallback((empId: string, month: string) => {
+    return dbLivingAllowances.filter(a => a.employee_id === empId && a.allowance_month === month).reduce((s, a) => s + Number(a.amount || 0), 0);
+  }, [dbLivingAllowances]);
+
+
 
   const salaryRecord = useMemo(() => {
     if (!selectedEmployee) return null;
@@ -237,27 +264,41 @@ export const PayrollProcessing = () => {
   };
 
   const loadEntryIntoForm = useCallback((empId: string, month: string, year: string) => {
+    const monthKey = `${year}-${month}`;
+    const uploadedLeave = getUploadedLeaveDays(empId, monthKey);
+    const uploadedPenalty = getUploadedPenaltyDays(empId, monthKey);
+    const uploadedLiving = getUploadedLivingAllowance(empId, monthKey);
     const existing = getPayrollEntry(empId, month, year);
     if (existing) {
-      setLivingAllowance(existing.livingAllowance);
+      setLivingAllowance(uploadedLiving > 0 ? uploadedLiving : existing.livingAllowance);
       setOvertimePay(existing.overtimePay);
       setBonusType(existing.bonusType);
       setBonusValue(existing.bonusValue);
-      setLeaveDays(normalizeQuarterInput(existing.leaveDays));
-      setPenaltyType(existing.penaltyType);
-      setPenaltyValue(existing.penaltyType === 'days' ? normalizeQuarterInput(existing.penaltyValue) : existing.penaltyValue);
+      setLeaveDays(normalizeQuarterInput(uploadedLeave > 0 ? uploadedLeave : existing.leaveDays));
+      if (uploadedPenalty > 0) {
+        setPenaltyType('days');
+        setPenaltyValue(normalizeQuarterInput(uploadedPenalty));
+      } else {
+        setPenaltyType(existing.penaltyType);
+        setPenaltyValue(existing.penaltyType === 'days' ? normalizeQuarterInput(existing.penaltyValue) : existing.penaltyValue);
+      }
     } else {
-      setLivingAllowance(0);
       setOvertimePay(0);
       setBonusType('amount');
       setBonusValue(0);
-      setLeaveDays(0);
-      setPenaltyType('amount');
-      setPenaltyValue(0);
+      setLeaveDays(normalizeQuarterInput(uploadedLeave));
+      if (uploadedPenalty > 0) {
+        setPenaltyType('days');
+        setPenaltyValue(normalizeQuarterInput(uploadedPenalty));
+      } else {
+        setPenaltyType('amount');
+        setPenaltyValue(0);
+      }
       const sr = getSalaryRecord(empId, year);
-      if (sr) setLivingAllowance(sr.livingAllowance);
+      setLivingAllowance(uploadedLiving > 0 ? uploadedLiving : (sr?.livingAllowance ?? 0));
     }
-  }, [getPayrollEntry, getSalaryRecord]);
+  }, [getPayrollEntry, getSalaryRecord, getUploadedLeaveDays, getUploadedPenaltyDays, getUploadedLivingAllowance]);
+
 
   const handleSelectEmployee = (empId: string) => {
     setSelectedEmployee(empId);
@@ -291,7 +332,13 @@ export const PayrollProcessing = () => {
     const usedIncomeTax = existing?.incomeTax ?? sr!.incomeTax;
 
     const bg = usedBasicSalary + usedTransport + usedIncentives + usedStationAllowance + usedMobileAllowance;
-    const la = empId === selectedEmployee ? livingAllowance : (existing?.livingAllowance ?? sr?.livingAllowance ?? 0);
+    // Uploaded monthly sheets take priority over previously stored/default values
+    const upLeave = getUploadedLeaveDays(empId, period);
+    const upPenalty = getUploadedPenaltyDays(empId, period);
+    const upLiving = getUploadedLivingAllowance(empId, period);
+    const la = empId === selectedEmployee
+      ? livingAllowance
+      : (upLiving > 0 ? upLiving : (existing?.livingAllowance ?? sr?.livingAllowance ?? 0));
     const ot = empId === selectedEmployee ? overtimePay : (existing?.overtimePay ?? 0);
     const g = bg + la + ot;
     const bt = empId === selectedEmployee ? bonusType : (existing?.bonusType ?? 'amount');
@@ -300,11 +347,18 @@ export const PayrollProcessing = () => {
     const lp = existing?.loanPayment ?? getEmployeeMonthlyLoanPayment(empId);
     const aa = existing?.advanceAmount ?? getEmployeeAdvanceForMonth(empId, period);
     const mb = existing?.mobileBill ?? getEmployeeMobileBill(empId, period);
-    const ld = empId === selectedEmployee ? normalizeQuarterInput(leaveDays) : (existing?.leaveDays ?? 0);
+    const ld = empId === selectedEmployee
+      ? normalizeQuarterInput(leaveDays)
+      : normalizeQuarterInput(upLeave > 0 ? upLeave : (existing?.leaveDays ?? 0));
     const leaveDailyRate = bg / 30;
     const lded = roundToNearestQuarter(leaveDailyRate * ld);
-    const pt = empId === selectedEmployee ? penaltyType : (existing?.penaltyType ?? 'amount');
-    const pv = empId === selectedEmployee ? (pt === 'days' ? normalizeQuarterInput(penaltyValue) : penaltyValue) : (existing?.penaltyValue ?? 0);
+    const pt = empId === selectedEmployee
+      ? penaltyType
+      : (upPenalty > 0 ? 'days' as const : (existing?.penaltyType ?? 'amount'));
+    const pv = empId === selectedEmployee
+      ? (pt === 'days' ? normalizeQuarterInput(penaltyValue) : penaltyValue)
+      : (upPenalty > 0 ? normalizeQuarterInput(upPenalty) : (existing?.penaltyValue ?? 0));
+
     const penaltyDailyRate = usedBasicSalary / 30;
     const pa = pt === 'amount' ? roundToNearestQuarter(pv) : pt === 'days' ? roundToNearestQuarter(penaltyDailyRate * pv) : roundToNearestQuarter((pv / 100) * usedBasicSalary);
     const td = usedEmployeeInsurance + lp + aa + mb + lded + pa;
