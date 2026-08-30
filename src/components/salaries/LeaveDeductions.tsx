@@ -140,14 +140,20 @@ export const LeaveDeductions = () => {
         const payload: any[] = [];
         let skippedCount = 0;
 
+        // Merge duplicate employees in the same file (sum their days) to avoid
+        // "ON CONFLICT DO UPDATE cannot affect row a second time"
+        const merged = new Map<string, any>();
         for (const row of rows.slice(1)) {
           const empCode = String(row[0] || '').trim();
           const days = parseFloat(String(row[1] || ''));
           if (!empCode || isNaN(days) || days <= 0) { skippedCount++; continue; }
           const employee = empByCode[empCode.toLowerCase()];
           if (!employee?.id) { skippedCount++; continue; }
-          payload.push({ employee_id: employee.id, days, deduction_month: deductionMonth, status: 'pending', uploaded_by: user?.id || null });
+          const existing = merged.get(employee.id);
+          if (existing) existing.days += days;
+          else merged.set(employee.id, { employee_id: employee.id, days, deduction_month: deductionMonth, status: 'pending', uploaded_by: user?.id || null });
         }
+        payload.push(...merged.values());
 
         if (payload.length === 0) {
           toast({
