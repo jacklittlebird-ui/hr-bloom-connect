@@ -167,6 +167,8 @@ const Leaves = () => {
         startDate: m.start_date || m.date,
         endDate: m.end_date || m.date,
         destination: m.destination || '', reason: m.reason || '',
+        checkIn: m.check_in ? String(m.check_in).slice(0, 5) : undefined,
+        checkOut: m.check_out ? String(m.check_out).slice(0, 5) : undefined,
         status: m.status as MissionRequest['status'],
         submittedDate: m.created_at.split('T')[0],
       };
