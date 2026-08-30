@@ -182,11 +182,12 @@ export const PayrollProcessing = () => {
   // Gross includes base + livingAllowance (manual) + overtimePay
   const gross = baseGross + livingAllowance + overtimePay;
 
-  // baseGross excludes livingAllowance and overtimePay - used for bonus%, leave, penalty calculations
+  // baseGross excludes livingAllowance and overtimePay - used for leave/penalty calculations.
+  // Bonus % is calculated on the full gross (before bonus), same as the DB trigger and reports.
   const bonusAmount = useMemo(() => {
     if (bonusType === 'amount') return bonusValue;
-    return Math.round((bonusValue / 100) * baseGross);
-  }, [bonusType, bonusValue, baseGross]);
+    return Math.round(((bonusValue / 100) * gross) * 100) / 100;
+  }, [bonusType, bonusValue, gross]);
 
   // Use stored insurance/deduction values from existing entry, fallback to current salary record
   const employeeInsurance = existingPayrollEntry?.employeeInsurance ?? salaryRecord?.employeeInsurance ?? 0;
