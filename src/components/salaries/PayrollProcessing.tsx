@@ -50,6 +50,9 @@ export const PayrollProcessing = () => {
   const [dbInstallments, setDbInstallments] = useState<{ loan_id: string; employee_id: string; amount: number; due_date: string; status: string }[]>([]);
   const [dbAdvances, setDbAdvances] = useState<{ id: string; employee_id: string; amount: number; deduction_month: string; status: string }[]>([]);
   const [dbMobileBills, setDbMobileBills] = useState<{ employee_id: string; amount: number; deduction_month: string }[]>([]);
+  const [dbLeaveDeductions, setDbLeaveDeductions] = useState<{ employee_id: string; days: number; deduction_month: string }[]>([]);
+  const [dbPenaltyDeductions, setDbPenaltyDeductions] = useState<{ employee_id: string; days: number; deduction_month: string }[]>([]);
+  const [dbLivingAllowances, setDbLivingAllowances] = useState<{ employee_id: string; amount: number; allowance_month: string }[]>([]);
 
   const roundToNearestQuarter = (v: number) => Math.round(v * 4) / 4;
   const roundToNearestEighth = (v: number) => Math.round(v * 8) / 8;
