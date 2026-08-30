@@ -80,17 +80,24 @@ export const PayrollProcessing = () => {
       return all;
     };
 
-    const [loansRes, installmentsAll, advancesRes, billsRes] = await Promise.all([
+    const [loansRes, installmentsAll, advancesRes, billsRes, leaveDedRes, penaltyDedRes, livingRes] = await Promise.all([
       supabase.from('loans').select('id, employee_id, monthly_installment, installments_count, paid_count, remaining').eq('status', 'active'),
       fetchAllInstallments(),
       supabase.from('advances').select('id, employee_id, amount, deduction_month, status').in('status', ['approved', 'deducted']),
       supabase.from('mobile_bills').select('employee_id, amount, deduction_month'),
+      supabase.from('leave_deductions').select('employee_id, days, deduction_month'),
+      supabase.from('penalty_deductions').select('employee_id, days, deduction_month'),
+      supabase.from('living_allowances').select('employee_id, amount, allowance_month'),
     ]);
     if (loansRes.data) setDbLoans(loansRes.data);
     setDbInstallments(installmentsAll);
     if (advancesRes.data) setDbAdvances(advancesRes.data);
     if (billsRes.data) setDbMobileBills(billsRes.data);
+    if (leaveDedRes.data) setDbLeaveDeductions(leaveDedRes.data as any);
+    if (penaltyDedRes.data) setDbPenaltyDeductions(penaltyDedRes.data as any);
+    if (livingRes.data) setDbLivingAllowances(livingRes.data as any);
   }, []);
+
 
 
   // Sync loan records after payroll: update paid_count, remaining, status, and mark installments
