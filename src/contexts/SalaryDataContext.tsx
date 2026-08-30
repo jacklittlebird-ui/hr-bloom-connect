@@ -70,17 +70,32 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const scopedEmployeeId = isEmployee ? user?.employeeUuid : null;
 
   const fetchRecords = useCallback(async () => {
-    let query;
     if (isEmployee && scopedEmployeeId) {
-      query = supabase.from('salary_records').select(EMPLOYEE_SALARY_COLS).eq('employee_id', scopedEmployeeId).limit(5);
-    } else {
-      query = supabase.from('salary_records').select(SALARY_COLS).order('year', { ascending: false });
+      const { data, error } = await supabase.from('salary_records').select(EMPLOYEE_SALARY_COLS).eq('employee_id', scopedEmployeeId).limit(5);
+      trackQuery('salary', data?.length || 0);
+      setSalaryRecords(!error && data ? data.map(mapRow) : []);
+      return;
     }
 
-    const { data, error } = await query;
-    trackQuery('salary', data?.length || 0);
-    setSalaryRecords(!error && data ? data.map(mapRow) : []);
+    // Paginate: Supabase caps a single response at 1000 rows
+    const all: any[] = [];
+    const pageSize = 1000;
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from('salary_records')
+        .select(SALARY_COLS)
+        .order('year', { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error || !data || data.length === 0) break;
+      all.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+    trackQuery('salary', all.length);
+    setSalaryRecords(all.map(mapRow));
   }, [isEmployee, scopedEmployeeId]);
+
 
   // Lazy loading: only fetch when first accessed
   const hasFetched = useRef(false);
@@ -133,15 +148,30 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       income_tax: record.incomeTax,
     };
 
-    const existing = salaryRecords.find(r => r.employeeId === record.employeeId && r.year === record.year);
-    
-    if (existing) {
-      const { error } = await supabase.from('salary_records').update(payload).eq('employee_id', record.employeeId).eq('year', record.year);
-      if (error) { console.error('Error updating salary record:', error); return; }
-    } else {
-      const { error } = await supabase.from('salary_records').insert(payload);
-      if (error) { console.error('Error inserting salary record:', error); return; }
+    // Update first; if no row was affected, insert. Avoids silent failures when the
+    // local cache is incomplete (e.g. record exists in DB but was not loaded).
+    const { data: updated, error: updateError } = await supabase
+      .from('salary_records')
+      .update(payload)
+      .eq('employee_id', record.employeeId)
+      .eq('year', record.year)
+      .select('id');
+
+    if (updateError) {
+      console.error('Error updating salary record:', updateError);
+      addNotification({ titleAr: `تعذر حفظ سجل الراتب: ${updateError.message}`, titleEn: `Failed to save salary record: ${updateError.message}`, type: 'error', module: 'salary' });
+      return;
     }
+
+    if (!updated || updated.length === 0) {
+      const { error: insertError } = await supabase.from('salary_records').insert(payload);
+      if (insertError) {
+        console.error('Error inserting salary record:', insertError);
+        addNotification({ titleAr: `تعذر حفظ سجل الراتب: ${insertError.message}`, titleEn: `Failed to save salary record: ${insertError.message}`, type: 'error', module: 'salary' });
+        return;
+      }
+    }
+
 
     await fetchRecords();
     addNotification({ titleAr: `تم حفظ سجل الراتب`, titleEn: `Salary record saved`, type: 'success', module: 'salary' });
