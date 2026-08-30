@@ -163,6 +163,19 @@ export const PortalMissions = () => {
                   </Popover>
                 </div>
 
+                {missionType === 'other' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>{ar ? 'وقت البداية' : 'Start Time'} <span className="text-destructive">*</span></Label>
+                      <Input type="time" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{ar ? 'وقت النهاية' : 'End Time'} <span className="text-destructive">*</span></Label>
+                      <Input type="time" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+                    </div>
+                  </>
+                )}
+
                 <div className="space-y-2 md:col-span-2">
                   <Label>{ar ? 'الوجهة' : 'Destination'}</Label>
                   <Input value={dest} onChange={e => setDest(e.target.value)} placeholder={ar ? 'أدخل الوجهة' : 'Enter destination'} />
@@ -201,6 +214,7 @@ export const PortalMissions = () => {
               <TableRow>
                 <TableHead>{ar ? 'النوع' : 'Type'}</TableHead>
                 <TableHead>{ar ? 'التاريخ' : 'Date'}</TableHead>
+                <TableHead>{ar ? 'التوقيت' : 'Time'}</TableHead>
                 <TableHead>{ar ? 'الوجهة' : 'Destination'}</TableHead>
                 <TableHead>{ar ? 'السبب' : 'Reason'}</TableHead>
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
@@ -215,6 +229,11 @@ export const PortalMissions = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>{m.date}</TableCell>
+                  <TableCell className="whitespace-nowrap" dir="ltr">
+                    {m.checkIn && m.checkOut
+                      ? `${m.checkIn} - ${m.checkOut}`
+                      : (ar ? missionTypeLabels[m.missionType].timeAr : missionTypeLabels[m.missionType].timeEn)}
+                  </TableCell>
                   <TableCell>{ar ? m.destAr : m.destEn}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{ar ? m.reasonAr : m.reasonEn}</TableCell>
                   <TableCell>
@@ -225,7 +244,7 @@ export const PortalMissions = () => {
                 </TableRow>
               ))}
               {missions.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد مأموريات' : 'No missions'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-4">{ar ? 'لا توجد مأموريات' : 'No missions'}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
