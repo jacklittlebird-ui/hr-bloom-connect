@@ -40,6 +40,7 @@ export interface ProcessedPayroll {
   healthInsurance: number;
   incomeTax: number;
   processedAt: string;
+  isPublished?: boolean;
 }
 
 interface PayrollDataContextType {
@@ -51,12 +52,13 @@ interface PayrollDataContextType {
   getPayrollEntry: (employeeId: string, month: string, year: string) => ProcessedPayroll | undefined;
   getMonthlyPayroll: (month: string, year: string) => ProcessedPayroll[];
   getEmployeePayroll: (employeeId: string) => ProcessedPayroll[];
+  publishMonthlyPayroll: (month: string, year: string, publish: boolean) => Promise<number>;
 }
 
 const PayrollDataContext = createContext<PayrollDataContextType | undefined>(undefined);
 
 // Only select needed columns (not SELECT *)
-const PAYROLL_COLS = 'employee_id, month, year, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance, overtime_pay, bonus_type, bonus_value, bonus_amount, gross, employee_insurance, loan_payment, advance_amount, mobile_bill, leave_days, leave_deduction, penalty_type, penalty_value, penalty_amount, total_deductions, net_salary, employer_social_insurance, health_insurance, income_tax, processed_at, id';
+const PAYROLL_COLS = 'employee_id, month, year, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance, overtime_pay, bonus_type, bonus_value, bonus_amount, gross, employee_insurance, loan_payment, advance_amount, mobile_bill, leave_days, leave_deduction, penalty_type, penalty_value, penalty_amount, total_deductions, net_salary, employer_social_insurance, health_insurance, income_tax, processed_at, is_published, id';
 
 // Salary data is sensitive, so employee views also receive the full processed breakdown.
 const EMPLOYEE_PAYROLL_COLS = PAYROLL_COLS;
@@ -119,6 +121,7 @@ const mapRowToEntry = (r: any): ProcessedPayroll => ({
   healthInsurance: r.health_insurance ?? 0,
   incomeTax: r.income_tax ?? 0,
   processedAt: r.processed_at ?? '',
+  isPublished: r.is_published ?? false,
 });
 
 const entryToPayload = (entry: ProcessedPayroll) => ({
@@ -452,13 +455,32 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return payrollEntries.filter(e => e.month === month && e.year === year);
   }, [payrollEntries, ensureLoaded]);
 
+  const publishMonthlyPayroll = useCallback(async (month: string, year: string, publish: boolean) => {
+    const { data, error } = await supabase
+      .from('payroll_entries')
+      .update({ is_published: publish, published_at: publish ? new Date().toISOString() : null })
+      .eq('month', month)
+      .eq('year', year)
+      .select('id');
+    if (error) throw error;
+    await fetchEntries();
+    const count = data?.length ?? 0;
+    addNotification({
+      titleAr: publish ? `تم نشر رواتب ${month}/${year} لـ ${count} موظف` : `تم إخفاء رواتب ${month}/${year}`,
+      titleEn: publish ? `Payroll ${month}/${year} published for ${count} employees` : `Payroll ${month}/${year} unpublished`,
+      type: publish ? 'success' : 'warning',
+      module: 'payroll',
+    });
+    return count;
+  }, [addNotification, fetchEntries]);
+
   const getEmployeePayrollLazy = useCallback((employeeId: string) => {
     if (!hasFetched.current) ensureLoaded();
     return payrollEntries.filter(e => e.employeeId === employeeId).sort((a, b) => `${b.year}-${b.month}`.localeCompare(`${a.year}-${a.month}`));
   }, [payrollEntries, ensureLoaded]);
 
   return (
-    <PayrollDataContext.Provider value={{ payrollEntries, refreshPayroll, savePayrollEntry, savePayrollEntries, deletePayrollEntry, getPayrollEntry, getMonthlyPayroll: getMonthlyPayrollLazy, getEmployeePayroll: getEmployeePayrollLazy }}>
+    <PayrollDataContext.Provider value={{ payrollEntries, refreshPayroll, savePayrollEntry, savePayrollEntries, deletePayrollEntry, getPayrollEntry, getMonthlyPayroll: getMonthlyPayrollLazy, getEmployeePayroll: getEmployeePayrollLazy, publishMonthlyPayroll }}>
       {children}
     </PayrollDataContext.Provider>
   );
