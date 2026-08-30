@@ -76,7 +76,7 @@ export function recomputePayroll<T extends PayrollComputable>(entry: T, override
 
   const bonusAmount =
     entry.bonusType === 'percentage'
-      ? Math.round(grossBeforeBonus * (entry.bonusValue || 0)) / 100 // value is a percentage
+      ? Math.round(((grossBeforeBonus * (entry.bonusValue || 0)) / 100) * 100) / 100
       : (entry.bonusValue || entry.bonusAmount || 0);
 
   const gross = grossBeforeBonus + bonusAmount;
