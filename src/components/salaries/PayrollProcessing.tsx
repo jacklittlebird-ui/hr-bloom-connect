@@ -332,7 +332,13 @@ export const PayrollProcessing = () => {
     const usedIncomeTax = existing?.incomeTax ?? sr!.incomeTax;
 
     const bg = usedBasicSalary + usedTransport + usedIncentives + usedStationAllowance + usedMobileAllowance;
-    const la = empId === selectedEmployee ? livingAllowance : (existing?.livingAllowance ?? sr?.livingAllowance ?? 0);
+    // Uploaded monthly sheets take priority over previously stored/default values
+    const upLeave = getUploadedLeaveDays(empId, period);
+    const upPenalty = getUploadedPenaltyDays(empId, period);
+    const upLiving = getUploadedLivingAllowance(empId, period);
+    const la = empId === selectedEmployee
+      ? livingAllowance
+      : (upLiving > 0 ? upLiving : (existing?.livingAllowance ?? sr?.livingAllowance ?? 0));
     const ot = empId === selectedEmployee ? overtimePay : (existing?.overtimePay ?? 0);
     const g = bg + la + ot;
     const bt = empId === selectedEmployee ? bonusType : (existing?.bonusType ?? 'amount');
@@ -341,11 +347,18 @@ export const PayrollProcessing = () => {
     const lp = existing?.loanPayment ?? getEmployeeMonthlyLoanPayment(empId);
     const aa = existing?.advanceAmount ?? getEmployeeAdvanceForMonth(empId, period);
     const mb = existing?.mobileBill ?? getEmployeeMobileBill(empId, period);
-    const ld = empId === selectedEmployee ? normalizeQuarterInput(leaveDays) : (existing?.leaveDays ?? 0);
+    const ld = empId === selectedEmployee
+      ? normalizeQuarterInput(leaveDays)
+      : normalizeQuarterInput(upLeave > 0 ? upLeave : (existing?.leaveDays ?? 0));
     const leaveDailyRate = bg / 30;
     const lded = roundToNearestQuarter(leaveDailyRate * ld);
-    const pt = empId === selectedEmployee ? penaltyType : (existing?.penaltyType ?? 'amount');
-    const pv = empId === selectedEmployee ? (pt === 'days' ? normalizeQuarterInput(penaltyValue) : penaltyValue) : (existing?.penaltyValue ?? 0);
+    const pt = empId === selectedEmployee
+      ? penaltyType
+      : (upPenalty > 0 ? 'days' as const : (existing?.penaltyType ?? 'amount'));
+    const pv = empId === selectedEmployee
+      ? (pt === 'days' ? normalizeQuarterInput(penaltyValue) : penaltyValue)
+      : (upPenalty > 0 ? normalizeQuarterInput(upPenalty) : (existing?.penaltyValue ?? 0));
+
     const penaltyDailyRate = usedBasicSalary / 30;
     const pa = pt === 'amount' ? roundToNearestQuarter(pv) : pt === 'days' ? roundToNearestQuarter(penaltyDailyRate * pv) : roundToNearestQuarter((pv / 100) * usedBasicSalary);
     const td = usedEmployeeInsurance + lp + aa + mb + lded + pa;
