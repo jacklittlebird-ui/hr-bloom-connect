@@ -464,7 +464,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     loaded.current.add('missions');
 
     await debouncedFetch(`portal_missions_${scopedEmployeeId || 'all'}`, async () => {
-      const q = supabase.from('missions').select('id, employee_id, mission_type, date, destination, reason, status').order('created_at', { ascending: false }).limit(LIMIT);
+      const q = supabase.from('missions').select('id, employee_id, mission_type, date, destination, reason, status, check_in, check_out').order('created_at', { ascending: false }).limit(LIMIT);
       if (scopedEmployeeId) q.eq('employee_id', scopedEmployeeId);
       try {
         const { data } = await q;
@@ -476,6 +476,8 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             date: m.date, destAr: m.destination || '', destEn: m.destination || '',
             reasonAr: m.reason || '', reasonEn: m.reason || '',
             status: m.status as any,
+            checkIn: m.check_in ? String(m.check_in).slice(0, 5) : undefined,
+            checkOut: m.check_out ? String(m.check_out).slice(0, 5) : undefined,
           })));
         }
       } catch (err) {
