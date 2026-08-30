@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
-import { Wallet, Gift, TrendingDown, Building2, Save, X, FileText, Users, Clock, Search, PlayCircle, Zap, Trash2 } from 'lucide-react';
+import { Wallet, Gift, TrendingDown, Building2, Save, X, FileText, Users, Clock, Search, PlayCircle, Zap, Trash2, Send, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
@@ -24,7 +24,8 @@ export const PayrollProcessing = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { getSalaryRecord, salaryRecords } = useSalaryData();
-  const { savePayrollEntry, savePayrollEntries, deletePayrollEntry, getPayrollEntry, getMonthlyPayroll } = usePayrollData();
+  const { savePayrollEntry, savePayrollEntries, deletePayrollEntry, getPayrollEntry, getMonthlyPayroll, publishMonthlyPayroll } = usePayrollData();
+  const [publishing, setPublishing] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(String(new Date().getMonth() + 1).padStart(2, '0'));
   const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
@@ -204,6 +205,26 @@ export const PayrollProcessing = () => {
   });
 
   const processedThisMonth = getMonthlyPayroll(selectedMonth, selectedYear);
+  const monthPublished = processedThisMonth.length > 0 && processedThisMonth.every(e => e.isPublished);
+
+  const handleTogglePublish = async () => {
+    const publish = !monthPublished;
+    setPublishing(true);
+    try {
+      const count = await publishMonthlyPayroll(selectedMonth, selectedYear, publish);
+      toast({
+        title: publish ? (ar ? 'تم نشر الرواتب' : 'Payroll published') : (ar ? 'تم إلغاء النشر' : 'Payroll unpublished'),
+        description: publish
+          ? (ar ? `أصبح الراتب ظاهرًا لـ ${count} موظف` : `Salary is now visible to ${count} employees`)
+          : (ar ? 'لن يظهر الراتب للموظفين' : 'Salary is now hidden from employees'),
+      });
+    } catch (e: any) {
+      toast({ title: ar ? 'خطأ' : 'Error', description: e?.message || '', variant: 'destructive' });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
 
   const handleReset = () => {
     setLivingAllowance(0);
@@ -425,7 +446,18 @@ export const PayrollProcessing = () => {
                 </Select>
               </div>
             </div>
-            <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
+            <div className={cn("flex gap-2 flex-wrap", isRTL && "flex-row-reverse")}>
+              <Button
+                variant={monthPublished ? 'outline' : 'default'}
+                disabled={publishing || processedThisMonth.length === 0}
+                onClick={handleTogglePublish}
+                className="gap-2"
+              >
+                {monthPublished ? <EyeOff className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                {monthPublished
+                  ? (ar ? 'إلغاء النشر' : 'Unpublish')
+                  : (ar ? `نشر الرواتب (${processedThisMonth.length})` : `Publish (${processedThisMonth.length})`)}
+              </Button>
               <Button variant={bulkMode ? "default" : "outline"} onClick={() => { setBulkMode(!bulkMode); setSelectedBulk([]); }} className="gap-2">
                 <Users className="h-4 w-4" />
                 {ar ? 'تشغيل جماعي' : 'Bulk Process'}
