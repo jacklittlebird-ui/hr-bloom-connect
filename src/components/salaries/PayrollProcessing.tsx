@@ -143,6 +143,23 @@ export const PayrollProcessing = () => {
     return dbMobileBills.filter(b => b.employee_id === empId && b.deduction_month === month).reduce((s, b) => s + b.amount, 0);
   }, [dbMobileBills]);
 
+  // Uploaded monthly leave days (الرواتب - الإجازات)
+  const getUploadedLeaveDays = useCallback((empId: string, month: string) => {
+    return dbLeaveDeductions.filter(d => d.employee_id === empId && d.deduction_month === month).reduce((s, d) => s + Number(d.days || 0), 0);
+  }, [dbLeaveDeductions]);
+
+  // Uploaded monthly penalty days (الرواتب - الخصومات)
+  const getUploadedPenaltyDays = useCallback((empId: string, month: string) => {
+    return dbPenaltyDeductions.filter(d => d.employee_id === empId && d.deduction_month === month).reduce((s, d) => s + Number(d.days || 0), 0);
+  }, [dbPenaltyDeductions]);
+
+  // Uploaded monthly living allowance (الرواتب - بدلات المعيشة)
+  const getUploadedLivingAllowance = useCallback((empId: string, month: string) => {
+    return dbLivingAllowances.filter(a => a.employee_id === empId && a.allowance_month === month).reduce((s, a) => s + Number(a.amount || 0), 0);
+  }, [dbLivingAllowances]);
+
+
+
   const salaryRecord = useMemo(() => {
     if (!selectedEmployee) return null;
     return getSalaryRecord(selectedEmployee, selectedYear);
