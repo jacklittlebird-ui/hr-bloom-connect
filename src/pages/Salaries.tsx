@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useMemo, useEffect } from 'react';
+import { useState, Suspense, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,20 +8,22 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useModulePermissions } from '@/hooks/useModulePermissions';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 
-const SalarySlips = lazy(() => import('@/components/salaries/SalarySlips').then(m => ({ default: m.SalarySlips })));
-const AllowancesDeductions = lazy(() => import('@/components/salaries/AllowancesDeductions').then(m => ({ default: m.AllowancesDeductions })));
-const SalaryStructure = lazy(() => import('@/components/salaries/SalaryStructure').then(m => ({ default: m.SalaryStructure })));
-const PayrollHistory = lazy(() => import('@/components/salaries/PayrollHistory').then(m => ({ default: m.PayrollHistory })));
-const MobileBills = lazy(() => import('@/components/salaries/MobileBills').then(m => ({ default: m.MobileBills })));
-const LeaveDeductions = lazy(() => import('@/components/salaries/LeaveDeductions').then(m => ({ default: m.LeaveDeductions })));
-const PenaltyDeductionsUpload = lazy(() => import('@/components/salaries/PenaltyDeductionsUpload').then(m => ({ default: m.PenaltyDeductions })));
-const LivingAllowances = lazy(() => import('@/components/salaries/LivingAllowances').then(m => ({ default: m.LivingAllowances })));
-const SalaryTransfer = lazy(() => import('@/components/salaries/SalaryTransfer').then(m => ({ default: m.SalaryTransfer })));
-const EidBonuses = lazy(() => import('@/components/salaries/EidBonuses').then(m => ({ default: m.EidBonuses })));
-const BonusManagement = lazy(() => import('@/components/salaries/BonusManagement').then(m => ({ default: m.BonusManagement })));
-const NonRecurringBonuses = lazy(() => import('@/components/salaries/NonRecurringBonuses').then(m => ({ default: m.NonRecurringBonuses })));
-const PerformanceBonuses = lazy(() => import('@/components/salaries/PerformanceBonuses').then(m => ({ default: m.PerformanceBonuses })));
+const SalarySlips = lazyWithRetry(() => import('@/components/salaries/SalarySlips').then(m => ({ default: m.SalarySlips })));
+const AllowancesDeductions = lazyWithRetry(() => import('@/components/salaries/AllowancesDeductions').then(m => ({ default: m.AllowancesDeductions })));
+const SalaryStructure = lazyWithRetry(() => import('@/components/salaries/SalaryStructure').then(m => ({ default: m.SalaryStructure })));
+const PayrollHistory = lazyWithRetry(() => import('@/components/salaries/PayrollHistory').then(m => ({ default: m.PayrollHistory })));
+const MobileBills = lazyWithRetry(() => import('@/components/salaries/MobileBills').then(m => ({ default: m.MobileBills })));
+const LeaveDeductions = lazyWithRetry(() => import('@/components/salaries/LeaveDeductions').then(m => ({ default: m.LeaveDeductions })));
+const PenaltyDeductionsUpload = lazyWithRetry(() => import('@/components/salaries/PenaltyDeductionsUpload').then(m => ({ default: m.PenaltyDeductions })));
+const LivingAllowances = lazyWithRetry(() => import('@/components/salaries/LivingAllowances').then(m => ({ default: m.LivingAllowances })));
+const SalaryTransfer = lazyWithRetry(() => import('@/components/salaries/SalaryTransfer').then(m => ({ default: m.SalaryTransfer })));
+const EidBonuses = lazyWithRetry(() => import('@/components/salaries/EidBonuses').then(m => ({ default: m.EidBonuses })));
+const BonusManagement = lazyWithRetry(() => import('@/components/salaries/BonusManagement').then(m => ({ default: m.BonusManagement })));
+const NonRecurringBonuses = lazyWithRetry(() => import('@/components/salaries/NonRecurringBonuses').then(m => ({ default: m.NonRecurringBonuses })));
+const PerformanceBonuses = lazyWithRetry(() => import('@/components/salaries/PerformanceBonuses').then(m => ({ default: m.PerformanceBonuses })));
+
 
 const TabFallback = () => <div className="space-y-4"><Skeleton className="h-10 w-full" /><Skeleton className="h-64 w-full" /></div>;
 
