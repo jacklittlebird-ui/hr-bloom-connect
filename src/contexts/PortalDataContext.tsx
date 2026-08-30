@@ -622,6 +622,8 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       date: req.date,
       destination: req.destAr || req.destEn,
       reason: req.reasonAr || req.reasonEn,
+      ...(req.checkIn ? { check_in: req.checkIn } : {}),
+      ...(req.checkOut ? { check_out: req.checkOut } : {}),
     });
     invalidateCache('portal_missions');
     loaded.current.delete('missions');
