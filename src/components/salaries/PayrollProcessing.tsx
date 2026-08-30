@@ -264,27 +264,41 @@ export const PayrollProcessing = () => {
   };
 
   const loadEntryIntoForm = useCallback((empId: string, month: string, year: string) => {
+    const monthKey = `${year}-${month}`;
+    const uploadedLeave = getUploadedLeaveDays(empId, monthKey);
+    const uploadedPenalty = getUploadedPenaltyDays(empId, monthKey);
+    const uploadedLiving = getUploadedLivingAllowance(empId, monthKey);
     const existing = getPayrollEntry(empId, month, year);
     if (existing) {
-      setLivingAllowance(existing.livingAllowance);
+      setLivingAllowance(uploadedLiving > 0 ? uploadedLiving : existing.livingAllowance);
       setOvertimePay(existing.overtimePay);
       setBonusType(existing.bonusType);
       setBonusValue(existing.bonusValue);
-      setLeaveDays(normalizeQuarterInput(existing.leaveDays));
-      setPenaltyType(existing.penaltyType);
-      setPenaltyValue(existing.penaltyType === 'days' ? normalizeQuarterInput(existing.penaltyValue) : existing.penaltyValue);
+      setLeaveDays(normalizeQuarterInput(uploadedLeave > 0 ? uploadedLeave : existing.leaveDays));
+      if (uploadedPenalty > 0) {
+        setPenaltyType('days');
+        setPenaltyValue(normalizeQuarterInput(uploadedPenalty));
+      } else {
+        setPenaltyType(existing.penaltyType);
+        setPenaltyValue(existing.penaltyType === 'days' ? normalizeQuarterInput(existing.penaltyValue) : existing.penaltyValue);
+      }
     } else {
-      setLivingAllowance(0);
       setOvertimePay(0);
       setBonusType('amount');
       setBonusValue(0);
-      setLeaveDays(0);
-      setPenaltyType('amount');
-      setPenaltyValue(0);
+      setLeaveDays(normalizeQuarterInput(uploadedLeave));
+      if (uploadedPenalty > 0) {
+        setPenaltyType('days');
+        setPenaltyValue(normalizeQuarterInput(uploadedPenalty));
+      } else {
+        setPenaltyType('amount');
+        setPenaltyValue(0);
+      }
       const sr = getSalaryRecord(empId, year);
-      if (sr) setLivingAllowance(sr.livingAllowance);
+      setLivingAllowance(uploadedLiving > 0 ? uploadedLiving : (sr?.livingAllowance ?? 0));
     }
-  }, [getPayrollEntry, getSalaryRecord]);
+  }, [getPayrollEntry, getSalaryRecord, getUploadedLeaveDays, getUploadedPenaltyDays, getUploadedLivingAllowance]);
+
 
   const handleSelectEmployee = (empId: string) => {
     setSelectedEmployee(empId);
