@@ -77,7 +77,7 @@ export interface TrainingCourse {
 }
 
 // ===== MISSIONS =====
-export type PortalMissionType = 'morning' | 'evening' | 'full_day';
+export type PortalMissionType = 'morning' | 'evening' | 'full_day' | 'other';
 export interface Mission {
   id: number;
   employeeId: string;
@@ -88,6 +88,10 @@ export interface Mission {
   reasonAr: string;
   reasonEn: string;
   status: 'approved' | 'pending' | 'rejected';
+  /** Cairo-local "HH:MM" start time (custom "other" missions) */
+  checkIn?: string;
+  /** Cairo-local "HH:MM" end time (custom "other" missions) */
+  checkOut?: string;
 }
 
 // ===== VIOLATIONS =====
