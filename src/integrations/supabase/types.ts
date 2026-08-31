@@ -3611,6 +3611,15 @@ export type Database = {
           table_name: string
         }[]
       }
+      can_manager_notify: {
+        Args: {
+          _department_id: string
+          _employee_id: string
+          _station_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
       get_area_manager_station_ids: {
         Args: { _user_id: string }
         Returns: string[]
@@ -3659,6 +3668,10 @@ export type Database = {
       }
       get_user_department_id: { Args: { _user_id: string }; Returns: string }
       get_user_employee_id: { Args: { _user_id: string }; Returns: string }
+      get_user_scoped_station_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
       get_user_station_id: { Args: { _user_id: string }; Returns: string }
       get_user_station_id_svm: { Args: { _user_id: string }; Returns: string }
       has_role: {
