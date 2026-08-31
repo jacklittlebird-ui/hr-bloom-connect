@@ -439,13 +439,20 @@ export const PayrollProcessing = () => {
     { value: '11', label: ar ? 'نوفمبر' : 'November' }, { value: '12', label: ar ? 'ديسمبر' : 'December' },
   ];
 
-  const totalSaved = processedThisMonth.length;
+  // Processed entries can include employees whose status is no longer "active"
+  // (e.g. absent / resigned after the payroll run). Count only active employees
+  // in the "Processed"/"Remaining" cards so the numbers stay consistent.
+  const activeIdSet = useMemo(() => new Set(activeEmployees.map(e => e.id)), [activeEmployees]);
+  const processedActive = processedThisMonth.filter(e => activeIdSet.has(e.employeeId));
+  const totalSaved = processedActive.length;
+  const processedOther = processedThisMonth.length - totalSaved;
   const selectedEmpData = activeEmployees.find(e => e.id === selectedEmployee);
 
   const stats = [
     { label: ar ? 'إجمالي الموظفين' : 'Total Employees', value: String(activeEmployees.length), icon: Users, bg: 'bg-stat-blue', cardBg: 'bg-stat-blue-bg' },
-    { label: ar ? 'تم المعالجة' : 'Processed', value: String(totalSaved), icon: FileText, bg: 'bg-stat-green', cardBg: 'bg-stat-green-bg' },
-    { label: ar ? 'المتبقي' : 'Remaining', value: String(activeEmployees.length - totalSaved), icon: Clock, bg: 'bg-stat-yellow', cardBg: 'bg-stat-yellow-bg' },
+    { label: ar ? 'تم المعالجة' : 'Processed', value: processedOther > 0 ? `${totalSaved} (+${processedOther})` : String(totalSaved), icon: FileText, bg: 'bg-stat-green', cardBg: 'bg-stat-green-bg' },
+    { label: ar ? 'المتبقي' : 'Remaining', value: String(Math.max(0, activeEmployees.length - totalSaved)), icon: Clock, bg: 'bg-stat-yellow', cardBg: 'bg-stat-yellow-bg' },
+
     { label: ar ? 'إجمالي الصافي' : 'Total Net', value: processedThisMonth.reduce((s, e) => s + e.netSalary, 0).toLocaleString(), icon: Wallet, bg: 'bg-stat-purple', cardBg: 'bg-stat-purple-bg' },
   ];
 
