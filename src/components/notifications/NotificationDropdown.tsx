@@ -53,7 +53,7 @@ export const NotificationDropdown = ({ variant = 'header', employeeId, portalFil
             )}
           </button>
         ) : (
-          <Button variant="ghost" size="icon" className="relative">
+          <Button variant="ghost" size="icon" aria-label="Notifications / الإشعارات" className="relative">
             <Bell className="w-5 h-5" />
             {filteredUnreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground rounded-full text-[10px] flex items-center justify-center">

@@ -65,10 +65,12 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
             variant="ghost"
             size="icon"
             onClick={onToggleSidebar}
+            aria-label={language === 'ar' ? 'فتح/إغلاق القائمة الجانبية' : 'Toggle sidebar menu'}
             className="text-primary-foreground hover:bg-primary-foreground/10 shrink-0"
           >
             <Menu className="w-5 h-5" />
           </Button>
+
         )}
         <div className="hidden sm:flex items-center justify-center h-14 w-14 rounded-lg bg-white p-1.5">
           <picture>
@@ -84,12 +86,13 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
             />
           </picture>
         </div>
-        <h1 className={cn(
+        <span className={cn(
           "text-lg md:text-xl font-bold text-primary-foreground truncate",
           isRTL ? "font-arabic" : "font-sans"
         )}>
           {t('app.title')}
-        </h1>
+        </span>
+
       </div>
 
       <div className="flex items-center gap-2 md:gap-4">
