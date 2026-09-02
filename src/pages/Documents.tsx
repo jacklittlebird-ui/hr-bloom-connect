@@ -30,6 +30,7 @@ import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/Ge
 import { Form01 } from '@/components/documents/Form01';
 import { Form06 } from '@/components/documents/Form06';
 import { EmploymentContract } from '@/components/documents/EmploymentContract';
+import { ClearanceCertificate } from '@/components/documents/ClearanceCertificate';
 
 interface Document {
   id: string;
@@ -68,7 +69,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders' | 'missingInsuranceStart' | 'form01' | 'form06' | 'contracts'>('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders' | 'missingInsuranceStart' | 'form01' | 'form06' | 'contracts' | 'clearance'>('renewals');
   const [reminders] = usePersistedState<Reminder[]>('hr_general_reminders', []);
   const activeRemindersCount = reminders.filter(r => !r.completed).length;
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
@@ -160,6 +161,7 @@ const Documents = () => {
         { key: 'form01', ar: 'استمارة (1)', en: 'Form 1', icon: File },
         { key: 'form06', ar: 'استمارة (6)', en: 'Form 6', icon: File },
         { key: 'contracts', ar: 'عقود العمل', en: 'Employment Contracts', icon: File },
+        { key: 'clearance', ar: 'إخلاء طرف', en: 'Clearance Certificate', icon: File },
         { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
       ],
     },
@@ -334,6 +336,8 @@ const Documents = () => {
           <Form01 />
         ) : activeMainTab === 'form06' ? (
           <Form06 />
+        ) : activeMainTab === 'clearance' ? (
+          <ClearanceCertificate />
         ) : activeMainTab === 'contracts' ? (
           <EmploymentContract />
 
