@@ -10,7 +10,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Check, ChevronsUpDown, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import linkAeroLogo from '@/assets/link-aero-logo.png';
 
 interface Emp {
   id: string;
@@ -45,7 +44,7 @@ interface FormState {
   docDate: string;
 }
 
-const buildHtml = (name: string, f: FormState, logoUrl: string) => {
+const buildHtml = (name: string, f: FormState) => {
   const male = f.gender === 'male';
   const body = male
     ? `تشـهد شركة لينك آيرو تريدنج إجنـسي بأن السـيد / <b>${esc(name)}</b>، كان يعمل لدينا في الفترة من <b>${fmt(f.hireDate)}</b> وحتى <b>${fmt(f.endDate)}</b>، وعند تقديمه اسـتقالته كان يشغل وظيفة <b>${esc(f.jobTitle) || '.................'}</b>، وقد أصبح طرفه خاليًا من الشركة إعتبارًا من <b>${fmt(f.clearanceDate)}</b>، وليس له أو عليه أي مستحقات مـــالية أو عينية لدى الشـركة، وقد أعطيت له هذه الشهادة بناءًا على طلبه ودون أدنى إلتزام أو مسؤولية مادية أو قانونية على الشركة.`
@@ -62,16 +61,13 @@ const buildHtml = (name: string, f: FormState, logoUrl: string) => {
 html, body { margin:0; padding:0; }
 body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#e5e7eb; }
 .sheet { position:relative; width:210mm; height:297mm; margin:0 auto; padding:24mm 22mm; background:#fff; overflow:hidden; }
-.hdr { display:flex; flex-direction:row-reverse; align-items:center; justify-content:center; margin-bottom:6mm; }
-.hdr img { width:90px; height:auto; }
 .date { text-align:left; font-size:14px; font-weight:bold; margin-bottom:12mm; }
 h1 { text-align:center; font-size:22px; font-weight:bold; margin:0 0 14mm; text-decoration:underline; }
 p.body { font-size:15.5px; line-height:2.3; text-align:justify; margin:0; }
-.sign { margin-top:24mm; text-align:center; font-size:15px; font-weight:bold; line-height:3.4; }
+.sign { margin-top:24mm; margin-left:25mm; text-align:left; font-size:15px; font-weight:bold; line-height:3.4; }
 @media print { body { background:#fff; } .sheet { margin:0; } }
 </style></head><body>
 <div class="sheet">
-  <div class="hdr"><img src="${logoUrl}" alt="Link Aero" /></div>
   <div class="date">${fmt(f.docDate)}</div>
   <h1>إخلاء طرف</h1>
   <p class="body">${body}</p>
@@ -130,7 +126,7 @@ export const ClearanceCertificate = () => {
     });
   };
 
-  const html = selected ? buildHtml(selected.name_ar, form, linkAeroLogo) : '';
+  const html = selected ? buildHtml(selected.name_ar, form) : '';
 
   const print = () => {
     if (!html) return;
