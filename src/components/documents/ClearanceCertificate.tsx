@@ -76,11 +76,11 @@ p.body { font-size:15.5px; line-height:2.3; text-align:justify; margin:0; }
   <h1>إخلاء طرف</h1>
   <p class="body">${body}</p>
   <div class="sign">
-    <div>مدير القطاع القطاع المالي</div>
+    <div>مدير القطاع المالي</div>
     <div>فارس أبو شادي</div>
   </div>
 </div>
-</body></html>`.replace('مدير القطاع القطاع المالي', 'مدير القطاع المالي');
+</body></html>`;
 };
 
 export const ClearanceCertificate = () => {
