@@ -10,7 +10,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Check, ChevronsUpDown, Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import linkAeroLogo from '@/assets/link-aero-logo.png';
 
 interface Emp {
   id: string;
@@ -45,7 +44,7 @@ interface FormState {
   docDate: string;
 }
 
-const buildHtml = (name: string, f: FormState, logoUrl: string) => {
+const buildHtml = (name: string, f: FormState) => {
   const male = f.gender === 'male';
   const body = male
     ? `تشـهد شركة لينك آيرو تريدنج إجنـسي بأن السـيد / <b>${esc(name)}</b>، كان يعمل لدينا في الفترة من <b>${fmt(f.hireDate)}</b> وحتى <b>${fmt(f.endDate)}</b>، وعند تقديمه اسـتقالته كان يشغل وظيفة <b>${esc(f.jobTitle) || '.................'}</b>، وقد أصبح طرفه خاليًا من الشركة إعتبارًا من <b>${fmt(f.clearanceDate)}</b>، وليس له أو عليه أي مستحقات مـــالية أو عينية لدى الشـركة، وقد أعطيت له هذه الشهادة بناءًا على طلبه ودون أدنى إلتزام أو مسؤولية مادية أو قانونية على الشركة.`
