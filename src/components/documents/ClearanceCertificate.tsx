@@ -61,16 +61,13 @@ const buildHtml = (name: string, f: FormState) => {
 html, body { margin:0; padding:0; }
 body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#e5e7eb; }
 .sheet { position:relative; width:210mm; height:297mm; margin:0 auto; padding:24mm 22mm; background:#fff; overflow:hidden; }
-.hdr { display:flex; flex-direction:row-reverse; align-items:center; justify-content:center; margin-bottom:6mm; }
-.hdr img { width:90px; height:auto; }
 .date { text-align:left; font-size:14px; font-weight:bold; margin-bottom:12mm; }
 h1 { text-align:center; font-size:22px; font-weight:bold; margin:0 0 14mm; text-decoration:underline; }
 p.body { font-size:15.5px; line-height:2.3; text-align:justify; margin:0; }
-.sign { margin-top:24mm; text-align:center; font-size:15px; font-weight:bold; line-height:3.4; }
+.sign { margin-top:24mm; margin-left:25mm; text-align:left; font-size:15px; font-weight:bold; line-height:3.4; }
 @media print { body { background:#fff; } .sheet { margin:0; } }
 </style></head><body>
 <div class="sheet">
-  <div class="hdr"><img src="${logoUrl}" alt="Link Aero" /></div>
   <div class="date">${fmt(f.docDate)}</div>
   <h1>إخلاء طرف</h1>
   <p class="body">${body}</p>
@@ -129,7 +126,7 @@ export const ClearanceCertificate = () => {
     });
   };
 
-  const html = selected ? buildHtml(selected.name_ar, form, linkAeroLogo) : '';
+  const html = selected ? buildHtml(selected.name_ar, form) : '';
 
   const print = () => {
     if (!html) return;
