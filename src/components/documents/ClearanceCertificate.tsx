@@ -60,7 +60,7 @@ const buildHtml = (name: string, f: FormState) => {
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; }
 body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#e5e7eb; }
-.sheet { position:relative; width:210mm; height:297mm; margin:0 auto; padding:42mm 22mm 24mm; background:#fff; overflow:hidden; }
+.sheet { position:relative; width:210mm; height:297mm; margin:0 auto; padding:60mm 22mm 24mm; background:#fff; overflow:hidden; }
 .date { text-align:left; font-size:14px; font-weight:bold; margin-bottom:12mm; }
 h1 { text-align:center; font-size:22px; font-weight:bold; margin:0 0 14mm; text-decoration:underline; }
 p.body { font-size:15.5px; line-height:2.3; text-align:justify; margin:0; }
