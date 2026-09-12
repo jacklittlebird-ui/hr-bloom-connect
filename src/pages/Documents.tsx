@@ -32,6 +32,7 @@ import { Form06 } from '@/components/documents/Form06';
 import { EmploymentContract } from '@/components/documents/EmploymentContract';
 import { ClearanceCertificate } from '@/components/documents/ClearanceCertificate';
 import { ExperienceCertificate } from '@/components/documents/ExperienceCertificate';
+import { MutualTermination } from '@/components/documents/MutualTermination';
 
 interface Document {
   id: string;
@@ -70,7 +71,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders' | 'missingInsuranceStart' | 'form01' | 'form06' | 'contracts' | 'clearance' | 'experience'>('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders' | 'missingInsuranceStart' | 'form01' | 'form06' | 'contracts' | 'clearance' | 'experience' | 'mutualTermination'>('renewals');
   const [reminders] = usePersistedState<Reminder[]>('hr_general_reminders', []);
   const activeRemindersCount = reminders.filter(r => !r.completed).length;
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
@@ -164,6 +165,7 @@ const Documents = () => {
         { key: 'contracts', ar: 'عقود العمل', en: 'Employment Contracts', icon: File },
         { key: 'clearance', ar: 'إخلاء طرف', en: 'Clearance Certificate', icon: File },
         { key: 'experience', ar: 'شهادة خبرة', en: 'Experience Certificate', icon: File },
+        { key: 'mutualTermination', ar: 'إنهاء علاقة عمل بالتراضي', en: 'Mutual Termination', icon: File },
         { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
       ],
     },
@@ -342,6 +344,8 @@ const Documents = () => {
           <ClearanceCertificate />
         ) : activeMainTab === 'experience' ? (
           <ExperienceCertificate />
+        ) : activeMainTab === 'mutualTermination' ? (
+          <MutualTermination />
         ) : activeMainTab === 'contracts' ? (
           <EmploymentContract />
 
