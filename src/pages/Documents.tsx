@@ -165,6 +165,7 @@ const Documents = () => {
         { key: 'contracts', ar: 'عقود العمل', en: 'Employment Contracts', icon: File },
         { key: 'clearance', ar: 'إخلاء طرف', en: 'Clearance Certificate', icon: File },
         { key: 'experience', ar: 'شهادة خبرة', en: 'Experience Certificate', icon: File },
+        { key: 'mutualTermination', ar: 'إنهاء علاقة عمل بالتراضي', en: 'Mutual Termination', icon: File },
         { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
       ],
     },
