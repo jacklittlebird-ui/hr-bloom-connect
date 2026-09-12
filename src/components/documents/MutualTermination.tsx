@@ -187,7 +187,7 @@ export const MutualTermination = () => {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from('employees')
-          .select('id, employee_code, name_ar, name_en, gender, hire_date, job_title_ar, department, national_id, social_insurance_no, resignation_date, address, phone')
+          .select('id, employee_code, name_ar, name_en, gender, hire_date, job_title_ar, national_id, social_insurance_no, resignation_date, address, phone, departments:department_id(name_ar)')
           .order('employee_code')
           .range(from, from + PAGE - 1);
         if (error || !data?.length) break;
@@ -209,7 +209,7 @@ export const MutualTermination = () => {
       agreementDate: today,
       terminationDate: e.resignation_date || today,
       secondPartyJob: e.job_title_ar || '',
-      secondPartyDepartment: e.department || '',
+      secondPartyDepartment: (e as any).departments?.name_ar || '',
       secondPartyInsuranceNo: e.social_insurance_no || '',
       secondPartyNationalId: e.national_id || '',
       secondPartyAddress: e.address || '',
