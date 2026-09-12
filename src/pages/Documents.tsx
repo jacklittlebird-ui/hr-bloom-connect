@@ -32,6 +32,7 @@ import { Form06 } from '@/components/documents/Form06';
 import { EmploymentContract } from '@/components/documents/EmploymentContract';
 import { ClearanceCertificate } from '@/components/documents/ClearanceCertificate';
 import { ExperienceCertificate } from '@/components/documents/ExperienceCertificate';
+import { MutualTermination } from '@/components/documents/MutualTermination';
 
 interface Document {
   id: string;
