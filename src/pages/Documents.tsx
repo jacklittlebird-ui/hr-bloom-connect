@@ -344,6 +344,8 @@ const Documents = () => {
           <ClearanceCertificate />
         ) : activeMainTab === 'experience' ? (
           <ExperienceCertificate />
+        ) : activeMainTab === 'mutualTermination' ? (
+          <MutualTermination />
         ) : activeMainTab === 'contracts' ? (
           <EmploymentContract />
 
