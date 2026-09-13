@@ -4,6 +4,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 import { getCairoDateString, getCairoHour } from '@/lib/cairoDate';
+import { cairoLocalToIso } from '@/lib/missionTime';
 
 export interface AttendanceEntry {
   id: string;
@@ -361,10 +362,32 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
   }, [records, addNotification, fetchRecords]);
 
   const addMissionAttendance = useCallback(async (employeeId: string, employeeName: string, employeeNameAr: string, department: string, date: string, checkInTime: string, checkOutTime: string, hours: number) => {
-    const ciTs = `${date}T${checkInTime}:00`;
-    const coTs = `${date}T${checkOutTime}:00`;
+    // Anchor mission hours to Cairo local time, never to the server's UTC day.
+    const ciTs = cairoLocalToIso(date, checkInTime);
+    const coTs = cairoLocalToIso(date, checkOutTime);
 
-    await supabase.from('attendance_records').delete().eq('employee_id', employeeId).eq('date', date);
+    // Only replace a previously generated mission row; never delete a real
+    // check-in/check-out the employee already made on that day.
+    const { data: existing } = await supabase
+      .from('attendance_records')
+      .select('id, status')
+      .eq('employee_id', employeeId)
+      .eq('date', date);
+
+    const missionRows = (existing || []).filter(r => r.status === 'mission');
+    const realRows = (existing || []).filter(r => r.status !== 'mission');
+
+    if (missionRows.length > 0) {
+      await supabase.from('attendance_records').delete().in('id', missionRows.map(r => r.id));
+    }
+
+    if (realRows.length > 0) {
+      // Employee already has an actual attendance record for this day — keep it.
+      invalidateCache('attendance_');
+      await fetchRecords(true);
+      return;
+    }
+
     await supabase.from('attendance_records').insert({
       employee_id: employeeId,
       date,
