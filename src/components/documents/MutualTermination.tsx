@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Printer, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ministryLogo from '@/assets/ministry-of-labour-logo.png.asset.json';
 
 interface Emp {
   id: string;
@@ -24,6 +25,8 @@ interface Emp {
   resignation_date?: string | null;
   address?: string | null;
   phone?: string | null;
+  contract_type?: string | null;
+  departments?: { name_ar?: string | null } | null;
 }
 
 const PAGE = 1000;
@@ -38,23 +41,39 @@ const fmt = (iso: string) => {
   return `${d}/${m}/${y}`;
 };
 
+const arabicDay = (iso: string) => {
+  if (!iso) return '................';
+  const date = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(date.getTime())
+    ? '................'
+    : new Intl.DateTimeFormat('ar-EG', { weekday: 'long' }).format(date);
+};
+
+const contractLabel = (type: string) => {
+  const normalized = type.toLowerCase();
+  if (normalized.includes('indefinite') || normalized.includes('unlimited') || normalized.includes('غير محدد')) return 'غير محدد المدة';
+  if (normalized.includes('year') || normalized.includes('month') || normalized.includes('fixed') || normalized.includes('محدد')) return 'محدد المدة';
+  return type;
+};
+
 interface FormState {
   agreementDate: string;
   terminationDate: string;
-  reason: string;
   firstPartyName: string;
   firstPartyTitle: string;
   firstPartyCompany: string;
+  companyAddress: string;
   secondPartyJob: string;
-  secondPartyDepartment: string;
-  secondPartyInsuranceNo: string;
   secondPartyNationalId: string;
   secondPartyAddress: string;
   secondPartyPhone: string;
+  hireDate: string;
+  contractType: string;
 }
 
 const buildHtml = (employeeName: string, f: FormState) => {
-  const dotted = (v: string) => v ? esc(v) : '......................................................';
+  const value = (v: string) => v ? `<b>${esc(v)}</b>` : '......................................................';
+  const logoUrl = esc(ministryLogo.url);
 
   return `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
@@ -65,93 +84,79 @@ const buildHtml = (employeeName: string, f: FormState) => {
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; }
-body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#e5e7eb; }
-.sheet { position:relative; width:210mm; min-height:297mm; margin:0 auto; padding:22mm 22mm 24mm; background:#fff; overflow:hidden; }
-h1 { text-align:center; font-size:20px; font-weight:bold; margin:0 0 4mm; }
-h2 { text-align:center; font-size:16px; font-weight:bold; margin:0 0 14mm; border:1px solid #000; padding:3mm; display:inline-block; width:100%; }
-.section-title { font-weight:bold; text-decoration:underline; margin:6mm 0 3mm; font-size:15px; }
-.field-row { display:flex; align-items:baseline; gap:2mm; margin-bottom:2.5mm; font-size:14px; line-height:1.6; flex-wrap:wrap; }
-.field-row .label { white-space:nowrap; font-weight:600; }
-.field-row .value { flex:1; border-bottom:1px dotted #000; min-width:40mm; padding:0 2mm; text-align:center; }
-.clause { font-size:14px; line-height:2; text-align:justify; margin:0 0 4mm; }
-.clause-title { font-weight:bold; display:block; margin-bottom:1mm; text-align:center; }
-.sign-grid { display:grid; grid-template-columns:1fr 1fr; gap:10mm; margin-top:16mm; }
-.sign-box { border:1px solid #000; padding:4mm; min-height:30mm; }
-.sign-box-title { font-weight:bold; text-align:center; margin-bottom:8mm; font-size:14px; }
-.sign-line { margin-bottom:6mm; font-size:13px; }
-.footer-note { font-size:12px; text-align:center; margin-top:8mm; color:#333; }
+body { font-family:"Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#e5e7eb; }
+.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 8mm; padding:38mm 18mm 18mm; background:#fff; overflow:hidden; page-break-after:always; }
+.sheet:last-child { page-break-after:auto; }
+.logo { position:absolute; top:7mm; right:17mm; width:30mm; height:30mm; object-fit:contain; }
+h1 { text-align:center; font-size:22px; margin:0 0 1mm; }
+h2 { text-align:center; font-size:20px; margin:0 0 12mm; background:#f2f2f2; line-height:1.8; }
+.intro,.clause { font-size:16px; line-height:2.25; text-align:justify; margin:0 0 5mm; }
+.center-title { text-align:center; font-size:17px; font-weight:700; margin:5mm 0 3mm; }
+.party { font-size:16px; line-height:2.35; margin:0 0 1mm; }
+.page-no { position:absolute; bottom:8mm; left:0; right:0; text-align:center; font:12px Arial,sans-serif; }
+.sign-grid { display:grid; grid-template-columns:1fr 1fr; gap:20mm; margin-top:12mm; }
+.sign-title { font-size:16px; font-weight:700; background:#dce6f1; display:inline-block; margin-bottom:5mm; }
+.sign-line { font-size:14px; line-height:2; white-space:nowrap; }
 @media print { body { background:#fff; } .sheet { margin:0; } }
 </style></head><body>
 <div class="sheet">
+  <img class="logo" src="${logoUrl}" alt="وزارة العمل" />
   <h1>نموذج</h1>
   <h2>إنهاء علاقة العمل بالتوافق بين الطرفين</h2>
+  <p class="intro">إنه في يوم ${arabicDay(f.agreementDate)} الموافق ${fmt(f.agreementDate)}</p>
+  <p class="intro"><b>حرر هذا الاتفاق بين كل من:</b></p>
+  <p class="party"><b>الطرف الأول:</b> السيد / ${value(f.firstPartyName)} بصفته الممثل القانوني لصاحب العمل بشركة ${value(f.firstPartyCompany)}</p>
+  <p class="party"><b>الطرف الثاني:</b> السيد / ${value(employeeName)} والذي يعمل لدى الطرف الأول بوظيفة ${value(f.secondPartyJob)}</p>
+  <p class="intro">وبعد أن أقر الطرفان بأهليتهما القانونية الكاملة للتصرف والتعاقد اتفقا على ما يلي:</p>
+  <div class="center-title">( تمهيد )</div>
+  <p class="clause">يعمل الطرف الثاني لدى الطرف الأول بوظيفة ${value(f.secondPartyJob)} بعقد عمل ${value(contractLabel(f.contractType))} منذ تاريخ ${fmt(f.hireDate)} ويرغب في التحلل أو التقايل من عقد العمل بالتراضي والتوافق مع صاحب العمل، وقد تلاقت إرادة الطرفين على ذلك.</p>
+  <div class="center-title">( البند الأول )</div>
+  <p class="clause">يعتبر التمهيد السابق جزء لا يتجزأ من هذا الاتفاق، وتسري عليه جميع أحكامه.</p>
+  <div class="page-no">1</div>
+</div>
 
-  <p class="clause" style="text-align:center; font-weight:bold;">
-    إنه في يوم ${fmt(f.agreementDate)} الموافق ${fmt(f.agreementDate)}<br>
-    تم الاتفاق بين كل من:
-  </p>
+<div class="sheet">
+  <img class="logo" src="${logoUrl}" alt="وزارة العمل" />
+  <div class="center-title">(البند الثاني)</div>
+  <p class="clause">يقر الطرف الثاني (العامل) أن هذا الاتفاق تم بالتوافق بينه وبين الطرف الأول (صاحب العمل) بناء على طلب كتابي قدمه لجهة عمله وبإرادته الحرة دون تهديد أو إكراه.</p>
+  <div class="center-title">(البند الثالث)</div>
+  <p class="clause">يقر الطرفان أن آخر يوم عمل تم الاتفاق عليه هو يوم ${arabicDay(f.terminationDate)} الموافق ${fmt(f.terminationDate)}</p>
+  <div class="center-title">(البند الرابع)</div>
+  <p class="clause">يقر صاحب العمل بأنه يلتزم - قبل توقيع هذا الاتفاق - بتسوية كافة حقوق العامل المالية، وعلى الأخص أجره عن فترة عمله حتى آخر يوم عمل، والمقابل النقدي لرصيد إجازاته السنوية التي لم يقم بها، وأية مزايا أخرى مقررة في عقد العمل الفردي أو الجماعي أو لائحة تنظيم العمل بالمنشأة أو بمقتضى العرف.</p>
+  <div class="center-title">(البند الخامس)</div>
+  <p class="clause">يقر الطرف الثاني العامل بأن توقيعه على هذا الاتفاق يعتبر مخالصة وإبراء لذمة صاحب العمل من أية مستحقات مالية.</p>
+  <div class="page-no">2</div>
+</div>
 
-  <div class="section-title">أولاً: الطرف الأول (صاحب العمل / ممثله القانوني)</div>
-  <div class="field-row"><span class="label">الاسم:</span><span class="value">${dotted(f.firstPartyName)}</span></div>
-  <div class="field-row"><span class="label">الصفة:</span><span class="value">${dotted(f.firstPartyTitle)}</span></div>
-  <div class="field-row"><span class="label">الشركة:</span><span class="value">${dotted(f.firstPartyCompany)}</span></div>
-
-  <div class="section-title">ثانياً: الطرف الثاني (العامل)</div>
-  <div class="field-row"><span class="label">الاسم:</span><span class="value">${dotted(employeeName)}</span></div>
-  <div class="field-row"><span class="label">الوظيفة:</span><span class="value">${dotted(f.secondPartyJob)}</span></div>
-  <div class="field-row"><span class="label">الإدارة / القسم:</span><span class="value">${dotted(f.secondPartyDepartment)}</span></div>
-  <div class="field-row"><span class="label">الرقم التأميني:</span><span class="value">${dotted(f.secondPartyInsuranceNo)}</span></div>
-  <div class="field-row"><span class="label">الرقم القومي:</span><span class="value">${dotted(f.secondPartyNationalId)}</span></div>
-  <div class="field-row"><span class="label">العنوان:</span><span class="value">${dotted(f.secondPartyAddress)}</span></div>
-  <div class="field-row"><span class="label">رقم التليفون:</span><span class="value">${dotted(f.secondPartyPhone)}</span></div>
-
-  <div class="section-title">ثالثاً: موضوع الاتفاق</div>
-  <p class="clause">
-    بتاريخ ${fmt(f.terminationDate)} تم الاتفاق بين الطرفين على إنهاء علاقة العمل بينهما بالتراضي، دون أي إكراه أو ضغط، وبناءً على رغبة الطرفين المشتركة، وذلك اعتباراً من ${fmt(f.terminationDate)}.
-  </p>
-  <div class="field-row"><span class="label">سبب إنهاء العلاقة:</span><span class="value">${dotted(f.reason)}</span></div>
-
-  <div class="section-title">رابعاً: البنود</div>
-  <p class="clause">
-    <span class="clause-title">البند الأول (التزامات العامل)</span>
-    يقر الطرف الثاني (العامل) بأنه تسلم كافة مستحقاته المالية وعينية، وأنه لا يوجد لديه أي مستحقات مالية أو عينية أخرى على الشركة حتى تاريخ ${fmt(f.terminationDate)}، وأنه قام بتسليم كافة الأصول والممتلكات والمستندات والأدوات والمعدات التابعة للشركة.
-  </p>
-  <p class="clause">
-    <span class="clause-title">البند الثاني (التزامات صاحب العمل)</span>
-    يقر الطرف الأول (صاحب العمل) بأنه قام بتصفية كافة حقوق العامل المالية المستحقة له حتى تاريخ ${fmt(f.terminationDate)}، وعلى الأخص راتبه وأجره وبدلاته ومكافآته ومستحقات نهاية الخدمة القانونية.
-  </p>
-  <p class="clause">
-    <span class="clause-title">البند الثالث (إبراء الذمة المتبادل)</span>
-    بمجرد توقيع هذا الاتفاق، يعتبر الطرفان قد أبرآ ذمتيهما متبادلين من أي التزامات أو مطالبات قد تنشأ عن عقد العمل أو إنهائه، باستثناء ما نص عليه صراحةً في هذا الاتفاق.
-  </p>
-  <p class="clause">
-    <span class="clause-title">البند الرابع (سرية المعلومات)</span>
-    يلتزم الطرف الثاني بموجب هذا الاتفاق بالحفاظ على سرية المعلومات والبيانات الخاصة بالشركة وعملائها، وألا يفصح عنها لأي طرف ثالث.
-  </p>
-  <p class="clause">
-    <span class="clause-title">البند الخامس (القانون الواجب التطبيق)</span>
-    يخضع هذا الاتفاق لأحكام قانون العمل المصري رقم 12 لسنة 2003 وتعديلاته، ويعتبر هذا الاتفاق نافذاً من تاريخ توقيعه.
-  </p>
-
-  <div class="section-title">خامساً: التوقيعات</div>
+<div class="sheet">
+  <img class="logo" src="${logoUrl}" alt="وزارة العمل" />
+  <div class="center-title">(البند السادس)</div>
+  <p class="clause">يقر الطرف الأول (صاحب العمل) أو من يمثله بالتزامه بمنح العامل شهادة تتضمن تاريخ التحاقه بالعمل، وتاريخ انتهائه، ونوع العمل الذي كان يؤديه، والمزايا التي كان يحصل عليها، وذلك خلال خمسة عشر يوماً من تاريخ طلب ذلك.</p>
+  <p class="clause">ويجوز بناء على طلب العامل، أن تتضمن تلك الشهادة مقدار الأجر الذي كان يتقاضاه، وسبب انتهاء علاقة العمل.</p>
+  <p class="clause">كما يقر بالتزامه بأن يرد للعامل عند انتهاء علاقة العمل ما يكون قد أودعه لديه من أوراق، أو شهادات، أو أدوات، وما يفيد إخلاء طرفه، فور طلبهم.</p>
+  <div class="center-title">(البند السابع)</div>
+  <p class="clause">يعمل بأحكام هذا الاتفاق كمستند لإثبات إنهاء علاقة العمل بإرادة الطرفين ودون منازعة، وحرر من عدد من النسخ بيد كل طرف منهما نسخة للعمل بها عند اللزوم.</p>
   <div class="sign-grid">
-    <div class="sign-box">
-      <div class="sign-box-title">الطرف الأول<br>صاحب العمل / ممثله القانوني</div>
-      <div class="sign-line">الاسم: ${dotted(f.firstPartyName)}</div>
-      <div class="sign-line">التوقيع: ...............................</div>
-      <div class="sign-line">التاريخ: ${fmt(f.agreementDate)}</div>
+    <div>
+      <div class="sign-title">ممثل صاحب العمل أو المنشأة:</div>
+      <div class="sign-line">الاسم: ${value(f.firstPartyName)}</div>
+      <div class="sign-line">الوظيفة: ${value(f.firstPartyTitle)}</div>
+      <div class="sign-line">اسم الشركة: ${value(f.firstPartyCompany)}</div>
+      <div class="sign-line">مقر الشركة: ${value(f.companyAddress)}</div>
+      <div class="sign-line">التوقيع: (............................)</div>
+      <div class="sign-line">خاتم جهة العمل:</div>
     </div>
-    <div class="sign-box">
-      <div class="sign-box-title">الطرف الثاني<br>العامل</div>
-      <div class="sign-line">الاسم: ${dotted(employeeName)}</div>
-      <div class="sign-line">التوقيع: ...............................</div>
-      <div class="sign-line">التاريخ: ${fmt(f.agreementDate)}</div>
+    <div>
+      <div class="sign-title">العامل أو ممثله القانوني:</div>
+      <div class="sign-line">الاسم: ${value(employeeName)}</div>
+      <div class="sign-line">الوظيفة: ${value(f.secondPartyJob)}</div>
+      <div class="sign-line">الرقم القومي: ${value(f.secondPartyNationalId)}</div>
+      <div class="sign-line">العنوان: ${value(f.secondPartyAddress)}</div>
+      <div class="sign-line">رقم التليفون: ${value(f.secondPartyPhone)}</div>
+      <div class="sign-line">التوقيع: (............................)</div>
     </div>
   </div>
-
-  <div class="footer-note">
-    هذا الاتفاق أُعد بموجب قانون العمل المصري ويُعتبر وثيقة رسمية لإنهاء علاقة العمل بالتراضي.
-  </div>
+  <div class="page-no">3</div>
 </div>
 </body></html>`;
 };
@@ -168,16 +173,16 @@ export const MutualTermination = () => {
   const [form, setForm] = useState<FormState>({
     agreementDate: today,
     terminationDate: today,
-    reason: '',
     firstPartyName: 'جاك اسحق عبد المسيح',
     firstPartyTitle: 'مدير قطاع الموارد البشرية',
-    firstPartyCompany: 'لينك آيرو تريدنج إجنيسي',
+    firstPartyCompany: 'لينك أيرو تريدنج أجنسي',
+    companyAddress: '',
     secondPartyJob: '',
-    secondPartyDepartment: '',
-    secondPartyInsuranceNo: '',
     secondPartyNationalId: '',
     secondPartyAddress: '',
     secondPartyPhone: '',
+    hireDate: '',
+    contractType: '',
   });
 
   useEffect(() => {
@@ -187,7 +192,7 @@ export const MutualTermination = () => {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from('employees')
-          .select('id, employee_code, name_ar, name_en, gender, hire_date, job_title_ar, national_id, social_insurance_no, resignation_date, address, phone, departments:department_id(name_ar)')
+          .select('id, employee_code, name_ar, name_en, gender, hire_date, job_title_ar, national_id, social_insurance_no, resignation_date, address, phone, contract_type')
           .order('employee_code')
           .range(from, from + PAGE - 1);
         if (error || !data?.length) break;
@@ -209,11 +214,11 @@ export const MutualTermination = () => {
       agreementDate: today,
       terminationDate: e.resignation_date || today,
       secondPartyJob: e.job_title_ar || '',
-      secondPartyDepartment: (e as any).departments?.name_ar || '',
-      secondPartyInsuranceNo: e.social_insurance_no || '',
       secondPartyNationalId: e.national_id || '',
       secondPartyAddress: e.address || '',
       secondPartyPhone: e.phone || '',
+      hireDate: e.hire_date || '',
+      contractType: e.contract_type || '',
     }));
   };
 
@@ -283,8 +288,8 @@ export const MutualTermination = () => {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs">{isAr ? 'سبب الإنهاء' : 'Reason'}</Label>
-            <Input className="h-9 w-[260px]" value={form.reason} onChange={e => set('reason', e.target.value)} placeholder={isAr ? 'اختياري' : 'Optional'} />
+            <Label className="text-xs">{isAr ? 'نوع عقد العمل' : 'Contract type'}</Label>
+            <Input className="h-9 w-[220px]" value={form.contractType} onChange={e => set('contractType', e.target.value)} />
           </div>
 
           <Button onClick={print} disabled={!selected} className="gap-2">
