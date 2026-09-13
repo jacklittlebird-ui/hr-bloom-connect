@@ -182,16 +182,11 @@ export const EmployeeDataForm = () => {
       gender: e.gender || '',
       birthDate: e.birth_date || '',
       nationalityAr: e.nationality || '',
-      nationalityEn: '',
-      birthPlace: e.birth_place || '',
-      birthGovernorate: e.birth_governorate || '',
-      nationalId: e.national_id || '',
-      residenceGovernorate: e.governorate || '',
-      departmentCenter: e.city || '',
-      residencePlace: e.address || '',
-      phone: e.phone || '',
-      jobTitleAr: e.job_title_ar || '',
-      jobTitleEn: e.job_title_en || '',
+      nationalityEn: 'Egyptian',
+...
+      // المهنة تقرأ من المسمى في التصريح (permit)، مع الرجوع للمسمى الوظيفي إن كان التصريح فارغًا
+      jobTitleAr: e.permit_name_ar || e.job_title_ar || '',
+      jobTitleEn: e.permit_name_en || e.job_title_en || '',
     }));
   };
 
