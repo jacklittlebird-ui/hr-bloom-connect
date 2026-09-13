@@ -85,7 +85,7 @@ const buildHtml = (employeeName: string, f: FormState) => {
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; }
 body { font-family:"Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#e5e7eb; }
-.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 8mm; padding:24mm 17mm 14mm; background:#fff; overflow:hidden; page-break-after:always; }
+.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 8mm; padding:22mm 17mm 12mm; background:#fff; overflow:hidden; page-break-after:always; }
 .sheet:last-child { page-break-after:auto; }
 .logo { position:absolute; top:7mm; right:15mm; width:25mm; height:25mm; object-fit:contain; }
 h1 { text-align:center; font-size:20px; line-height:1.3; margin:0; }
@@ -116,15 +116,15 @@ h2 { text-align:center; font-size:18px; margin:0 0 5mm; background:#f2f2f2; line
   <p class="clause">يقر الطرف الثاني (العامل) أن هذا الاتفاق تم بالتوافق بينه وبين الطرف الأول (صاحب العمل) بناء على طلب كتابي قدمه لجهة عمله وبإرادته الحرة دون تهديد أو إكراه.</p>
   <div class="center-title">(البند الثالث)</div>
   <p class="clause">يقر الطرفان أن آخر يوم عمل تم الاتفاق عليه هو يوم ${arabicDay(f.terminationDate)} الموافق ${fmt(f.terminationDate)}</p>
+  <div class="center-title">(البند الرابع)</div>
+  <p class="clause">يقر صاحب العمل بأنه يلتزم - قبل توقيع هذا الاتفاق - بتسوية كافة حقوق العامل المالية، وعلى الأخص أجره عن فترة عمله حتى آخر يوم عمل، والمقابل النقدي لرصيد إجازاته السنوية التي لم يقم بها، وأية مزايا أخرى مقررة في عقد العمل الفردي أو الجماعي أو لائحة تنظيم العمل بالمنشأة أو بمقتضى العرف.</p>
+  <div class="center-title">(البند الخامس)</div>
+  <p class="clause">يقر الطرف الثاني العامل بأن توقيعه على هذا الاتفاق يعتبر مخالصة وإبراء لذمة صاحب العمل من أية مستحقات مالية.</p>
   <div class="page-no">1</div>
 </div>
 
 <div class="sheet">
   <img class="logo" src="${logoUrl}" alt="وزارة العمل" />
-  <div class="center-title">(البند الرابع)</div>
-  <p class="clause">يقر صاحب العمل بأنه يلتزم - قبل توقيع هذا الاتفاق - بتسوية كافة حقوق العامل المالية، وعلى الأخص أجره عن فترة عمله حتى آخر يوم عمل، والمقابل النقدي لرصيد إجازاته السنوية التي لم يقم بها، وأية مزايا أخرى مقررة في عقد العمل الفردي أو الجماعي أو لائحة تنظيم العمل بالمنشأة أو بمقتضى العرف.</p>
-  <div class="center-title">(البند الخامس)</div>
-  <p class="clause">يقر الطرف الثاني العامل بأن توقيعه على هذا الاتفاق يعتبر مخالصة وإبراء لذمة صاحب العمل من أية مستحقات مالية.</p>
   <div class="center-title">(البند السادس)</div>
   <p class="clause">يقر الطرف الأول (صاحب العمل) أو من يمثله بالتزامه بمنح العامل شهادة تتضمن تاريخ التحاقه بالعمل، وتاريخ انتهائه، ونوع العمل الذي كان يؤديه، والمزايا التي كان يحصل عليها، وذلك خلال خمسة عشر يوماً من تاريخ طلب ذلك.</p>
   <p class="clause">ويجوز بناء على طلب العامل، أن تتضمن تلك الشهادة مقدار الأجر الذي كان يتقاضاه، وسبب انتهاء علاقة العمل.</p>
