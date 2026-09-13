@@ -126,6 +126,16 @@ h2 { text-align:center; font-size:18px; margin:0 0 5mm; background:#f2f2f2; line
   <p class="clause">يقر الطرف الأول (صاحب العمل) أو من يمثله بالتزامه بمنح العامل شهادة تتضمن تاريخ التحاقه بالعمل، وتاريخ انتهائه، ونوع العمل الذي كان يؤديه، والمزايا التي كان يحصل عليها، وذلك خلال خمسة عشر يوماً من تاريخ طلب ذلك.</p>
   <p class="clause">ويجوز بناء على طلب العامل، أن تتضمن تلك الشهادة مقدار الأجر الذي كان يتقاضاه، وسبب انتهاء علاقة العمل.</p>
   <p class="clause">كما يقر بالتزامه بأن يرد للعامل عند انتهاء علاقة العمل ما يكون قد أودعه لديه من أوراق، أو شهادات، أو أدوات، وما يفيد إخلاء طرفه، فور طلبهم.</p>
+  <div style="margin-top:10mm; font-size:14px; line-height:1.8; display:grid; grid-template-columns:1fr 1fr; gap:10mm;">
+    <div>
+      <div><b>ممثل صاحب العمل أو المنشأة</b></div>
+      <div>التوقيع: (.....................................................)</div>
+    </div>
+    <div>
+      <div><b>العامل أو ممثله القانوني</b></div>
+      <div>التوقيع: (.....................................................)</div>
+    </div>
+  </div>
   <div class="page-no">1</div>
 </div>
 
@@ -150,7 +160,7 @@ h2 { text-align:center; font-size:18px; margin:0 0 5mm; background:#f2f2f2; line
       <div class="sign-line">الرقم القومي: ${value(f.secondPartyNationalId)}</div>
       <div class="sign-line">العنوان: ${value(f.secondPartyAddress)}</div>
       <div class="sign-line">رقم التليفون: ${value(f.secondPartyPhone)}</div>
-      <div class="sign-line">التوقيع: (............................)</div>
+      <div class="sign-line">التوقيع: (.....................................................)</div>
     </div>
   </div>
   <div class="page-no">2</div>
