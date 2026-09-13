@@ -344,7 +344,8 @@ export const PayrollProcessing = () => {
     const g = bg + la + ot;
     const bt = empId === selectedEmployee ? bonusType : (existing?.bonusType ?? 'amount');
     const bv = empId === selectedEmployee ? bonusValue : (existing?.bonusValue ?? 0);
-    const ba = bt === 'amount' ? bv : Math.round((bv / 100) * bg);
+    // Percentage bonus on full gross (base + living allowance + overtime), matching the on-screen display and reports
+    const ba = bt === 'amount' ? bv : Math.round(((bv / 100) * g) * 100) / 100;
     const lp = existing?.loanPayment ?? getEmployeeMonthlyLoanPayment(empId);
     const aa = existing?.advanceAmount ?? getEmployeeAdvanceForMonth(empId, period);
     const mb = existing?.mobileBill ?? getEmployeeMobileBill(empId, period);
