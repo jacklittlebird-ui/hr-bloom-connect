@@ -158,7 +158,7 @@ export const EmployeeDataForm = () => {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from('employees')
-          .select('id, employee_code, name_ar, name_en, gender, birth_date, nationality, birth_place, birth_governorate, national_id, governorate, city, address, phone, job_title_ar, job_title_en')
+          .select('id, employee_code, name_ar, name_en, gender, birth_date, nationality, birth_place, birth_governorate, national_id, governorate, city, address, phone, job_title_ar, job_title_en, permit_name_ar, permit_name_en')
           .order('employee_code')
           .range(from, from + PAGE - 1);
         if (error || !data?.length) break;
