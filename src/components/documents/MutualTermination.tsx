@@ -69,6 +69,7 @@ interface FormState {
   secondPartyAddress: string;
   secondPartyPhone: string;
   hireDate: string;
+  socialInsuranceStartDate: string;
   contractType: string;
 }
 
