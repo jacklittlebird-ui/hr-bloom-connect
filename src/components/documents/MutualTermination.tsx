@@ -22,6 +22,7 @@ interface Emp {
   department?: string | null;
   national_id?: string | null;
   social_insurance_no?: string | null;
+  social_insurance_start_date?: string | null;
   resignation_date?: string | null;
   address?: string | null;
   phone?: string | null;
