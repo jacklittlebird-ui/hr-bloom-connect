@@ -287,6 +287,11 @@ export const MutualTermination = () => {
             <Input className="h-9 w-[220px]" value={form.contractType} onChange={e => set('contractType', e.target.value)} />
           </div>
 
+          <div className="space-y-1">
+            <Label className="text-xs">{isAr ? 'الوظيفة' : 'Job title'}</Label>
+            <Input className="h-9 w-[260px]" value={form.secondPartyJob} onChange={e => set('secondPartyJob', e.target.value)} />
+          </div>
+
           <Button onClick={print} disabled={!selected} className="gap-2">
             <Printer className="h-4 w-4" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}
           </Button>
