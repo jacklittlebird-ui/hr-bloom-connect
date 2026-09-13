@@ -4,6 +4,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 import { getCairoDateString, getCairoHour } from '@/lib/cairoDate';
+import { cairoLocalToIso } from '@/lib/missionTime';
 
 export interface AttendanceEntry {
   id: string;
