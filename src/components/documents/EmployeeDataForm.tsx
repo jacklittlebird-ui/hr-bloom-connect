@@ -27,6 +27,8 @@ interface Emp {
   phone?: string | null;
   job_title_ar?: string | null;
   job_title_en?: string | null;
+  permit_name_ar?: string | null;
+  permit_name_en?: string | null;
 }
 
 const PAGE = 1000;
