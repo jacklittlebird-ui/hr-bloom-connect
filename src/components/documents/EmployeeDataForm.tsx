@@ -128,9 +128,10 @@ h1 { text-align:center; font-size:22px; font-weight:bold; margin:0 0 14mm; text-
   </div>
 
   <div class="bottom">
-    <div class="approval">يعتمد /</div>
     <div class="stamp">ختم الشركة</div>
+    <div class="approval">يعتمد /</div>
   </div>
+
 </div>
 </body></html>`;
 };
