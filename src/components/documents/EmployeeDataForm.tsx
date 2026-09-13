@@ -76,18 +76,18 @@ const buildHtml = (f: FormState) => {
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; }
 body { font-family:"Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#e5e7eb; }
-.sheet { position:relative; width:210mm; min-height:297mm; margin:0 auto; padding:18mm 15mm 20mm; background:#fff; overflow:hidden; }
-h1 { text-align:center; font-size:22px; font-weight:bold; margin:0 0 14mm; text-decoration:underline; }
-.form-grid { display:grid; grid-template-columns:1fr 38mm; gap:4mm 5mm; }
-.fields-col { grid-column:1; display:flex; flex-direction:column; gap:4.5mm; }
+.sheet { position:relative; width:210mm; min-height:297mm; margin:0 auto; padding:16mm 14mm 16mm; background:#fff; overflow:hidden; }
+h1 { text-align:center; font-size:22px; font-weight:bold; margin:0 0 10mm; text-decoration:underline; }
+.form-grid { display:grid; grid-template-columns:1fr 38mm; gap:3mm 4mm; }
+.fields-col { grid-column:1; display:flex; flex-direction:column; gap:3.5mm; }
 .photo-col { grid-column:2; grid-row:1 / span 7; border:1px solid #000; display:flex; align-items:center; justify-content:center; text-align:center; padding:4mm; font-size:13px; line-height:1.6; font-weight:600; }
-.field-row { display:flex; align-items:center; gap:3mm; }
+.field-row { display:flex; align-items:center; gap:2mm; }
 .field-row.two .field { flex:1; }
-.field { display:flex; align-items:center; gap:2mm; flex:1; }
-.field .lbl { font-size:13.5px; font-weight:700; white-space:nowrap; }
-.field .v { border-bottom:1px solid #000; flex:1; min-height:7.5mm; padding:1mm 2mm; font-size:13.5px; text-align:right; line-height:1.4; }
-.section-title { text-align:center; font-size:16px; font-weight:bold; margin:6mm 0 2mm; text-decoration:underline; }
-.bottom { display:flex; align-items:flex-end; justify-content:space-between; margin-top:12mm; padding:0 8mm; }
+.field { display:flex; align-items:center; gap:1.5mm; flex:1; }
+.field .lbl { font-size:13px; font-weight:700; white-space:nowrap; }
+.field .v { border-bottom:1px solid #000; flex:1; min-height:7mm; padding:0.8mm 1.5mm; font-size:15.5px; text-align:right; line-height:1.35; }
+.section-title { text-align:center; font-size:16px; font-weight:bold; margin:4mm 0 2mm; text-decoration:underline; }
+.bottom { display:flex; align-items:flex-end; justify-content:space-between; margin-top:8mm; padding:0 8mm; }
 .approval { font-size:15px; font-weight:bold; }
 .stamp { width:32mm; height:32mm; border:1px solid #000; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
 @media print { body { background:#fff; } .sheet { margin:0; } }
