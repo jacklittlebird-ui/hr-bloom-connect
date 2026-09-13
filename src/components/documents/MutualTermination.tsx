@@ -85,7 +85,7 @@ const buildHtml = (employeeName: string, f: FormState) => {
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; }
 body { font-family:"Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#e5e7eb; }
-.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 8mm; padding:24mm 17mm 14mm; background:#fff; overflow:hidden; page-break-after:always; }
+.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 8mm; padding:22mm 17mm 12mm; background:#fff; overflow:hidden; page-break-after:always; }
 .sheet:last-child { page-break-after:auto; }
 .logo { position:absolute; top:7mm; right:15mm; width:25mm; height:25mm; object-fit:contain; }
 h1 { text-align:center; font-size:20px; line-height:1.3; margin:0; }
