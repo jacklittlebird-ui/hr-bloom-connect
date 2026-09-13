@@ -416,9 +416,11 @@ const Leaves = () => {
       const config = { checkIn: ci, checkOut: co, hours: hrs };
       const start = mission.startDate || mission.date;
       const end = mission.endDate || mission.date;
-      const startD = new Date(start + 'T00:00:00');
-      const endD = new Date(end + 'T00:00:00');
-      for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+      // Iterate calendar days in UTC-safe fashion so the device timezone
+      // (Cairo, UTC+2/+3) can never shift the date back by one day.
+      const startD = new Date(start + 'T12:00:00Z');
+      const endD = new Date(end + 'T12:00:00Z');
+      for (let d = new Date(startD); d <= endD; d.setUTCDate(d.getUTCDate() + 1)) {
         const ds = d.toISOString().slice(0, 10);
         addMissionAttendance(mission.employeeId, mission.employeeName, mission.employeeNameAr, mission.department, ds, config.checkIn, config.checkOut, config.hours);
       }
