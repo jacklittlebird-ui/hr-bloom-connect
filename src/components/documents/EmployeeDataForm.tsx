@@ -27,6 +27,8 @@ interface Emp {
   phone?: string | null;
   job_title_ar?: string | null;
   job_title_en?: string | null;
+  permit_name_ar?: string | null;
+  permit_name_en?: string | null;
 }
 
 const PAGE = 1000;
@@ -158,7 +160,7 @@ export const EmployeeDataForm = () => {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from('employees')
-          .select('id, employee_code, name_ar, name_en, gender, birth_date, nationality, birth_place, birth_governorate, national_id, governorate, city, address, phone, job_title_ar, job_title_en')
+          .select('id, employee_code, name_ar, name_en, gender, birth_date, nationality, birth_place, birth_governorate, national_id, governorate, city, address, phone, job_title_ar, job_title_en, permit_name_ar, permit_name_en')
           .order('employee_code')
           .range(from, from + PAGE - 1);
         if (error || !data?.length) break;
@@ -182,7 +184,7 @@ export const EmployeeDataForm = () => {
       gender: e.gender || '',
       birthDate: e.birth_date || '',
       nationalityAr: e.nationality || '',
-      nationalityEn: '',
+      nationalityEn: 'Egyptian',
       birthPlace: e.birth_place || '',
       birthGovernorate: e.birth_governorate || '',
       nationalId: e.national_id || '',
@@ -190,8 +192,9 @@ export const EmployeeDataForm = () => {
       departmentCenter: e.city || '',
       residencePlace: e.address || '',
       phone: e.phone || '',
-      jobTitleAr: e.job_title_ar || '',
-      jobTitleEn: e.job_title_en || '',
+      // المهنة تقرأ من المسمى في التصريح (permit)، مع الرجوع للمسمى الوظيفي إن كان التصريح فارغًا
+      jobTitleAr: e.permit_name_ar || e.job_title_ar || '',
+      jobTitleEn: e.permit_name_en || e.job_title_en || '',
     }));
   };
 
