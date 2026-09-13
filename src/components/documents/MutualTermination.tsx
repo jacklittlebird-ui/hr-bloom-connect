@@ -140,7 +140,7 @@ h2 { text-align:center; font-size:18px; margin:0 0 5mm; background:#f2f2f2; line
       <div class="sign-line">الوظيفة: ${value(f.firstPartyTitle)}</div>
       <div class="sign-line">اسم الشركة: ${value(f.firstPartyCompany)}</div>
       <div class="sign-line">مقر الشركة: ${value(f.companyAddress)}</div>
-      <div class="sign-line">التوقيع: (............................)</div>
+      <div class="sign-line">التوقيع: (.........................................................)</div>
       <div class="sign-line">خاتم جهة العمل:</div>
     </div>
     <div>
@@ -173,7 +173,7 @@ export const MutualTermination = () => {
     firstPartyName: 'جاك اسحق عبد المسيح',
     firstPartyTitle: 'مدير قطاع الموارد البشرية',
     firstPartyCompany: 'لينك أيرو تريدنج أجنسي',
-    companyAddress: '',
+    companyAddress: '10 ش الجزيرة الوسطى - الزمالك',
     secondPartyJob: '',
     secondPartyNationalId: '',
     secondPartyAddress: '',
