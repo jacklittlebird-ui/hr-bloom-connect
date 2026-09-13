@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Printer, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import ministryLogo from '@/assets/ministry-of-labour-logo.png.asset.json';
+import ministryLogo from '@/assets/ministry-labour-seal.png.asset.json';
 
 interface Emp {
   id: string;
@@ -85,18 +85,18 @@ const buildHtml = (employeeName: string, f: FormState) => {
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; }
 body { font-family:"Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#e5e7eb; }
-.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 8mm; padding:38mm 18mm 18mm; background:#fff; overflow:hidden; page-break-after:always; }
+.sheet { position:relative; width:210mm; height:297mm; margin:0 auto 8mm; padding:24mm 17mm 14mm; background:#fff; overflow:hidden; page-break-after:always; }
 .sheet:last-child { page-break-after:auto; }
-.logo { position:absolute; top:7mm; right:17mm; width:30mm; height:30mm; object-fit:contain; }
-h1 { text-align:center; font-size:22px; margin:0 0 1mm; }
-h2 { text-align:center; font-size:20px; margin:0 0 12mm; background:#f2f2f2; line-height:1.8; }
-.intro,.clause { font-size:16px; line-height:2.25; text-align:justify; margin:0 0 5mm; }
-.center-title { text-align:center; font-size:17px; font-weight:700; margin:5mm 0 3mm; }
-.party { font-size:16px; line-height:2.35; margin:0 0 1mm; }
-.page-no { position:absolute; bottom:8mm; left:0; right:0; text-align:center; font:12px Arial,sans-serif; }
-.sign-grid { display:grid; grid-template-columns:1fr 1fr; gap:20mm; margin-top:12mm; }
-.sign-title { font-size:16px; font-weight:700; background:#dce6f1; display:inline-block; margin-bottom:5mm; }
-.sign-line { font-size:14px; line-height:2; white-space:nowrap; }
+.logo { position:absolute; top:7mm; right:15mm; width:25mm; height:25mm; object-fit:contain; }
+h1 { text-align:center; font-size:20px; line-height:1.3; margin:0; }
+h2 { text-align:center; font-size:18px; margin:0 0 5mm; background:#f2f2f2; line-height:1.6; }
+.intro,.clause { font-size:14px; line-height:1.75; text-align:justify; margin:0 0 2mm; }
+.center-title { text-align:center; font-size:15px; font-weight:700; margin:2mm 0 1mm; }
+.party { font-size:14px; line-height:1.8; margin:0 0 1mm; }
+.page-no { position:absolute; bottom:6mm; left:0; right:0; text-align:center; font:11px Arial,sans-serif; }
+.sign-grid { display:grid; grid-template-columns:1fr 1fr; gap:13mm; margin-top:5mm; }
+.sign-title { font-size:14px; font-weight:700; background:#dce6f1; display:inline-block; margin-bottom:2mm; }
+.sign-line { font-size:12.5px; line-height:1.7; white-space:nowrap; }
 @media print { body { background:#fff; } .sheet { margin:0; } }
 </style></head><body>
 <div class="sheet">
@@ -112,24 +112,19 @@ h2 { text-align:center; font-size:20px; margin:0 0 12mm; background:#f2f2f2; lin
   <p class="clause">يعمل الطرف الثاني لدى الطرف الأول بوظيفة ${value(f.secondPartyJob)} بعقد عمل ${value(contractLabel(f.contractType))} منذ تاريخ ${fmt(f.hireDate)} ويرغب في التحلل أو التقايل من عقد العمل بالتراضي والتوافق مع صاحب العمل، وقد تلاقت إرادة الطرفين على ذلك.</p>
   <div class="center-title">( البند الأول )</div>
   <p class="clause">يعتبر التمهيد السابق جزء لا يتجزأ من هذا الاتفاق، وتسري عليه جميع أحكامه.</p>
+  <div class="center-title">(البند الثاني)</div>
+  <p class="clause">يقر الطرف الثاني (العامل) أن هذا الاتفاق تم بالتوافق بينه وبين الطرف الأول (صاحب العمل) بناء على طلب كتابي قدمه لجهة عمله وبإرادته الحرة دون تهديد أو إكراه.</p>
+  <div class="center-title">(البند الثالث)</div>
+  <p class="clause">يقر الطرفان أن آخر يوم عمل تم الاتفاق عليه هو يوم ${arabicDay(f.terminationDate)} الموافق ${fmt(f.terminationDate)}</p>
   <div class="page-no">1</div>
 </div>
 
 <div class="sheet">
   <img class="logo" src="${logoUrl}" alt="وزارة العمل" />
-  <div class="center-title">(البند الثاني)</div>
-  <p class="clause">يقر الطرف الثاني (العامل) أن هذا الاتفاق تم بالتوافق بينه وبين الطرف الأول (صاحب العمل) بناء على طلب كتابي قدمه لجهة عمله وبإرادته الحرة دون تهديد أو إكراه.</p>
-  <div class="center-title">(البند الثالث)</div>
-  <p class="clause">يقر الطرفان أن آخر يوم عمل تم الاتفاق عليه هو يوم ${arabicDay(f.terminationDate)} الموافق ${fmt(f.terminationDate)}</p>
   <div class="center-title">(البند الرابع)</div>
   <p class="clause">يقر صاحب العمل بأنه يلتزم - قبل توقيع هذا الاتفاق - بتسوية كافة حقوق العامل المالية، وعلى الأخص أجره عن فترة عمله حتى آخر يوم عمل، والمقابل النقدي لرصيد إجازاته السنوية التي لم يقم بها، وأية مزايا أخرى مقررة في عقد العمل الفردي أو الجماعي أو لائحة تنظيم العمل بالمنشأة أو بمقتضى العرف.</p>
   <div class="center-title">(البند الخامس)</div>
   <p class="clause">يقر الطرف الثاني العامل بأن توقيعه على هذا الاتفاق يعتبر مخالصة وإبراء لذمة صاحب العمل من أية مستحقات مالية.</p>
-  <div class="page-no">2</div>
-</div>
-
-<div class="sheet">
-  <img class="logo" src="${logoUrl}" alt="وزارة العمل" />
   <div class="center-title">(البند السادس)</div>
   <p class="clause">يقر الطرف الأول (صاحب العمل) أو من يمثله بالتزامه بمنح العامل شهادة تتضمن تاريخ التحاقه بالعمل، وتاريخ انتهائه، ونوع العمل الذي كان يؤديه، والمزايا التي كان يحصل عليها، وذلك خلال خمسة عشر يوماً من تاريخ طلب ذلك.</p>
   <p class="clause">ويجوز بناء على طلب العامل، أن تتضمن تلك الشهادة مقدار الأجر الذي كان يتقاضاه، وسبب انتهاء علاقة العمل.</p>
@@ -156,7 +151,7 @@ h2 { text-align:center; font-size:20px; margin:0 0 12mm; background:#f2f2f2; lin
       <div class="sign-line">التوقيع: (............................)</div>
     </div>
   </div>
-  <div class="page-no">3</div>
+  <div class="page-no">2</div>
 </div>
 </body></html>`;
 };
