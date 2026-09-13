@@ -22,6 +22,7 @@ interface Emp {
   department?: string | null;
   national_id?: string | null;
   social_insurance_no?: string | null;
+  social_insurance_start_date?: string | null;
   resignation_date?: string | null;
   address?: string | null;
   phone?: string | null;
@@ -68,6 +69,7 @@ interface FormState {
   secondPartyAddress: string;
   secondPartyPhone: string;
   hireDate: string;
+  socialInsuranceStartDate: string;
   contractType: string;
 }
 
@@ -109,7 +111,7 @@ h2 { text-align:center; font-size:18px; margin:0 0 5mm; background:#f2f2f2; line
   <p class="party"><b>الطرف الثاني:</b> السيد / ${value(employeeName)} والذي يعمل لدى الطرف الأول بوظيفة ${value(f.secondPartyJob)}</p>
   <p class="intro">وبعد أن أقر الطرفان بأهليتهما القانونية الكاملة للتصرف والتعاقد اتفقا على ما يلي:</p>
   <div class="center-title">( تمهيد )</div>
-  <p class="clause">يعمل الطرف الثاني لدى الطرف الأول بوظيفة ${value(f.secondPartyJob)} بعقد عمل ${value(contractLabel(f.contractType))} منذ تاريخ ${fmt(f.hireDate)} ويرغب في التحلل أو التقايل من عقد العمل بالتراضي والتوافق مع صاحب العمل، وقد تلاقت إرادة الطرفين على ذلك.</p>
+  <p class="clause">يعمل الطرف الثاني لدى الطرف الأول بوظيفة ${value(f.secondPartyJob)} بعقد عمل ${value(contractLabel(f.contractType))} منذ تاريخ ${fmt(f.socialInsuranceStartDate)} ويرغب في التحلل أو التقايل من عقد العمل بالتراضي والتوافق مع صاحب العمل، وقد تلاقت إرادة الطرفين على ذلك.</p>
   <div class="center-title">( البند الأول )</div>
   <p class="clause">يعتبر التمهيد السابق جزء لا يتجزأ من هذا الاتفاق، وتسري عليه جميع أحكامه.</p>
   <div class="center-title">(البند الثاني)</div>
@@ -177,6 +179,7 @@ export const MutualTermination = () => {
     secondPartyAddress: '',
     secondPartyPhone: '',
     hireDate: '',
+    socialInsuranceStartDate: '',
     contractType: '',
   });
 
@@ -187,7 +190,7 @@ export const MutualTermination = () => {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from('employees')
-          .select('id, employee_code, name_ar, name_en, gender, hire_date, job_title_ar, national_id, social_insurance_no, resignation_date, address, phone, contract_type')
+          .select('id, employee_code, name_ar, name_en, gender, hire_date, job_title_ar, national_id, social_insurance_no, social_insurance_start_date, resignation_date, address, phone, contract_type')
           .order('employee_code')
           .range(from, from + PAGE - 1);
         if (error || !data?.length) break;
@@ -213,6 +216,7 @@ export const MutualTermination = () => {
       secondPartyAddress: e.address || '',
       secondPartyPhone: e.phone || '',
       hireDate: e.hire_date || '',
+      socialInsuranceStartDate: e.social_insurance_start_date || '',
       contractType: e.contract_type || '',
     }));
   };
