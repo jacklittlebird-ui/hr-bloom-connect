@@ -41,6 +41,21 @@ const fmt = (iso: string) => {
   return `${d}/${m}/${y}`;
 };
 
+const arabicDay = (iso: string) => {
+  if (!iso) return '................';
+  const date = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(date.getTime())
+    ? '................'
+    : new Intl.DateTimeFormat('ar-EG', { weekday: 'long' }).format(date);
+};
+
+const contractLabel = (type: string) => {
+  const normalized = type.toLowerCase();
+  if (normalized.includes('indefinite') || normalized.includes('unlimited') || normalized.includes('غير محدد')) return 'غير محدد المدة';
+  if (normalized.includes('year') || normalized.includes('month') || normalized.includes('fixed') || normalized.includes('محدد')) return 'محدد المدة';
+  return type;
+};
+
 interface FormState {
   agreementDate: string;
   terminationDate: string;
@@ -88,13 +103,13 @@ h2 { text-align:center; font-size:20px; margin:0 0 12mm; background:#f2f2f2; lin
   <img class="logo" src="${logoUrl}" alt="وزارة العمل" />
   <h1>نموذج</h1>
   <h2>إنهاء علاقة العمل بالتوافق بين الطرفين</h2>
-  <p class="intro">إنه في يوم ................ الموافق ${fmt(f.agreementDate)}</p>
+  <p class="intro">إنه في يوم ${arabicDay(f.agreementDate)} الموافق ${fmt(f.agreementDate)}</p>
   <p class="intro"><b>حرر هذا الاتفاق بين كل من:</b></p>
   <p class="party"><b>الطرف الأول:</b> السيد / ${value(f.firstPartyName)} بصفته الممثل القانوني لصاحب العمل بشركة ${value(f.firstPartyCompany)}</p>
   <p class="party"><b>الطرف الثاني:</b> السيد / ${value(employeeName)} والذي يعمل لدى الطرف الأول بوظيفة ${value(f.secondPartyJob)}</p>
   <p class="intro">وبعد أن أقر الطرفان بأهليتهما القانونية الكاملة للتصرف والتعاقد اتفقا على ما يلي:</p>
   <div class="center-title">( تمهيد )</div>
-  <p class="clause">يعمل الطرف الثاني لدى الطرف الأول بوظيفة ${value(f.secondPartyJob)} بعقد عمل ${value(f.contractType)} (محدد المدة / غير محدد المدة) منذ تاريخ ${fmt(f.hireDate)} ويرغب في التحلل أو التقايل من عقد العمل بالتراضي والتوافق مع صاحب العمل، وقد تلاقت إرادة الطرفين على ذلك.</p>
+  <p class="clause">يعمل الطرف الثاني لدى الطرف الأول بوظيفة ${value(f.secondPartyJob)} بعقد عمل ${value(contractLabel(f.contractType))} منذ تاريخ ${fmt(f.hireDate)} ويرغب في التحلل أو التقايل من عقد العمل بالتراضي والتوافق مع صاحب العمل، وقد تلاقت إرادة الطرفين على ذلك.</p>
   <div class="center-title">( البند الأول )</div>
   <p class="clause">يعتبر التمهيد السابق جزء لا يتجزأ من هذا الاتفاق، وتسري عليه جميع أحكامه.</p>
   <div class="page-no">1</div>
@@ -105,7 +120,7 @@ h2 { text-align:center; font-size:20px; margin:0 0 12mm; background:#f2f2f2; lin
   <div class="center-title">(البند الثاني)</div>
   <p class="clause">يقر الطرف الثاني (العامل) أن هذا الاتفاق تم بالتوافق بينه وبين الطرف الأول (صاحب العمل) بناء على طلب كتابي قدمه لجهة عمله وبإرادته الحرة دون تهديد أو إكراه.</p>
   <div class="center-title">(البند الثالث)</div>
-  <p class="clause">يقر الطرفان أن آخر يوم عمل تم الاتفاق عليه هو يوم ................ الموافق ${fmt(f.terminationDate)}</p>
+  <p class="clause">يقر الطرفان أن آخر يوم عمل تم الاتفاق عليه هو يوم ${arabicDay(f.terminationDate)} الموافق ${fmt(f.terminationDate)}</p>
   <div class="center-title">(البند الرابع)</div>
   <p class="clause">يقر صاحب العمل بأنه يلتزم - قبل توقيع هذا الاتفاق - بتسوية كافة حقوق العامل المالية، وعلى الأخص أجره عن فترة عمله حتى آخر يوم عمل، والمقابل النقدي لرصيد إجازاته السنوية التي لم يقم بها، وأية مزايا أخرى مقررة في عقد العمل الفردي أو الجماعي أو لائحة تنظيم العمل بالمنشأة أو بمقتضى العرف.</p>
   <div class="center-title">(البند الخامس)</div>
@@ -160,7 +175,7 @@ export const MutualTermination = () => {
     terminationDate: today,
     firstPartyName: 'جاك اسحق عبد المسيح',
     firstPartyTitle: 'مدير قطاع الموارد البشرية',
-    firstPartyCompany: 'لينك آيرو تريدنج إجنيسي',
+    firstPartyCompany: 'لينك أيرو تريدنج أجنسي',
     companyAddress: '',
     secondPartyJob: '',
     secondPartyNationalId: '',
