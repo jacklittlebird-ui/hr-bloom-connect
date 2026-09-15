@@ -93,6 +93,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const [searchDept, setSearchDept] = useState('');
   const [searchStation, setSearchStation] = useState('');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [employeeOverrides, setEmployeeOverrides] = useState<Record<string, string[]>>({});
   const [isAddRecordOpen, setIsAddRecordOpen] = useState(false);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
   const [bulkSelectedEmployeeIds, setBulkSelectedEmployeeIds] = useState<string[]>([]);
