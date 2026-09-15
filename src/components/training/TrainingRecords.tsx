@@ -93,6 +93,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const [searchDept, setSearchDept] = useState('');
   const [searchStation, setSearchStation] = useState('');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [employeeOverrides, setEmployeeOverrides] = useState<Record<string, string[]>>({});
   const [isAddRecordOpen, setIsAddRecordOpen] = useState(false);
   const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
   const [bulkSelectedEmployeeIds, setBulkSelectedEmployeeIds] = useState<string[]>([]);
@@ -150,14 +151,14 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     linkId: emp.employeeId.replace('Emp', ''),
     hireDate: emp.hireDate || '',
     mobile: emp.phone || '',
-    jobFunctions: ((emp as any).deptCode || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+    jobFunctions: employeeOverrides[emp.id] ?? ((emp as any).deptCode || '').split(',').map((s: string) => s.trim()).filter(Boolean),
     jobTitleAr: (emp as any).jobTitleAr || '',
     jobTitleEn: (emp as any).jobTitleEn || '',
     avatar: emp.avatar || undefined,
     nationalId: (emp as any).nationalId || '',
     status: emp.status || 'active',
     educationAr: (emp as any).educationAr || '',
-  })), [contextEmployees]);
+  })), [contextEmployees, employeeOverrides]);
 
   const selectedEmployee = useMemo(
     () => trainingEmployees.find((emp) => emp.id === selectedEmployeeId) ?? null,
@@ -526,7 +527,12 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                                   // Preserve declaration order from jobFunctionLabels
                                   const ordered = Object.keys(jobFunctionLabels).filter(c => next.includes(c));
                                   try {
-                                    await updateEmployee(selectedEmployee.id, { deptCode: ordered.join(',') } as any);
+                                    const { error: rpcError } = await supabase.rpc('update_employee_job_function' as any, {
+                                      _employee_id: selectedEmployee.id,
+                                      _dept_code: ordered.join(','),
+                                    });
+                                    if (rpcError) throw rpcError;
+                                    setEmployeeOverrides(prev => ({ ...prev, [selectedEmployee.id]: ordered }));
                                     toast({ title: ar ? 'تم الحفظ' : 'Saved' });
                                   } catch (err: any) {
                                     toast({ title: ar ? 'خطأ' : 'Error', description: err?.message || (ar ? 'تعذر الحفظ' : 'Failed to save'), variant: 'destructive' });

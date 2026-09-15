@@ -3708,6 +3708,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      update_employee_job_function: {
+        Args: { _dept_code: string; _employee_id: string }
+        Returns: string
+      }
       upsert_mobile_bill: {
         Args: {
           p_amount: number
