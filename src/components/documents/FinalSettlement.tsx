@@ -73,7 +73,7 @@ const buildHtml = (employeeName: string, form: FormState) => `<!DOCTYPE html>
     <section class="signature">
       <div class="signature-row"><span class="signature-label">الاسم:</span><span>${escapeHtml(employeeName)}</span></div>
       <div class="signature-row"><span class="signature-label">التوقيع:</span><span></span></div>
-      <div class="signature-row"><span class="signature-label">التاريخ:</span><span>${formatDate(form.documentDate)}</span></div>
+      <div class="signature-row"><span class="signature-label">التاريخ:</span><span>........./......../.................</span></div>
     </section>
   </main>
 </body>
