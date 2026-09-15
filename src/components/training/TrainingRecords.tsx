@@ -158,7 +158,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     nationalId: (emp as any).nationalId || '',
     status: emp.status || 'active',
     educationAr: (emp as any).educationAr || '',
-  })), [contextEmployees]);
+  })), [contextEmployees, employeeOverrides]);
 
   const selectedEmployee = useMemo(
     () => trainingEmployees.find((emp) => emp.id === selectedEmployeeId) ?? null,
