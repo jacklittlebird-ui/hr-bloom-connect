@@ -15,12 +15,10 @@ interface EmployeeRecord {
   employee_code: string;
   name_ar: string;
   national_id: string | null;
-  resignation_date: string | null;
 }
 
 interface FormState {
   nationalId: string;
-  resignationDate: string;
   documentDate: string;
 }
 
