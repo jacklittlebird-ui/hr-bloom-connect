@@ -31,6 +31,7 @@ interface Emp {
 }
 
 const PAGE = 1000;
+const ASSET_ORIGIN = 'https://hr-bloom-connect.lovable.app';
 
 const esc = (s: string | null | undefined) =>
   (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string));
@@ -75,7 +76,7 @@ interface FormState {
 
 const buildHtml = (employeeName: string, f: FormState) => {
   const value = (v: string) => v ? `<b>${esc(v)}</b>` : '......................................................';
-  const logoUrl = esc(new URL(ministryLogo.url, window.location.origin).href);
+  const logoUrl = esc(new URL(ministryLogo.url, ASSET_ORIGIN).href);
 
   return `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
