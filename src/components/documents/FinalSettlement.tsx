@@ -195,11 +195,6 @@ export const FinalSettlement = () => {
             <Input className="h-9 w-[210px]" value={form.nationalId} onChange={event => setForm(current => ({ ...current, nationalId: event.target.value }))} />
           </div>
 
-          <div className="space-y-1">
-            <Label className="text-xs">{isArabic ? 'تاريخ المخالصة' : 'Settlement date'}</Label>
-            <Input type="date" className="h-9 w-[170px]" value={form.documentDate} onChange={event => setForm(current => ({ ...current, documentDate: event.target.value }))} />
-          </div>
-
           <Button onClick={printDocument} disabled={!selectedEmployee} className="gap-2">
             <Printer className="h-4 w-4" />
             {isArabic ? 'طباعة / PDF' : 'Print / PDF'}
