@@ -63,37 +63,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Clear employee.user_id link if exists
-    await supabaseAdmin
-      .from('employees')
-      .update({ user_id: null })
-      .eq('user_id', user_id);
-
-    // Delete user_roles
-    await supabaseAdmin
-      .from('user_roles')
-      .delete()
-      .eq('user_id', user_id);
-
-    // Delete user_module_permissions
-    await supabaseAdmin
-      .from('user_module_permissions')
-      .delete()
-      .eq('user_id', user_id);
-
-    // Delete user_devices
-    await supabaseAdmin
-      .from('user_devices')
-      .delete()
-      .eq('user_id', user_id);
-
-    // Delete profile
-    await supabaseAdmin
-      .from('profiles')
-      .delete()
-      .eq('id', user_id);
-
-    // Delete auth user
+    // Delete the auth user first. Database foreign keys now handle all linked
+    // records atomically: account-owned rows cascade, employee links and audit
+    // references are set to null. This prevents half-deleted accounts when the
+    // auth deletion fails.
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
     if (deleteError) {
       return new Response(JSON.stringify({ error: deleteError.message }), {

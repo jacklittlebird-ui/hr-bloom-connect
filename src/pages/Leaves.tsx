@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAttendanceData } from '@/contexts/AttendanceDataContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LeaveRequestsList } from '@/components/leaves/LeaveRequestsList';
 import { PermissionRequestsList } from '@/components/leaves/PermissionRequestsList';
@@ -22,7 +21,6 @@ import {
   MissionRequest,
   OvertimeRequest,
   EmployeeLeaveBalance,
-  MISSION_TIME_CONFIG,
 } from '@/types/leaves';
 import { FileText, Plus, CheckCircle, BarChart3, Calendar, ShieldCheck, Briefcase, PlusCircle, AlertTriangle, RefreshCw, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -57,7 +55,6 @@ const fetchAllRows = async <T,>(buildQuery: (from: number, to: number) => Promis
 
 const Leaves = () => {
   const { t, isRTL, language } = useLanguage();
-  const { addMissionAttendance } = useAttendanceData();
   const [activeTab, setActiveTab] = useState('leaves');
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [permissionRequests, setPermissionRequests] = useState<PermissionRequest[]>([]);
@@ -402,29 +399,8 @@ const Leaves = () => {
       language === 'ar' ? 'تمت الموافقة على المأمورية' : 'Mission approved',
     );
     if (!ok) return;
-    const mission = missionRequests.find(r => r.id === id);
-    if (mission) {
-      const cfg = (MISSION_TIME_CONFIG as any)[mission.missionType];
-      const ci = mission.checkIn || cfg?.checkIn || '09:00';
-      const co = mission.checkOut || cfg?.checkOut || '17:00';
-      const toMin = (t: string) => {
-        const [h, m] = t.split(':').map(Number);
-        return (h || 0) * 60 + (m || 0);
-      };
-      const diff = toMin(co) - toMin(ci);
-      const hrs = Math.max(0, Math.round((diff < 0 ? diff + 1440 : diff) / 60 * 100) / 100) || cfg?.hours || 0;
-      const config = { checkIn: ci, checkOut: co, hours: hrs };
-      const start = mission.startDate || mission.date;
-      const end = mission.endDate || mission.date;
-      // Iterate calendar days in UTC-safe fashion so the device timezone
-      // (Cairo, UTC+2/+3) can never shift the date back by one day.
-      const startD = new Date(start + 'T12:00:00Z');
-      const endD = new Date(end + 'T12:00:00Z');
-      for (let d = new Date(startD); d <= endD; d.setUTCDate(d.getUTCDate() + 1)) {
-        const ds = d.toISOString().slice(0, 10);
-        addMissionAttendance(mission.employeeId, mission.employeeName, mission.employeeNameAr, mission.department, ds, config.checkIn, config.checkOut, config.hours);
-      }
-    }
+    // The database trigger records or merges all mission days atomically with
+    // the approval, including days that already contain normal attendance.
   };
   const handleRejectMission = (id: string, reason: string) => runMutation(
     () => supabase.from('missions').update({ status: 'rejected', rejection_reason: reason } as any).eq('id', id),

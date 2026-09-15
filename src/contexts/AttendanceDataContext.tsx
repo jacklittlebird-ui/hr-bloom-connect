@@ -4,7 +4,6 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
 import { getCairoDateString, getCairoHour } from '@/lib/cairoDate';
-import { cairoLocalToIso } from '@/lib/missionTime';
 
 export interface AttendanceEntry {
   id: string;
@@ -42,7 +41,6 @@ interface AttendanceDataContextType {
   refresh: (force?: boolean) => Promise<void>;
   checkIn: (employeeId: string, employeeName: string, employeeNameAr: string, department: string) => void;
   checkOut: (recordId: string) => void;
-  addMissionAttendance: (employeeId: string, employeeName: string, employeeNameAr: string, department: string, date: string, checkIn: string, checkOut: string, hours: number) => void;
   getEmployeeRecords: (employeeId: string) => AttendanceEntry[];
   getEmployeeMonthlyRecords: (employeeId: string, year: number, month: number) => AttendanceEntry[];
   getMonthlyStats: (employeeId: string, year: number, month: number) => {
@@ -361,46 +359,6 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
     await fetchRecords(true);
   }, [records, addNotification, fetchRecords]);
 
-  const addMissionAttendance = useCallback(async (employeeId: string, employeeName: string, employeeNameAr: string, department: string, date: string, checkInTime: string, checkOutTime: string, hours: number) => {
-    // Anchor mission hours to Cairo local time, never to the server's UTC day.
-    const ciTs = cairoLocalToIso(date, checkInTime);
-    const coTs = cairoLocalToIso(date, checkOutTime);
-
-    // Only replace a previously generated mission row; never delete a real
-    // check-in/check-out the employee already made on that day.
-    const { data: existing } = await supabase
-      .from('attendance_records')
-      .select('id, status')
-      .eq('employee_id', employeeId)
-      .eq('date', date);
-
-    const missionRows = (existing || []).filter(r => r.status === 'mission');
-    const realRows = (existing || []).filter(r => r.status !== 'mission');
-
-    if (missionRows.length > 0) {
-      await supabase.from('attendance_records').delete().in('id', missionRows.map(r => r.id));
-    }
-
-    if (realRows.length > 0) {
-      // Employee already has an actual attendance record for this day — keep it.
-      invalidateCache('attendance_');
-      await fetchRecords(true);
-      return;
-    }
-
-    await supabase.from('attendance_records').insert({
-      employee_id: employeeId,
-      date,
-      check_in: ciTs,
-      check_out: coTs,
-      status: 'mission',
-      notes: 'مأمورية / Mission',
-    });
-
-    invalidateCache('attendance_');
-    await fetchRecords(true);
-  }, [fetchRecords]);
-
   const getEmployeeRecords = useCallback((employeeId: string) => {
     return records.filter(r => r.employeeId === employeeId).sort((a, b) => b.date.localeCompare(a.date));
   }, [records]);
@@ -428,7 +386,7 @@ export const AttendanceDataProvider: React.FC<{ children: React.ReactNode }> = (
   }, [records]);
 
   return (
-    <AttendanceDataContext.Provider value={{ records, refresh: fetchRecords, checkIn: checkInFn, checkOut: checkOutFn, addMissionAttendance, getEmployeeRecords, getEmployeeMonthlyRecords, getMonthlyStats }}>
+    <AttendanceDataContext.Provider value={{ records, refresh: fetchRecords, checkIn: checkInFn, checkOut: checkOutFn, getEmployeeRecords, getEmployeeMonthlyRecords, getMonthlyStats }}>
       {children}
     </AttendanceDataContext.Provider>
   );
