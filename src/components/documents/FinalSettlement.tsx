@@ -15,12 +15,10 @@ interface EmployeeRecord {
   employee_code: string;
   name_ar: string;
   national_id: string | null;
-  resignation_date: string | null;
 }
 
 interface FormState {
   nationalId: string;
-  resignationDate: string;
   documentDate: string;
 }
 
@@ -68,7 +66,7 @@ const buildHtml = (employeeName: string, form: FormState) => `<!DOCTYPE html>
       <p>رقم قومي: <b>${escapeHtml(form.nationalId) || '.................'}</b></p>
     </section>
     <p class="body">
-      بأنني استلمت جميع مستحقاتي المالية والعينية (من مستندات وغيرها) من شركة لينك أيرو تريدنج أجنسي منذ تعييني وحتى تاريخه. كما أقر بأنني قد استهلكت جميع إجازاتي السنوية والحكومية منذ تعييني وحتى تاريخه، ولا يحق لي المطالبة بأي مبالغ مالية من الشركة. وأقر بأنه ليس لي طرف الشركة أي متعلقات أو مستحقات حتى تاريخ استقالتي الموافق <b>${formatDate(form.resignationDate)}</b>.
+      بأنني استلمت جميع مستحقاتي المالية والعينية (من مستندات وغيرها) من شركة لينك أيرو تريدنج أجنسي منذ تعييني وحتى تاريخه. كما أقر بأنني قد استهلكت جميع إجازاتي السنوية والحكومية منذ تعييني وحتى تاريخه، ولا يحق لي المطالبة بأي مبالغ مالية من الشركة. وأقر بأنه ليس لي طرف الشركة أي متعلقات أو مستحقات حتى تاريخ استقالتي الموافق <b>........./......../.................</b>.
       كما أقر بأنني سلمت لشركة لينك أيرو تريدنج أجنسي كافة المستندات والعهد التي بحوزتي، وأنني لم أحتفظ بأية مستندات أو عهد تخص الشركة، وأكون خائنًا ومبددًا للأمانة في حالة مخالفة ذلك. ويحق للشركة اتخاذ كافة الإجراءات القانونية التي تراها مناسبة في حالة مخالفتي لذلك. وهذا إقرار مني بذلك مع كامل علمي بأحكام القوانين المنظمة لخيانة الأمانة.
     </p>
     <p class="closing">وهذا إقرار ومخالصة مني بذلك،،،،</p>
@@ -89,7 +87,7 @@ export const FinalSettlement = () => {
   const [loading, setLoading] = useState(true);
   const [employeePickerOpen, setEmployeePickerOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
-  const [form, setForm] = useState<FormState>({ nationalId: '', resignationDate: '', documentDate: today });
+  const [form, setForm] = useState<FormState>({ nationalId: '', documentDate: today });
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +96,7 @@ export const FinalSettlement = () => {
       for (let from = 0; ; from += PAGE_SIZE) {
         const { data, error } = await supabase
           .from('employees')
-          .select('id, employee_code, name_ar, national_id, resignation_date')
+          .select('id, employee_code, name_ar, national_id')
           .order('employee_code')
           .range(from, from + PAGE_SIZE - 1);
         if (error || !data?.length) break;
@@ -124,7 +122,6 @@ export const FinalSettlement = () => {
     setEmployeePickerOpen(false);
     setForm({
       nationalId: employee.national_id || '',
-      resignationDate: employee.resignation_date || '',
       documentDate: today,
     });
   };
@@ -196,11 +193,6 @@ export const FinalSettlement = () => {
           <div className="space-y-1">
             <Label className="text-xs">{isArabic ? 'الرقم القومي' : 'National ID'}</Label>
             <Input className="h-9 w-[210px]" value={form.nationalId} onChange={event => setForm(current => ({ ...current, nationalId: event.target.value }))} />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs">{isArabic ? 'تاريخ الاستقالة' : 'Resignation date'}</Label>
-            <Input type="date" className="h-9 w-[170px]" value={form.resignationDate} onChange={event => setForm(current => ({ ...current, resignationDate: event.target.value }))} />
           </div>
 
           <div className="space-y-1">
