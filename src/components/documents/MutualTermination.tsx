@@ -75,7 +75,7 @@ interface FormState {
 
 const buildHtml = (employeeName: string, f: FormState) => {
   const value = (v: string) => v ? `<b>${esc(v)}</b>` : '......................................................';
-  const logoUrl = esc(ministryLogo.url);
+  const logoUrl = esc(new URL(ministryLogo.url, window.location.origin).href);
 
   return `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
