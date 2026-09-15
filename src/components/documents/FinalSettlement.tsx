@@ -19,7 +19,6 @@ interface EmployeeRecord {
 
 interface FormState {
   nationalId: string;
-  documentDate: string;
 }
 
 const PAGE_SIZE = 1000;
@@ -27,11 +26,6 @@ const PAGE_SIZE = 1000;
 const escapeHtml = (value: string | null | undefined) =>
   (value || '').replace(/[<>&]/g, character => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[character] as string));
 
-const formatDate = (value: string) => {
-  if (!value) return '.................';
-  const [year, month, day] = value.split('-');
-  return year && month && day ? `${day}/${month}/${year}` : escapeHtml(value);
-};
 
 const buildHtml = (employeeName: string, form: FormState) => `<!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -82,12 +76,11 @@ const buildHtml = (employeeName: string, form: FormState) => `<!DOCTYPE html>
 export const FinalSettlement = () => {
   const { language } = useLanguage();
   const isArabic = language === 'ar';
-  const today = new Date().toISOString().split('T')[0];
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [employeePickerOpen, setEmployeePickerOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
-  const [form, setForm] = useState<FormState>({ nationalId: '', documentDate: today });
+  const [form, setForm] = useState<FormState>({ nationalId: '' });
 
   useEffect(() => {
     let cancelled = false;
@@ -122,7 +115,6 @@ export const FinalSettlement = () => {
     setEmployeePickerOpen(false);
     setForm({
       nationalId: employee.national_id || '',
-      documentDate: today,
     });
   };
 
