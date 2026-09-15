@@ -526,7 +526,12 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
                                   // Preserve declaration order from jobFunctionLabels
                                   const ordered = Object.keys(jobFunctionLabels).filter(c => next.includes(c));
                                   try {
-                                    await updateEmployee(selectedEmployee.id, { deptCode: ordered.join(',') } as any);
+                                    const { error: rpcError } = await supabase.rpc('update_employee_job_function' as any, {
+                                      _employee_id: selectedEmployee.id,
+                                      _dept_code: ordered.join(','),
+                                    });
+                                    if (rpcError) throw rpcError;
+                                    setEmployeeOverrides(prev => ({ ...prev, [selectedEmployee.id]: ordered }));
                                     toast({ title: ar ? 'تم الحفظ' : 'Saved' });
                                   } catch (err: any) {
                                     toast({ title: ar ? 'خطأ' : 'Error', description: err?.message || (ar ? 'تعذر الحفظ' : 'Failed to save'), variant: 'destructive' });
