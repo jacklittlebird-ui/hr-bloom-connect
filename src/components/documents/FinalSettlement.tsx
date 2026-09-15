@@ -87,7 +87,7 @@ export const FinalSettlement = () => {
   const [loading, setLoading] = useState(true);
   const [employeePickerOpen, setEmployeePickerOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
-  const [form, setForm] = useState<FormState>({ nationalId: '', resignationDate: '', documentDate: today });
+  const [form, setForm] = useState<FormState>({ nationalId: '', documentDate: today });
 
   useEffect(() => {
     let cancelled = false;
@@ -96,7 +96,7 @@ export const FinalSettlement = () => {
       for (let from = 0; ; from += PAGE_SIZE) {
         const { data, error } = await supabase
           .from('employees')
-          .select('id, employee_code, name_ar, national_id, resignation_date')
+          .select('id, employee_code, name_ar, national_id')
           .order('employee_code')
           .range(from, from + PAGE_SIZE - 1);
         if (error || !data?.length) break;
@@ -122,7 +122,6 @@ export const FinalSettlement = () => {
     setEmployeePickerOpen(false);
     setForm({
       nationalId: employee.national_id || '',
-      resignationDate: employee.resignation_date || '',
       documentDate: today,
     });
   };
@@ -194,11 +193,6 @@ export const FinalSettlement = () => {
           <div className="space-y-1">
             <Label className="text-xs">{isArabic ? 'الرقم القومي' : 'National ID'}</Label>
             <Input className="h-9 w-[210px]" value={form.nationalId} onChange={event => setForm(current => ({ ...current, nationalId: event.target.value }))} />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs">{isArabic ? 'تاريخ الاستقالة' : 'Resignation date'}</Label>
-            <Input type="date" className="h-9 w-[170px]" value={form.resignationDate} onChange={event => setForm(current => ({ ...current, resignationDate: event.target.value }))} />
           </div>
 
           <div className="space-y-1">
