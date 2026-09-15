@@ -19,7 +19,6 @@ interface EmployeeRecord {
 
 interface FormState {
   nationalId: string;
-  documentDate: string;
 }
 
 const PAGE_SIZE = 1000;
@@ -27,11 +26,6 @@ const PAGE_SIZE = 1000;
 const escapeHtml = (value: string | null | undefined) =>
   (value || '').replace(/[<>&]/g, character => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[character] as string));
 
-const formatDate = (value: string) => {
-  if (!value) return '.................';
-  const [year, month, day] = value.split('-');
-  return year && month && day ? `${day}/${month}/${year}` : escapeHtml(value);
-};
 
 const buildHtml = (employeeName: string, form: FormState) => `<!DOCTYPE html>
 <html dir="rtl" lang="ar">
@@ -82,12 +76,11 @@ const buildHtml = (employeeName: string, form: FormState) => `<!DOCTYPE html>
 export const FinalSettlement = () => {
   const { language } = useLanguage();
   const isArabic = language === 'ar';
-  const today = new Date().toISOString().split('T')[0];
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [employeePickerOpen, setEmployeePickerOpen] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
-  const [form, setForm] = useState<FormState>({ nationalId: '', documentDate: today });
+  const [form, setForm] = useState<FormState>({ nationalId: '' });
 
   useEffect(() => {
     let cancelled = false;
@@ -122,7 +115,6 @@ export const FinalSettlement = () => {
     setEmployeePickerOpen(false);
     setForm({
       nationalId: employee.national_id || '',
-      documentDate: today,
     });
   };
 
@@ -193,11 +185,6 @@ export const FinalSettlement = () => {
           <div className="space-y-1">
             <Label className="text-xs">{isArabic ? 'الرقم القومي' : 'National ID'}</Label>
             <Input className="h-9 w-[210px]" value={form.nationalId} onChange={event => setForm(current => ({ ...current, nationalId: event.target.value }))} />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs">{isArabic ? 'تاريخ المخالصة' : 'Settlement date'}</Label>
-            <Input type="date" className="h-9 w-[170px]" value={form.documentDate} onChange={event => setForm(current => ({ ...current, documentDate: event.target.value }))} />
           </div>
 
           <Button onClick={printDocument} disabled={!selectedEmployee} className="gap-2">
