@@ -323,6 +323,23 @@ const PermitListPanel = ({
     toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
   };
 
+  const handleExportCairoLetter = async () => {
+    if (rows.length === 0) {
+      toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
+      return;
+    }
+    const data = rows.map(entry => {
+      const emp = employeeById.get(entry.employee_id);
+      return {
+        name: emp?.name_ar || '',
+        jobTitle: emp?.permit_name_ar || emp?.job_title_ar || '',
+      };
+    });
+    const year = String(new Date().getFullYear() + 1);
+    await exportSecurityCairoRenewalLetter(data, year, formatDate(new Date().toISOString()));
+    toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
