@@ -313,6 +313,8 @@ export async function exportSecurityAirportsIssueLetter(
   rows: LetterRow[],
   year: string,
   dateText: string,
+  purpose = 'إنهاء إجراءات الركاب',
+  airports = 'عموم المطارات',
   fileName = `خطاب_استخراج_تصاريح_المطارات_${year}.docx`,
 ) {
   const res = await fetch(AIRPORTS_ISSUE_TEMPLATE_URL);
