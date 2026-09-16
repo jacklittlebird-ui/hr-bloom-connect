@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Employee } from '@/types/employee';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, ChevronsUpDown, Printer } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import linkAeroLogo from '@/assets/link-aero-logo.png';
+
+interface EmploymentContractProps {
+  employee: Employee;
+}
 
 interface Emp {
   id: string;
@@ -23,8 +25,6 @@ interface Emp {
   governorate: string | null;
   nationality: string | null;
 }
-
-const PAGE = 1000;
 
 const esc = (s: string | null | undefined) =>
   (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string));
@@ -41,6 +41,19 @@ const nidBoxes = (v: string | null | undefined) => {
 };
 
 type Duration = 'six_months' | 'year';
+
+const toInternalEmp = (employee: Employee): Emp => ({
+  id: employee.id,
+  employee_code: employee.employeeId,
+  name_ar: employee.nameAr,
+  national_id: employee.nationalId || null,
+  social_insurance_no: employee.socialInsuranceNo || null,
+  education_ar: employee.educationAr || null,
+  address: employee.address || null,
+  city: employee.city || null,
+  governorate: employee.governorate || null,
+  nationality: employee.nationality || null,
+});
 
 const buildHtml = (e: Emp, duration: Duration, logoUrl: string) => {
   const durationText =
@@ -79,10 +92,7 @@ p { margin:6px 0; orphans:3; widows:3; }
 .sign { display:flex; justify-content:space-between; margin-top:26px; font-weight:bold; }
 .sign > div { width:45%; }
 .sign .l { margin-top:14px; font-weight:normal; }
-@media print {
-  body { background:#fff; }
-  .sheet { margin:0; }
-}
+@media print { body { background:#fff; } .sheet { margin:0; } }
 </style></head><body>
 <main id="contract-source">
 
@@ -238,39 +248,15 @@ p { margin:6px 0; orphans:3; widows:3; }
   );
 };
 
-export const EmploymentContract = () => {
+export const EmploymentContract = ({ employee }: EmploymentContractProps) => {
   const { language } = useLanguage();
   const isAr = language === 'ar';
-  const [employees, setEmployees] = useState<Emp[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState('');
+  const emp = useMemo(() => toInternalEmp(employee), [employee]);
   const [duration, setDuration] = useState<Duration>('year');
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const all: Emp[] = [];
-      for (let from = 0; ; from += PAGE) {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('id, employee_code, name_ar, national_id, social_insurance_no, education_ar, address, city, governorate, nationality')
-          .order('employee_code')
-          .range(from, from + PAGE - 1);
-        if (error || !data?.length) break;
-        all.push(...(data as unknown as Emp[]));
-        if (data.length < PAGE) break;
-      }
-      if (!cancelled) { setEmployees(all); setLoading(false); }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  const selected = useMemo(() => employees.find(e => e.id === selectedId) || null, [employees, selectedId]);
-  const html = selected ? buildHtml(selected, duration, linkAeroLogo) : '';
+  const html = useMemo(() => buildHtml(emp, duration, linkAeroLogo), [emp, duration]);
 
   const print = () => {
-    if (!html) return;
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
     document.body.appendChild(iframe);
@@ -300,37 +286,10 @@ export const EmploymentContract = () => {
       <Card>
         <CardContent className="p-4 flex flex-wrap items-end gap-3">
           <div className="space-y-1">
-            <Label className="text-xs">{isAr ? 'اسم الموظف' : 'Employee'}</Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" role="combobox" className="h-9 w-[320px] justify-between font-normal" disabled={loading}>
-                  <span className="truncate">
-                    {loading ? (isAr ? 'جاري التحميل...' : 'Loading...') : selected ? `${selected.employee_code} — ${selected.name_ar}` : (isAr ? 'ابحث بالاسم أو الكود...' : 'Search by name or code...')}
-                  </span>
-                  <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[360px] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder={isAr ? 'بحث عن موظف...' : 'Search employee...'} />
-                  <CommandList className="max-h-[300px]">
-                    <CommandEmpty>{isAr ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
-                    <CommandGroup>
-                      {employees.map(e => (
-                        <CommandItem
-                          key={e.id}
-                          value={`${e.name_ar} ${e.employee_code}`}
-                          onSelect={() => { setSelectedId(e.id); setOpen(false); }}
-                        >
-                          <Check className={cn('me-2 h-4 w-4', selectedId === e.id ? 'opacity-100' : 'opacity-0')} />
-                          <span className="truncate">{e.employee_code} — {e.name_ar}</span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Label className="text-xs font-bold">{isAr ? 'الموظف' : 'Employee'}</Label>
+            <div className="h-9 flex items-center px-3 rounded-md border bg-muted/50 text-sm min-w-[280px]">
+              {emp.employee_code} — {emp.name_ar}
+            </div>
           </div>
 
           <div className="space-y-1">
@@ -344,19 +303,17 @@ export const EmploymentContract = () => {
             </Select>
           </div>
 
-          <Button onClick={print} disabled={!selected} className="gap-2">
+          <Button onClick={print} className="gap-2">
             <Printer className="h-4 w-4" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}
           </Button>
         </CardContent>
       </Card>
 
-      {selected && (
-        <Card>
-          <CardContent className="p-0">
-            <iframe title="contract-preview" className="w-full h-[80vh] rounded-md bg-white" srcDoc={html} />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardContent className="p-0">
+          <iframe title="contract-preview" className="w-full h-[80vh] rounded-md bg-white" srcDoc={html} />
+        </CardContent>
+      </Card>
     </div>
   );
 };

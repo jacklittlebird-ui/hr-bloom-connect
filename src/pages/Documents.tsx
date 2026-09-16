@@ -27,14 +27,6 @@ import { MissingInsuranceStart } from '@/components/documents/MissingInsuranceSt
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
 import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
-import { Form01 } from '@/components/documents/Form01';
-import { Form06 } from '@/components/documents/Form06';
-import { EmploymentContract } from '@/components/documents/EmploymentContract';
-import { ClearanceCertificate } from '@/components/documents/ClearanceCertificate';
-import { ExperienceCertificate } from '@/components/documents/ExperienceCertificate';
-import { MutualTermination } from '@/components/documents/MutualTermination';
-import { EmployeeDataForm } from '@/components/documents/EmployeeDataForm';
-import { FinalSettlement } from '@/components/documents/FinalSettlement';
 import { InsuranceClosures } from '@/components/documents/InsuranceClosures';
 
 
@@ -75,7 +67,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'insuranceClosures' | 'reminders' | 'missingInsuranceStart' | 'form01' | 'form06' | 'contracts' | 'clearance' | 'experience' | 'mutualTermination' | 'employeeDataForm' | 'finalSettlement'>('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'insuranceClosures' | 'reminders' | 'missingInsuranceStart'>('renewals');
   const [reminders] = usePersistedState<Reminder[]>('hr_general_reminders', []);
   const activeRemindersCount = reminders.filter(r => !r.completed).length;
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
@@ -165,16 +157,7 @@ const Documents = () => {
       items: [
         { key: 'reminders', ar: 'تنبيهات عامة', en: 'General Reminders', icon: Bell },
         { key: 'directory', ar: 'دليل الموظفين', en: 'Directory', icon: Users },
-        { key: 'form01', ar: 'استمارة (1)', en: 'Form 1', icon: File },
-        { key: 'form06', ar: 'استمارة (6)', en: 'Form 6', icon: File },
-        { key: 'contracts', ar: 'عقود العمل', en: 'Employment Contracts', icon: File },
-        { key: 'clearance', ar: 'إخلاء طرف', en: 'Clearance Certificate', icon: File },
-        { key: 'experience', ar: 'شهادة خبرة', en: 'Experience Certificate', icon: File },
-        { key: 'mutualTermination', ar: 'إنهاء علاقة عمل بالتراضي', en: 'Mutual Termination', icon: File },
-        { key: 'finalSettlement', ar: 'مخالصة نهائية', en: 'Final Settlement', icon: File },
-        { key: 'employeeDataForm', ar: 'نموذج بيانات موظف', en: 'Employee Data Form', icon: File },
         { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
-
       ],
     },
   ];
@@ -346,24 +329,6 @@ const Documents = () => {
           <MissingInsuranceStart />
         ) : activeMainTab === 'directory' ? (
           <EmployeeDirectory />
-        ) : activeMainTab === 'form01' ? (
-          <Form01 />
-        ) : activeMainTab === 'form06' ? (
-          <Form06 />
-        ) : activeMainTab === 'clearance' ? (
-          <ClearanceCertificate />
-        ) : activeMainTab === 'experience' ? (
-          <ExperienceCertificate />
-        ) : activeMainTab === 'mutualTermination' ? (
-          <MutualTermination />
-        ) : activeMainTab === 'finalSettlement' ? (
-          <FinalSettlement />
-        ) : activeMainTab === 'employeeDataForm' ? (
-          <EmployeeDataForm />
-        ) : activeMainTab === 'contracts' ? (
-
-          <EmploymentContract />
-
         ) : activeMainTab === 'leaveBalances' ? (
           <LeaveBalancesAlert />
         ) : activeMainTab === 'unpaidLeaves' ? (

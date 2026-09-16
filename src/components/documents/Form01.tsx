@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Employee } from '@/types/employee';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown, Printer, Loader2, FileSpreadsheet } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Printer } from 'lucide-react';
 import nosiLogo from '@/assets/nosi-logo.png';
+
+interface Form01Props {
+  employee: Employee;
+}
 
 interface Emp {
   id: string;
@@ -27,8 +28,6 @@ interface Emp {
   social_insurance_start_date: string | null;
 }
 
-const PAGE = 1000;
-
 const digits = (v: string | null | undefined, len: number) => {
   const d = (v || '').replace(/\D/g, '').slice(0, len);
   return Array.from({ length: len }, (_, i) => d[i] || '');
@@ -39,14 +38,6 @@ const boxes = (v: string | null | undefined, len: number) =>
 
 
 const esc = (s: string | null | undefined) => (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string));
-
-export interface Form01Extra {
-  office: string; applicant: string; applicantRole: string;
-  applicantInsuranceNo: string; applicantNationalId: string; applicantPhone: string; applicantTaxNo: string;
-  sector: string; subCode: string; periodType: string; wage: string; totalWage: string;
-  buildingNo: string; village: string; writtenAt: string;
-  facilityName: string; facilityNo: string;
-}
 
 const line = (v: string | null | undefined, w = 'auto') =>
   `<span class="fill" style="min-width:${w}">${esc(v) || '&nbsp;'}</span>`;
@@ -71,6 +62,14 @@ const amountBoxes = (v: string) => {
   const d = (v || '').replace(/\D/g, '').slice(-6).padStart(6, ' ');
   return `<span class="boxes">${Array.from(d).map(c => `<span class="box">${c.trim()}</span>`).join('')}</span>`;
 };
+
+export interface Form01Extra {
+  office: string; applicant: string; applicantRole: string;
+  applicantInsuranceNo: string; applicantNationalId: string; applicantPhone: string; applicantTaxNo: string;
+  sector: string; subCode: string; periodType: string; wage: string; totalWage: string;
+  buildingNo: string; village: string; writtenAt: string;
+  facilityName: string; facilityNo: string;
+}
 
 const buildHtml = (e: Emp, logoUrl: string, x: Form01Extra) => `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
@@ -169,7 +168,7 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">المهـنة :</span>${line('')}</span>
   </div>
   <div class="row">
-    <span class="cell"><span class="lbl">تاريــخ بــدء الإشــتراك :</span>${dateBoxes('')}</span>
+    <span class="cell"><span class="lbl">تاريــخ بــدء الإشــتراك :</span>${dateBoxes(e.social_insurance_start_date)}</span>
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">القطــاع :</span>${line(x.sector)}</span>
   </div>
   <div class="row">
@@ -301,69 +300,66 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 
 </body></html>`;
 
+const toInternalEmp = (employee: Employee): Emp => ({
+  id: employee.id,
+  employee_code: employee.employeeId,
+  name_ar: employee.nameAr,
+  social_insurance_no: employee.socialInsuranceNo || null,
+  national_id: employee.nationalId || null,
+  education_ar: employee.educationAr || null,
+  address: employee.address || null,
+  city: employee.city || null,
+  governorate: employee.governorate || null,
+  job_title_ar: employee.jobTitleAr || null,
+  nationality: employee.nationality || null,
+  phone: employee.phone || null,
+  social_insurance_start_date: employee.socialInsuranceStartDate || null,
+});
 
-
-
-
-export const Form01 = () => {
+export const Form01 = ({ employee }: Form01Props) => {
   const { language } = useLanguage();
   const isAr = language === 'ar';
-  const [employees, setEmployees] = useState<Emp[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState('');
-  const [emp, setEmp] = useState<Emp | null>(null);
+  const [emp, setEmp] = useState<Emp>(() => toInternalEmp(employee));
+
+  useEffect(() => {
+    setEmp(toInternalEmp(employee));
+  }, [employee]);
+
   const [extra, setExtra] = useState<Form01Extra>({
-    office: 'الزمالك', applicant: 'محمود احمد سلامة', applicantRole: 'مندوب',
-    applicantInsuranceNo: '12694358', applicantNationalId: '99560411050303', applicantPhone: '01006676711', applicantTaxNo: '215/137/108',
-    sector: 'خاص', subCode: '', periodType: '', wage: '', totalWage: '',
-    buildingNo: '', village: '', writtenAt: '',
-    facilityName: 'لينك أيرو تريدنج أجنسي', facilityNo: '1307926',
+    office: 'الزمالك',
+    applicant: employee.nameAr,
+    applicantRole: 'الموظف نفسه',
+    applicantInsuranceNo: employee.socialInsuranceNo || '',
+    applicantNationalId: employee.nationalId || '',
+    applicantPhone: employee.phone || '',
+    applicantTaxNo: '215/137/108',
+    sector: 'خاص',
+    subCode: '',
+    periodType: '',
+    wage: '',
+    totalWage: '',
+    buildingNo: '',
+    village: '',
+    writtenAt: '',
+    facilityName: 'لينك أيرو تريدنج أجنسي',
+    facilityNo: '1307926',
   });
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const all: Emp[] = [];
-      for (let from = 0; ; from += PAGE) {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('id, employee_code, name_ar, social_insurance_no, national_id, education_ar, address, city, governorate, job_title_ar, nationality, phone, social_insurance_start_date')
-          .order('employee_code')
-          .range(from, from + PAGE - 1);
-        if (error || !data?.length) break;
-        all.push(...(data as unknown as Emp[]));
-        if (data.length < PAGE) break;
-      }
-      if (!cancelled) { setEmployees(all); setLoading(false); }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    setExtra(p => ({
+      ...p,
+      applicant: employee.nameAr,
+      applicantInsuranceNo: employee.socialInsuranceNo || '',
+      applicantNationalId: employee.nationalId || '',
+      applicantPhone: employee.phone || '',
+    }));
+  }, [employee]);
 
-  const selected = useMemo(() => employees.find(e => e.id === selectedId) || null, [employees, selectedId]);
+  const setEmpField = (k: keyof Emp, v: string) => setEmp(prev => ({ ...prev, [k]: v }));
 
-  useEffect(() => {
-    setEmp(selected ? { ...selected } : null);
-    if (selected) {
-      setExtra(p => ({
-        ...p,
-        applicant: selected.name_ar || '',
-        applicantRole: 'الموظف نفسه',
-        applicantInsuranceNo: selected.social_insurance_no || '',
-        applicantNationalId: selected.national_id || '',
-        applicantPhone: selected.phone || '',
-      }));
-    }
-  }, [selected]);
-
-  const setEmpField = (k: keyof Emp, v: string) => setEmp(p => (p ? { ...p, [k]: v } : p));
-  const html = emp ? buildHtml(emp, nosiLogo, extra) : '';
-
-
-
+  const html = useMemo(() => buildHtml(emp, nosiLogo, extra), [emp, extra]);
 
   const print = () => {
-    if (!html) return;
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
     document.body.appendChild(iframe);
@@ -383,40 +379,13 @@ export const Form01 = () => {
     <div className="space-y-4" dir={isAr ? 'rtl' : 'ltr'}>
       <Card>
         <CardContent className="p-4 flex flex-wrap items-end gap-3">
-          <div className="space-y-1 min-w-[280px]">
-            <Label className="text-xs">{isAr ? 'اسم الموظف' : 'Employee'}</Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" role="combobox" className="h-9 w-[320px] justify-between font-normal" disabled={loading}>
-                  <span className="truncate">
-                    {loading ? (isAr ? 'جاري التحميل...' : 'Loading...') : selected ? `${selected.employee_code} — ${selected.name_ar}` : (isAr ? 'ابحث بالاسم أو الكود...' : 'Search by name or code...')}
-                  </span>
-                  <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[360px] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder={isAr ? 'بحث عن موظف...' : 'Search employee...'} />
-                  <CommandList className="max-h-[300px]">
-                    <CommandEmpty>{isAr ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
-                    <CommandGroup>
-                      {employees.map(e => (
-                        <CommandItem
-                          key={e.id}
-                          value={`${e.name_ar} ${e.employee_code}`}
-                          onSelect={() => { setSelectedId(e.id); setOpen(false); }}
-                        >
-                          <Check className={cn('me-2 h-4 w-4', selectedId === e.id ? 'opacity-100' : 'opacity-0')} />
-                          <span className="truncate">{e.employee_code} — {e.name_ar}</span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+          <div className="space-y-1">
+            <Label className="text-xs font-bold">{isAr ? 'الموظف' : 'Employee'}</Label>
+            <div className="h-9 flex items-center px-3 rounded-md border bg-muted/50 text-sm min-w-[280px]">
+              {emp.employee_code} — {emp.name_ar}
+            </div>
           </div>
-          <Button onClick={print} disabled={!emp} className="gap-2">
+          <Button onClick={print} className="gap-2">
             <Printer className="h-4 w-4" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}
           </Button>
         </CardContent>
@@ -428,47 +397,47 @@ export const Form01 = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'اسم المؤمن عليه' : 'name_ar'}</Label>
-              <Input className="h-9" value={emp?.name_ar || ''} onChange={ev => setEmpField('name_ar', ev.target.value)} />
+              <Input className="h-9" value={emp.name_ar} onChange={ev => setEmpField('name_ar', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'الرقم التأمينى' : 'social_insurance_no'}</Label>
-              <Input className="h-9" value={emp?.social_insurance_no || ''} onChange={ev => setEmpField('social_insurance_no', ev.target.value)} />
+              <Input className="h-9" value={emp.social_insurance_no || ''} onChange={ev => setEmpField('social_insurance_no', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'الرقم القومى' : 'national_id'}</Label>
-              <Input className="h-9" value={emp?.national_id || ''} onChange={ev => setEmpField('national_id', ev.target.value)} />
+              <Input className="h-9" value={emp.national_id || ''} onChange={ev => setEmpField('national_id', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'الجنسية' : 'nationality'}</Label>
-              <Input className="h-9" value={emp?.nationality || ''} onChange={ev => setEmpField('nationality', ev.target.value)} />
+              <Input className="h-9" value={emp.nationality || ''} onChange={ev => setEmpField('nationality', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'المؤهل' : 'education_ar'}</Label>
-              <Input className="h-9" value={emp?.education_ar || ''} onChange={ev => setEmpField('education_ar', ev.target.value)} />
+              <Input className="h-9" value={emp.education_ar || ''} onChange={ev => setEmpField('education_ar', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'المهنة' : 'job_title_ar'}</Label>
-              <Input className="h-9" value={emp?.job_title_ar || ''} onChange={ev => setEmpField('job_title_ar', ev.target.value)} />
+              <Input className="h-9" value={emp.job_title_ar || ''} onChange={ev => setEmpField('job_title_ar', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'تاريخ بدء الاشتراك' : 'social_insurance_start_date'}</Label>
-              <Input className="h-9" value={emp?.social_insurance_start_date || ''} onChange={ev => setEmpField('social_insurance_start_date', ev.target.value)} />
+              <Input className="h-9" value={emp.social_insurance_start_date || ''} onChange={ev => setEmpField('social_insurance_start_date', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'شارع' : 'address'}</Label>
-              <Input className="h-9" value={emp?.address || ''} onChange={ev => setEmpField('address', ev.target.value)} />
+              <Input className="h-9" value={emp.address || ''} onChange={ev => setEmpField('address', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'قسم / مركز' : 'city'}</Label>
-              <Input className="h-9" value={emp?.city || ''} onChange={ev => setEmpField('city', ev.target.value)} />
+              <Input className="h-9" value={emp.city || ''} onChange={ev => setEmpField('city', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'محافظة' : 'governorate'}</Label>
-              <Input className="h-9" value={emp?.governorate || ''} onChange={ev => setEmpField('governorate', ev.target.value)} />
+              <Input className="h-9" value={emp.governorate || ''} onChange={ev => setEmpField('governorate', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'رقم التليفون' : 'phone'}</Label>
-              <Input className="h-9" value={emp?.phone || ''} onChange={ev => setEmpField('phone', ev.target.value)} />
+              <Input className="h-9" value={emp.phone || ''} onChange={ev => setEmpField('phone', ev.target.value)} />
             </div>
           </div>
           <div className="mb-3 text-sm font-semibold">{isAr ? 'بيانات إضافية للاستمارة' : 'Additional form data'}</div>
@@ -549,18 +518,7 @@ export const Form01 = () => {
 
       <Card>
         <CardContent className="p-0 h-[75vh]">
-          {loading ? (
-            <div className="flex h-full items-center justify-center gap-2 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />{isAr ? 'جاري التحميل...' : 'Loading...'}
-            </div>
-          ) : emp ? (
-            <iframe srcDoc={html} title="form-01" className="w-full h-full bg-white rounded-md border" />
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-              <FileSpreadsheet className="h-8 w-8" />
-              {isAr ? 'اختر اسم الموظف لعرض الاستمارة' : 'Select an employee to view the form'}
-            </div>
-          )}
+          <iframe srcDoc={html} title="form-01" className="w-full h-full bg-white rounded-md border" />
         </CardContent>
       </Card>
     </div>

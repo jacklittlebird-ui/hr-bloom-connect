@@ -42,7 +42,7 @@ export const DocumentsTab = ({ employee }: DocumentsTabProps) => {
         {DOC_TABS.map(({ key, Comp }) => (
           <TabsContent key={key} value={key}>
             <Suspense fallback={<div className="p-8 text-center text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</div>}>
-              <Comp />
+              <Comp employee={employee} />
             </Suspense>
           </TabsContent>
         ))}

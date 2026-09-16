@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Employee } from '@/types/employee';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Check, ChevronsUpDown, Printer } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Printer } from 'lucide-react';
+
+interface ClearanceCertificateProps {
+  employee: Employee;
+}
 
 interface Emp {
   id: string;
@@ -20,8 +21,6 @@ interface Emp {
   job_title_ar: string | null;
   resignation_date: string | null;
 }
-
-const PAGE = 1000;
 
 const esc = (s: string | null | undefined) =>
   (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string));
@@ -43,6 +42,16 @@ interface FormState {
   clearanceDate: string;
   docDate: string;
 }
+
+const toInternalEmp = (employee: Employee): Emp => ({
+  id: employee.id,
+  employee_code: employee.employeeId,
+  name_ar: employee.nameAr,
+  gender: employee.gender || null,
+  hire_date: employee.hireDate || null,
+  job_title_ar: employee.jobTitleAr || null,
+  resignation_date: employee.resignationDate || null,
+});
 
 const buildHtml = (name: string, f: FormState) => {
   const male = f.gender === 'male';
@@ -79,57 +88,24 @@ p.body { font-size:15.5px; line-height:2.3; text-align:justify; margin:0; }
 </body></html>`;
 };
 
-export const ClearanceCertificate = () => {
+export const ClearanceCertificate = ({ employee }: ClearanceCertificateProps) => {
   const { language } = useLanguage();
   const isAr = language === 'ar';
   const today = new Date().toISOString().split('T')[0];
+  const emp = useMemo(() => toInternalEmp(employee), [employee]);
 
-  const [employees, setEmployees] = useState<Emp[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState('');
   const [form, setForm] = useState<FormState>({
-    gender: 'male', hireDate: '', endDate: '', jobTitle: '', clearanceDate: '', docDate: today,
+    gender: ((emp.gender || '').includes('أنث') || (emp.gender || '').toLowerCase() === 'female') ? 'female' : 'male',
+    hireDate: emp.hire_date || '',
+    endDate: emp.resignation_date || '',
+    jobTitle: emp.job_title_ar || '',
+    clearanceDate: emp.resignation_date || '',
+    docDate: today,
   });
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const all: Emp[] = [];
-      for (let from = 0; ; from += PAGE) {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('id, employee_code, name_ar, gender, hire_date, job_title_ar, resignation_date')
-          .order('employee_code')
-          .range(from, from + PAGE - 1);
-        if (error || !data?.length) break;
-        all.push(...(data as unknown as Emp[]));
-        if (data.length < PAGE) break;
-      }
-      if (!cancelled) { setEmployees(all); setLoading(false); }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  const selected = useMemo(() => employees.find(e => e.id === selectedId) || null, [employees, selectedId]);
-
-  const pick = (e: Emp) => {
-    setSelectedId(e.id);
-    setOpen(false);
-    setForm({
-      gender: (e.gender || '').includes('أنث') || (e.gender || '').toLowerCase() === 'female' ? 'female' : 'male',
-      hireDate: e.hire_date || '',
-      endDate: e.resignation_date || '',
-      jobTitle: e.job_title_ar || '',
-      clearanceDate: e.resignation_date || '',
-      docDate: today,
-    });
-  };
-
-  const html = selected ? buildHtml(selected.name_ar, form) : '';
+  const html = useMemo(() => buildHtml(emp.name_ar, form), [emp.name_ar, form]);
 
   const print = () => {
-    if (!html) return;
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
     document.body.appendChild(iframe);
@@ -152,33 +128,10 @@ export const ClearanceCertificate = () => {
       <Card>
         <CardContent className="p-4 flex flex-wrap items-end gap-3">
           <div className="space-y-1">
-            <Label className="text-xs">{isAr ? 'اسم الموظف' : 'Employee'}</Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" role="combobox" className="h-9 w-[320px] justify-between font-normal" disabled={loading}>
-                  <span className="truncate">
-                    {loading ? (isAr ? 'جاري التحميل...' : 'Loading...') : selected ? `${selected.employee_code} — ${selected.name_ar}` : (isAr ? 'ابحث بالاسم أو الكود...' : 'Search by name or code...')}
-                  </span>
-                  <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[360px] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder={isAr ? 'بحث عن موظف...' : 'Search employee...'} />
-                  <CommandList className="max-h-[300px]">
-                    <CommandEmpty>{isAr ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
-                    <CommandGroup>
-                      {employees.map(e => (
-                        <CommandItem key={e.id} value={`${e.name_ar} ${e.employee_code}`} onSelect={() => pick(e)}>
-                          <Check className={cn('me-2 h-4 w-4', selectedId === e.id ? 'opacity-100' : 'opacity-0')} />
-                          <span className="truncate">{e.employee_code} — {e.name_ar}</span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Label className="text-xs font-bold">{isAr ? 'الموظف' : 'Employee'}</Label>
+            <div className="h-9 flex items-center px-3 rounded-md border bg-muted/50 text-sm min-w-[280px]">
+              {emp.employee_code} — {emp.name_ar}
+            </div>
           </div>
 
           <div className="space-y-1">
@@ -217,19 +170,17 @@ export const ClearanceCertificate = () => {
             <Input type="date" className="h-9 w-[170px]" value={form.docDate} onChange={e => set('docDate', e.target.value)} />
           </div>
 
-          <Button onClick={print} disabled={!selected} className="gap-2">
+          <Button onClick={print} className="gap-2">
             <Printer className="h-4 w-4" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}
           </Button>
         </CardContent>
       </Card>
 
-      {selected && (
-        <Card>
-          <CardContent className="p-0">
-            <iframe title="clearance-preview" className="w-full h-[80vh] rounded-md bg-white" srcDoc={html} />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardContent className="p-0">
+          <iframe title="clearance-preview" className="w-full h-[80vh] rounded-md bg-white" srcDoc={html} />
+        </CardContent>
+      </Card>
     </div>
   );
 };
