@@ -337,10 +337,16 @@ const PermitListPanel = ({
             />
           </div>
           {canExportRenewalSheet && (
-            <Button variant="outline" className="gap-2" onClick={handleExportSheet}>
-              <FileSpreadsheet className="w-4 h-4" />
-              {ar ? 'تصدير كشف التجديد' : 'Export renewal sheet'}
-            </Button>
+            <>
+              <Button variant="outline" className="gap-2" onClick={handleExportSheet}>
+                <FileSpreadsheet className="w-4 h-4" />
+                {ar ? 'تصدير كشف التجديد' : 'Export renewal sheet'}
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={handleExportLetter}>
+                <FileText className="w-4 h-4" />
+                {ar ? 'تصدير خطاب التجديد' : 'Export renewal letter'}
+              </Button>
+            </>
           )}
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
