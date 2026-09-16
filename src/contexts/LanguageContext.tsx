@@ -242,7 +242,7 @@ const translations: Record<string, Record<Language, string>> = {
   'employees.tabs.missionRecord': { en: 'Mission Record', ar: 'سجل المأموريات' },
   'employees.tabs.evaluations': { en: 'Evaluations', ar: 'التقييمات' },
   'employees.tabs.violations': { en: 'Violations & Penalties', ar: 'المخالفات والجزاءات' },
-  'employees.tabs.documents': { en: 'Documents', ar: 'المستندات' },
+  'employees.tabs.documents': { en: 'Forms', ar: 'النماذج' },
   'employees.tabs.salaryRecord': { en: 'Salary Record', ar: 'سجل الرواتب' },
   'employees.tabs.loansAdvances': { en: 'Advances & Loans', ar: 'السلف والقروض' },
   'employees.tabs.training': { en: 'Training & Development', ar: 'التدريب والتطوير' },
