@@ -7,6 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ministryLogo from '@/assets/ministry-labour-logo-v2.png.asset.json';
+
+const ASSET_ORIGIN = 'https://hr-bloom-connect.lovable.app';
+const LOGO_URL = new URL(ministryLogo.url, ASSET_ORIGIN).href;
 
 interface MutualTerminationProps {
   employee: Employee;
@@ -20,7 +24,6 @@ interface Emp {
   address: string | null;
   phone: string | null;
   hire_date: string | null;
-  social_insurance_start_date: string | null;
   resignation_date: string | null;
   job_title_ar: string | null;
   contract_type: string | null;
@@ -29,22 +32,23 @@ interface Emp {
 const esc = (s: string | null | undefined) =>
   (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string));
 
-const fmt = (iso: string) => {
-  if (!iso) return '......./......./.................';
+const dots = (n = 40) => '.'.repeat(n);
+
+const fmt = (iso: string | null | undefined, n = 24) => {
+  if (!iso) return dots(n);
   const [y, m, d] = iso.split('-');
   if (!y || !m || !d) return esc(iso);
   return `${d}/${m}/${y}`;
 };
 
-const dots = (n = 60) => '.'.repeat(n);
-
-const line = (v: string | null | undefined, n = 60) => `<span class="fill">${esc(v) || dots(n)}</span>`;
-
-const nidBoxes = (v: string | null | undefined) => {
-  const d = (v || '').replace(/\D/g, '').slice(0, 14);
-  const cells = Array.from({ length: 14 }, (_, i) => d[i] || '');
-  return `<span class="boxes">${cells.map(c => `<span class="box">${c}</span>`).join('')}</span>`;
+const AR_DAYS = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const dayName = (iso: string | null | undefined) => {
+  if (!iso) return dots(14);
+  const dt = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(dt.getTime()) ? dots(14) : AR_DAYS[dt.getDay()];
 };
+
+const line = (v: string | null | undefined, n = 40) => `<span class="fill">${esc(v) || dots(n)}</span>`;
 
 const toInternalEmp = (employee: Employee): Emp => ({
   id: employee.id,
@@ -54,26 +58,50 @@ const toInternalEmp = (employee: Employee): Emp => ({
   address: employee.address || null,
   phone: employee.phone || null,
   hire_date: employee.hireDate || null,
-  social_insurance_start_date: employee.socialInsuranceStartDate || null,
   resignation_date: employee.resignationDate || null,
   job_title_ar: employee.jobTitleAr || null,
   contract_type: employee.contractType || null,
 });
 
 interface FormState {
+  agreementDate: string;
   lastWorkDate: string;
-  terminationDate: string;
   jobTitle: string;
+  contractType: string;
+  hireDate: string;
+  nationalId: string;
   address: string;
   phone: string;
-  nationalId: string;
-  hireDate: string;
-  socialInsuranceStartDate: string;
-  entitlements: string;
   copies: string;
+  employerRepName: string;
+  employerRepTitle: string;
+  companyName: string;
+  companyAddress: string;
 }
 
-const buildHtml = (e: Emp, f: FormState, today: string) => `<!DOCTYPE html>
+const signatures = (e: Emp, f: FormState) => `
+  <div class="sig">
+    <div class="sig-col">
+      <div class="sig-head">مقدمه لسيادتكم :</div>
+      <div>الاسم: ${line(e.name_ar, 28)}</div>
+      <div>الوظيفة: ${line(f.jobTitle, 26)}</div>
+      <div>الرقم القومي: ${line(f.nationalId, 22)}</div>
+      <div>العنوان: ${line(f.address, 26)}</div>
+      <div>رقم التليفون: ${line(f.phone, 22)}</div>
+      <div>(التوقيع) ${dots(24)}</div>
+    </div>
+    <div class="sig-col">
+      <div class="sig-head">ممثل جهة الإدارة :</div>
+      <div>الاسم: ${line(f.employerRepName, 28)}</div>
+      <div>الوظيفة: ${line(f.employerRepTitle, 26)}</div>
+      <div>اسم الشركة: ${line(f.companyName, 22)}</div>
+      <div>مقر الشركة: ${line(f.companyAddress, 22)}</div>
+      <div>(التوقيع) ${dots(24)}</div>
+      <div>خاتم جهة العمل : ${dots(16)}</div>
+    </div>
+  </div>`;
+
+const buildHtml = (e: Emp, f: FormState) => `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -82,90 +110,70 @@ const buildHtml = (e: Emp, f: FormState, today: string) => `<!DOCTYPE html>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; }
-body { font-family: "Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#fff; }
-.page { width:210mm; min-height:297mm; margin:0 auto; padding:20mm 16mm 18mm; position:relative; background:#fff; }
-.header { display:flex; align-items:flex-start; justify-content:space-between; }
-.logo { width:64px; height:auto; }
-h1 { flex:1; text-align:center; font-size:16px; font-weight:bold; line-height:1.8; }
-h2 { text-align:center; font-size:15px; font-weight:bold; margin:14px 0 10px; text-decoration:underline; }
-p { margin:5px 0; line-height:1.8; font-size:13.5px; text-align:justify; }
-.section { margin:10px 0; }
-.section-title { font-weight:bold; text-align:center; margin:10px 0; font-size:14px; }
-.boxes { display:inline-flex; direction:ltr; margin:4px 0; }
-.box { width:18px; height:22px; border:1px solid #000; margin-inline-start:-1px; text-align:center; line-height:21px; font-size:12px; }
-.fill { font-weight:bold; }
-.two-col { display:flex; justify-content:space-between; gap:16px; margin:8px 0; }
-.two-col > div { width:48%; }
-.signatures { margin-top:28px; display:flex; justify-content:space-between; font-weight:bold; }
-.signatures > div { width:45%; }
-.line { margin-top:14px; }
+body { font-family:"Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#fff; }
+.page { width:210mm; height:297mm; margin:0 auto; padding:10mm 16mm 8mm; background:#fff; overflow:hidden; display:flex; flex-direction:column; }
+.logo-bar { text-align:right; }
+.logo-bar img { width:22mm; height:22mm; object-fit:contain; }
+h1 { text-align:center; font-size:17px; font-weight:700; margin:2mm 0 1mm; }
+h2 { text-align:center; font-size:15px; font-weight:700; margin:0 0 4mm; text-decoration:underline; }
+p { margin:1.6mm 0; line-height:1.65; font-size:12.5px; text-align:justify; }
+.clause { font-weight:700; text-align:center; margin:3mm 0 1mm; font-size:13px; }
+.fill { font-weight:700; }
+.content { flex:1; }
+.sig { display:flex; justify-content:space-between; gap:8mm; margin-top:5mm; font-size:12px; line-height:1.9; border-top:1px solid #000; padding-top:3mm; }
+.sig-col { width:48%; }
+.sig-head { font-weight:700; margin-bottom:1mm; }
+.pno { text-align:center; font-size:11px; margin-top:2mm; }
+@media screen { body { background:#eee; } .page { margin:8px auto; box-shadow:0 1px 5px #aaa; } }
+@media print { .page { margin:0; box-shadow:none; page-break-after:always; } .page:last-child { page-break-after:auto; } }
 </style></head><body>
+
 <div class="page">
-  <div class="header">
-    <div style="text-align:center; flex:1;">
-      <div style="font-weight:bold; font-size:15px;">شركة لينك آيرو تريدنج إجنسي</div>
-      <div style="font-size:11px;">10 ش الجزيرة الوسطى – الزمالك – القاهرة</div>
-    </div>
-  </div>
+  <div class="logo-bar"><img src="${LOGO_URL}" alt=""></div>
+  <div class="content">
+    <h1>نموذج</h1>
+    <h2>إنهاء علاقة العمل بالتوافق بين الطرفين</h2>
+    <p>إنه في يوم ${line(dayName(f.agreementDate), 14)} الموافق ${line(fmt(f.agreementDate), 20)}</p>
+    <p><b>حرر هذا الاتفاق بين كل من:</b></p>
+    <p><b>الطرف الأول:</b> السيد / ${line(f.employerRepName, 30)} بصفته الممثل القانوني لصاحب العمل بشركة ${line(f.companyName, 30)}</p>
+    <p><b>الطرف الثاني:</b> السيد / ${line(e.name_ar, 30)} والذي يعمل لدى الطرف الأول بوظيفة ${line(f.jobTitle, 26)}</p>
+    <p>وبعد أن أقر الطرفان بأهليتهما القانونية الكاملة للتصرف والتعاقد اتفقا على ما يلي:</p>
 
-  <h2>إنهاء علاقة عمل بالتراضي</h2>
+    <div class="clause">(تمهيد)</div>
+    <p>يعمل الطرف الثاني لدى الطرف الأول بوظيفة ${line(f.jobTitle, 26)} بعقد عمل ${line(f.contractType, 20)} (محدد المدة / غير محدد المدة) منذ تاريخ ${line(fmt(f.hireDate), 20)}، ويرغب في التحلل من عقد العمل بالتراضي والتوافق مع صاحب العمل، وقد تلاقت إرادة الطرفين على ذلك.</p>
 
-  <div class="section">
-    <p><b>الطرف الأول:</b> شركة لينك آيرو تريدنج إجنسي، ويمثلها في هذا العقد السيد/ جاك إسحق عبد المسيح، بصفته المدير المسؤول عن الموارد البشرية بالشركة.</p>
-    <p><b>الطرف الثاني:</b> السيد/ ${line(e.name_ar)}</p>
-    <p>الرقم القومي: ${nidBoxes(f.nationalId)}</p>
-    <p>العنوان: ${line(f.address)}</p>
-    <p>رقم الهاتف: ${line(f.phone)}</p>
-  </div>
+    <div class="clause">(البند الأول)</div>
+    <p>يعتبر التمهيد السابق جزء لا يتجزأ من هذا الاتفاق، وتسري عليه جميع أحكامه.</p>
 
-  <div class="section">
-    <div class="section-title">البند الأول: تمهيد</div>
-    <p>حيث سبق وانعقدت علاقة عمل بين الطرفين بتاريخ ${fmt(f.hireDate)} بموجب ععمل ${line(e.contract_type)}، حيث كان الطرف الثاني يعمل لدى الطرف الأول في وظيفة ${line(f.jobTitle)}.</p>
-  </div>
+    <div class="clause">(البند الثاني)</div>
+    <p>يقر الطرف الثاني (العامل) أن هذا الاتفاق تم بالتوافق بينه وبين الطرف الأول (صاحب العمل) بناءً على طلب كتابي قدمه لجهة عمله وبإرادته الحرة دون تهديد أو إكراه.</p>
 
-  <div class="section">
-    <div class="section-title">البند الثاني: إرادة حرة</div>
-    <p>اتفق الطرفان بالتراضي على إنهاء علاقة العمل بينهما دون إكراه أو ضغط من أي طرف، ويُعد هذا التوقيع استقالة نهائية من الطرف الثاني وموافقة صريحة من الطرف الأول.</p>
-  </div>
+    <div class="clause">(البند الثالث)</div>
+    <p>يقر الطرفان أن آخر يوم عمل تم الاتفاق عليه هو يوم ${line(dayName(f.lastWorkDate), 12)} الموافق ${line(fmt(f.lastWorkDate), 20)}.</p>
 
-  <div class="section">
-    <div class="section-title">البند الثالث: آخر يوم عمل</div>
-    <p>يُعتبر يوم ${fmt(f.lastWorkDate)} هو آخر يوم عمل فعلي للطرف الثاني لدى الطرف الأول، ويتعهد الطرف الثاني بتسليم كافة العهدة والممتلكات والمستندات والبريد الإلكتروني الخاص بالشركة.</p>
-  </div>
+    <div class="clause">(البند الرابع)</div>
+    <p>يقر صاحب العمل بأنه يلتزم - قبل توقيع هذا الاتفاق - بتسوية كافة حقوق العامل المالية، وعلى الخصوص أجره عن فترة عمله حتى آخر يوم عمل، والمقابل النقدي لرصيد أجازاته السنوية التي لم يقم بها، وأية مزايا أخرى مقررة في عقد العمل الفردي أو الجماعي أو لائحة تنظيم العمل بالمنشأة أو بمقتضى العرف.</p>
 
-  <div class="section">
-    <div class="section-title">البند الرابع: تسوية الحقوق</div>
-    <p>اتفق الطرفان على أنه قد تم تسوية كافة حقوق الطرف الثاني المالية والقانونية المستحقة عن فترة عمله حتى تاريخ ${fmt(f.terminationDate)}، بما فيها الأجر والإجازات والمكافآت والتعويضات المستحقة، وأن الطرف الثاني لا يملك أي مطالبة مالية أو قانونية أخرى مستقبلية على الطرف الأول.</p>
-    <p>ملاحظات إضافية: ${line(f.entitlements, 100)}</p>
+    <div class="clause">(البند الخامس)</div>
+    <p>يقر الطرف الثاني العامل بأن توقيعه على هذا الاتفاق يعتبر مخالصة وإبراء ذمة صاحب العمل من أية مستحقات مالية.</p>
   </div>
+  ${signatures(e, f)}
+  <div class="pno">1</div>
+</div>
 
-  <div class="section">
-    <div class="section-title">البند الخامس: مخالصة</div>
-    <p>بموجب هذا العقد، يُبرئ الطرف الثاني الطرف الأول من أي مسؤولية أو مطالبة قانونية أو مالية ناشئة عن فترة عمله، ويؤكد الطرف الثاني بأنه استلم جميع مستحقاته كاملة.</p>
-  </div>
+<div class="page">
+  <div class="logo-bar"><img src="${LOGO_URL}" alt=""></div>
+  <div class="content">
+    <div class="clause">(البند السادس)</div>
+    <p>يقر الطرف الأول (صاحب العمل) أو من يمثله بالتزامه بمنح العامل شهادة تتضمن تاريخ التحاقه بالعمل، وتاريخ انتهائه، ونوع العمل الذي كان يؤديه، والمزايا التي كان يحصل عليها، وذلك خلال خمسة عشر يوماً من تاريخ طلب ذلك.</p>
+    <p>ويجوز بناءً على طلب العامل، أن تتضمن تلك الشهادة مقدار الأجر الذي كان يتقاضاه، وسبب انتهاء علاقة العمل.</p>
+    <p>كما يقر بالتزامه بأن يرد للعامل عند إنهاء علاقة العمل ما يكون قد أودعه لديه من أوراق، أو شهادات، أو أدوات، وما يفيد إخلاء طرفه، فور طلبها.</p>
 
-  <div class="section">
-    <div class="section-title">البند السادس: شهادة إنهاء وختم</div>
-    <p>يعطي الطرف الأول للطرف الثاني شهادة إنهاء خدماته حسب النماذج المعتمدة لدى الجهات المختصة، وذلك اعتبارًا من ${fmt(f.terminationDate)}.</p>
+    <div class="clause">(البند السابع)</div>
+    <p>يعمل بأحكام هذا الاتفاق كمستند لإثبات إنهاء علاقة العمل بإرادة الطرفين ودون منازعة، وحرر من عدد ${line(f.copies, 8)} نسخ بيد كل طرف منهما نسخة للعمل بها عند اللزوم.</p>
   </div>
-
-  <div class="section">
-    <div class="section-title">البند السابع: عدد النسخ</div>
-    <p>تحرر هذا العقد من ${line(f.copies || '4')} نسخ أصلية بما لها من حجية قانونية.</p>
-  </div>
-
-  <div class="signatures">
-    <div>
-      <div>توقيع ممثل صاحب العمل</div>
-      <div class="line">جاك إسحق عبد المسيح</div>
-      <div>التاريخ: ${fmt(today)}</div>
-    </div>
-    <div>
-      <div>توقيع العامل</div>
-      <div class="line">${line(e.name_ar, 30)}</div>
-      <div>التاريخ: ${fmt(today)}</div>
-    </div>
-  </div>
+  ${signatures(e, f)}
+  <div class="pno">2</div>
 </div>
 </body></html>`;
 
@@ -176,19 +184,22 @@ export const MutualTermination = ({ employee }: MutualTerminationProps) => {
   const today = new Date().toISOString().split('T')[0];
 
   const [form, setForm] = useState<FormState>({
+    agreementDate: today,
     lastWorkDate: emp.resignation_date || today,
-    terminationDate: emp.resignation_date || today,
     jobTitle: emp.job_title_ar || '',
+    contractType: emp.contract_type || '',
+    hireDate: emp.hire_date || '',
+    nationalId: emp.national_id || '',
     address: emp.address || '',
     phone: emp.phone || '',
-    nationalId: emp.national_id || '',
-    hireDate: emp.hire_date || '',
-    socialInsuranceStartDate: emp.social_insurance_start_date || '',
-    entitlements: '',
-    copies: '4',
+    copies: '2',
+    employerRepName: 'جاك إسحق عبد المسيح',
+    employerRepTitle: 'مدير الموارد البشرية',
+    companyName: 'لينك آيرو تريدنج إجنسي',
+    companyAddress: '10 ش الجزيرة الوسطى – الزمالك – القاهرة',
   });
 
-  const html = useMemo(() => buildHtml(emp, form, today), [emp, form, today]);
+  const html = useMemo(() => buildHtml(emp, form), [emp, form]);
 
   const print = () => {
     const iframe = document.createElement('iframe');
@@ -203,7 +214,7 @@ export const MutualTermination = ({ employee }: MutualTerminationProps) => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
       setTimeout(() => iframe.remove(), 1000);
-    }, 600);
+    }, 800);
   };
 
   const set = (k: keyof FormState, v: string) => setForm(p => ({ ...p, [k]: v }));
@@ -211,7 +222,7 @@ export const MutualTermination = ({ employee }: MutualTerminationProps) => {
   return (
     <div className="space-y-4" dir={isAr ? 'rtl' : 'ltr'}>
       <Card>
-        <CardContent className={cn("p-4 flex flex-wrap items-end gap-3", isAr ? 'flex-row' : 'flex-row-reverse')}>
+        <CardContent className={cn('p-4 flex flex-wrap items-end gap-3', isAr ? 'flex-row' : 'flex-row-reverse')}>
           <div className="space-y-1">
             <Label className="text-xs font-bold">{isAr ? 'الموظف' : 'Employee'}</Label>
             <div className="h-9 flex items-center px-3 rounded-md border bg-muted/50 text-sm min-w-[280px]">
@@ -219,16 +230,15 @@ export const MutualTermination = ({ employee }: MutualTerminationProps) => {
             </div>
           </div>
 
+          <div className="space-y-1"><Label className="text-xs">{isAr ? 'تاريخ الاتفاق' : 'Agreement date'}</Label><Input type="date" className="h-9 w-[170px]" value={form.agreementDate} onChange={e => set('agreementDate', e.target.value)} /></div>
           <div className="space-y-1"><Label className="text-xs">{isAr ? 'آخر يوم عمل' : 'Last working day'}</Label><Input type="date" className="h-9 w-[170px]" value={form.lastWorkDate} onChange={e => set('lastWorkDate', e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">{isAr ? 'تاريخ الإنهاء' : 'Termination date'}</Label><Input type="date" className="h-9 w-[170px]" value={form.terminationDate} onChange={e => set('terminationDate', e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">{isAr ? 'المسمى الوظيفي' : 'Job title'}</Label><Input className="h-9 w-[220px]" value={form.jobTitle} onChange={e => set('jobTitle', e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">{isAr ? 'العنوان' : 'Address'}</Label><Input className="h-9 w-[240px]" value={form.address} onChange={e => set('address', e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">{isAr ? 'الهاتف' : 'Phone'}</Label><Input className="h-9 w-[160px]" value={form.phone} onChange={e => set('phone', e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">{isAr ? 'الرقم القومي' : 'National ID'}</Label><Input className="h-9 w-[160px]" value={form.nationalId} onChange={e => set('nationalId', e.target.value.replace(/\D/g, '').slice(0, 14))} /></div>
+          <div className="space-y-1"><Label className="text-xs">{isAr ? 'المسمى الوظيفي' : 'Job title'}</Label><Input className="h-9 w-[200px]" value={form.jobTitle} onChange={e => set('jobTitle', e.target.value)} /></div>
+          <div className="space-y-1"><Label className="text-xs">{isAr ? 'نوع العقد' : 'Contract type'}</Label><Input className="h-9 w-[180px]" value={form.contractType} onChange={e => set('contractType', e.target.value)} /></div>
           <div className="space-y-1"><Label className="text-xs">{isAr ? 'تاريخ التعيين' : 'Hire date'}</Label><Input type="date" className="h-9 w-[170px]" value={form.hireDate} onChange={e => set('hireDate', e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">{isAr ? 'بداية التأمين' : 'Insurance start'}</Label><Input type="date" className="h-9 w-[170px]" value={form.socialInsuranceStartDate} onChange={e => set('socialInsuranceStartDate', e.target.value)} /></div>
-          <div className="space-y-1"><Label className="text-xs">{isAr ? 'عدد النسخ' : 'Copies'}</Label><Input className="h-9 w-[100px]" value={form.copies} onChange={e => set('copies', e.target.value)} /></div>
-          <div className="space-y-1 flex-1 min-w-[300px]"><Label className="text-xs">{isAr ? 'ملاحظات الحقوق' : 'Rights notes'}</Label><Input className="h-9" value={form.entitlements} onChange={e => set('entitlements', e.target.value)} /></div>
+          <div className="space-y-1"><Label className="text-xs">{isAr ? 'الرقم القومي' : 'National ID'}</Label><Input className="h-9 w-[160px]" value={form.nationalId} onChange={e => set('nationalId', e.target.value.replace(/\D/g, '').slice(0, 14))} /></div>
+          <div className="space-y-1"><Label className="text-xs">{isAr ? 'العنوان' : 'Address'}</Label><Input className="h-9 w-[240px]" value={form.address} onChange={e => set('address', e.target.value)} /></div>
+          <div className="space-y-1"><Label className="text-xs">{isAr ? 'الهاتف' : 'Phone'}</Label><Input className="h-9 w-[150px]" value={form.phone} onChange={e => set('phone', e.target.value)} /></div>
+          <div className="space-y-1"><Label className="text-xs">{isAr ? 'عدد النسخ' : 'Copies'}</Label><Input className="h-9 w-[90px]" value={form.copies} onChange={e => set('copies', e.target.value)} /></div>
 
           <Button onClick={print} className="gap-2">
             <Printer className="h-4 w-4" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}
