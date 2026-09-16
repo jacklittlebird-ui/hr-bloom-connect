@@ -2302,6 +2302,7 @@ export type Database = {
           employee_id: string
           id: string
           list_key: string
+          permit_no: string | null
           status: string
           updated_at: string
         }
@@ -2310,6 +2311,7 @@ export type Database = {
           employee_id: string
           id?: string
           list_key: string
+          permit_no?: string | null
           status?: string
           updated_at?: string
         }
@@ -2318,6 +2320,7 @@ export type Database = {
           employee_id?: string
           id?: string
           list_key?: string
+          permit_no?: string | null
           status?: string
           updated_at?: string
         }
