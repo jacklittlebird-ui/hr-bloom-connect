@@ -267,6 +267,35 @@ const PermitListPanel = ({
     });
   }, [entries, employeeById, search]);
 
+  const canExportRenewalSheet = listKey === 'port_authority_renew';
+
+  const handleExportSheet = async () => {
+    const data = rows.map(entry => {
+      const emp = employeeById.get(entry.employee_id);
+      return {
+        name: emp?.name_ar || '',
+        nationality: emp?.nationality || '',
+        religion: emp?.religion || '',
+        birthDate: fmt(emp?.birth_date),
+        birthGovernorate: emp?.birth_governorate || '',
+        nationalId: emp?.national_id || '',
+        idIssue: fmt(emp?.id_issue_date),
+        jobTitle: emp?.permit_name_ar || emp?.job_title_ar || '',
+        address: emp?.address || '',
+        visitArea: VISIT_AREA,
+        permitNo: entry.permit_no ?? emp?.annual_permit_no ?? '',
+        phone: emp?.phone || '',
+      };
+    });
+    if (data.length === 0) {
+      toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
+      return;
+    }
+    const year = String(new Date().getFullYear());
+    await exportPermitRenewalSheet(data, year, `كشف_تجديد_${year}.xlsx`);
+    toast.success(ar ? 'تم تنزيل الكشف' : 'Sheet downloaded');
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
