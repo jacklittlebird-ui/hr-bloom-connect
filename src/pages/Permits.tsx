@@ -245,6 +245,7 @@ const PermitListPanel = ({
 }: PanelProps) => {
   const detailed = DETAILED_LISTS.includes(listKey);
   const isRenewal = RENEWAL_LISTS.includes(listKey);
+  const colCount = 8 + (detailed ? (isRenewal ? 10 : 9) : 0);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -353,6 +354,28 @@ const PermitListPanel = ({
                     <TableCell>{(emp?.station_id && stationMap.get(emp.station_id)) || '-'}</TableCell>
                     <TableCell>{(emp?.department_id && deptMap.get(emp.department_id)) || '-'}</TableCell>
                     <TableCell className="whitespace-pre-wrap break-words">{(ar ? emp?.job_title_ar : emp?.job_title_en) || '-'}</TableCell>
+                    {detailed && (
+                      <>
+                        <TableCell>{emp?.nationality || '-'}</TableCell>
+                        <TableCell>{emp?.religion || '-'}</TableCell>
+                        <TableCell>{emp?.birth_date ? formatDate(emp.birth_date) : '-'}</TableCell>
+                        <TableCell>{emp?.birth_governorate || '-'}</TableCell>
+                        <TableCell className="font-mono text-xs">{emp?.national_id || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{emp?.permit_name_ar || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words max-w-[220px]">{emp?.address || '-'}</TableCell>
+                        {isRenewal && (
+                          <TableCell>
+                            <PermitNoInput
+                              value={entry.permit_no || ''}
+                              onSave={(v) => onPermitNoChange(entry.id, v)}
+                              placeholder={ar ? 'رقم التصريح' : 'Permit no.'}
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell className="font-mono text-xs" dir="ltr">{emp?.phone || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words max-w-[220px]">{VISIT_AREA}</TableCell>
+                      </>
+                    )}
                     <TableCell>{formatDate(entry.created_at)}</TableCell>
                     <TableCell>
                       <Select value={entry.status} onValueChange={(v) => onStatusChange(entry.id, v as 'in_progress' | 'done')}>
@@ -378,6 +401,20 @@ const PermitListPanel = ({
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+const PermitNoInput = ({ value, onSave, placeholder }: { value: string; onSave: (v: string) => void; placeholder: string }) => {
+  const [local, setLocal] = useState(value);
+  useEffect(() => { setLocal(value); }, [value]);
+  return (
+    <Input
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={() => { if (local !== value) onSave(local.trim()); }}
+      placeholder={placeholder}
+      className="w-[140px] h-8"
+    />
   );
 };
 
