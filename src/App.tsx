@@ -51,6 +51,7 @@ const GpsVerificationLogs = React.lazy(() => import("./pages/GpsVerificationLogs
 const Vehicles = React.lazy(() => import("./pages/Vehicles"));
 const VehiclePortal = React.lazy(() => import("./pages/VehiclePortal"));
 const PropertyTaxes = React.lazy(() => import("./pages/PropertyTaxes"));
+const Permits = React.lazy(() => import("./pages/Permits"));
 
 const queryClient = new QueryClient();
 
@@ -121,6 +122,7 @@ const AppRoutes = () => (
       <Route path="/roles" element={<Navigate to="/users" replace />} />
       <Route path="/settings" element={<ProtectedRoute allowedRoles={['admin']}><SiteSettingsPage /></ProtectedRoute>} />
       <Route path="/documents" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Documents /></ProtectedRoute>} />
+      <Route path="/permits" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Permits /></ProtectedRoute>} />
       <Route path="/uniforms" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Uniforms /></ProtectedRoute>} />
       <Route path="/vehicles" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><Vehicles /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute allowedRoles={['admin', 'hr']}><NotificationsPage /></ProtectedRoute>} />
