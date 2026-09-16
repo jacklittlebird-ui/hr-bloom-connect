@@ -65,6 +65,14 @@ const DETAILED_LISTS: ListKey[] = [
   'security_cairo_issue', 'security_cairo_renew',
 ];
 const RENEWAL_LISTS: ListKey[] = ['port_authority_renew', 'security_cairo_renew'];
+// قوائم أمن المواني ومطارات قطاع الأمن (بيانات تفصيلية مختلفة)
+const AIRPORT_LISTS: ListKey[] = [
+  'ports_security_issue', 'ports_security_renew',
+  'security_airports_issue', 'security_airports_renew',
+];
+const AIRPORT_RENEWAL_LISTS: ListKey[] = ['ports_security_renew', 'security_airports_renew'];
+const PERMIT_PURPOSE = 'إنهاء إجراءات الركاب';
+const PERMIT_AIRPORTS = 'عموم المطارات';
 const religionAr = (v?: string | null) => {
   const s = (v || '').trim().toLowerCase();
   if (s === 'muslim' || s === 'مسلم' || s === 'مسلمة') return 'مسلم';
