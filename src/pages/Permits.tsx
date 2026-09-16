@@ -30,6 +30,14 @@ interface EmployeeLite {
   job_title_en: string | null;
   station_id: string | null;
   department_id: string | null;
+  nationality: string | null;
+  religion: string | null;
+  birth_date: string | null;
+  birth_governorate: string | null;
+  national_id: string | null;
+  permit_name_ar: string | null;
+  address: string | null;
+  phone: string | null;
 }
 
 interface PermitEntry {
@@ -37,8 +45,17 @@ interface PermitEntry {
   employee_id: string;
   list_key: ListKey;
   status: 'in_progress' | 'done';
+  permit_no: string | null;
   created_at: string;
 }
+
+// القوائم التي تعرض البيانات التفصيلية
+const DETAILED_LISTS: ListKey[] = [
+  'port_authority_issue', 'port_authority_renew',
+  'security_cairo_issue', 'security_cairo_renew',
+];
+const RENEWAL_LISTS: ListKey[] = ['port_authority_renew', 'security_cairo_renew'];
+const VISIT_AREA = 'صالة - مهبط مباني 1،2،3 وترانزيت وبضائع';
 
 const SECTIONS: { key: string; ar: string; en: string; icon: React.ElementType; lists: { key: ListKey; ar: string; en: string }[] }[] = [
   {
