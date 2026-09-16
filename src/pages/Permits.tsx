@@ -13,8 +13,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { cn, formatDate } from '@/lib/utils';
-import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSpreadsheet } from 'lucide-react';
+import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSpreadsheet, FileText } from 'lucide-react';
 import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
+import { exportPortAuthorityRenewalLetter } from '@/lib/permitRenewalLetter';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -304,6 +305,23 @@ const PermitListPanel = ({
     toast.success(ar ? 'تم تنزيل الكشف' : 'Sheet downloaded');
   };
 
+  const handleExportLetter = async () => {
+    if (rows.length === 0) {
+      toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
+      return;
+    }
+    const data = rows.map(entry => {
+      const emp = employeeById.get(entry.employee_id);
+      return {
+        name: emp?.name_ar || '',
+        jobTitle: emp?.permit_name_ar || emp?.job_title_ar || '',
+      };
+    });
+    const year = String(new Date().getFullYear());
+    await exportPortAuthorityRenewalLetter(data, year, formatDate(new Date().toISOString()));
+    toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -319,10 +337,16 @@ const PermitListPanel = ({
             />
           </div>
           {canExportRenewalSheet && (
-            <Button variant="outline" className="gap-2" onClick={handleExportSheet}>
-              <FileSpreadsheet className="w-4 h-4" />
-              {ar ? 'تصدير كشف التجديد' : 'Export renewal sheet'}
-            </Button>
+            <>
+              <Button variant="outline" className="gap-2" onClick={handleExportSheet}>
+                <FileSpreadsheet className="w-4 h-4" />
+                {ar ? 'تصدير كشف التجديد' : 'Export renewal sheet'}
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={handleExportLetter}>
+                <FileText className="w-4 h-4" />
+                {ar ? 'تصدير خطاب التجديد' : 'Export renewal letter'}
+              </Button>
+            </>
           )}
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
