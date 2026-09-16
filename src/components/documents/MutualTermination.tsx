@@ -88,7 +88,7 @@ const signatures = (e: Emp, f: FormState) => `
       <div>الرقم القومي: ${line(f.nationalId, 22)}</div>
       <div>العنوان: ${line(f.address, 26)}</div>
       <div>رقم التليفون: ${line(f.phone, 22)}</div>
-      <div>(التوقيع) ${dots(24)}</div>
+      <div>(التوقيع) ${dots(44)}</div>
     </div>
     <div class="sig-col">
       <div class="sig-head">ممثل جهة الإدارة :</div>
@@ -96,7 +96,7 @@ const signatures = (e: Emp, f: FormState) => `
       <div>الوظيفة: ${line(f.employerRepTitle, 26)}</div>
       <div>اسم الشركة: ${line(f.companyName, 22)}</div>
       <div>مقر الشركة: ${line(f.companyAddress, 22)}</div>
-      <div>(التوقيع) ${dots(24)}</div>
+      <div>(التوقيع) ${dots(44)}</div>
       <div>خاتم جهة العمل : ${dots(16)}</div>
     </div>
   </div>`;
