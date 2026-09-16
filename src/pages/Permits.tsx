@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { cn, formatDate } from '@/lib/utils';
 import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSpreadsheet, FileText } from 'lucide-react';
 import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
-import { exportPortAuthorityRenewalLetter } from '@/lib/permitRenewalLetter';
+import { exportPortAuthorityRenewalLetter, exportSecurityCairoRenewalLetter } from '@/lib/permitRenewalLetter';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -277,6 +277,7 @@ const PermitListPanel = ({
   }, [entries, employeeById, search]);
 
   const canExportRenewalSheet = listKey === 'port_authority_renew';
+  const canExportCairoLetter = listKey === 'security_cairo_renew';
 
   const handleExportSheet = async () => {
     const data = rows.map(entry => {
