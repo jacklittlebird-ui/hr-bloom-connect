@@ -124,7 +124,7 @@ const Permits = () => {
     for (let from = 0; from < 10000; from += 1000) {
       const { data, error } = await supabase
         .from('employees')
-        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, issuing_authority, permit_name_ar, address, phone, annual_permit_no, id_issue_date')
+        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, issuing_authority, permit_name_ar, address, phone, annual_permit_no, id_issue_date, permit_name_en, governorate, city, social_insurance_no, airports_annual_permit_no')
         .order('employee_code')
         .range(from, from + 999);
       if (error) break;
