@@ -1119,6 +1119,28 @@ const Employees = () => {
             </div>
           </div>
         </div>
+        <Tabs defaultValue="list" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="list">{ar ? 'قائمة الموظفين' : 'Employees'}</TabsTrigger>
+          <TabsTrigger value="docs">{ar ? 'المستندات' : 'Documents'}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="docs" className="space-y-4">
+          <Tabs defaultValue={EMPLOYEE_DOC_TABS[0].key} className="space-y-4">
+            <TabsList className="flex flex-wrap h-auto gap-1">
+              {EMPLOYEE_DOC_TABS.map(tab => (
+                <TabsTrigger key={tab.key} value={tab.key}>{ar ? tab.ar : tab.en}</TabsTrigger>
+              ))}
+            </TabsList>
+            {EMPLOYEE_DOC_TABS.map(({ key, Comp }) => (
+              <TabsContent key={key} value={key}>
+                <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</div>}>
+                  <Comp />
+                </Suspense>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </TabsContent>
+        <TabsContent value="list" className="space-y-6">
         <EmployeeStatsCards total={counts.all} active={counts.active} departments={departments} newThisMonth={1} />
         <EmployeeFilters
           searchQuery={searchQuery}
