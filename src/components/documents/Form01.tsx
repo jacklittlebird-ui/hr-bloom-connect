@@ -5,8 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Printer, Loader2, FileSpreadsheet } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Printer } from 'lucide-react';
 import nosiLogo from '@/assets/nosi-logo.png';
 
 interface Form01Props {
