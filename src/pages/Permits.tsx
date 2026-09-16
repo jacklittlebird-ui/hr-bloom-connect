@@ -366,6 +366,12 @@ const PermitListPanel = ({
               </Button>
             </>
           )}
+          {canExportCairoLetter && (
+            <Button variant="outline" className="gap-2" onClick={handleExportCairoLetter}>
+              <FileText className="w-4 h-4" />
+              {ar ? 'تصدير خطاب التجديد' : 'Export renewal letter'}
+            </Button>
+          )}
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button className="gap-2">
