@@ -209,6 +209,7 @@ const Permits = () => {
                       onAdd={addEntry}
                       onRemove={removeEntry}
                       onStatusChange={updateStatus}
+                      onPermitNoChange={updatePermitNo}
                     />
                   </TabsContent>
                 ))}
@@ -235,12 +236,15 @@ interface PanelProps {
   onAdd: (employeeId: string, listKey: ListKey) => void;
   onRemove: (id: string) => void;
   onStatusChange: (id: string, status: 'in_progress' | 'done') => void;
+  onPermitNoChange: (id: string, permitNo: string) => void;
 }
 
 const PermitListPanel = ({
   title, listKey, entries, employees, employeeById, stationMap, deptMap,
-  loading, ar, isRTL, onAdd, onRemove, onStatusChange,
+  loading, ar, isRTL, onAdd, onRemove, onStatusChange, onPermitNoChange,
 }: PanelProps) => {
+  const detailed = DETAILED_LISTS.includes(listKey);
+  const isRenewal = RENEWAL_LISTS.includes(listKey);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
