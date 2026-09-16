@@ -103,12 +103,20 @@ const AttendanceKiosk = () => {
   useEffect(() => {
     const tokenRefresh = setInterval(async () => {
       try {
-        await supabase.auth.refreshSession();
-        console.log("[Kiosk] Keep-alive: session refreshed");
-      } catch { /* ignore */ }
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          // Dead / revoked session: stop reusing it and return to login.
+          try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
+          window.location.replace('/login');
+          return;
+        }
+      } catch {
+        // network hiccup — keep the current session and retry next interval
+      }
     }, 10 * 60 * 1000);
     return () => clearInterval(tokenRefresh);
   }, []);
+
 
   // ── Freeze detection: reload if page was suspended > 5 min ──
   useEffect(() => {
