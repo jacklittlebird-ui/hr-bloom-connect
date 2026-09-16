@@ -36,6 +36,7 @@ interface EmployeeLite {
   birth_date: string | null;
   birth_governorate: string | null;
   national_id: string | null;
+  issuing_authority: string | null;
   permit_name_ar: string | null;
   address: string | null;
   phone: string | null;
@@ -58,6 +59,13 @@ const DETAILED_LISTS: ListKey[] = [
   'security_cairo_issue', 'security_cairo_renew',
 ];
 const RENEWAL_LISTS: ListKey[] = ['port_authority_renew', 'security_cairo_renew'];
+const religionAr = (v?: string | null) => {
+  const s = (v || '').trim().toLowerCase();
+  if (s === 'muslim' || s === 'مسلم' || s === 'مسلمة') return 'مسلم';
+  if (s === 'christian' || s === 'مسيحي' || s === 'مسيحية') return 'مسيحي';
+  return v || '';
+};
+
 const VISIT_AREA = 'صالة - مهبط مباني 1،2،3 وترانزيت وبضائع';
 
 const SECTIONS: { key: string; ar: string; en: string; icon: React.ElementType; lists: { key: ListKey; ar: string; en: string }[] }[] = [
@@ -102,7 +110,7 @@ const Permits = () => {
     for (let from = 0; from < 10000; from += 1000) {
       const { data, error } = await supabase
         .from('employees')
-        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, permit_name_ar, address, phone, annual_permit_no, id_issue_date')
+        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, issuing_authority, permit_name_ar, address, phone, annual_permit_no, id_issue_date')
         .order('employee_code')
         .range(from, from + 999);
       if (error) break;
@@ -248,7 +256,7 @@ const PermitListPanel = ({
 }: PanelProps) => {
   const detailed = DETAILED_LISTS.includes(listKey);
   const isRenewal = RENEWAL_LISTS.includes(listKey);
-  const colCount = 8 + (detailed ? (isRenewal ? 10 : 9) : 0);
+  const colCount = 8 + (detailed ? (isRenewal ? 11 : 10) : 0);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -275,11 +283,11 @@ const PermitListPanel = ({
       return {
         name: emp?.name_ar || '',
         nationality: emp?.nationality || '',
-        religion: emp?.religion || '',
+        religion: religionAr(emp?.religion),
         birthDate: fmt(emp?.birth_date),
         birthGovernorate: emp?.birth_governorate || '',
         nationalId: emp?.national_id || '',
-        idIssue: fmt(emp?.id_issue_date),
+        issuingAuthority: emp?.issuing_authority || '',
         jobTitle: emp?.permit_name_ar || emp?.job_title_ar || '',
         address: emp?.address || '',
         visitArea: VISIT_AREA,
@@ -366,6 +374,7 @@ const PermitListPanel = ({
                     <TableHead>{ar ? 'تاريخ الميلاد' : 'Birth Date'}</TableHead>
                     <TableHead>{ar ? 'محافظة الميلاد' : 'Birth Governorate'}</TableHead>
                     <TableHead>{ar ? 'الرقم القومي' : 'National ID'}</TableHead>
+                    <TableHead>{ar ? 'جهة الإصدار' : 'Issuing Authority'}</TableHead>
                     <TableHead>{ar ? 'المسمى في التصريح' : 'Permit Title (AR)'}</TableHead>
                     <TableHead>{ar ? 'العنوان' : 'Address'}</TableHead>
                     {isRenewal && <TableHead>{ar ? 'رقم التصريح' : 'Permit No.'}</TableHead>}
@@ -395,10 +404,11 @@ const PermitListPanel = ({
                     {detailed && (
                       <>
                         <TableCell>{emp?.nationality || '-'}</TableCell>
-                        <TableCell>{emp?.religion || '-'}</TableCell>
+                        <TableCell>{religionAr(emp?.religion) || '-'}</TableCell>
                         <TableCell>{emp?.birth_date ? formatDate(emp.birth_date) : '-'}</TableCell>
                         <TableCell>{emp?.birth_governorate || '-'}</TableCell>
                         <TableCell className="font-mono text-xs">{emp?.national_id || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{emp?.issuing_authority || '-'}</TableCell>
                         <TableCell className="whitespace-pre-wrap break-words">{emp?.permit_name_ar || '-'}</TableCell>
                         <TableCell className="whitespace-pre-wrap break-words max-w-[220px]">{emp?.address || '-'}</TableCell>
                         {isRenewal && (
