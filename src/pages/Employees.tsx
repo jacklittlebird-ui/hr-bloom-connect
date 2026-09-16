@@ -1183,6 +1183,8 @@ const Employees = () => {
             />
           )}
         </div>
+        </TabsContent>
+        </Tabs>
       </div>
       <AddEmployeeDialog open={showAddDialog} onClose={() => setShowAddDialog(false)} />
       <input
