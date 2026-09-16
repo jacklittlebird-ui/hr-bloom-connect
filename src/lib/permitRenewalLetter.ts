@@ -1,56 +1,27 @@
-import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  Table,
-  TableRow,
-  TableCell,
-  AlignmentType,
-  WidthType,
-  BorderStyle,
-  VerticalAlign,
-} from 'docx';
+import JSZip from 'jszip';
 
 export interface LetterRow {
   name: string;
   jobTitle: string;
 }
 
-const FONT = 'Arial';
-const PURPOSE = 'إنهاء إجراءات الركاب والطائرات وترانزيت والبضائع';
+const TEMPLATE_URL = '/templates/port-authority-renewal.docx';
 
-const border = { style: BorderStyle.SINGLE, size: 6, color: '000000' };
-const borders = { top: border, bottom: border, left: border, right: border };
+const esc = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-const p = (
-  text: string,
-  opts: { bold?: boolean; size?: number; align?: (typeof AlignmentType)[keyof typeof AlignmentType]; after?: number } = {}
-) =>
-  new Paragraph({
-    bidirectional: true,
-    alignment: opts.align ?? AlignmentType.RIGHT,
-    spacing: { after: opts.after ?? 120, line: 340 },
-    children: [new TextRun({ text, bold: opts.bold, size: opts.size ?? 26, font: FONT, rightToLeft: true })],
-  });
+const runXml = (text: string) =>
+  `<w:r><w:rPr><w:rFonts w:ascii="Baloo Bhaijaan 2" w:hAnsi="Baloo Bhaijaan 2" w:cs="Baloo Bhaijaan 2" w:hint="cs"/><w:color w:val="000000" w:themeColor="text1"/><w:sz w:val="18"/><w:szCs w:val="18"/><w:rtl/></w:rPr><w:t xml:space="preserve">${esc(text)}</w:t></w:r>`;
 
-const cell = (text: string, width: number, opts: { bold?: boolean; center?: boolean } = {}) =>
-  new TableCell({
-    borders,
-    width: { size: width, type: WidthType.DXA },
-    verticalAlign: VerticalAlign.CENTER,
-    margins: { top: 60, bottom: 60, left: 100, right: 100 },
-    children: [
-      new Paragraph({
-        bidirectional: true,
-        alignment: opts.center ? AlignmentType.CENTER : AlignmentType.RIGHT,
-        spacing: { after: 0, line: 300 },
-        children: [new TextRun({ text, bold: opts.bold, size: 24, font: FONT, rightToLeft: true })],
-      }),
-    ],
-  });
-
-const COLS = [900, 3400, 2660, 2400];
+/** Inserts a run into the paragraph of the nth table cell (0-based) of a row. */
+function fillCell(rowXml: string, cellIndex: number, text: string): string {
+  const parts = rowXml.split('</w:tc>');
+  if (cellIndex >= parts.length - 1 || !text) return rowXml;
+  const idx = parts[cellIndex].lastIndexOf('</w:p>');
+  if (idx === -1) return rowXml;
+  parts[cellIndex] = parts[cellIndex].slice(0, idx) + runXml(text) + parts[cellIndex].slice(idx);
+  return parts.join('</w:tc>');
+}
 
 export async function exportPortAuthorityRenewalLetter(
   rows: LetterRow[],
@@ -58,66 +29,45 @@ export async function exportPortAuthorityRenewalLetter(
   dateText: string,
   fileName = `خطاب_تجديد_${year}.docx`,
 ) {
-  const table = new Table({
-    width: { size: 9360, type: WidthType.DXA },
-    columnWidths: COLS,
-    rows: [
-      new TableRow({
-        tableHeader: true,
-        children: [
-          cell('م', COLS[0], { bold: true, center: true }),
-          cell('الإسم', COLS[1], { bold: true, center: true }),
-          cell('الوظيفة', COLS[2], { bold: true, center: true }),
-          cell('الغرض من التصريح', COLS[3], { bold: true, center: true }),
-        ],
-      }),
-      ...rows.map((r, i) =>
-        new TableRow({
-          children: [
-            cell(String(i + 1), COLS[0], { center: true }),
-            cell(r.name, COLS[1]),
-            cell(r.jobTitle, COLS[2], { center: true }),
-            cell(PURPOSE, COLS[3], { center: true }),
-          ],
-        }),
-      ),
-    ],
-  });
+  const res = await fetch(TEMPLATE_URL);
+  if (!res.ok) throw new Error('template not found');
+  const zip = await JSZip.loadAsync(await res.arrayBuffer());
+  let xml = await zip.file('word/document.xml')!.async('string');
 
-  const doc = new Document({
-    styles: { default: { document: { run: { font: FONT, size: 26 } } } },
-    sections: [
-      {
-        properties: {
-          page: {
-            size: { width: 11906, height: 16838 },
-            margin: { top: 1440, right: 1273, bottom: 1440, left: 1273 },
-          },
-        },
-        children: [
-          p(`التاريخ: ${dateText}`),
-          p('الصادر: ............................', { after: 300 }),
-          p('السيد اللواء/ مدير الإدارة العامة لشرطة ميناء القاهرة الجوى', { bold: true, after: 240 }),
-          p('تحيــة طيبــة وبعــد،،،', { bold: true, after: 240 }),
-          p(
-            `رجاء التكرم بالموافقة على تجديد عدد (${rows.length}) تصريح سنوي مستديم لدخول مطار القاهرة الدولي لعام ${year} (صالة – مهبط – ترانزيت - بضائع):`,
-            { after: 240 },
-          ),
-          table,
-          p('', { after: 200 }),
-          p(
-            'حيث أن طبيعة العمل تستلزم التواجد بإستمرار داخل الدائرة الجمركية فى المطارات لمتابعة الخدمات الأرضية لشركات الطيران التى نمثلها فى جمهورية مصر العربية.',
-            { after: 300 },
-          ),
-          p('وتفضــلوا بقبــول فائق الإحتــرام،،،', { after: 500 }),
-          p('رئيس الشؤون الإدارية', { bold: true, align: AlignmentType.CENTER, after: 400 }),
-          p('چـاك إسحق', { bold: true, align: AlignmentType.CENTER }),
-        ],
-      },
-    ],
-  });
+  // Placeholders in the header text
+  xml = xml
+    .replace('(يتم كتابة التاريخ)', esc(dateText))
+    .replace('(يتم كتابة الرقم)', '')
+    .replace('إجمالي العدد', String(rows.length))
+    .replace('(يتم اختيار السنة)', esc(year));
 
-  const blob = await Packer.toBlob(doc);
+  // Rebuild table body rows from the template rows
+  const tblStart = xml.indexOf('<w:tbl>');
+  const tblEnd = xml.indexOf('</w:tbl>') + '</w:tbl>'.length;
+  const tbl = xml.slice(tblStart, tblEnd);
+  const trMatches = tbl.match(/<w:tr[ >][\s\S]*?<\/w:tr>/g) || [];
+  if (trMatches.length >= 3) {
+    const firstTemplate = trMatches[1];
+    const restTemplate = trMatches[2];
+    const built = rows
+      .map((r, i) => {
+        let row = i === 0 ? firstTemplate : restTemplate;
+        row = fillCell(row, 1, r.name);
+        row = fillCell(row, 2, r.jobTitle);
+        return row;
+      })
+      .join('');
+    const bodyStart = tbl.indexOf(trMatches[1]);
+    const bodyEnd = tbl.lastIndexOf(restTemplate) + restTemplate.length;
+    const newTbl = tbl.slice(0, bodyStart) + built + tbl.slice(bodyEnd);
+    xml = xml.slice(0, tblStart) + newTbl + xml.slice(tblEnd);
+  }
+
+  zip.file('word/document.xml', xml);
+  const blob = await zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
