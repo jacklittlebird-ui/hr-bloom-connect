@@ -16,6 +16,7 @@ import { cn, formatDate } from '@/lib/utils';
 import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSpreadsheet, FileText } from 'lucide-react';
 import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
 import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter, exportSecurityAirportsIssueLetter, exportSecurityAirportsRenewalLetter, exportPortsSecurityIssueLetter, exportPortsSecurityRenewalLetter } from '@/lib/permitRenewalLetter';
+import { exportPortsSecuritySheet } from '@/lib/permitPortsSecurityExcel';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -448,6 +449,32 @@ const PermitListPanel = ({
     toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
   };
 
+  const handleExportPortsSecuritySheet = async () => {
+    if (rows.length === 0) {
+      toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
+      return;
+    }
+    const data = rows.map(entry => {
+      const emp = employeeById.get(entry.employee_id);
+      return {
+        nameAr: emp?.name_ar || '',
+        nameEn: emp?.name_en || '',
+        nationality: emp?.nationality || '',
+        nationalId: emp?.national_id || '',
+        jobAr: emp?.permit_name_ar || emp?.job_title_ar || '',
+        jobEn: emp?.permit_name_en || emp?.job_title_en || '',
+        birthPlace: emp?.birth_governorate || '',
+        birthDate: fmt(emp?.birth_date),
+        governorate: emp?.governorate || '',
+        city: emp?.city || '',
+        address: emp?.address || '',
+      };
+    });
+    const year = String(new Date().getFullYear() + 1);
+    await exportPortsSecuritySheet(data, year, `استخراج_امن_مؤاني_${year}.xlsx`);
+    toast.success(ar ? 'تم تنزيل الكشف' : 'Sheet downloaded');
+  };
+
   const handleExportPortsSecurityRenewalLetter = async () => {
     if (rows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
@@ -522,10 +549,16 @@ const PermitListPanel = ({
             </Button>
           )}
           {canExportPortsSecurityIssueLetter && (
-            <Button variant="outline" className="gap-2" onClick={handleExportPortsSecurityIssueLetter}>
-              <FileText className="w-4 h-4" />
-              {ar ? 'تصدير خطاب الاستخراج' : 'Export issuance letter'}
-            </Button>
+            <>
+              <Button variant="outline" className="gap-2" onClick={handleExportPortsSecurityIssueLetter}>
+                <FileText className="w-4 h-4" />
+                {ar ? 'تصدير خطاب الاستخراج' : 'Export issuance letter'}
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={handleExportPortsSecuritySheet}>
+                <FileSpreadsheet className="w-4 h-4" />
+                {ar ? 'تصدير كشف الاستخراج' : 'Export issuance sheet'}
+              </Button>
+            </>
           )}
           {canExportPortsSecurityRenewalLetter && (
             <Button variant="outline" className="gap-2" onClick={handleExportPortsSecurityRenewalLetter}>
