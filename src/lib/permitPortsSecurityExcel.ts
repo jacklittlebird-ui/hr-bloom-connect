@@ -38,23 +38,20 @@ export const exportPortsSecuritySheet = async (rows: PortsSecurityRow[], year: s
   WIDTHS.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
   // الرأس العلوي
-  ws.mergeCells('A1:B2');
-  Object.assign(ws.getCell('A1'), hdrCell('عموم المطارات', 12, { horizontal: 'center' }));
+  Object.assign(ws.getCell('A1'), hdrCell('عموم المطارات'));
   Object.assign(ws.getCell('C1'), hdrCell('المواني المصرح بها:'));
-  ws.mergeCells('C2:D2');
+  Object.assign(ws.getCell('A2'), hdrCell('صالة و مهبط'));
   Object.assign(ws.getCell('C2'), hdrCell('القطاعات المصرح بها: '));
-  ws.mergeCells('E1:J2');
+  ws.mergeCells('E1:I1');
   Object.assign(ws.getCell('E1'), hdrCell(`نموذج رقم (2) استخراج التصاريح المستديمة لعام ${year}`, 14, { horizontal: 'center' }));
   Object.assign(ws.getCell('K1'), hdrCell('وزارة الداخلية'));
   Object.assign(ws.getCell('K2'), hdrCell('الإدارة العامة لأمن المواني'));
   Object.assign(ws.getCell('K3'), hdrCell('ادارة التصاريح'));
   Object.assign(ws.getCell('K4'), hdrCell('اسم الشركة : لينك ايرو تريدنج اجنسي'));
   Object.assign(ws.getCell('K5'), hdrCell('اسم الشركة  Link Aero Trading Agency'));
-  Object.assign(ws.getCell('K6'), hdrCell('رقم الملف:  (48)'));
-  ws.getCell('A2').value = 'صالة و مهبط';
-  ws.getCell('A2').font = { name: FONT, size: 12, bold: true };
-  ws.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+  Object.assign(ws.getCell('K6'), hdrCell('رقم الملف:  (48)', 9));
   for (let r = 1; r <= 6; r++) ws.getRow(r).height = 18;
+  ws.getRow(7).height = 6;
 
   // صف العناوين
   const headerRow = ws.getRow(8);
