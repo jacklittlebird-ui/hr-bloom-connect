@@ -117,7 +117,7 @@ export const FinalSettlement = ({ employee }: FinalSettlementProps) => {
               className="w-44"
             />
           </div>
-          <Button onClick={print} className="gap-2">
+          <Button onClick={print} disabled={!resignationDate} className="gap-2">
             <Printer className="h-4 w-4" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}
           </Button>
         </CardContent>
