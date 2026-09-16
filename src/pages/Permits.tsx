@@ -43,6 +43,11 @@ interface EmployeeLite {
   phone: string | null;
   annual_permit_no: string | null;
   id_issue_date: string | null;
+  permit_name_en: string | null;
+  governorate: string | null;
+  city: string | null;
+  social_insurance_no: string | null;
+  airports_annual_permit_no: string | null;
 }
 
 interface PermitEntry {
