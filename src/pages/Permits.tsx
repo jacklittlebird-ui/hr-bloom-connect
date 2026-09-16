@@ -424,7 +424,7 @@ const PermitListPanel = ({
                     <TableCell className="font-medium whitespace-pre-wrap break-words">{(ar ? emp?.name_ar : emp?.name_en) || '-'}</TableCell>
                     <TableCell>{(emp?.station_id && stationMap.get(emp.station_id)) || '-'}</TableCell>
                     <TableCell>{(emp?.department_id && deptMap.get(emp.department_id)) || '-'}</TableCell>
-                    <TableCell className="whitespace-pre-wrap break-words">{(ar ? emp?.job_title_ar : emp?.job_title_en) || '-'}</TableCell>
+                    <TableCell className="whitespace-pre-wrap break-words">{emp?.permit_name_ar || emp?.job_title_ar || '-'}</TableCell>
                     {detailed && (
                       <>
                         <TableCell>{emp?.nationality || '-'}</TableCell>
