@@ -329,24 +329,6 @@ const Documents = () => {
           <MissingInsuranceStart />
         ) : activeMainTab === 'directory' ? (
           <EmployeeDirectory />
-        ) : activeMainTab === 'form01' ? (
-          <Form01 />
-        ) : activeMainTab === 'form06' ? (
-          <Form06 />
-        ) : activeMainTab === 'clearance' ? (
-          <ClearanceCertificate />
-        ) : activeMainTab === 'experience' ? (
-          <ExperienceCertificate />
-        ) : activeMainTab === 'mutualTermination' ? (
-          <MutualTermination />
-        ) : activeMainTab === 'finalSettlement' ? (
-          <FinalSettlement />
-        ) : activeMainTab === 'employeeDataForm' ? (
-          <EmployeeDataForm />
-        ) : activeMainTab === 'contracts' ? (
-
-          <EmploymentContract />
-
         ) : activeMainTab === 'leaveBalances' ? (
           <LeaveBalancesAlert />
         ) : activeMainTab === 'unpaidLeaves' ? (
