@@ -75,3 +75,59 @@ export async function exportPortAuthorityRenewalLetter(
   a.click();
   URL.revokeObjectURL(url);
 }
+
+const CAIRO_TEMPLATE_URL = '/templates/security-cairo-renewal.docx';
+
+/** خطاب تجديد تصاريح مطار القاهرة (قطاع الأمن) */
+export async function exportSecurityCairoRenewalLetter(
+  rows: LetterRow[],
+  year: string,
+  dateText: string,
+  fileName = `خطاب_تجديد_تصاريح_القاهرة_${year}.docx`,
+) {
+  const res = await fetch(CAIRO_TEMPLATE_URL);
+  if (!res.ok) throw new Error('template not found');
+  const zip = await JSZip.loadAsync(await res.arrayBuffer());
+  let xml = await zip.file('word/document.xml')!.async('string');
+
+  xml = xml
+    .replace('(يتم كتابة التاريخ)', esc(dateText))
+    .replace('(يتم كتابة الرقم)', '')
+    .replace('إجمالي العدد', String(rows.length))
+    .replace('(يتم اختيار سنة', `(${esc(year)}`)
+    .replace(' لاحقة للسنة الحالية', '');
+
+  const tblStart = xml.indexOf('<w:tbl>');
+  const tblEnd = xml.indexOf('</w:tbl>') + '</w:tbl>'.length;
+  const tbl = xml.slice(tblStart, tblEnd);
+  const trMatches = tbl.match(/<w:tr[ >][\s\S]*?<\/w:tr>/g) || [];
+  if (trMatches.length >= 3) {
+    const firstTemplate = trMatches[1];
+    const restTemplate = trMatches[2];
+    const built = rows
+      .map((r, i) => {
+        let row = i === 0 ? firstTemplate : restTemplate;
+        row = fillCell(row, 0, String(i + 1));
+        row = fillCell(row, 1, r.name);
+        row = fillCell(row, 2, r.jobTitle);
+        return row;
+      })
+      .join('');
+    const bodyStart = tbl.indexOf(trMatches[1]);
+    const bodyEnd = tbl.lastIndexOf(restTemplate) + restTemplate.length;
+    const newTbl = tbl.slice(0, bodyStart) + built + tbl.slice(bodyEnd);
+    xml = xml.slice(0, tblStart) + newTbl + xml.slice(tblEnd);
+  }
+
+  zip.file('word/document.xml', xml);
+  const blob = await zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(url);
+}
