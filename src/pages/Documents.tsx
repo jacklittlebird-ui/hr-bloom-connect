@@ -28,6 +28,7 @@ import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductions
 import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
 import { InsuranceClosures } from '@/components/documents/InsuranceClosures';
+import { EmployeeForms } from '@/components/documents/EmployeeForms';
 
 
 interface Document {
