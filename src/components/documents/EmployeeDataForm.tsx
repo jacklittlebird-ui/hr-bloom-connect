@@ -1,37 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Employee } from '@/types/employee';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Check, ChevronsUpDown, Printer } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface Emp {
-  id: string;
-  employee_code: string;
-  name_ar: string;
-  name_en?: string | null;
-  gender: string | null;
-  birth_date?: string | null;
-  nationality?: string | null;
-  birth_place?: string | null;
-  birth_governorate?: string | null;
-  national_id?: string | null;
-  governorate?: string | null;
-  city?: string | null;
-  address?: string | null;
-  phone?: string | null;
-  job_title_ar?: string | null;
-  job_title_en?: string | null;
-  permit_name_ar?: string | null;
-  permit_name_en?: string | null;
+interface EmployeeDataFormProps {
+  employee: Employee;
 }
-
-const PAGE = 1000;
 
 const esc = (s: string | null | undefined) =>
   (s || '').replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c] as string));
@@ -63,6 +42,26 @@ interface FormState {
   phone: string;
 }
 
+const toFormState = (employee: Employee): FormState => ({
+  nameAr: employee.nameAr || '',
+  nameEn: employee.nameEn || '',
+  gender: employee.gender || '',
+  birthDate: employee.birthDate || '',
+  nationalityAr: employee.nationality || '',
+  nationalityEn: 'Egyptian',
+  birthPlace: employee.birthPlace || '',
+  birthGovernorate: employee.birthGovernorate || '',
+  nationalId: employee.nationalId || '',
+  residenceGovernorate: employee.governorate || '',
+  departmentCenter: employee.city || '',
+  residencePlace: employee.address || '',
+  companyNameAr: 'لينك أيرو تريدنج أجنسي',
+  companyNameEn: 'Link Aero Trading Agency',
+  jobTitleAr: employee.jobTitleAr || '',
+  jobTitleEn: employee.jobTitleEn || '',
+  phone: employee.phone || '',
+});
+
 const buildHtml = (f: FormState) => {
   const val = (v: string) => `<span class="v">${esc(v) || '......................................................'}</span>`;
 
@@ -82,7 +81,7 @@ h1 { text-align:center; font-size:22px; font-weight:bold; margin:0 0 10mm; text-
 .fields-col { grid-column:1; display:flex; flex-direction:column; gap:3.5mm; }
 .photo-col { grid-column:2; grid-row:1 / span 7; border:1px solid #000; display:flex; align-items:center; justify-content:center; text-align:center; padding:4mm; font-size:13px; line-height:1.6; font-weight:600; }
 .field-row { display:flex; align-items:center; gap:2mm; }
-.field-row.two .field { flex:1; }
+.field-row.two { display:grid; grid-template-columns:1fr 1fr; gap:3mm; }
 .field { display:flex; align-items:center; gap:1.5mm; flex:1; }
 .field .lbl { font-size:13px; font-weight:700; white-space:nowrap; }
 .field .v { border-bottom:1px solid #000; flex:1; min-height:7mm; padding:0.8mm 1.5mm; font-size:15.5px; text-align:right; line-height:1.35; }
@@ -138,70 +137,14 @@ h1 { text-align:center; font-size:22px; font-weight:bold; margin:0 0 10mm; text-
 </body></html>`;
 };
 
-export const EmployeeDataForm = () => {
+export const EmployeeDataForm = ({ employee }: EmployeeDataFormProps) => {
   const { language } = useLanguage();
   const isAr = language === 'ar';
+  const [form, setForm] = useState<FormState>(() => toFormState(employee));
 
-  const [employees, setEmployees] = useState<Emp[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState('');
-  const [form, setForm] = useState<FormState>({
-    nameAr: '', nameEn: '', gender: '', birthDate: '', nationalityAr: '', nationalityEn: '',
-    birthPlace: '', birthGovernorate: '', nationalId: '', residenceGovernorate: '',
-    departmentCenter: '', residencePlace: '', companyNameAr: 'لينك أيرو تريدنج أجنسي',
-    companyNameEn: 'Link Aero Trading Agency', jobTitleAr: '', jobTitleEn: '', phone: '',
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const all: Emp[] = [];
-      for (let from = 0; ; from += PAGE) {
-        const { data, error } = await supabase
-          .from('employees')
-          .select('id, employee_code, name_ar, name_en, gender, birth_date, nationality, birth_place, birth_governorate, national_id, governorate, city, address, phone, job_title_ar, job_title_en, permit_name_ar, permit_name_en')
-          .order('employee_code')
-          .range(from, from + PAGE - 1);
-        if (error || !data?.length) break;
-        all.push(...(data as unknown as Emp[]));
-        if (data.length < PAGE) break;
-      }
-      if (!cancelled) { setEmployees(all); setLoading(false); }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  const selected = useMemo(() => employees.find(e => e.id === selectedId) || null, [employees, selectedId]);
-
-  const pick = (e: Emp) => {
-    setSelectedId(e.id);
-    setOpen(false);
-    setForm(f => ({
-      ...f,
-      nameAr: e.name_ar || '',
-      nameEn: e.name_en || '',
-      gender: e.gender || '',
-      birthDate: e.birth_date || '',
-      nationalityAr: e.nationality || '',
-      nationalityEn: 'Egyptian',
-      birthPlace: e.birth_place || '',
-      birthGovernorate: e.birth_governorate || '',
-      nationalId: e.national_id || '',
-      residenceGovernorate: e.governorate || '',
-      departmentCenter: e.city || '',
-      residencePlace: e.address || '',
-      phone: e.phone || '',
-      // المهنة تقرأ من المسمى في التصريح (permit)، مع الرجوع للمسمى الوظيفي إن كان التصريح فارغًا
-      jobTitleAr: e.permit_name_ar || e.job_title_ar || '',
-      jobTitleEn: e.permit_name_en || e.job_title_en || '',
-    }));
-  };
-
-  const html = selected ? buildHtml(form) : '';
+  const html = buildHtml(form);
 
   const print = () => {
-    if (!html) return;
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
     document.body.appendChild(iframe);
@@ -231,33 +174,10 @@ export const EmployeeDataForm = () => {
       <Card>
         <CardContent className="p-4 flex flex-wrap items-end gap-3">
           <div className="space-y-1">
-            <Label className="text-xs">{isAr ? 'اسم الموظف' : 'Employee'}</Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button type="button" variant="outline" role="combobox" className="h-9 w-[320px] justify-between font-normal" disabled={loading}>
-                  <span className="truncate">
-                    {loading ? (isAr ? 'جاري التحميل...' : 'Loading...') : selected ? `${selected.employee_code} — ${selected.name_ar}` : (isAr ? 'ابحث بالاسم أو الكود...' : 'Search by name or code...')}
-                  </span>
-                  <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[360px] p-0" align="start">
-                <Command>
-                  <CommandInput placeholder={isAr ? 'بحث عن موظف...' : 'Search employee...'} />
-                  <CommandList className="max-h-[300px]">
-                    <CommandEmpty>{isAr ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
-                    <CommandGroup>
-                      {employees.map(e => (
-                        <CommandItem key={e.id} value={`${e.name_ar} ${e.employee_code}`} onSelect={() => pick(e)}>
-                          <Check className={cn('me-2 h-4 w-4', selectedId === e.id ? 'opacity-100' : 'opacity-0')} />
-                          <span className="truncate">{e.employee_code} — {e.name_ar}</span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Label className="text-xs font-bold">{isAr ? 'الموظف' : 'Employee'}</Label>
+            <div className="h-9 flex items-center px-3 rounded-md border bg-muted/50 text-sm min-w-[280px]">
+              {employee.employeeId} — {employee.nameAr}
+            </div>
           </div>
 
           {field(isAr ? 'الاسم بالعربية' : 'Name Arabic', 'nameAr', 'text', 'w-[260px]')}
@@ -278,19 +198,17 @@ export const EmployeeDataForm = () => {
           {field(isAr ? 'المهنة بالإنجليزية' : 'Job title English', 'jobTitleEn', 'text', 'w-[260px]')}
           {field(isAr ? 'رقم الهاتف' : 'Phone', 'phone', 'text', 'w-[180px]')}
 
-          <Button onClick={print} disabled={!selected} className="gap-2">
+          <Button onClick={print} className="gap-2">
             <Printer className="h-4 w-4" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}
           </Button>
         </CardContent>
       </Card>
 
-      {selected && (
-        <Card>
-          <CardContent className="p-0">
-            <iframe title="employee-data-form-preview" className="w-full h-[80vh] rounded-md bg-white" srcDoc={html} />
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardContent className="p-0">
+          <iframe title="employee-data-form-preview" className="w-full h-[80vh] rounded-md bg-white" srcDoc={html} />
+        </CardContent>
+      </Card>
     </div>
   );
 };
