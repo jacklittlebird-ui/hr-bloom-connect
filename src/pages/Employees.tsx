@@ -15,28 +15,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
-import { Suspense, lazy } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-const Form01 = lazy(() => import('@/components/documents/Form01').then(m => ({ default: m.Form01 })));
-const Form06 = lazy(() => import('@/components/documents/Form06').then(m => ({ default: m.Form06 })));
-const EmploymentContract = lazy(() => import('@/components/documents/EmploymentContract').then(m => ({ default: m.EmploymentContract })));
-const ClearanceCertificate = lazy(() => import('@/components/documents/ClearanceCertificate').then(m => ({ default: m.ClearanceCertificate })));
-const ExperienceCertificate = lazy(() => import('@/components/documents/ExperienceCertificate').then(m => ({ default: m.ExperienceCertificate })));
-const MutualTermination = lazy(() => import('@/components/documents/MutualTermination').then(m => ({ default: m.MutualTermination })));
-const FinalSettlement = lazy(() => import('@/components/documents/FinalSettlement').then(m => ({ default: m.FinalSettlement })));
-const EmployeeDataForm = lazy(() => import('@/components/documents/EmployeeDataForm').then(m => ({ default: m.EmployeeDataForm })));
-
-const EMPLOYEE_DOC_TABS = [
-  { key: 'form01', ar: 'استمارة (1)', en: 'Form 01', Comp: Form01 },
-  { key: 'form06', ar: 'استمارة (6)', en: 'Form 06', Comp: Form06 },
-  { key: 'contract', ar: 'عقد عمل', en: 'Employment Contract', Comp: EmploymentContract },
-  { key: 'clearance', ar: 'إخلاء طرف', en: 'Clearance', Comp: ClearanceCertificate },
-  { key: 'experience', ar: 'شهادة خبرة', en: 'Experience Certificate', Comp: ExperienceCertificate },
-  { key: 'mutual', ar: 'إنهاء علاقة عمل بالتراضي', en: 'Mutual Termination', Comp: MutualTermination },
-  { key: 'settlement', ar: 'مخالصة نهائية', en: 'Final Settlement', Comp: FinalSettlement },
-  { key: 'dataForm', ar: 'نموذج بيانات موظف', en: 'Employee Data Form', Comp: EmployeeDataForm },
-] as const;
 
 type FilterStatus = 'all' | 'active' | 'inactive' | 'suspended';
 
