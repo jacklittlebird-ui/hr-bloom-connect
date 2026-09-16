@@ -38,6 +38,7 @@ interface EmployeeLite {
   permit_name_ar: string | null;
   address: string | null;
   phone: string | null;
+  annual_permit_no: string | null;
 }
 
 interface PermitEntry {
@@ -99,7 +100,7 @@ const Permits = () => {
     for (let from = 0; from < 10000; from += 1000) {
       const { data, error } = await supabase
         .from('employees')
-        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, permit_name_ar, address, phone')
+        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, permit_name_ar, address, phone, annual_permit_no')
         .order('employee_code')
         .range(from, from + 999);
       if (error) break;
@@ -366,7 +367,7 @@ const PermitListPanel = ({
                         {isRenewal && (
                           <TableCell>
                             <PermitNoInput
-                              value={entry.permit_no || ''}
+                              value={entry.permit_no ?? emp?.annual_permit_no ?? ''}
                               onSave={(v) => onPermitNoChange(entry.id, v)}
                               placeholder={ar ? 'رقم التصريح' : 'Permit no.'}
                             />
