@@ -320,7 +320,11 @@ const toInternalEmp = (employee: Employee): Emp => ({
 export const Form01 = ({ employee }: Form01Props) => {
   const { language } = useLanguage();
   const isAr = language === 'ar';
-  const emp = useMemo(() => toInternalEmp(employee), [employee]);
+  const [emp, setEmp] = useState<Emp>(() => toInternalEmp(employee));
+
+  useEffect(() => {
+    setEmp(toInternalEmp(employee));
+  }, [employee]);
 
   const [extra, setExtra] = useState<Form01Extra>({
     office: 'الزمالك',
@@ -352,19 +356,7 @@ export const Form01 = ({ employee }: Form01Props) => {
     }));
   }, [employee]);
 
-  const setEmpField = (k: keyof Emp, v: string) => {
-    if (k === 'name_ar') employee.nameAr = v;
-    if (k === 'social_insurance_no') employee.socialInsuranceNo = v;
-    if (k === 'national_id') employee.nationalId = v;
-    if (k === 'nationality') employee.nationality = v;
-    if (k === 'education_ar') employee.educationAr = v;
-    if (k === 'job_title_ar') employee.jobTitleAr = v;
-    if (k === 'social_insurance_start_date') employee.socialInsuranceStartDate = v;
-    if (k === 'address') employee.address = v;
-    if (k === 'city') employee.city = v;
-    if (k === 'governorate') employee.governorate = v;
-    if (k === 'phone') employee.phone = v;
-  };
+  const setEmpField = (k: keyof Emp, v: string) => setEmp(prev => ({ ...prev, [k]: v }));
 
   const html = useMemo(() => buildHtml(emp, nosiLogo, extra), [emp, extra]);
 
