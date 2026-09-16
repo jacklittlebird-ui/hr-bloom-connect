@@ -270,7 +270,11 @@ const PermitListPanel = ({
 }: PanelProps) => {
   const detailed = DETAILED_LISTS.includes(listKey);
   const isRenewal = RENEWAL_LISTS.includes(listKey);
-  const colCount = 8 + (detailed ? (isRenewal ? 11 : 10) : 0);
+  const airportDetailed = AIRPORT_LISTS.includes(listKey);
+  const isAirportRenewal = AIRPORT_RENEWAL_LISTS.includes(listKey);
+  const colCount = 8
+    + (detailed ? (isRenewal ? 11 : 10) : 0)
+    + (airportDetailed ? (isAirportRenewal ? 14 : 13) : 0);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
