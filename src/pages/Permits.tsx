@@ -1,0 +1,343 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { cn, formatDate } from '@/lib/utils';
+import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship } from 'lucide-react';
+
+type ListKey =
+  | 'security_airports_issue' | 'security_airports_renew'
+  | 'security_cairo_issue' | 'security_cairo_renew'
+  | 'ports_security_issue' | 'ports_security_renew'
+  | 'port_authority_issue' | 'port_authority_renew';
+
+interface EmployeeLite {
+  id: string;
+  employee_code: string;
+  name_ar: string;
+  name_en: string;
+  job_title_ar: string | null;
+  job_title_en: string | null;
+  station_id: string | null;
+  department_id: string | null;
+}
+
+interface PermitEntry {
+  id: string;
+  employee_id: string;
+  list_key: ListKey;
+  status: 'in_progress' | 'done';
+  created_at: string;
+}
+
+const SECTIONS: { key: string; ar: string; en: string; icon: React.ElementType; lists: { key: ListKey; ar: string; en: string }[] }[] = [
+  {
+    key: 'security', ar: 'قطاع الأمن', en: 'Security Sector', icon: ShieldCheck,
+    lists: [
+      { key: 'security_airports_issue', ar: 'مطارات - استخراج', en: 'Airports - New' },
+      { key: 'security_airports_renew', ar: 'مطارات - تجديد', en: 'Airports - Renewal' },
+      { key: 'security_cairo_issue', ar: 'القاهرة - استخراج', en: 'Cairo - New' },
+      { key: 'security_cairo_renew', ar: 'القاهرة - تجديد', en: 'Cairo - Renewal' },
+    ],
+  },
+  {
+    key: 'ports_security', ar: 'أمن المواني', en: 'Ports Security', icon: Anchor,
+    lists: [
+      { key: 'ports_security_issue', ar: 'استخراج', en: 'New' },
+      { key: 'ports_security_renew', ar: 'تجديد', en: 'Renewal' },
+    ],
+  },
+  {
+    key: 'port_authority', ar: 'هيئة الميناء', en: 'Port Authority', icon: Ship,
+    lists: [
+      { key: 'port_authority_issue', ar: 'استخراج', en: 'New' },
+      { key: 'port_authority_renew', ar: 'تجديد', en: 'Renewal' },
+    ],
+  },
+];
+
+const Permits = () => {
+  const { language, isRTL } = useLanguage();
+  const ar = language === 'ar';
+
+  const [employees, setEmployees] = useState<EmployeeLite[]>([]);
+  const [stationMap, setStationMap] = useState<Map<string, string>>(new Map());
+  const [deptMap, setDeptMap] = useState<Map<string, string>>(new Map());
+  const [entries, setEntries] = useState<PermitEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    const all: EmployeeLite[] = [];
+    for (let from = 0; from < 10000; from += 1000) {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id')
+        .order('employee_code')
+        .range(from, from + 999);
+      if (error) break;
+      all.push(...((data || []) as EmployeeLite[]));
+      if (!data || data.length < 1000) break;
+    }
+
+    const [stationsRes, deptsRes, entriesRes] = await Promise.all([
+      supabase.from('stations').select('id, name_ar, name_en'),
+      supabase.from('departments').select('id, name_ar, name_en'),
+      supabase.from('permit_list_entries').select('id, employee_id, list_key, status, created_at').order('created_at', { ascending: false }),
+    ]);
+
+    setStationMap(new Map(((stationsRes.data || []) as any[]).map(s => [s.id, ar ? s.name_ar : s.name_en])));
+    setDeptMap(new Map(((deptsRes.data || []) as any[]).map(d => [d.id, ar ? d.name_ar : d.name_en])));
+    setEmployees(all);
+    setEntries(((entriesRes.data || []) as any[]) as PermitEntry[]);
+    setLoading(false);
+  }, [ar]);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  const employeeById = useMemo(() => new Map(employees.map(e => [e.id, e])), [employees]);
+
+  const addEntry = async (employeeId: string, listKey: ListKey) => {
+    const { data, error } = await supabase
+      .from('permit_list_entries')
+      .insert({ employee_id: employeeId, list_key: listKey })
+      .select('id, employee_id, list_key, status, created_at')
+      .single();
+    if (error) {
+      toast.error(error.code === '23505'
+        ? (ar ? 'الموظف مضاف بالفعل في هذه القائمة' : 'Employee already in this list')
+        : (ar ? 'تعذر إضافة الموظف' : 'Could not add employee'));
+      return;
+    }
+    setEntries(prev => [data as PermitEntry, ...prev]);
+    toast.success(ar ? 'تمت الإضافة' : 'Added');
+  };
+
+  const removeEntry = async (id: string) => {
+    const { error } = await supabase.from('permit_list_entries').delete().eq('id', id);
+    if (error) { toast.error(ar ? 'تعذر الحذف' : 'Could not delete'); return; }
+    setEntries(prev => prev.filter(e => e.id !== id));
+    toast.success(ar ? 'تم الحذف' : 'Deleted');
+  };
+
+  const updateStatus = async (id: string, status: 'in_progress' | 'done') => {
+    const { error } = await supabase.from('permit_list_entries').update({ status }).eq('id', id);
+    if (error) { toast.error(ar ? 'تعذر تحديث الحالة' : 'Could not update status'); return; }
+    setEntries(prev => prev.map(e => (e.id === id ? { ...e, status } : e)));
+  };
+
+  return (
+    <DashboardLayout>
+      <main className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div>
+          <h1 className="text-2xl font-bold">{ar ? 'التصاريح' : 'Permits'}</h1>
+          <p className="text-sm text-muted-foreground">
+            {ar ? 'قوائم الموظفين المطلوب استخراج أو تجديد تصاريحهم' : 'Employee lists for permit issuance and renewal'}
+          </p>
+        </div>
+
+        <Tabs defaultValue={SECTIONS[0].key} className="space-y-4">
+          <TabsList className="flex flex-wrap h-auto">
+            {SECTIONS.map(section => (
+              <TabsTrigger key={section.key} value={section.key} className="gap-2">
+                <section.icon className="w-4 h-4" />
+                {ar ? section.ar : section.en}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {SECTIONS.map(section => (
+            <TabsContent key={section.key} value={section.key}>
+              <Tabs defaultValue={section.lists[0].key} className="space-y-4">
+                <TabsList className="flex flex-wrap h-auto">
+                  {section.lists.map(list => (
+                    <TabsTrigger key={list.key} value={list.key}>
+                      {ar ? list.ar : list.en}
+                      <Badge variant="secondary" className="ms-2">
+                        {entries.filter(e => e.list_key === list.key).length}
+                      </Badge>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {section.lists.map(list => (
+                  <TabsContent key={list.key} value={list.key}>
+                    <PermitListPanel
+                      title={`${ar ? section.ar : section.en}: ${ar ? list.ar : list.en}`}
+                      listKey={list.key}
+                      entries={entries.filter(e => e.list_key === list.key)}
+                      employees={employees}
+                      employeeById={employeeById}
+                      stationMap={stationMap}
+                      deptMap={deptMap}
+                      loading={loading}
+                      ar={ar}
+                      isRTL={isRTL}
+                      onAdd={addEntry}
+                      onRemove={removeEntry}
+                      onStatusChange={updateStatus}
+                    />
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </main>
+    </DashboardLayout>
+  );
+};
+
+interface PanelProps {
+  title: string;
+  listKey: ListKey;
+  entries: PermitEntry[];
+  employees: EmployeeLite[];
+  employeeById: Map<string, EmployeeLite>;
+  stationMap: Map<string, string>;
+  deptMap: Map<string, string>;
+  loading: boolean;
+  ar: boolean;
+  isRTL: boolean;
+  onAdd: (employeeId: string, listKey: ListKey) => void;
+  onRemove: (id: string) => void;
+  onStatusChange: (id: string, status: 'in_progress' | 'done') => void;
+}
+
+const PermitListPanel = ({
+  title, listKey, entries, employees, employeeById, stationMap, deptMap,
+  loading, ar, isRTL, onAdd, onRemove, onStatusChange,
+}: PanelProps) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const existingIds = useMemo(() => new Set(entries.map(e => e.employee_id)), [entries]);
+  const selectable = useMemo(() => employees.filter(e => !existingIds.has(e.id)).slice(0, 400), [employees, existingIds]);
+
+  const rows = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    return entries.filter(entry => {
+      if (!s) return true;
+      const emp = employeeById.get(entry.employee_id);
+      if (!emp) return false;
+      return emp.name_ar.toLowerCase().includes(s)
+        || (emp.name_en || '').toLowerCase().includes(s)
+        || (emp.employee_code || '').toLowerCase().includes(s);
+    });
+  }, [entries, employeeById, search]);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <CardTitle className="text-base">{title}</CardTitle>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="relative">
+            <Search className={cn('absolute top-2.5 w-4 h-4 text-muted-foreground', isRTL ? 'right-3' : 'left-3')} />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={ar ? 'بحث بالاسم أو الكود...' : 'Search by name or code...'}
+              className={cn('w-full sm:w-64', isRTL ? 'pr-9' : 'pl-9')}
+            />
+          </div>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                {ar ? 'إضافة موظف' : 'Add employee'}
+                <ChevronsUpDown className="w-4 h-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[320px] p-0 bg-popover z-50" align="start">
+              <Command>
+                <CommandInput placeholder={ar ? 'ابحث بالاسم أو الكود...' : 'Search by name or code...'} />
+                <CommandList className="max-h-[300px] overflow-y-auto">
+                  <CommandEmpty>{ar ? 'لا يوجد موظف' : 'No employee found'}</CommandEmpty>
+                  <CommandGroup>
+                    {selectable.map(emp => (
+                      <CommandItem
+                        key={emp.id}
+                        value={`${emp.name_ar} ${emp.name_en} ${emp.employee_code}`}
+                        onSelect={() => { onAdd(emp.id, listKey); setOpen(false); }}
+                      >
+                        <div className={cn('flex flex-col min-w-0', isRTL && 'items-end')}>
+                          <span className="font-medium truncate">{ar ? emp.name_ar : emp.name_en}</span>
+                          <span className="text-xs text-muted-foreground truncate">{emp.employee_code}</span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{ar ? 'الكود' : 'Code'}</TableHead>
+                <TableHead>{ar ? 'اسم الموظف' : 'Employee'}</TableHead>
+                <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
+                <TableHead>{ar ? 'القسم' : 'Department'}</TableHead>
+                <TableHead>{ar ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
+                <TableHead>{ar ? 'تاريخ الإضافة' : 'Added On'}</TableHead>
+                <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
+                <TableHead className="w-[60px]" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
+              ) : rows.length === 0 ? (
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد أسماء في هذه القائمة' : 'No employees in this list'}</TableCell></TableRow>
+              ) : rows.map(entry => {
+                const emp = employeeById.get(entry.employee_id);
+                return (
+                  <TableRow key={entry.id}>
+                    <TableCell className="font-mono text-xs">{emp?.employee_code || '-'}</TableCell>
+                    <TableCell className="font-medium whitespace-pre-wrap break-words">{(ar ? emp?.name_ar : emp?.name_en) || '-'}</TableCell>
+                    <TableCell>{(emp?.station_id && stationMap.get(emp.station_id)) || '-'}</TableCell>
+                    <TableCell>{(emp?.department_id && deptMap.get(emp.department_id)) || '-'}</TableCell>
+                    <TableCell className="whitespace-pre-wrap break-words">{(ar ? emp?.job_title_ar : emp?.job_title_en) || '-'}</TableCell>
+                    <TableCell>{formatDate(entry.created_at)}</TableCell>
+                    <TableCell>
+                      <Select value={entry.status} onValueChange={(v) => onStatusChange(entry.id, v as 'in_progress' | 'done')}>
+                        <SelectTrigger className="w-[140px] h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover z-50">
+                          <SelectItem value="in_progress">{ar ? 'قيد التنفيذ' : 'In progress'}</SelectItem>
+                          <SelectItem value="done">{ar ? 'تم' : 'Done'}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" onClick={() => onRemove(entry.id)} aria-label={ar ? 'حذف' : 'Delete'}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default Permits;
