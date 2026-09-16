@@ -185,7 +185,7 @@ h1 { font-size: 20px; font-weight: bold; text-align: center; margin: 4px 0 10px;
     <span class="cell grow"><span class="lbl">اسم المنشأة :</span>${line(x.facilityName)}</span>
     <span class="cell"><span class="lbl">رقمها التأمينى :</span>${boxes(x.facilityNo, 10)}</span>
   </div>
-  <div class="row"><span class="cell grow"><span class="lbl">العنــــــان :</span>${line(x.address)}</span></div>
+  <div class="row"><span class="cell grow"><span class="lbl">العنــــــوان :</span>${line(x.address)}</span></div>
   <div class="row">
     <span class="cell grow"><span class="lbl">اسم المؤمن عليه :</span>${line(e.name_ar)}</span>
     <span class="cell"><span class="lbl">رقمه التأمينى :</span>${boxes(e.social_insurance_no, 10)}</span>
