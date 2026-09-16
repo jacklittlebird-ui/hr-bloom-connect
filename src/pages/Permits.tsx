@@ -425,7 +425,7 @@ const PermitListPanel = ({
       };
     });
     const year = String(new Date().getFullYear());
-    await exportPortsSecurityIssueLetter(data, year, formatDate(new Date().toISOString()));
+    await exportPortsSecurityIssueLetter(data, year, formatDate(new Date().toISOString()), PERMIT_PURPOSE, PERMIT_AIRPORTS);
     toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
   };
 
