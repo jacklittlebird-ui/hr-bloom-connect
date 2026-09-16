@@ -13,7 +13,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { cn, formatDate } from '@/lib/utils';
-import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship } from 'lucide-react';
+import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSpreadsheet } from 'lucide-react';
+import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -39,6 +40,7 @@ interface EmployeeLite {
   address: string | null;
   phone: string | null;
   annual_permit_no: string | null;
+  id_issue_date: string | null;
 }
 
 interface PermitEntry {
@@ -100,7 +102,7 @@ const Permits = () => {
     for (let from = 0; from < 10000; from += 1000) {
       const { data, error } = await supabase
         .from('employees')
-        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, permit_name_ar, address, phone, annual_permit_no')
+        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, permit_name_ar, address, phone, annual_permit_no, id_issue_date')
         .order('employee_code')
         .range(from, from + 999);
       if (error) break;
@@ -265,6 +267,35 @@ const PermitListPanel = ({
     });
   }, [entries, employeeById, search]);
 
+  const canExportRenewalSheet = listKey === 'port_authority_renew';
+
+  const handleExportSheet = async () => {
+    const data = rows.map(entry => {
+      const emp = employeeById.get(entry.employee_id);
+      return {
+        name: emp?.name_ar || '',
+        nationality: emp?.nationality || '',
+        religion: emp?.religion || '',
+        birthDate: fmt(emp?.birth_date),
+        birthGovernorate: emp?.birth_governorate || '',
+        nationalId: emp?.national_id || '',
+        idIssue: fmt(emp?.id_issue_date),
+        jobTitle: emp?.permit_name_ar || emp?.job_title_ar || '',
+        address: emp?.address || '',
+        visitArea: VISIT_AREA,
+        permitNo: entry.permit_no ?? emp?.annual_permit_no ?? '',
+        phone: emp?.phone || '',
+      };
+    });
+    if (data.length === 0) {
+      toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
+      return;
+    }
+    const year = String(new Date().getFullYear());
+    await exportPermitRenewalSheet(data, year, `كشف_تجديد_${year}.xlsx`);
+    toast.success(ar ? 'تم تنزيل الكشف' : 'Sheet downloaded');
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -279,6 +310,12 @@ const PermitListPanel = ({
               className={cn('w-full sm:w-64', isRTL ? 'pr-9' : 'pl-9')}
             />
           </div>
+          {canExportRenewalSheet && (
+            <Button variant="outline" className="gap-2" onClick={handleExportSheet}>
+              <FileSpreadsheet className="w-4 h-4" />
+              {ar ? 'تصدير كشف التجديد' : 'Export renewal sheet'}
+            </Button>
+          )}
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button className="gap-2">
