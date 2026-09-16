@@ -35,6 +35,7 @@ import { ExperienceCertificate } from '@/components/documents/ExperienceCertific
 import { MutualTermination } from '@/components/documents/MutualTermination';
 import { EmployeeDataForm } from '@/components/documents/EmployeeDataForm';
 import { FinalSettlement } from '@/components/documents/FinalSettlement';
+import { InsuranceClosures } from '@/components/documents/InsuranceClosures';
 
 
 interface Document {
@@ -74,7 +75,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'reminders' | 'missingInsuranceStart' | 'form01' | 'form06' | 'contracts' | 'clearance' | 'experience' | 'mutualTermination' | 'employeeDataForm' | 'finalSettlement'>('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'insuranceClosures' | 'reminders' | 'missingInsuranceStart' | 'form01' | 'form06' | 'contracts' | 'clearance' | 'experience' | 'mutualTermination' | 'employeeDataForm' | 'finalSettlement'>('renewals');
   const [reminders] = usePersistedState<Reminder[]>('hr_general_reminders', []);
   const activeRemindersCount = reminders.filter(r => !r.completed).length;
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
@@ -139,6 +140,7 @@ const Documents = () => {
       items: [
         { key: 'renewals', ar: 'تجديد التأمين', en: 'Insurance', icon: ShieldAlert, statKey: 'renewals' },
         { key: 'resignedInsurance', ar: 'الموظفين المستقيلين', en: 'Resigned Employees', icon: UserX },
+        { key: 'insuranceClosures', ar: 'إغلاق التأمينات', en: 'Insurance Closures', icon: ShieldAlert },
         { key: 'nationalId', ar: 'الرقم القومي', en: 'National ID', icon: CreditCard, statKey: 'nationalId' },
       ],
     },
