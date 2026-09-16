@@ -278,6 +278,7 @@ const PermitListPanel = ({
 
   const canExportRenewalSheet = listKey === 'port_authority_renew';
   const canExportCairoLetter = listKey === 'security_cairo_renew';
+  const canExportCairoIssueLetter = listKey === 'security_cairo_issue';
 
   const handleExportSheet = async () => {
     const data = rows.map(entry => {
