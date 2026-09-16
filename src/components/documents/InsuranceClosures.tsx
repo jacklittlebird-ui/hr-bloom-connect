@@ -187,7 +187,7 @@ export const InsuranceClosures = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2">
+            <Button variant="outline" size="sm" onClick={() => handlePrint(ar ? 'إغلاق التأمينات' : 'Insurance Closures')} className="gap-2">
               <Printer className="w-4 h-4" /> {ar ? 'طباعة' : 'Print'}
             </Button>
             <Button variant="outline" size="sm" onClick={handleExportExcel} className="gap-2">
