@@ -94,8 +94,7 @@ export async function exportSecurityCairoRenewalLetter(
     .replace('(يتم كتابة التاريخ)', esc(dateText))
     .replace('(يتم كتابة الرقم)', '')
     .replace('إجمالي العدد', String(rows.length))
-    .replace('(يتم اختيار سنة', `(${esc(year)}`)
-    .replace(' لاحقة للسنة الحالية', '');
+    .replace('(يتم اختيار سنة لاحقة للسنة الحالية)', 'يتم اختيار سنة لاحقة للسنة الحالية)');
 
   const tblStart = xml.indexOf('<w:tbl>');
   const tblEnd = xml.indexOf('</w:tbl>') + '</w:tbl>'.length;
