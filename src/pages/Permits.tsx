@@ -431,6 +431,7 @@ const PermitListPanel = ({
     toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
   };
 
+  const handleExportPortsSecurityIssueLetter = async () => {
     if (rows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
