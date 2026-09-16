@@ -340,10 +340,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             const { data: { session: storedSession } } = await supabase.auth.getSession();
             if (storedSession?.user) {
-              // Another tab refreshed the token successfully — adopt that session
-              // instead of logging out.
-              setSession(storedSession);
-              return;
+              // A stored session exists, but it may already be revoked server-side
+              // (rotation, sign-out elsewhere, idle timeout). Validate before adopting.
+              const { error: verifyError } = await supabase.auth.getUser();
+              if (!verifyError) {
+                setSession(storedSession);
+                return;
+              }
+              // Dead token: drop it locally so it is never reused.
+              try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
             }
           } catch {
             // fall through and clear state
@@ -353,6 +358,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearAuthState();
         return;
       }
+
 
       setSession(newSession);
 
