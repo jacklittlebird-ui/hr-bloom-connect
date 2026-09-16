@@ -99,7 +99,7 @@ const Permits = () => {
     for (let from = 0; from < 10000; from += 1000) {
       const { data, error } = await supabase
         .from('employees')
-        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id')
+        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, permit_name_ar, address, phone')
         .order('employee_code')
         .range(from, from + 999);
       if (error) break;
@@ -110,7 +110,7 @@ const Permits = () => {
     const [stationsRes, deptsRes, entriesRes] = await Promise.all([
       supabase.from('stations').select('id, name_ar, name_en'),
       supabase.from('departments').select('id, name_ar, name_en'),
-      supabase.from('permit_list_entries').select('id, employee_id, list_key, status, created_at').order('created_at', { ascending: false }),
+      supabase.from('permit_list_entries').select('id, employee_id, list_key, status, permit_no, created_at').order('created_at', { ascending: false }),
     ]);
 
     setStationMap(new Map(((stationsRes.data || []) as any[]).map(s => [s.id, ar ? s.name_ar : s.name_en])));
@@ -128,7 +128,7 @@ const Permits = () => {
     const { data, error } = await supabase
       .from('permit_list_entries')
       .insert({ employee_id: employeeId, list_key: listKey })
-      .select('id, employee_id, list_key, status, created_at')
+      .select('id, employee_id, list_key, status, permit_no, created_at')
       .single();
     if (error) {
       toast.error(error.code === '23505'
