@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { cn, formatDate } from '@/lib/utils';
 import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSpreadsheet, FileText } from 'lucide-react';
 import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
-import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter, exportSecurityAirportsIssueLetter, exportPortsSecurityIssueLetter, exportPortsSecurityRenewalLetter } from '@/lib/permitRenewalLetter';
+import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter, exportSecurityAirportsIssueLetter, exportSecurityAirportsRenewalLetter, exportPortsSecurityIssueLetter, exportPortsSecurityRenewalLetter } from '@/lib/permitRenewalLetter';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -298,6 +298,7 @@ const PermitListPanel = ({
   const canExportCairoIssueLetter = listKey === 'security_cairo_issue';
   const canExportPortIssueLetter = listKey === 'port_authority_issue';
   const canExportAirportsIssueLetter = listKey === 'security_airports_issue';
+  const canExportAirportsRenewalLetter = listKey === 'security_airports_renew';
   const canExportPortsSecurityIssueLetter = listKey === 'ports_security_issue';
   const canExportPortsSecurityRenewalLetter = listKey === 'ports_security_renew';
 
@@ -413,6 +414,23 @@ const PermitListPanel = ({
     toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
   };
 
+  const handleExportAirportsRenewalLetter = async () => {
+    if (rows.length === 0) {
+      toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
+      return;
+    }
+    const data = rows.map(entry => {
+      const emp = employeeById.get(entry.employee_id);
+      return {
+        name: emp?.name_ar || '',
+        jobTitle: emp?.permit_name_ar || emp?.job_title_ar || '',
+      };
+    });
+    const year = String(new Date().getFullYear() + 1);
+    await exportSecurityAirportsRenewalLetter(data, year, formatDate(new Date().toISOString()), PERMIT_PURPOSE, PERMIT_AIRPORTS);
+    toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
+  };
+
   const handleExportPortsSecurityIssueLetter = async () => {
     if (rows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
@@ -495,6 +513,12 @@ const PermitListPanel = ({
             <Button variant="outline" className="gap-2" onClick={handleExportAirportsIssueLetter}>
               <FileText className="w-4 h-4" />
               {ar ? 'تصدير خطاب الاستخراج' : 'Export issuance letter'}
+            </Button>
+          )}
+          {canExportAirportsRenewalLetter && (
+            <Button variant="outline" className="gap-2" onClick={handleExportAirportsRenewalLetter}>
+              <FileText className="w-4 h-4" />
+              {ar ? 'تصدير خطاب التجديد' : 'Export renewal letter'}
             </Button>
           )}
           {canExportPortsSecurityIssueLetter && (
