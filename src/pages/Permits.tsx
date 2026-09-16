@@ -40,6 +40,7 @@ interface EmployeeLite {
   address: string | null;
   phone: string | null;
   annual_permit_no: string | null;
+  id_issue_date: string | null;
 }
 
 interface PermitEntry {
