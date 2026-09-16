@@ -67,7 +67,7 @@ const initialDocs: Document[] = [
 
 const Documents = () => {
   const { language, isRTL } = useLanguage();
-  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'insuranceClosures' | 'reminders' | 'missingInsuranceStart' | 'form01' | 'form06' | 'contracts' | 'clearance' | 'experience' | 'mutualTermination' | 'employeeDataForm' | 'finalSettlement'>('renewals');
+  const [activeMainTab, setActiveMainTab] = useState<AlertKey | 'directory' | 'documents' | 'resignedInsurance' | 'insuranceClosures' | 'reminders' | 'missingInsuranceStart'>('renewals');
   const [reminders] = usePersistedState<Reminder[]>('hr_general_reminders', []);
   const activeRemindersCount = reminders.filter(r => !r.completed).length;
   const [docs, setDocs] = usePersistedState<Document[]>('hr_documents_library', initialDocs);
