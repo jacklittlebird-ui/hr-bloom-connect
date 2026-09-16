@@ -320,6 +320,20 @@ const PermitListPanel = ({
                 <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead>{ar ? 'القسم' : 'Department'}</TableHead>
                 <TableHead>{ar ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
+                {detailed && (
+                  <>
+                    <TableHead>{ar ? 'الجنسية' : 'Nationality'}</TableHead>
+                    <TableHead>{ar ? 'الديانة' : 'Religion'}</TableHead>
+                    <TableHead>{ar ? 'تاريخ الميلاد' : 'Birth Date'}</TableHead>
+                    <TableHead>{ar ? 'محافظة الميلاد' : 'Birth Governorate'}</TableHead>
+                    <TableHead>{ar ? 'الرقم القومي' : 'National ID'}</TableHead>
+                    <TableHead>{ar ? 'المسمى في التصريح' : 'Permit Title (AR)'}</TableHead>
+                    <TableHead>{ar ? 'العنوان' : 'Address'}</TableHead>
+                    {isRenewal && <TableHead>{ar ? 'رقم التصريح' : 'Permit No.'}</TableHead>}
+                    <TableHead>{ar ? 'الهاتف المحمول' : 'Mobile'}</TableHead>
+                    <TableHead>{ar ? 'منطقة الارتياد' : 'Visit Area'}</TableHead>
+                  </>
+                )}
                 <TableHead>{ar ? 'تاريخ الإضافة' : 'Added On'}</TableHead>
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
                 <TableHead className="w-[60px]" />
@@ -327,9 +341,9 @@ const PermitListPanel = ({
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
               ) : rows.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد أسماء في هذه القائمة' : 'No employees in this list'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد أسماء في هذه القائمة' : 'No employees in this list'}</TableCell></TableRow>
               ) : rows.map(entry => {
                 const emp = employeeById.get(entry.employee_id);
                 return (
