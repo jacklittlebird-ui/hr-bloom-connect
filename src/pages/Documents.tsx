@@ -334,6 +334,8 @@ const Documents = () => {
           <InsuranceRenewals />
         ) : activeMainTab === 'resignedInsurance' ? (
           <ResignedInsuranceRenewals />
+        ) : activeMainTab === 'insuranceClosures' ? (
+          <InsuranceClosures />
         ) : activeMainTab === 'nationalId' ? (
           <NationalIdRenewals />
         ) : activeMainTab === 'bankData' ? (
