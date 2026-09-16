@@ -555,6 +555,32 @@ const PermitListPanel = ({
                         <TableCell className="whitespace-pre-wrap break-words max-w-[220px]">{VISIT_AREA}</TableCell>
                       </>
                     )}
+                    {airportDetailed && (
+                      <>
+                        <TableCell className="whitespace-pre-wrap break-words">{emp?.name_en || '-'}</TableCell>
+                        <TableCell>{emp?.nationality || '-'}</TableCell>
+                        <TableCell className="font-mono text-xs">{emp?.national_id || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{emp?.permit_name_ar || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{emp?.permit_name_en || '-'}</TableCell>
+                        <TableCell>{emp?.birth_governorate || '-'}</TableCell>
+                        <TableCell>{emp?.birth_date ? formatDate(emp.birth_date) : '-'}</TableCell>
+                        <TableCell>{emp?.governorate || '-'}</TableCell>
+                        <TableCell>{emp?.city || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words max-w-[220px]">{emp?.address || '-'}</TableCell>
+                        {isAirportRenewal && (
+                          <TableCell>
+                            <PermitNoInput
+                              value={entry.permit_no ?? emp?.airports_annual_permit_no ?? ''}
+                              onSave={(v) => onPermitNoChange(entry.id, v)}
+                              placeholder={ar ? 'رقم التصريح' : 'Permit no.'}
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell className="font-mono text-xs">{emp?.social_insurance_no || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{PERMIT_PURPOSE}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{PERMIT_AIRPORTS}</TableCell>
+                      </>
+                    )}
                     <TableCell>{formatDate(entry.created_at)}</TableCell>
                     <TableCell>
                       <Select value={entry.status} onValueChange={(v) => onStatusChange(entry.id, v as 'in_progress' | 'done')}>
