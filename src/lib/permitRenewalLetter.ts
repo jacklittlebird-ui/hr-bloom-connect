@@ -342,6 +342,8 @@ export async function exportSecurityAirportsIssueLetter(
         row = fillCell(row, 0, String(i + 1));
         row = fillCell(row, 1, r.name);
         row = fillCell(row, 2, r.jobTitle);
+        row = fillCell(row, 3, purpose);
+        row = fillCell(row, 4, airports);
         return row;
       })
       .join('');
