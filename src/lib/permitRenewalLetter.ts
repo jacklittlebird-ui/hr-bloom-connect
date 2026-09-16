@@ -94,8 +94,7 @@ export async function exportSecurityCairoRenewalLetter(
     .replace('(يتم كتابة التاريخ)', esc(dateText))
     .replace('(يتم كتابة الرقم)', '')
     .replace('إجمالي العدد', String(rows.length))
-    .replace('(يتم اختيار سنة', `(${esc(year)}`)
-    .replace(' لاحقة للسنة الحالية', '');
+    .replace('(يتم اختيار سنة لاحقة للسنة الحالية)', 'يتم اختيار سنة لاحقة للسنة الحالية)');
 
   const tblStart = xml.indexOf('<w:tbl>');
   const tblEnd = xml.indexOf('</w:tbl>') + '</w:tbl>'.length;
@@ -150,8 +149,7 @@ export async function exportPortAuthorityIssueLetter(
     .replace('(يتم كتابة التاريخ)', esc(dateText))
     .replace('(يتم كتابة الرقم)', '')
     .replace('إجمالي العدد', String(rows.length))
-    .replace('(يتم اختيار سنة', `(${esc(year)}`)
-    .replace(' لاحقة للسنة الحالية', '');
+    .replace('(يتم اختيار سنة لاحقة للسنة الحالية)', 'يتم اختيار سنة لاحقة للسنة الحالية)');
 
   const tblStart = xml.indexOf('<w:tbl>');
   const tblEnd = xml.indexOf('</w:tbl>') + '</w:tbl>'.length;
@@ -207,8 +205,7 @@ export async function exportSecurityCairoIssueLetter(
     .replace('(يتم كتابة التاريخ)', esc(dateText))
     .replace('(يتم كتابة الرقم)', '')
     .replace('إجمالي العدد', String(rows.length))
-    .replace('(يتم اختيار سنة', `(${esc(year)}`)
-    .replace(' لاحقة للسنة الحالية', '');
+    .replace('(يتم اختيار سنة لاحقة للسنة الحالية)', 'يتم اختيار سنة لاحقة للسنة الحالية)');
 
   const tblStart = xml.indexOf('<w:tbl>');
   const tblEnd = xml.indexOf('</w:tbl>') + '</w:tbl>'.length;
@@ -265,8 +262,7 @@ export async function exportPortsSecurityIssueLetter(
     .replace('(يتم كتابة التاريخ)', esc(dateText))
     .replace('(يتم كتابة الرقم)', '')
     .replace('إجمالي العدد', String(rows.length))
-    .replace('(يتم اختيار سنة', `(${esc(year)}`)
-    .replace(' لاحقة للسنة الحالية', '');
+    .replace('(يتم اختيار سنة لاحقة للسنة الحالية)', 'يتم اختيار سنة لاحقة للسنة الحالية)');
 
   const tblStart = xml.indexOf('<w:tbl>');
   const tblEnd = xml.indexOf('</w:tbl>') + '</w:tbl>'.length;
@@ -326,8 +322,7 @@ export async function exportSecurityAirportsIssueLetter(
     .replace('(يتم كتابة التاريخ)', esc(dateText))
     .replace('(يتم كتابة الرقم)', '')
     .replace('إجمالي العدد', String(rows.length))
-    .replace('(يتم اختيار سنة', `(${esc(year)}`)
-    .replace(' لاحقة للسنة الحالية', '');
+    .replace('(يتم اختيار سنة لاحقة للسنة الحالية)', 'يتم اختيار سنة لاحقة للسنة الحالية)');
 
   const tblStart = xml.indexOf('<w:tbl>');
   const tblEnd = xml.indexOf('</w:tbl>') + '</w:tbl>'.length;
