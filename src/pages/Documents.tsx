@@ -157,16 +157,7 @@ const Documents = () => {
       items: [
         { key: 'reminders', ar: 'تنبيهات عامة', en: 'General Reminders', icon: Bell },
         { key: 'directory', ar: 'دليل الموظفين', en: 'Directory', icon: Users },
-        { key: 'form01', ar: 'استمارة (1)', en: 'Form 1', icon: File },
-        { key: 'form06', ar: 'استمارة (6)', en: 'Form 6', icon: File },
-        { key: 'contracts', ar: 'عقود العمل', en: 'Employment Contracts', icon: File },
-        { key: 'clearance', ar: 'إخلاء طرف', en: 'Clearance Certificate', icon: File },
-        { key: 'experience', ar: 'شهادة خبرة', en: 'Experience Certificate', icon: File },
-        { key: 'mutualTermination', ar: 'إنهاء علاقة عمل بالتراضي', en: 'Mutual Termination', icon: File },
-        { key: 'finalSettlement', ar: 'مخالصة نهائية', en: 'Final Settlement', icon: File },
-        { key: 'employeeDataForm', ar: 'نموذج بيانات موظف', en: 'Employee Data Form', icon: File },
         { key: 'documents', ar: 'مكتبة المستندات', en: 'Library', icon: FileText },
-
       ],
     },
   ];
