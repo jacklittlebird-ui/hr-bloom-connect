@@ -408,7 +408,7 @@ const PermitListPanel = ({
       };
     });
     const year = String(new Date().getFullYear() + 1);
-    await exportSecurityAirportsIssueLetter(data, year, formatDate(new Date().toISOString()));
+    await exportSecurityAirportsIssueLetter(data, year, formatDate(new Date().toISOString()), PERMIT_PURPOSE, PERMIT_AIRPORTS);
     toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
   };
 
