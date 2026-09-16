@@ -495,6 +495,24 @@ const PermitListPanel = ({
                     <TableHead>{ar ? 'منطقة الارتياد' : 'Visit Area'}</TableHead>
                   </>
                 )}
+                {airportDetailed && (
+                  <>
+                    <TableHead>{ar ? 'الاسم بالإنجليزية' : 'Full Name (EN)'}</TableHead>
+                    <TableHead>{ar ? 'الجنسية' : 'Nationality'}</TableHead>
+                    <TableHead>{ar ? 'الرقم القومي' : 'National ID'}</TableHead>
+                    <TableHead>{ar ? 'المسمى في التصريح (ع)' : 'Permit Title (AR)'}</TableHead>
+                    <TableHead>{ar ? 'المسمى في التصريح (إن)' : 'Permit Title (EN)'}</TableHead>
+                    <TableHead>{ar ? 'محافظة الميلاد' : 'Birth Governorate'}</TableHead>
+                    <TableHead>{ar ? 'تاريخ الميلاد' : 'Birth Date'}</TableHead>
+                    <TableHead>{ar ? 'المحافظة' : 'Governorate'}</TableHead>
+                    <TableHead>{ar ? 'المدينة' : 'City'}</TableHead>
+                    <TableHead>{ar ? 'العنوان' : 'Address'}</TableHead>
+                    {isAirportRenewal && <TableHead>{ar ? 'تصريح المطارات السنوي' : 'Airports Annual Permit'}</TableHead>}
+                    <TableHead>{ar ? 'الرقم التأميني' : 'Insurance No.'}</TableHead>
+                    <TableHead>{ar ? 'الغرض من التصريح' : 'Permit Purpose'}</TableHead>
+                    <TableHead>{ar ? 'المطارات المراد ارتيادها' : 'Airports'}</TableHead>
+                  </>
+                )}
                 <TableHead>{ar ? 'تاريخ الإضافة' : 'Added On'}</TableHead>
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
                 <TableHead className="w-[60px]" />
