@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { cn, formatDate } from '@/lib/utils';
 import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSpreadsheet, FileText } from 'lucide-react';
 import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
-import { exportPortAuthorityRenewalLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter } from '@/lib/permitRenewalLetter';
+import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter } from '@/lib/permitRenewalLetter';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -279,6 +279,7 @@ const PermitListPanel = ({
   const canExportRenewalSheet = listKey === 'port_authority_renew';
   const canExportCairoLetter = listKey === 'security_cairo_renew';
   const canExportCairoIssueLetter = listKey === 'security_cairo_issue';
+  const canExportPortIssueLetter = listKey === 'port_authority_issue';
 
   const handleExportSheet = async () => {
     const data = rows.map(entry => {
@@ -358,6 +359,23 @@ const PermitListPanel = ({
     toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
   };
 
+  const handleExportPortIssueLetter = async () => {
+    if (rows.length === 0) {
+      toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
+      return;
+    }
+    const data = rows.map(entry => {
+      const emp = employeeById.get(entry.employee_id);
+      return {
+        name: emp?.name_ar || '',
+        jobTitle: emp?.permit_name_ar || emp?.job_title_ar || '',
+      };
+    });
+    const year = String(new Date().getFullYear());
+    await exportPortAuthorityIssueLetter(data, year, formatDate(new Date().toISOString()));
+    toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -392,6 +410,12 @@ const PermitListPanel = ({
           )}
           {canExportCairoIssueLetter && (
             <Button variant="outline" className="gap-2" onClick={handleExportCairoIssueLetter}>
+              <FileText className="w-4 h-4" />
+              {ar ? 'تصدير خطاب الاستخراج' : 'Export issuance letter'}
+            </Button>
+          )}
+          {canExportPortIssueLetter && (
+            <Button variant="outline" className="gap-2" onClick={handleExportPortIssueLetter}>
               <FileText className="w-4 h-4" />
               {ar ? 'تصدير خطاب الاستخراج' : 'Export issuance letter'}
             </Button>
