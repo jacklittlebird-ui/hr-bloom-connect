@@ -96,7 +96,7 @@ const signatures = (e: Emp, f: FormState) => `
       <div>الوظيفة: ${line(f.employerRepTitle, 26)}</div>
       <div>اسم الشركة: ${line(f.companyName, 22)}</div>
       <div>مقر الشركة: ${line(f.companyAddress, 22)}</div>
-      <div>(التوقيع) ${dots(24)}</div>
+      <div>(التوقيع) ${dots(44)}</div>
       <div>خاتم جهة العمل : ${dots(16)}</div>
     </div>
   </div>`;
