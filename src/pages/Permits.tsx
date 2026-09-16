@@ -153,6 +153,12 @@ const Permits = () => {
     setEntries(prev => prev.map(e => (e.id === id ? { ...e, status } : e)));
   };
 
+  const updatePermitNo = async (id: string, permit_no: string) => {
+    setEntries(prev => prev.map(e => (e.id === id ? { ...e, permit_no } : e)));
+    const { error } = await supabase.from('permit_list_entries').update({ permit_no }).eq('id', id);
+    if (error) toast.error(ar ? 'تعذر حفظ رقم التصريح' : 'Could not save permit number');
+  };
+
   return (
     <DashboardLayout>
       <main className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
