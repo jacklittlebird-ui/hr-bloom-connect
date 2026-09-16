@@ -195,7 +195,7 @@ h1 { font-size: 20px; font-weight: bold; text-align: center; margin: 4px 0 10px;
   <div class="signs"><div>توقيع المؤمن عليه<div class="signline">(...............................)</div></div><div>توقيع صاحب العمل<div class="signline">(...............................)</div></div></div>
 
   <div class="decl">٤- أقر أنا الموقع أدناه بأن المؤمن عليه محل هذا النموذج قد رفض تسليم البطاقة العلاجية وقمت بإخطار الهيئة المعنية بالتأمين الصحي ببيانات المؤمن عليه لإيقاف التعامل معه.</div>
-  <div class="signs"><div></div><div>توقيع صاحب العمل<div class="signline">(...............................)}</div></div></div>
+  <div class="signs"><div></div><div>توقيع صاحب العمل<div class="signline">(...............................)</div></div></div>
 </div>
 
 </body></html>`;
