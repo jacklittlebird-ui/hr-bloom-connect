@@ -27,14 +27,6 @@ import { MissingInsuranceStart } from '@/components/documents/MissingInsuranceSt
 import { PenaltyDeductionsAlert } from '@/components/documents/PenaltyDeductionsAlert';
 import { useAlertsStats, AlertKey } from '@/hooks/useAlertsStats';
 import { GeneralReminders, daysUntil, Reminder } from '@/components/documents/GeneralReminders';
-import { Form01 } from '@/components/documents/Form01';
-import { Form06 } from '@/components/documents/Form06';
-import { EmploymentContract } from '@/components/documents/EmploymentContract';
-import { ClearanceCertificate } from '@/components/documents/ClearanceCertificate';
-import { ExperienceCertificate } from '@/components/documents/ExperienceCertificate';
-import { MutualTermination } from '@/components/documents/MutualTermination';
-import { EmployeeDataForm } from '@/components/documents/EmployeeDataForm';
-import { FinalSettlement } from '@/components/documents/FinalSettlement';
 import { InsuranceClosures } from '@/components/documents/InsuranceClosures';
 
 
