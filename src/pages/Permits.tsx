@@ -43,6 +43,11 @@ interface EmployeeLite {
   phone: string | null;
   annual_permit_no: string | null;
   id_issue_date: string | null;
+  permit_name_en: string | null;
+  governorate: string | null;
+  city: string | null;
+  social_insurance_no: string | null;
+  airports_annual_permit_no: string | null;
 }
 
 interface PermitEntry {
@@ -60,6 +65,14 @@ const DETAILED_LISTS: ListKey[] = [
   'security_cairo_issue', 'security_cairo_renew',
 ];
 const RENEWAL_LISTS: ListKey[] = ['port_authority_renew', 'security_cairo_renew'];
+// قوائم أمن المواني ومطارات قطاع الأمن (بيانات تفصيلية مختلفة)
+const AIRPORT_LISTS: ListKey[] = [
+  'ports_security_issue', 'ports_security_renew',
+  'security_airports_issue', 'security_airports_renew',
+];
+const AIRPORT_RENEWAL_LISTS: ListKey[] = ['ports_security_renew', 'security_airports_renew'];
+const PERMIT_PURPOSE = 'إنهاء إجراءات الركاب';
+const PERMIT_AIRPORTS = 'عموم المطارات';
 const religionAr = (v?: string | null) => {
   const s = (v || '').trim().toLowerCase();
   if (s === 'muslim' || s === 'مسلم' || s === 'مسلمة') return 'مسلم';
@@ -111,7 +124,7 @@ const Permits = () => {
     for (let from = 0; from < 10000; from += 1000) {
       const { data, error } = await supabase
         .from('employees')
-        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, issuing_authority, permit_name_ar, address, phone, annual_permit_no, id_issue_date')
+        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, issuing_authority, permit_name_ar, address, phone, annual_permit_no, id_issue_date, permit_name_en, governorate, city, social_insurance_no, airports_annual_permit_no')
         .order('employee_code')
         .range(from, from + 999);
       if (error) break;
@@ -257,7 +270,11 @@ const PermitListPanel = ({
 }: PanelProps) => {
   const detailed = DETAILED_LISTS.includes(listKey);
   const isRenewal = RENEWAL_LISTS.includes(listKey);
-  const colCount = 8 + (detailed ? (isRenewal ? 11 : 10) : 0);
+  const airportDetailed = AIRPORT_LISTS.includes(listKey);
+  const isAirportRenewal = AIRPORT_RENEWAL_LISTS.includes(listKey);
+  const colCount = 8
+    + (detailed ? (isRenewal ? 11 : 10) : 0)
+    + (airportDetailed ? (isAirportRenewal ? 14 : 13) : 0);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -478,6 +495,24 @@ const PermitListPanel = ({
                     <TableHead>{ar ? 'منطقة الارتياد' : 'Visit Area'}</TableHead>
                   </>
                 )}
+                {airportDetailed && (
+                  <>
+                    <TableHead>{ar ? 'الاسم بالإنجليزية' : 'Full Name (EN)'}</TableHead>
+                    <TableHead>{ar ? 'الجنسية' : 'Nationality'}</TableHead>
+                    <TableHead>{ar ? 'الرقم القومي' : 'National ID'}</TableHead>
+                    <TableHead>{ar ? 'المسمى في التصريح (ع)' : 'Permit Title (AR)'}</TableHead>
+                    <TableHead>{ar ? 'المسمى في التصريح (إن)' : 'Permit Title (EN)'}</TableHead>
+                    <TableHead>{ar ? 'محافظة الميلاد' : 'Birth Governorate'}</TableHead>
+                    <TableHead>{ar ? 'تاريخ الميلاد' : 'Birth Date'}</TableHead>
+                    <TableHead>{ar ? 'المحافظة' : 'Governorate'}</TableHead>
+                    <TableHead>{ar ? 'المدينة' : 'City'}</TableHead>
+                    <TableHead>{ar ? 'العنوان' : 'Address'}</TableHead>
+                    {isAirportRenewal && <TableHead>{ar ? 'تصريح المطارات السنوي' : 'Airports Annual Permit'}</TableHead>}
+                    <TableHead>{ar ? 'الرقم التأميني' : 'Insurance No.'}</TableHead>
+                    <TableHead>{ar ? 'الغرض من التصريح' : 'Permit Purpose'}</TableHead>
+                    <TableHead>{ar ? 'المطارات المراد ارتيادها' : 'Airports'}</TableHead>
+                  </>
+                )}
                 <TableHead>{ar ? 'تاريخ الإضافة' : 'Added On'}</TableHead>
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
                 <TableHead className="w-[60px]" />
@@ -518,6 +553,32 @@ const PermitListPanel = ({
                         )}
                         <TableCell className="font-mono text-xs" dir="ltr">{emp?.phone || '-'}</TableCell>
                         <TableCell className="whitespace-pre-wrap break-words max-w-[220px]">{VISIT_AREA}</TableCell>
+                      </>
+                    )}
+                    {airportDetailed && (
+                      <>
+                        <TableCell className="whitespace-pre-wrap break-words">{emp?.name_en || '-'}</TableCell>
+                        <TableCell>{emp?.nationality || '-'}</TableCell>
+                        <TableCell className="font-mono text-xs">{emp?.national_id || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{emp?.permit_name_ar || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{emp?.permit_name_en || '-'}</TableCell>
+                        <TableCell>{emp?.birth_governorate || '-'}</TableCell>
+                        <TableCell>{emp?.birth_date ? formatDate(emp.birth_date) : '-'}</TableCell>
+                        <TableCell>{emp?.governorate || '-'}</TableCell>
+                        <TableCell>{emp?.city || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words max-w-[220px]">{emp?.address || '-'}</TableCell>
+                        {isAirportRenewal && (
+                          <TableCell>
+                            <PermitNoInput
+                              value={entry.permit_no ?? emp?.airports_annual_permit_no ?? ''}
+                              onSave={(v) => onPermitNoChange(entry.id, v)}
+                              placeholder={ar ? 'رقم التصريح' : 'Permit no.'}
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell className="font-mono text-xs">{emp?.social_insurance_no || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{PERMIT_PURPOSE}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{PERMIT_AIRPORTS}</TableCell>
                       </>
                     )}
                     <TableCell>{formatDate(entry.created_at)}</TableCell>
