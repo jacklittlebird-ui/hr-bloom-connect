@@ -107,7 +107,7 @@ export async function exportSecurityCairoRenewalLetter(
     const built = rows
       .map((r, i) => {
         let row = i === 0 ? firstTemplate : restTemplate;
-        row = fillCell(row, 0, String(i + 1));
+        // عمود «م» مرقّم تلقائيًا في القالب (قائمة Word) — لا ندرج الرقم يدويًا
         row = fillCell(row, 1, r.name);
         row = fillCell(row, 2, r.jobTitle);
         return row;
@@ -163,7 +163,7 @@ export async function exportSecurityCairoIssueLetter(
     const built = rows
       .map((r, i) => {
         let row = i === 0 ? firstTemplate : restTemplate;
-        row = fillCell(row, 0, String(i + 1));
+        // عمود «م» مرقّم تلقائيًا في القالب (قائمة Word) — لا ندرج الرقم يدويًا
         row = fillCell(row, 1, r.name);
         row = fillCell(row, 2, r.jobTitle);
         return row;
