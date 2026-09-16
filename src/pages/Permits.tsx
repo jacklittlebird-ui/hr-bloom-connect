@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { cn, formatDate } from '@/lib/utils';
 import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSpreadsheet, FileText } from 'lucide-react';
 import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
-import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter, exportSecurityAirportsIssueLetter, exportPortsSecurityIssueLetter, exportPortsSecurityRenewalLetter } from '@/lib/permitRenewalLetter';
+import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter, exportSecurityAirportsIssueLetter, exportSecurityAirportsRenewalLetter, exportPortsSecurityIssueLetter, exportPortsSecurityRenewalLetter } from '@/lib/permitRenewalLetter';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -298,6 +298,7 @@ const PermitListPanel = ({
   const canExportCairoIssueLetter = listKey === 'security_cairo_issue';
   const canExportPortIssueLetter = listKey === 'port_authority_issue';
   const canExportAirportsIssueLetter = listKey === 'security_airports_issue';
+  const canExportAirportsRenewalLetter = listKey === 'security_airports_renew';
   const canExportPortsSecurityIssueLetter = listKey === 'ports_security_issue';
   const canExportPortsSecurityRenewalLetter = listKey === 'ports_security_renew';
 
