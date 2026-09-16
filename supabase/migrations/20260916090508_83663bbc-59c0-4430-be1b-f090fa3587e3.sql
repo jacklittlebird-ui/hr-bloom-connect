@@ -1,0 +1,1 @@
+ALTER TABLE public.permit_list_entries ADD COLUMN IF NOT EXISTS permit_no text;

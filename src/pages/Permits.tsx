@@ -30,6 +30,14 @@ interface EmployeeLite {
   job_title_en: string | null;
   station_id: string | null;
   department_id: string | null;
+  nationality: string | null;
+  religion: string | null;
+  birth_date: string | null;
+  birth_governorate: string | null;
+  national_id: string | null;
+  permit_name_ar: string | null;
+  address: string | null;
+  phone: string | null;
 }
 
 interface PermitEntry {
@@ -37,8 +45,17 @@ interface PermitEntry {
   employee_id: string;
   list_key: ListKey;
   status: 'in_progress' | 'done';
+  permit_no: string | null;
   created_at: string;
 }
+
+// القوائم التي تعرض البيانات التفصيلية
+const DETAILED_LISTS: ListKey[] = [
+  'port_authority_issue', 'port_authority_renew',
+  'security_cairo_issue', 'security_cairo_renew',
+];
+const RENEWAL_LISTS: ListKey[] = ['port_authority_renew', 'security_cairo_renew'];
+const VISIT_AREA = 'صالة - مهبط مباني 1،2،3 وترانزيت وبضائع';
 
 const SECTIONS: { key: string; ar: string; en: string; icon: React.ElementType; lists: { key: ListKey; ar: string; en: string }[] }[] = [
   {
@@ -82,7 +99,7 @@ const Permits = () => {
     for (let from = 0; from < 10000; from += 1000) {
       const { data, error } = await supabase
         .from('employees')
-        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id')
+        .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, permit_name_ar, address, phone')
         .order('employee_code')
         .range(from, from + 999);
       if (error) break;
@@ -93,7 +110,7 @@ const Permits = () => {
     const [stationsRes, deptsRes, entriesRes] = await Promise.all([
       supabase.from('stations').select('id, name_ar, name_en'),
       supabase.from('departments').select('id, name_ar, name_en'),
-      supabase.from('permit_list_entries').select('id, employee_id, list_key, status, created_at').order('created_at', { ascending: false }),
+      supabase.from('permit_list_entries').select('id, employee_id, list_key, status, permit_no, created_at').order('created_at', { ascending: false }),
     ]);
 
     setStationMap(new Map(((stationsRes.data || []) as any[]).map(s => [s.id, ar ? s.name_ar : s.name_en])));
@@ -111,7 +128,7 @@ const Permits = () => {
     const { data, error } = await supabase
       .from('permit_list_entries')
       .insert({ employee_id: employeeId, list_key: listKey })
-      .select('id, employee_id, list_key, status, created_at')
+      .select('id, employee_id, list_key, status, permit_no, created_at')
       .single();
     if (error) {
       toast.error(error.code === '23505'
@@ -134,6 +151,12 @@ const Permits = () => {
     const { error } = await supabase.from('permit_list_entries').update({ status }).eq('id', id);
     if (error) { toast.error(ar ? 'تعذر تحديث الحالة' : 'Could not update status'); return; }
     setEntries(prev => prev.map(e => (e.id === id ? { ...e, status } : e)));
+  };
+
+  const updatePermitNo = async (id: string, permit_no: string) => {
+    setEntries(prev => prev.map(e => (e.id === id ? { ...e, permit_no } : e)));
+    const { error } = await supabase.from('permit_list_entries').update({ permit_no }).eq('id', id);
+    if (error) toast.error(ar ? 'تعذر حفظ رقم التصريح' : 'Could not save permit number');
   };
 
   return (
@@ -186,6 +209,7 @@ const Permits = () => {
                       onAdd={addEntry}
                       onRemove={removeEntry}
                       onStatusChange={updateStatus}
+                      onPermitNoChange={updatePermitNo}
                     />
                   </TabsContent>
                 ))}
@@ -212,12 +236,16 @@ interface PanelProps {
   onAdd: (employeeId: string, listKey: ListKey) => void;
   onRemove: (id: string) => void;
   onStatusChange: (id: string, status: 'in_progress' | 'done') => void;
+  onPermitNoChange: (id: string, permitNo: string) => void;
 }
 
 const PermitListPanel = ({
   title, listKey, entries, employees, employeeById, stationMap, deptMap,
-  loading, ar, isRTL, onAdd, onRemove, onStatusChange,
+  loading, ar, isRTL, onAdd, onRemove, onStatusChange, onPermitNoChange,
 }: PanelProps) => {
+  const detailed = DETAILED_LISTS.includes(listKey);
+  const isRenewal = RENEWAL_LISTS.includes(listKey);
+  const colCount = 8 + (detailed ? (isRenewal ? 10 : 9) : 0);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -293,6 +321,20 @@ const PermitListPanel = ({
                 <TableHead>{ar ? 'المحطة' : 'Station'}</TableHead>
                 <TableHead>{ar ? 'القسم' : 'Department'}</TableHead>
                 <TableHead>{ar ? 'المسمى الوظيفي' : 'Job Title'}</TableHead>
+                {detailed && (
+                  <>
+                    <TableHead>{ar ? 'الجنسية' : 'Nationality'}</TableHead>
+                    <TableHead>{ar ? 'الديانة' : 'Religion'}</TableHead>
+                    <TableHead>{ar ? 'تاريخ الميلاد' : 'Birth Date'}</TableHead>
+                    <TableHead>{ar ? 'محافظة الميلاد' : 'Birth Governorate'}</TableHead>
+                    <TableHead>{ar ? 'الرقم القومي' : 'National ID'}</TableHead>
+                    <TableHead>{ar ? 'المسمى في التصريح' : 'Permit Title (AR)'}</TableHead>
+                    <TableHead>{ar ? 'العنوان' : 'Address'}</TableHead>
+                    {isRenewal && <TableHead>{ar ? 'رقم التصريح' : 'Permit No.'}</TableHead>}
+                    <TableHead>{ar ? 'الهاتف المحمول' : 'Mobile'}</TableHead>
+                    <TableHead>{ar ? 'منطقة الارتياد' : 'Visit Area'}</TableHead>
+                  </>
+                )}
                 <TableHead>{ar ? 'تاريخ الإضافة' : 'Added On'}</TableHead>
                 <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
                 <TableHead className="w-[60px]" />
@@ -300,9 +342,9 @@ const PermitListPanel = ({
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</TableCell></TableRow>
               ) : rows.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد أسماء في هذه القائمة' : 'No employees in this list'}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={colCount} className="text-center py-8 text-muted-foreground">{ar ? 'لا توجد أسماء في هذه القائمة' : 'No employees in this list'}</TableCell></TableRow>
               ) : rows.map(entry => {
                 const emp = employeeById.get(entry.employee_id);
                 return (
@@ -312,6 +354,28 @@ const PermitListPanel = ({
                     <TableCell>{(emp?.station_id && stationMap.get(emp.station_id)) || '-'}</TableCell>
                     <TableCell>{(emp?.department_id && deptMap.get(emp.department_id)) || '-'}</TableCell>
                     <TableCell className="whitespace-pre-wrap break-words">{(ar ? emp?.job_title_ar : emp?.job_title_en) || '-'}</TableCell>
+                    {detailed && (
+                      <>
+                        <TableCell>{emp?.nationality || '-'}</TableCell>
+                        <TableCell>{emp?.religion || '-'}</TableCell>
+                        <TableCell>{emp?.birth_date ? formatDate(emp.birth_date) : '-'}</TableCell>
+                        <TableCell>{emp?.birth_governorate || '-'}</TableCell>
+                        <TableCell className="font-mono text-xs">{emp?.national_id || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words">{emp?.permit_name_ar || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words max-w-[220px]">{emp?.address || '-'}</TableCell>
+                        {isRenewal && (
+                          <TableCell>
+                            <PermitNoInput
+                              value={entry.permit_no || ''}
+                              onSave={(v) => onPermitNoChange(entry.id, v)}
+                              placeholder={ar ? 'رقم التصريح' : 'Permit no.'}
+                            />
+                          </TableCell>
+                        )}
+                        <TableCell className="font-mono text-xs" dir="ltr">{emp?.phone || '-'}</TableCell>
+                        <TableCell className="whitespace-pre-wrap break-words max-w-[220px]">{VISIT_AREA}</TableCell>
+                      </>
+                    )}
                     <TableCell>{formatDate(entry.created_at)}</TableCell>
                     <TableCell>
                       <Select value={entry.status} onValueChange={(v) => onStatusChange(entry.id, v as 'in_progress' | 'done')}>
@@ -337,6 +401,20 @@ const PermitListPanel = ({
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+const PermitNoInput = ({ value, onSave, placeholder }: { value: string; onSave: (v: string) => void; placeholder: string }) => {
+  const [local, setLocal] = useState(value);
+  useEffect(() => { setLocal(value); }, [value]);
+  return (
+    <Input
+      value={local}
+      onChange={e => setLocal(e.target.value)}
+      onBlur={() => { if (local !== value) onSave(local.trim()); }}
+      placeholder={placeholder}
+      className="w-[140px] h-8"
+    />
   );
 };
 
