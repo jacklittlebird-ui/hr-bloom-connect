@@ -394,6 +394,23 @@ const PermitListPanel = ({
     toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
   };
 
+  const handleExportAirportsIssueLetter = async () => {
+    if (rows.length === 0) {
+      toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
+      return;
+    }
+    const data = rows.map(entry => {
+      const emp = employeeById.get(entry.employee_id);
+      return {
+        name: emp?.name_ar || '',
+        jobTitle: emp?.permit_name_ar || emp?.job_title_ar || '',
+      };
+    });
+    const year = String(new Date().getFullYear() + 1);
+    await exportSecurityAirportsIssueLetter(data, year, formatDate(new Date().toISOString()));
+    toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -434,6 +451,12 @@ const PermitListPanel = ({
           )}
           {canExportPortIssueLetter && (
             <Button variant="outline" className="gap-2" onClick={handleExportPortIssueLetter}>
+              <FileText className="w-4 h-4" />
+              {ar ? 'تصدير خطاب الاستخراج' : 'Export issuance letter'}
+            </Button>
+          )}
+          {canExportAirportsIssueLetter && (
+            <Button variant="outline" className="gap-2" onClick={handleExportAirportsIssueLetter}>
               <FileText className="w-4 h-4" />
               {ar ? 'تصدير خطاب الاستخراج' : 'Export issuance letter'}
             </Button>
