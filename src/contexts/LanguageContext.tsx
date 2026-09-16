@@ -206,7 +206,7 @@ const translations: Record<string, Record<Language, string>> = {
   'employees.military.notApplicable': { en: 'Not Applicable', ar: 'لا ينطبق' },
   'employees.contract.permanent': { en: 'Permanent', ar: 'دائم' },
   'employees.contract.sixMonths': { en: '6 Months', ar: 'ستة أشهر' },
-  'employees.contract.oneYear': { en: '1 Year', ar: 'سنة' },
+  'employees.contract.oneYear': { en: '1 Year', ar: '.....................' },
   'employees.contract.fourYears': { en: '4 Years', ar: '4 سنوات' },
   'employees.contract.temporary': { en: 'Temporary', ar: 'مؤقت' },
   'employees.contract.parttime': { en: 'Part-time', ar: 'جزئي' },
