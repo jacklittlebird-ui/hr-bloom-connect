@@ -110,20 +110,20 @@ const buildHtml = (e: Emp, f: FormState) => `<!DOCTYPE html>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
 html, body { margin:0; padding:0; }
-body { font-family:"Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#fff; }
-.page { width:210mm; height:297mm; margin:0 auto; padding:10mm 16mm 8mm; background:#fff; overflow:hidden; display:flex; flex-direction:column; }
+body { font-family:"Baloo Bhaijaan 2","Tahoma",sans-serif; direction:rtl; color:#000; background:#fff; font-size:14px; }
+.page { width:210mm; height:297mm; margin:0 auto; padding:8mm 14mm 6mm; background:#fff; overflow:hidden; display:flex; flex-direction:column; }
 .logo-bar { text-align:right; }
-.logo-bar img { width:22mm; height:22mm; object-fit:contain; }
-h1 { text-align:center; font-size:17px; font-weight:700; margin:2mm 0 1mm; }
-h2 { text-align:center; font-size:15px; font-weight:700; margin:0 0 4mm; text-decoration:underline; }
-p { margin:1.6mm 0; line-height:1.65; font-size:12.5px; text-align:justify; }
-.clause { font-weight:700; text-align:center; margin:3mm 0 1mm; font-size:13px; }
+.logo-bar img { width:24mm; height:24mm; object-fit:contain; }
+h1 { text-align:center; font-size:19px; font-weight:700; margin:1.5mm 0 1mm; }
+h2 { text-align:center; font-size:17px; font-weight:700; margin:0 0 3mm; text-decoration:underline; }
+p { margin:1.4mm 0; line-height:1.55; font-size:14px; text-align:justify; }
+.clause { font-weight:700; text-align:center; margin:2.5mm 0 1mm; font-size:15px; }
 .fill { font-weight:700; }
 .content { flex:1; }
-.sig { display:flex; justify-content:space-between; gap:8mm; margin-top:5mm; font-size:12px; line-height:1.9; border-top:1px solid #000; padding-top:3mm; }
+.sig { display:flex; justify-content:space-between; gap:8mm; margin-top:4mm; font-size:13.5px; line-height:1.75; border-top:1px solid #000; padding-top:2.5mm; }
 .sig-col { width:48%; }
 .sig-head { font-weight:700; margin-bottom:1mm; }
-.pno { text-align:center; font-size:11px; margin-top:2mm; }
+.pno { text-align:center; font-size:12px; margin-top:1.5mm; }
 @media screen { body { background:#eee; } .page { margin:8px auto; box-shadow:0 1px 5px #aaa; } }
 @media print { .page { margin:0; box-shadow:none; page-break-after:always; } .page:last-child { page-break-after:auto; } }
 </style></head><body>
