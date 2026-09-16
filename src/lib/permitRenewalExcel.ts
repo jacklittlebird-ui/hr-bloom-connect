@@ -8,7 +8,7 @@ export interface PermitRenewalRow {
   birthDate: string;
   birthGovernorate: string;
   nationalId: string;
-  idIssue: string;
+  issuingAuthority: string;
   jobTitle: string;
   address: string;
   visitArea: string;
@@ -18,7 +18,7 @@ export interface PermitRenewalRow {
 
 const FONT = 'Baloo Bhaijaan 2';
 const WIDTHS = [7.14, 52.14, 12.14, 16.29, 18.14, 11.43, 10.71, 13.86, 18.86, 62.29, 18.71, 13.14, 12.57];
-const HEADERS = ['م', 'بيانات الاسم ', 'الجنسية', 'الديانة', 'تاريخ الميلاد', 'جهة الميلاد', 'الرقم', 'الاصدار', 'الوظيفة', 'عنوان السكن ', 'منطقة الإرتياد ', 'رقم التصريح', 'رقم التليفون'];
+const HEADERS = ['م', 'بيانات الاسم ', 'الجنسية', 'الديانة', 'تاريخ الميلاد', 'جهة الميلاد', 'الرقم', 'جهة الإصدار', 'الوظيفة', 'عنوان السكن ', 'منطقة الإرتياد ', 'رقم التصريح', 'رقم التليفون'];
 
 const medium = { style: 'medium' as const };
 const thin = { style: 'thin' as const };
@@ -76,7 +76,7 @@ export const exportPermitRenewalSheet = async (rows: PermitRenewalRow[], year: s
       r.birthDate,
       r.birthGovernorate,
       r.nationalId,
-      r.idIssue,
+      r.issuingAuthority,
       r.jobTitle,
       r.address,
       r.visitArea,
