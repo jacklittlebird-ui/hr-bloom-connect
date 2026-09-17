@@ -85,6 +85,14 @@ const religionAr = (v?: string | null) => {
 
 const VISIT_AREA = 'صالة - مهبط مباني 1،2،3 وترانزيت وبضائع';
 
+// قوائم مرتبطة: الإضافة أو الحذف في إحداها ينعكس على الأخرى
+const LINKED_LISTS: Partial<Record<ListKey, ListKey>> = {
+  security_airports_renew: 'ports_security_renew',
+  ports_security_renew: 'security_airports_renew',
+  security_airports_issue: 'ports_security_issue',
+  ports_security_issue: 'security_airports_issue',
+};
+
 const SECTIONS: { key: string; ar: string; en: string; icon: React.ElementType; lists: { key: ListKey; ar: string; en: string }[] }[] = [
   {
     key: 'security', ar: 'قطاع الأمن', en: 'Security Sector', icon: ShieldCheck,
