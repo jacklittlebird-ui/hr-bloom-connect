@@ -187,6 +187,23 @@ const Permits = () => {
     if (error) toast.error(ar ? 'تعذر حفظ رقم التصريح' : 'Could not save permit number');
   };
 
+  // يحفظ التعديلات في سجل الموظف الأساسي (جدول الموظفين) وليس في قائمة التصاريح فقط
+  const saveEmployee = async (employeeId: string, updates: Partial<EmployeeLite>) => {
+    const payload: Record<string, unknown> = {};
+    Object.entries(updates).forEach(([k, v]) => {
+      payload[k] = typeof v === 'string' && v.trim() === '' ? null : v;
+    });
+    const { error } = await supabase.from('employees').update(payload as never).eq('id', employeeId);
+    if (error) {
+      toast.error(ar ? 'تعذر حفظ التعديلات' : 'Could not save changes');
+      return false;
+    }
+    setEmployees(prev => prev.map(e => (e.id === employeeId ? { ...e, ...(payload as Partial<EmployeeLite>) } : e)));
+    toast.success(ar ? 'تم حفظ التعديلات في ملف الموظف' : 'Saved to employee record');
+    return true;
+  };
+
+
   return (
     <DashboardLayout>
       <main className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
