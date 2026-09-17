@@ -278,9 +278,21 @@ const PermitListPanel = ({
     + (airportDetailed ? (isAirportRenewal ? 14 : 13) : 0);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [addSearch, setAddSearch] = useState('');
 
   const existingIds = useMemo(() => new Set(entries.map(e => e.employee_id)), [entries]);
-  const selectable = useMemo(() => employees.filter(e => !existingIds.has(e.id)).slice(0, 400), [employees, existingIds]);
+  // Filter the FULL roster by the picker search first, then cap the rendered
+  // list — otherwise employees beyond the first 400 can never be found.
+  const selectable = useMemo(() => {
+    const s = addSearch.trim().toLowerCase();
+    return employees
+      .filter(e => !existingIds.has(e.id))
+      .filter(e => !s
+        || e.name_ar.toLowerCase().includes(s)
+        || (e.name_en || '').toLowerCase().includes(s)
+        || (e.employee_code || '').toLowerCase().includes(s))
+      .slice(0, 400);
+  }, [employees, existingIds, addSearch]);
 
   const rows = useMemo(() => {
     const s = search.trim().toLowerCase();
