@@ -313,7 +313,7 @@ const toInternalEmp = (employee: Employee): Emp => ({
   job_title_ar: employee.jobTitleAr || null,
   nationality: employee.nationality || null,
   phone: employee.phone || null,
-  social_insurance_start_date: employee.socialInsuranceStartDate || null,
+  social_insurance_start_date: null,
 });
 
 export const Form01 = ({ employee }: Form01Props) => {
@@ -418,10 +418,6 @@ export const Form01 = ({ employee }: Form01Props) => {
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'المهنة' : 'job_title_ar'}</Label>
               <Input className="h-9" value={emp.job_title_ar || ''} onChange={ev => setEmpField('job_title_ar', ev.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">{isAr ? 'تاريخ بدء الاشتراك' : 'social_insurance_start_date'}</Label>
-              <Input className="h-9" value={emp.social_insurance_start_date || ''} onChange={ev => setEmpField('social_insurance_start_date', ev.target.value)} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">{isAr ? 'شارع' : 'address'}</Label>
