@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789647976778,
+      "tag": "0000_fix_auto_attendance_on_mission_upsert",
+      "breakpoints": true
+    }
+  ]
+}
