@@ -728,7 +728,22 @@ const PermitListPanel = ({
                 return (
                   <TableRow key={entry.id}>
                     <TableCell className="font-mono text-xs">{emp?.employee_code || '-'}</TableCell>
-                    <TableCell className="font-medium whitespace-pre-wrap break-words">{(ar ? emp?.name_ar : emp?.name_en) || '-'}</TableCell>
+                    <TableCell className="font-medium whitespace-pre-wrap break-words">
+                      <div className="flex items-center gap-1">
+                        <span>{(ar ? emp?.name_ar : emp?.name_en) || '-'}</span>
+                        {emp && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0"
+                            onClick={() => setEditEmp(emp)}
+                            aria-label={ar ? 'تعديل بيانات الموظف' : 'Edit employee data'}
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-primary" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{(emp?.station_id && stationMap.get(emp.station_id)) || '-'}</TableCell>
                     <TableCell>{(emp?.department_id && deptMap.get(emp.department_id)) || '-'}</TableCell>
                     <TableCell className="whitespace-pre-wrap break-words">{emp?.permit_name_ar || emp?.job_title_ar || '-'}</TableCell>
