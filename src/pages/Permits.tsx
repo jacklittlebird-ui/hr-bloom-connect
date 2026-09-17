@@ -255,6 +255,7 @@ const Permits = () => {
                       onRemove={removeEntry}
                       onStatusChange={updateStatus}
                       onPermitNoChange={updatePermitNo}
+                      onEmployeeSave={saveEmployee}
                     />
                   </TabsContent>
                 ))}
