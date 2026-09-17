@@ -347,6 +347,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setSession(storedSession);
                 return;
               }
+              // Distinguish a genuinely revoked token (4xx auth error) from a
+              // transient network failure (offline / fetch error / 5xx). A
+              // network blip must NOT log the user out — adopt the stored
+              // session and let a later refresh event re-validate.
+              const err = verifyError as { status?: number; name?: string };
+              const isAuthFailure = typeof err?.status === 'number' && err.status >= 400 && err.status < 500;
+              if (!isAuthFailure) {
+                setSession(storedSession);
+                return;
+              }
               // Dead token: drop it locally so it is never reused.
               try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
             }
