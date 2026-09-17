@@ -330,7 +330,7 @@ export const InsuranceRenewals = () => {
                   <SelectContent>
                     <SelectItem value="permanent">{ar ? 'دائم' : 'Permanent'}</SelectItem>
                     <SelectItem value="sixMonths">{ar ? '6 أشهر' : '6 Months'}</SelectItem>
-                    <SelectItem value="oneYear">{ar ? '.....................' : '1 Year'}</SelectItem>
+                    <SelectItem value="oneYear">{ar ? 'سنة' : '1 Year'}</SelectItem>
                     <SelectItem value="fourYears">{ar ? '4 سنوات' : '4 Years'}</SelectItem>
                   </SelectContent>
                 </Select>
