@@ -620,8 +620,12 @@ const PermitListPanel = ({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[320px] p-0 bg-popover z-50" align="start">
-              <Command>
-                <CommandInput placeholder={ar ? 'ابحث بالاسم أو الكود...' : 'Search by name or code...'} />
+              <Command shouldFilter={false}>
+                <CommandInput
+                  placeholder={ar ? 'ابحث بالاسم أو الكود...' : 'Search by name or code...'}
+                  value={addSearch}
+                  onValueChange={setAddSearch}
+                />
                 <CommandList className="max-h-[300px] overflow-y-auto">
                   <CommandEmpty>{ar ? 'لا يوجد موظف' : 'No employee found'}</CommandEmpty>
                   <CommandGroup>
