@@ -1,10 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Printer } from 'lucide-react';
 
 interface FinalSettlementProps {
@@ -28,13 +26,7 @@ const toInternalEmp = (employee: Employee): Emp => ({
   national_id: employee.nationalId || null,
 });
 
-const formatDate = (value: string) => {
-  if (!value) return '(تاريخ يجب إدخاله)';
-  const [year, month, day] = value.split('-');
-  return day && month && year ? `${day}/${month}/${year}` : value;
-};
-
-const buildHtml = (e: Emp, resignationDate: string) => `<!DOCTYPE html>
+const buildHtml = (e: Emp) => `<!DOCTYPE html>
 <html dir="rtl" lang="ar"><head><meta charset="utf-8"><title> </title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -62,7 +54,7 @@ h1 { margin:0 0 14mm; text-align:center; font-size:23px; line-height:1.2; font-w
       <p>أقر أنا الموقع أدناه (${esc(e.name_ar)})</p>
       <p>رقم قومي: (${esc(e.national_id)})</p>
     </div>
-    <p>بأني استلمت جميع مستحقاتي المالية والعينية (من مستندات وغيرها) من شركة لينك أيرو تريدينج أجنسي منذ تعييني وحتى تاريخه. كما أقر بأنني قد استهلكت جميع أجازاتي السنوية والحكومية منذ تعييني وحتى تاريخه ولا يحق لي المطالبة بأي مبالغ مالية من الشركة. وأقر بأن ليس لي طرف الشركة أي متعلقات أو مستحقات حتى تاريخ استقالتي الموافق ${esc(formatDate(resignationDate))}</p>
+    <p>بأني استلمت جميع مستحقاتي المالية والعينية (من مستندات وغيرها) من شركة لينك أيرو تريدينج أجنسي منذ تعييني وحتى تاريخه. كما أقر بأنني قد استهلكت جميع أجازاتي السنوية والحكومية منذ تعييني وحتى تاريخه ولا يحق لي المطالبة بأي مبالغ مالية من الشركة. وأقر بأن ليس لي طرف الشركة أي متعلقات أو مستحقات حتى تاريخ استقالتي الموافق ........../.........../..................</p>
     <p>كما أقر بأنني سلمت لشركة لينك أيرو تريدينج أجنسي كافة المستندات والعهد التي بحوزتي وأني لم أحتفظ بأية مستندات أو عهد تخص الشركة وأكون خائنًا ومبددًا للأمانة في حالة مخالفة ذلك. ويحق للشركة اتخاذ كافة الإجراءات القانونية التي تراها مناسبة في حالة مخالفتي لذلك. وهذا إقرار مني بذلك مع كامل علمي بأحكام القوانين المنظمة لخيانة الأمانة.</p>
     <div class="conclusion">،،،، وهذا إقرار ومخالصة مني بذلك</div>
   </div>
@@ -78,8 +70,7 @@ export const FinalSettlement = ({ employee }: FinalSettlementProps) => {
   const { language } = useLanguage();
   const isAr = language === 'ar';
   const emp = useMemo(() => toInternalEmp(employee), [employee]);
-  const [resignationDate, setResignationDate] = useState('');
-  const html = useMemo(() => buildHtml(emp, resignationDate), [emp, resignationDate]);
+  const html = useMemo(() => buildHtml(emp), [emp]);
 
   const print = () => {
     const iframe = document.createElement('iframe');
@@ -104,20 +95,7 @@ export const FinalSettlement = ({ employee }: FinalSettlementProps) => {
           <div className="h-9 flex items-center px-3 rounded-md border bg-muted/50 text-sm min-w-[280px]">
               {emp.employee_code} — {emp.name_ar}
           </div>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="settlement-resignation-date" className="whitespace-nowrap">
-              {isAr ? 'تاريخ الاستقالة' : 'Resignation date'}
-            </Label>
-            <Input
-              id="settlement-resignation-date"
-              type="date"
-              required
-              value={resignationDate}
-              onChange={(event) => setResignationDate(event.target.value)}
-              className="w-44"
-            />
-          </div>
-          <Button onClick={print} disabled={!resignationDate} className="gap-2">
+          <Button onClick={print} className="gap-2">
             <Printer className="h-4 w-4" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}
           </Button>
         </CardContent>
