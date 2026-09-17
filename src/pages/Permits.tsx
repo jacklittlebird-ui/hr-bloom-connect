@@ -820,7 +820,105 @@ const PermitListPanel = ({
           </Table>
         </div>
       </CardContent>
+      <EditPermitEmployeeDialog
+        employee={editEmp}
+        ar={ar}
+        isRTL={isRTL}
+        onClose={() => setEditEmp(null)}
+        onSave={onEmployeeSave}
+      />
     </Card>
+  );
+};
+
+const EDIT_FIELDS: { key: keyof EmployeeLite; ar: string; en: string; type?: 'date' }[] = [
+  { key: 'name_ar', ar: 'الاسم بالعربية', en: 'Full Name (AR)' },
+  { key: 'name_en', ar: 'الاسم بالإنجليزية', en: 'Full Name (EN)' },
+  { key: 'nationality', ar: 'الجنسية', en: 'Nationality' },
+  { key: 'religion', ar: 'الديانة', en: 'Religion' },
+  { key: 'birth_date', ar: 'تاريخ الميلاد', en: 'Birth Date', type: 'date' },
+  { key: 'birth_governorate', ar: 'محافظة الميلاد', en: 'Birth Governorate' },
+  { key: 'national_id', ar: 'الرقم القومي', en: 'National ID' },
+  { key: 'issuing_authority', ar: 'جهة الإصدار', en: 'Issuing Authority' },
+  { key: 'permit_name_ar', ar: 'المسمى في التصريح (ع)', en: 'Permit Title (AR)' },
+  { key: 'permit_name_en', ar: 'المسمى في التصريح (إن)', en: 'Permit Title (EN)' },
+  { key: 'job_title_ar', ar: 'المسمى الوظيفي (ع)', en: 'Job Title (AR)' },
+  { key: 'job_title_en', ar: 'المسمى الوظيفي (إن)', en: 'Job Title (EN)' },
+  { key: 'governorate', ar: 'المحافظة', en: 'Governorate' },
+  { key: 'city', ar: 'المدينة', en: 'City' },
+  { key: 'address', ar: 'العنوان', en: 'Address' },
+  { key: 'phone', ar: 'الهاتف المحمول', en: 'Mobile' },
+  { key: 'social_insurance_no', ar: 'الرقم التأميني', en: 'Insurance No.' },
+  { key: 'annual_permit_no', ar: 'تصريح مطار القاهرة السنوي', en: 'Cairo Annual Permit No.' },
+  { key: 'airports_annual_permit_no', ar: 'تصريح المطارات السنوي', en: 'Airports Annual Permit No.' },
+];
+
+const EditPermitEmployeeDialog = ({
+  employee, ar, isRTL, onClose, onSave,
+}: {
+  employee: EmployeeLite | null;
+  ar: boolean;
+  isRTL: boolean;
+  onClose: () => void;
+  onSave: (employeeId: string, updates: Partial<EmployeeLite>) => Promise<boolean>;
+}) => {
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!employee) return;
+    const next: Record<string, string> = {};
+    EDIT_FIELDS.forEach(f => { next[f.key as string] = (employee[f.key] as string | null) || ''; });
+    setForm(next);
+  }, [employee]);
+
+  const handleSave = async () => {
+    if (!employee) return;
+    setSaving(true);
+    const updates: Partial<EmployeeLite> = {};
+    EDIT_FIELDS.forEach(f => {
+      const current = (employee[f.key] as string | null) || '';
+      const next = form[f.key as string] ?? '';
+      if (next !== current) (updates as Record<string, unknown>)[f.key as string] = next;
+    });
+    if (Object.keys(updates).length === 0) { setSaving(false); onClose(); return; }
+    const ok = await onSave(employee.id, updates);
+    setSaving(false);
+    if (ok) onClose();
+  };
+
+  return (
+    <Dialog open={!!employee} onOpenChange={o => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+        <DialogHeader>
+          <DialogTitle>
+            {ar ? 'تعديل بيانات الموظف' : 'Edit employee data'}
+            {employee ? ` — ${ar ? employee.name_ar : employee.name_en}` : ''}
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          {ar ? 'يتم حفظ التعديلات في ملف الموظف الأساسي في النظام.' : 'Changes are saved to the main employee record.'}
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {EDIT_FIELDS.map(f => (
+            <div key={f.key as string} className="space-y-1.5">
+              <Label className="text-xs">{ar ? f.ar : f.en}</Label>
+              <Input
+                type={f.type === 'date' ? 'date' : 'text'}
+                value={form[f.key as string] ?? ''}
+                onChange={e => setForm(prev => ({ ...prev, [f.key as string]: e.target.value }))}
+              />
+            </div>
+          ))}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>{ar ? 'إلغاء' : 'Cancel'}</Button>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ' : 'Save')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
