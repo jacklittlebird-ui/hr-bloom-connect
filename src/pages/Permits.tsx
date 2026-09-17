@@ -283,12 +283,14 @@ interface PanelProps {
   onRemove: (id: string) => void;
   onStatusChange: (id: string, status: 'in_progress' | 'done') => void;
   onPermitNoChange: (id: string, permitNo: string) => void;
+  onEmployeeSave: (employeeId: string, updates: Partial<EmployeeLite>) => Promise<boolean>;
 }
 
 const PermitListPanel = ({
   title, listKey, entries, employees, employeeById, stationMap, deptMap,
-  loading, ar, isRTL, onAdd, onRemove, onStatusChange, onPermitNoChange,
+  loading, ar, isRTL, onAdd, onRemove, onStatusChange, onPermitNoChange, onEmployeeSave,
 }: PanelProps) => {
+  const [editEmp, setEditEmp] = useState<EmployeeLite | null>(null);
   const detailed = DETAILED_LISTS.includes(listKey);
   const isRenewal = RENEWAL_LISTS.includes(listKey);
   const airportDetailed = AIRPORT_LISTS.includes(listKey);
