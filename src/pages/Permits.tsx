@@ -85,6 +85,14 @@ const religionAr = (v?: string | null) => {
 
 const VISIT_AREA = 'صالة - مهبط مباني 1،2،3 وترانزيت وبضائع';
 
+// قوائم مرتبطة: الإضافة أو الحذف في إحداها ينعكس على الأخرى
+const LINKED_LISTS: Partial<Record<ListKey, ListKey>> = {
+  security_airports_renew: 'ports_security_renew',
+  ports_security_renew: 'security_airports_renew',
+  security_airports_issue: 'ports_security_issue',
+  ports_security_issue: 'security_airports_issue',
+};
+
 const SECTIONS: { key: string; ar: string; en: string; icon: React.ElementType; lists: { key: ListKey; ar: string; en: string }[] }[] = [
   {
     key: 'security', ar: 'قطاع الأمن', en: 'Security Sector', icon: ShieldCheck,
@@ -153,25 +161,37 @@ const Permits = () => {
   const employeeById = useMemo(() => new Map(employees.map(e => [e.id, e])), [employees]);
 
   const addEntry = async (employeeId: string, listKey: ListKey) => {
+    const targets = [listKey, ...(LINKED_LISTS[listKey] ? [LINKED_LISTS[listKey]!] : [])];
     const { data, error } = await supabase
       .from('permit_list_entries')
-      .insert({ employee_id: employeeId, list_key: listKey })
-      .select('id, employee_id, list_key, status, permit_no, created_at')
-      .single();
+      .upsert(
+        targets.map(k => ({ employee_id: employeeId, list_key: k })),
+        { onConflict: 'employee_id,list_key', ignoreDuplicates: true },
+      )
+      .select('id, employee_id, list_key, status, permit_no, created_at');
     if (error) {
-      toast.error(error.code === '23505'
-        ? (ar ? 'الموظف مضاف بالفعل في هذه القائمة' : 'Employee already in this list')
-        : (ar ? 'تعذر إضافة الموظف' : 'Could not add employee'));
+      toast.error(ar ? 'تعذر إضافة الموظف' : 'Could not add employee');
       return;
     }
-    setEntries(prev => [data as PermitEntry, ...prev]);
+    const added = (data || []) as PermitEntry[];
+    if (added.length === 0) {
+      toast.error(ar ? 'الموظف مضاف بالفعل في هذه القائمة' : 'Employee already in this list');
+      return;
+    }
+    setEntries(prev => [...added, ...prev]);
     toast.success(ar ? 'تمت الإضافة' : 'Added');
   };
 
   const removeEntry = async (id: string) => {
-    const { error } = await supabase.from('permit_list_entries').delete().eq('id', id);
+    const target = entries.find(e => e.id === id);
+    const mirror = target ? LINKED_LISTS[target.list_key] : undefined;
+    const mirrorEntry = target && mirror
+      ? entries.find(e => e.employee_id === target.employee_id && e.list_key === mirror)
+      : undefined;
+    const ids = [id, ...(mirrorEntry ? [mirrorEntry.id] : [])];
+    const { error } = await supabase.from('permit_list_entries').delete().in('id', ids);
     if (error) { toast.error(ar ? 'تعذر الحذف' : 'Could not delete'); return; }
-    setEntries(prev => prev.filter(e => e.id !== id));
+    setEntries(prev => prev.filter(e => !ids.includes(e.id)));
     toast.success(ar ? 'تم الحذف' : 'Deleted');
   };
 
