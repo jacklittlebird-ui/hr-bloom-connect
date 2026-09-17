@@ -16,7 +16,7 @@ import { cn, formatDate } from '@/lib/utils';
 import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSpreadsheet, FileText } from 'lucide-react';
 import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
 import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter, exportSecurityAirportsIssueLetter, exportSecurityAirportsRenewalLetter, exportPortsSecurityIssueLetter, exportPortsSecurityRenewalLetter } from '@/lib/permitRenewalLetter';
-import { exportPortsSecuritySheet } from '@/lib/permitPortsSecurityExcel';
+import { exportPortsSecuritySheet, exportPortsSecurityRenewalSheet } from '@/lib/permitPortsSecurityExcel';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -492,6 +492,33 @@ const PermitListPanel = ({
     toast.success(ar ? 'تم تنزيل الخطاب' : 'Letter downloaded');
   };
 
+  const handleExportPortsSecurityRenewalSheet = async () => {
+    if (rows.length === 0) {
+      toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
+      return;
+    }
+    const data = rows.map(entry => {
+      const emp = employeeById.get(entry.employee_id);
+      return {
+        permitNo: entry.permit_no ?? emp?.airports_annual_permit_no ?? '',
+        nameAr: emp?.name_ar || '',
+        nameEn: emp?.name_en || '',
+        nationality: emp?.nationality || '',
+        nationalId: emp?.national_id || '',
+        jobAr: emp?.permit_name_ar || emp?.job_title_ar || '',
+        jobEn: emp?.permit_name_en || emp?.job_title_en || '',
+        birthPlace: emp?.birth_governorate || '',
+        birthDate: fmt(emp?.birth_date),
+        governorate: emp?.governorate || '',
+        city: emp?.city || '',
+        address: emp?.address || '',
+      };
+    });
+    const year = String(new Date().getFullYear() + 1);
+    await exportPortsSecurityRenewalSheet(data, year, `تجديد_امن_مؤاني_${year}.xlsx`);
+    toast.success(ar ? 'تم تنزيل الكشف' : 'Sheet downloaded');
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -561,10 +588,16 @@ const PermitListPanel = ({
             </>
           )}
           {canExportPortsSecurityRenewalLetter && (
-            <Button variant="outline" className="gap-2" onClick={handleExportPortsSecurityRenewalLetter}>
-              <FileText className="w-4 h-4" />
-              {ar ? 'تصدير خطاب التجديد' : 'Export renewal letter'}
-            </Button>
+            <>
+              <Button variant="outline" className="gap-2" onClick={handleExportPortsSecurityRenewalLetter}>
+                <FileText className="w-4 h-4" />
+                {ar ? 'تصدير خطاب التجديد' : 'Export renewal letter'}
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={handleExportPortsSecurityRenewalSheet}>
+                <FileSpreadsheet className="w-4 h-4" />
+                {ar ? 'تصدير كشف التجديد' : 'Export renewal sheet'}
+              </Button>
+            </>
           )}
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
