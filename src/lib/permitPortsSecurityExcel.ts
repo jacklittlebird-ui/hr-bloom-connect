@@ -116,7 +116,7 @@ const dashed = { style: 'dashed' as const };
 export const exportPortsSecurityRenewalSheet = async (rows: PortsSecurityRenewalRow[], year: string, fileName: string) => {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('تجديد', {
-    views: [{ showGridLines: false }],
+    views: [{ rightToLeft: true, showGridLines: false }],
     pageSetup: { orientation: 'landscape', paperSize: 9 },
   });
 
