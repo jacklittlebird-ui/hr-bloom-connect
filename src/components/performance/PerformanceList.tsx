@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -21,7 +22,6 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useReportExport } from '@/hooks/useReportExport';
 import { stationLocations } from '@/data/stationLocations';
-import { initialDepartments } from '@/data/departments';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { toast } from 'sonner';
 
@@ -63,6 +63,34 @@ export const PerformanceList = () => {
   const [editManagerComments, setEditManagerComments] = useState('');
 
   const ar = language === 'ar';
+
+  const [dbDepartments, setDbDepartments] = useState<{ nameAr: string; nameEn: string }[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.from('departments').select('name_ar, name_en').order('name_ar').then(({ data }) => {
+      if (!cancelled && data) setDbDepartments(data.map((d: any) => ({ nameAr: d.name_ar || '', nameEn: d.name_en || '' })));
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const departmentOptions = (() => {
+    const seen = new Set<string>();
+    const opts: { value: string; label: string }[] = [];
+    for (const d of dbDepartments) {
+      const value = d.nameAr;
+      if (!value || seen.has(value)) continue;
+      seen.add(value);
+      opts.push({ value, label: ar ? d.nameAr : (d.nameEn || d.nameAr) });
+    }
+    for (const r of reviews) {
+      const value = (r.department || '').trim();
+      if (!value || value === '-' || seen.has(value)) continue;
+      seen.add(value);
+      opts.push({ value, label: value });
+    }
+    return opts;
+  })();
+
   const filtersActive = searchQuery !== '' || statusFilter !== 'all' || quarterFilter !== 'all' || yearFilter !== 'all' || stationFilter !== 'all' || departmentFilter !== 'all' || jobDegreeFilter !== 'all';
 
   const handleResetFilters = () => {
@@ -331,8 +359,8 @@ export const PerformanceList = () => {
               <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder={language === 'ar' ? 'القسم' : 'Department'} /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{language === 'ar' ? 'جميع الأقسام' : 'All Departments'}</SelectItem>
-                {initialDepartments.map(d => (
-                  <SelectItem key={d.id} value={d.nameAr}>{language === 'ar' ? d.nameAr : d.nameEn}</SelectItem>
+                {departmentOptions.map(d => (
+                  <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
