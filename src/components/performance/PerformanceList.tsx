@@ -63,6 +63,34 @@ export const PerformanceList = () => {
   const [editManagerComments, setEditManagerComments] = useState('');
 
   const ar = language === 'ar';
+
+  const [dbDepartments, setDbDepartments] = useState<{ nameAr: string; nameEn: string }[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    supabase.from('departments').select('name_ar, name_en').order('name_ar').then(({ data }) => {
+      if (!cancelled && data) setDbDepartments(data.map((d: any) => ({ nameAr: d.name_ar || '', nameEn: d.name_en || '' })));
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const departmentOptions = (() => {
+    const seen = new Set<string>();
+    const opts: { value: string; label: string }[] = [];
+    for (const d of dbDepartments) {
+      const value = d.nameAr;
+      if (!value || seen.has(value)) continue;
+      seen.add(value);
+      opts.push({ value, label: ar ? d.nameAr : (d.nameEn || d.nameAr) });
+    }
+    for (const r of reviews) {
+      const value = (r.department || '').trim();
+      if (!value || value === '-' || seen.has(value)) continue;
+      seen.add(value);
+      opts.push({ value, label: value });
+    }
+    return opts;
+  })();
+
   const filtersActive = searchQuery !== '' || statusFilter !== 'all' || quarterFilter !== 'all' || yearFilter !== 'all' || stationFilter !== 'all' || departmentFilter !== 'all' || jobDegreeFilter !== 'all';
 
   const handleResetFilters = () => {
