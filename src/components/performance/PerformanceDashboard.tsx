@@ -540,7 +540,7 @@ export const PerformanceDashboard = () => {
                       <div className={cn("min-w-0 flex-1", isRTL && "text-right")}>
                         <p className="font-medium truncate">{ar ? emp.nameAr : emp.nameEn}</p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {emp.employeeId || '-'}{emp.department ? ` • ${emp.department}` : ''}{sl ? ` • ${ar ? sl.labelAr : sl.labelEn}` : ''}
+                          {emp.employeeId || '-'}{emp.department ? ` • ${emp.department}` : ''}{sl ? ` • ${ar ? sl.labelAr : sl.labelEn}` : ''}{emp.hireDate ? ` • ${ar ? 'تاريخ التعيين:' : 'Hire Date:'} ${formatDate(emp.hireDate)}` : ''}
                         </p>
                       </div>
                       <Button size="sm" variant="outline" onClick={() => goToReviewFor(emp.id)}>
