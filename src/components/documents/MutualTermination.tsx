@@ -181,14 +181,13 @@ export const MutualTermination = ({ employee }: MutualTerminationProps) => {
   const { language } = useLanguage();
   const isAr = language === 'ar';
   const emp = useMemo(() => toInternalEmp(employee), [employee]);
-  const today = new Date().toISOString().split('T')[0];
 
   const [form, setForm] = useState<FormState>({
-    agreementDate: today,
-    lastWorkDate: emp.resignation_date || today,
-    jobTitle: emp.job_title_ar || '',
-    contractType: emp.contract_type || '',
-    hireDate: emp.hire_date || '',
+    agreementDate: '',
+    lastWorkDate: '',
+    jobTitle: '',
+    contractType: '',
+    hireDate: '',
     nationalId: emp.national_id || '',
     address: emp.address || '',
     phone: emp.phone || '',
