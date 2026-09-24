@@ -533,9 +533,16 @@ const StationManagerPortal = () => {
 
 
   const stationReviews = useMemo(() => {
+    // Hide evaluations of non-active employees in every account
+    const activeIds = new Set<string>();
+    employees.forEach(e => {
+      if (e.status !== 'active') return;
+      if (e.id) activeIds.add(e.id);
+      if (e.employeeId) activeIds.add(e.employeeId);
+    });
     const empIds = new Set(stationEmployees.map(e => e.id));
-    return reviews.filter(r => empIds.has(r.employeeId) || r.station === user?.station);
-  }, [reviews, stationEmployees, user?.station]);
+    return reviews.filter(r => activeIds.has(r.employeeId) && (empIds.has(r.employeeId) || r.station === user?.station));
+  }, [reviews, employees, stationEmployees, user?.station]);
 
   // Filter violations for this station's employees (violations now use UUID)
   const stationViolations = useMemo(() => {

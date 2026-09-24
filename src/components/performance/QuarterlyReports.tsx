@@ -61,7 +61,14 @@ export const QuarterlyReports = () => {
     const yearNorm = String(selectedYear || '').trim();
     const quarterNorm = String(selectedQuarter || '').trim().toUpperCase();
     const matchesDegree = (r: any) => jobDegreeFilter === 'all' || employeeDegreeMap.get(r.employeeId) === jobDegreeFilter;
-    const filtered = reviews.filter(r => String(r.year || '').trim() === yearNorm && matchesDegree(r));
+    // Hide evaluations of non-active employees in every account
+    const activeIds = new Set<string>();
+    employees.forEach(e => {
+      if (e.status !== 'active') return;
+      if (e.id) activeIds.add(e.id);
+      if (e.employeeId) activeIds.add(e.employeeId);
+    });
+    const filtered = reviews.filter(r => activeIds.has(r.employeeId) && String(r.year || '').trim() === yearNorm && matchesDegree(r));
     const quarterFiltered = filtered.filter(r => String(r.quarter || '').trim().toUpperCase() === quarterNorm);
 
     // Department scores
