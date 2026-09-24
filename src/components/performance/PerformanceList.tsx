@@ -156,15 +156,9 @@ export const PerformanceList = () => {
     }
   };
 
-  const activeEmployeeIdSet = new Set<string>();
-  employees.forEach(e => {
-    if (e.status === 'active') {
-      if (e.id) activeEmployeeIdSet.add(e.id);
-      if (e.employeeId) activeEmployeeIdSet.add(e.employeeId);
-    }
-  });
+  // Show all reviews regardless of employee status — matches what station
+  // managers see (resigned/inactive employees' evaluations must stay visible).
   const filteredReviews = reviews.filter(review => {
-    if (!activeEmployeeIdSet.has(review.employeeId)) return false;
     const q = searchQuery.trim().toLowerCase();
     const matchesSearch = q === '' || (review.employeeName || '').toLowerCase().includes(q) ||
                          (review.department || '').toLowerCase().includes(q) ||
