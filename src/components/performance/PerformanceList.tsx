@@ -55,6 +55,31 @@ export const PerformanceList = () => {
   const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [bonusEditId, setBonusEditId] = useState<string | null>(null);
+  const [bonusDraft, setBonusDraft] = useState('');
+  const [bonusSavingId, setBonusSavingId] = useState<string | null>(null);
+
+  const saveBonus = async (review: PerformanceReview) => {
+    const raw = bonusDraft.trim();
+    const value = raw === '' ? null : Number(raw);
+    if (raw !== '' && (Number.isNaN(value) || value! < 0)) {
+      toast.error(language === 'ar' ? 'أدخل رقمًا صحيحًا (0 أو أكثر)' : 'Enter a valid number (0 or more)');
+      return;
+    }
+    setBonusEditId(null);
+    if ((review.bonusPercentage ?? null) === value) return;
+    setBonusSavingId(review.id);
+    try {
+      // null clears the bonus; numbers above 100 are allowed
+      await updateReview(review.id, { bonusPercentage: value as number });
+      toast.success(language === 'ar' ? 'تم حفظ نسبة المكافأة' : 'Bonus percentage saved');
+    } catch {
+      toast.error(language === 'ar' ? 'فشل حفظ نسبة المكافأة' : 'Failed to save bonus percentage');
+    } finally {
+      setBonusSavingId(null);
+    }
+  };
+
 
   const [editCriteria, setEditCriteria] = useState<CriteriaItem[]>([]);
   const [editStrengths, setEditStrengths] = useState('');
