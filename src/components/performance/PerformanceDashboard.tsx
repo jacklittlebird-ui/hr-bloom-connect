@@ -57,15 +57,25 @@ export const PerformanceDashboard = () => {
   // Filter reviews by selected year, quarter & station/department employees
   const activeEmployeeIds = useMemo(() => new Set(activeEmployees.map(e => e.id)), [activeEmployees]);
 
+  // Always hide evaluations of non-active employees (every account).
+  const allActiveIds = useMemo(() => {
+    const s = new Set<string>();
+    allActiveEmployees.forEach(e => {
+      if (e.id) s.add(e.id);
+      if (e.employeeId) s.add(e.employeeId);
+    });
+    return s;
+  }, [allActiveEmployees]);
+
   const filteredReviews = useMemo(() => {
-    let list = reviews;
+    let list = reviews.filter(r => allActiveIds.has(r.employeeId));
     const yearNorm = String(selectedYear || '').trim();
     const quarterNorm = String(selectedQuarter || '').trim().toUpperCase();
     if (yearNorm) list = list.filter(r => String(r.year || '').trim() === yearNorm);
     if (quarterNorm && quarterNorm !== 'ALL') list = list.filter(r => String(r.quarter || '').trim().toUpperCase() === quarterNorm);
     if (stationFilter !== 'all' || departmentFilter !== 'all' || jobDegreeFilter !== 'all') list = list.filter(r => activeEmployeeIds.has(r.employeeId));
     return list;
-  }, [reviews, selectedYear, selectedQuarter, stationFilter, departmentFilter, jobDegreeFilter, activeEmployeeIds]);
+  }, [reviews, selectedYear, selectedQuarter, stationFilter, departmentFilter, jobDegreeFilter, activeEmployeeIds, allActiveIds]);
 
   // Status counts
   const statusCounts = useMemo(() => {
