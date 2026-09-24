@@ -55,6 +55,31 @@ export const PerformanceList = () => {
   const [deleteReviewId, setDeleteReviewId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [bonusEditId, setBonusEditId] = useState<string | null>(null);
+  const [bonusDraft, setBonusDraft] = useState('');
+  const [bonusSavingId, setBonusSavingId] = useState<string | null>(null);
+
+  const saveBonus = async (review: PerformanceReview) => {
+    const raw = bonusDraft.trim();
+    const value = raw === '' ? null : Number(raw);
+    if (raw !== '' && (Number.isNaN(value) || value < 0)) {
+      toast.error(language === 'ar' ? 'أدخل رقمًا صحيحًا (0 أو أكثر)' : 'Enter a valid number (0 or more)');
+      return;
+    }
+    setBonusEditId(null);
+    if ((review.bonusPercentage ?? null) === value) return;
+    setBonusSavingId(review.id);
+    try {
+      // null clears the bonus; numbers above 100 are allowed
+      await updateReview(review.id, { bonusPercentage: value as number });
+      toast.success(language === 'ar' ? 'تم حفظ نسبة المكافأة' : 'Bonus percentage saved');
+    } catch {
+      toast.error(language === 'ar' ? 'فشل حفظ نسبة المكافأة' : 'Failed to save bonus percentage');
+    } finally {
+      setBonusSavingId(null);
+    }
+  };
+
 
   const [editCriteria, setEditCriteria] = useState<CriteriaItem[]>([]);
   const [editStrengths, setEditStrengths] = useState('');
@@ -427,12 +452,39 @@ export const PerformanceList = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {review.bonusPercentage != null ? (
-                        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 font-bold">
-                          {review.bonusPercentage}%
-                        </Badge>
+                      {bonusEditId === review.id ? (
+                        <Input
+                          autoFocus
+                          type="number"
+                          min={0}
+                          step="any"
+                          className="h-8 w-20 text-center"
+                          value={bonusDraft}
+                          onChange={(e) => setBonusDraft(e.target.value)}
+                          onBlur={() => saveBonus(review)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); saveBonus(review); }
+                            if (e.key === 'Escape') setBonusEditId(null);
+                          }}
+                          aria-label={language === 'ar' ? 'تعديل نسبة المكافأة' : 'Edit bonus percentage'}
+                        />
                       ) : (
-                        <span className="text-muted-foreground text-xs">-</span>
+                        <button
+                          type="button"
+                          className="cursor-pointer"
+                          title={language === 'ar' ? 'اضغط للتعديل' : 'Click to edit'}
+                          onClick={() => { setBonusDraft(review.bonusPercentage != null ? String(review.bonusPercentage) : ''); setBonusEditId(review.id); }}
+                        >
+                          {bonusSavingId === review.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                          ) : review.bonusPercentage != null ? (
+                            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 font-bold">
+                              {review.bonusPercentage}%
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs underline decoration-dotted">-</span>
+                          )}
+                        </button>
                       )}
                     </TableCell>
                     <TableCell>{getStatusBadge(review.status)}</TableCell>
