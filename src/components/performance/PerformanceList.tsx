@@ -44,7 +44,7 @@ export const PerformanceList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [quarterFilter, setQuarterFilter] = useState<string>(`Q${Math.floor(new Date().getMonth() / 3) + 1}`);
-  const [yearFilter, setYearFilter] = useState<string>('all');
+  const [yearFilter, setYearFilter] = useState<string>(String(new Date().getFullYear()));
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [jobDegreeFilter, setJobDegreeFilter] = useState<string>('all');
