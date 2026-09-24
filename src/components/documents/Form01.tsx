@@ -77,7 +77,8 @@ const buildHtml = (e: Emp, logoUrl: string, x: Form01Extra) => `<!DOCTYPE html>
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
 body { font-family: "Arial", "Tahoma", sans-serif; direction: rtl; color: #000; margin: 0; font-size: 13.5px; line-height: 1.6; }
-.sheet { width: 190mm; margin: 0 auto; padding: 6mm 5mm; box-sizing: border-box; }
+.sheet { width: 190mm; height: 296mm; margin: 0 auto; padding: 6mm 5mm; box-sizing: border-box; overflow: hidden; break-after: page; page-break-after: always; }
+.sheet:last-child { break-after: auto; page-break-after: auto; }
 .hdr { display: flex; align-items: center; gap: 8px; }
 .hdr .side { flex: 1; }
 .hdr img { height: 110px; max-width: 110px; width: auto; display: block; margin: 0 auto; }
@@ -103,7 +104,7 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .secwrap { display:flex; align-items:center; gap:0; margin:14px 0 10px; }
 .secwrap:before,.secwrap:after { content:""; border-top:1.5px solid #000; flex:1; }
 .secwrap .sec { margin:0; border-radius:9px; padding:4px 22px; background:transparent; }
-.pagebreak { page-break-before: always; break-before: page; height: 0; }
+.pagebreak { display: none; }
 .decl { margin-top: 12px; font-size: 15px; line-height: 2.1; text-align: justify; }
 .page2 h1 { font-size: 20px; margin: 8px 0 12px; }
 .guide { margin: 0; padding-inline-start: 18px; font-size: 15px; line-height: 1.9; text-align: justify; }
@@ -250,7 +251,7 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 
 <div class="pagebreak"></div>
 
-<div class="sheet page2">
+<div class="sheet page2" style="break-before:page;page-break-before:always">
   <h1>إرشـــــادات</h1>
 
   <ol class="guide">
