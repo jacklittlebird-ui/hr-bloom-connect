@@ -969,7 +969,7 @@ export const PerformanceReviewForm = () => {
                       <CommandGroup>
                         {(() => {
                           const n = Number(bonusSearch);
-                          const isValidSearch = bonusSearch !== '' && !Number.isNaN(n) && n >= 0 && n <= 100;
+                          const isValidSearch = bonusSearch !== '' && !Number.isNaN(n) && n >= 0 && n <= 1000;
                           const isInList = BONUS_OPTIONS.includes(n);
                           if (isValidSearch && !isInList) {
                             return (
