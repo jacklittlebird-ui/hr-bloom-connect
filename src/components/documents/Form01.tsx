@@ -100,6 +100,9 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
 .note { margin-top: 8px; font-size: 12px; font-weight: bold; }
 .sp { flex: 1; }
 .sec { font-weight: bold; font-size: 17px; margin: 10px 0 6px; text-align: center; border: 1.5px solid #000; padding: 3px 6px; background: #f0f0f0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.secwrap { display:flex; align-items:center; gap:0; margin:14px 0 10px; }
+.secwrap:before,.secwrap:after { content:""; border-top:1.5px solid #000; flex:1; }
+.secwrap .sec { margin:0; border-radius:9px; padding:4px 22px; background:transparent; }
 .pagebreak { page-break-before: always; break-before: page; height: 0; }
 .decl { margin-top: 12px; font-size: 15px; line-height: 2.1; text-align: justify; }
 .page2 h1 { font-size: 20px; margin: 8px 0 12px; }
@@ -150,8 +153,7 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">الرقم الضريبى :</span>${line(x.applicantTaxNo)}</span>
   </div>
 
-  <div class="rule"></div>
-  <div class="sec">بيانات المؤمن عليه</div>
+  <div class="secwrap"><div class="sec">بيانات المؤمن عليه</div></div>
 
 
 
@@ -191,8 +193,7 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="opt">لا<span class="chk"></span></span>
   </div>
 
-  <div class="rule"></div>
-  <div class="sec">بيانات المنشأة</div>
+  <div class="secwrap"><div class="sec">بيانات المنشأة</div></div>
 
 
 
@@ -208,8 +209,7 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell" style="margin-inline-start:12px"><span class="lbl">رقم المنشأة :</span>${boxes(x.facilityNo, 7)}</span>
   </div>
 
-  <div class="rule"></div>
-  <div class="sec">بيانات محل إقامة المؤمن عليه</div>
+  <div class="secwrap"><div class="sec">بيانات محل إقامة المؤمن عليه</div></div>
 
 
 
@@ -223,8 +223,7 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="cell grow" style="margin-inline-start:12px"><span class="lbl">محافظة :</span>${line(e.governorate)}</span>
   </div>
 
-  <div class="rule"></div>
-  <div class="sec">التوقيع</div>
+  <div class="secwrap"><div class="sec">التوقيع</div></div>
 
   <div class="row" style="margin-top:6px">
     <span class="cell grow"><span class="lbl">توقيع المؤمن عليه :</span>${line('')}</span>
@@ -239,8 +238,7 @@ h1 { font-size: 15px; font-weight: bold; text-align: center; margin: 4px 0 8px; 
     <span class="sp"></span>
   </div>
 
-  <div class="rule"></div>
-  <div class="sec">مطابقة التوقيع</div>
+  <div class="secwrap"><div class="sec">مطابقة التوقيع</div></div>
 
   <div class="row">
     <span class="cell grow"><span class="lbl">توقيع الموظف المختص بالمطابقة :</span>${line('')}</span>
