@@ -126,7 +126,7 @@ export const QuarterlyReports = () => {
     ];
 
     return { departmentScores, quarterlyComparison, criteriaAverages, radarData, summaryStats };
-  }, [reviews, selectedYear, selectedQuarter, jobDegreeFilter, employeeDegreeMap, language, t]);
+  }, [reviews, employees, selectedYear, selectedQuarter, jobDegreeFilter, employeeDegreeMap, language, t]);
 
   const handleExportCSV = () => {
     exportToCSV({
