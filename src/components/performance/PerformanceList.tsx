@@ -156,9 +156,19 @@ export const PerformanceList = () => {
     }
   };
 
-  // Show all reviews regardless of employee status — matches what station
-  // managers see (resigned/inactive employees' evaluations must stay visible).
+  // Hide evaluations of non-active employees in every account.
+  const activeIds = useMemo(() => {
+    const s = new Set<string>();
+    employees.forEach(e => {
+      if (e.status !== 'active') return;
+      if (e.id) s.add(e.id);
+      if (e.employeeId) s.add(e.employeeId);
+    });
+    return s;
+  }, [employees]);
+
   const filteredReviews = reviews.filter(review => {
+    if (!activeIds.has(review.employeeId)) return false;
     const q = searchQuery.trim().toLowerCase();
     const matchesSearch = q === '' || (review.employeeName || '').toLowerCase().includes(q) ||
                          (review.department || '').toLowerCase().includes(q) ||
