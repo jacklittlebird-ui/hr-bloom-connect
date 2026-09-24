@@ -43,7 +43,7 @@ export const PerformanceList = () => {
   const { exportToCSV, exportToPDF, handlePrint, reportRef } = useReportExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [quarterFilter, setQuarterFilter] = useState<string>('all');
+  const [quarterFilter, setQuarterFilter] = useState<string>(`Q${Math.floor(new Date().getMonth() / 3) + 1}`);
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
