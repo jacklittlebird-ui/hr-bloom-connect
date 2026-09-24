@@ -339,26 +339,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
           try {
             const { data: { session: storedSession } } = await supabase.auth.getSession();
-            if (storedSession?.user) {
-              // A stored session exists, but it may already be revoked server-side
-              // (rotation, sign-out elsewhere, idle timeout). Validate before adopting.
-              const { error: verifyError } = await supabase.auth.getUser();
-              if (!verifyError) {
-                setSession(storedSession);
-                return;
-              }
-              // Distinguish a genuinely revoked token (4xx auth error) from a
-              // transient network failure (offline / fetch error / 5xx). A
-              // network blip must NOT log the user out — adopt the stored
-              // session and let a later refresh event re-validate.
-              const err = verifyError as { status?: number; name?: string };
-              const isAuthFailure = typeof err?.status === 'number' && err.status >= 400 && err.status < 500;
-              if (!isAuthFailure) {
-                setSession(storedSession);
-                return;
-              }
-              // Dead token: drop it locally so it is never reused.
-              try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
+            const expiresAtMs = (storedSession?.expires_at ?? 0) * 1000;
+            if (storedSession?.user && expiresAtMs > Date.now()) {
+              // getSession reads local storage without adding another auth-server
+              // request. Keep a still-valid rotated session and let the SDK's
+              // built-in auto-refresh perform the next server validation.
+              setSession(storedSession);
+              return;
             }
           } catch {
             // fall through and clear state

@@ -99,25 +99,6 @@ const AttendanceKiosk = () => {
     clearRetryTimer();
   }, [selectedLocation, accessToken, clearRefreshTimer, clearRetryTimer]);
 
-  // ── Keep-alive: refresh Supabase token every 10 min (lightweight, no page reload) ──
-  useEffect(() => {
-    const tokenRefresh = setInterval(async () => {
-      try {
-        const { error } = await supabase.auth.refreshSession();
-        if (error) {
-          // Dead / revoked session: stop reusing it and return to login.
-          try { await supabase.auth.signOut({ scope: 'local' }); } catch {}
-          window.location.replace('/login');
-          return;
-        }
-      } catch {
-        // network hiccup — keep the current session and retry next interval
-      }
-    }, 10 * 60 * 1000);
-    return () => clearInterval(tokenRefresh);
-  }, []);
-
-
   // ── Freeze detection: reload if page was suspended > 5 min ──
   useEffect(() => {
     let lastTick = Date.now();
