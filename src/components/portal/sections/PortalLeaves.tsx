@@ -130,7 +130,7 @@ export const PortalLeaves = () => {
 
   const calculateDays = () => (leaveStartDate && leaveEndDate ? differenceInDays(leaveEndDate, leaveStartDate) + 1 : 0);
 
-  const handleSubmitLeave = () => {
+  const handleSubmitLeave = async () => {
     if (!leaveType || !leaveStartDate || !leaveEndDate || !leaveReason) {
       toast.error(ar ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
       return;
