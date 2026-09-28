@@ -265,7 +265,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const yearStart = getYearStart(currentYear);
       const yearEnd = getYearEnd(currentYear);
       const lbQuery = supabase.from('leave_balances').select('employee_id, annual_total, annual_used, sick_total, sick_used, casual_total, casual_used, permissions_total, permissions_used').eq('year', currentYear);
-      const lrQuery = supabase.from('leave_requests').select('id, employee_id, leave_type, start_date, end_date, days, status').gte('start_date', yearStart).lte('start_date', yearEnd).order('start_date', { ascending: false }).order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
+      const lrQuery = supabase.from('leave_requests').select('id, employee_id, leave_type, start_date, end_date, days, status').gte('end_date', yearStart).order('start_date', { ascending: false }).order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
       const pQuery = supabase.from('permission_requests').select('id, employee_id, permission_type, date, start_time, end_time, reason, status').neq('permission_type', 'no_deduction').gte('date', yearStart).lte('date', yearEnd).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
       const otQuery = supabase.from('overtime_requests').select('id, employee_id, date, overtime_type, reason, status').gte('date', yearStart).lte('date', yearEnd).order('date', { ascending: false }).order('created_at', { ascending: false }).limit(PORTAL_RECORDS_LIMIT);
 
@@ -554,16 +554,26 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   
   const addLeaveRequest = useCallback(async (req: Omit<LeaveRequest, 'id' | 'status'>) => {
     const leaveType = Object.entries(leaveTypeMap).find(([, v]) => v.ar === req.typeAr || v.en === req.typeEn)?.[0] || 'annual';
-    await supabase.from('leave_requests').insert({
+    const { data: inserted, error } = await supabase.from('leave_requests').insert({
       employee_id: req.employeeId,
       leave_type: leaveType,
       start_date: req.from,
       end_date: req.to,
       days: req.days,
-    });
+    }).select('id, employee_id, leave_type, start_date, end_date, days, status').single();
+    if (error || !inserted) {
+      console.error('[Portal] leave insert failed:', error);
+      throw new Error(error?.message || 'Leave request was not saved');
+    }
+    // Optimistically show the saved row immediately
+    const lt = leaveTypeMap[inserted.leave_type] || { ar: inserted.leave_type, en: inserted.leave_type };
+    setLeaveRequests(prev => [
+      { id: inserted.id as any, employeeId: inserted.employee_id, typeAr: lt.ar, typeEn: lt.en, from: inserted.start_date, to: inserted.end_date, days: inserted.days, status: inserted.status as any },
+      ...prev.filter(r => String(r.id) !== String(inserted.id)),
+    ]);
     invalidateCache('portal_leaves');
     loaded.current.delete(LEAVES_LOADED_KEY);
-    await ensureLeaves();
+    await ensureLeaves(true);
   }, [ensureLeaves]);
 
   const getPermissions = useCallback((empId: string) => permissions.filter(p => p.employeeId === empId), [permissions]);

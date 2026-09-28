@@ -260,7 +260,11 @@ const AttendanceKiosk = () => {
         width: 280, margin: 2,
         color: { dark: "#000000", light: "#ffffff" },
       });
-      const nextExpiresAt = typeof json.expiresAt === "number" ? json.expiresAt : getCurrentBucketExpiresAt();
+      // Convert server expiry to local clock (kiosk device clock may be wrong)
+      const skew = typeof json.serverNow === "number" ? Date.now() - json.serverNow : 0;
+      let nextExpiresAt = typeof json.expiresAt === "number" ? json.expiresAt + skew : getCurrentBucketExpiresAt();
+      // Never schedule into the past; guarantees the refresh loop keeps moving
+      if (nextExpiresAt <= Date.now() + REFRESH_BUFFER_MS) nextExpiresAt = Date.now() + 60_000;
 
       if (mountedRef.current) {
         setQrSrcs([src, src, src]);
@@ -306,6 +310,8 @@ const AttendanceKiosk = () => {
 
       if (expiredOrNearExpiry || staleRefresh) {
         void generateQRCodes();
+        // Keep ticking even if generation fails — retry every 10s until a fresh token arrives
+        refreshTimeoutRef.current = window.setTimeout(tick, 10_000);
         return;
       }
 

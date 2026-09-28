@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
     const token = `${btoa(payload)}.${signature}`;
 
     return new Response(
-      JSON.stringify({ token, expiresAt: (tsBucket + TOKEN_TTL) * 1000 }),
+      JSON.stringify({ token, expiresAt: (tsBucket + TOKEN_TTL) * 1000, serverNow: Date.now() }),
       { headers: { ...corsHeaders, "content-type": "application/json" } }
     );
   } catch (e) {
