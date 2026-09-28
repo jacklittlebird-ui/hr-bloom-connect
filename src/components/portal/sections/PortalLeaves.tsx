@@ -70,7 +70,7 @@ export const PortalLeaves = () => {
   const permTo = calcPermTo(permFrom, permDuration);
 
   const balances = useMemo(() => getLeaveBalances(PORTAL_EMPLOYEE_ID), [getLeaveBalances]);
-  const requests = useMemo(() => getLeaveRequests(PORTAL_EMPLOYEE_ID), [getLeaveRequests]);
+  const requests = useMemo(() => getLeaveRequests(PORTAL_EMPLOYEE_ID), [getLeaveRequests, PORTAL_EMPLOYEE_ID]);
   const permissions = useMemo(() => getPermissions(PORTAL_EMPLOYEE_ID), [getPermissions]);
   const overtimeDays = useMemo(() => getOvertimeDays(PORTAL_EMPLOYEE_ID), [getOvertimeDays]);
 
