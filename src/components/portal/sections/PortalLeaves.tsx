@@ -200,14 +200,19 @@ export const PortalLeaves = () => {
 
     const t = leaveTypes.find(l => l.value === leaveType);
     const days = calculateDays();
-    addLeaveRequest({
-      employeeId: PORTAL_EMPLOYEE_ID,
-      typeAr: t?.ar || '',
-      typeEn: t?.en || '',
-      from: format(leaveStartDate, 'yyyy-MM-dd'),
-      to: format(leaveEndDate, 'yyyy-MM-dd'),
-      days,
-    });
+    try {
+      await addLeaveRequest({
+        employeeId: PORTAL_EMPLOYEE_ID,
+        typeAr: t?.ar || '',
+        typeEn: t?.en || '',
+        from: format(leaveStartDate, 'yyyy-MM-dd'),
+        to: format(leaveEndDate, 'yyyy-MM-dd'),
+        days,
+      });
+    } catch (err: any) {
+      toast.error(ar ? `لم يتم حفظ الطلب، حاول مرة أخرى. (${err?.message || ''})` : `Request was not saved, please retry. (${err?.message || ''})`);
+      return;
+    }
     toast.success(ar ? 'تم تقديم طلب الإجازة بنجاح' : 'Leave request submitted');
     setShowLeaveDialog(false);
     setLeaveType(''); setLeaveStartDate(undefined); setLeaveEndDate(undefined); setLeaveReason('');
