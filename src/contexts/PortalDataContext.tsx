@@ -569,7 +569,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const lt = leaveTypeMap[inserted.leave_type] || { ar: inserted.leave_type, en: inserted.leave_type };
     setLeaveRequests(prev => [
       { id: inserted.id as any, employeeId: inserted.employee_id, typeAr: lt.ar, typeEn: lt.en, from: inserted.start_date, to: inserted.end_date, days: inserted.days, status: inserted.status as any },
-      ...prev.filter(r => r.id !== inserted.id),
+      ...prev.filter(r => String(r.id) !== String(inserted.id)),
     ]);
     invalidateCache('portal_leaves');
     loaded.current.delete(LEAVES_LOADED_KEY);
