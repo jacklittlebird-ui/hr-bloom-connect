@@ -37,8 +37,37 @@ export const PortalProfile = () => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const portalEmployeeId = usePortalEmployee();
-  const { getEmployee } = useEmployeeData();
+  const { getEmployee, refreshEmployees } = useEmployeeData();
   const employee = getEmployee(portalEmployeeId);
+
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [marital, setMarital] = useState('');
+  const [children, setChildren] = useState('0');
+
+  const handleSave = async () => {
+    const count = Number(children);
+    if (!Number.isInteger(count) || count < 0 || count > 30) {
+      toast.error(ar ? 'عدد الأطفال غير صحيح' : 'Invalid children count');
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.rpc('update_my_personal_info', {
+        _marital_status: marital || null,
+        _children_count: count,
+      });
+      if (error) throw error;
+      await refreshEmployees();
+      toast.success(ar ? 'تم حفظ البيانات' : 'Saved successfully');
+      setEditing(false);
+    } catch (e) {
+      toast.error(ar ? 'تعذر حفظ البيانات' : 'Could not save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   if (!employee) {
     return (
