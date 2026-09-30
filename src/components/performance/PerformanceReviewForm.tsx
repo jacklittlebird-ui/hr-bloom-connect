@@ -442,6 +442,10 @@ export const PerformanceReviewForm = () => {
       toast.error(ar ? 'الدرجات يجب أن تكون بين 1 و 5' : 'Scores must be between 1 and 5');
       return;
     }
+    if (/^Q[1-4]$/.test(selectedQuarter) && (bonusPercentage === '' || isNaN(Number(bonusPercentage)))) {
+      toast.error(ar ? 'يجب تحديد نسبة المكافأة قبل الحفظ أو الإرسال' : 'Bonus percentage is required before saving or sending');
+      return;
+    }
     const review = buildReview(status);
     if (!review) return;
 
