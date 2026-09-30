@@ -58,6 +58,8 @@ export const PerformanceList = () => {
   const [bonusEditId, setBonusEditId] = useState<string | null>(null);
   const [bonusDraft, setBonusDraft] = useState('');
   const [bonusSavingId, setBonusSavingId] = useState<string | null>(null);
+  const [sendingAll, setSendingAll] = useState(false);
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false);
 
   const saveBonus = async (review: PerformanceReview) => {
     const raw = bonusDraft.trim();
