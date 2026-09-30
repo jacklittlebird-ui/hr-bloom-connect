@@ -118,10 +118,44 @@ export const PortalProfile = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-4"><CardTitle className="flex items-center gap-2 text-lg"><User className="w-5 h-5" />{ar ? 'معلومات إضافية' : 'Additional Info'}</CardTitle></CardHeader>
+          <CardHeader className="pb-4 flex-row items-center justify-between space-y-0">
+            <CardTitle className="flex items-center gap-2 text-lg"><User className="w-5 h-5" />{ar ? 'معلومات إضافية' : 'Additional Info'}</CardTitle>
+            {!editing && (
+              <Button variant="outline" size="sm" onClick={() => { setMarital(employee.maritalStatus || ''); setChildren(String(employee.childrenCount ?? 0)); setEditing(true); }}>
+                <Pencil className="w-4 h-4 me-1" />{ar ? 'تعديل' : 'Edit'}
+              </Button>
+            )}
+          </CardHeader>
           <CardContent className="space-y-4">
-            <InfoItem icon={User} label={ar ? 'الحالة الاجتماعية' : 'Marital Status'} value={tr(employee.maritalStatus, maritalStatusMap, ar)} />
-            <InfoItem icon={User} label={ar ? 'عدد الأطفال' : 'Children Count'} value={String(employee.childrenCount ?? 0)} />
+            {editing ? (
+              <>
+                <div className="space-y-2">
+                  <Label>{ar ? 'الحالة الاجتماعية' : 'Marital Status'}</Label>
+                  <Select value={marital} onValueChange={setMarital}>
+                    <SelectTrigger><SelectValue placeholder={ar ? 'اختر' : 'Select'} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">{ar ? 'أعزب' : 'Single'}</SelectItem>
+                      <SelectItem value="married">{ar ? 'متزوج' : 'Married'}</SelectItem>
+                      <SelectItem value="divorced">{ar ? 'مطلق' : 'Divorced'}</SelectItem>
+                      <SelectItem value="widowed">{ar ? 'أرمل' : 'Widowed'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>{ar ? 'عدد الأطفال' : 'Children Count'}</Label>
+                  <Input type="number" min={0} max={30} value={children} onChange={(e) => setChildren(e.target.value)} />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ' : 'Save')}</Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditing(false)} disabled={saving}>{ar ? 'إلغاء' : 'Cancel'}</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <InfoItem icon={User} label={ar ? 'الحالة الاجتماعية' : 'Marital Status'} value={tr(employee.maritalStatus, maritalStatusMap, ar)} />
+                <InfoItem icon={User} label={ar ? 'عدد الأطفال' : 'Children Count'} value={String(employee.childrenCount ?? 0)} />
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
