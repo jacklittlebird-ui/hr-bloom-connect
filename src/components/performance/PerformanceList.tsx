@@ -803,6 +803,29 @@ export const PerformanceList = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={confirmSendOpen} onOpenChange={(o) => { if (!sendingAll) setConfirmSendOpen(o); }}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{ar ? 'إرسال التقييمات' : 'Send Reviews'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {ar
+                ? `سيتم تغيير حالة ${draftReviews.length} تقييم من مسودة إلى مُرسل.`
+                : `${draftReviews.length} reviews will change from Draft to Submitted.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={sendingAll}>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={sendingAll}
+              onClick={(e) => { e.preventDefault(); void handleSendAllDrafts(); }}
+            >
+              {sendingAll ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {ar ? 'إرسال' : 'Send'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
