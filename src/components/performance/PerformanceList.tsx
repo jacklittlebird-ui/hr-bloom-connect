@@ -216,7 +216,7 @@ export const PerformanceList = () => {
   });
 
   const m3Reviews = filteredReviews.filter(r => r.quarter === 'M3');
-  const draftReviews = filteredReviews.filter(r => r.status === 'draft');
+  const draftReviews = filteredReviews.filter(r => r.status === 'draft' && (!/^Q[1-4]$/.test(String(r.quarter || '').toUpperCase()) || r.bonusPercentage != null));
 
   const handleSendAllDrafts = async () => {
     if (draftReviews.length === 0) return;
