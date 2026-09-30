@@ -214,6 +214,29 @@ export const PerformanceList = () => {
   });
 
   const m3Reviews = filteredReviews.filter(r => r.quarter === 'M3');
+  const draftReviews = filteredReviews.filter(r => r.status === 'draft');
+
+  const handleSendAllDrafts = async () => {
+    if (draftReviews.length === 0) return;
+    setSendingAll(true);
+    let ok = 0;
+    try {
+      for (const r of draftReviews) {
+        try {
+          await updateReview(r.id, { status: 'submitted' });
+          ok++;
+        } catch { /* continue with the rest */ }
+      }
+      if (ok === draftReviews.length) {
+        toast.success(ar ? `تم إرسال ${ok} تقييم` : `${ok} reviews submitted`);
+      } else {
+        toast.error(ar ? `تم إرسال ${ok} من ${draftReviews.length}` : `Submitted ${ok} of ${draftReviews.length}`);
+      }
+    } finally {
+      setSendingAll(false);
+      setConfirmSendOpen(false);
+    }
+  };
 
   const { paginatedItems: paginatedReviews, currentPage: revPage, totalPages: revTotalPages, totalItems: revTotalItems, startIndex: revStart, endIndex: revEnd, setCurrentPage: setRevPage } = usePagination(filteredReviews);
 
