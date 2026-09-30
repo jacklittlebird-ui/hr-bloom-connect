@@ -3757,6 +3757,10 @@ export type Database = {
         Args: { _dept_code: string; _employee_id: string }
         Returns: string
       }
+      update_my_personal_info: {
+        Args: { _children_count: number; _marital_status: string }
+        Returns: undefined
+      }
       upsert_mobile_bill: {
         Args: {
           p_amount: number
