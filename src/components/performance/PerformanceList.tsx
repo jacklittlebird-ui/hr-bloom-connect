@@ -371,6 +371,16 @@ export const PerformanceList = () => {
                 <Download className="w-4 h-4" />
                 {ar ? `M3 PDF (${m3Reviews.length})` : `M3 PDF (${m3Reviews.length})`}
               </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setConfirmSendOpen(true)}
+                disabled={draftReviews.length === 0 || sendingAll}
+                className="gap-1.5"
+              >
+                {sendingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {ar ? `إرسال التقييمات (${draftReviews.length})` : `Send Reviews (${draftReviews.length})`}
+              </Button>
             </div>
           </div>
         </CardHeader>
