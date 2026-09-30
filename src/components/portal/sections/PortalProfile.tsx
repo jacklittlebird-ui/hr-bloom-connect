@@ -1,11 +1,18 @@
+import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { User, Building2, Briefcase, Mail, Phone, CreditCard, Calendar, FileText, Shield, Landmark } from 'lucide-react';
+import { User, Building2, Briefcase, Mail, Phone, CreditCard, Calendar, FileText, Shield, Landmark, Pencil } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) => (
   <div className="flex items-start gap-3">
@@ -30,8 +37,37 @@ export const PortalProfile = () => {
   const { language } = useLanguage();
   const ar = language === 'ar';
   const portalEmployeeId = usePortalEmployee();
-  const { getEmployee } = useEmployeeData();
+  const { getEmployee, refreshEmployees } = useEmployeeData();
   const employee = getEmployee(portalEmployeeId);
+
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [marital, setMarital] = useState('');
+  const [children, setChildren] = useState('0');
+
+  const handleSave = async () => {
+    const count = Number(children);
+    if (!Number.isInteger(count) || count < 0 || count > 30) {
+      toast.error(ar ? 'عدد الأطفال غير صحيح' : 'Invalid children count');
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase.rpc('update_my_personal_info', {
+        _marital_status: marital || null,
+        _children_count: count,
+      });
+      if (error) throw error;
+      await refreshEmployees();
+      toast.success(ar ? 'تم حفظ البيانات' : 'Saved successfully');
+      setEditing(false);
+    } catch (e) {
+      toast.error(ar ? 'تعذر حفظ البيانات' : 'Could not save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   if (!employee) {
     return (
@@ -118,10 +154,44 @@ export const PortalProfile = () => {
         </Card>
 
         <Card>
-          <CardHeader className="pb-4"><CardTitle className="flex items-center gap-2 text-lg"><User className="w-5 h-5" />{ar ? 'معلومات إضافية' : 'Additional Info'}</CardTitle></CardHeader>
+          <CardHeader className="pb-4 flex-row items-center justify-between space-y-0">
+            <CardTitle className="flex items-center gap-2 text-lg"><User className="w-5 h-5" />{ar ? 'معلومات إضافية' : 'Additional Info'}</CardTitle>
+            {!editing && (
+              <Button variant="outline" size="sm" onClick={() => { setMarital(employee.maritalStatus || ''); setChildren(String(employee.childrenCount ?? 0)); setEditing(true); }}>
+                <Pencil className="w-4 h-4 me-1" />{ar ? 'تعديل' : 'Edit'}
+              </Button>
+            )}
+          </CardHeader>
           <CardContent className="space-y-4">
-            <InfoItem icon={User} label={ar ? 'الحالة الاجتماعية' : 'Marital Status'} value={tr(employee.maritalStatus, maritalStatusMap, ar)} />
-            <InfoItem icon={User} label={ar ? 'عدد الأطفال' : 'Children Count'} value={String(employee.childrenCount ?? 0)} />
+            {editing ? (
+              <>
+                <div className="space-y-2">
+                  <Label>{ar ? 'الحالة الاجتماعية' : 'Marital Status'}</Label>
+                  <Select value={marital} onValueChange={setMarital}>
+                    <SelectTrigger><SelectValue placeholder={ar ? 'اختر' : 'Select'} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="single">{ar ? 'أعزب' : 'Single'}</SelectItem>
+                      <SelectItem value="married">{ar ? 'متزوج' : 'Married'}</SelectItem>
+                      <SelectItem value="divorced">{ar ? 'مطلق' : 'Divorced'}</SelectItem>
+                      <SelectItem value="widowed">{ar ? 'أرمل' : 'Widowed'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>{ar ? 'عدد الأطفال' : 'Children Count'}</Label>
+                  <Input type="number" min={0} max={30} value={children} onChange={(e) => setChildren(e.target.value)} />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? (ar ? 'جاري الحفظ...' : 'Saving...') : (ar ? 'حفظ' : 'Save')}</Button>
+                  <Button size="sm" variant="outline" onClick={() => setEditing(false)} disabled={saving}>{ar ? 'إلغاء' : 'Cancel'}</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <InfoItem icon={User} label={ar ? 'الحالة الاجتماعية' : 'Marital Status'} value={tr(employee.maritalStatus, maritalStatusMap, ar)} />
+                <InfoItem icon={User} label={ar ? 'عدد الأطفال' : 'Children Count'} value={String(employee.childrenCount ?? 0)} />
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
