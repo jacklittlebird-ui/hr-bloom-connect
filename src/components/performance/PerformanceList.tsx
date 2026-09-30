@@ -58,6 +58,8 @@ export const PerformanceList = () => {
   const [bonusEditId, setBonusEditId] = useState<string | null>(null);
   const [bonusDraft, setBonusDraft] = useState('');
   const [bonusSavingId, setBonusSavingId] = useState<string | null>(null);
+  const [sendingAll, setSendingAll] = useState(false);
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false);
 
   const saveBonus = async (review: PerformanceReview) => {
     const raw = bonusDraft.trim();
@@ -214,6 +216,29 @@ export const PerformanceList = () => {
   });
 
   const m3Reviews = filteredReviews.filter(r => r.quarter === 'M3');
+  const draftReviews = filteredReviews.filter(r => r.status === 'draft');
+
+  const handleSendAllDrafts = async () => {
+    if (draftReviews.length === 0) return;
+    setSendingAll(true);
+    let ok = 0;
+    try {
+      for (const r of draftReviews) {
+        try {
+          await updateReview(r.id, { status: 'submitted' });
+          ok++;
+        } catch { /* continue with the rest */ }
+      }
+      if (ok === draftReviews.length) {
+        toast.success(ar ? `تم إرسال ${ok} تقييم` : `${ok} reviews submitted`);
+      } else {
+        toast.error(ar ? `تم إرسال ${ok} من ${draftReviews.length}` : `Submitted ${ok} of ${draftReviews.length}`);
+      }
+    } finally {
+      setSendingAll(false);
+      setConfirmSendOpen(false);
+    }
+  };
 
   const { paginatedItems: paginatedReviews, currentPage: revPage, totalPages: revTotalPages, totalItems: revTotalItems, startIndex: revStart, endIndex: revEnd, setCurrentPage: setRevPage } = usePagination(filteredReviews);
 
@@ -345,6 +370,16 @@ export const PerformanceList = () => {
               <Button variant="default" size="sm" onClick={() => handleExportM3('pdf')} className="gap-1.5">
                 <Download className="w-4 h-4" />
                 {ar ? `M3 PDF (${m3Reviews.length})` : `M3 PDF (${m3Reviews.length})`}
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setConfirmSendOpen(true)}
+                disabled={draftReviews.length === 0 || sendingAll}
+                className="gap-1.5"
+              >
+                {sendingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {ar ? `إرسال التقييمات (${draftReviews.length})` : `Send Reviews (${draftReviews.length})`}
               </Button>
             </div>
           </div>
@@ -764,6 +799,29 @@ export const PerformanceList = () => {
             >
               {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {ar ? 'حذف' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmSendOpen} onOpenChange={(o) => { if (!sendingAll) setConfirmSendOpen(o); }}>
+        <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{ar ? 'إرسال التقييمات' : 'Send Reviews'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {ar
+                ? `سيتم تغيير حالة ${draftReviews.length} تقييم من مسودة إلى مُرسل.`
+                : `${draftReviews.length} reviews will change from Draft to Submitted.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={sendingAll}>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={sendingAll}
+              onClick={(e) => { e.preventDefault(); void handleSendAllDrafts(); }}
+            >
+              {sendingAll ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {ar ? 'إرسال' : 'Send'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
