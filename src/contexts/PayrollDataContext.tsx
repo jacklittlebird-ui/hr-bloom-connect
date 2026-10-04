@@ -423,6 +423,25 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     return () => subscription.unsubscribe();
   }, []);
 
+  // If a month is already published, any entry added/re-processed later must be published
+  // too — otherwise the employee portal keeps showing an older published month.
+  const syncPublishedState = async (month: string, year: string) => {
+    const { data: pub } = await supabase
+      .from('payroll_entries')
+      .select('id')
+      .eq('month', month)
+      .eq('year', year)
+      .eq('is_published', true)
+      .limit(1);
+    if (!pub || pub.length === 0) return;
+    await supabase
+      .from('payroll_entries')
+      .update({ is_published: true, published_at: new Date().toISOString() })
+      .eq('month', month)
+      .eq('year', year)
+      .eq('is_published', false);
+  };
+
   const upsertEntry = async (entry: ProcessedPayroll) => {
     const payload = entryToPayload(entry);
     const { data: existing } = await supabase
@@ -438,6 +457,7 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } else {
       await supabase.from('payroll_entries').insert(payload);
     }
+    await syncPublishedState(entry.month, entry.year);
   };
 
   const savePayrollEntry = useCallback(async (entry: ProcessedPayroll) => {
@@ -464,6 +484,11 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       } else {
         saved += slice.length;
       }
+    }
+    const periods = new Set(entries.map((e) => `${e.month}|${e.year}`));
+    for (const p of periods) {
+      const [m, y] = p.split('|');
+      await syncPublishedState(m, y);
     }
     await fetchEntries();
     if (failed > 0) {
