@@ -63,16 +63,16 @@ export const PerformanceBonuses = () => {
   const ar = language === 'ar';
   const { exportBilingualPDF, exportBilingualCSV, handlePrint, reportRef } = useReportExport();
 
-  const currentYear = new Date().getFullYear();
-  const [year, setYear] = useState(String(currentYear));
-  const getCurrentQuarter = () => {
-    const month = new Date().getMonth();
-    if (month >= 0 && month <= 2) return 'Q1';
-    if (month >= 3 && month <= 5) return 'Q2';
-    if (month >= 6 && month <= 8) return 'Q3';
-    return 'Q4';
+  // Bonuses are paid for the quarter that just ended — default to the previous quarter.
+  const getDefaultPeriod = () => {
+    const now = new Date();
+    const q = Math.floor(now.getMonth() / 3); // 0..3 = current quarter index
+    if (q === 0) return { year: String(now.getFullYear() - 1), quarter: 'Q4' };
+    return { year: String(now.getFullYear()), quarter: `Q${q}` };
   };
-  const [quarter, setQuarter] = useState(getCurrentQuarter());
+  const defaultPeriod = getDefaultPeriod();
+  const [year, setYear] = useState(defaultPeriod.year);
+  const [quarter, setQuarter] = useState(defaultPeriod.quarter);
   const [minMonths, setMinMonths] = useState('6');
   const [calcDate, setCalcDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [rows, setRows] = useState<Row[]>([]);
