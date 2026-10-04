@@ -63,6 +63,7 @@ export const PerformanceBonuses = () => {
   const ar = language === 'ar';
   const { exportBilingualPDF, exportBilingualCSV, handlePrint, reportRef } = useReportExport();
 
+  const currentYear = new Date().getFullYear();
   // Bonuses are paid for the quarter that just ended — default to the previous quarter.
   const getDefaultPeriod = () => {
     const now = new Date();
