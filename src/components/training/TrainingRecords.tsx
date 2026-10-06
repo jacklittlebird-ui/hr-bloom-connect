@@ -422,6 +422,10 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
               <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
               <Input placeholder={t('training.searchByName')} value={searchName} onChange={(e) => setSearchName(e.target.value)} className={cn(isRTL ? "pr-10" : "pl-10")} />
             </div>
+            <div className="relative">
+              <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
+              <Input placeholder={ar ? 'بحث بالمسمى الوظيفي' : 'Search by job title'} value={searchTitle} onChange={(e) => setSearchTitle(e.target.value)} className={cn(isRTL ? "pr-10" : "pl-10")} />
+            </div>
             <Select value={searchDept} onValueChange={setSearchDept}>
               <SelectTrigger><SelectValue placeholder={t('training.searchByDept')} /></SelectTrigger>
               <SelectContent>
