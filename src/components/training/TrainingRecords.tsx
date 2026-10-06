@@ -90,6 +90,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const { toast } = useToast();
   const { employees: contextEmployees, updateEmployee, loading: employeesLoading } = useEmployeeData();
   const [searchName, setSearchName] = useState('');
+  const [searchTitle, setSearchTitle] = useState('');
   const [searchDept, setSearchDept] = useState('');
   const [searchStation, setSearchStation] = useState('');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
