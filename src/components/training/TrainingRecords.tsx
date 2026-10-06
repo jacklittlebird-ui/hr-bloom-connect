@@ -172,6 +172,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
       if (!saved) return;
       const parsed = JSON.parse(saved);
       setSearchName(parsed.searchName ?? '');
+      setSearchTitle(parsed.searchTitle ?? '');
       setSearchDept(parsed.searchDept ?? '');
       setSearchStation(parsed.searchStation ?? '');
       setSelectedEmployeeId(parsed.selectedEmployeeId ?? null);
@@ -183,9 +184,9 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   useEffect(() => {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ searchName, searchDept, searchStation, selectedEmployeeId })
+      JSON.stringify({ searchName, searchTitle, searchDept, searchStation, selectedEmployeeId })
     );
-  }, [searchName, searchDept, searchStation, selectedEmployeeId]);
+  }, [searchName, searchTitle, searchDept, searchStation, selectedEmployeeId]);
 
   // Fetch training records from DB when employee is selected
   useEffect(() => {
