@@ -90,6 +90,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   const { toast } = useToast();
   const { employees: contextEmployees, updateEmployee, loading: employeesLoading } = useEmployeeData();
   const [searchName, setSearchName] = useState('');
+  const [searchTitle, setSearchTitle] = useState('');
   const [searchDept, setSearchDept] = useState('');
   const [searchStation, setSearchStation] = useState('');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
@@ -171,6 +172,7 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
       if (!saved) return;
       const parsed = JSON.parse(saved);
       setSearchName(parsed.searchName ?? '');
+      setSearchTitle(parsed.searchTitle ?? '');
       setSearchDept(parsed.searchDept ?? '');
       setSearchStation(parsed.searchStation ?? '');
       setSelectedEmployeeId(parsed.selectedEmployeeId ?? null);
@@ -182,9 +184,9 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
   useEffect(() => {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ searchName, searchDept, searchStation, selectedEmployeeId })
+      JSON.stringify({ searchName, searchTitle, searchDept, searchStation, selectedEmployeeId })
     );
-  }, [searchName, searchDept, searchStation, selectedEmployeeId]);
+  }, [searchName, searchTitle, searchDept, searchStation, selectedEmployeeId]);
 
   // Fetch training records from DB when employee is selected
   useEffect(() => {
@@ -225,9 +227,12 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
 
   const filteredEmployees = trainingEmployees.filter(emp => {
     const nameMatch = emp.nameEn.toLowerCase().includes(searchName.toLowerCase()) || emp.nameAr.includes(searchName);
+    const titleMatch = !searchTitle.trim()
+      || (emp.jobTitleAr || '').includes(searchTitle.trim())
+      || (emp.jobTitleEn || '').toLowerCase().includes(searchTitle.trim().toLowerCase());
     const deptMatch = !searchDept || searchDept === 'all' || emp.department === searchDept;
     const stationMatch = !searchStation || searchStation === 'all' || emp.station.includes(searchStation);
-    return nameMatch && deptMatch && stationMatch;
+    return nameMatch && titleMatch && deptMatch && stationMatch;
   });
 
   const handleAddRecord = async () => {
@@ -416,6 +421,10 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
             <div className="relative">
               <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
               <Input placeholder={t('training.searchByName')} value={searchName} onChange={(e) => setSearchName(e.target.value)} className={cn(isRTL ? "pr-10" : "pl-10")} />
+            </div>
+            <div className="relative">
+              <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
+              <Input placeholder={ar ? 'بحث بالمسمى الوظيفي' : 'Search by job title'} value={searchTitle} onChange={(e) => setSearchTitle(e.target.value)} className={cn(isRTL ? "pr-10" : "pl-10")} />
             </div>
             <Select value={searchDept} onValueChange={setSearchDept}>
               <SelectTrigger><SelectValue placeholder={t('training.searchByDept')} /></SelectTrigger>
