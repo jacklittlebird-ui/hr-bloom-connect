@@ -574,6 +574,20 @@ export const TrainingQualificationReport = () => {
                 </PopoverContent>
               </Popover>
             </div>
+
+            {/* Job Title */}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المسمى الوظيفي' : 'Job Title'}</label>
+              <div className="relative">
+                <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", ar ? "right-3" : "left-3")} />
+                <Input
+                  placeholder={ar ? 'بحث بالمسمى الوظيفي' : 'Search by job title'}
+                  value={filterTitle}
+                  onChange={e => setFilterTitle(e.target.value)}
+                  className={cn(ar ? "pr-10" : "pl-10")}
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
