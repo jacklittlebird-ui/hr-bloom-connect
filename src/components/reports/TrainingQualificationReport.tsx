@@ -149,6 +149,7 @@ export const TrainingQualificationReport = () => {
       const c = courseOptions.find(c => c.id === filterCourse);
       if (c) parts.push(ar ? c.nameAr : c.nameEn);
     }
+    if (filterTitle.trim()) parts.push(filterTitle.trim());
     return parts.join(' - ') || '';
   };
 
@@ -470,7 +471,7 @@ export const TrainingQualificationReport = () => {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {/* Station */}
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">{ar ? 'المحطة' : 'Station'}</label>
