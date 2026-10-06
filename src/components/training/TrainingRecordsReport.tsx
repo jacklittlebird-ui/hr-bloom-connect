@@ -119,6 +119,8 @@ interface ReportRecord {
   employeeCode: string;
   department: string;
   station: string;
+  jobTitleAr: string;
+  jobTitleEn: string;
   courseId: string;
   courseName: string;
   courseCode: string;
@@ -174,6 +176,7 @@ export const TrainingRecordsReport = () => {
   const [filterProviders, setFilterProviders] = useState<string[]>([]);
   const [filterYear, setFilterYear] = useState('all');
   const [filterFavorite, setFilterFavorite] = useState('all');
+  const [filterTitle, setFilterTitle] = useState('');
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -200,6 +203,8 @@ export const TrainingRecordsReport = () => {
           employeeCode: emp?.employeeId || '',
           department: dName,
           station: stName,
+          jobTitleAr: (emp as any)?.jobTitleAr || '',
+          jobTitleEn: (emp as any)?.jobTitleEn || '',
           courseId: r.course_id || '',
           courseName: r.training_courses ? (ar ? r.training_courses.name_ar : r.training_courses.name_en) : '',
           courseCode: r.training_courses?.course_code || '',
@@ -260,6 +265,10 @@ export const TrainingRecordsReport = () => {
         if (filterFavorite === 'yes' && !r.isFavorite) return false;
         if (filterFavorite === 'no' && r.isFavorite) return false;
       }
+      if (filterTitle.trim()) {
+        const s = filterTitle.trim().toLowerCase();
+        if (!r.jobTitleAr.toLowerCase().includes(s) && !r.jobTitleEn.toLowerCase().includes(s)) return false;
+      }
       return true;
     });
     // Sort alphabetically by employee name, then by end date (newest first)
@@ -269,7 +278,7 @@ export const TrainingRecordsReport = () => {
       return (b.endDate || '').localeCompare(a.endDate || '');
     });
     return base;
-  }, [allRecords, filterStations, filterCourses, filterEmployee, filterDepartments, filterProviders, filterYear, filterFavorite, stations, departments, ar]);
+  }, [allRecords, filterStations, filterCourses, filterEmployee, filterDepartments, filterProviders, filterYear, filterFavorite, filterTitle, stations, departments, ar]);
 
 
   const getStatusBadge = (status: string) => {
@@ -394,7 +403,7 @@ export const TrainingRecordsReport = () => {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">{ar ? 'المحطة' : 'Station'}</label>
               <Popover>
@@ -477,6 +486,10 @@ export const TrainingRecordsReport = () => {
                   {yearOptions.map(y => (<SelectItem key={y} value={y}>{y}</SelectItem>))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المسمى الوظيفي' : 'Job Title'}</label>
+              <Input placeholder={ar ? 'بحث بالمسمى الوظيفي' : 'Search by job title'} value={filterTitle} onChange={e => setFilterTitle(e.target.value)} className="h-10 text-xs" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">{ar ? 'المفضلة' : 'Favorites'}</label>

@@ -65,6 +65,7 @@ export const TrainingQualificationReport = () => {
   const [filterDepartment, setFilterDepartment] = useState('all');
   const [filterCourse, setFilterCourse] = useState('all');
   const [filterEmployee, setFilterEmployee] = useState('all');
+  const [filterTitle, setFilterTitle] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [courseSearch, setCourseSearch] = useState('');
 
@@ -86,7 +87,7 @@ export const TrainingQualificationReport = () => {
 
   const groupedData = useMemo(() => {
     const empMap = new Map<string, EmployeeTrainingGroup>();
-    const hasAnyFilter = filterStation !== 'all' || filterDepartment !== 'all' || filterCourse !== 'all' || filterEmployee !== 'all';
+    const hasAnyFilter = filterStation !== 'all' || filterDepartment !== 'all' || filterCourse !== 'all' || filterEmployee !== 'all' || filterTitle.trim() !== '';
     if (!hasAnyFilter) return [];
 
     allRecords.forEach(r => {
@@ -97,6 +98,10 @@ export const TrainingQualificationReport = () => {
       if (filterDepartment !== 'all' && emp.departmentId !== filterDepartment) return;
       if (filterCourse !== 'all' && r.course_id !== filterCourse) return;
       if (filterEmployee !== 'all' && emp.id !== filterEmployee) return;
+      if (filterTitle.trim()) {
+        const s = filterTitle.trim().toLowerCase();
+        if (!(emp.jobTitleAr || '').toLowerCase().includes(s) && !(emp.jobTitleEn || '').toLowerCase().includes(s)) return;
+      }
 
       if (!empMap.has(emp.id)) {
         empMap.set(emp.id, {
@@ -124,7 +129,7 @@ export const TrainingQualificationReport = () => {
     });
 
     return [...empMap.values()].sort((a, b) => a.employeeName.localeCompare(b.employeeName, ar ? 'ar' : 'en'));
-  }, [allRecords, contextEmployees, filterStation, filterDepartment, filterCourse, filterEmployee, ar]);
+  }, [allRecords, contextEmployees, filterStation, filterDepartment, filterCourse, filterEmployee, filterTitle, ar]);
 
   const getFilterTitle = () => {
     const parts: string[] = [];
@@ -144,6 +149,7 @@ export const TrainingQualificationReport = () => {
       const c = courseOptions.find(c => c.id === filterCourse);
       if (c) parts.push(ar ? c.nameAr : c.nameEn);
     }
+    if (filterTitle.trim()) parts.push(filterTitle.trim());
     return parts.join(' - ') || '';
   };
 
@@ -213,7 +219,7 @@ export const TrainingQualificationReport = () => {
 
   const filterTypeLabel = getFilterTitle();
 
-  const isFilterActive = filterStation !== 'all' || filterDepartment !== 'all' || filterCourse !== 'all' || filterEmployee !== 'all';
+  const isFilterActive = filterStation !== 'all' || filterDepartment !== 'all' || filterCourse !== 'all' || filterEmployee !== 'all' || filterTitle.trim() !== '';
 
   const handleQualificationPrint = useCallback(() => {
     const logoUrl = `${window.location.origin}/images/company-logo.png`;
@@ -465,7 +471,7 @@ export const TrainingQualificationReport = () => {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {/* Station */}
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">{ar ? 'المحطة' : 'Station'}</label>
@@ -567,6 +573,20 @@ export const TrainingQualificationReport = () => {
                   </div>
                 </PopoverContent>
               </Popover>
+            </div>
+
+            {/* Job Title */}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المسمى الوظيفي' : 'Job Title'}</label>
+              <div className="relative">
+                <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", ar ? "right-3" : "left-3")} />
+                <Input
+                  placeholder={ar ? 'بحث بالمسمى الوظيفي' : 'Search by job title'}
+                  value={filterTitle}
+                  onChange={e => setFilterTitle(e.target.value)}
+                  className={cn(ar ? "pr-10" : "pl-10")}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
