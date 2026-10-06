@@ -227,9 +227,12 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
 
   const filteredEmployees = trainingEmployees.filter(emp => {
     const nameMatch = emp.nameEn.toLowerCase().includes(searchName.toLowerCase()) || emp.nameAr.includes(searchName);
+    const titleMatch = !searchTitle.trim()
+      || (emp.jobTitleAr || '').includes(searchTitle.trim())
+      || (emp.jobTitleEn || '').toLowerCase().includes(searchTitle.trim().toLowerCase());
     const deptMatch = !searchDept || searchDept === 'all' || emp.department === searchDept;
     const stationMatch = !searchStation || searchStation === 'all' || emp.station.includes(searchStation);
-    return nameMatch && deptMatch && stationMatch;
+    return nameMatch && titleMatch && deptMatch && stationMatch;
   });
 
   const handleAddRecord = async () => {
