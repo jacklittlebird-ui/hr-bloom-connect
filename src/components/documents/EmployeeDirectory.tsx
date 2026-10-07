@@ -21,6 +21,7 @@ export const EmployeeDirectory = () => {
   const ar = language === 'ar';
   const { employees, refreshEmployees } = useEmployeeData();
   const [search, setSearch] = useState('');
+  const [titleSearch, setTitleSearch] = useState('');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
@@ -52,16 +53,18 @@ export const EmployeeDirectory = () => {
   }, [employees]);
 
   const filtered = useMemo(() => {
+    const ts = titleSearch.trim().toLowerCase();
     return employees
       .filter(e => e.status === 'active')
       .filter(e => {
         if (search && !e.nameAr.includes(search) && !e.nameEn.toLowerCase().includes(search.toLowerCase()) && !e.employeeId.includes(search)) return false;
+        if (ts && !(e.jobTitleAr || '').toLowerCase().includes(ts) && !(e.jobTitleEn || '').toLowerCase().includes(ts)) return false;
         if (selectedStation !== 'all' && e.stationName !== selectedStation) return false;
         if (selectedDept !== 'all' && e.department !== selectedDept) return false;
         return true;
       })
       .sort((a, b) => a.nameAr.localeCompare(b.nameAr, 'ar'));
-  }, [employees, search, selectedStation, selectedDept]);
+  }, [employees, search, titleSearch, selectedStation, selectedDept]);
 
   const { paginatedItems, currentPage, setCurrentPage, totalPages, totalItems, startIndex, endIndex } = usePagination(filtered, 30);
 
@@ -134,6 +137,15 @@ export const EmployeeDirectory = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               className={cn("w-64", isRTL ? "pr-10" : "pl-10")}
+            />
+          </div>
+          <div className="relative">
+            <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
+            <Input
+              placeholder={ar ? 'بحث بالمسمى الوظيفي...' : 'Search by job title...'}
+              value={titleSearch}
+              onChange={e => setTitleSearch(e.target.value)}
+              className={cn("w-56", isRTL ? "pr-10" : "pl-10")}
             />
           </div>
           <Select value={selectedStation} onValueChange={v => { setSelectedStation(v); setCurrentPage(1); }}>
