@@ -139,6 +139,15 @@ export const EmployeeDirectory = () => {
               className={cn("w-64", isRTL ? "pr-10" : "pl-10")}
             />
           </div>
+          <div className="relative">
+            <Search className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground", isRTL ? "right-3" : "left-3")} />
+            <Input
+              placeholder={ar ? 'بحث بالمسمى الوظيفي...' : 'Search by job title...'}
+              value={titleSearch}
+              onChange={e => setTitleSearch(e.target.value)}
+              className={cn("w-56", isRTL ? "pr-10" : "pl-10")}
+            />
+          </div>
           <Select value={selectedStation} onValueChange={v => { setSelectedStation(v); setCurrentPage(1); }}>
             <SelectTrigger className="w-48"><SelectValue placeholder={ar ? 'المحطة' : 'Station'} /></SelectTrigger>
             <SelectContent>
