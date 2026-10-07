@@ -21,6 +21,7 @@ export const EmployeeDirectory = () => {
   const ar = language === 'ar';
   const { employees, refreshEmployees } = useEmployeeData();
   const [search, setSearch] = useState('');
+  const [titleSearch, setTitleSearch] = useState('');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedDept, setSelectedDept] = useState('all');
   const { reportRef, handlePrint, exportBilingualCSV } = useReportExport();
@@ -52,16 +53,18 @@ export const EmployeeDirectory = () => {
   }, [employees]);
 
   const filtered = useMemo(() => {
+    const ts = titleSearch.trim().toLowerCase();
     return employees
       .filter(e => e.status === 'active')
       .filter(e => {
         if (search && !e.nameAr.includes(search) && !e.nameEn.toLowerCase().includes(search.toLowerCase()) && !e.employeeId.includes(search)) return false;
+        if (ts && !(e.jobTitleAr || '').toLowerCase().includes(ts) && !(e.jobTitleEn || '').toLowerCase().includes(ts)) return false;
         if (selectedStation !== 'all' && e.stationName !== selectedStation) return false;
         if (selectedDept !== 'all' && e.department !== selectedDept) return false;
         return true;
       })
       .sort((a, b) => a.nameAr.localeCompare(b.nameAr, 'ar'));
-  }, [employees, search, selectedStation, selectedDept]);
+  }, [employees, search, titleSearch, selectedStation, selectedDept]);
 
   const { paginatedItems, currentPage, setCurrentPage, totalPages, totalItems, startIndex, endIndex } = usePagination(filtered, 30);
 
