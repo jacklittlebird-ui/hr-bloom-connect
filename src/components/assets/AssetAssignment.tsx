@@ -75,9 +75,21 @@ export const AssetAssignment = () => {
   const filteredEmployees = allEmployees.filter(e => e.stationId === selectedStation);
 
   const fetchData = useCallback(async () => {
+    const fetchAllEmployees = async () => {
+      const all: any[] = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error } = await supabase.from('employees')
+          .select('id, name_ar, name_en, employee_code, station_id')
+          .eq('status', 'active').order('employee_code').range(from, from + 999);
+        if (error) return { data: all.length ? all : null, error };
+        all.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+      return { data: all, error: null };
+    };
     const [stationsRes, employeesRes, assetsRes] = await Promise.all([
       supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true).order('name_ar'),
-      supabase.from('employees').select('id, name_ar, name_en, employee_code, station_id').eq('status', 'active').order('employee_code'),
+      fetchAllEmployees(),
       supabase.from('assets').select('*').order('created_at', { ascending: false }),
     ]);
 
