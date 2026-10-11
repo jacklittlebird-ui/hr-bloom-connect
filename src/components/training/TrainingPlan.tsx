@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CalendarDays, Users, BookOpen, FileText, FileSpreadsheet, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { CalendarDays, Users, BookOpen, FileText, FileSpreadsheet, AlertTriangle, CheckCircle2, Clock, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
@@ -49,7 +51,8 @@ export const TrainingPlan = () => {
   const [filterStation, setFilterStation] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
   const [filterYear, setFilterYear] = useState(String(new Date().getFullYear()));
-  const [filterCourse, setFilterCourse] = useState('all');
+  const [filterCourses, setFilterCourses] = useState<string[]>([]);
+  const [courseFilterOpen, setCourseFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Fetch departments and stations from DB
@@ -124,12 +127,24 @@ export const TrainingPlan = () => {
     return [...map.entries()].sort(([, a], [, b]) => a.localeCompare(b));
   }, [records]);
 
+  const toggleCourse = (id: string) =>
+    setFilterCourses(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
+
+  const courseFilterLabel = () => {
+    if (filterCourses.length === 0) return ar ? 'جميع الدورات' : 'All Courses';
+    if (filterCourses.length === 1) {
+      const found = courseOptions.find(([id]) => id === filterCourses[0]);
+      return found ? found[1] : (ar ? 'دورة واحدة' : '1 course');
+    }
+    return ar ? `${filterCourses.length} دورات محددة` : `${filterCourses.length} courses selected`;
+  };
+
   // Filter records
   const filtered = useMemo(() => {
     return records.filter(r => {
       const deptMatch = filterDept === 'all' || r.department === filterDept;
       const stationMatch = filterStation === 'all' || r.station === filterStation;
-      const courseMatch = filterCourse === 'all' || r.courseId === filterCourse;
+      const courseMatch = filterCourses.length === 0 || filterCourses.includes(r.courseId);
       if (!deptMatch || !stationMatch || !courseMatch) return false;
       if (!r.plannedDate) return false;
       const d = new Date(r.plannedDate);
@@ -137,7 +152,7 @@ export const TrainingPlan = () => {
       const yearMatch = filterYear === 'all' || d.getFullYear() === parseInt(filterYear);
       return monthMatch && yearMatch;
     });
-  }, [records, filterDept, filterStation, filterMonth, filterYear, filterCourse]);
+  }, [records, filterDept, filterStation, filterMonth, filterYear, filterCourses]);
 
   // Group by month
   const grouped = useMemo(() => {
@@ -266,16 +281,71 @@ export const TrainingPlan = () => {
               </Select>
             </div>
             <div className="flex-1 min-w-[200px]">
-              <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'الدورة' : 'Course'}</label>
-              <Select value={filterCourse} onValueChange={setFilterCourse}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{ar ? 'جميع الدورات' : 'All Courses'}</SelectItem>
-                  {courseOptions.map(([id, name]) => (
-                    <SelectItem key={id} value={id}>{name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'الدورات' : 'Courses'}</label>
+              <Popover open={courseFilterOpen} onOpenChange={setCourseFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={courseFilterOpen}
+                    aria-label={ar ? 'اختيار الدورات' : 'Select courses'}
+                    className={cn(
+                      'w-full h-10 justify-between font-normal',
+                      filterCourses.length > 0 && 'border-primary bg-primary/5'
+                    )}
+                  >
+                    <span className="truncate text-sm">{courseFilterLabel()}</span>
+                    <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[320px] max-w-[90vw] p-0" align={isRTL ? 'end' : 'start'}>
+                  <Command>
+                    <CommandInput placeholder={ar ? 'ابحث عن دورة...' : 'Search courses...'} />
+                    <CommandList>
+                      <CommandEmpty>{ar ? 'لا توجد نتائج' : 'No courses found'}</CommandEmpty>
+                      <CommandGroup className="max-h-72 overflow-y-auto">
+                        {courseOptions.map(([id, name]) => {
+                          const checked = filterCourses.includes(id);
+                          return (
+                            <CommandItem
+                              key={id}
+                              value={name}
+                              onSelect={() => toggleCourse(id)}
+                              className={cn('gap-2', isRTL && 'flex-row-reverse')}
+                            >
+                              <Check className={cn('h-4 w-4 shrink-0', checked ? 'opacity-100' : 'opacity-0')} />
+                              <span className="truncate whitespace-pre-wrap break-words">{name}</span>
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                  <div className="p-2 border-t flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {filterCourses.length} / {courseOptions.length}
+                    </span>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => setFilterCourses(courseOptions.map(([id]) => id))}
+                      >
+                        {ar ? 'تحديد الكل' : 'Select all'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                        onClick={() => setFilterCourses([])}
+                      >
+                        {ar ? 'مسح' : 'Clear'}
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="flex-1 min-w-[200px]">
               <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'الشهر' : 'Month'}</label>
