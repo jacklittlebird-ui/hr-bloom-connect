@@ -22,6 +22,13 @@
       "when": 1791723611315,
       "tag": "0002_restrict_assets_and_course_assignments_read",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791723703780,
+      "tag": "0003_restrict_courses_read",
+      "breakpoints": true
     }
   ]
 }
