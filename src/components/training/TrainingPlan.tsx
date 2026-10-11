@@ -68,11 +68,26 @@ export const TrainingPlan = () => {
   useEffect(() => {
     const fetchRecords = async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from('training_records')
-        .select('*, training_courses(name_en, name_ar, course_code, validity_years)')
-        .not('planned_date', 'is', null);
-      setRawRecords(data || []);
+      const all: any[] = [];
+      const pageSize = 1000;
+      let page = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data } = await supabase
+          .from('training_records')
+          .select('*, training_courses(name_en, name_ar, course_code, validity_years)')
+          .not('planned_date', 'is', null)
+          .order('planned_date', { ascending: true })
+          .range(page * pageSize, (page + 1) * pageSize - 1);
+        if (data && data.length > 0) {
+          all.push(...data);
+          hasMore = data.length === pageSize;
+          page++;
+        } else {
+          hasMore = false;
+        }
+      }
+      setRawRecords(all);
       setLoading(false);
     };
     fetchRecords();
