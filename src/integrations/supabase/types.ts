@@ -3726,6 +3726,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_staff_user: { Args: { _user_id: string }; Returns: boolean }
       log_rls_access_denied: {
         Args: { p_module: string; p_resource_id?: string }
         Returns: undefined

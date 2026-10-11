@@ -15,6 +15,13 @@
       "when": 1790754600566,
       "tag": "0001_employee_update_own_personal_info",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791723611315,
+      "tag": "0002_restrict_assets_and_course_assignments_read",
+      "breakpoints": true
     }
   ]
 }
