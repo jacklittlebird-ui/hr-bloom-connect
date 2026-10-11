@@ -281,16 +281,71 @@ export const TrainingPlan = () => {
               </Select>
             </div>
             <div className="flex-1 min-w-[200px]">
-              <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'الدورة' : 'Course'}</label>
-              <Select value={filterCourse} onValueChange={setFilterCourse}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{ar ? 'جميع الدورات' : 'All Courses'}</SelectItem>
-                  {courseOptions.map(([id, name]) => (
-                    <SelectItem key={id} value={id}>{name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'الدورات' : 'Courses'}</label>
+              <Popover open={courseFilterOpen} onOpenChange={setCourseFilterOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={courseFilterOpen}
+                    aria-label={ar ? 'اختيار الدورات' : 'Select courses'}
+                    className={cn(
+                      'w-full h-10 justify-between font-normal',
+                      filterCourses.length > 0 && 'border-primary bg-primary/5'
+                    )}
+                  >
+                    <span className="truncate text-sm">{courseFilterLabel()}</span>
+                    <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[320px] max-w-[90vw] p-0" align={isRTL ? 'end' : 'start'}>
+                  <Command>
+                    <CommandInput placeholder={ar ? 'ابحث عن دورة...' : 'Search courses...'} />
+                    <CommandList>
+                      <CommandEmpty>{ar ? 'لا توجد نتائج' : 'No courses found'}</CommandEmpty>
+                      <CommandGroup className="max-h-72 overflow-y-auto">
+                        {courseOptions.map(([id, name]) => {
+                          const checked = filterCourses.includes(id);
+                          return (
+                            <CommandItem
+                              key={id}
+                              value={name}
+                              onSelect={() => toggleCourse(id)}
+                              className={cn('gap-2', isRTL && 'flex-row-reverse')}
+                            >
+                              <Check className={cn('h-4 w-4 shrink-0', checked ? 'opacity-100' : 'opacity-0')} />
+                              <span className="truncate whitespace-pre-wrap break-words">{name}</span>
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                  <div className="p-2 border-t flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      {filterCourses.length} / {courseOptions.length}
+                    </span>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => setFilterCourses(courseOptions.map(([id]) => id))}
+                      >
+                        {ar ? 'تحديد الكل' : 'Select all'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                        onClick={() => setFilterCourses([])}
+                      >
+                        {ar ? 'مسح' : 'Clear'}
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="flex-1 min-w-[200px]">
               <label className="text-sm text-muted-foreground mb-1 block">{ar ? 'الشهر' : 'Month'}</label>
