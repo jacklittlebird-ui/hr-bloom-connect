@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CalendarDays, Users, BookOpen, FileText, FileSpreadsheet, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { CalendarDays, Users, BookOpen, FileText, FileSpreadsheet, AlertTriangle, CheckCircle2, Clock, Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useReportExport } from '@/hooks/useReportExport';
@@ -49,7 +51,8 @@ export const TrainingPlan = () => {
   const [filterStation, setFilterStation] = useState('all');
   const [filterMonth, setFilterMonth] = useState('all');
   const [filterYear, setFilterYear] = useState(String(new Date().getFullYear()));
-  const [filterCourse, setFilterCourse] = useState('all');
+  const [filterCourses, setFilterCourses] = useState<string[]>([]);
+  const [courseFilterOpen, setCourseFilterOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Fetch departments and stations from DB
