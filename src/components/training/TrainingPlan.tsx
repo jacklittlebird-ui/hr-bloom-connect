@@ -38,6 +38,7 @@ interface PlanRecord {
   endDate: string;
   plannedDate: string;
   validityYears: number;
+  cost: number | null;
   status: string;
   hasCert: boolean;
 }
@@ -114,6 +115,7 @@ export const TrainingPlan = () => {
         endDate: r.end_date || '',
         plannedDate: r.planned_date || '',
         validityYears: r.training_courses?.validity_years || 1,
+        cost: r.cost ?? null,
         status: r.status || 'enrolled',
         hasCert: r.has_cert || false,
       };
@@ -205,6 +207,7 @@ export const TrainingPlan = () => {
     { headerAr: 'اسم الدورة', headerEn: 'Course', key: 'courseName' },
     { headerAr: 'تاريخ الانتهاء', headerEn: 'End Date', key: 'endDate' },
     { headerAr: 'الصلاحية', headerEn: 'Validity', key: 'validity' },
+    { headerAr: 'قيمة الدورة', headerEn: 'Course Value', key: 'costLabel' },
     { headerAr: 'تاريخ التخطيط', headerEn: 'Planned Date', key: 'plannedDate' },
     { headerAr: 'الحالة', headerEn: 'Status', key: 'statusLabel' },
   ];
@@ -214,6 +217,7 @@ export const TrainingPlan = () => {
       ...r,
       stationName: stations.find(s => s.id === r.station)?.[ar ? 'nameAr' : 'nameEn'] || '-',
       validity: `${r.validityYears} ${ar ? 'سنة' : 'yr'}`,
+      costLabel: r.cost ? r.cost.toLocaleString() : '-',
       statusLabel: r.status === 'completed' ? (ar ? 'مكتمل' : 'Completed') : r.status === 'failed' ? (ar ? 'راسب' : 'Failed') : (ar ? 'مسجل' : 'Enrolled'),
     }));
   }, [filtered, stations, ar]);
@@ -407,6 +411,7 @@ export const TrainingPlan = () => {
                     <TableHead>{ar ? 'اسم الدورة' : 'Course'}</TableHead>
                     <TableHead>{ar ? 'تاريخ الانتهاء' : 'End Date'}</TableHead>
                     <TableHead>{ar ? 'الصلاحية' : 'Validity'}</TableHead>
+                    <TableHead>{ar ? 'قيمة الدورة' : 'Course Value'}</TableHead>
                     <TableHead>{ar ? 'تاريخ التخطيط' : 'Planned Date'}</TableHead>
                     <TableHead>{ar ? 'الحالة' : 'Status'}</TableHead>
                   </TableRow>
@@ -422,6 +427,7 @@ export const TrainingPlan = () => {
                       <TableCell>{r.courseName}</TableCell>
                       <TableCell>{r.endDate || '-'}</TableCell>
                       <TableCell>{r.validityYears} {ar ? 'سنة' : 'yr'}</TableCell>
+                      <TableCell className="font-mono text-xs">{r.cost ? r.cost.toLocaleString() : '-'}</TableCell>
                       <TableCell>
                         <span className={cn(isOverdue(r.plannedDate) && r.status !== 'completed' && 'text-destructive font-semibold')}>
                           {r.plannedDate}
