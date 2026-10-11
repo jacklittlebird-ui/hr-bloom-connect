@@ -127,12 +127,24 @@ export const TrainingPlan = () => {
     return [...map.entries()].sort(([, a], [, b]) => a.localeCompare(b));
   }, [records]);
 
+  const toggleCourse = (id: string) =>
+    setFilterCourses(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
+
+  const courseFilterLabel = () => {
+    if (filterCourses.length === 0) return ar ? 'جميع الدورات' : 'All Courses';
+    if (filterCourses.length === 1) {
+      const found = courseOptions.find(([id]) => id === filterCourses[0]);
+      return found ? found[1] : (ar ? 'دورة واحدة' : '1 course');
+    }
+    return ar ? `${filterCourses.length} دورات محددة` : `${filterCourses.length} courses selected`;
+  };
+
   // Filter records
   const filtered = useMemo(() => {
     return records.filter(r => {
       const deptMatch = filterDept === 'all' || r.department === filterDept;
       const stationMatch = filterStation === 'all' || r.station === filterStation;
-      const courseMatch = filterCourse === 'all' || r.courseId === filterCourse;
+      const courseMatch = filterCourses.length === 0 || filterCourses.includes(r.courseId);
       if (!deptMatch || !stationMatch || !courseMatch) return false;
       if (!r.plannedDate) return false;
       const d = new Date(r.plannedDate);
@@ -140,7 +152,7 @@ export const TrainingPlan = () => {
       const yearMatch = filterYear === 'all' || d.getFullYear() === parseInt(filterYear);
       return monthMatch && yearMatch;
     });
-  }, [records, filterDept, filterStation, filterMonth, filterYear, filterCourse]);
+  }, [records, filterDept, filterStation, filterMonth, filterYear, filterCourses]);
 
   // Group by month
   const grouped = useMemo(() => {
