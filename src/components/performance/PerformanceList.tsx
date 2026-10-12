@@ -1,3 +1,4 @@
+import { QualityRecordsList } from '@/components/quality/QualityRecordsList';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePagination } from '@/hooks/usePagination';
@@ -609,6 +610,8 @@ export const PerformanceList = () => {
                 <div className={cn(isRTL && "text-right")}><p className="text-sm text-muted-foreground">{t('performance.list.reviewer')}</p><p className="font-semibold">{viewReview.reviewer}</p></div>
                 <div className={cn(isRTL && "text-right")}><p className="text-sm text-muted-foreground">{t('performance.list.status')}</p>{getStatusBadge(viewReview.status)}</div>
               </div>
+
+              <QualityRecordsList employeeId={employees.find(e => e.id === viewReview.employeeId || e.employeeId === viewReview.employeeId)?.id} />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className={cn("flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20", isRTL && "flex-row-reverse")}>

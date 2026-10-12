@@ -1,3 +1,4 @@
+import { QualityRecordsList } from '@/components/quality/QualityRecordsList';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,7 +23,7 @@ interface PortalReview {
 }
 
 export const PortalEvaluations = () => {
-  const { loading: authLoading, session } = useAuth();
+  const { loading: authLoading, session, user } = useAuth();
   const { language } = useLanguage();
   const ar = language === 'ar';
   const [myReviews, setMyReviews] = useState<PortalReview[]>([]);
@@ -87,6 +88,7 @@ export const PortalEvaluations = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{ar ? 'تقييماتي' : 'My Evaluations'}</h1>
+      <QualityRecordsList employeeId={user?.employeeUuid} />
 
       {loading ? (
         <Card><CardContent className="p-10 text-center text-muted-foreground">{ar ? 'جاري تحميل التقييمات...' : 'Loading evaluations...'}</CardContent></Card>
