@@ -28,10 +28,18 @@ const QualityPortal = () => {
   const [reason, setReason] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [saving, setSaving] = useState(false);
+  const [recordSearch, setRecordSearch] = useState('');
 
   const loadRecords = async () => {
-    const { data } = await supabase.from('quality_records' as any).select('*').order('created_at', { ascending: false }).limit(500);
-    setRecords((data as any) || []);
+    const all: any[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data } = await supabase.from('quality_records' as any).select('*')
+        .order('created_at', { ascending: false }).range(from, from + 999);
+      const page = (data as any) || [];
+      all.push(...page);
+      if (page.length < 1000) break;
+    }
+    setRecords(all);
   };
 
   useEffect(() => {
@@ -47,6 +55,15 @@ const QualityPortal = () => {
     return employees.filter(e => (!stationId || e.station_id === stationId) &&
       (!q || e.name_ar?.toLowerCase().includes(q) || e.employee_code?.toLowerCase().includes(q))).slice(0, 300);
   }, [employees, stationId, empSearch]);
+
+  const filteredRecords = useMemo(() => {
+    const q = recordSearch.trim().toLowerCase();
+    if (!q) return records;
+    return records.filter(r => {
+      const e = empById.get(r.employee_id);
+      return !!e && (e.name_ar?.toLowerCase().includes(q) || e.name_en?.toLowerCase().includes(q) || e.employee_code?.toLowerCase().includes(q));
+    });
+  }, [records, empById, recordSearch]);
 
   const save = async () => {
     if (!employeeId || !reason.trim()) { toast.error('اختر الموظف واكتب السبب'); return; }
@@ -117,9 +134,12 @@ const QualityPortal = () => {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-lg">السجلات ({records.length})</CardTitle></CardHeader>
+        <CardHeader className="gap-2">
+          <CardTitle className="text-lg">السجلات ({filteredRecords.length}{filteredRecords.length !== records.length ? ` من ${records.length}` : ''})</CardTitle>
+          <Input value={recordSearch} onChange={e => setRecordSearch(e.target.value)} placeholder="بحث باسم الموظف أو الكود..." className="max-w-sm" />
+        </CardHeader>
         <CardContent className="space-y-2">
-          {records.map(r => {
+          {filteredRecords.length === 0 ? <p className="text-sm text-muted-foreground">{records.length === 0 ? 'لا توجد سجلات' : 'لا توجد سجلات مطابقة للبحث'}</p> : filteredRecords.map(r => {
             const e = empById.get(r.employee_id);
             return (
               <div key={r.id} className="flex items-start gap-2 border rounded-md p-2">
