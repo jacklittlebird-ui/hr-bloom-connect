@@ -224,15 +224,19 @@ export const PayrollProcessing = () => {
 
   const { employees: allEmployees } = useEmployeeData();
   const activeEmployees = allEmployees.filter(e => e.status === 'active');
+  const processedThisMonth = getMonthlyPayroll(selectedMonth, selectedYear);
+  // Saved payroll is frozen: employees already saved for this month stay listed
+  // even if their status changed later.
+  const savedIds = new Set(processedThisMonth.map(e => e.employeeId));
+  const listEmployees = allEmployees.filter(e => e.status === 'active' || savedIds.has(e.id));
 
   // Filter by station from employee data
-  const filteredEmployees = activeEmployees.filter(emp => {
+  const filteredEmployees = listEmployees.filter(emp => {
     const nameMatch = emp.nameEn.toLowerCase().includes(searchName.toLowerCase()) || emp.nameAr.includes(searchName);
     if (!searchStation || searchStation === 'all') return nameMatch;
     return nameMatch && emp.stationLocation === searchStation;
   });
 
-  const processedThisMonth = getMonthlyPayroll(selectedMonth, selectedYear);
   const monthPublished = processedThisMonth.length > 0 && processedThisMonth.every(e => e.isPublished);
 
   const handleTogglePublish = async () => {
@@ -315,7 +319,7 @@ export const PayrollProcessing = () => {
 
   const buildPayrollEntry = (empId: string): ProcessedPayroll | null => {
     const sr = getSalaryRecord(empId, selectedYear);
-    const emp = activeEmployees.find(e => e.id === empId);
+    const emp = listEmployees.find(e => e.id === empId);
     if (!emp) return null;
     const existing = getPayrollEntry(empId, selectedMonth, selectedYear);
     // If no salary record AND no existing entry, can't process
@@ -447,7 +451,7 @@ export const PayrollProcessing = () => {
   const processedActive = processedThisMonth.filter(e => activeIdSet.has(e.employeeId));
   const totalSaved = processedActive.length;
   const processedOther = processedThisMonth.length - totalSaved;
-  const selectedEmpData = activeEmployees.find(e => e.id === selectedEmployee);
+  const selectedEmpData = listEmployees.find(e => e.id === selectedEmployee);
 
   const stats = [
     { label: ar ? 'إجمالي الموظفين' : 'Total Employees', value: String(activeEmployees.length), icon: Users, bg: 'bg-stat-blue', cardBg: 'bg-stat-blue-bg' },
