@@ -29,6 +29,13 @@
       "when": 1791723703780,
       "tag": "0003_restrict_courses_read",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791801173360,
+      "tag": "0004_add_quality_role",
+      "breakpoints": true
     }
   ]
 }
