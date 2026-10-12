@@ -42,6 +42,8 @@ export interface ProcessedPayroll {
   incomeTax: number;
   processedAt: string;
   isPublished?: boolean;
+  stationId?: string | null;
+  departmentId?: string | null;
 }
 
 interface PayrollDataContextType {
@@ -59,7 +61,7 @@ interface PayrollDataContextType {
 const PayrollDataContext = createContext<PayrollDataContextType | undefined>(undefined);
 
 // Only select needed columns (not SELECT *)
-const PAYROLL_COLS = 'employee_id, month, year, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance, overtime_pay, bonus_type, bonus_value, bonus_amount, gross, employee_insurance, loan_payment, advance_amount, mobile_bill, leave_days, leave_deduction, penalty_type, penalty_value, penalty_amount, total_deductions, net_salary, employer_social_insurance, health_insurance, income_tax, processed_at, is_published, id';
+const PAYROLL_COLS = 'employee_id, month, year, basic_salary, transport_allowance, incentives, station_allowance, mobile_allowance, living_allowance, overtime_pay, bonus_type, bonus_value, bonus_amount, gross, employee_insurance, loan_payment, advance_amount, mobile_bill, leave_days, leave_deduction, penalty_type, penalty_value, penalty_amount, total_deductions, net_salary, employer_social_insurance, health_insurance, income_tax, processed_at, is_published, id, station_id, department_id';
 
 // Salary data is sensitive, so employee views also receive the full processed breakdown.
 const EMPLOYEE_PAYROLL_COLS = PAYROLL_COLS;
@@ -123,6 +125,8 @@ const mapRowToEntry = (r: any): ProcessedPayroll => ({
   incomeTax: r.income_tax ?? 0,
   processedAt: r.processed_at ?? '',
   isPublished: r.is_published ?? false,
+  stationId: r.station_id ?? null,
+  departmentId: r.department_id ?? null,
 });
 
 const entryToPayload = (entry: ProcessedPayroll) => ({
@@ -160,6 +164,8 @@ const entryToPayload = (entry: ProcessedPayroll) => ({
 export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [rawEntries, setRawEntries] = useState<ProcessedPayroll[]>([]);
   const [employeeMap, setEmployeeMap] = useState<Record<string, { code: string; nameAr: string; nameEn: string; department: string; station: string }>>({});
+  // id -> station code / department name, used to show the placement saved with each payroll month
+  const [placementLookup, setPlacementLookup] = useState<{ stations: Record<string, string>; departments: Record<string, string> }>({ stations: {}, departments: {} });
   const { addNotification } = useNotifications();
   const { user } = useAuth();
   const isEmployee = user?.role === 'employee';
@@ -364,6 +370,7 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
       };
     });
     setEmployeeMap(map);
+    setPlacementLookup({ stations: stationMap, departments: deptMap });
   }, [isEmployee]);
 
   const fetchEntries = useCallback(async () => {
@@ -389,19 +396,23 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const payrollEntries = useMemo(() => {
     return rawEntries.map(entry => {
       const emp = employeeMap[entry.employeeId];
-      if (emp) {
+      // Saved payroll keeps the station/department the employee had in that month,
+      // even if the employee was moved later.
+      const savedStation = entry.stationId ? placementLookup.stations[entry.stationId] : undefined;
+      const savedDept = entry.departmentId ? placementLookup.departments[entry.departmentId] : undefined;
+      if (emp || savedStation || savedDept) {
         return {
           ...entry,
-          employeeCode: emp.code || entry.employeeCode,
-          employeeName: emp.nameAr || entry.employeeName,
-          employeeNameEn: emp.nameEn || entry.employeeNameEn,
-          department: emp.department || entry.department,
-          stationLocation: emp.station || entry.stationLocation,
+          employeeCode: emp?.code || entry.employeeCode,
+          employeeName: emp?.nameAr || entry.employeeName,
+          employeeNameEn: emp?.nameEn || entry.employeeNameEn,
+          department: savedDept || emp?.department || entry.department,
+          stationLocation: savedStation || emp?.station || entry.stationLocation,
         };
       }
       return entry;
     });
-  }, [rawEntries, employeeMap]);
+  }, [rawEntries, employeeMap, placementLookup]);
 
   // Lazy loading: only fetch when first consumer calls refreshPayroll or accesses data
   const hasFetched = useRef(false);
