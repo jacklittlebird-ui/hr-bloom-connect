@@ -42,6 +42,8 @@ export interface ProcessedPayroll {
   incomeTax: number;
   processedAt: string;
   isPublished?: boolean;
+  stationId?: string | null;
+  departmentId?: string | null;
 }
 
 interface PayrollDataContextType {
