@@ -64,6 +64,13 @@
       "when": 1791809013254,
       "tag": "0008_payroll_entries_station_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791809045973,
+      "tag": "0009_backfill_payroll_station_snapshot",
+      "breakpoints": true
     }
   ]
 }
