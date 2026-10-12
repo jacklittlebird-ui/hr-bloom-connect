@@ -2609,6 +2609,64 @@ export type Database = {
           },
         ]
       }
+      quality_records: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deduction_days: number | null
+          employee_id: string
+          id: string
+          reason: string
+          record_date: string
+          record_type: string
+          station_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deduction_days?: number | null
+          employee_id: string
+          id?: string
+          reason: string
+          record_date?: string
+          record_type: string
+          station_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deduction_days?: number | null
+          employee_id?: string
+          id?: string
+          reason?: string
+          record_date?: string
+          record_type?: string
+          station_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_records_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salary_records: {
         Row: {
           basic_salary: number | null
@@ -3707,6 +3765,17 @@ export type Database = {
           year: string
         }[]
       }
+      get_quality_employees: {
+        Args: never
+        Returns: {
+          employee_code: string
+          id: string
+          job_title_ar: string
+          name_ar: string
+          name_en: string
+          station_id: string
+        }[]
+      }
       get_station_hr_station_ids: {
         Args: { _user_id: string }
         Returns: string[]
@@ -3784,6 +3853,7 @@ export type Database = {
         | "department_manager"
         | "station_hr"
         | "station_vehicle_manager"
+        | "quality"
       employee_status:
         | "active"
         | "inactive"
@@ -3932,6 +4002,7 @@ export const Constants = {
         "department_manager",
         "station_hr",
         "station_vehicle_manager",
+        "quality",
       ],
       employee_status: [
         "active",

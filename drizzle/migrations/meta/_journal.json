@@ -29,6 +29,27 @@
       "when": 1791723703780,
       "tag": "0003_restrict_courses_read",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791801173360,
+      "tag": "0004_add_quality_role",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791801189083,
+      "tag": "0005_create_quality_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791801205640,
+      "tag": "0006_quality_employee_lookup",
+      "breakpoints": true
     }
   ]
 }
