@@ -36,6 +36,13 @@
       "when": 1791801173360,
       "tag": "0004_add_quality_role",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791801189083,
+      "tag": "0005_create_quality_records",
+      "breakpoints": true
     }
   ]
 }

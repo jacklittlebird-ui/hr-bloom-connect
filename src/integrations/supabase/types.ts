@@ -2609,6 +2609,64 @@ export type Database = {
           },
         ]
       }
+      quality_records: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deduction_days: number | null
+          employee_id: string
+          id: string
+          reason: string
+          record_date: string
+          record_type: string
+          station_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deduction_days?: number | null
+          employee_id: string
+          id?: string
+          reason: string
+          record_date?: string
+          record_type: string
+          station_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deduction_days?: number | null
+          employee_id?: string
+          id?: string
+          reason?: string
+          record_date?: string
+          record_type?: string
+          station_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_records_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_records_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salary_records: {
         Row: {
           basic_salary: number | null
