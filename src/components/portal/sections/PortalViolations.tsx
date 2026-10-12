@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Ban } from 'lucide-react';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
+import { QualityRecordsList } from '@/components/quality/QualityRecordsList';
 
 export const PortalViolations = () => {
   const PORTAL_EMPLOYEE_ID = usePortalEmployee();
@@ -17,6 +18,8 @@ export const PortalViolations = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{ar ? 'مخالفاتي' : 'My Violations'}</h1>
+
+      <QualityRecordsList employeeId={PORTAL_EMPLOYEE_ID} title={ar ? 'ملاحظات الجودة' : 'Quality Notes'} />
 
       {violations.length === 0 ? (
         <Card><CardContent className="p-10 text-center text-muted-foreground">{ar ? 'لا توجد مخالفات' : 'No violations'}</CardContent></Card>
