@@ -9,7 +9,8 @@ export interface QualityRecord {
   id: string;
   employee_id: string;
   station_id: string | null;
-  record_type: 'deduction' | 'gratitude';
+  record_type: 'deduction' | 'gratitude' | 'warning';
+  warning_level?: number | null;
   deduction_days: number | null;
   reason: string;
   record_date: string;
@@ -32,7 +33,8 @@ export const QualityRecordsList = ({ employeeId, title = 'ملاحظات الج�
 
   const deductions = rows.filter(r => r.record_type === 'deduction');
   const totalDays = deductions.reduce((s, r) => s + Number(r.deduction_days || 0), 0);
-  const gratitudes = rows.length - deductions.length;
+  const gratitudes = rows.filter(r => r.record_type === 'gratitude').length;
+  const warnings = rows.filter(r => r.record_type === 'warning').length;
 
   return (
     <Card>
@@ -40,6 +42,7 @@ export const QualityRecordsList = ({ employeeId, title = 'ملاحظات الج�
         <CardTitle className="text-base flex flex-wrap items-center gap-2">
           {title}
           <Badge variant="secondary">شكر: {gratitudes}</Badge>
+          <Badge variant="outline">إنذارات: {warnings}</Badge>
           <Badge variant="destructive">خصومات: {deductions.length} ({totalDays} يوم)</Badge>
         </CardTitle>
       </CardHeader>
@@ -53,7 +56,7 @@ export const QualityRecordsList = ({ employeeId, title = 'ملاحظات الج�
                 : <AlertTriangle className="h-4 w-4 text-destructive mt-1 shrink-0" />}
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap gap-2 items-center text-sm font-medium">
-                  {r.record_type === 'gratitude' ? 'شهادة شكر' : `خصم ${r.deduction_days ?? 0} يوم`}
+                  {r.record_type === 'gratitude' ? 'شهادة شكر' : r.record_type === 'warning' ? (r.warning_level === 2 ? 'إنذار ثاني' : 'إنذار أول') : `خصم ${r.deduction_days ?? 0} يوم`}
                   <span className="text-xs text-muted-foreground">{formatDate(r.record_date)}</span>
                 </div>
                 <p className="text-sm whitespace-pre-wrap break-words">{r.reason}</p>
