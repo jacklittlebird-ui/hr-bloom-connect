@@ -33,6 +33,7 @@ export const CoursesList = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterValidity, setFilterValidity] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isViewMode, setIsViewMode] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -50,7 +51,7 @@ export const CoursesList = () => {
       durationHours: c.duration_hours || 0,
       description: c.description || '',
       status: c.is_active ? 'active' as const : 'inactive' as const,
-      validityYears: c.validity_years || 1,
+      validityYears: c.validity_years ?? 1,
     })));
   };
 
