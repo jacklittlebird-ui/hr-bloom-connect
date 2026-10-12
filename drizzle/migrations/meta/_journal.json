@@ -57,6 +57,13 @@
       "when": 1791801926276,
       "tag": "0007_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791809013254,
+      "tag": "0008_payroll_entries_station_snapshot",
+      "breakpoints": true
     }
   ]
 }

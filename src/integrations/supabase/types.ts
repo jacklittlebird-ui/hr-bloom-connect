@@ -1880,6 +1880,7 @@ export type Database = {
           bonus_amount: number | null
           bonus_type: string | null
           bonus_value: number | null
+          department_id: string | null
           employee_id: string
           employee_insurance: number | null
           employer_social_insurance: number | null
@@ -1904,6 +1905,7 @@ export type Database = {
           processed_at: string
           published_at: string | null
           station_allowance: number | null
+          station_id: string | null
           total_deductions: number | null
           transport_allowance: number | null
           year: string
@@ -1914,6 +1916,7 @@ export type Database = {
           bonus_amount?: number | null
           bonus_type?: string | null
           bonus_value?: number | null
+          department_id?: string | null
           employee_id: string
           employee_insurance?: number | null
           employer_social_insurance?: number | null
@@ -1938,6 +1941,7 @@ export type Database = {
           processed_at?: string
           published_at?: string | null
           station_allowance?: number | null
+          station_id?: string | null
           total_deductions?: number | null
           transport_allowance?: number | null
           year: string
@@ -1948,6 +1952,7 @@ export type Database = {
           bonus_amount?: number | null
           bonus_type?: string | null
           bonus_value?: number | null
+          department_id?: string | null
           employee_id?: string
           employee_insurance?: number | null
           employer_social_insurance?: number | null
@@ -1972,6 +1977,7 @@ export type Database = {
           processed_at?: string
           published_at?: string | null
           station_allowance?: number | null
+          station_id?: string | null
           total_deductions?: number | null
           transport_allowance?: number | null
           year?: string
