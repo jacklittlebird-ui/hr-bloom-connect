@@ -60,8 +60,11 @@ export const CoursesList = () => {
   const filteredCourses = courses.filter(course => {
     const searchMatch = course.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) || course.nameAr.includes(searchQuery) || course.code.toLowerCase().includes(searchQuery.toLowerCase());
     const statusMatch = !filterStatus || filterStatus === 'all' || course.status === filterStatus;
-    return searchMatch && statusMatch;
+    const validityMatch = !filterValidity || filterValidity === 'all' || course.validityYears === parseInt(filterValidity);
+    return searchMatch && statusMatch && validityMatch;
   });
+
+  const validityOptions = [...new Set(courses.map(c => c.validityYears))].filter(v => !isNaN(v)).sort((a, b) => a - b);
 
   const handleNew = () => {
     setSelectedCourse(null); setIsViewMode(false);
@@ -83,7 +86,7 @@ export const CoursesList = () => {
         provider: formData.provider || '',
         course_code: formData.code || '',
         duration_hours: formData.durationHours || 0,
-        validity_years: formData.validityYears || 1,
+        validity_years: formData.validityYears ?? 1,
       } as any).eq('id', selectedCourse.id);
       toast({ title: t('common.success'), description: t('training.courses.updated') });
     } else {
@@ -94,7 +97,7 @@ export const CoursesList = () => {
         provider: formData.provider || '',
         course_code: formData.code || '',
         duration_hours: formData.durationHours || 0,
-        validity_years: formData.validityYears || 1,
+        validity_years: formData.validityYears ?? 1,
       }, { onConflict: 'name_en,course_code', ignoreDuplicates: true });
       toast({ title: t('common.success'), description: t('training.courses.added') });
     }
