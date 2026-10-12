@@ -134,9 +134,12 @@ const QualityPortal = () => {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-lg">السجلات ({records.length})</CardTitle></CardHeader>
+        <CardHeader className="gap-2">
+          <CardTitle className="text-lg">السجلات ({filteredRecords.length}{filteredRecords.length !== records.length ? ` من ${records.length}` : ''})</CardTitle>
+          <Input value={recordSearch} onChange={e => setRecordSearch(e.target.value)} placeholder="بحث باسم الموظف أو الكود..." className="max-w-sm" />
+        </CardHeader>
         <CardContent className="space-y-2">
-          {records.map(r => {
+          {filteredRecords.length === 0 ? <p className="text-sm text-muted-foreground">{records.length === 0 ? 'لا توجد سجلات' : 'لا توجد سجلات مطابقة للبحث'}</p> : filteredRecords.map(r => {
             const e = empById.get(r.employee_id);
             return (
               <div key={r.id} className="flex items-start gap-2 border rounded-md p-2">
