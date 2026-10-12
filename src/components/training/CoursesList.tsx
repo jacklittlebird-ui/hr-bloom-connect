@@ -127,6 +127,15 @@ export const CoursesList = () => {
               <SelectItem value="inactive">{t('training.status.inactive')}</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filterValidity} onValueChange={setFilterValidity}>
+            <SelectTrigger className="w-40"><SelectValue placeholder={language === 'ar' ? 'مدة الصلاحية' : 'Validity'} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {validityOptions.map(v => (
+                <SelectItem key={v} value={String(v)}>{v} {language === 'ar' ? (v === 1 ? 'سنة' : 'سنوات') : (v === 1 ? 'Year' : 'Years')}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button onClick={handleNew}><Plus className="h-4 w-4 mr-2" />{t('training.courses.add')}</Button>
         </div>
       </CardContent></Card>
@@ -175,10 +184,10 @@ export const CoursesList = () => {
             <div><Label>{language === 'ar' ? 'الجهة المقدمة' : 'Provider'}</Label><Input value={formData.provider || ''} onChange={(e) => setFormData({ ...formData, provider: e.target.value })} disabled={isViewMode} /></div>
             <div><Label>{language === 'ar' ? 'المدة (ساعات)' : 'Duration (hours)'}</Label><Input type="number" value={formData.durationHours || ''} onChange={(e) => setFormData({ ...formData, durationHours: parseInt(e.target.value) || 0 })} disabled={isViewMode} /></div>
             <div><Label>{language === 'ar' ? 'مدة الصلاحية (سنوات)' : 'Validity (years)'}</Label>
-              <Select value={String(formData.validityYears || 1)} onValueChange={(v) => setFormData({ ...formData, validityYears: parseInt(v) })} disabled={isViewMode}>
+              <Select value={String(formData.validityYears ?? 1)} onValueChange={(v) => setFormData({ ...formData, validityYears: parseInt(v) })} disabled={isViewMode}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {[1,2,3,4,5].map(y => <SelectItem key={y} value={String(y)}>{y} {language === 'ar' ? (y === 1 ? 'سنة' : 'سنوات') : (y === 1 ? 'Year' : 'Years')}</SelectItem>)}
+                  {[0,1,2,3,4,5].map(y => <SelectItem key={y} value={String(y)}>{y} {language === 'ar' ? (y === 1 ? 'سنة' : 'سنوات') : (y === 1 ? 'Year' : 'Years')}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
