@@ -2620,6 +2620,7 @@ export type Database = {
           record_date: string
           record_type: string
           station_id: string | null
+          warning_level: number | null
         }
         Insert: {
           created_at?: string
@@ -2631,6 +2632,7 @@ export type Database = {
           record_date?: string
           record_type: string
           station_id?: string | null
+          warning_level?: number | null
         }
         Update: {
           created_at?: string
@@ -2642,6 +2644,7 @@ export type Database = {
           record_date?: string
           record_type?: string
           station_id?: string | null
+          warning_level?: number | null
         }
         Relationships: [
           {
