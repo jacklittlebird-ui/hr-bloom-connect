@@ -43,6 +43,13 @@
       "when": 1791801189083,
       "tag": "0005_create_quality_records",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791801205640,
+      "tag": "0006_quality_employee_lookup",
+      "breakpoints": true
     }
   ]
 }

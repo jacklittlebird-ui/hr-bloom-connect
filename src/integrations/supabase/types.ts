@@ -3765,6 +3765,17 @@ export type Database = {
           year: string
         }[]
       }
+      get_quality_employees: {
+        Args: never
+        Returns: {
+          employee_code: string
+          id: string
+          job_title_ar: string
+          name_ar: string
+          name_en: string
+          station_id: string
+        }[]
+      }
       get_station_hr_station_ids: {
         Args: { _user_id: string }
         Returns: string[]
