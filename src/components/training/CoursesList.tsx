@@ -33,6 +33,7 @@ export const CoursesList = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterValidity, setFilterValidity] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isViewMode, setIsViewMode] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -50,7 +51,7 @@ export const CoursesList = () => {
       durationHours: c.duration_hours || 0,
       description: c.description || '',
       status: c.is_active ? 'active' as const : 'inactive' as const,
-      validityYears: c.validity_years || 1,
+      validityYears: c.validity_years ?? 1,
     })));
   };
 
@@ -59,8 +60,11 @@ export const CoursesList = () => {
   const filteredCourses = courses.filter(course => {
     const searchMatch = course.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) || course.nameAr.includes(searchQuery) || course.code.toLowerCase().includes(searchQuery.toLowerCase());
     const statusMatch = !filterStatus || filterStatus === 'all' || course.status === filterStatus;
-    return searchMatch && statusMatch;
+    const validityMatch = !filterValidity || filterValidity === 'all' || course.validityYears === parseInt(filterValidity);
+    return searchMatch && statusMatch && validityMatch;
   });
+
+  const validityOptions = [...new Set(courses.map(c => c.validityYears))].filter(v => !isNaN(v)).sort((a, b) => a - b);
 
   const handleNew = () => {
     setSelectedCourse(null); setIsViewMode(false);
@@ -82,7 +86,7 @@ export const CoursesList = () => {
         provider: formData.provider || '',
         course_code: formData.code || '',
         duration_hours: formData.durationHours || 0,
-        validity_years: formData.validityYears || 1,
+        validity_years: formData.validityYears ?? 1,
       } as any).eq('id', selectedCourse.id);
       toast({ title: t('common.success'), description: t('training.courses.updated') });
     } else {
@@ -93,7 +97,7 @@ export const CoursesList = () => {
         provider: formData.provider || '',
         course_code: formData.code || '',
         duration_hours: formData.durationHours || 0,
-        validity_years: formData.validityYears || 1,
+        validity_years: formData.validityYears ?? 1,
       }, { onConflict: 'name_en,course_code', ignoreDuplicates: true });
       toast({ title: t('common.success'), description: t('training.courses.added') });
     }
@@ -121,6 +125,15 @@ export const CoursesList = () => {
               <SelectItem value="all">{t('common.all')}</SelectItem>
               <SelectItem value="active">{t('training.status.active')}</SelectItem>
               <SelectItem value="inactive">{t('training.status.inactive')}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterValidity} onValueChange={setFilterValidity}>
+            <SelectTrigger className="w-40"><SelectValue placeholder={language === 'ar' ? 'مدة الصلاحية' : 'Validity'} /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
+              {validityOptions.map(v => (
+                <SelectItem key={v} value={String(v)}>{v} {language === 'ar' ? (v === 1 ? 'سنة' : 'سنوات') : (v === 1 ? 'Year' : 'Years')}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button onClick={handleNew}><Plus className="h-4 w-4 mr-2" />{t('training.courses.add')}</Button>
@@ -171,10 +184,10 @@ export const CoursesList = () => {
             <div><Label>{language === 'ar' ? 'الجهة المقدمة' : 'Provider'}</Label><Input value={formData.provider || ''} onChange={(e) => setFormData({ ...formData, provider: e.target.value })} disabled={isViewMode} /></div>
             <div><Label>{language === 'ar' ? 'المدة (ساعات)' : 'Duration (hours)'}</Label><Input type="number" value={formData.durationHours || ''} onChange={(e) => setFormData({ ...formData, durationHours: parseInt(e.target.value) || 0 })} disabled={isViewMode} /></div>
             <div><Label>{language === 'ar' ? 'مدة الصلاحية (سنوات)' : 'Validity (years)'}</Label>
-              <Select value={String(formData.validityYears || 1)} onValueChange={(v) => setFormData({ ...formData, validityYears: parseInt(v) })} disabled={isViewMode}>
+              <Select value={String(formData.validityYears ?? 1)} onValueChange={(v) => setFormData({ ...formData, validityYears: parseInt(v) })} disabled={isViewMode}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {[1,2,3,4,5].map(y => <SelectItem key={y} value={String(y)}>{y} {language === 'ar' ? (y === 1 ? 'سنة' : 'سنوات') : (y === 1 ? 'Year' : 'Years')}</SelectItem>)}
+                  {[0,1,2,3,4,5].map(y => <SelectItem key={y} value={String(y)}>{y} {language === 'ar' ? (y === 1 ? 'سنة' : 'سنوات') : (y === 1 ? 'Year' : 'Years')}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
