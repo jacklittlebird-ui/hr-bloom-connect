@@ -79,6 +79,7 @@ export default function TamperAttemptsTab() {
         .gte('created_at', `${from}T00:00:00+02:00`)
         .lte('created_at', `${to}T23:59:59+02:00`)
         .order('created_at', { ascending: false })
+        [fRisk === 'low' ? 'eq' : 'neq']('risk_level', 'low')
         .range(off, off + 999);
       if (error) { toast.error(error.message); break; }
       all.push(...((data as any) || []));
@@ -102,7 +103,7 @@ export default function TamperAttemptsTab() {
       setStations(m);
     });
   }, [ar]);
-  useEffect(() => { void load(); }, [from, to]);
+  useEffect(() => { void load(); }, [from, to, fRisk === 'low']);
 
   const filtered = useMemo(() => rows.filter(r => {
     if (fStation !== 'all' && r.station_id !== fStation) return false;
@@ -226,7 +227,7 @@ export default function TamperAttemptsTab() {
           </SelectContent>
         </Select>
         {sel2(fCat, setFCat, ['account_sharing', 'device_binding', 'new_device', 'outside_geofence', 'suspicious_location', 'verification_bypass', 'other'], ar ? 'الفئة' : 'Category')}
-        {sel2(fRisk, setFRisk, ['low', 'medium', 'high'], ar ? 'الخطورة' : 'Risk')}
+        {sel2(fRisk, setFRisk, ['low', 'medium', 'high'], ar ? 'الخطورة (الافتراضي متوسط وعالٍ)' : 'Risk (default medium+high)')}
         {sel2(fOutcome, setFOutcome, ['accepted', 'flagged', 'pending_verification', 'rejected'], ar ? 'النتيجة' : 'Outcome')}
         {sel2(fStatus, setFStatus, ['new', 'under_review', 'resolved', 'escalated'], ar ? 'الحالة' : 'Status')}
       </div>
