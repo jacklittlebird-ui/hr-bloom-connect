@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import TamperAttemptsTab from "@/components/attendance/TamperAttemptsTab";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -421,6 +422,10 @@ const AttendanceAdmin = () => {
             <TabsTrigger value="anomalies" className="gap-1.5">
               <AlertTriangle className="h-4 w-4" />
               {ar ? "تحتاج مراجعة" : "Anomalies"}
+            </TabsTrigger>
+            <TabsTrigger value="tamper" className="gap-1.5">
+              <Shield className="h-4 w-4" />
+              {ar ? "محاولات التلاعب" : "Tamper Attempts"}
             </TabsTrigger>
             <TabsTrigger value="missions-audit" className="gap-1.5">
               <Wrench className="h-4 w-4" />
@@ -909,6 +914,10 @@ const AttendanceAdmin = () => {
                 })()}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="tamper">
+            <TamperAttemptsTab />
           </TabsContent>
 
           <TabsContent value="anomalies">
