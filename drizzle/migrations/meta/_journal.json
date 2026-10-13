@@ -71,6 +71,13 @@
       "when": 1791809045973,
       "tag": "0009_backfill_payroll_station_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791874525562,
+      "tag": "0010_attendance_tamper_incidents",
+      "breakpoints": true
     }
   ]
 }

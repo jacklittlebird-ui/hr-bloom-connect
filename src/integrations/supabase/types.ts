@@ -407,6 +407,41 @@ export type Database = {
           },
         ]
       }
+      attendance_risk_rules: {
+        Row: {
+          id: string
+          max_accuracy_m: number
+          max_location_age_s: number
+          max_speed_kmh: number
+          station_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          max_accuracy_m?: number
+          max_location_age_s?: number
+          max_speed_kmh?: number
+          station_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          max_accuracy_m?: number
+          max_location_age_s?: number
+          max_speed_kmh?: number
+          station_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_risk_rules_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: true
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_rules: {
         Row: {
           created_at: string
@@ -463,6 +498,97 @@ export type Database = {
           working_days_per_week?: number | null
         }
         Relationships: []
+      }
+      attendance_tamper_incidents: {
+        Row: {
+          category: string
+          created_at: string
+          device_id: string | null
+          employee_id: string | null
+          event_type: string | null
+          evidence: Json
+          id: string
+          incident_no: number
+          outcome: string
+          reasons: string[]
+          review_notes: string | null
+          review_status: string
+          reviewed_at: string | null
+          reviewer_id: string | null
+          reviewer_name: string | null
+          risk_level: string
+          source: string
+          source_ref: string | null
+          station_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          device_id?: string | null
+          employee_id?: string | null
+          event_type?: string | null
+          evidence?: Json
+          id?: string
+          incident_no?: number
+          outcome?: string
+          reasons?: string[]
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          risk_level?: string
+          source?: string
+          source_ref?: string | null
+          station_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          device_id?: string | null
+          employee_id?: string | null
+          event_type?: string | null
+          evidence?: Json
+          id?: string
+          incident_no?: number
+          outcome?: string
+          reasons?: string[]
+          review_notes?: string | null
+          review_status?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          reviewer_name?: string | null
+          risk_level?: string
+          source?: string
+          source_ref?: string | null
+          station_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_tamper_incidents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_tamper_incidents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_tamper_incidents_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_logs: {
         Row: {
@@ -2845,6 +2971,7 @@ export type Database = {
           is_active: boolean
           name_ar: string
           name_en: string
+          qr_required: boolean
           timezone: string
           weekend_days: Json
         }
@@ -2856,6 +2983,7 @@ export type Database = {
           is_active?: boolean
           name_ar: string
           name_en: string
+          qr_required?: boolean
           timezone?: string
           weekend_days?: Json
         }
@@ -2867,6 +2995,7 @@ export type Database = {
           is_active?: boolean
           name_ar?: string
           name_en?: string
+          qr_required?: boolean
           timezone?: string
           weekend_days?: Json
         }
@@ -3213,6 +3342,7 @@ export type Database = {
       }
       user_devices: {
         Row: {
+          approved_status: string
           bound_at: string
           browser: string | null
           device_id: string
@@ -3225,6 +3355,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approved_status?: string
           bound_at?: string
           browser?: string | null
           device_id: string
@@ -3237,6 +3368,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approved_status?: string
           bound_at?: string
           browser?: string | null
           device_id?: string
