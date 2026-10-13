@@ -245,6 +245,7 @@ export const PortalDashboard = () => {
           totalMins += mins;
         });
         setMonthlyStats({ present: presentDates.size, late, absent, totalHours: Math.floor(totalMins / 60), totalMinutes: totalMins % 60, overtime: 0 });
+        setAutoClosedCount(autoClosed);
       }
     })();
   }, [PORTAL_EMPLOYEE_ID]);
