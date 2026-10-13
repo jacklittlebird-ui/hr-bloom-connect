@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Clock, Calendar, Wallet, Star, LogIn, LogOut, FileText, Bell, QrCode, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Clock, Calendar, Wallet, Star, LogIn, LogOut, FileText, Bell, QrCode, CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ar as arLocale, enUS } from 'date-fns/locale';
@@ -201,6 +201,7 @@ export const PortalDashboard = () => {
   }, [refreshPayroll]);
 
   const [monthlyStats, setMonthlyStats] = useState({ present: 0, late: 0, absent: 0, totalHours: 0, totalMinutes: 0, overtime: 0 });
+  const [autoClosedCount, setAutoClosedCount] = useState(0);
   useEffect(() => {
     if (!PORTAL_EMPLOYEE_ID) return;
     const now = new Date();
@@ -222,11 +223,12 @@ export const PortalDashboard = () => {
       }
       if (data) {
         const presentDates = new Set<string>();
-        let late = 0, absent = 0, totalMins = 0;
+        let late = 0, absent = 0, totalMins = 0, autoClosed = 0;
         data.forEach((r: any) => {
           const status = String(r.status || '').toLowerCase().replace(/_/g, '-');
           const notes = String(r.notes || '').toLowerCase().replace(/_/g, '-');
           const isAutoClosed = status === 'auto-closed' || /auto[_-]?closed/i.test(notes);
+          if (isAutoClosed) autoClosed++;
           const isMission = status === 'mission';
           const isPresentDay = !!r.check_in || isAutoClosed || isMission || ['present', 'late', 'early-leave'].includes(status);
           if (isPresentDay && r.date) presentDates.add(r.date);
@@ -243,6 +245,7 @@ export const PortalDashboard = () => {
           totalMins += mins;
         });
         setMonthlyStats({ present: presentDates.size, late, absent, totalHours: Math.floor(totalMins / 60), totalMinutes: totalMins % 60, overtime: 0 });
+        setAutoClosedCount(autoClosed);
       }
     })();
   }, [PORTAL_EMPLOYEE_ID]);
@@ -348,6 +351,23 @@ export const PortalDashboard = () => {
           {format(new Date(), 'EEEE, d MMMM yyyy', { locale: ar ? arLocale : enUS })}
         </p>
       </div>
+
+      {/* Auto-closed attendance warning */}
+      {autoClosedCount > 0 && (
+        <div className="flex items-start gap-3 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 text-amber-800">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
+          <div className="space-y-1">
+            <p className="font-bold text-sm md:text-base">
+              {ar ? 'تحذير: قد لا يتم احتساب اليوم نتيجة عدم تسجيل الانصراف' : 'Warning: this day may not be counted because no check-out was recorded'}
+            </p>
+            <p className="text-xs md:text-sm text-amber-700">
+              {ar
+                ? `يوجد ${autoClosedCount} ${autoClosedCount === 1 ? 'يوم' : 'أيام'} أغلقها النظام تلقائيًا هذا الشهر بدون تسجيل انصراف. يرجى الالتزام بتسجيل الانصراف يوميًا.`
+                : `${autoClosedCount} day(s) this month were auto-closed by the system without a check-out. Please record your check-out daily.`}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Check-in/out Card */}
       <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
