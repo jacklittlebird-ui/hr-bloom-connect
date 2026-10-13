@@ -228,6 +228,7 @@ export const PortalDashboard = () => {
           const status = String(r.status || '').toLowerCase().replace(/_/g, '-');
           const notes = String(r.notes || '').toLowerCase().replace(/_/g, '-');
           const isAutoClosed = status === 'auto-closed' || /auto[_-]?closed/i.test(notes);
+          if (isAutoClosed) autoClosed++;
           const isMission = status === 'mission';
           const isPresentDay = !!r.check_in || isAutoClosed || isMission || ['present', 'late', 'early-leave'].includes(status);
           if (isPresentDay && r.date) presentDates.add(r.date);
