@@ -223,7 +223,7 @@ export const PortalDashboard = () => {
       }
       if (data) {
         const presentDates = new Set<string>();
-        let late = 0, absent = 0, totalMins = 0;
+        let late = 0, absent = 0, totalMins = 0, autoClosed = 0;
         data.forEach((r: any) => {
           const status = String(r.status || '').toLowerCase().replace(/_/g, '-');
           const notes = String(r.notes || '').toLowerCase().replace(/_/g, '-');
