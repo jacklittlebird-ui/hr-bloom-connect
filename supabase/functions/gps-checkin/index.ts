@@ -1,4 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { assessRisk, DEFAULT_RULES } from "./risk.ts";
+
+async function logIncident(supabaseAdmin: any, row: Record<string, unknown>) {
+  const { error } = await supabaseAdmin.from("attendance_tamper_incidents").insert({ source: "gps-checkin", ...row });
+  if (error) console.error("[gps-checkin] incident log failed:", error.message);
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -201,6 +207,7 @@ async function resolveDevice(
       browser: meta?.browser || null,
       os: meta?.os || null,
       device_type: meta?.deviceType || null,
+      approved_status: "pending",
       expires_at: new Date(Date.now() + DEVICE_EXPIRY_DAYS * 86400_000).toISOString(),
     });
     return { allowed: true, action: "new_device_registered" };
@@ -409,7 +416,7 @@ Deno.serve(async (req) => {
     // Get station
     const { data: emp } = await supabaseAdmin
       .from("employees")
-      .select("station_id, checkin_method_override, stations(id, checkin_method, timezone)")
+      .select("station_id, checkin_method_override, stations(id, checkin_method, timezone, qr_required)")
       .eq("id", employeeId)
       .limit(1)
       .single();
@@ -424,6 +431,16 @@ Deno.serve(async (req) => {
     if (effectiveMethod !== "gps" && effectiveMethod !== "both") {
       await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({ error: "GPS check-in not enabled for this employee" }, 403);
+    }
+
+    if (station?.qr_required) {
+      await logIncident(supabaseAdmin, {
+        user_id: userId, employee_id: employeeId, station_id: emp.station_id, event_type,
+        category: "verification_bypass", risk_level: "medium", reasons: ["qr_required_gps_only"],
+        device_id, outcome: "rejected", evidence: { gps_lat, gps_lng, gps_accuracy },
+      });
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+      return json({ error: "هذه المحطة تتطلب مسح رمز QR الخاص بالمحطة / This station requires scanning the station QR code.", qr_required: true }, 403);
     }
 
     // Anti-fraud: each device can only be used by ONE user per day
@@ -517,6 +534,12 @@ Deno.serve(async (req) => {
     }
 
     if (!matchedLocation) {
+      await logIncident(supabaseAdmin, {
+        user_id: userId, employee_id: employeeId, station_id: empStationId, event_type,
+        category: "outside_geofence", risk_level: nearestDist > 5000 ? "high" : "medium",
+        reasons: ["outside_geofence"], device_id, outcome: "rejected",
+        evidence: { gps_lat, gps_lng, gps_accuracy, nearest_distance_m: Math.round(nearestDist) },
+      });
       await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
         error: `خارج النطاق المسموح - المسافة ${Math.round(nearestDist)} متر / Out of range - distance ${Math.round(nearestDist)}m`,
@@ -546,6 +569,33 @@ Deno.serve(async (req) => {
 
     const scheduleType = (assignment?.attendance_rules as any)?.schedule_type || "fixed";
     const isFlexible = ["flexible", "fully-flexible", "fully_flexible"].includes(scheduleType);
+
+    // Risk assessment (flag only — never blocks an otherwise valid attempt)
+    let risk: ReturnType<typeof assessRisk> | null = null;
+    try {
+      const { data: ruleRows } = await supabaseAdmin
+        .from("attendance_risk_rules")
+        .select("station_id, max_accuracy_m, max_speed_kmh")
+        .or(`station_id.is.null,station_id.eq.${empStationId}`);
+      const rule = (ruleRows || []).find((r: any) => r.station_id === empStationId)
+        || (ruleRows || []).find((r: any) => !r.station_id);
+      const { data: prevEv } = await supabaseAdmin
+        .from("attendance_events")
+        .select("gps_lat, gps_lng, scan_time")
+        .eq("user_id", userId)
+        .not("gps_lat", "is", null)
+        .order("scan_time", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      risk = assessRisk({
+        accuracy_m: typeof gps_accuracy === "number" ? gps_accuracy : null,
+        lat: gps_lat, lng: gps_lng, now_ms: now.getTime(),
+        prev: prevEv ? { lat: Number(prevEv.gps_lat), lng: Number(prevEv.gps_lng), at_ms: new Date(prevEv.scan_time).getTime() } : null,
+        new_device: deviceResult.action === "new_device_registered",
+      }, rule ? { max_accuracy_m: Number(rule.max_accuracy_m), max_speed_kmh: Number(rule.max_speed_kmh) } : DEFAULT_RULES);
+    } catch (e) {
+      console.error("[gps-checkin] risk assessment failed:", e);
+    }
 
     // Fire-and-forget: attendance event logging
     const eventPromise = supabaseAdmin.from("attendance_events").insert({
@@ -738,6 +788,16 @@ Deno.serve(async (req) => {
     // SUCCESS — now record dedup + min-interval (so a legitimate fast retry
     // is treated as a duplicate and acknowledged as already_processed).
     recordCheckin(userId, event_type);
+
+    // new_device alone is already logged via device_alerts trigger
+    if (risk && risk.level !== "low" && !(risk.reasons.length === 1 && risk.reasons[0] === "new_device")) {
+      await logIncident(supabaseAdmin, {
+        user_id: userId, employee_id: employeeId, station_id: empStationId, event_type,
+        category: risk.category, risk_level: risk.level, reasons: risk.reasons, device_id,
+        outcome: "flagged",
+        evidence: { gps_lat, gps_lng, gps_accuracy, speed_kmh: risk.speed_kmh, location: matchedLocation.name_ar, device_meta: device_meta || null },
+      });
+    }
 
     // Determine the actual saved timestamp to return to the client so the UI
     // can display the exact check-in / check-out time recorded in the DB.
