@@ -54,6 +54,7 @@ const Attendance = () => {
     { value: 'shifts', icon: Calendar, label: t('attendance.tabs.shifts') },
     { value: 'rules', icon: Settings2, label: t('attendance.tabs.rules') },
     { value: 'assignment', icon: Users, label: t('attendance.tabs.assignment') },
+    { value: 'tamper', icon: Shield, label: language === 'ar' ? 'محاولات التلاعب' : 'Tamper Attempts' },
     { value: 'station-settings', icon: Navigation, label: language === 'ar' ? 'إعدادات المحطات' : 'Station Settings' },
     { value: 'hours-by-station', icon: Timer, label: language === 'ar' ? 'ساعات العمل الشهرية' : 'Monthly Hours' },
     { value: 'holidays', icon: CalendarDays, label: language === 'ar' ? 'الإجازات الرسمية' : 'Official Holidays' },
@@ -140,6 +141,10 @@ const Attendance = () => {
 
           <TabsContent value="assignment">
             <EmployeeAssignment />
+          </TabsContent>
+
+          <TabsContent value="tamper">
+            <TamperAttemptsTab />
           </TabsContent>
 
           <TabsContent value="station-settings">
