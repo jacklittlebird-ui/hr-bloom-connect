@@ -201,6 +201,7 @@ export const PortalDashboard = () => {
   }, [refreshPayroll]);
 
   const [monthlyStats, setMonthlyStats] = useState({ present: 0, late: 0, absent: 0, totalHours: 0, totalMinutes: 0, overtime: 0 });
+  const [autoClosedCount, setAutoClosedCount] = useState(0);
   useEffect(() => {
     if (!PORTAL_EMPLOYEE_ID) return;
     const now = new Date();
