@@ -21,6 +21,7 @@ const DOC_TABS = [
   { key: 'experience', ar: 'شهادة خبرة', en: 'Experience Certificate', Comp: ExperienceCertificate },
   { key: 'mutual', ar: 'إنهاء علاقة عمل بالتراضي', en: 'Mutual Termination', Comp: MutualTermination },
   { key: 'settlement', ar: 'مخالصة نهائية', en: 'Final Settlement', Comp: FinalSettlement },
+  { key: 'resignation', ar: 'استقالة', en: 'Resignation', Comp: ResignationLetter },
   { key: 'dataForm', ar: 'نموذج بيانات موظف', en: 'Employee Data Form', Comp: EmployeeDataForm },
 ] as const;
 
