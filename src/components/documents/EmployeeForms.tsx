@@ -18,6 +18,7 @@ const ClearanceCertificate = lazy(() => import('@/components/documents/Clearance
 const ExperienceCertificate = lazy(() => import('@/components/documents/ExperienceCertificate').then(m => ({ default: m.ExperienceCertificate })));
 const MutualTermination = lazy(() => import('@/components/documents/MutualTermination').then(m => ({ default: m.MutualTermination })));
 const FinalSettlement = lazy(() => import('@/components/documents/FinalSettlement').then(m => ({ default: m.FinalSettlement })));
+const ResignationLetter = lazy(() => import('@/components/documents/ResignationLetter').then(m => ({ default: m.ResignationLetter })));
 const EmployeeDataForm = lazy(() => import('@/components/documents/EmployeeDataForm').then(m => ({ default: m.EmployeeDataForm })));
 
 const DOC_TABS = [
