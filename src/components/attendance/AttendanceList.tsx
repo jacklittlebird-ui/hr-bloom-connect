@@ -380,7 +380,23 @@ export const AttendanceList = () => {
       const [stRes, dRes, eRes] = await Promise.all([
         supabase.from('stations').select('id, name_ar, name_en').eq('is_active', true),
         supabase.from('departments').select('id, name_ar, name_en').eq('is_active', true),
-        supabase.from('employees').select('id, employee_code, station_id, department_id').order('employee_code'),
+        (async () => {
+          // Fetch ALL employees in pages — default limit (1000) would drop
+          // station/department for employees beyond the first page.
+          const all: { id: string; employee_code: string | null; station_id: string | null; department_id: string | null }[] = [];
+          const PAGE = 1000;
+          for (let from = 0; ; from += PAGE) {
+            const { data, error } = await supabase
+              .from('employees')
+              .select('id, employee_code, station_id, department_id')
+              .order('employee_code')
+              .range(from, from + PAGE - 1);
+            if (error || !data || data.length === 0) break;
+            all.push(...data);
+            if (data.length < PAGE) break;
+          }
+          return { data: all };
+        })(),
       ]);
       if (stRes.data) setStations(stRes.data);
       if (dRes.data) setDepartments(dRes.data);
