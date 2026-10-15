@@ -119,6 +119,8 @@ const MultiSelectFilter = ({ ar, label, placeholder, options, selected, onChange
     </div>
   );
 };
+
+export const TrainingQualificationReport = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { employees: contextEmployees } = useEmployeeData();
