@@ -593,7 +593,7 @@ const Leaves = () => {
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSelectedTypes([]); }} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
           <TabsList className={cn("grid w-full grid-cols-5 lg:grid-cols-10 mb-6")}>
             <TabsTrigger value="leaves" className="flex items-center gap-1.5"><FileText className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.leaves')}</span></TabsTrigger>
             <TabsTrigger value="permissions" className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.permissions')}</span></TabsTrigger>
