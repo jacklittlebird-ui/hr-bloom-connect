@@ -31,6 +31,8 @@ interface ViolationRecord {
   description: string;
   penalty: string;
   deductionMonth: string;
+  penaltyKind: string;
+  penaltyDays: number | null;
   status: string;
   createdAt: string;
 }
@@ -59,6 +61,8 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
   const [editDate, setEditDate] = useState('');
   const [editType, setEditType] = useState('');
   const [editDeductionMonth, setEditDeductionMonth] = useState('');
+  const [editKind, setEditKind] = useState('');
+  const [editDays, setEditDays] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -133,6 +137,8 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
         description: v.description || '',
         penalty: v.penalty || '',
         deductionMonth: v.deduction_month || '',
+        penaltyKind: v.penalty_kind || '',
+        penaltyDays: v.penalty_days ?? null,
         status: v.status,
         createdAt: v.created_at,
       };
@@ -177,11 +183,26 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
     setEditDate(v.date);
     setEditType(v.type);
     setEditDeductionMonth(v.deductionMonth);
+    const parsed = (v.penalty || '').replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).match(/\d+(\.\d+)?/);
+    const kind = v.penaltyKind || (/إنذار|انذار|warning/i.test(v.penalty) ? 'warning' : (parsed ? 'deduction' : ''));
+    setEditKind(kind);
+    setEditDays(v.penaltyDays != null ? String(v.penaltyDays) : (parsed ? parsed[0] : ''));
   };
 
   const handleSaveEdit = async () => {
     if (!editDialog) return;
-    await supabase.from('violations').update({ penalty: editPenalty, description: editDescription, date: editDate, type: editType, deduction_month: editDeductionMonth || null }).eq('id', editDialog.id);
+    const days = Number(editDays);
+    if (editKind === 'deduction' && (!days || days <= 0 || !editDeductionMonth)) {
+      toast({ title: ar ? 'أدخل عدد أيام الخصم وشهر الخصم' : 'Enter deduction days and month', variant: 'destructive' });
+      return;
+    }
+    const { error } = await supabase.from('violations').update({
+      penalty: editPenalty, description: editDescription, date: editDate, type: editType,
+      penalty_kind: editKind || null,
+      penalty_days: editKind === 'deduction' ? days : null,
+      deduction_month: editKind === 'deduction' ? editDeductionMonth : null,
+    }).eq('id', editDialog.id);
+    if (error) { toast({ title: ar ? 'تعذر الحفظ' : 'Save failed', description: error.message, variant: 'destructive' }); return; }
     toast({ title: ar ? 'تم التعديل' : 'Updated' });
     setEditDialog(null);
     fetchViolations();
@@ -449,6 +470,20 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
               <Label>{ar ? 'العقوبة' : 'Penalty'}</Label>
               <Input value={editPenalty} onChange={e => setEditPenalty(e.target.value)} />
             </div>
+            <div className="space-y-2">
+              <Label>{ar ? 'نوع العقوبة' : 'Penalty Kind'}</Label>
+              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={editKind} onChange={e => setEditKind(e.target.value)}>
+                <option value="">{ar ? '— بدون —' : '— None —'}</option>
+                <option value="warning">{ar ? 'إنذار' : 'Warning'}</option>
+                <option value="deduction">{ar ? 'خصم' : 'Deduction'}</option>
+              </select>
+            </div>
+            {editKind === 'deduction' && (
+            <div className="space-y-2">
+              <Label>{ar ? 'عدد أيام الخصم' : 'Deduction Days'}</Label>
+              <Input type="number" min={0.25} step={0.25} value={editDays} onChange={e => setEditDays(e.target.value)} />
+            </div>
+            )}
             <div className="space-y-2">
               <Label>{ar ? 'شهر الخصم' : 'Deduction Month'}</Label>
               <Input type="month" value={editDeductionMonth} onChange={e => setEditDeductionMonth(e.target.value)} />
