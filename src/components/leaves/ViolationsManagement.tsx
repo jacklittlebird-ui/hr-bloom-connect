@@ -62,6 +62,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
 
   const STATUS_OPTIONS = [
     { value: 'pending', ar: 'بانتظار الموافقة', en: 'Pending', cls: 'bg-warning/10 text-warning border-warning' },
@@ -71,6 +72,18 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
 
   const toggleStatus = (v: string) =>
     setSelectedStatuses(prev => prev.includes(v) ? prev.filter(s => s !== v) : [...prev, v]);
+
+  const toggleType = (v: string) =>
+    setSelectedTypes(prev => prev.includes(v) ? prev.filter(s => s !== v) : [...prev, v]);
+
+  const typeButtonLabel = () => {
+    if (selectedTypes.length === 0) return ar ? 'كل الأنواع' : 'All Types';
+    if (selectedTypes.length === 1) {
+      const o = Object.entries(violationTypes).find(([key]) => key === selectedTypes[0]);
+      return o ? (ar ? o[1].ar : o[1].en) : selectedTypes[0];
+    }
+    return ar ? `${selectedTypes.length} أنواع محددة` : `${selectedTypes.length} selected`;
+  };
 
   const statusButtonLabel = () => {
     if (selectedStatuses.length === 0) return ar ? 'كل الحالات' : 'All Statuses';
