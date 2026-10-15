@@ -22,6 +22,7 @@ interface Violation {
   type: string;
   description: string;
   penalty: string;
+  deductionMonth: string;
   status: 'active' | 'resolved' | 'pending';
 }
 
@@ -48,7 +49,7 @@ export const ViolationsTab = ({ employee }: ViolationsTabProps) => {
   const fetchViolations = useCallback(async () => {
     const { data } = await supabase.from('violations').select('*').eq('employee_id', employee.id).order('date', { ascending: false });
     if (data) {
-      setViolations(data.map(v => ({ id: v.id, employeeId: v.employee_id, date: v.date, type: v.type, description: v.description || '', penalty: v.penalty || '', status: v.status === 'approved' ? 'active' as const : v.status === 'pending' ? 'pending' as const : 'resolved' as const })));
+      setViolations(data.map(v => ({ id: v.id, employeeId: v.employee_id, date: v.date, type: v.type, description: v.description || '', penalty: v.penalty || '', deductionMonth: v.deduction_month || '', status: v.status === 'approved' ? 'active' as const : v.status === 'pending' ? 'pending' as const : 'resolved' as const })));
     }
   }, [employee.id]);
 
@@ -98,6 +99,7 @@ export const ViolationsTab = ({ employee }: ViolationsTabProps) => {
               <TableHead className="text-destructive-foreground">{ar ? 'النوع' : 'Type'}</TableHead>
               <TableHead className="text-destructive-foreground">{ar ? 'الوصف' : 'Description'}</TableHead>
               <TableHead className="text-destructive-foreground">{ar ? 'العقوبة' : 'Penalty'}</TableHead>
+              <TableHead className="text-destructive-foreground">{ar ? 'شهر الخصم' : 'Deduction Month'}</TableHead>
               <TableHead className="text-destructive-foreground">{ar ? 'الحالة' : 'Status'}</TableHead>
               <TableHead className="text-destructive-foreground">{ar ? 'إجراءات' : 'Actions'}</TableHead>
             </TableRow>
@@ -105,7 +107,7 @@ export const ViolationsTab = ({ employee }: ViolationsTabProps) => {
           <TableBody>
             {empViolations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-30" />
                   {ar ? 'لا توجد مخالفات' : 'No violations'}
                 </TableCell>
@@ -119,6 +121,7 @@ export const ViolationsTab = ({ employee }: ViolationsTabProps) => {
                     <TableCell>{ar ? typeLabel?.ar : typeLabel?.en}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{v.description}</TableCell>
                     <TableCell>{v.penalty}</TableCell>
+                    <TableCell>{v.deductionMonth || '—'}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={
                         v.status === 'pending' ? 'bg-warning/10 text-warning border-warning' :
