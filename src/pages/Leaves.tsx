@@ -40,6 +40,40 @@ const getAddedDays = (overtimeType?: string | null) => (
   EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
 );
 
+// Type-filter options per tab (bilingual labels)
+const LEAVE_TYPE_OPTIONS = [
+  { value: 'annual', ar: 'سنوية', en: 'Annual' },
+  { value: 'sick', ar: 'مرضية', en: 'Sick' },
+  { value: 'casual', ar: 'عارضة', en: 'Casual' },
+  { value: 'unpaid', ar: 'بدون راتب', en: 'Unpaid' },
+  { value: 'marriage', ar: 'زواج', en: 'Marriage' },
+];
+const PERMISSION_TYPE_OPTIONS = [
+  { value: 'early_leave', ar: 'انصراف مبكر', en: 'Early Leave' },
+  { value: 'late_arrival', ar: 'تأخر وصول', en: 'Late Arrival' },
+  { value: 'personal', ar: 'شخصي', en: 'Personal' },
+  { value: 'medical', ar: 'طبية', en: 'Medical' },
+];
+const MISSION_TYPE_OPTIONS = [
+  { value: 'morning', ar: 'صباحية', en: 'Morning' },
+  { value: 'evening', ar: 'مسائية', en: 'Evening' },
+  { value: 'full_day', ar: 'يوم كامل', en: 'Full Day' },
+  { value: 'other', ar: 'أخرى', en: 'Other' },
+];
+const OVERTIME_TYPE_OPTIONS = [
+  { value: 'regular', ar: 'عادي', en: 'Regular' },
+  { value: 'holiday', ar: 'عطلة رسمية', en: 'Holiday' },
+  { value: 'weekend', ar: 'نهاية أسبوع', en: 'Weekend' },
+  { value: 'eid_first_day', ar: 'أول أيام العيد', en: 'Eid First Day' },
+  { value: 'eid_first_day_adha_fitr', ar: 'أول أيام العيد', en: 'Eid First Day' },
+];
+const TAB_TYPE_OPTIONS: Record<string, { value: string; ar: string; en: string }[]> = {
+  leaves: LEAVE_TYPE_OPTIONS,
+  permissions: PERMISSION_TYPE_OPTIONS,
+  missions: MISSION_TYPE_OPTIONS,
+  overtime: OVERTIME_TYPE_OPTIONS,
+};
+
 const fetchAllRows = async <T,>(buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>) => {
   const pageSize = 1000;
   const rows: T[] = [];
@@ -70,6 +104,7 @@ const Leaves = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
