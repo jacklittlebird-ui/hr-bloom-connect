@@ -25,6 +25,11 @@ interface RequestFiltersProps {
   selectedStatuses?: string[];
   onSelectedStatusesChange?: (values: string[]) => void;
 
+  // Type filter — multi-select array. Empty array = no filter (all).
+  typeOptions?: { value: string; ar: string; en: string }[];
+  selectedTypes?: string[];
+  onSelectedTypesChange?: (values: string[]) => void;
+
   fromDate?: string;
   onFromDateChange?: (value: string) => void;
   toDate?: string;
@@ -44,6 +49,7 @@ export const RequestFilters = ({
   selectedStation, onStationChange,
   departments, stations,
   selectedStatuses, onSelectedStatusesChange,
+  typeOptions, selectedTypes, onSelectedTypesChange,
   fromDate, onFromDateChange,
   toDate, onToDateChange,
   showAdvanced = true,
@@ -51,10 +57,16 @@ export const RequestFilters = ({
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const statuses = selectedStatuses || [];
+  const types = selectedTypes || [];
 
   const toggleStatus = (v: string) => {
     if (!onSelectedStatusesChange) return;
     onSelectedStatusesChange(statuses.includes(v) ? statuses.filter(s => s !== v) : [...statuses, v]);
+  };
+
+  const toggleType = (v: string) => {
+    if (!onSelectedTypesChange) return;
+    onSelectedTypesChange(types.includes(v) ? types.filter(t => t !== v) : [...types, v]);
   };
 
   const hasActive =
@@ -62,6 +74,7 @@ export const RequestFilters = ({
     selectedDepartment !== 'all' ||
     selectedStation !== 'all' ||
     statuses.length > 0 ||
+    types.length > 0 ||
     !!fromDate || !!toDate;
 
   const clearAll = () => {
@@ -69,6 +82,7 @@ export const RequestFilters = ({
     onDepartmentChange('all');
     onStationChange('all');
     onSelectedStatusesChange?.([]);
+    onSelectedTypesChange?.([]);
     onFromDateChange?.('');
     onToDateChange?.('');
   };
@@ -80,6 +94,15 @@ export const RequestFilters = ({
       return ar ? o?.ar : o?.en;
     }
     return ar ? `${statuses.length} حالات محددة` : `${statuses.length} selected`;
+  };
+
+  const typeButtonLabel = () => {
+    if (types.length === 0) return ar ? 'كل الأنواع' : 'All Types';
+    if (types.length === 1) {
+      const o = typeOptions?.find(t => t.value === types[0]);
+      return ar ? o?.ar : o?.en;
+    }
+    return ar ? `${types.length} أنواع محددة` : `${types.length} selected`;
   };
 
   return (
@@ -166,6 +189,58 @@ export const RequestFilters = ({
                       <Badge variant="outline" className={cn("text-xs", opt.cls)}>
                         {ar ? opt.ar : opt.en}
                       </Badge>
+                      {checked && <Check className="w-3.5 h-3.5 text-primary ms-auto" />}
+                    </label>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+
+        {showAdvanced && typeOptions && typeOptions.length > 0 && onSelectedTypesChange && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-10 w-full sm:w-[200px] justify-between gap-2 font-normal",
+                  types.length > 0 && "border-primary bg-primary/5"
+                )}
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <ListFilter className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="truncate text-sm">{typeButtonLabel()}</span>
+                </span>
+                {types.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 min-w-[20px] justify-center">
+                    {types.length}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align={isRTL ? 'end' : 'start'}>
+              <div className="p-2 border-b flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">{ar ? 'النوع' : 'Type'}</span>
+                {types.length > 0 && (
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onSelectedTypesChange([])}>
+                    {ar ? 'مسح' : 'Clear'}
+                  </Button>
+                )}
+              </div>
+              <div className="p-1">
+                {typeOptions.map(opt => {
+                  const checked = types.includes(opt.value);
+                  return (
+                    <label
+                      key={opt.value}
+                      className={cn(
+                        "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer hover:bg-accent text-sm",
+                        isRTL && "flex-row-reverse text-right"
+                      )}
+                    >
+                      <Checkbox checked={checked} onCheckedChange={() => toggleType(opt.value)} />
+                      <span className="truncate text-xs">{ar ? opt.ar : opt.en}</span>
                       {checked && <Check className="w-3.5 h-3.5 text-primary ms-auto" />}
                     </label>
                   );

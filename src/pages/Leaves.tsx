@@ -40,6 +40,40 @@ const getAddedDays = (overtimeType?: string | null) => (
   EID_FIRST_DAY_TYPES.has(overtimeType || '') ? 2 : 1
 );
 
+// Type-filter options per tab (bilingual labels)
+const LEAVE_TYPE_OPTIONS = [
+  { value: 'annual', ar: 'سنوية', en: 'Annual' },
+  { value: 'sick', ar: 'مرضية', en: 'Sick' },
+  { value: 'casual', ar: 'عارضة', en: 'Casual' },
+  { value: 'unpaid', ar: 'بدون راتب', en: 'Unpaid' },
+  { value: 'marriage', ar: 'زواج', en: 'Marriage' },
+];
+const PERMISSION_TYPE_OPTIONS = [
+  { value: 'early_leave', ar: 'انصراف مبكر', en: 'Early Leave' },
+  { value: 'late_arrival', ar: 'تأخر وصول', en: 'Late Arrival' },
+  { value: 'personal', ar: 'شخصي', en: 'Personal' },
+  { value: 'medical', ar: 'طبية', en: 'Medical' },
+];
+const MISSION_TYPE_OPTIONS = [
+  { value: 'morning', ar: 'صباحية', en: 'Morning' },
+  { value: 'evening', ar: 'مسائية', en: 'Evening' },
+  { value: 'full_day', ar: 'يوم كامل', en: 'Full Day' },
+  { value: 'other', ar: 'أخرى', en: 'Other' },
+];
+const OVERTIME_TYPE_OPTIONS = [
+  { value: 'regular', ar: 'عادي', en: 'Regular' },
+  { value: 'holiday', ar: 'عطلة رسمية', en: 'Holiday' },
+  { value: 'weekend', ar: 'نهاية أسبوع', en: 'Weekend' },
+  { value: 'eid_first_day', ar: 'أول أيام العيد', en: 'Eid First Day' },
+  { value: 'eid_first_day_adha_fitr', ar: 'أول أيام العيد', en: 'Eid First Day' },
+];
+const TAB_TYPE_OPTIONS: Record<string, { value: string; ar: string; en: string }[]> = {
+  leaves: LEAVE_TYPE_OPTIONS,
+  permissions: PERMISSION_TYPE_OPTIONS,
+  missions: MISSION_TYPE_OPTIONS,
+  overtime: OVERTIME_TYPE_OPTIONS,
+};
+
 const fetchAllRows = async <T,>(buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>) => {
   const pageSize = 1000;
   const rows: T[] = [];
@@ -70,6 +104,7 @@ const Leaves = () => {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedStation, setSelectedStation] = useState('all');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
@@ -300,15 +335,16 @@ const Leaves = () => {
     return true;
   };
   const matchStatus = (status?: string) => selectedStatuses.length === 0 || (status ? selectedStatuses.includes(status) : false);
+  const matchType = (type?: string) => selectedTypes.length === 0 || (type ? selectedTypes.includes(type) : false);
 
-  const filteredLeaves = useMemo(() => filterBase(leaveRequests).filter(r => matchStatus(r.status) && inDateRange(r.startDate)),
-    [leaveRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
-  const filteredPermissions = useMemo(() => filterBase(permissionRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
-    [permissionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
-  const filteredMissions = useMemo(() => filterBase(missionRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
-    [missionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
-  const filteredOvertime = useMemo(() => filterBase(overtimeRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
-    [overtimeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
+  const filteredLeaves = useMemo(() => filterBase(leaveRequests).filter(r => matchStatus(r.status) && matchType(r.leaveType) && inDateRange(r.startDate)),
+    [leaveRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, selectedTypes, fromDate, toDate]);
+  const filteredPermissions = useMemo(() => filterBase(permissionRequests).filter(r => matchStatus(r.status) && matchType(r.permissionType) && inDateRange(r.date)),
+    [permissionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, selectedTypes, fromDate, toDate]);
+  const filteredMissions = useMemo(() => filterBase(missionRequests).filter(r => matchStatus(r.status) && matchType(r.missionType) && inDateRange(r.date)),
+    [missionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, selectedTypes, fromDate, toDate]);
+  const filteredOvertime = useMemo(() => filterBase(overtimeRequests).filter(r => matchStatus(r.status) && matchType(r.overtimeType) && inDateRange(r.date)),
+    [overtimeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, selectedTypes, fromDate, toDate]);
   const filteredBalances = useMemo(() => filterBase(leaveBalances), [leaveBalances, searchQuery, selectedDepartment, selectedStation]);
   const filteredEmployeeRequests = useMemo(() => {
     return employeeRequests.filter(r => {
@@ -557,7 +593,7 @@ const Leaves = () => {
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSelectedTypes([]); }} className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
           <TabsList className={cn("grid w-full grid-cols-5 lg:grid-cols-10 mb-6")}>
             <TabsTrigger value="leaves" className="flex items-center gap-1.5"><FileText className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.leaves')}</span></TabsTrigger>
             <TabsTrigger value="permissions" className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /><span className="hidden lg:inline">{t('leaves.tabs.permissions')}</span></TabsTrigger>
@@ -587,6 +623,9 @@ const Leaves = () => {
               stations={stations}
               selectedStatuses={selectedStatuses}
               onSelectedStatusesChange={setSelectedStatuses}
+              typeOptions={TAB_TYPE_OPTIONS[activeTab]}
+              selectedTypes={selectedTypes}
+              onSelectedTypesChange={setSelectedTypes}
               fromDate={fromDate}
               onFromDateChange={setFromDate}
               toDate={toDate}
