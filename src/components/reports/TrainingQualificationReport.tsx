@@ -2,10 +2,9 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Printer, FileText, FileSpreadsheet, ChevronDown, Search } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Printer, FileText, FileSpreadsheet, ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,7 +49,76 @@ async function fetchAllTrainingRecords() {
   return all;
 }
 
-export const TrainingQualificationReport = () => {
+interface FilterOption { value: string; label: string }
+
+const MultiSelectFilter = ({ ar, label, placeholder, options, selected, onChange }: {
+  ar: boolean;
+  label: string;
+  placeholder: string;
+  options: FilterOption[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+}) => {
+  const selectedLabels = options.filter(o => selected.includes(o.value)).map(o => o.label);
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            className={cn('w-full justify-between text-xs font-normal h-10', selected.length > 0 && 'border-primary bg-primary/5')}
+          >
+            <span className="truncate text-start">
+              {selected.length === 0
+                ? placeholder
+                : selected.length === 1
+                  ? selectedLabels[0]
+                  : `${selectedLabels[0]} +${selected.length - 1}`}
+            </span>
+            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[320px] max-w-[90vw] p-0" align="start">
+          <Command>
+            <CommandInput placeholder={ar ? 'بحث...' : 'Search...'} />
+            <CommandList>
+              <CommandEmpty>{ar ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
+              <CommandGroup className="max-h-72 overflow-y-auto">
+                {options.map(o => {
+                  const checked = selected.includes(o.value);
+                  return (
+                    <CommandItem
+                      key={o.value}
+                      value={o.label}
+                      onSelect={() => onChange(checked ? selected.filter(v => v !== o.value) : [...selected, o.value])}
+                      className={cn('gap-2', ar && 'flex-row-reverse')}
+                    >
+                      <Check className={cn('h-4 w-4 shrink-0', checked ? 'opacity-100' : 'opacity-0')} />
+                      <span className="truncate whitespace-pre-wrap break-words">{o.label}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+          <div className="p-2 border-t flex items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">{selected.length} / {options.length}</span>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onChange(options.map(o => o.value))}>
+                {ar ? 'تحديد الكل' : 'Select all'}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive" onClick={() => onChange([])}>
+                {ar ? 'مسح' : 'Clear'}
+              </Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const { employees: contextEmployees } = useEmployeeData();
@@ -61,13 +129,11 @@ export const TrainingQualificationReport = () => {
   const [departments, setDepartments] = useState<{ id: string; nameAr: string; nameEn: string }[]>([]);
   const [courseOptions, setCourseOptions] = useState<{ id: string; nameAr: string; nameEn: string; provider: string }[]>([]);
 
-  const [filterStation, setFilterStation] = useState('all');
-  const [filterDepartment, setFilterDepartment] = useState('all');
-  const [filterCourse, setFilterCourse] = useState('all');
-  const [filterEmployee, setFilterEmployee] = useState('all');
-  const [filterTitle, setFilterTitle] = useState('');
-  const [employeeSearch, setEmployeeSearch] = useState('');
-  const [courseSearch, setCourseSearch] = useState('');
+  const [filterStations, setFilterStations] = useState<string[]>([]);
+  const [filterDepartments, setFilterDepartments] = useState<string[]>([]);
+  const [filterCourses, setFilterCourses] = useState<string[]>([]);
+  const [filterEmployees, setFilterEmployees] = useState<string[]>([]);
+  const [filterTitles, setFilterTitles] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -87,21 +153,18 @@ export const TrainingQualificationReport = () => {
 
   const groupedData = useMemo(() => {
     const empMap = new Map<string, EmployeeTrainingGroup>();
-    const hasAnyFilter = filterStation !== 'all' || filterDepartment !== 'all' || filterCourse !== 'all' || filterEmployee !== 'all' || filterTitle.trim() !== '';
+    const hasAnyFilter = filterStations.length > 0 || filterDepartments.length > 0 || filterCourses.length > 0 || filterEmployees.length > 0 || filterTitles.length > 0;
     if (!hasAnyFilter) return [];
 
     allRecords.forEach(r => {
       const emp = contextEmployees.find(e => e.id === r.employee_id);
       if (!emp) return;
 
-      if (filterStation !== 'all' && emp.stationId !== filterStation) return;
-      if (filterDepartment !== 'all' && emp.departmentId !== filterDepartment) return;
-      if (filterCourse !== 'all' && r.course_id !== filterCourse) return;
-      if (filterEmployee !== 'all' && emp.id !== filterEmployee) return;
-      if (filterTitle.trim()) {
-        const s = filterTitle.trim().toLowerCase();
-        if (!(emp.jobTitleAr || '').toLowerCase().includes(s) && !(emp.jobTitleEn || '').toLowerCase().includes(s)) return;
-      }
+      if (filterStations.length > 0 && !filterStations.includes(emp.stationId)) return;
+      if (filterDepartments.length > 0 && !filterDepartments.includes(emp.departmentId)) return;
+      if (filterCourses.length > 0 && !filterCourses.includes(r.course_id)) return;
+      if (filterEmployees.length > 0 && !filterEmployees.includes(emp.id)) return;
+      if (filterTitles.length > 0 && !filterTitles.some(t => t === (emp.jobTitleAr || '').trim() || t === (emp.jobTitleEn || '').trim())) return;
 
       if (!empMap.has(emp.id)) {
         empMap.set(emp.id, {
@@ -129,52 +192,42 @@ export const TrainingQualificationReport = () => {
     });
 
     return [...empMap.values()].sort((a, b) => a.employeeName.localeCompare(b.employeeName, ar ? 'ar' : 'en'));
-  }, [allRecords, contextEmployees, filterStation, filterDepartment, filterCourse, filterEmployee, filterTitle, ar]);
+  }, [allRecords, contextEmployees, filterStations, filterDepartments, filterCourses, filterEmployees, filterTitles, ar]);
 
   const getFilterTitle = () => {
+    const joinNames = (ids: string[], list: { id: string; nameAr: string; nameEn: string }[]) =>
+      ids.map(id => { const f = list.find(x => x.id === id); return f ? (ar ? f.nameAr : f.nameEn) : ''; }).filter(Boolean).join('، ');
     const parts: string[] = [];
-    if (filterStation !== 'all') {
-      const s = stations.find(s => s.id === filterStation);
-      if (s) parts.push(ar ? s.nameAr : s.nameEn);
+    const stnPart = joinNames(filterStations, stations);
+    if (stnPart) parts.push(stnPart);
+    const deptPart = joinNames(filterDepartments, departments);
+    if (deptPart) parts.push(deptPart);
+    if (filterEmployees.length) {
+      const empPart = filterEmployees
+        .map(id => { const e = contextEmployees.find(x => x.id === id); return e ? (ar ? e.nameAr : e.nameEn) : ''; })
+        .filter(Boolean).join('، ');
+      if (empPart) parts.push(empPart);
     }
-    if (filterDepartment !== 'all') {
-      const d = departments.find(d => d.id === filterDepartment);
-      if (d) parts.push(ar ? d.nameAr : d.nameEn);
+    if (filterCourses.length) {
+      const coursePart = filterCourses
+        .map(id => { const c = courseOptions.find(x => x.id === id); return c ? (ar ? c.nameAr : c.nameEn) : ''; })
+        .filter(Boolean).join('، ');
+      if (coursePart) parts.push(coursePart);
     }
-    if (filterEmployee !== 'all') {
-      const emp = contextEmployees.find(e => e.id === filterEmployee);
-      if (emp) parts.push(ar ? emp.nameAr : emp.nameEn);
-    }
-    if (filterCourse !== 'all') {
-      const c = courseOptions.find(c => c.id === filterCourse);
-      if (c) parts.push(ar ? c.nameAr : c.nameEn);
-    }
-    if (filterTitle.trim()) parts.push(filterTitle.trim());
+    if (filterTitles.length) parts.push(filterTitles.join('، '));
     return parts.join(' - ') || '';
   };
 
-  const filteredEmployees = useMemo(() => {
-    let list = contextEmployees;
-    if (filterStation !== 'all') list = list.filter(e => e.stationId === filterStation);
-    if (filterDepartment !== 'all') list = list.filter(e => e.departmentId === filterDepartment);
-    if (employeeSearch) {
-      const s = employeeSearch.toLowerCase();
-      list = list.filter(e =>
-        (e.nameAr || '').toLowerCase().includes(s) ||
-        (e.nameEn || '').toLowerCase().includes(s) ||
-        (e.employeeId || '').toLowerCase().includes(s)
-      );
-    }
-    return list;
-  }, [contextEmployees, employeeSearch, filterStation, filterDepartment]);
+  const employeeOptions = useMemo(() => contextEmployees.map(e => ({
+    value: e.id,
+    label: `${e.employeeId ? e.employeeId + ' - ' : ''}${ar ? e.nameAr : e.nameEn}`,
+  })), [contextEmployees, ar]);
 
-  const filteredCourses = useMemo(() => {
-    if (!courseSearch) return courseOptions;
-    const s = courseSearch.toLowerCase();
-    return courseOptions.filter(c =>
-      c.nameAr.toLowerCase().includes(s) || c.nameEn.toLowerCase().includes(s)
-    );
-  }, [courseOptions, courseSearch]);
+  const jobTitleOptions = useMemo(() => {
+    const set = new Set<string>();
+    contextEmployees.forEach(e => { const t = (e.jobTitleAr || '').trim(); if (t) set.add(t); });
+    return [...set].sort((a, b) => a.localeCompare(b, 'ar')).map(t => ({ value: t, label: t }));
+  }, [contextEmployees]);
 
   const exportColumns = [
     { headerAr: 'اسم الموظف', headerEn: 'Employee Name', key: 'employeeName' },
@@ -219,7 +272,7 @@ export const TrainingQualificationReport = () => {
 
   const filterTypeLabel = getFilterTitle();
 
-  const isFilterActive = filterStation !== 'all' || filterDepartment !== 'all' || filterCourse !== 'all' || filterEmployee !== 'all' || filterTitle.trim() !== '';
+  const isFilterActive = filterStations.length > 0 || filterDepartments.length > 0 || filterCourses.length > 0 || filterEmployees.length > 0 || filterTitles.length > 0;
 
   const handleQualificationPrint = useCallback(() => {
     const logoUrl = `${window.location.origin}/images/company-logo.png`;
