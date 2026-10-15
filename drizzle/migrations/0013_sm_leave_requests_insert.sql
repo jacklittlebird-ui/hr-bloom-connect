@@ -1,0 +1,1 @@
+CREATE POLICY "sm_leave_requests_insert" ON public.leave_requests FOR INSERT TO authenticated WITH CHECK ((SELECT has_role(auth.uid(), 'station_manager'::app_role)) AND (employee_id IN (SELECT e.id FROM public.employees e WHERE e.station_id = (SELECT get_user_station_id(auth.uid())))));

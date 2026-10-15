@@ -92,6 +92,13 @@
       "when": 1792061432707,
       "tag": "0012_unpaid_leave_deduction_month",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792063100742,
+      "tag": "0013_sm_leave_requests_insert",
+      "breakpoints": true
     }
   ]
 }
