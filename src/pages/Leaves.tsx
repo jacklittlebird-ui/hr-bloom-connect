@@ -335,15 +335,16 @@ const Leaves = () => {
     return true;
   };
   const matchStatus = (status?: string) => selectedStatuses.length === 0 || (status ? selectedStatuses.includes(status) : false);
+  const matchType = (type?: string) => selectedTypes.length === 0 || (type ? selectedTypes.includes(type) : false);
 
-  const filteredLeaves = useMemo(() => filterBase(leaveRequests).filter(r => matchStatus(r.status) && inDateRange(r.startDate)),
-    [leaveRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
-  const filteredPermissions = useMemo(() => filterBase(permissionRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
-    [permissionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
-  const filteredMissions = useMemo(() => filterBase(missionRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
-    [missionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
-  const filteredOvertime = useMemo(() => filterBase(overtimeRequests).filter(r => matchStatus(r.status) && inDateRange(r.date)),
-    [overtimeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, fromDate, toDate]);
+  const filteredLeaves = useMemo(() => filterBase(leaveRequests).filter(r => matchStatus(r.status) && matchType(r.leaveType) && inDateRange(r.startDate)),
+    [leaveRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, selectedTypes, fromDate, toDate]);
+  const filteredPermissions = useMemo(() => filterBase(permissionRequests).filter(r => matchStatus(r.status) && matchType(r.permissionType) && inDateRange(r.date)),
+    [permissionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, selectedTypes, fromDate, toDate]);
+  const filteredMissions = useMemo(() => filterBase(missionRequests).filter(r => matchStatus(r.status) && matchType(r.missionType) && inDateRange(r.date)),
+    [missionRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, selectedTypes, fromDate, toDate]);
+  const filteredOvertime = useMemo(() => filterBase(overtimeRequests).filter(r => matchStatus(r.status) && matchType(r.overtimeType) && inDateRange(r.date)),
+    [overtimeRequests, searchQuery, selectedDepartment, selectedStation, selectedStatuses, selectedTypes, fromDate, toDate]);
   const filteredBalances = useMemo(() => filterBase(leaveBalances), [leaveBalances, searchQuery, selectedDepartment, selectedStation]);
   const filteredEmployeeRequests = useMemo(() => {
     return employeeRequests.filter(r => {
@@ -622,6 +623,9 @@ const Leaves = () => {
               stations={stations}
               selectedStatuses={selectedStatuses}
               onSelectedStatusesChange={setSelectedStatuses}
+              typeOptions={TAB_TYPE_OPTIONS[activeTab]}
+              selectedTypes={selectedTypes}
+              onSelectedTypesChange={setSelectedTypes}
               fromDate={fromDate}
               onFromDateChange={setFromDate}
               toDate={toDate}
