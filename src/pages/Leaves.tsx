@@ -433,7 +433,7 @@ const Leaves = () => {
     language === 'ar' ? 'تم حذف العمل الإضافي' : 'Overtime deleted',
   );
 
-  const handleEditLeave = (data: { id: string; leaveType: string; startDate: string; endDate: string; days: number; status: string; reason: string }) => runMutation(
+  const handleEditLeave = (data: { id: string; leaveType: string; startDate: string; endDate: string; days: number; status: string; reason: string; deductionMonth?: string }) => runMutation(
     () => supabase.from('leave_requests').update({
       leave_type: data.leaveType,
       start_date: data.startDate,
@@ -441,6 +441,7 @@ const Leaves = () => {
       days: data.days,
       status: data.status,
       reason: data.reason,
+      deduction_month: data.deductionMonth || null,
     }).eq('id', data.id),
     language === 'ar' ? 'تم تعديل الإجازة بنجاح' : 'Leave updated successfully',
     { key: `edit-leave-${data.id}` },
