@@ -148,7 +148,8 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
       v.employeeNameAr.includes(searchQuery.trim()) ||
       (v.employeeCode || '').toLowerCase().includes(q);
     const matchStatus = selectedStatuses.length === 0 || selectedStatuses.includes(v.status);
-    return matchSearch && matchStatus;
+    const matchType = selectedTypes.length === 0 || selectedTypes.includes(v.type);
+    return matchSearch && matchStatus && matchType;
   });
 
   const { paginatedItems, currentPage, totalPages, totalItems, startIndex, endIndex, setCurrentPage } = usePagination(filtered);
@@ -282,8 +283,57 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
             </div>
           </PopoverContent>
         </Popover>
-        {selectedStatuses.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={() => setSelectedStatuses([])} className="gap-1.5 text-muted-foreground hover:text-destructive">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "h-10 w-full sm:w-[200px] justify-between gap-2 font-normal",
+                selectedTypes.length > 0 && "border-primary bg-primary/5"
+              )}
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <ListFilter className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="truncate text-sm">{typeButtonLabel()}</span>
+              </span>
+              {selectedTypes.length > 0 && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 min-w-[20px] justify-center">
+                  {selectedTypes.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0" align={isRTL ? 'end' : 'start'}>
+            <div className="p-2 border-b flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground">{ar ? 'النوع' : 'Type'}</span>
+              {selectedTypes.length > 0 && (
+                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setSelectedTypes([])}>
+                  {ar ? 'مسح' : 'Clear'}
+                </Button>
+              )}
+            </div>
+            <div className="p-1">
+              {Object.entries(violationTypes).map(([key, label]) => {
+                const checked = selectedTypes.includes(key);
+                return (
+                  <label
+                    key={key}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-2 rounded-md cursor-pointer hover:bg-accent text-sm",
+                      isRTL && "flex-row-reverse text-right"
+                    )}
+                  >
+                    <Checkbox checked={checked} onCheckedChange={() => toggleType(key)} />
+                    <span className="truncate text-xs">{ar ? label.ar : label.en}</span>
+                    {checked && <Check className="w-3.5 h-3.5 text-primary ms-auto" />}
+                  </label>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+        {(selectedStatuses.length > 0 || selectedTypes.length > 0) && (
+          <Button variant="ghost" size="sm" onClick={() => { setSelectedStatuses([]); setSelectedTypes([]); }} className="gap-1.5 text-muted-foreground hover:text-destructive">
             <X className="w-4 h-4" />
             {ar ? 'مسح الفلاتر' : 'Clear filters'}
           </Button>
