@@ -56,6 +56,9 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
   const [editDialog, setEditDialog] = useState<ViolationRecord | null>(null);
   const [editPenalty, setEditPenalty] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editType, setEditType] = useState('');
+  const [editDeductionMonth, setEditDeductionMonth] = useState('');
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
@@ -157,11 +160,14 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
     setEditDialog(v);
     setEditPenalty(v.penalty);
     setEditDescription(v.description);
+    setEditDate(v.date);
+    setEditType(v.type);
+    setEditDeductionMonth(v.deductionMonth);
   };
 
   const handleSaveEdit = async () => {
     if (!editDialog) return;
-    await supabase.from('violations').update({ penalty: editPenalty, description: editDescription }).eq('id', editDialog.id);
+    await supabase.from('violations').update({ penalty: editPenalty, description: editDescription, date: editDate, type: editType, deduction_month: editDeductionMonth || null }).eq('id', editDialog.id);
     toast({ title: ar ? 'تم التعديل' : 'Updated' });
     setEditDialog(null);
     fetchViolations();
@@ -355,6 +361,23 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
             <DialogTitle>{ar ? 'تعديل المخالفة' : 'Edit Violation'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{ar ? 'التاريخ' : 'Date'}</Label>
+                <Input type="date" value={editDate} onChange={e => setEditDate(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>{ar ? 'النوع' : 'Type'}</Label>
+                <Select value={editType} onValueChange={setEditType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(violationTypes).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{ar ? label.ar : label.en}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="space-y-2">
               <Label>{ar ? 'الوصف' : 'Description'}</Label>
               <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} />
@@ -362,6 +385,10 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
             <div className="space-y-2">
               <Label>{ar ? 'العقوبة' : 'Penalty'}</Label>
               <Input value={editPenalty} onChange={e => setEditPenalty(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>{ar ? 'شهر الخصم' : 'Deduction Month'}</Label>
+              <Input type="month" value={editDeductionMonth} onChange={e => setEditDeductionMonth(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
