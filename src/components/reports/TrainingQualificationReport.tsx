@@ -528,121 +528,29 @@ export const TrainingQualificationReport = () => {
         <CardContent className="p-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {/* Station */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المحطة' : 'Station'}</label>
-              <Select value={filterStation} onValueChange={setFilterStation}>
-                <SelectTrigger><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                  {stations.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{ar ? s.nameAr : s.nameEn}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'المحطة' : 'Station'} placeholder={ar ? 'الكل' : 'All'}
+              options={stations.map(s => ({ value: s.id, label: ar ? s.nameAr : s.nameEn }))}
+              selected={filterStations} onChange={setFilterStations} />
 
             {/* Department */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'القسم' : 'Department'}</label>
-              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                <SelectTrigger><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                  {departments.map(d => (
-                    <SelectItem key={d.id} value={d.id}>{ar ? d.nameAr : d.nameEn}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'القسم' : 'Department'} placeholder={ar ? 'الكل' : 'All'}
+              options={departments.map(d => ({ value: d.id, label: ar ? d.nameAr : d.nameEn }))}
+              selected={filterDepartments} onChange={setFilterDepartments} />
 
             {/* Employee */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'الموظف' : 'Employee'}</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between text-xs font-normal h-10">
-                    {filterEmployee === 'all' ? (ar ? 'الكل' : 'All') : (() => {
-                      const emp = contextEmployees.find(e => e.id === filterEmployee);
-                      return emp ? (ar ? emp.nameAr : emp.nameEn) : '';
-                    })()}
-                    <ChevronDown className="h-3 w-3 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-2" align="start">
-                  <div className="flex items-center gap-2 mb-2 border-b pb-2">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    <Input placeholder={ar ? 'بحث...' : 'Search...'} value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)}
-                      className="h-8 text-sm border-0 p-0 focus-visible:ring-0" />
-                  </div>
-                  <div className="max-h-60 overflow-y-auto space-y-0.5">
-                    <button
-                      className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted", filterEmployee === 'all' && 'bg-accent')}
-                      onClick={() => { setFilterEmployee('all'); setEmployeeSearch(''); }}>
-                      {ar ? 'الكل' : 'All'}
-                    </button>
-                    {filteredEmployees.map(e => (
-                      <button key={e.id}
-                        className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", filterEmployee === e.id && 'bg-accent')}
-                        onClick={() => { setFilterEmployee(e.id); setEmployeeSearch(''); }}>
-                        {e.employeeId} - {ar ? e.nameAr : e.nameEn}
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'الموظف' : 'Employee'} placeholder={ar ? 'الكل' : 'All'}
+              options={employeeOptions}
+              selected={filterEmployees} onChange={setFilterEmployees} />
 
             {/* Course */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'الدورة' : 'Course'}</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between text-xs font-normal h-10">
-                    {filterCourse === 'all' ? (ar ? 'الكل' : 'All') : (() => {
-                      const c = courseOptions.find(c => c.id === filterCourse);
-                      return c ? (ar ? c.nameAr : c.nameEn) : '';
-                    })()}
-                    <ChevronDown className="h-3 w-3 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-2" align="start">
-                  <div className="flex items-center gap-2 mb-2 border-b pb-2">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    <Input placeholder={ar ? 'بحث...' : 'Search...'} value={courseSearch} onChange={e => setCourseSearch(e.target.value)}
-                      className="h-8 text-sm border-0 p-0 focus-visible:ring-0" />
-                  </div>
-                  <div className="max-h-60 overflow-y-auto space-y-0.5">
-                    <button
-                      className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted", filterCourse === 'all' && 'bg-accent')}
-                      onClick={() => { setFilterCourse('all'); setCourseSearch(''); }}>
-                      {ar ? 'الكل' : 'All'}
-                    </button>
-                    {filteredCourses.map(c => (
-                      <button key={c.id}
-                        className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", filterCourse === c.id && 'bg-accent')}
-                        onClick={() => { setFilterCourse(c.id); setCourseSearch(''); }}>
-                        <span>{ar ? c.nameAr : c.nameEn}</span>
-                        {c.provider && <span className="text-xs text-muted-foreground mr-1">({c.provider})</span>}
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'الدورة' : 'Course'} placeholder={ar ? 'الكل' : 'All'}
+              options={courseOptions.map(c => ({ value: c.id, label: c.provider ? `${ar ? c.nameAr : c.nameEn} (${c.provider})` : (ar ? c.nameAr : c.nameEn) }))}
+              selected={filterCourses} onChange={setFilterCourses} />
 
             {/* Job Title */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المسمى الوظيفي' : 'Job Title'}</label>
-              <div className="relative">
-                <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", ar ? "right-3" : "left-3")} />
-                <Input
-                  placeholder={ar ? 'بحث بالمسمى الوظيفي' : 'Search by job title'}
-                  value={filterTitle}
-                  onChange={e => setFilterTitle(e.target.value)}
-                  className={cn(ar ? "pr-10" : "pl-10")}
-                />
-              </div>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'المسمى الوظيفي' : 'Job Title'} placeholder={ar ? 'الكل' : 'All'}
+              options={jobTitleOptions}
+              selected={filterTitles} onChange={setFilterTitles} />
           </div>
         </CardContent>
       </Card>
