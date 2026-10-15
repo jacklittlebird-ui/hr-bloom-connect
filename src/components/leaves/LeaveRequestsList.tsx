@@ -25,6 +25,7 @@ interface LeaveEditData {
   days: number;
   status: LeaveRequest['status'];
   reason: string;
+  deductionMonth: string;
 }
 
 interface LeaveRequestsListProps {
@@ -70,6 +71,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
       days: r.days,
       status: r.status,
       reason: r.reason,
+      deductionMonth: r.deductionMonth || '',
     });
   };
 
@@ -224,6 +226,10 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'عدد الأيام' : 'Days'}</Label>
                 <Input type="number" step="0.5" min="0.5" value={editData.days} onChange={(e) => setEditData({ ...editData, days: parseFloat(e.target.value) || 0 })} />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === 'ar' ? 'شهر الخصم' : 'Deduction Month'}</Label>
+                <Input type="month" value={editData.deductionMonth} onChange={(e) => setEditData({ ...editData, deductionMonth: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'الحالة' : 'Status'}</Label>
