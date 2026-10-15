@@ -99,6 +99,13 @@
       "when": 1792063100742,
       "tag": "0013_sm_leave_requests_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792063534491,
+      "tag": "0014_sync_deduction_on_month_edit",
+      "breakpoints": true
     }
   ]
 }
