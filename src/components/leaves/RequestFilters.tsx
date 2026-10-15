@@ -25,6 +25,11 @@ interface RequestFiltersProps {
   selectedStatuses?: string[];
   onSelectedStatusesChange?: (values: string[]) => void;
 
+  // Type filter — multi-select array. Empty array = no filter (all).
+  typeOptions?: { value: string; ar: string; en: string }[];
+  selectedTypes?: string[];
+  onSelectedTypesChange?: (values: string[]) => void;
+
   fromDate?: string;
   onFromDateChange?: (value: string) => void;
   toDate?: string;
