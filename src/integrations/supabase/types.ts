@@ -1437,6 +1437,7 @@ export type Database = {
           approved_by: string | null
           created_at: string
           days: number
+          deduction_month: string | null
           employee_id: string
           end_date: string
           id: string
@@ -1450,6 +1451,7 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           days?: number
+          deduction_month?: string | null
           employee_id: string
           end_date: string
           id?: string
@@ -1463,6 +1465,7 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           days?: number
+          deduction_month?: string | null
           employee_id?: string
           end_date?: string
           id?: string
@@ -3856,6 +3859,10 @@ export type Database = {
       }
     }
     Functions: {
+      apply_leave_deduction_days: {
+        Args: { _by: string; _days: number; _emp: string; _month: string }
+        Returns: undefined
+      }
       apply_violation_penalty_days: {
         Args: { _by: string; _days: number; _emp: string; _month: string }
         Returns: undefined

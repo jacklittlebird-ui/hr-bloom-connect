@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Check, ChevronsUpDown, UserX, Loader2 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
+import { getUnpaidDeductionMonth } from '@/lib/violationPenalty';
 
 export const ABSENCE_REASON_AR = 'غياب بدون إذن';
 
@@ -30,6 +31,7 @@ interface AbsenceRow {
   id: string;
   employee_id: string;
   start_date: string;
+  deduction_month?: string | null;
   created_at: string;
 }
 
@@ -56,7 +58,7 @@ export const UnauthorizedAbsence = ({ employees }: UnauthorizedAbsenceProps) => 
     if (ids.length === 0) { setRows([]); return; }
     const { data } = await supabase
       .from('leave_requests')
-      .select('id, employee_id, start_date, created_at')
+      .select('id, employee_id, start_date, deduction_month, created_at')
       .eq('leave_type', 'unpaid')
       .eq('reason', ABSENCE_REASON_AR)
       .in('employee_id', ids)
@@ -143,6 +145,7 @@ export const UnauthorizedAbsence = ({ employees }: UnauthorizedAbsenceProps) => 
           <div className="space-y-2">
             <Label>{t('اليوم', 'Date')}</Label>
             <Input type="date" value={date} onChange={e => setDate(e.target.value)} className="h-10" />
+            <p className="text-xs text-muted-foreground">{t('شهر الخصم: ', 'Deduction month: ')}{getUnpaidDeductionMonth()}</p>
           </div>
 
           <Button onClick={handleSave} disabled={saving} className="h-10">
@@ -163,13 +166,14 @@ export const UnauthorizedAbsence = ({ employees }: UnauthorizedAbsenceProps) => 
                 <TableHead>{t('الموظف', 'Employee')}</TableHead>
                 <TableHead>{t('الرقم الوظيفي', 'Code')}</TableHead>
                 <TableHead>{t('اليوم', 'Date')}</TableHead>
+                <TableHead>{t('شهر الخصم', 'Deduction Month')}</TableHead>
                 <TableHead>{t('البيان', 'Details')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
                     {t('لا توجد سجلات', 'No records')}
                   </TableCell>
                 </TableRow>
@@ -180,6 +184,7 @@ export const UnauthorizedAbsence = ({ employees }: UnauthorizedAbsenceProps) => 
                     <TableCell className="whitespace-pre-wrap break-words">{empLabel(e) || '-'}</TableCell>
                     <TableCell>{e?.employeeId || '-'}</TableCell>
                     <TableCell>{formatDate(r.start_date)}</TableCell>
+                    <TableCell>{r.deduction_month || '-'}</TableCell>
                     <TableCell>{ABSENCE_REASON_AR}</TableCell>
                   </TableRow>
                 );
