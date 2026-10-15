@@ -49,6 +49,7 @@ export const RequestFilters = ({
   selectedStation, onStationChange,
   departments, stations,
   selectedStatuses, onSelectedStatusesChange,
+  typeOptions, selectedTypes, onSelectedTypesChange,
   fromDate, onFromDateChange,
   toDate, onToDateChange,
   showAdvanced = true,
@@ -56,10 +57,16 @@ export const RequestFilters = ({
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
   const statuses = selectedStatuses || [];
+  const types = selectedTypes || [];
 
   const toggleStatus = (v: string) => {
     if (!onSelectedStatusesChange) return;
     onSelectedStatusesChange(statuses.includes(v) ? statuses.filter(s => s !== v) : [...statuses, v]);
+  };
+
+  const toggleType = (v: string) => {
+    if (!onSelectedTypesChange) return;
+    onSelectedTypesChange(types.includes(v) ? types.filter(t => t !== v) : [...types, v]);
   };
 
   const hasActive =
@@ -67,6 +74,7 @@ export const RequestFilters = ({
     selectedDepartment !== 'all' ||
     selectedStation !== 'all' ||
     statuses.length > 0 ||
+    types.length > 0 ||
     !!fromDate || !!toDate;
 
   const clearAll = () => {
@@ -74,6 +82,7 @@ export const RequestFilters = ({
     onDepartmentChange('all');
     onStationChange('all');
     onSelectedStatusesChange?.([]);
+    onSelectedTypesChange?.([]);
     onFromDateChange?.('');
     onToDateChange?.('');
   };
@@ -85,6 +94,15 @@ export const RequestFilters = ({
       return ar ? o?.ar : o?.en;
     }
     return ar ? `${statuses.length} حالات محددة` : `${statuses.length} selected`;
+  };
+
+  const typeButtonLabel = () => {
+    if (types.length === 0) return ar ? 'كل الأنواع' : 'All Types';
+    if (types.length === 1) {
+      const o = typeOptions?.find(t => t.value === types[0]);
+      return ar ? o?.ar : o?.en;
+    }
+    return ar ? `${types.length} أنواع محددة` : `${types.length} selected`;
   };
 
   return (
