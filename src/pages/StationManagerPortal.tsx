@@ -7,6 +7,7 @@ import { usePerformanceData, defaultCriteria, calculateScore, CriteriaItem } fro
 import { useNotifications } from '@/contexts/NotificationContext';
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 import { cn } from '@/lib/utils';
+import { getAllowedDeductionMonths, formatPenaltyLabel } from '@/lib/violationPenalty';
 import { supabase } from '@/integrations/supabase/client';
 import { stationLocations } from '@/data/stationLocations';
 import { PortalWelcomeBanner } from '@/components/portal/PortalWelcomeBanner';
