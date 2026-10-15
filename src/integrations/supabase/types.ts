@@ -3688,10 +3688,13 @@ export type Database = {
           created_at: string
           created_by: string | null
           date: string
+          deduction_month: string | null
           description: string | null
           employee_id: string
           id: string
           penalty: string | null
+          penalty_days: number | null
+          penalty_kind: string | null
           status: string
           type: string
         }
@@ -3701,10 +3704,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date?: string
+          deduction_month?: string | null
           description?: string | null
           employee_id: string
           id?: string
           penalty?: string | null
+          penalty_days?: number | null
+          penalty_kind?: string | null
           status?: string
           type: string
         }
@@ -3714,10 +3720,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date?: string
+          deduction_month?: string | null
           description?: string | null
           employee_id?: string
           id?: string
           penalty?: string | null
+          penalty_days?: number | null
+          penalty_kind?: string | null
           status?: string
           type?: string
         }
@@ -3847,6 +3856,10 @@ export type Database = {
       }
     }
     Functions: {
+      apply_violation_penalty_days: {
+        Args: { _by: string; _days: number; _emp: string; _month: string }
+        Returns: undefined
+      }
       audit_dm_multi_dept_policies: {
         Args: never
         Returns: {
