@@ -78,6 +78,13 @@
       "when": 1791874525562,
       "tag": "0010_attendance_tamper_incidents",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792052050000,
+      "tag": "0011_violation_penalty_to_payroll",
+      "breakpoints": true
     }
   ]
 }
