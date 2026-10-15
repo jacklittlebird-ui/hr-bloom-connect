@@ -17,3 +17,8 @@ export const formatPenaltyLabel = (kind: string | null | undefined, days: number
   if (kind === 'deduction') return ar ? `خصم ${days} يوم - ${month}` : `Deduct ${days} day(s) - ${month}`;
   return '';
 };
+
+/** Deduction month (YYYY-MM) for unpaid leave / unauthorized absence: current Cairo month, or next month after day 25. */
+export function getUnpaidDeductionMonth(now: Date = new Date()): string {
+  return getAllowedDeductionMonths(now, 1)[0];
+}

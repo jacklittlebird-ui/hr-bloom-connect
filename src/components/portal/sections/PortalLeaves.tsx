@@ -1,3 +1,4 @@
+import { getUnpaidDeductionMonth } from '@/lib/violationPenalty';
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePortalData } from '@/contexts/PortalDataContext';
@@ -147,15 +148,6 @@ export const PortalLeaves = () => {
       return;
     }
 
-    // Unpaid leave: cannot be registered for a previous month
-    if (leaveType === 'unpaid') {
-      const firstOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      if (leaveStartDate < firstOfThisMonth) {
-        toast.error(ar ? 'لا يمكن تسجيل إجازة بدون راتب في شهر سابق' : 'Cannot register unpaid leave for a previous month');
-        return;
-      }
-    }
-
     // Marriage leave: max 8 days, no balance deduction
     if (leaveType === 'marriage' && calculateDays() > 8) {
       toast.error(ar ? 'إجازة الزواج بحد أقصى 8 أيام' : 'Marriage leave is limited to a maximum of 8 days');
@@ -214,6 +206,10 @@ export const PortalLeaves = () => {
       return;
     }
     toast.success(ar ? 'تم تقديم طلب الإجازة بنجاح' : 'Leave request submitted');
+    if (leaveType === 'unpaid') {
+      const m = getUnpaidDeductionMonth();
+      toast.info(ar ? `شهر الخصم من الراتب: ${m}` : `Salary deduction month: ${m}`);
+    }
     setShowLeaveDialog(false);
     setLeaveType(''); setLeaveStartDate(undefined); setLeaveEndDate(undefined); setLeaveReason('');
   };
