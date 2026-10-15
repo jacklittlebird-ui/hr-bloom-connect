@@ -230,7 +230,8 @@ const StationManagerPortal = () => {
 
   // Violation dialog state
   const [violDialog, setViolDialog] = useState(false);
-  const [violForm, setViolForm] = useState({ employeeId: '', type: 'absence', description: '', penalty: '', date: new Date().toISOString().split('T')[0] });
+  const emptyViolForm = () => ({ employeeId: '', type: 'absence', description: '', penalty: '', penaltyKind: '', penaltyDays: '', deductionMonth: getAllowedDeductionMonths()[0], date: new Date().toISOString().split('T')[0] });
+  const [violForm, setViolForm] = useState(emptyViolForm);
   const [violEmpPickerOpen, setViolEmpPickerOpen] = useState(false);
 
   // Edit evaluation dialog state
@@ -635,28 +636,41 @@ const StationManagerPortal = () => {
   };
 
   const handleAddViolation = async () => {
-    if (!violForm.employeeId || !violForm.type) {
-      toast({ title: t('أكمل البيانات المطلوبة', 'Complete required fields'), variant: 'destructive' });
+    if (!violForm.employeeId || !violForm.type || !violForm.penaltyKind) {
+      toast({ title: t('أكمل البيانات المطلوبة (العقوبة إلزامية)', 'Complete required fields (penalty is required)'), variant: 'destructive' });
+      return;
+    }
+    const isDeduction = violForm.penaltyKind === 'deduction';
+    const allowed = getAllowedDeductionMonths();
+    if (isDeduction && (!violForm.penaltyDays || !allowed.includes(violForm.deductionMonth))) {
+      toast({ title: t('اختر عدد أيام الخصم وشهر خصم مسموح', 'Choose deduction days and an allowed month'), variant: 'destructive' });
       return;
     }
     const emp = stationEmployees.find(e => e.id === violForm.employeeId);
     if (!emp) return;
+    const days = isDeduction ? Number(violForm.penaltyDays) : null;
+    const month = isDeduction ? violForm.deductionMonth : null;
     const { error } = await supabase.from('violations').insert({
       employee_id: emp.id,
       date: violForm.date,
       type: violForm.type,
       description: violForm.description,
-      penalty: violForm.penalty,
+      penalty: formatPenaltyLabel(violForm.penaltyKind, days, month, true),
+      penalty_kind: violForm.penaltyKind,
+      penalty_days: days,
+      deduction_month: month,
       status: 'pending',
       created_by: user?.id || null,
     });
-    if (!error) {
-      addNotification({ titleAr: `مخالفة جديدة بانتظار الموافقة للموظف: ${emp.nameAr}`, titleEn: `New violation pending approval for: ${emp.nameEn}`, type: 'warning', module: 'employee' });
-      toast({ title: t('تم إضافة المخالفة بنجاح', 'Violation added successfully') });
-      await fetchViolations();
+    if (error) {
+      toast({ title: t('تعذر الحفظ', 'Save failed'), description: error.message, variant: 'destructive' });
+      return;
     }
+    addNotification({ titleAr: `مخالفة جديدة بانتظار الموافقة للموظف: ${emp.nameAr}`, titleEn: `New violation pending approval for: ${emp.nameEn}`, type: 'warning', module: 'employee' });
+    toast({ title: t('تم إضافة المخالفة بنجاح', 'Violation added successfully') });
+    await fetchViolations();
     setViolDialog(false);
-    setViolForm({ employeeId: '', type: 'absence', description: '', penalty: '', date: new Date().toISOString().split('T')[0] });
+    setViolForm(emptyViolForm());
   };
 
   const handleDeleteViolation = async (id: string) => {
@@ -2995,9 +3009,38 @@ const StationManagerPortal = () => {
               <Textarea value={violForm.description} onChange={e => setViolForm(p => ({ ...p, description: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <Label>{t('العقوبة', 'Penalty')}</Label>
-              <Input value={violForm.penalty} onChange={e => setViolForm(p => ({ ...p, penalty: e.target.value }))} />
+              <Label>{t('العقوبة', 'Penalty')} <span className="text-destructive">*</span></Label>
+              <Select value={violForm.penaltyKind} onValueChange={v => setViolForm(p => ({ ...p, penaltyKind: v }))}>
+                <SelectTrigger><SelectValue placeholder={t('اختر العقوبة', 'Select penalty')} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="warning">{t('إنذار', 'Warning')}</SelectItem>
+                  <SelectItem value="deduction">{t('خصم', 'Deduction')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+            {violForm.penaltyKind === 'deduction' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>{t('عدد أيام الخصم', 'Deduction days')} <span className="text-destructive">*</span></Label>
+                  <Select value={violForm.penaltyDays} onValueChange={v => setViolForm(p => ({ ...p, penaltyDays: v }))}>
+                    <SelectTrigger><SelectValue placeholder={t('اختر', 'Select')} /></SelectTrigger>
+                    <SelectContent>
+                      {['0.25', '0.5', '1', '1.5', '2', '3', '4', '5', '7', '10', '15'].map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('شهر الخصم', 'Deduction month')} <span className="text-destructive">*</span></Label>
+                  <Select value={violForm.deductionMonth} onValueChange={v => setViolForm(p => ({ ...p, deductionMonth: v }))}>
+                    <SelectTrigger><SelectValue placeholder={t('اختر الشهر', 'Select month')} /></SelectTrigger>
+                    <SelectContent>
+                      {getAllowedDeductionMonths().map(m => <SelectItem key={m} value={m}>{m.split('-').reverse().join('/')}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="col-span-2 text-xs text-muted-foreground">{t('بعد يوم 25 من الشهر لا يمكن الخصم على نفس الشهر. يُسجَّل الخصم تلقائيًا في جزاءات الرواتب.', 'After the 25th, the current month is not allowed. The deduction is added to payroll penalties automatically.')}</p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setViolDialog(false)}>{t('إلغاء', 'Cancel')}</Button>
