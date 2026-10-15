@@ -2,10 +2,9 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Printer, FileText, FileSpreadsheet, ChevronDown, Search } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Printer, FileText, FileSpreadsheet, ChevronsUpDown, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,6 +49,77 @@ async function fetchAllTrainingRecords() {
   return all;
 }
 
+interface FilterOption { value: string; label: string }
+
+const MultiSelectFilter = ({ ar, label, placeholder, options, selected, onChange }: {
+  ar: boolean;
+  label: string;
+  placeholder: string;
+  options: FilterOption[];
+  selected: string[];
+  onChange: (values: string[]) => void;
+}) => {
+  const selectedLabels = options.filter(o => selected.includes(o.value)).map(o => o.label);
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            className={cn('w-full justify-between text-xs font-normal h-10', selected.length > 0 && 'border-primary bg-primary/5')}
+          >
+            <span className="truncate text-start">
+              {selected.length === 0
+                ? placeholder
+                : selected.length === 1
+                  ? selectedLabels[0]
+                  : `${selectedLabels[0]} +${selected.length - 1}`}
+            </span>
+            <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[320px] max-w-[90vw] p-0" align="start">
+          <Command>
+            <CommandInput placeholder={ar ? 'بحث...' : 'Search...'} />
+            <CommandList>
+              <CommandEmpty>{ar ? 'لا توجد نتائج' : 'No results'}</CommandEmpty>
+              <CommandGroup className="max-h-72 overflow-y-auto">
+                {options.map(o => {
+                  const checked = selected.includes(o.value);
+                  return (
+                    <CommandItem
+                      key={o.value}
+                      value={o.label}
+                      onSelect={() => onChange(checked ? selected.filter(v => v !== o.value) : [...selected, o.value])}
+                      className={cn('gap-2', ar && 'flex-row-reverse')}
+                    >
+                      <Check className={cn('h-4 w-4 shrink-0', checked ? 'opacity-100' : 'opacity-0')} />
+                      <span className="truncate whitespace-pre-wrap break-words">{o.label}</span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+          <div className="p-2 border-t flex items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">{selected.length} / {options.length}</span>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onChange(options.map(o => o.value))}>
+                {ar ? 'تحديد الكل' : 'Select all'}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive" onClick={() => onChange([])}>
+                {ar ? 'مسح' : 'Clear'}
+              </Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
+
 export const TrainingQualificationReport = () => {
   const { language, isRTL } = useLanguage();
   const ar = language === 'ar';
@@ -61,13 +131,11 @@ export const TrainingQualificationReport = () => {
   const [departments, setDepartments] = useState<{ id: string; nameAr: string; nameEn: string }[]>([]);
   const [courseOptions, setCourseOptions] = useState<{ id: string; nameAr: string; nameEn: string; provider: string }[]>([]);
 
-  const [filterStation, setFilterStation] = useState('all');
-  const [filterDepartment, setFilterDepartment] = useState('all');
-  const [filterCourse, setFilterCourse] = useState('all');
-  const [filterEmployee, setFilterEmployee] = useState('all');
-  const [filterTitle, setFilterTitle] = useState('');
-  const [employeeSearch, setEmployeeSearch] = useState('');
-  const [courseSearch, setCourseSearch] = useState('');
+  const [filterStations, setFilterStations] = useState<string[]>([]);
+  const [filterDepartments, setFilterDepartments] = useState<string[]>([]);
+  const [filterCourses, setFilterCourses] = useState<string[]>([]);
+  const [filterEmployees, setFilterEmployees] = useState<string[]>([]);
+  const [filterTitles, setFilterTitles] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -87,21 +155,18 @@ export const TrainingQualificationReport = () => {
 
   const groupedData = useMemo(() => {
     const empMap = new Map<string, EmployeeTrainingGroup>();
-    const hasAnyFilter = filterStation !== 'all' || filterDepartment !== 'all' || filterCourse !== 'all' || filterEmployee !== 'all' || filterTitle.trim() !== '';
+    const hasAnyFilter = filterStations.length > 0 || filterDepartments.length > 0 || filterCourses.length > 0 || filterEmployees.length > 0 || filterTitles.length > 0;
     if (!hasAnyFilter) return [];
 
     allRecords.forEach(r => {
       const emp = contextEmployees.find(e => e.id === r.employee_id);
       if (!emp) return;
 
-      if (filterStation !== 'all' && emp.stationId !== filterStation) return;
-      if (filterDepartment !== 'all' && emp.departmentId !== filterDepartment) return;
-      if (filterCourse !== 'all' && r.course_id !== filterCourse) return;
-      if (filterEmployee !== 'all' && emp.id !== filterEmployee) return;
-      if (filterTitle.trim()) {
-        const s = filterTitle.trim().toLowerCase();
-        if (!(emp.jobTitleAr || '').toLowerCase().includes(s) && !(emp.jobTitleEn || '').toLowerCase().includes(s)) return;
-      }
+      if (filterStations.length > 0 && !filterStations.includes(emp.stationId)) return;
+      if (filterDepartments.length > 0 && !filterDepartments.includes(emp.departmentId)) return;
+      if (filterCourses.length > 0 && !filterCourses.includes(r.course_id)) return;
+      if (filterEmployees.length > 0 && !filterEmployees.includes(emp.id)) return;
+      if (filterTitles.length > 0 && !filterTitles.some(t => t === (emp.jobTitleAr || '').trim() || t === (emp.jobTitleEn || '').trim())) return;
 
       if (!empMap.has(emp.id)) {
         empMap.set(emp.id, {
@@ -129,52 +194,42 @@ export const TrainingQualificationReport = () => {
     });
 
     return [...empMap.values()].sort((a, b) => a.employeeName.localeCompare(b.employeeName, ar ? 'ar' : 'en'));
-  }, [allRecords, contextEmployees, filterStation, filterDepartment, filterCourse, filterEmployee, filterTitle, ar]);
+  }, [allRecords, contextEmployees, filterStations, filterDepartments, filterCourses, filterEmployees, filterTitles, ar]);
 
   const getFilterTitle = () => {
+    const joinNames = (ids: string[], list: { id: string; nameAr: string; nameEn: string }[]) =>
+      ids.map(id => { const f = list.find(x => x.id === id); return f ? (ar ? f.nameAr : f.nameEn) : ''; }).filter(Boolean).join('، ');
     const parts: string[] = [];
-    if (filterStation !== 'all') {
-      const s = stations.find(s => s.id === filterStation);
-      if (s) parts.push(ar ? s.nameAr : s.nameEn);
+    const stnPart = joinNames(filterStations, stations);
+    if (stnPart) parts.push(stnPart);
+    const deptPart = joinNames(filterDepartments, departments);
+    if (deptPart) parts.push(deptPart);
+    if (filterEmployees.length) {
+      const empPart = filterEmployees
+        .map(id => { const e = contextEmployees.find(x => x.id === id); return e ? (ar ? e.nameAr : e.nameEn) : ''; })
+        .filter(Boolean).join('، ');
+      if (empPart) parts.push(empPart);
     }
-    if (filterDepartment !== 'all') {
-      const d = departments.find(d => d.id === filterDepartment);
-      if (d) parts.push(ar ? d.nameAr : d.nameEn);
+    if (filterCourses.length) {
+      const coursePart = filterCourses
+        .map(id => { const c = courseOptions.find(x => x.id === id); return c ? (ar ? c.nameAr : c.nameEn) : ''; })
+        .filter(Boolean).join('، ');
+      if (coursePart) parts.push(coursePart);
     }
-    if (filterEmployee !== 'all') {
-      const emp = contextEmployees.find(e => e.id === filterEmployee);
-      if (emp) parts.push(ar ? emp.nameAr : emp.nameEn);
-    }
-    if (filterCourse !== 'all') {
-      const c = courseOptions.find(c => c.id === filterCourse);
-      if (c) parts.push(ar ? c.nameAr : c.nameEn);
-    }
-    if (filterTitle.trim()) parts.push(filterTitle.trim());
+    if (filterTitles.length) parts.push(filterTitles.join('، '));
     return parts.join(' - ') || '';
   };
 
-  const filteredEmployees = useMemo(() => {
-    let list = contextEmployees;
-    if (filterStation !== 'all') list = list.filter(e => e.stationId === filterStation);
-    if (filterDepartment !== 'all') list = list.filter(e => e.departmentId === filterDepartment);
-    if (employeeSearch) {
-      const s = employeeSearch.toLowerCase();
-      list = list.filter(e =>
-        (e.nameAr || '').toLowerCase().includes(s) ||
-        (e.nameEn || '').toLowerCase().includes(s) ||
-        (e.employeeId || '').toLowerCase().includes(s)
-      );
-    }
-    return list;
-  }, [contextEmployees, employeeSearch, filterStation, filterDepartment]);
+  const employeeOptions = useMemo(() => contextEmployees.map(e => ({
+    value: e.id,
+    label: `${e.employeeId ? e.employeeId + ' - ' : ''}${ar ? e.nameAr : e.nameEn}`,
+  })), [contextEmployees, ar]);
 
-  const filteredCourses = useMemo(() => {
-    if (!courseSearch) return courseOptions;
-    const s = courseSearch.toLowerCase();
-    return courseOptions.filter(c =>
-      c.nameAr.toLowerCase().includes(s) || c.nameEn.toLowerCase().includes(s)
-    );
-  }, [courseOptions, courseSearch]);
+  const jobTitleOptions = useMemo(() => {
+    const set = new Set<string>();
+    contextEmployees.forEach(e => { const t = (e.jobTitleAr || '').trim(); if (t) set.add(t); });
+    return [...set].sort((a, b) => a.localeCompare(b, 'ar')).map(t => ({ value: t, label: t }));
+  }, [contextEmployees]);
 
   const exportColumns = [
     { headerAr: 'اسم الموظف', headerEn: 'Employee Name', key: 'employeeName' },
@@ -219,7 +274,7 @@ export const TrainingQualificationReport = () => {
 
   const filterTypeLabel = getFilterTitle();
 
-  const isFilterActive = filterStation !== 'all' || filterDepartment !== 'all' || filterCourse !== 'all' || filterEmployee !== 'all' || filterTitle.trim() !== '';
+  const isFilterActive = filterStations.length > 0 || filterDepartments.length > 0 || filterCourses.length > 0 || filterEmployees.length > 0 || filterTitles.length > 0;
 
   const handleQualificationPrint = useCallback(() => {
     const logoUrl = `${window.location.origin}/images/company-logo.png`;
@@ -473,121 +528,29 @@ export const TrainingQualificationReport = () => {
         <CardContent className="p-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {/* Station */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المحطة' : 'Station'}</label>
-              <Select value={filterStation} onValueChange={setFilterStation}>
-                <SelectTrigger><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                  {stations.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{ar ? s.nameAr : s.nameEn}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'المحطة' : 'Station'} placeholder={ar ? 'الكل' : 'All'}
+              options={stations.map(s => ({ value: s.id, label: ar ? s.nameAr : s.nameEn }))}
+              selected={filterStations} onChange={setFilterStations} />
 
             {/* Department */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'القسم' : 'Department'}</label>
-              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-                <SelectTrigger><SelectValue placeholder={ar ? 'الكل' : 'All'} /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{ar ? 'الكل' : 'All'}</SelectItem>
-                  {departments.map(d => (
-                    <SelectItem key={d.id} value={d.id}>{ar ? d.nameAr : d.nameEn}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'القسم' : 'Department'} placeholder={ar ? 'الكل' : 'All'}
+              options={departments.map(d => ({ value: d.id, label: ar ? d.nameAr : d.nameEn }))}
+              selected={filterDepartments} onChange={setFilterDepartments} />
 
             {/* Employee */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'الموظف' : 'Employee'}</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between text-xs font-normal h-10">
-                    {filterEmployee === 'all' ? (ar ? 'الكل' : 'All') : (() => {
-                      const emp = contextEmployees.find(e => e.id === filterEmployee);
-                      return emp ? (ar ? emp.nameAr : emp.nameEn) : '';
-                    })()}
-                    <ChevronDown className="h-3 w-3 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-2" align="start">
-                  <div className="flex items-center gap-2 mb-2 border-b pb-2">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    <Input placeholder={ar ? 'بحث...' : 'Search...'} value={employeeSearch} onChange={e => setEmployeeSearch(e.target.value)}
-                      className="h-8 text-sm border-0 p-0 focus-visible:ring-0" />
-                  </div>
-                  <div className="max-h-60 overflow-y-auto space-y-0.5">
-                    <button
-                      className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted", filterEmployee === 'all' && 'bg-accent')}
-                      onClick={() => { setFilterEmployee('all'); setEmployeeSearch(''); }}>
-                      {ar ? 'الكل' : 'All'}
-                    </button>
-                    {filteredEmployees.map(e => (
-                      <button key={e.id}
-                        className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", filterEmployee === e.id && 'bg-accent')}
-                        onClick={() => { setFilterEmployee(e.id); setEmployeeSearch(''); }}>
-                        {e.employeeId} - {ar ? e.nameAr : e.nameEn}
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'الموظف' : 'Employee'} placeholder={ar ? 'الكل' : 'All'}
+              options={employeeOptions}
+              selected={filterEmployees} onChange={setFilterEmployees} />
 
             {/* Course */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'الدورة' : 'Course'}</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between text-xs font-normal h-10">
-                    {filterCourse === 'all' ? (ar ? 'الكل' : 'All') : (() => {
-                      const c = courseOptions.find(c => c.id === filterCourse);
-                      return c ? (ar ? c.nameAr : c.nameEn) : '';
-                    })()}
-                    <ChevronDown className="h-3 w-3 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-2" align="start">
-                  <div className="flex items-center gap-2 mb-2 border-b pb-2">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    <Input placeholder={ar ? 'بحث...' : 'Search...'} value={courseSearch} onChange={e => setCourseSearch(e.target.value)}
-                      className="h-8 text-sm border-0 p-0 focus-visible:ring-0" />
-                  </div>
-                  <div className="max-h-60 overflow-y-auto space-y-0.5">
-                    <button
-                      className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted", filterCourse === 'all' && 'bg-accent')}
-                      onClick={() => { setFilterCourse('all'); setCourseSearch(''); }}>
-                      {ar ? 'الكل' : 'All'}
-                    </button>
-                    {filteredCourses.map(c => (
-                      <button key={c.id}
-                        className={cn("w-full text-right px-2 py-1.5 text-sm rounded hover:bg-muted truncate", filterCourse === c.id && 'bg-accent')}
-                        onClick={() => { setFilterCourse(c.id); setCourseSearch(''); }}>
-                        <span>{ar ? c.nameAr : c.nameEn}</span>
-                        {c.provider && <span className="text-xs text-muted-foreground mr-1">({c.provider})</span>}
-                      </button>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'الدورة' : 'Course'} placeholder={ar ? 'الكل' : 'All'}
+              options={courseOptions.map(c => ({ value: c.id, label: c.provider ? `${ar ? c.nameAr : c.nameEn} (${c.provider})` : (ar ? c.nameAr : c.nameEn) }))}
+              selected={filterCourses} onChange={setFilterCourses} />
 
             {/* Job Title */}
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">{ar ? 'المسمى الوظيفي' : 'Job Title'}</label>
-              <div className="relative">
-                <Search className={cn("absolute top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground", ar ? "right-3" : "left-3")} />
-                <Input
-                  placeholder={ar ? 'بحث بالمسمى الوظيفي' : 'Search by job title'}
-                  value={filterTitle}
-                  onChange={e => setFilterTitle(e.target.value)}
-                  className={cn(ar ? "pr-10" : "pl-10")}
-                />
-              </div>
-            </div>
+            <MultiSelectFilter ar={ar} label={ar ? 'المسمى الوظيفي' : 'Job Title'} placeholder={ar ? 'الكل' : 'All'}
+              options={jobTitleOptions}
+              selected={filterTitles} onChange={setFilterTitles} />
           </div>
         </CardContent>
       </Card>
