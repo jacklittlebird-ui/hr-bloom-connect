@@ -102,6 +102,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                 { header: language === 'ar' ? 'من تاريخ' : 'Start Date', accessor: (r) => formatDate(r.startDate) },
                 { header: language === 'ar' ? 'إلى تاريخ' : 'End Date', accessor: (r) => formatDate(r.endDate) },
                 { header: language === 'ar' ? 'الأيام' : 'Days', accessor: (r) => r.days },
+                { header: language === 'ar' ? 'شهر الخصم' : 'Deduction Month', accessor: (r) => r.deductionMonth || '' },
                 { header: language === 'ar' ? 'الحالة' : 'Status', accessor: (r) => r.status },
                 { header: language === 'ar' ? 'سبب الرفض' : 'Rejection Reason', accessor: (r) => r.rejectionReason || '' },
                 { header: language === 'ar' ? 'السبب' : 'Reason', accessor: (r) => r.reason || '' },
@@ -122,6 +123,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.startDate')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.endDate')}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.days')}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{language === 'ar' ? 'شهر الخصم' : 'Deduction Month'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{t('leaves.list.status')}</TableHead>
                   {(onDelete || onEdit) && <TableHead className="w-24"></TableHead>}
                 </TableRow>
@@ -129,7 +131,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
               <TableBody>
                 {paginatedItems.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={(onDelete || onEdit) ? 10 : 9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={(onDelete || onEdit) ? 11 : 10} className="text-center text-muted-foreground py-8">
                       {t('leaves.list.noRequests')}
                     </TableCell>
                   </TableRow>
@@ -144,6 +146,7 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
                       <TableCell>{formatDate(request.startDate)}</TableCell>
                       <TableCell>{formatDate(request.endDate)}</TableCell>
                       <TableCell>{request.days}</TableCell>
+                      <TableCell>{request.deductionMonth || '—'}</TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
                       {(onDelete || onEdit) && (
                         <TableCell>

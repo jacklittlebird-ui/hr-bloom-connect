@@ -16,6 +16,7 @@ export interface LeaveRequest {
   approvedBy?: string;
   approvedDate?: string;
   rejectionReason?: string;
+  deductionMonth?: string;
 }
 
 export interface PermissionRequest {

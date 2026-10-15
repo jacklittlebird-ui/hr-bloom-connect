@@ -125,6 +125,7 @@ const Leaves = () => {
         reason: l.reason || '', status: l.status as LeaveRequest['status'],
         submittedDate: l.created_at.split('T')[0],
         rejectionReason: l.rejection_reason || undefined,
+        deductionMonth: l.deduction_month || undefined,
       };
     }));
 
