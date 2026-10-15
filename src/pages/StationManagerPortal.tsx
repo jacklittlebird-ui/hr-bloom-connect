@@ -76,6 +76,7 @@ interface Violation {
   type: string;
   description: string;
   penalty: string;
+  deductionMonth: string;
   status: 'active' | 'resolved' | 'pending';
 }
 
@@ -202,6 +203,7 @@ const StationManagerPortal = () => {
         type: v.type,
         description: v.description || '',
         penalty: v.penalty || '',
+        deductionMonth: v.deduction_month || '',
         status: v.status === 'approved' ? 'active' as const : v.status === 'resolved' ? 'resolved' as const : 'pending' as const,
       })));
     }
@@ -2645,13 +2647,14 @@ const StationManagerPortal = () => {
                       <TableHead>{t('النوع', 'Type')}</TableHead>
                       <TableHead>{t('الوصف', 'Description')}</TableHead>
                       <TableHead>{t('العقوبة', 'Penalty')}</TableHead>
+                      <TableHead>{t('شهر الخصم', 'Deduction Month')}</TableHead>
                       <TableHead>{t('الحالة', 'Status')}</TableHead>
                       <TableHead>{t('إجراءات', 'Actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredViolations.length === 0 ? (
-                      <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">{t('لا توجد مخالفات', 'No violations found')}</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">{t('لا توجد مخالفات', 'No violations found')}</TableCell></TableRow>
                     ) : filteredViolations.map(v => {
                       const emp = stationEmployees.find(e => e.id === v.employeeId);
                       const typeLabel = violationTypes.find(vt => vt.value === v.type);
@@ -2662,6 +2665,7 @@ const StationManagerPortal = () => {
                           <TableCell>{ar ? typeLabel?.ar : typeLabel?.en || v.type}</TableCell>
                           <TableCell className="max-w-[200px] truncate">{v.description}</TableCell>
                           <TableCell>{v.penalty || '-'}</TableCell>
+                          <TableCell>{v.deductionMonth || '-'}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={
                               v.status === 'pending' ? 'bg-[hsl(var(--stat-yellow-bg))] text-[hsl(var(--stat-yellow))] border-[hsl(var(--stat-yellow))]' :

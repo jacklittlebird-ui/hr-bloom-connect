@@ -30,6 +30,7 @@ interface ViolationRecord {
   type: string;
   description: string;
   penalty: string;
+  deductionMonth: string;
   status: string;
   createdAt: string;
 }
@@ -115,6 +116,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
         type: v.type,
         description: v.description || '',
         penalty: v.penalty || '',
+        deductionMonth: v.deduction_month || '',
         status: v.status,
         createdAt: v.created_at,
       };
@@ -290,6 +292,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'النوع' : 'Type'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الوصف' : 'Description'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'العقوبة' : 'Penalty'}</TableHead>
+                  <TableHead className={cn(isRTL && "text-right")}>{ar ? 'شهر الخصم' : 'Deduction Month'}</TableHead>
                   <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الحالة' : 'Status'}</TableHead>
                   <TableHead className="w-32">{ar ? 'إجراءات' : 'Actions'}</TableHead>
                 </TableRow>
@@ -297,7 +300,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                       <Ban className="w-8 h-8 mx-auto mb-2 opacity-30" />
                       {ar ? 'لا توجد مخالفات' : 'No violations'}
                     </TableCell>
@@ -315,6 +318,7 @@ export const ViolationsManagement = ({ searchQuery, selectedDepartment, selected
                         <TableCell>{typeLabel ? (ar ? typeLabel.ar : typeLabel.en) : v.type}</TableCell>
                         <TableCell className="max-w-[300px] whitespace-normal break-words">{v.description}</TableCell>
                         <TableCell>{v.penalty}</TableCell>
+                        <TableCell>{v.deductionMonth || '—'}</TableCell>
                         <TableCell>{getStatusBadge(v.status)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
