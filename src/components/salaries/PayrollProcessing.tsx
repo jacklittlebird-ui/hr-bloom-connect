@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Wallet, Gift, TrendingDown, Building2, Save, X, FileText, Users, Clock, Search, PlayCircle, Zap, Trash2, Send, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { isInstallmentInsufficient } from '@/lib/loanAffordability';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
 import { markLoanInstallmentsPaidForPeriod } from '@/lib/loanPayments';
@@ -836,6 +837,13 @@ export const PayrollProcessing = () => {
                       <span className="text-base font-bold">{ar ? 'صافي الراتب' : 'Net Salary'}</span>
                       <span className="font-bold text-2xl text-primary">{netSalary.toLocaleString()}</span>
                     </div>
+                    {loanPayment > 0 && isInstallmentInsufficient(loanPayment, netSalary, loanPayment) && (
+                      <div role="alert" className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive whitespace-pre-wrap break-words">
+                        {ar
+                          ? `تحذير: صافي الراتب قبل القسط (${(netSalary + loanPayment).toLocaleString()}) غير كافٍ لتغطية قسط القرض (${loanPayment.toLocaleString()}).`
+                          : `Warning: net salary before installment (${(netSalary + loanPayment).toLocaleString()}) is not enough to cover the loan installment (${loanPayment.toLocaleString()}).`}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

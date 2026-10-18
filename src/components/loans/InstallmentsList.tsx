@@ -14,6 +14,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { markInstallmentPaid, revertInstallmentPayment } from '@/lib/loanPayments';
 import { formatDate } from '@/lib/utils';
 import { useReportExport } from '@/hooks/useReportExport';
+import { isInstallmentInsufficient } from '@/lib/loanAffordability';
+import { AlertTriangle } from 'lucide-react';
 
 interface Installment {
   id: string;
@@ -27,6 +29,8 @@ interface Installment {
   dueDate: string;
   paidDate: string | null;
   status: 'paid' | 'pending' | 'overdue';
+  insufficient: boolean | null;
+  netSalary: number | null;
 }
 
 export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
@@ -66,6 +70,20 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
       const { data: departments } = await supabase.from('departments').select('id, name_ar, name_en');
       const empMap = new Map(employees?.map(e => [e.id, e]) || []);
       const deptMap = new Map(departments?.map(d => [d.id, d]) || []);
+      // Saved payroll per employee/month to detect insufficient net salary
+      const payMap = new Map<string, { net: number | null; loan: number | null }>();
+      let pFrom = 0;
+      while (true) {
+        const { data: pr, error: pErr } = await supabase
+          .from('payroll_entries')
+          .select('id, employee_id, month, year, net_salary, loan_payment')
+          .order('id')
+          .range(pFrom, pFrom + pageSize - 1);
+        if (pErr) throw pErr;
+        (pr || []).forEach((r: any) => payMap.set(`${r.employee_id}-${r.year}-${String(r.month).padStart(2, '0')}`, { net: r.net_salary, loan: r.loan_payment }));
+        if (!pr || pr.length < pageSize) break;
+        pFrom += pageSize;
+      }
 
       setInstallments((data || []).map(i => {
         const emp = empMap.get(i.employee_id);
@@ -81,6 +99,11 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
           totalInstallments: (i.loans as any)?.installments_count || 0,
           amount: i.amount, dueDate: i.due_date,
           paidDate: i.paid_at ? i.paid_at.split('T')[0] : null, status,
+          netSalary: payMap.get(`${i.employee_id}-${i.due_date?.slice(0, 7)}`)?.net ?? null,
+          insufficient: (() => {
+            const p = payMap.get(`${i.employee_id}-${i.due_date?.slice(0, 7)}`);
+            return p ? isInstallmentInsufficient(i.amount, p.net, p.loan) : null;
+          })(),
         };
       }));
     } catch (e: any) {
@@ -233,6 +256,16 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {!loading && filteredInstallments.some(i => i.insufficient) && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {language === 'ar'
+                  ? `تحذير: ${filteredInstallments.filter(i => i.insufficient).length} قسط صادف صافي راتب غير كافٍ لتغطيته. راجع الصفوف المميزة.`
+                  : `Warning: ${filteredInstallments.filter(i => i.insufficient).length} installment(s) exceed the available net salary. Review the highlighted rows.`}
+              </AlertDescription>
+            </Alert>
+          )}
           {loading ? (
             <div className="py-12 flex items-center justify-center text-muted-foreground gap-2">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -253,10 +286,20 @@ export const InstallmentsList = ({ refreshKey = 0 }: { refreshKey?: number } = {
               {filteredInstallments.length === 0 ? (
                 <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">{language === 'ar' ? 'لا توجد أقساط' : 'No installments'}</TableCell></TableRow>
               ) : filteredInstallments.map((inst) => (
-                <TableRow key={inst.id}>
+                <TableRow key={inst.id} className={inst.insufficient ? 'bg-destructive/10' : undefined}>
                   <TableCell><div><p className="font-medium">{inst.employeeName}</p><p className="text-sm text-muted-foreground">{inst.department}</p></div></TableCell>
                   <TableCell>{inst.installmentNumber}/{inst.totalInstallments}</TableCell>
-                  <TableCell>{inst.amount.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <span>{inst.amount.toLocaleString()}</span>
+                      {inst.insufficient && (
+                        <Badge variant="destructive" className="w-fit gap-1 whitespace-pre-wrap break-words">
+                          <AlertTriangle className="h-3 w-3" />
+                          {language === 'ar' ? `صافي الراتب غير كافٍ (${(inst.netSalary ?? 0).toLocaleString()})` : `Insufficient net (${(inst.netSalary ?? 0).toLocaleString()})`}
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{formatDate(inst.dueDate)}</TableCell>
                   <TableCell>{inst.paidDate ? formatDate(inst.paidDate) : '-'}</TableCell>
                   <TableCell><Badge variant={statusLabels[inst.status].variant}>{isRTL ? statusLabels[inst.status].ar : statusLabels[inst.status].en}</Badge></TableCell>
