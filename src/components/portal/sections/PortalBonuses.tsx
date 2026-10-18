@@ -96,7 +96,7 @@ export const PortalBonuses = () => {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Award className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-semibold">{isAr ? 'المكافآت' : 'Bonuses'}</h2>
+        <h2 className="text-lg font-semibold">{isAr ? 'مكافآت وبدل إجازات سنوية وعطلات رسمية' : 'Bonuses & Annual/Official Holiday Allowance'}</h2>
       </div>
 
       {records.length === 0 ? (
