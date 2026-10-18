@@ -14,6 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Wallet, Gift, TrendingDown, Building2, Save, X, FileText, Users, Clock, Search, PlayCircle, Zap, Trash2, Send, EyeOff } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { isInstallmentInsufficient } from '@/lib/loanAffordability';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { stationLocations } from '@/data/stationLocations';
 import { markLoanInstallmentsPaidForPeriod } from '@/lib/loanPayments';
