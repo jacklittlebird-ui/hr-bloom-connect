@@ -92,6 +92,10 @@ const LINKED_LISTS: Partial<Record<ListKey, ListKey>> = {
   ports_security_renew: 'security_airports_renew',
   security_airports_issue: 'ports_security_issue',
   ports_security_issue: 'security_airports_issue',
+  security_cairo_renew: 'port_authority_renew',
+  port_authority_renew: 'security_cairo_renew',
+  security_cairo_issue: 'port_authority_issue',
+  port_authority_issue: 'security_cairo_issue',
 };
 
 const SECTIONS: { key: string; ar: string; en: string; icon: React.ElementType; lists: { key: ListKey; ar: string; en: string }[] }[] = [
