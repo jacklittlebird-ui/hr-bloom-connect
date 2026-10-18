@@ -145,21 +145,23 @@ const Permits = () => {
     }
 
     try {
-    const [stationsRes, deptsRes, allEntries] = await Promise.all([
-      supabase.from('stations').select('id, name_ar, name_en'),
-      supabase.from('departments').select('id, name_ar, name_en'),
-      fetchAllPages<PermitEntry>((from, to) =>
-        supabase.from('permit_list_entries')
-          .select('id, employee_id, list_key, status, permit_no, created_at')
-          .order('created_at', { ascending: false })
-          .order('id')
-          .range(from, to)),
-    ]);
+      const [stationsRes, deptsRes, allEntries] = await Promise.all([
+        supabase.from('stations').select('id, name_ar, name_en'),
+        supabase.from('departments').select('id, name_ar, name_en'),
+        fetchAllPages<PermitEntry>(async (from, to) => {
+          const { data, error } = await supabase.from('permit_list_entries')
+            .select('id, employee_id, list_key, status, permit_no, created_at')
+            .order('created_at', { ascending: false })
+            .order('id')
+            .range(from, to);
+          return { data: data as PermitEntry[] | null, error };
+        }),
+      ]);
 
-    setStationMap(new Map(((stationsRes.data || []) as any[]).map(s => [s.id, ar ? s.name_ar : s.name_en])));
-    setDeptMap(new Map(((deptsRes.data || []) as any[]).map(d => [d.id, ar ? d.name_ar : d.name_en])));
-    setEmployees(all);
-    setEntries(allEntries);
+      setStationMap(new Map(((stationsRes.data || []) as any[]).map(s => [s.id, ar ? s.name_ar : s.name_en])));
+      setDeptMap(new Map(((deptsRes.data || []) as any[]).map(d => [d.id, ar ? d.name_ar : d.name_en])));
+      setEmployees(all);
+      setEntries(allEntries);
     } catch {
       toast.error(ar ? 'تعذر تحميل قائمة التصاريح كاملة، يرجى إعادة المحاولة' : 'Unable to load the complete permit list. Please retry.');
     } finally {
