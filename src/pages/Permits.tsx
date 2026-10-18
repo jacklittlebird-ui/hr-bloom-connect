@@ -19,6 +19,7 @@ import { ChevronsUpDown, Plus, Search, ShieldCheck, Trash2, Anchor, Ship, FileSp
 import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
 import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter, exportSecurityAirportsIssueLetter, exportSecurityAirportsRenewalLetter, exportPortsSecurityIssueLetter, exportPortsSecurityRenewalLetter } from '@/lib/permitRenewalLetter';
 import { exportPortsSecuritySheet, exportPortsSecurityRenewalSheet } from '@/lib/permitPortsSecurityExcel';
+import { fetchAllPages } from '@/lib/fetchAllPages';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -143,17 +144,27 @@ const Permits = () => {
       if (!data || data.length < 1000) break;
     }
 
-    const [stationsRes, deptsRes, entriesRes] = await Promise.all([
+    try {
+    const [stationsRes, deptsRes, allEntries] = await Promise.all([
       supabase.from('stations').select('id, name_ar, name_en'),
       supabase.from('departments').select('id, name_ar, name_en'),
-      supabase.from('permit_list_entries').select('id, employee_id, list_key, status, permit_no, created_at').order('created_at', { ascending: false }),
+      fetchAllPages<PermitEntry>((from, to) =>
+        supabase.from('permit_list_entries')
+          .select('id, employee_id, list_key, status, permit_no, created_at')
+          .order('created_at', { ascending: false })
+          .order('id')
+          .range(from, to)),
     ]);
 
     setStationMap(new Map(((stationsRes.data || []) as any[]).map(s => [s.id, ar ? s.name_ar : s.name_en])));
     setDeptMap(new Map(((deptsRes.data || []) as any[]).map(d => [d.id, ar ? d.name_ar : d.name_en])));
     setEmployees(all);
-    setEntries(((entriesRes.data || []) as any[]) as PermitEntry[]);
-    setLoading(false);
+    setEntries(allEntries);
+    } catch {
+      toast.error(ar ? 'تعذر تحميل قائمة التصاريح كاملة، يرجى إعادة المحاولة' : 'Unable to load the complete permit list. Please retry.');
+    } finally {
+      setLoading(false);
+    }
   }, [ar]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
