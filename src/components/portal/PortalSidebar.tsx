@@ -39,7 +39,7 @@ const sidebarGroups: SidebarGroup[] = [
     items: [
       { key: 'salary', labelAr: 'الراتب', labelEn: 'Salary', icon: Wallet },
       { key: 'eid-bonuses', labelAr: 'العيديات', labelEn: 'Eid Bonuses', icon: Gift },
-      { key: 'bonuses', labelAr: 'المكافآت', labelEn: 'Bonuses', icon: Award },
+      { key: 'bonuses', labelAr: 'مكافآت وبدل إجازات سنوية وعطلات رسمية', labelEn: 'Bonuses & Annual/Official Holiday Allowance', icon: Award },
       { key: 'loans', labelAr: 'قروضي', labelEn: 'My Loans', icon: HandCoins },
     ],
   },
