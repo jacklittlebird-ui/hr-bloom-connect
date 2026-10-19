@@ -8,6 +8,8 @@ globalThis.ResizeObserver = class {
   unobserve() {}
   disconnect() {}
 } as any;
+// jsdom does not implement scrollIntoView, which cmdk calls on the active option.
+Element.prototype.scrollIntoView = function () {};
 
 const { tableData } = vi.hoisted(() => ({
   tableData: {
