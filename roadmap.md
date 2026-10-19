@@ -7,3 +7,4 @@
 
 - [x] Replace the mutual termination template with a dynamic two-page A4 version using the uploaded Ministry of Labour logo.
 - [x] Add a dynamic A4 final settlement tab based on the uploaded document.
+- [x] Add a multi-select Employment Status filter to the Training Qualification Record report, with bilingual labels and tests (4 passed; build OK).

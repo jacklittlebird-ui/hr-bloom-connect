@@ -13,6 +13,17 @@ import { toast } from '@/hooks/use-toast';
 
 const DEPT_CODES = ['PS', 'OO', 'LC', 'IA', 'LL', 'RO', 'SC', 'AD', 'AC', 'WO', 'TR'];
 
+const EMPLOYMENT_STATUS_LABELS: Record<string, { ar: string; en: string }> = {
+  active: { ar: 'نشط', en: 'Active' },
+  inactive: { ar: 'غير نشط', en: 'Inactive' },
+  suspended: { ar: 'موقوف', en: 'Suspended' },
+  external_stations: { ar: 'محطات خارجية', en: 'External Stations' },
+  absent: { ar: 'منقطع', en: 'Absent' },
+  pending_hire: { ar: 'تحت التعيين', en: 'Pending Hire' },
+  resigned: { ar: 'مستقيل', en: 'Resigned' },
+  under_resignation: { ar: 'تحت الاستقالة', en: 'Under Resignation' },
+};
+
 interface EmployeeTrainingGroup {
   employeeId: string;
   employeeName: string;
@@ -136,6 +147,7 @@ export const TrainingQualificationReport = () => {
   const [filterCourses, setFilterCourses] = useState<string[]>([]);
   const [filterEmployees, setFilterEmployees] = useState<string[]>([]);
   const [filterTitles, setFilterTitles] = useState<string[]>([]);
+  const [filterStatuses, setFilterStatuses] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -155,7 +167,7 @@ export const TrainingQualificationReport = () => {
 
   const groupedData = useMemo(() => {
     const empMap = new Map<string, EmployeeTrainingGroup>();
-    const hasAnyFilter = filterStations.length > 0 || filterDepartments.length > 0 || filterCourses.length > 0 || filterEmployees.length > 0 || filterTitles.length > 0;
+    const hasAnyFilter = filterStations.length > 0 || filterDepartments.length > 0 || filterCourses.length > 0 || filterEmployees.length > 0 || filterTitles.length > 0 || filterStatuses.length > 0;
     if (!hasAnyFilter) return [];
 
     allRecords.forEach(r => {
@@ -167,6 +179,7 @@ export const TrainingQualificationReport = () => {
       if (filterCourses.length > 0 && !filterCourses.includes(r.course_id)) return;
       if (filterEmployees.length > 0 && !filterEmployees.includes(emp.id)) return;
       if (filterTitles.length > 0 && !filterTitles.some(t => t === (emp.jobTitleAr || '').trim() || t === (emp.jobTitleEn || '').trim())) return;
+      if (filterStatuses.length > 0 && !filterStatuses.includes(emp.status || 'active')) return;
 
       if (!empMap.has(emp.id)) {
         empMap.set(emp.id, {
@@ -194,7 +207,7 @@ export const TrainingQualificationReport = () => {
     });
 
     return [...empMap.values()].sort((a, b) => a.employeeName.localeCompare(b.employeeName, ar ? 'ar' : 'en'));
-  }, [allRecords, contextEmployees, filterStations, filterDepartments, filterCourses, filterEmployees, filterTitles, ar]);
+  }, [allRecords, contextEmployees, filterStations, filterDepartments, filterCourses, filterEmployees, filterTitles, filterStatuses, ar]);
 
   const getFilterTitle = () => {
     const joinNames = (ids: string[], list: { id: string; nameAr: string; nameEn: string }[]) =>
@@ -217,6 +230,9 @@ export const TrainingQualificationReport = () => {
       if (coursePart) parts.push(coursePart);
     }
     if (filterTitles.length) parts.push(filterTitles.join('، '));
+    if (filterStatuses.length) {
+      parts.push(filterStatuses.map(v => (ar ? EMPLOYMENT_STATUS_LABELS[v]?.ar : EMPLOYMENT_STATUS_LABELS[v]?.en) || v).join('، '));
+    }
     return parts.join(' - ') || '';
   };
 
@@ -224,6 +240,13 @@ export const TrainingQualificationReport = () => {
     value: e.id,
     label: `${e.employeeId ? e.employeeId + ' - ' : ''}${ar ? e.nameAr : e.nameEn}`,
   })), [contextEmployees, ar]);
+
+  const employmentStatusOptions = useMemo(() => {
+    const present = new Set(contextEmployees.map(e => (e.status || 'active').trim()).filter(Boolean));
+    return Object.entries(EMPLOYMENT_STATUS_LABELS)
+      .filter(([value]) => present.has(value))
+      .map(([value, l]) => ({ value, label: ar ? l.ar : l.en }));
+  }, [contextEmployees, ar]);
 
   const jobTitleOptions = useMemo(() => {
     const set = new Set<string>();
@@ -277,7 +300,7 @@ export const TrainingQualificationReport = () => {
 
   const filterTypeLabel = getFilterTitle();
 
-  const isFilterActive = filterStations.length > 0 || filterDepartments.length > 0 || filterCourses.length > 0 || filterEmployees.length > 0 || filterTitles.length > 0;
+  const isFilterActive = filterStations.length > 0 || filterDepartments.length > 0 || filterCourses.length > 0 || filterEmployees.length > 0 || filterTitles.length > 0 || filterStatuses.length > 0;
 
   const handleQualificationPrint = useCallback(() => {
     const logoUrl = `${window.location.origin}/images/company-logo.png`;
@@ -529,7 +552,7 @@ export const TrainingQualificationReport = () => {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
             {/* Station */}
             <MultiSelectFilter ar={ar} label={ar ? 'المحطة' : 'Station'} placeholder={ar ? 'الكل' : 'All'}
               options={stations.map(s => ({ value: s.id, label: ar ? s.nameAr : s.nameEn }))}
@@ -554,6 +577,11 @@ export const TrainingQualificationReport = () => {
             <MultiSelectFilter ar={ar} label={ar ? 'المسمى الوظيفي' : 'Job Title'} placeholder={ar ? 'الكل' : 'All'}
               options={jobTitleOptions}
               selected={filterTitles} onChange={setFilterTitles} />
+
+            {/* Employment Status */}
+            <MultiSelectFilter ar={ar} label={ar ? 'حالة التوظيف' : 'Employment Status'} placeholder={ar ? 'الكل' : 'All'}
+              options={employmentStatusOptions}
+              selected={filterStatuses} onChange={setFilterStatuses} />
           </div>
         </CardContent>
       </Card>
