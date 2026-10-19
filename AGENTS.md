@@ -1,4 +1,5 @@
 # Project rules
+- Marriage leave day counting is shared through `src/lib/leaveDays.ts` and enforced by a database trigger on insert/date/type/day edits; this keeps all entry paths consistent and prevents bypassing validation.
 
 - Permit lists load all pages through `fetchAllPages` with stable ordering and reject partial failures — combined linked lists can exceed the Data API row limit.
 
