@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Enforce marriage leave maximum excluding Fridays across creation/editing and database, show employee notice, and verify tests.
 
 - [x] Normalize requested Arabic job titles and spelling in primary and saved business records, then verify no variants remain.
 
