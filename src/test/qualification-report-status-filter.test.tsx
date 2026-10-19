@@ -2,6 +2,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import React from 'react';
 
+// jsdom has no ResizeObserver; cmdk's command list needs one to mount.
+globalThis.ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as any;
+
 const { tableData } = vi.hoisted(() => ({
   tableData: {
     stations: [{ id: 'st1', name_ar: 'القاهرة', name_en: 'Cairo' }],
