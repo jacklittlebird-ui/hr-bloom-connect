@@ -227,9 +227,12 @@ export const TrainingQualificationReport = () => {
 
   const jobTitleOptions = useMemo(() => {
     const set = new Set<string>();
-    contextEmployees.forEach(e => { const t = (e.jobTitleAr || '').trim(); if (t) set.add(t); });
-    return [...set].sort((a, b) => a.localeCompare(b, 'ar')).map(t => ({ value: t, label: t }));
-  }, [contextEmployees]);
+    contextEmployees.forEach(e => {
+      const t = (ar ? (e.jobTitleAr || '') : (e.jobTitleEn || '')).trim();
+      if (t) set.add(t);
+    });
+    return [...set].sort((a, b) => a.localeCompare(b, ar ? 'ar' : 'en')).map(t => ({ value: t, label: t }));
+  }, [contextEmployees, ar]);
 
   const exportColumns = [
     { headerAr: 'اسم الموظف', headerEn: 'Employee Name', key: 'employeeName' },
