@@ -144,6 +144,7 @@ const leaveTypeMap: Record<string, { ar: string; en: string }> = {
   sick: { ar: 'مرضية', en: 'Sick' },
   casual: { ar: 'عارضة', en: 'Casual' },
   unpaid: { ar: 'بدون راتب', en: 'Unpaid' },
+  marriage: { ar: 'زواج', en: 'Marriage' },
 };
 
 const permTypeMap: Record<string, { ar: string; en: string }> = {
@@ -553,7 +554,8 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const getLeaveRequests = useCallback((empId: string) => leaveRequests.filter(r => r.employeeId === empId), [leaveRequests]);
   
   const addLeaveRequest = useCallback(async (req: Omit<LeaveRequest, 'id' | 'status'>) => {
-    const leaveType = Object.entries(leaveTypeMap).find(([, v]) => v.ar === req.typeAr || v.en === req.typeEn)?.[0] || 'annual';
+    const leaveType = Object.entries(leaveTypeMap).find(([, v]) => v.ar === req.typeAr || v.en === req.typeEn)?.[0];
+    if (!leaveType) throw new Error('Unknown leave type');
     const { data: inserted, error } = await supabase.from('leave_requests').insert({
       employee_id: req.employeeId,
       leave_type: leaveType,
