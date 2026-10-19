@@ -146,7 +146,7 @@ describe('Qualification Record — Employment Status filter', () => {
     await flush();
     expect(screen.getByText('Emp Resigned')).toBeInTheDocument();
 
-    openStatusDropdown();
+    // The dropdown stays open after selecting, so clear straight from it.
     fireEvent.click(screen.getByRole('button', { name: /^Clear$/i }));
     await flush();
 
