@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Enforce marriage leave maximum excluding Fridays across creation/editing and database, show employee notice, and verify tests (26 passed).
+- [ ] Verify marriage leave submission/readback in the live employee portal — blocked until the user signs in; no managed auth account matches the requesting user.
 
 - [x] Normalize requested Arabic job titles and spelling in primary and saved business records, then verify no variants remain.
 

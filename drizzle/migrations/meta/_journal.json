@@ -113,6 +113,13 @@
       "when": 1792064152028,
       "tag": "0015_unpaid_leave_deduct_on_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792401452203,
+      "tag": "0016_enforce_marriage_leave_seven_days_excluding_fridays",
+      "breakpoints": true
     }
   ]
 }

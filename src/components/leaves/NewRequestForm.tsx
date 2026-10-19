@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { calculateLeaveDays, isValidMarriageLeave, MARRIAGE_LEAVE_NOTICE_AR, MARRIAGE_LEAVE_NOTICE_EN } from '@/lib/leaveDays';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,7 +89,7 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
   const [reason, setReason] = useState('');
   const [status] = useState('pending');
 
-  const calculateDays = () => (startDate && endDate ? differenceInDays(endDate, startDate) + 1 : 0);
+  const calculateDays = () => calculateLeaveDays(leaveType, startDate, endDate);
 
   const isPrivilegedUser = user?.role === 'admin' || (user?.email || '').toLowerCase() === 'hr@linkagency.com';
 
@@ -99,9 +100,8 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
       return;
     }
 
-    // Marriage leave: max 8 days, no balance deduction
-    if (leaveType === 'marriage' && calculateDays() > 8) {
-      toast({ title: t('leaves.form.error'), description: isRTL ? 'إجازة الزواج بحد أقصى 8 أيام' : 'Marriage leave is limited to a maximum of 8 days', variant: 'destructive' });
+    if (leaveType === 'marriage' && !isValidMarriageLeave(startDate, endDate)) {
+      toast({ title: t('leaves.form.error'), description: isRTL ? MARRIAGE_LEAVE_NOTICE_AR : MARRIAGE_LEAVE_NOTICE_EN, variant: 'destructive' });
       return;
     }
 
@@ -213,6 +213,11 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
         <DatePickerField label={t('leaves.form.startDate')} date={startDate} onSelect={setStartDate} />
         <DatePickerField label={t('leaves.form.endDate')} date={endDate} onSelect={setEndDate} disableBefore={startDate} />
       </div>
+      {leaveType === 'marriage' && (
+        <p role="status" className="text-sm text-primary bg-primary/10 border border-primary/20 rounded-md p-3 whitespace-pre-wrap break-words">
+          {isRTL ? MARRIAGE_LEAVE_NOTICE_AR : MARRIAGE_LEAVE_NOTICE_EN}
+        </p>
+      )}
       <div className="space-y-2">
         <Label>{t('leaves.form.reason')} <span className="text-destructive">*</span></Label>
         <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('leaves.form.reasonPlaceholder')} rows={4} />

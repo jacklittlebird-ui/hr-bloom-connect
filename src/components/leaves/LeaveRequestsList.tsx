@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { calculateLeaveDays, isValidMarriageLeave, MARRIAGE_LEAVE_NOTICE_AR, MARRIAGE_LEAVE_NOTICE_EN } from '@/lib/leaveDays';
+import { toast } from 'sonner';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -77,7 +79,11 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
 
   const handleSaveEdit = () => {
     if (editData && onEdit) {
-      onEdit(editData);
+      if (editData.leaveType === 'marriage' && !isValidMarriageLeave(editData.startDate, editData.endDate)) {
+        toast.error(language === 'ar' ? MARRIAGE_LEAVE_NOTICE_AR : MARRIAGE_LEAVE_NOTICE_EN);
+        return;
+      }
+      onEdit({ ...editData, days: editData.leaveType === 'marriage' ? calculateLeaveDays('marriage', editData.startDate, editData.endDate) : editData.days });
       setEditData(null);
     }
   };
@@ -225,7 +231,8 @@ export const LeaveRequestsList = ({ requests, onDelete, onEdit }: LeaveRequestsL
               </div>
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'عدد الأيام' : 'Days'}</Label>
-                <Input type="number" step="0.5" min="0.5" value={editData.days} onChange={(e) => setEditData({ ...editData, days: parseFloat(e.target.value) || 0 })} />
+                <Input type="number" step="0.5" min="0.5" readOnly={editData.leaveType === 'marriage'} value={editData.leaveType === 'marriage' ? calculateLeaveDays('marriage', editData.startDate, editData.endDate) : editData.days} onChange={(e) => setEditData({ ...editData, days: parseFloat(e.target.value) || 0 })} />
+                {editData.leaveType === 'marriage' && <p role="status" className="text-sm text-primary whitespace-pre-wrap break-words">{language === 'ar' ? MARRIAGE_LEAVE_NOTICE_AR : MARRIAGE_LEAVE_NOTICE_EN}</p>}
               </div>
               <div className="space-y-2">
                 <Label>{language === 'ar' ? 'شهر الخصم' : 'Deduction Month'}</Label>

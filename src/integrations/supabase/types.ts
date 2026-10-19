@@ -3961,6 +3961,10 @@ export type Database = {
         Args: { p_module: string; p_resource_id?: string }
         Returns: undefined
       }
+      marriage_leave_days: {
+        Args: { p_end: string; p_start: string }
+        Returns: number
+      }
       notify_employee_and_admins: {
         Args: {
           p_desc_ar?: string

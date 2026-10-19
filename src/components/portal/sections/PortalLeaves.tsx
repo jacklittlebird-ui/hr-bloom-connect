@@ -1,4 +1,5 @@
 import { getUnpaidDeductionMonth } from '@/lib/violationPenalty';
+import { calculateLeaveDays, isValidMarriageLeave, MARRIAGE_LEAVE_NOTICE_AR, MARRIAGE_LEAVE_NOTICE_EN } from '@/lib/leaveDays';
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePortalData } from '@/contexts/PortalDataContext';
@@ -129,7 +130,7 @@ export const PortalLeaves = () => {
     { value: 'regular', ar: 'أخرى', en: 'Other' },
   ];
 
-  const calculateDays = () => (leaveStartDate && leaveEndDate ? differenceInDays(leaveEndDate, leaveStartDate) + 1 : 0);
+  const calculateDays = () => calculateLeaveDays(leaveType, leaveStartDate, leaveEndDate);
 
   const handleSubmitLeave = async () => {
     if (!leaveType || !leaveStartDate || !leaveEndDate || !leaveReason) {
@@ -148,9 +149,8 @@ export const PortalLeaves = () => {
       return;
     }
 
-    // Marriage leave: max 8 days, no balance deduction
-    if (leaveType === 'marriage' && calculateDays() > 8) {
-      toast.error(ar ? 'إجازة الزواج بحد أقصى 8 أيام' : 'Marriage leave is limited to a maximum of 8 days');
+    if (leaveType === 'marriage' && !isValidMarriageLeave(leaveStartDate, leaveEndDate)) {
+      toast.error(ar ? MARRIAGE_LEAVE_NOTICE_AR : MARRIAGE_LEAVE_NOTICE_EN);
       return;
     }
 
@@ -577,6 +577,11 @@ export const PortalLeaves = () => {
                 </Popover>
               </div>
             </div>
+            {leaveType === 'marriage' && (
+              <p role="status" className="text-sm text-primary bg-primary/10 border border-primary/20 rounded-md p-3 whitespace-pre-wrap break-words">
+                {ar ? MARRIAGE_LEAVE_NOTICE_AR : MARRIAGE_LEAVE_NOTICE_EN}
+              </p>
+            )}
             <div className="space-y-2">
               <Label>{ar ? 'السبب' : 'Reason'} <span className="text-destructive">*</span></Label>
               <Textarea value={leaveReason} onChange={e => setLeaveReason(e.target.value)} placeholder={ar ? 'أدخل سبب الإجازة' : 'Enter leave reason'} rows={4} />
