@@ -4,6 +4,7 @@ export const employeeFormPdfFilename = (formName: string, employeeName: string) 
 };
 
 export async function downloadEmployeeFormPdf(source: HTMLIFrameElement, filename: string) {
+  const insuranceForm = source.title === 'form-01' || source.title === 'form-06';
   const sourceDoc = source.contentDocument;
   if (!sourceDoc || !sourceDoc.querySelector('.sheet, .page')) throw new Error('Form not ready');
   await sourceDoc.fonts.ready;
@@ -33,7 +34,9 @@ export async function downloadEmployeeFormPdf(source: HTMLIFrameElement, filenam
     for (const [index, page] of pages.entries()) {
       page.style.margin = '0 auto';
       page.style.boxShadow = 'none';
-      const canvas = await html2canvas(page, { scale: 2, useCORS: true, logging: false, windowWidth: 794, scrollX: 0, scrollY: 0 });
+      // Native browser text layout preserves RTL baselines and digit-box alignment
+      // in the insurance forms; the canvas text renderer shifts these glyphs.
+      const canvas = await html2canvas(page, { scale: 2, useCORS: true, logging: false, windowWidth: 794, scrollX: 0, scrollY: 0, foreignObjectRendering: insuranceForm });
       const widthMm = page.getBoundingClientRect().width * 25.4 / 96;
       const heightMm = canvas.height / canvas.width * widthMm;
       const scale = Math.min(1, 210 / widthMm, 297 / heightMm);
