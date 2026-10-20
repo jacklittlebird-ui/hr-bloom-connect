@@ -21,6 +21,15 @@ async function renderInsurancePage(page: HTMLElement): Promise<HTMLCanvasElement
     image.src = canvas.toDataURL('image/png');
   }
   const styles = Array.from(doc.querySelectorAll('style')).map(style => style.textContent).join('\n');
+  // The SVG has no body element: retain the body's inherited font and line height.
+  const bodyStyle = doc.defaultView?.getComputedStyle(doc.body);
+  if (!bodyStyle) throw new Error('Form styles unavailable');
+  clone.style.fontFamily = bodyStyle.fontFamily;
+  clone.style.fontSize = bodyStyle.fontSize;
+  clone.style.fontWeight = bodyStyle.fontWeight;
+  clone.style.lineHeight = bodyStyle.lineHeight;
+  clone.style.color = bodyStyle.color;
+  clone.style.direction = bodyStyle.direction;
   const markup = new XMLSerializer().serializeToString(clone);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="0 0 ${width} ${height}"><foreignObject x="0" y="0" width="${width}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" dir="rtl"><style>${styles}</style>${markup}</div></foreignObject></svg>`;
   const image = new Image();
