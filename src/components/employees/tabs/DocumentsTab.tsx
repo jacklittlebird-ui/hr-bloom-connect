@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EmployeeFormDownload } from '@/components/documents/EmployeeFormDownload';
 
 const Form01 = lazy(() => import('@/components/documents/Form01').then(m => ({ default: m.Form01 })));
 const Form06 = lazy(() => import('@/components/documents/Form06').then(m => ({ default: m.Form06 })));
@@ -41,11 +42,13 @@ export const DocumentsTab = ({ employee }: DocumentsTabProps) => {
             <TabsTrigger key={t.key} value={t.key}>{ar ? t.ar : t.en}</TabsTrigger>
           ))}
         </TabsList>
-        {DOC_TABS.map(({ key, Comp }) => (
+        {DOC_TABS.map(({ key, ar: formNameAr, en: formNameEn, Comp }) => (
           <TabsContent key={key} value={key}>
+            <EmployeeFormDownload formName={ar ? formNameAr : formNameEn} employeeName={ar ? employee.nameAr : (employee.nameEn || employee.nameAr)}>
             <Suspense fallback={<div className="p-8 text-center text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</div>}>
               <Comp employee={employee} />
             </Suspense>
+            </EmployeeFormDownload>
           </TabsContent>
         ))}
       </Tabs>

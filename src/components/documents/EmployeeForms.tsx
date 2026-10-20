@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Check, ChevronsUpDown, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { EmployeeFormDownload } from '@/components/documents/EmployeeFormDownload';
 
 const Form01 = lazy(() => import('@/components/documents/Form01').then(m => ({ default: m.Form01 })));
 const Form06 = lazy(() => import('@/components/documents/Form06').then(m => ({ default: m.Form06 })));
@@ -117,11 +118,13 @@ export const EmployeeForms = () => {
               <TabsTrigger key={t.key} value={t.key}>{ar ? t.ar : t.en}</TabsTrigger>
             ))}
           </TabsList>
-          {DOC_TABS.map(({ key, Comp }) => (
+          {DOC_TABS.map(({ key, ar: formNameAr, en: formNameEn, Comp }) => (
             <TabsContent key={key} value={key}>
+              <EmployeeFormDownload formName={ar ? formNameAr : formNameEn} employeeName={ar ? employee.nameAr : (employee.nameEn || employee.nameAr)}>
               <Suspense fallback={<div className="p-8 text-center text-muted-foreground">{ar ? 'جاري التحميل...' : 'Loading...'}</div>}>
                 <Comp key={employee.id} employee={employee} />
               </Suspense>
+              </EmployeeFormDownload>
             </TabsContent>
           ))}
         </Tabs>
