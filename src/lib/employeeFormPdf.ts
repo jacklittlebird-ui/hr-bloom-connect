@@ -3,6 +3,38 @@ export const employeeFormPdfFilename = (formName: string, employeeName: string) 
   return `${safe(formName)} - ${safe(employeeName)}.pdf`;
 };
 
+async function renderInsurancePage(page: HTMLElement): Promise<HTMLCanvasElement> {
+  const doc = page.ownerDocument;
+  const width = Math.ceil(page.getBoundingClientRect().width);
+  const height = Math.ceil(page.getBoundingClientRect().height);
+  const clone = page.cloneNode(true) as HTMLElement;
+  clone.style.margin = '0';
+  for (const image of Array.from(clone.querySelectorAll('img'))) {
+    const original = Array.from(page.querySelectorAll('img'))[Array.from(clone.querySelectorAll('img')).indexOf(image)];
+    if (!original) continue;
+    const canvas = doc.createElement('canvas');
+    canvas.width = original.naturalWidth;
+    canvas.height = original.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Image renderer unavailable');
+    ctx.drawImage(original, 0, 0);
+    image.src = canvas.toDataURL('image/png');
+  }
+  const styles = Array.from(doc.querySelectorAll('style')).map(style => style.textContent).join('\n');
+  const markup = new XMLSerializer().serializeToString(clone);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width * 2}" height="${height * 2}" viewBox="0 0 ${width} ${height}"><foreignObject x="0" y="0" width="${width}" height="${height}"><div xmlns="http://www.w3.org/1999/xhtml" dir="rtl"><style>${styles}</style>${markup}</div></foreignObject></svg>`;
+  const image = new Image();
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  await image.decode();
+  const canvas = document.createElement('canvas');
+  canvas.width = width * 2;
+  canvas.height = height * 2;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Page renderer unavailable');
+  ctx.drawImage(image, 0, 0);
+  return canvas;
+}
+
 export async function downloadEmployeeFormPdf(source: HTMLIFrameElement, filename: string) {
   const insuranceForm = source.title === 'form-01' || source.title === 'form-06';
   const sourceDoc = source.contentDocument;
@@ -36,7 +68,9 @@ export async function downloadEmployeeFormPdf(source: HTMLIFrameElement, filenam
       page.style.boxShadow = 'none';
       // Native browser text layout preserves RTL baselines and digit-box alignment
       // in the insurance forms; the canvas text renderer shifts these glyphs.
-      const canvas = await html2canvas(page, { scale: 2, useCORS: true, logging: false, windowWidth: 794, scrollX: 0, scrollY: 0, foreignObjectRendering: insuranceForm });
+      const canvas = insuranceForm
+        ? await renderInsurancePage(page)
+        : await html2canvas(page, { scale: 2, useCORS: true, logging: false, windowWidth: 794, scrollX: 0, scrollY: 0 });
       const widthMm = page.getBoundingClientRect().width * 25.4 / 96;
       const heightMm = canvas.height / canvas.width * widthMm;
       const scale = Math.min(1, 210 / widthMm, 297 / heightMm);
