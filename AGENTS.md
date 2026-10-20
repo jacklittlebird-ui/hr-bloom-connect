@@ -1,5 +1,6 @@
 # Project rules
 - Employee form PDF downloads use a shared wrapper around the rendered preview in both document entry points; export each existing page separately to preserve current values and pagination without duplicating template logic.
+- Insurance Form 1 and Form 6 PDF exports use native browser text layout through foreignObject rendering to keep Arabic text baselines and boxed digits aligned with their previews.
 - Marriage leave day counting is shared through `src/lib/leaveDays.ts` and enforced by a database trigger on insert/date/type/day edits; this keeps all entry paths consistent and prevents bypassing validation.
 
 - Permit lists load all pages through `fetchAllPages` with stable ordering and reject partial failures — combined linked lists can exceed the Data API row limit.
