@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Add direct PDF downloads for every employee form in Documents and employee profiles, named after the form and employee; verify actual downloads.
 - [x] Ensure employee marriage leave persists as marriage, never falls back to annual, and verify persistence regression tests (26 tests passed; build OK).
 - [x] Enforce marriage leave maximum excluding Fridays across creation/editing and database, show employee notice, and verify tests (26 passed).
 - [ ] Verify marriage leave submission/readback in the live employee portal — blocked until the user signs in; no managed auth account matches the requesting user.
