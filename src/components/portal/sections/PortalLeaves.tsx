@@ -534,7 +534,7 @@ export const PortalLeaves = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{ar ? 'نوع الإجازة' : 'Leave Type'} <span className="text-destructive">*</span></Label>
-                <Select value={leaveType} onValueChange={setLeaveType}>
+                <Select value={leaveType} onValueChange={(v) => { setLeaveType(v); if (v === 'marriage' && leaveStartDate) setLeaveEndDate(marriageLeaveEndDate(leaveStartDate)); }}>
                   <SelectTrigger><SelectValue placeholder={ar ? 'اختر النوع' : 'Select type'} /></SelectTrigger>
                   <SelectContent>
                     {availableLeaveTypes.map(t => <SelectItem key={t.value} value={t.value}>{ar ? t.ar : t.en}</SelectItem>)}

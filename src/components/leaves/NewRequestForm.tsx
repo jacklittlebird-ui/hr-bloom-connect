@@ -195,7 +195,7 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label>{t('leaves.form.leaveType')} <span className="text-destructive">*</span></Label>
-          <Select value={leaveType} onValueChange={setLeaveType}>
+          <Select value={leaveType} onValueChange={(v) => { setLeaveType(v); if (v === 'marriage' && startDate) setEndDate(marriageLeaveEndDate(startDate)); }}>
             <SelectTrigger><SelectValue placeholder={t('leaves.form.selectType')} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="annual">{t('leaves.types.annual')}</SelectItem>
