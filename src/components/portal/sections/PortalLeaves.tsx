@@ -1,5 +1,5 @@
 import { getUnpaidDeductionMonth } from '@/lib/violationPenalty';
-import { calculateLeaveDays, isValidMarriageLeave, MARRIAGE_LEAVE_NOTICE_AR, MARRIAGE_LEAVE_NOTICE_EN } from '@/lib/leaveDays';
+import { calculateLeaveDays, isValidMarriageLeave, marriageLeaveEndDate, MARRIAGE_LEAVE_NOTICE_AR, MARRIAGE_LEAVE_NOTICE_EN } from '@/lib/leaveDays';
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePortalData } from '@/contexts/PortalDataContext';
@@ -558,7 +558,7 @@ export const PortalLeaves = () => {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 z-50" align="start">
-                    <CalendarComponent mode="single" selected={leaveStartDate} onSelect={setLeaveStartDate} initialFocus />
+                    <CalendarComponent mode="single" selected={leaveStartDate} onSelect={(d) => { setLeaveStartDate(d); if (d && leaveType === 'marriage') setLeaveEndDate(marriageLeaveEndDate(d)); }} initialFocus />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -580,6 +580,7 @@ export const PortalLeaves = () => {
             {leaveType === 'marriage' && (
               <p role="status" className="text-sm text-primary bg-primary/10 border border-primary/20 rounded-md p-3 whitespace-pre-wrap break-words">
                 {ar ? MARRIAGE_LEAVE_NOTICE_AR : MARRIAGE_LEAVE_NOTICE_EN}
+                {leaveStartDate && leaveEndDate && (ar ? `\nعدد الأيام المحتسبة: ${calculateDays()} (الجمعة مستبعدة)` : `\nCounted days: ${calculateDays()} (Fridays excluded)`)}
               </p>
             )}
             <div className="space-y-2">

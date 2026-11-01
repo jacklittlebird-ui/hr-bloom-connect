@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { calculateLeaveDays, isValidMarriageLeave, MARRIAGE_LEAVE_NOTICE_AR, MARRIAGE_LEAVE_NOTICE_EN } from '@/lib/leaveDays';
+import { calculateLeaveDays, isValidMarriageLeave, marriageLeaveEndDate, MARRIAGE_LEAVE_NOTICE_AR, MARRIAGE_LEAVE_NOTICE_EN } from '@/lib/leaveDays';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -210,12 +210,13 @@ const LeaveForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
           <Label>{t('leaves.form.totalDays')}</Label>
           <Input value={calculateDays()} readOnly className="bg-muted" />
         </div>
-        <DatePickerField label={t('leaves.form.startDate')} date={startDate} onSelect={setStartDate} />
+        <DatePickerField label={t('leaves.form.startDate')} date={startDate} onSelect={(d) => { setStartDate(d); if (d && leaveType === 'marriage') setEndDate(marriageLeaveEndDate(d)); }} />
         <DatePickerField label={t('leaves.form.endDate')} date={endDate} onSelect={setEndDate} disableBefore={startDate} />
       </div>
       {leaveType === 'marriage' && (
         <p role="status" className="text-sm text-primary bg-primary/10 border border-primary/20 rounded-md p-3 whitespace-pre-wrap break-words">
           {isRTL ? MARRIAGE_LEAVE_NOTICE_AR : MARRIAGE_LEAVE_NOTICE_EN}
+          {startDate && endDate && (isRTL ? `\nعدد الأيام المحتسبة: ${calculateDays()} (الجمعة مستبعدة)` : `\nCounted days: ${calculateDays()} (Fridays excluded)`)}
         </p>
       )}
       <div className="space-y-2">
@@ -402,7 +403,7 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
           </Select>
         </div>
         <div className="hidden md:block" />
-        <DatePickerField label={ar ? 'تاريخ البداية' : 'Start Date'} date={startDate} onSelect={setStartDate} />
+        <DatePickerField label={ar ? 'تاريخ البداية' : 'Start Date'} date={startDate} onSelect={(d) => { setStartDate(d); if (d && leaveType === 'marriage') setEndDate(marriageLeaveEndDate(d)); }} />
         <DatePickerField label={ar ? 'تاريخ النهاية' : 'End Date'} date={endDate} onSelect={setEndDate} />
         {missionType === 'other' && (
           <>

@@ -1,8 +1,8 @@
-import { differenceInCalendarDays, getDay, parseISO } from 'date-fns';
+import { addDays, differenceInCalendarDays, getDay, parseISO } from 'date-fns';
 
 export const MARRIAGE_LEAVE_MAX_DAYS = 7;
-export const MARRIAGE_LEAVE_NOTICE_AR = 'أقصى إجازة مسموح بها للزواج هي 7 أيام، ولا تخصم من رصيد الإجازات، ولا يحتسب يوم الجمعة ضمن الإجازة.';
-export const MARRIAGE_LEAVE_NOTICE_EN = 'Marriage leave is limited to 7 days, does not deduct from your leave balance, and excludes Fridays.';
+export const MARRIAGE_LEAVE_NOTICE_AR = 'يحق لك 7 أيام إجازة زواج لا تخصم من رصيد الإجازات، ولا يحتسب يوم الجمعة، فتمتد الإجازة يومًا إضافيًا إذا تضمنت جمعة.';
+export const MARRIAGE_LEAVE_NOTICE_EN = 'You are entitled to 7 days of marriage leave, not deducted from your balance. Fridays are not counted, so the leave extends by one day when it includes a Friday.';
 
 /** Inclusive calendar days; marriage leave excludes every Friday. */
 export function calculateLeaveDays(type: string, start?: Date | string, end?: Date | string): number {
@@ -20,4 +20,15 @@ export function calculateLeaveDays(type: string, start?: Date | string, end?: Da
 export function isValidMarriageLeave(start?: Date | string, end?: Date | string): boolean {
   const days = calculateLeaveDays('marriage', start, end);
   return days > 0 && days <= MARRIAGE_LEAVE_MAX_DAYS;
+}
+
+/** End date giving exactly MARRIAGE_LEAVE_MAX_DAYS counted days (Fridays skipped). */
+export function marriageLeaveEndDate(start: Date | string): Date {
+  let d = typeof start === 'string' ? parseISO(start) : new Date(start);
+  let counted = getDay(d) === 5 ? 0 : 1;
+  while (counted < MARRIAGE_LEAVE_MAX_DAYS) {
+    d = addDays(d, 1);
+    if (getDay(d) !== 5) counted++;
+  }
+  return d;
 }

@@ -26,3 +26,16 @@ describe('Marriage leave: seven days excluding Fridays', () => {
     }
   });
 });
+import { marriageLeaveEndDate as endFor, calculateLeaveDays as count } from '@/lib/leaveDays';
+describe('marriageLeaveEndDate', () => {
+  it('Saturday start ends next Saturday with 7 counted days', () => {
+    const end = endFor('2026-11-07');
+    expect(end.getDate()).toBe(14);
+    expect(count('marriage', '2026-11-07', end)).toBe(7);
+  });
+  it('Thursday start ends next Thursday with 7 counted days', () => {
+    const end = endFor('2026-11-05');
+    expect(end.getDate()).toBe(12);
+    expect(count('marriage', '2026-11-05', end)).toBe(7);
+  });
+});
