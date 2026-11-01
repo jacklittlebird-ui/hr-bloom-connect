@@ -26,7 +26,7 @@ export function VehicleRoster() {
         const rows = await fetchAllPages<any>((f, t) =>
           supabase
             .from('employees')
-            .select('id, employee_code, name_ar, name_en, status, station_id, departments(name_ar), stations(code)')
+            .select('id, employee_code, name_ar, name_en, status, station_id, job_title_ar, job_title_en, departments(name_ar), stations(code)')
             .order('employee_code')
             .range(f, t)
         );
@@ -37,6 +37,8 @@ export function VehicleRoster() {
           nameAr: r.name_ar,
           nameEn: r.name_en,
           department: r.departments?.name_ar || '-',
+          jobTitle: r.job_title_en || '',
+          jobTitleAr: r.job_title_ar || '',
           status: r.status,
           stationLocation: r.stations?.code || '',
         })) as Employee[];
