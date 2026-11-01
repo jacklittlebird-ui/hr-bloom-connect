@@ -403,7 +403,7 @@ const MissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
           </Select>
         </div>
         <div className="hidden md:block" />
-        <DatePickerField label={ar ? 'تاريخ البداية' : 'Start Date'} date={startDate} onSelect={(d) => { setStartDate(d); if (d && leaveType === 'marriage') setEndDate(marriageLeaveEndDate(d)); }} />
+        <DatePickerField label={ar ? 'تاريخ البداية' : 'Start Date'} date={startDate} onSelect={setStartDate} />
         <DatePickerField label={ar ? 'تاريخ النهاية' : 'End Date'} date={endDate} onSelect={setEndDate} />
         {missionType === 'other' && (
           <>
