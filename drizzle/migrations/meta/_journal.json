@@ -141,6 +141,13 @@
       "when": 1793392594366,
       "tag": "0019_roster_allowance_employee_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793618265209,
+      "tag": "0020_extra_days_allowances",
+      "breakpoints": true
     }
   ]
 }
