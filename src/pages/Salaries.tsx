@@ -22,6 +22,7 @@ const SalaryTransfer = lazyWithRetry(() => import('@/components/salaries/SalaryT
 const EidBonuses = lazyWithRetry(() => import('@/components/salaries/EidBonuses').then(m => ({ default: m.EidBonuses })));
 const BonusManagement = lazyWithRetry(() => import('@/components/salaries/BonusManagement').then(m => ({ default: m.BonusManagement })));
 const NonRecurringBonuses = lazyWithRetry(() => import('@/components/salaries/NonRecurringBonuses').then(m => ({ default: m.NonRecurringBonuses })));
+const ExtraDaysAllowance = lazyWithRetry(() => import('@/components/salaries/ExtraDaysAllowance').then(m => ({ default: m.ExtraDaysAllowance })));
 const PerformanceBonuses = lazyWithRetry(() => import('@/components/salaries/PerformanceBonuses').then(m => ({ default: m.PerformanceBonuses })));
 
 
@@ -40,7 +41,7 @@ const Salaries = () => {
   const allowedSubTabs = useMemo(() => {
     const ids: string[] = [];
     if (allowedModules.includes('salaries-performance-bonus')) ids.push('performance-bonus');
-    if (allowedModules.includes('salaries-non-recurring-bonus')) ids.push('non-recurring-bonuses');
+    if (allowedModules.includes('salaries-non-recurring-bonus')) { ids.push('non-recurring-bonuses'); ids.push('extra-days'); }
     return ids;
   }, [allowedModules]);
   const defaultTab = evalOnly ? (allowedSubTabs[0] ?? 'performance-bonus') : 'payroll';
@@ -69,6 +70,7 @@ const Salaries = () => {
     { id: 'bonus', label: isRTL ? 'المكافأة' : 'Bonus' },
     { id: 'performance-bonus', label: isRTL ? 'مكافآت دورية (تقييم)' : 'Periodic Bonus (Eval)' },
     { id: 'non-recurring-bonuses', label: isRTL ? 'مكافآت غير دورية' : 'Non-Recurring Bonuses' },
+    { id: 'extra-days', label: isRTL ? 'بدل عمل أيام إضافية' : 'Extra Days Allowance' },
   ];
 
   const tabs = evalOnly ? allTabs.filter(t => allowedSubTabs.includes(t.id)) : allTabs;
@@ -142,6 +144,9 @@ const Salaries = () => {
         )}
         {activeTab === 'non-recurring-bonuses' && (!evalOnly || allowedSubTabs.includes('non-recurring-bonuses')) && (
           <TabsContent value="non-recurring-bonuses"><Suspense fallback={<TabFallback />}><NonRecurringBonuses /></Suspense></TabsContent>
+        )}
+        {activeTab === 'extra-days' && (!evalOnly || allowedSubTabs.includes('extra-days')) && (
+          <TabsContent value="extra-days"><Suspense fallback={<TabFallback />}><ExtraDaysAllowance /></Suspense></TabsContent>
         )}
       </Tabs>
     </DashboardLayout>

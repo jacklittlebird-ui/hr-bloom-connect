@@ -1288,6 +1288,72 @@ export type Database = {
           },
         ]
       }
+      extra_days_allowances: {
+        Row: {
+          allowance_month: string | null
+          amount: number
+          bank_account_number: string | null
+          bank_id_number: string | null
+          batch_id: string
+          created_at: string
+          daily_rate: number
+          days: number
+          employee_code: string
+          employee_id: string | null
+          employee_name: string | null
+          id: string
+          net_salary: number
+          uploaded_by: string | null
+        }
+        Insert: {
+          allowance_month?: string | null
+          amount: number
+          bank_account_number?: string | null
+          bank_id_number?: string | null
+          batch_id: string
+          created_at?: string
+          daily_rate: number
+          days: number
+          employee_code: string
+          employee_id?: string | null
+          employee_name?: string | null
+          id?: string
+          net_salary: number
+          uploaded_by?: string | null
+        }
+        Update: {
+          allowance_month?: string | null
+          amount?: number
+          bank_account_number?: string | null
+          bank_id_number?: string | null
+          batch_id?: string
+          created_at?: string
+          daily_rate?: number
+          days?: number
+          employee_code?: string
+          employee_id?: string | null
+          employee_name?: string | null
+          id?: string
+          net_salary?: number
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extra_days_allowances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_limited_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "extra_days_allowances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gps_verification_logs: {
         Row: {
           created_at: string
