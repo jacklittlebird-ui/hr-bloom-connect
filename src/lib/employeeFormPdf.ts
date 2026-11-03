@@ -70,7 +70,7 @@ export async function downloadEmployeeFormPdf(source: HTMLIFrameElement, filenam
       if (image.src) await image.decode();
     }));
     const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
     const pages = Array.from(doc.querySelectorAll<HTMLElement>('.sheet, .page'));
     for (const [index, page] of pages.entries()) {
       page.style.margin = '0 auto';
@@ -85,7 +85,18 @@ export async function downloadEmployeeFormPdf(source: HTMLIFrameElement, filenam
       const scale = Math.min(1, 210 / widthMm, 297 / heightMm);
       const width = widthMm * scale;
       if (index > 0) pdf.addPage();
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', (210 - width) / 2, 0, width, heightMm * scale);
+      // JPEG on a white background is ~10x smaller than PNG at the same 2x resolution.
+      const flat = document.createElement('canvas');
+      flat.width = canvas.width;
+      flat.height = canvas.height;
+      const fctx = flat.getContext('2d');
+      if (!fctx) throw new Error('Page renderer unavailable');
+      fctx.fillStyle = '#ffffff';
+      fctx.fillRect(0, 0, flat.width, flat.height);
+      fctx.drawImage(canvas, 0, 0);
+      pdf.addImage(flat.toDataURL('image/jpeg', 0.85), 'JPEG', (210 - width) / 2, 0, width, heightMm * scale, undefined, 'FAST');
+      flat.width = 0;
+      flat.height = 0;
       canvas.width = 0;
       canvas.height = 0;
     }
