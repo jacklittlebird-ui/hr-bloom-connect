@@ -162,6 +162,13 @@
       "when": 1793796530981,
       "tag": "0022_loan_type",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793801365126,
+      "tag": "0023_loan_keep_custom_schedule",
+      "breakpoints": true
     }
   ]
 }
