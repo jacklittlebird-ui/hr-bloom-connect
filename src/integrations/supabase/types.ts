@@ -1672,6 +1672,7 @@ export type Database = {
           employee_id: string
           id: string
           installments_count: number
+          loan_type: string
           monthly_installment: number | null
           paid_count: number | null
           reason: string | null
@@ -1686,6 +1687,7 @@ export type Database = {
           employee_id: string
           id?: string
           installments_count?: number
+          loan_type?: string
           monthly_installment?: number | null
           paid_count?: number | null
           reason?: string | null
@@ -1700,6 +1702,7 @@ export type Database = {
           employee_id?: string
           id?: string
           installments_count?: number
+          loan_type?: string
           monthly_installment?: number | null
           paid_count?: number | null
           reason?: string | null
