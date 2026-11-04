@@ -148,6 +148,13 @@
       "when": 1793618265209,
       "tag": "0020_extra_days_allowances",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793792990415,
+      "tag": "0021_fix_loan_update_due_dates",
+      "breakpoints": true
     }
   ]
 }
