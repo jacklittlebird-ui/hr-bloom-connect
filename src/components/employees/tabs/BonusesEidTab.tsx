@@ -60,9 +60,22 @@ export const BonusesEidTab = ({ employee }: BonusesEidTabProps) => {
           .eq('employee_id', employee.id)
           .order('year', { ascending: false })
           .order('bonus_number', { ascending: false }),
+        supabase
+          .from('performance_bonus_records')
+          .select('id, year, quarter, amount, gross_salary, percentage, station_name, department_name, created_at')
+          .eq('employee_id', employee.id),
       ]);
+      const perfRes = arguments.length ? null : null;
+      void perfRes;
       setEidRecords(eidRes.data || []);
-      setBonusRecords(bonusRes.data || []);
+      const regular: BonusRecord[] = (bonusRes.data || []).map((r: any) => ({ ...r, amount: Number(r.amount || 0), gross_salary: Number(r.gross_salary || 0), percentage: Number(r.percentage || 0) }));
+      const perf: BonusRecord[] = ((perfData as any)?.data || []).map((r: any) => ({
+        id: r.id, year: r.year, bonus_number: 0, quarter: r.quarter, job_level: null,
+        amount: Number(r.amount || 0), gross_salary: Number(r.gross_salary || 0), percentage: Number(r.percentage || 0),
+        station_name: r.station_name, department_name: r.department_name, created_at: r.created_at,
+      }));
+      setBonusRecords([...regular, ...perf].sort((a, b) =>
+        String(b.year).localeCompare(String(a.year)) || String(b.quarter || '').localeCompare(String(a.quarter || '')) || b.bonus_number - a.bonus_number));
       setLoading(false);
     };
     fetchData();
