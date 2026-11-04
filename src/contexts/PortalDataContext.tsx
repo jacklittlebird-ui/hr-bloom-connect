@@ -388,7 +388,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           setPortalLoans(data.map((l: any) => ({
             id: l.id as any, employeeId: l.employee_id,
             typeAr: l.reason || 'قرض', typeEn: l.reason || 'Loan',
-            amount: l.amount, paid: (l.paid_count || 0) * (l.monthly_installment || 0),
+            amount: l.amount, paid: Math.max(0, (Number(l.amount) || 0) - (Number(l.remaining) || 0)),
             remaining: l.remaining || 0, installment: l.monthly_installment || 0,
             status: l.status === 'completed' ? 'paid' as const : 'active' as const,
           })));
