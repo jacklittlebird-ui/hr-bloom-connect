@@ -90,7 +90,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       installments: l.installments_count,
       monthlyPayment: l.monthly_installment || 0,
       paidInstallments: l.paid_count || 0,
-      paidAmount: (l.paid_count || 0) * (l.monthly_installment || 0),
+      paidAmount: Math.max(0, (Number(l.amount) || 0) - (Number(l.remaining) || 0)),
       remainingAmount: l.remaining || 0,
       startDate: l.start_date,
       status: l.status as Loan['status'],
