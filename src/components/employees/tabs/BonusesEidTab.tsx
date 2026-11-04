@@ -28,6 +28,7 @@ interface BonusRecord {
   id: string;
   year: string;
   bonus_number: number;
+  quarter?: string;
   amount: number;
   gross_salary: number;
   percentage: number;
@@ -47,7 +48,7 @@ export const BonusesEidTab = ({ employee }: BonusesEidTabProps) => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [eidRes, bonusRes] = await Promise.all([
+      const [eidRes, bonusRes, perfRes] = await Promise.all([
         supabase
           .from('eid_bonuses')
           .select('id, year, bonus_number, amount, station_name, department_name, job_level, created_at')
@@ -65,8 +66,7 @@ export const BonusesEidTab = ({ employee }: BonusesEidTabProps) => {
           .select('id, year, quarter, amount, gross_salary, percentage, station_name, department_name, created_at')
           .eq('employee_id', employee.id),
       ]);
-      const perfRes = arguments.length ? null : null;
-      void perfRes;
+      const perfData = perfRes;
       setEidRecords(eidRes.data || []);
       const regular: BonusRecord[] = (bonusRes.data || []).map((r: any) => ({ ...r, amount: Number(r.amount || 0), gross_salary: Number(r.gross_salary || 0), percentage: Number(r.percentage || 0) }));
       const perf: BonusRecord[] = ((perfData as any)?.data || []).map((r: any) => ({
@@ -190,7 +190,7 @@ export const BonusesEidTab = ({ employee }: BonusesEidTabProps) => {
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{r.year}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{r.bonus_number}</Badge>
+                        <Badge variant="outline">{r.quarter ? (isAr ? `تقييم ${r.quarter}` : `Eval ${r.quarter}`) : r.bonus_number}</Badge>
                       </TableCell>
                       <TableCell>{r.gross_salary.toLocaleString()}</TableCell>
                       <TableCell>{r.percentage}%</TableCell>
