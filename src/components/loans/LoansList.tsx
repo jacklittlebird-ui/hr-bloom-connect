@@ -530,7 +530,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
                         {isRTL ? statusLabels[loan.status]?.ar : statusLabels[loan.status]?.en}
                       </Badge>
                       <h3 className="font-bold text-lg">{loan.employeeName}</h3>
-                      <Badge variant={loan.loanType === 'insurance' ? 'secondary' : 'default'} className="w-fit">{loan.loanType === 'insurance' ? (isRTL ? 'قسط تأمين' : 'Insurance') : (isRTL ? 'قرض شخصي' : 'Personal loan')}</Badge>
+                      <Badge variant="default" className={`w-fit ${loan.loanType === 'insurance' ? 'bg-success text-success-foreground hover:bg-success/90' : ''}`}>{loan.loanType === 'insurance' ? (isRTL ? 'قسط تأمين' : 'Insurance') : (isRTL ? 'قرض شخصي' : 'Personal loan')}</Badge>
                     </div>
 
                     <div className="space-y-2 text-sm">
@@ -657,7 +657,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
               <Label>{isRTL ? 'نوع القرض' : 'Loan type'}</Label>
               <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
                 {(['personal','insurance'] as const).map(t => (
-                  <Button key={t} type="button" size="sm" variant={formData.loanType === t ? 'default' : 'ghost'} onClick={() => setFormData({ ...formData, loanType: t })}>
+                  <Button key={t} type="button" size="sm" variant={formData.loanType === t ? 'default' : 'ghost'} className={formData.loanType === t && t === 'insurance' ? 'bg-success text-success-foreground hover:bg-success/90' : ''} onClick={() => setFormData({ ...formData, loanType: t })}>
                     {t === 'personal' ? (isRTL ? 'قرض شخصي' : 'Personal loan') : (isRTL ? 'قسط تأمين' : 'Insurance')}
                   </Button>
                 ))}
