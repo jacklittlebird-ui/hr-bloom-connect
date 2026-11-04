@@ -146,12 +146,12 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
   const { paginatedItems: paginatedLoans, currentPage: loanPage, totalPages: loanTotalPages, totalItems: loanTotalItems, startIndex: loanStart, endIndex: loanEnd, setCurrentPage: setLoanPage } = usePagination(filteredLoans);
 
   const stats = {
-    totalLoans: loans.length,
-    activeLoans: loans.filter(l => l.status === 'active').length,
-    pendingLoans: loans.filter(l => l.status === 'pending').length,
-    totalAmount: loans.filter(l => l.status === 'active').reduce((sum, l) => sum + l.remainingAmount, 0),
-    totalLoanValue: loans.reduce((sum, l) => sum + l.amount, 0),
-    totalRemaining: loans.reduce((sum, l) => sum + l.remainingAmount, 0),
+    totalLoans: filteredLoans.length,
+    activeLoans: filteredLoans.filter(l => l.status === 'active').length,
+    pendingLoans: filteredLoans.filter(l => l.status === 'pending').length,
+    totalAmount: filteredLoans.filter(l => l.status === 'active').reduce((sum, l) => sum + l.remainingAmount, 0),
+    totalLoanValue: filteredLoans.reduce((sum, l) => sum + l.amount, 0),
+    totalRemaining: filteredLoans.reduce((sum, l) => sum + l.remainingAmount, 0),
   };
 
   const resetForm = () => {
