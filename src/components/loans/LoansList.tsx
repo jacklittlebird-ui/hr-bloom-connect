@@ -32,12 +32,15 @@ const getMonthName = (dateStr: string, lang: string) => {
   return `${monthName} ${year}`;
 };
 
-export const LoansList = ({ refreshKey = 0 }: { refreshKey?: number } = {}) => {
+export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: number; view?: 'all' | 'open' | 'completed' } = {}) => {
   const { t, isRTL, language } = useLanguage();
   const { exportToPDF } = useReportExport();
-  const { loans, addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment, refreshData, ensureLoaded } = useLoanData();
+  const { loans: allLoans, addLoan, updateLoan, deleteLoan, recordLoanPayment, reverseLoanPayment, refreshData, ensureLoaded } = useLoanData();
   const { employees } = useEmployeeData();
   const activeEmployees = employees.filter(e => e.status === 'active');
+  const loans = useMemo(() => view === 'all' ? allLoans
+    : view === 'completed' ? allLoans.filter(l => l.status === 'completed')
+    : allLoans.filter(l => l.status !== 'completed'), [allLoans, view]);
 
   useEffect(() => { ensureLoaded(); }, [ensureLoaded]);
   useEffect(() => { if (refreshKey > 0) refreshData(); }, [refreshKey, refreshData]);
