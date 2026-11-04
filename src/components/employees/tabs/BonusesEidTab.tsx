@@ -28,6 +28,7 @@ interface BonusRecord {
   id: string;
   year: string;
   bonus_number: number;
+  quarter?: string;
   amount: number;
   gross_salary: number;
   percentage: number;
@@ -47,7 +48,7 @@ export const BonusesEidTab = ({ employee }: BonusesEidTabProps) => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [eidRes, bonusRes] = await Promise.all([
+      const [eidRes, bonusRes, perfRes] = await Promise.all([
         supabase
           .from('eid_bonuses')
           .select('id, year, bonus_number, amount, station_name, department_name, job_level, created_at')
@@ -60,9 +61,21 @@ export const BonusesEidTab = ({ employee }: BonusesEidTabProps) => {
           .eq('employee_id', employee.id)
           .order('year', { ascending: false })
           .order('bonus_number', { ascending: false }),
+        supabase
+          .from('performance_bonus_records')
+          .select('id, year, quarter, amount, gross_salary, percentage, station_name, department_name, created_at')
+          .eq('employee_id', employee.id),
       ]);
+      const perfData = perfRes as any;
       setEidRecords(eidRes.data || []);
-      setBonusRecords(bonusRes.data || []);
+      const regular: BonusRecord[] = (bonusRes.data || []).map((r: any) => ({ ...r, amount: Number(r.amount || 0), gross_salary: Number(r.gross_salary || 0), percentage: Number(r.percentage || 0) }));
+      const perf: BonusRecord[] = (perfData?.data || []).map((r: any) => ({
+        id: r.id, year: r.year, bonus_number: 0, quarter: r.quarter, job_level: null,
+        amount: Number(r.amount || 0), gross_salary: Number(r.gross_salary || 0), percentage: Number(r.percentage || 0),
+        station_name: r.station_name, department_name: r.department_name, created_at: r.created_at,
+      }));
+      setBonusRecords([...regular, ...perf].sort((a, b) =>
+        String(b.year).localeCompare(String(a.year)) || String(b.quarter || '').localeCompare(String(a.quarter || '')) || b.bonus_number - a.bonus_number));
       setLoading(false);
     };
     fetchData();
@@ -177,7 +190,7 @@ export const BonusesEidTab = ({ employee }: BonusesEidTabProps) => {
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{r.year}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{r.bonus_number}</Badge>
+                        <Badge variant="outline">{r.quarter ? (isAr ? `تقييم ${r.quarter}` : `Eval ${r.quarter}`) : r.bonus_number}</Badge>
                       </TableCell>
                       <TableCell>{r.gross_salary.toLocaleString()}</TableCell>
                       <TableCell>{r.percentage}%</TableCell>
