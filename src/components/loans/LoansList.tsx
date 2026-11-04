@@ -49,6 +49,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [stationFilter, setStationFilter] = useState<string>('all');
   const [startDateFilter, setStartDateFilter] = useState<string>('all');
   const [showDialog, setShowDialog] = useState(false);
@@ -81,6 +82,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
     notes: '',
     calculationMethod: 'auto' as 'auto' | 'manual',
     monthlyPayment: '',
+    loanType: 'personal' as 'personal' | 'insurance',
   });
 
   const selectedEmployee = useMemo(() =>
@@ -132,7 +134,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
   const filteredLoans = loans.filter(loan => {
     const matchesSearch = loan.employeeName.includes(searchQuery) ||
       loan.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || loan.status === statusFilter;
+    const matchesStatus = (statusFilter === 'all' || loan.status === statusFilter) && (typeFilter === 'all' || (loan.loanType || 'personal') === typeFilter);
     const empStation = getEmployeeStation(loan.employeeId);
     const matchesStation = stationFilter === 'all' || empStation === stationFilter || loan.station === stationFilter;
     const matchesStartDate = startDateFilter === 'all' || loan.startDate?.startsWith(startDateFilter);
@@ -153,7 +155,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
   };
 
   const resetForm = () => {
-    setFormData({ employeeId: '', amount: '', installments: '', startDate: '', notes: '', calculationMethod: 'auto', monthlyPayment: '' });
+    setFormData({ employeeId: '', amount: '', installments: '', startDate: '', notes: '', calculationMethod: 'auto', monthlyPayment: '', loanType: 'personal' });
     setEditingLoan(null);
     setEmployeeSearch('');
     setShowEmployeeDropdown(false);
@@ -171,6 +173,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
       notes: loan.notes,
       calculationMethod: loan.calculationMethod,
       monthlyPayment: loan.calculationMethod === 'manual' ? String(loan.monthlyPayment) : '',
+      loanType: loan.loanType || 'personal',
     });
     const emp = activeEmployees.find(e => e.id === loan.employeeId);
     setEmployeeSearch(emp ? `${emp.employeeId} - ${isRTL ? emp.nameAr : emp.nameEn}` : loan.employeeName);
@@ -212,6 +215,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
           monthlyPayment: isManual ? monthlyPayment : undefined,
           startDate: formData.startDate,
           notes: formData.notes,
+          loanType: formData.loanType,
         });
         toast({ title: isRTL ? 'تم التحديث' : 'Updated', description: isRTL ? 'تم تعديل القرض بنجاح' : 'Loan updated successfully' });
       } else {
@@ -225,6 +229,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
           startDate: formData.startDate,
           status: 'active',
           notes: formData.notes,
+          loanType: formData.loanType,
           calculationMethod: formData.calculationMethod,
         });
         toast({ title: isRTL ? 'تم الحفظ' : 'Saved', description: isRTL ? 'تم إضافة القرض بنجاح' : 'Loan added successfully' });
@@ -479,6 +484,14 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
                   {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{isRTL ? v.ar : v.en}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-40"><SelectValue placeholder={isRTL ? 'نوع القرض' : 'Type'} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{isRTL ? 'كل الأنواع' : 'All types'}</SelectItem>
+                  <SelectItem value="personal">{isRTL ? 'قرض شخصي' : 'Personal loan'}</SelectItem>
+                  <SelectItem value="insurance">{isRTL ? 'قسط تأمين' : 'Insurance'}</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={stationFilter} onValueChange={setStationFilter}>
                 <SelectTrigger className="w-40"><SelectValue placeholder={isRTL ? 'المحطة' : 'Station'} /></SelectTrigger>
                 <SelectContent>
@@ -517,6 +530,7 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
                         {isRTL ? statusLabels[loan.status]?.ar : statusLabels[loan.status]?.en}
                       </Badge>
                       <h3 className="font-bold text-lg">{loan.employeeName}</h3>
+                      <Badge variant={loan.loanType === 'insurance' ? 'secondary' : 'default'} className="w-fit">{loan.loanType === 'insurance' ? (isRTL ? 'قسط تأمين' : 'Insurance') : (isRTL ? 'قرض شخصي' : 'Personal loan')}</Badge>
                     </div>
 
                     <div className="space-y-2 text-sm">
@@ -638,6 +652,16 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
                 <div className="flex items-center space-x-2"><RadioGroupItem value="auto" id="calc-auto" /><Label htmlFor="calc-auto">{isRTL ? 'تلقائي (المبلغ ÷ الأقساط)' : 'Auto (Amount ÷ Installments)'}</Label></div>
                 <div className="flex items-center space-x-2"><RadioGroupItem value="manual" id="calc-manual" /><Label htmlFor="calc-manual">{isRTL ? 'يدوي (تحديد القسط الشهري)' : 'Manual (Set Monthly Payment)'}</Label></div>
               </RadioGroup>
+            </div>
+            <div className="space-y-2">
+              <Label>{isRTL ? 'نوع القرض' : 'Loan type'}</Label>
+              <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+                {(['personal','insurance'] as const).map(t => (
+                  <Button key={t} type="button" size="sm" variant={formData.loanType === t ? 'default' : 'ghost'} onClick={() => setFormData({ ...formData, loanType: t })}>
+                    {t === 'personal' ? (isRTL ? 'قرض شخصي' : 'Personal loan') : (isRTL ? 'قسط تأمين' : 'Insurance')}
+                  </Button>
+                ))}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

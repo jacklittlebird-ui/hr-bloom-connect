@@ -20,6 +20,7 @@ export interface Loan {
   status: 'active' | 'completed' | 'pending';
   notes: string;
   calculationMethod: 'auto' | 'manual';
+  loanType?: 'personal' | 'insurance';
 }
 
 export interface Advance {
@@ -57,8 +58,8 @@ interface LoanDataContextType {
 const LoanDataContext = createContext<LoanDataContextType | undefined>(undefined);
 
 // Specific columns instead of SELECT *
-const LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, employees(name_ar, stations(code))';
-const EMPLOYEE_LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason';
+const LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, loan_type, employees(name_ar, stations(code))';
+const EMPLOYEE_LOAN_COLS = 'id, employee_id, amount, installments_count, monthly_installment, paid_count, remaining, start_date, status, reason, loan_type';
 const ADVANCE_COLS = 'id, employee_id, amount, created_at, deduction_month, status, reason, employees(name_ar, stations(code))';
 const EMPLOYEE_ADVANCE_COLS = 'id, employee_id, amount, created_at, deduction_month, status, reason';
 
@@ -94,6 +95,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       startDate: l.start_date,
       status: l.status as Loan['status'],
       notes: l.reason || '',
+      loanType: (l.loan_type === 'insurance' ? 'insurance' : 'personal'),
       calculationMethod: 'auto' as const,
     })));
   }, [isEmployee, scopedEmployeeId]);
@@ -153,6 +155,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       monthly_installment: loan.monthlyPayment && loan.monthlyPayment > 0 ? loan.monthlyPayment : undefined,
       start_date: loan.startDate.length === 7 ? `${loan.startDate}-01` : loan.startDate,
       reason: loan.notes,
+      loan_type: loan.loanType || 'personal',
       status: loan.status || 'active',
     });
     if (error) throw error;
@@ -168,6 +171,7 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (updates.monthlyPayment !== undefined) dbUpdates.monthly_installment = updates.monthlyPayment;
     if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate.length === 7 ? `${updates.startDate}-01` : updates.startDate;
     if (updates.notes !== undefined) dbUpdates.reason = updates.notes;
+    if (updates.loanType !== undefined) dbUpdates.loan_type = updates.loanType;
     if (updates.status !== undefined) dbUpdates.status = updates.status;
     if (updates.employeeId !== undefined) dbUpdates.employee_id = updates.employeeId;
 
