@@ -193,6 +193,47 @@ export const VehicleLetters = ({ allowedStationIds }: { allowedStationIds?: stri
     setTimeout(() => w.print(), 500);
   };
 
+  const [buildingStatement, setBuildingStatement] = useState(false);
+  const openStatement = async () => {
+    setBuildingStatement(true);
+    try {
+      const { data } = await supabase
+        .from('employees')
+        .select('name_ar, social_insurance_no, social_insurance_start_date, hire_date, national_id, employee_code')
+        .ilike('job_title_ar', '%سائق%')
+        .eq('status', 'active')
+        .eq('social_insurance_closed', false)
+        .not('social_insurance_no', 'is', null)
+        .order('employee_code');
+      const drivers = ((data || []) as any[]).filter((d) => String(d.social_insurance_no || '').trim());
+      const plated = vehicles.filter((v) => {
+        const p = (v.plate_number || '').trim();
+        return p && !['لا يوجد', 'بدون', '-', '—'].includes(p);
+      });
+      const td = 'border:1px solid #334155;padding:4px 6px;text-align:center;font-size:13px;';
+      const th = td + 'background:#e2e8f0;font-weight:700;';
+      const vRows = plated.map((v, i) => `<tr><td style="${td}">${i + 1}</td><td style="${td}">${v.plate_number}</td><td style="${td}">${v.chassis_number || '—'}</td><td style="${td}">${v.engine_number || '—'}</td></tr>`).join('');
+      const dRows = drivers.map((d, i) => `<tr><td style="${td}">${i + 1}</td><td style="${td}">${d.name_ar}</td><td style="${td}">${d.social_insurance_no}</td><td style="${td}">${fmt(d.social_insurance_start_date || d.hire_date)}</td><td style="${td}">${d.national_id || '—'}</td></tr>`).join('');
+      const html = `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8" /><title>بيان بالسائقين والسيارات</title>
+<style>@page{size:A4;margin:15mm}body{font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#0f172a;direction:rtl;line-height:1.9}
+.head{text-align:center;border-bottom:2px solid #1e3a8a;padding-bottom:10px;margin-bottom:16px}.head img{height:70px}
+.date{text-align:left;font-size:14px;color:#475569}.line{font-size:16px;font-weight:700;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:8px 0 16px}.sign{margin-top:40px;text-align:center;font-weight:700;font-size:16px}.sign span{display:block;margin-top:40px}</style></head>
+<body><div class="head"><img src="${logoUrls.default}" alt="logo" /></div>
+<div class="date">التاريخ: ${todayAr()}</div>
+<p class="line">السيد / مدير مكتب تأمينات الزمالك</p><p class="line">تحية طيبة وبعد،،،</p>
+<p class="line">رجاء التكرم بالعلم بأن السيارات المدرجة بالشركة هي كالتالي:</p>
+<table><thead><tr><th style="${th}">م</th><th style="${th}">رقم اللوحة</th><th style="${th}">رقم الشاسيه</th><th style="${th}">رقم الموتور</th></tr></thead><tbody>${vRows}</tbody></table>
+<p class="line">كما يرجى العلم بأن السائقين المدرجين بالشركة هم كالتالي:</p>
+<table><thead><tr><th style="${th}">م</th><th style="${th}">الاسم</th><th style="${th}">الرقم التأميني</th><th style="${th}">تاريخ الالتحاق</th><th style="${th}">رقم الرخصة</th></tr></thead><tbody>${dRows}</tbody></table>
+<p class="line">وتفضلوا بقبول فائق الاحترام،،،</p>
+<div class="sign">رئيس شئون العاملين<br/>بشركة لينك إيرو تريدنج إجنسي<span>جاك إسحق</span></div></body></html>`;
+      setPreview({ html, title: isAr ? 'بيان بالسائقين والسيارات' : 'Drivers & Vehicles Statement' });
+    } finally {
+      setBuildingStatement(false);
+    }
+  };
+
   const keys = [...grouped.keys()].sort((a, b) => stationName(a).localeCompare(stationName(b), 'ar'));
 
   if (loading) {
@@ -201,6 +242,10 @@ export const VehicleLetters = ({ allowedStationIds }: { allowedStationIds?: stri
 
   return (
     <div className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
+      <Button onClick={openStatement} disabled={buildingStatement}>
+        {buildingStatement ? <Loader2 className="h-4 w-4 me-1 animate-spin" /> : <FileText className="h-4 w-4 me-1" />}
+        {isAr ? 'بيان بالسائقين والسيارات' : 'Drivers & Vehicles Statement'}
+      </Button>
       <div className="relative max-w-sm">
         <Search className="absolute top-2.5 start-3 h-4 w-4 text-muted-foreground" />
         <Input
