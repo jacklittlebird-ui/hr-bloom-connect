@@ -221,7 +221,7 @@ export const VehicleLetters = ({ allowedStationIds }: { allowedStationIds?: stri
 .date{text-align:left;font-size:12px;color:#475569}.line{font-size:13.5px;font-weight:700;margin:5px 0}
 table{width:100%;border-collapse:collapse;margin:4px 0 10px;table-layout:auto}tr{page-break-inside:avoid}
 .sign{margin-top:18px;text-align:center;font-weight:700;font-size:13.5px}.sign span{display:block;margin-top:22px}</style></head>
-<body><div class="head"><img src="${logoUrls.default}" alt="logo" /></div>
+<body><script>window.addEventListener('beforeprint',function(){var b=document.body;b.style.zoom='';var max=1050;var h=b.scrollHeight;if(h>max)b.style.zoom=String(max/h);});</script><div class="head"><img src="${logoUrls.default}" alt="logo" /></div>
 <div class="date">التاريخ: ${todayAr()}</div>
 <p class="line">السيد / مدير مكتب تأمينات الزمالك</p><p class="line">تحية طيبة وبعد،،،</p>
 <p class="line">رجاء التكرم بالعلم بأن السيارات المدرجة بالشركة هي كالتالي:</p>
@@ -249,17 +249,10 @@ table{width:100%;border-collapse:collapse;margin:4px 0 10px;table-layout:auto}tr
       const canvas = await html2canvas(body, { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: body.scrollWidth, height: body.scrollHeight, windowWidth: body.scrollWidth });
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
       const pageW = 210, pageH = 297;
-      const pxPerPage = Math.floor(canvas.width * pageH / pageW);
-      for (let y = 0, i = 0; y < canvas.height; y += pxPerPage, i++) {
-        const h = Math.min(pxPerPage, canvas.height - y);
-        const c = document.createElement('canvas');
-        c.width = canvas.width; c.height = h;
-        const ctx = c.getContext('2d')!;
-        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, h);
-        ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
-        if (i > 0) pdf.addPage();
-        pdf.addImage(c.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pageW, h * pageW / canvas.width);
-      }
+      const imgH = canvas.height * pageW / canvas.width;
+      const scale = Math.min(1, pageH / imgH);
+      const w = pageW * scale, h = imgH * scale;
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', (pageW - w) / 2, 0, w, h);
       pdf.save(`${preview.title.replace(/[\\/:*?"<>|]/g, '-')}.pdf`);
     } finally {
       setDownloading(false);
