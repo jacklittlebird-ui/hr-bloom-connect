@@ -169,6 +169,13 @@
       "when": 1793801365126,
       "tag": "0023_loan_keep_custom_schedule",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793880134214,
+      "tag": "0024_employee_multi_bank",
+      "breakpoints": true
     }
   ]
 }

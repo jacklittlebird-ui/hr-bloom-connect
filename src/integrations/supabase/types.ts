@@ -1014,6 +1014,7 @@ export type Database = {
           city: string | null
           contract_type: string | null
           created_at: string
+          credit_account_active: boolean
           department_id: string | null
           dept_code: string | null
           documents_originals_received: boolean
@@ -1064,6 +1065,8 @@ export type Database = {
           name_en: string
           national_id: string | null
           nationality: string | null
+          nbe_account_active: boolean
+          nbe_account_number: string | null
           notes: string | null
           permit_name_ar: string | null
           permit_name_en: string | null
@@ -1073,6 +1076,7 @@ export type Database = {
           resignation_date: string | null
           resignation_reason: string | null
           resigned: boolean | null
+          salary_bank: string
           sick_leave_balance: number | null
           social_insurance_closed: boolean
           social_insurance_closed_date: string | null
@@ -1107,6 +1111,7 @@ export type Database = {
           city?: string | null
           contract_type?: string | null
           created_at?: string
+          credit_account_active?: boolean
           department_id?: string | null
           dept_code?: string | null
           documents_originals_received?: boolean
@@ -1157,6 +1162,8 @@ export type Database = {
           name_en: string
           national_id?: string | null
           nationality?: string | null
+          nbe_account_active?: boolean
+          nbe_account_number?: string | null
           notes?: string | null
           permit_name_ar?: string | null
           permit_name_en?: string | null
@@ -1166,6 +1173,7 @@ export type Database = {
           resignation_date?: string | null
           resignation_reason?: string | null
           resigned?: boolean | null
+          salary_bank?: string
           sick_leave_balance?: number | null
           social_insurance_closed?: boolean
           social_insurance_closed_date?: string | null
@@ -1200,6 +1208,7 @@ export type Database = {
           city?: string | null
           contract_type?: string | null
           created_at?: string
+          credit_account_active?: boolean
           department_id?: string | null
           dept_code?: string | null
           documents_originals_received?: boolean
@@ -1250,6 +1259,8 @@ export type Database = {
           name_en?: string
           national_id?: string | null
           nationality?: string | null
+          nbe_account_active?: boolean
+          nbe_account_number?: string | null
           notes?: string | null
           permit_name_ar?: string | null
           permit_name_en?: string | null
@@ -1259,6 +1270,7 @@ export type Database = {
           resignation_date?: string | null
           resignation_reason?: string | null
           resigned?: boolean | null
+          salary_bank?: string
           sick_leave_balance?: number | null
           social_insurance_closed?: boolean
           social_insurance_closed_date?: string | null
