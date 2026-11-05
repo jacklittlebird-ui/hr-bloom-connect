@@ -233,6 +233,11 @@ export const TrainingRecords = ({ activeTab }: { activeTab?: string }) => {
     const deptMatch = !searchDept || searchDept === 'all' || emp.department === searchDept;
     const stationMatch = !searchStation || searchStation === 'all' || emp.station.includes(searchStation);
     return nameMatch && titleMatch && deptMatch && stationMatch;
+  }).sort((a, b) => {
+    if (!a.hireDate && !b.hireDate) return 0;
+    if (!a.hireDate) return 1;
+    if (!b.hireDate) return -1;
+    return a.hireDate.localeCompare(b.hireDate);
   });
 
   const handleAddRecord = async () => {
