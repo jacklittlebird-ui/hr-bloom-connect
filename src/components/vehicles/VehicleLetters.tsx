@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { BOSTAN_INSURANCE } from '@/components/vehicles/InsuredDriverPicker';
 import { supabase } from '@/integrations/supabase/client';
@@ -210,15 +210,17 @@ export const VehicleLetters = ({ allowedStationIds }: { allowedStationIds?: stri
         const p = (v.plate_number || '').trim();
         return p && !['لا يوجد', 'بدون', '-', '—'].includes(p);
       });
-      const td = 'border:1px solid #334155;padding:4px 6px;text-align:center;font-size:13px;';
+      const td = 'border:1px solid #334155;padding:2px 5px;text-align:center;font-size:11.5px;word-break:break-word;';
       const th = td + 'background:#e2e8f0;font-weight:700;';
       const vRows = plated.map((v, i) => `<tr><td style="${td}">${i + 1}</td><td style="${td}">${v.plate_number}</td><td style="${td}">${v.chassis_number || '—'}</td><td style="${td}">${v.engine_number || '—'}</td></tr>`).join('');
       const dRows = drivers.map((d, i) => `<tr><td style="${td}">${i + 1}</td><td style="${td}">${d.name_ar}</td><td style="${td}">${d.social_insurance_no}</td><td style="${td}">${fmt(d.social_insurance_start_date || d.hire_date)}</td><td style="${td}">${d.national_id || '—'}</td></tr>`).join('');
       const html = `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8" /><title>بيان بالسائقين والسيارات</title>
-<style>@page{size:A4;margin:15mm}body{font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#0f172a;direction:rtl;line-height:1.9}
-.head{text-align:center;border-bottom:2px solid #1e3a8a;padding-bottom:10px;margin-bottom:16px}.head img{height:70px}
-.date{text-align:left;font-size:14px;color:#475569}.line{font-size:16px;font-weight:700;margin:10px 0}
-table{width:100%;border-collapse:collapse;margin:8px 0 16px}.sign{margin-top:40px;text-align:center;font-weight:700;font-size:16px}.sign span{display:block;margin-top:40px}</style></head>
+<style>@page{size:A4;margin:12mm}*{box-sizing:border-box}html,body{margin:0;background:#fff}body{font-family:"Baloo Bhaijaan 2",Arial,sans-serif;color:#0f172a;direction:rtl;line-height:1.5;width:210mm;padding:12mm 14mm;margin:0 auto}
+@media print{body{width:auto;padding:0}}
+.head{text-align:center;border-bottom:2px solid #1e3a8a;padding-bottom:6px;margin-bottom:8px}.head img{height:55px}
+.date{text-align:left;font-size:12px;color:#475569}.line{font-size:13.5px;font-weight:700;margin:5px 0}
+table{width:100%;border-collapse:collapse;margin:4px 0 10px;table-layout:auto}tr{page-break-inside:avoid}
+.sign{margin-top:18px;text-align:center;font-weight:700;font-size:13.5px}.sign span{display:block;margin-top:22px}</style></head>
 <body><div class="head"><img src="${logoUrls.default}" alt="logo" /></div>
 <div class="date">التاريخ: ${todayAr()}</div>
 <p class="line">السيد / مدير مكتب تأمينات الزمالك</p><p class="line">تحية طيبة وبعد،،،</p>
@@ -231,6 +233,36 @@ table{width:100%;border-collapse:collapse;margin:8px 0 16px}.sign{margin-top:40p
       setPreview({ html, title: isAr ? 'بيان بالسائقين والسيارات' : 'Drivers & Vehicles Statement' });
     } finally {
       setBuildingStatement(false);
+    }
+  };
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const downloadPdf = async () => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc || !preview) return;
+    setDownloading(true);
+    try {
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')]);
+      await (doc as any).fonts?.ready;
+      const body = doc.body;
+      const canvas = await html2canvas(body, { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: body.scrollWidth, height: body.scrollHeight, windowWidth: body.scrollWidth });
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+      const pageW = 210, pageH = 297;
+      const pxPerPage = Math.floor(canvas.width * pageH / pageW);
+      for (let y = 0, i = 0; y < canvas.height; y += pxPerPage, i++) {
+        const h = Math.min(pxPerPage, canvas.height - y);
+        const c = document.createElement('canvas');
+        c.width = canvas.width; c.height = h;
+        const ctx = c.getContext('2d')!;
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, h);
+        ctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
+        if (i > 0) pdf.addPage();
+        pdf.addImage(c.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pageW, h * pageW / canvas.width);
+      }
+      pdf.save(`${preview.title.replace(/[\\/:*?"<>|]/g, '-')}.pdf`);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -312,12 +344,13 @@ table{width:100%;border-collapse:collapse;margin:8px 0 16px}.sign{margin-top:40p
           </DialogHeader>
           <div className="flex-1 overflow-hidden bg-muted/30 p-3">
             {preview && (
-              <iframe srcDoc={preview.html} title="letter-preview" className="w-full h-full bg-white rounded-md border" />
+              <iframe ref={iframeRef} srcDoc={preview.html} title="letter-preview" className="w-full h-full bg-white rounded-md border" />
             )}
           </div>
           <DialogFooter className="px-6 py-3 border-t flex-row gap-2 sm:justify-end">
             <Button variant="outline" onClick={() => setPreview(null)}>{isAr ? 'إغلاق' : 'Close'}</Button>
-            <Button onClick={printLetter}><Printer className="h-4 w-4 me-1" />{isAr ? 'طباعة / PDF' : 'Print / PDF'}</Button>
+            <Button variant="secondary" onClick={downloadPdf} disabled={downloading}>{downloading ? <Loader2 className="h-4 w-4 me-1 animate-spin" /> : <FileText className="h-4 w-4 me-1" />}{isAr ? 'تحميل PDF' : 'Download PDF'}</Button>
+            <Button onClick={printLetter}><Printer className="h-4 w-4 me-1" />{isAr ? 'طباعة' : 'Print'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
