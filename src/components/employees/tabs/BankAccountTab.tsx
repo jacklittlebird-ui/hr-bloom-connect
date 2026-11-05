@@ -44,19 +44,16 @@ export const BankAccountTab = ({ employee, onUpdate, readOnly }: BankAccountTabP
   ];
 
   const toggleAccount = (bank: 'credit' | 'nbe', on: boolean) => {
-    const credit = bank === 'credit' ? on : s.creditAccountActive;
-    const nbe = bank === 'nbe' ? on : s.nbeAccountActive;
-    const u: Partial<typeof s> = bank === 'credit' ? { creditAccountActive: on } : { nbeAccountActive: on };
-    const sb = s.salaryBank;
+    // Only one bank can be active: activating one disables the other.
     if (on) {
-      // Newly activated bank becomes the salary bank (unless the other active bank is already chosen)
-      if (sb === 'cash' || !(sb === 'credit_agricole' ? credit : nbe)) u.salaryBank = bank === 'credit' ? 'credit_agricole' : 'nbe';
-    } else if (!credit && !nbe) {
-      u.salaryBank = 'cash';
-    } else if ((bank === 'credit' && sb === 'credit_agricole') || (bank === 'nbe' && sb === 'nbe')) {
-      u.salaryBank = credit ? 'credit_agricole' : 'nbe';
+      set(bank === 'credit'
+        ? { creditAccountActive: true, nbeAccountActive: false, salaryBank: 'credit_agricole' }
+        : { nbeAccountActive: true, creditAccountActive: false, salaryBank: 'nbe' });
+    } else {
+      set(bank === 'credit'
+        ? { creditAccountActive: false, salaryBank: 'cash' }
+        : { nbeAccountActive: false, salaryBank: 'cash' });
     }
-    set(u);
   };
 
   const lbl = cn("text-xs", isRTL && "text-right block");
