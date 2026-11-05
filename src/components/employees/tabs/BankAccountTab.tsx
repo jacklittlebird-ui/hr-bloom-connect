@@ -40,13 +40,22 @@ export const BankAccountTab = ({ employee, onUpdate, readOnly }: BankAccountTabP
   const banks: { value: SalaryBank; label: string; enabled: boolean }[] = [
     { value: 'credit_agricole', label: ar ? 'كريدي أجريكول' : 'Crédit Agricole', enabled: s.creditAccountActive },
     { value: 'nbe', label: ar ? 'البنك الأهلي' : 'NBE', enabled: s.nbeAccountActive },
-    { value: 'cash', label: ar ? 'نقدي' : 'Cash', enabled: true },
+    { value: 'cash', label: ar ? 'نقدي' : 'Cash', enabled: !s.creditAccountActive && !s.nbeAccountActive },
   ];
 
   const toggleAccount = (bank: 'credit' | 'nbe', on: boolean) => {
+    const credit = bank === 'credit' ? on : s.creditAccountActive;
+    const nbe = bank === 'nbe' ? on : s.nbeAccountActive;
     const u: Partial<typeof s> = bank === 'credit' ? { creditAccountActive: on } : { nbeAccountActive: on };
     const sb = s.salaryBank;
-    if (!on && ((bank === 'credit' && sb === 'credit_agricole') || (bank === 'nbe' && sb === 'nbe'))) u.salaryBank = 'cash';
+    if (on) {
+      // Newly activated bank becomes the salary bank (unless the other active bank is already chosen)
+      if (sb === 'cash' || !(sb === 'credit_agricole' ? credit : nbe)) u.salaryBank = bank === 'credit' ? 'credit_agricole' : 'nbe';
+    } else if (!credit && !nbe) {
+      u.salaryBank = 'cash';
+    } else if ((bank === 'credit' && sb === 'credit_agricole') || (bank === 'nbe' && sb === 'nbe')) {
+      u.salaryBank = credit ? 'credit_agricole' : 'nbe';
+    }
     set(u);
   };
 
