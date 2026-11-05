@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { trackQuery, debouncedFetch, getCached, setCache } from '@/lib/queryOptimizer';
 
 // Columns needed for the employee list table (fast load)
-const LIST_COLUMNS = 'id, employee_code, name_ar, name_en, phone, status, avatar, station_id, department_id, job_title_ar, job_title_en, job_level, job_degree, dept_code, hire_date, first_name, father_name, family_name, email, employment_status, contract_type, resigned, resignation_date, gender, national_id, bank_account_number, bank_id_number, bank_account_type, bank_name, social_insurance_start_date, social_insurance_no, has_social_insurance, education_ar';
+const LIST_COLUMNS = 'id, employee_code, name_ar, name_en, phone, status, avatar, station_id, department_id, job_title_ar, job_title_en, job_level, job_degree, dept_code, hire_date, first_name, father_name, family_name, email, employment_status, contract_type, resigned, resignation_date, gender, national_id, bank_account_number, bank_id_number, bank_account_type, bank_name, nbe_account_number, credit_account_active, nbe_account_active, salary_bank, social_insurance_start_date, social_insurance_no, has_social_insurance, education_ar';
 
 // Lighter select WITHOUT nested joins — joins are resolved client-side via maps for speed
 const LIST_SELECT = LIST_COLUMNS;
@@ -138,6 +138,10 @@ function mapRow(row: any): Employee {
     bankIdNumber: row.bank_id_number || undefined,
     bankAccountType: row.bank_account_type || undefined,
     bankName: row.bank_name || undefined,
+    nbeAccountNumber: row.nbe_account_number || undefined,
+    creditAccountActive: row.credit_account_active ?? true,
+    nbeAccountActive: row.nbe_account_active ?? false,
+    salaryBank: row.salary_bank || 'credit_agricole',
     notes: row.notes || undefined,
     deptCode: row.dept_code || undefined,
     emergencyContactName1: row.emergency_contact_name1 || undefined,
@@ -228,6 +232,10 @@ async function mapUpdates(updates: Partial<Employee>): Promise<Record<string, an
     bankIdNumber: 'bank_id_number',
     bankAccountType: 'bank_account_type',
     bankName: 'bank_name',
+    nbeAccountNumber: 'nbe_account_number',
+    creditAccountActive: 'credit_account_active',
+    nbeAccountActive: 'nbe_account_active',
+    salaryBank: 'salary_bank',
     notes: 'notes',
     deptCode: 'dept_code',
     jobTitle: 'job_title_ar',

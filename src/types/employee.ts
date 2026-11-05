@@ -90,6 +90,10 @@ export interface Employee {
   bankIdNumber?: string;
   bankAccountType?: string;
   bankName?: string;
+  nbeAccountNumber?: string;
+  creditAccountActive?: boolean;
+  nbeAccountActive?: boolean;
+  salaryBank?: 'credit_agricole' | 'nbe' | 'cash';
   deptCode?: string;
   emergencyContactName1?: string;
   emergencyContactMobile1?: string;
