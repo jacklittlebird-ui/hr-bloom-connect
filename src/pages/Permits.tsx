@@ -141,6 +141,7 @@ const Permits = () => {
       const { data, error } = await supabase
         .from('employees')
         .select('id, employee_code, name_ar, name_en, job_title_ar, job_title_en, station_id, department_id, nationality, religion, birth_date, birth_governorate, national_id, issuing_authority, permit_name_ar, address, phone, annual_permit_no, id_issue_date, permit_name_en, governorate, city, social_insurance_no, airports_annual_permit_no')
+        .eq('status', 'active')
         .order('employee_code')
         .range(from, from + 999);
       if (error) break;
@@ -165,7 +166,8 @@ const Permits = () => {
       setStationMap(new Map(((stationsRes.data || []) as any[]).map(s => [s.id, ar ? s.name_ar : s.name_en])));
       setDeptMap(new Map(((deptsRes.data || []) as any[]).map(d => [d.id, ar ? d.name_ar : d.name_en])));
       setEmployees(all);
-      setEntries(allEntries);
+      const activeIds = new Set(all.map(e => e.id));
+      setEntries(allEntries.filter(e => activeIds.has(e.employee_id)));
     } catch {
       toast.error(ar ? 'تعذر تحميل قائمة التصاريح كاملة، يرجى إعادة المحاولة' : 'Unable to load the complete permit list. Please retry.');
     } finally {
