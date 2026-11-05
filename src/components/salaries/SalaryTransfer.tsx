@@ -11,6 +11,9 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Download, FileSpreadsheet, Banknote, Users } from 'lucide-react';
 import { stationLocations } from '@/data/stationLocations';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import * as XLSX from 'xlsx';
+import { stripEmpPrefix, transferBankOf, type TransferBank } from '@/lib/salaryBank';
 
 export const SalaryTransfer = () => {
   const { language, isRTL } = useLanguage();
@@ -65,20 +68,54 @@ export const SalaryTransfer = () => {
         bankName: emp?.bankName || '-',
         accountType: emp?.bankAccountType || '-',
         netSalary: entry.netSalary,
+        nbeAccount: emp?.nbeAccountNumber || '-',
+        transferBank: transferBankOf(emp),
       };
     });
   }, [payrollData, employees, ar]);
 
-  const totalNet = transferData.reduce((s, e) => s + e.netSalary, 0);
+  const [bankTab, setBankTab] = useState<TransferBank | 'totals'>('nbe');
+  const bankLabels: Record<TransferBank, string> = {
+    nbe: ar ? 'البنك الأهلي' : 'NBE',
+    credit_agricole: ar ? 'كريدي أجريكول' : 'Crédit Agricole',
+    cash: ar ? 'نقدي' : 'Cash',
+  };
+  const byBank = (b: TransferBank) => transferData.filter(r => r.transferBank === b);
+  const currentRows = bankTab === 'totals' ? transferData : byBank(bankTab);
+  const totalNet = currentRows.reduce((s, e) => s + e.netSalary, 0);
+
+  const exportNbe = () => {
+    const rows = byBank('nbe');
+    if (!rows.length) return;
+    const aoa: (string | number | null)[][] = [[null, null, null, 'المبلغ', 'رقم الموظف']];
+    rows.forEach(r => aoa.push([null, null, null, r.netSalary, stripEmpPrefix(r.employeeId)]));
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    XLSX.writeFile(wb, `تحويل_الأهلي_${selectedYear}_${selectedMonth}.xlsx`);
+  };
+
+  const exportTotals = () => {
+    const banks: TransferBank[] = ['nbe', 'credit_agricole', 'cash'];
+    const aoa: (string | number)[][] = [[ar ? 'البنك' : 'Bank', ar ? 'عدد الموظفين' : 'Employees', ar ? 'الإجمالي' : 'Total']];
+    banks.forEach(b => { const r = byBank(b); aoa.push([bankLabels[b], r.length, r.reduce((s, e) => s + e.netSalary, 0)]); });
+    aoa.push([ar ? 'الإجمالي' : 'Total', transferData.length, transferData.reduce((s, e) => s + e.netSalary, 0)]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Totals');
+    XLSX.writeFile(wb, `اجماليات_التحويل_${selectedYear}_${selectedMonth}.xlsx`);
+  };
 
   const handleExportExcel = () => {
-    if (!transferData.length) return;
+    if (bankTab === 'nbe') return exportNbe();
+    if (bankTab === 'totals') return exportTotals();
+    const rowsToExport = currentRows;
+    if (!rowsToExport.length) return;
     const monthLabel = months.find(m => m.value === selectedMonth)?.label || selectedMonth;
 
     exportToCSV({
-      title: ar ? `تحويل رواتب - ${monthLabel} ${selectedYear}` : `Salary Transfer - ${monthLabel} ${selectedYear}`,
-      fileName: `salary_transfer_${selectedYear}_${selectedMonth}`,
-      data: transferData.map(d => ({
+      title: ar ? `تحويل رواتب ${bankLabels[bankTab]} - ${monthLabel} ${selectedYear}` : `Salary Transfer - ${monthLabel} ${selectedYear}`,
+      fileName: `salary_transfer_${bankTab}_${selectedYear}_${selectedMonth}`,
+      data: rowsToExport.map(d => ({
         ...d,
         netSalary: d.netSalary.toLocaleString(),
       })) as unknown as Record<string, unknown>[],
@@ -140,13 +177,47 @@ export const SalaryTransfer = () => {
                 </Select>
               </div>
             </div>
-            <Button onClick={handleExportExcel} className="gap-2" disabled={!transferData.length}>
+            <Button onClick={handleExportExcel} className="gap-2" disabled={!currentRows.length}>
               <FileSpreadsheet className="h-4 w-4" />
-              {ar ? 'تصدير Excel' : 'Export Excel'}
+              {ar ? `تصدير ${bankTab === 'totals' ? 'الإجماليات' : bankLabels[bankTab]}` : 'Export Excel'}
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      <Tabs value={bankTab} onValueChange={v => setBankTab(v as TransferBank | 'totals')} dir={isRTL ? 'rtl' : 'ltr'}>
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="nbe">{bankLabels.nbe} ({byBank('nbe').length})</TabsTrigger>
+          <TabsTrigger value="credit_agricole">{bankLabels.credit_agricole} ({byBank('credit_agricole').length})</TabsTrigger>
+          <TabsTrigger value="cash">{bankLabels.cash} ({byBank('cash').length})</TabsTrigger>
+          <TabsTrigger value="totals">{ar ? 'الإجماليات' : 'Totals'}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="totals">
+          <Card><CardContent className="pt-6">
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'البنك' : 'Bank'}</TableHead>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'عدد الموظفين' : 'Employees'}</TableHead>
+                <TableHead className={cn(isRTL && "text-right")}>{ar ? 'الإجمالي' : 'Total'}</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {(['nbe', 'credit_agricole', 'cash'] as TransferBank[]).map(b => (
+                  <TableRow key={b}>
+                    <TableCell>{bankLabels[b]}</TableCell>
+                    <TableCell>{byBank(b).length}</TableCell>
+                    <TableCell className="font-bold">{byBank(b).reduce((s, e) => s + e.netSalary, 0).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+                <TableRow className="bg-muted/50 font-bold">
+                  <TableCell>{ar ? 'الإجمالي' : 'Total'}</TableCell>
+                  <TableCell>{transferData.length}</TableCell>
+                  <TableCell className="text-primary">{transferData.reduce((s, e) => s + e.netSalary, 0).toLocaleString()}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent></Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
@@ -156,7 +227,7 @@ export const SalaryTransfer = () => {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">{ar ? 'عدد الموظفين' : 'Employees'}</p>
-            <p className="text-2xl font-bold text-foreground">{transferData.length}</p>
+            <p className="text-2xl font-bold text-foreground">{currentRows.length}</p>
           </div>
         </div>
         <div className={cn("rounded-xl p-5 flex items-center gap-4 shadow-sm border border-border/30 bg-stat-green-bg", isRTL && "flex-row-reverse")}>
@@ -178,7 +249,7 @@ export const SalaryTransfer = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {transferData.length === 0 ? (
+          {bankTab === 'totals' ? null : currentRows.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Banknote className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>{ar ? 'لا توجد رواتب معالجة لهذا الشهر' : 'No processed payroll for this month'}</p>
@@ -200,13 +271,13 @@ export const SalaryTransfer = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transferData.map((row, idx) => (
+                  {currentRows.map((row, idx) => (
                     <TableRow key={row.employeeId}>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell className="font-mono text-xs">{row.employeeId}</TableCell>
                       <TableCell className="font-medium">{row.employeeName}</TableCell>
                       <TableCell>{row.department}</TableCell>
-                      <TableCell className="font-mono text-xs">{row.accountNumber}</TableCell>
+                      <TableCell className="font-mono text-xs">{row.transferBank === 'nbe' ? row.nbeAccount : row.accountNumber}</TableCell>
                       <TableCell className="font-mono text-xs">{row.bankId}</TableCell>
                       <TableCell>{row.bankName}</TableCell>
                       <TableCell>{row.accountType}</TableCell>
