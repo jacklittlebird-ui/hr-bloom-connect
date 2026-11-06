@@ -176,6 +176,13 @@
       "when": 1793880134214,
       "tag": "0024_employee_multi_bank",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793993974912,
+      "tag": "0025_sync_salary_bank_from_bank_name",
+      "breakpoints": true
     }
   ]
 }
