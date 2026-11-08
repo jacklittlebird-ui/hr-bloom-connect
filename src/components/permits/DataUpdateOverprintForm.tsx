@@ -36,7 +36,9 @@ const natAr = (n?: string | null) => {
   return n || '';
 };
 
-function pageHtml(e: PermitFormEmployee, x: Extra, d: Defaults, off: { x: number; y: number }, bg?: string) {
+const TOP_MARGIN_MM = 10; // هامش علوي إضافي 1 سم
+function pageHtml(e: PermitFormEmployee, x: Extra, d: Defaults, offIn: { x: number; y: number }, bg?: string) {
+  const off = { x: offIn.x, y: offIn.y + TOP_MARGIN_MM };
   const T = 'position:absolute;font-size:12pt;font-weight:600;white-space:nowrap;overflow:hidden;line-height:1;';
   // القيمة تجلس فوق السطر المنقط (حوالي 4.5 مم فوق الحد السفلي للصف)
   const base = (row: number) => LINES[row + 1] - 4.2 + off.y;
@@ -57,8 +59,9 @@ function pageHtml(e: PermitFormEmployee, x: Extra, d: Defaults, off: { x: number
   ${field(4, x.education_ar)}
   ${field(5, e.job_title_ar)}
   ${field(6, residence, 'font-size:10.5pt')}
+  ${field(7, 'لا يوجد')}
   ${field(8, COMPANY_AR)}
-  ${field(9, x.station)}
+  ${field(9, '10 ش الجزيرة الوسطى - الزمالك')}
   ${field(10, x.email, 'direction:ltr;text-align:right')}
   <div style="${T}right:${VAL_RIGHT + 2 - off.x}mm;left:${MOBILE_SPLIT + 2 + off.x}mm;top:${base(11) - 5}mm;direction:ltr;text-align:right">${esc(e.phone)}</div>
   <div style="${T}left:${VAL_LEFT + off.x}mm;width:${MOBILE_SPLIT - VAL_LEFT - 18}mm;top:${base(11) - 5}mm;direction:ltr;text-align:right">${esc(x.home_phone)}</div>
