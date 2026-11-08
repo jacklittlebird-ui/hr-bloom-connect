@@ -154,6 +154,12 @@ function softMatchScore(
   return score;
 }
 
+function isDesktopDevice(d: { os?: string | null; device_type?: string | null; deviceType?: string | null }): boolean {
+  const os = (d.os || "").toLowerCase();
+  const t = (d.device_type || d.deviceType || "").toLowerCase();
+  return t === "desktop" || os === "windows" || os === "macos" || os === "linux";
+}
+
 async function resolveDevice(
   supabaseAdmin: any,
   userId: string,
@@ -168,9 +174,8 @@ async function resolveDevice(
     .eq("user_id", userId)
     .eq("is_active", true);
 
-  const devices = (userDevices || []).filter(
-    (d: any) => !d.expires_at || new Date(d.expires_at) > new Date()
-  );
+  // Devices stay valid until replaced (no time-based expiry); desktops never count.
+  const devices = (userDevices || []).filter((d: any) => !isDesktopDevice(d));
 
   const exactMatch = devices.find((d: any) => d.device_id === deviceId);
   if (exactMatch) {
@@ -213,7 +218,7 @@ async function resolveDevice(
       os: meta?.os || null,
       device_type: meta?.deviceType || null,
       approved_status: isFirst ? "approved" : "awaiting_approval",
-      expires_at: new Date(Date.now() + DEVICE_EXPIRY_DAYS * 86400_000).toISOString(),
+      expires_at: null,
     });
     if (!isFirst) return { allowed: false, reason: "new_device_pending", action: "new_device_registered" };
     return { allowed: true, action: "new_device_registered" };
@@ -470,6 +475,12 @@ Deno.serve(async (req) => {
         error: "⛔ تم رفض تسجيل الحضور. هذا الجهاز استُخدم لتسجيل حضور موظف آخر اليوم. يُعد ذلك تلاعباً صريحاً بنظام الحضور، وتم تسجيل المحاولة وإبلاغ الإدارة، وتكرارها يعرضك للمساءلة والجزاء.",
         device_fraud: true, tamper_block: true,
       }, 403);
+    }
+
+    // Desktop/laptop computers are never accepted for attendance
+    if (!device_meta || isDesktopDevice(device_meta)) {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+      return json({ error: "⛔ تم رفض تسجيل الحضور. لا يُسمح بتسجيل الحضور أو الانصراف من أجهزة الكمبيوتر. استخدم هاتفك المحمول المعتمد فقط.", desktop_blocked: true, tamper_block: true }, 403);
     }
 
     // Multi-device binding

@@ -136,7 +136,9 @@ export default function TamperAttemptsTab() {
     }).eq('id', sel.id);
     if (error) { toast.error(error.message); return; }
     if (status === 'resolved' && sel.category === 'new_device' && sel.device_id && sel.user_id) {
-      await supabase.from('user_devices').update({ approved_status: 'approved' } as any).eq('user_id', sel.user_id).eq('device_id', sel.device_id);
+      // Approving a new device replaces the old one: previous devices stop being valid.
+      await supabase.from('user_devices').update({ is_active: false, approved_status: 'revoked' } as any).eq('user_id', sel.user_id).neq('device_id', sel.device_id);
+      await supabase.from('user_devices').update({ approved_status: 'approved', is_active: true, expires_at: null } as any).eq('user_id', sel.user_id).eq('device_id', sel.device_id);
     }
     toast.success(ar ? 'تم الحفظ' : 'Saved');
     setSel(null);
