@@ -28,7 +28,7 @@ export const SharmAllowances = () => {
     try {
       const { data: st } = await supabase.from('stations').select('id').eq('code', 'sharm').single();
       if (!st) throw new Error('محطة شرم الشيخ غير موجودة');
-      const emps = await fetchAllPages<any>((f, t) => supabase.from('employees').select('id, employee_code, name_ar').eq('station_id', st.id).order('id').range(f, t));
+      const emps = await fetchAllPages<any>((f, t) => supabase.from('employees').select('id, employee_code, name_ar').eq('station_id', st.id).eq('status', 'active').order('id').range(f, t));
       const ids = emps.map(e => e.id);
       const allowance = new Set<string>();
       for (const part of chunk(ids, 200)) {
@@ -51,6 +51,11 @@ export const SharmAllowances = () => {
         const { error } = await supabase.from('living_allowances').upsert(payload, { onConflict: 'employee_id,allowance_month' });
         if (error) throw error;
       }
+      const { error: runErr } = await supabase.from('sharm_allowance_runs').upsert({
+        run_month: month, employees_count: payload.length,
+        total_amount: payload.reduce((s, p) => s + p.amount, 0), run_by: user?.id || null, run_at: new Date().toISOString(),
+      });
+      if (runErr) throw runErr;
       setRows(result);
       toast({ title: 'تم تشغيل بدلات شرم', description: `${payload.length} موظف — أضيفت المبالغ إلى بدل المعيشة لشهر ${month}` });
     } catch (e: any) {

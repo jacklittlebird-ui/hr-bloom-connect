@@ -420,6 +420,18 @@ export const PayrollProcessing = () => {
   };
 
   const handleBulkProcess = async () => {
+    const { data: sharmRun, error: sharmErr } = await supabase
+      .from('sharm_allowance_runs').select('run_month').eq('run_month', period).maybeSingle();
+    if (sharmErr || !sharmRun) {
+      toast({
+        title: ar ? 'لا يمكن التشغيل الجماعي' : 'Bulk run blocked',
+        description: ar
+          ? `يجب تشغيل بدلات شرم الشيخ لشهر ${period} أولاً من تبويبة «بدلات شرم الشيخ» قبل التشغيل الجماعي للمرتبات.`
+          : `Run the Sharm allowances for ${period} first from the "Sharm Allowances" tab.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     const entries: ProcessedPayroll[] = [];
     const targets = selectedBulk.length > 0 ? selectedBulk : filteredEmployees.map(e => e.id);
     targets.forEach(empId => {

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Save, Calendar, Edit, Trash2, Wallet, TrendingUp, TrendingDown, Building2 } from 'lucide-react';
@@ -35,6 +36,7 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
 
 
   const [selectedYear, setSelectedYear] = useState('');
+  const [rosterEnabled, setRosterEnabled] = useState(false);
   const [formData, setFormData] = useState({
     basicSalary: 0, transportAllowance: 0, incentives: 0, livingAllowance: 0,
     stationAllowance: 0, mobileAllowance: 0, rosterAllowance: 0, employeeInsurance: 0,
@@ -57,7 +59,9 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
     if (existing) {
       const { year: _, employeeId: __, stationLocation: ___, ...rest } = existing;
       setFormData(rest);
+      setRosterEnabled((rest.rosterAllowance || 0) > 0);
     } else {
+      setRosterEnabled(false);
       setFormData({
         basicSalary: 0, transportAllowance: 0, incentives: 0, livingAllowance: 0,
         stationAllowance: 0, mobileAllowance: 0, rosterAllowance: 0, employeeInsurance: 0,
@@ -79,7 +83,11 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
       toast({ title: ar ? 'خطأ' : 'Error', description: ar ? 'اختر السنة أولاً' : 'Select a year first', variant: 'destructive' });
       return;
     }
-    saveSalaryRecord({ year: selectedYear, employeeId: employee.id, stationLocation: employee.stationLocation || '', ...formData });
+    if (rosterEnabled && !(formData.rosterAllowance > 0)) {
+      toast({ title: ar ? 'خطأ' : 'Error', description: ar ? 'بدل الروستر مفعل — يجب إدخال قيمة أكبر من صفر أو تعطيل الزر' : 'Roster allowance is enabled — enter an amount above zero or turn it off', variant: 'destructive' });
+      return;
+    }
+    saveSalaryRecord({ year: selectedYear, employeeId: employee.id, stationLocation: employee.stationLocation || '', ...formData, rosterAllowance: rosterEnabled ? formData.rosterAllowance : 0 });
     toast({ title: ar ? 'تم الحفظ' : 'Saved', description: ar ? `تم حفظ راتب سنة ${selectedYear}` : `Salary for ${selectedYear} saved` });
   };
 
@@ -146,7 +154,24 @@ export const SalaryTab = ({ employee, onUpdate, readOnly }: SalaryTabProps) => {
                   {fieldRow(ar ? 'بدل معيشة' : 'Living Allowance', 'livingAllowance')}
                   {fieldRow(ar ? 'بدل محطات' : 'Station Allowance', 'stationAllowance')}
                   {fieldRow(ar ? 'بدل محمول' : 'Mobile Allowance', 'mobileAllowance')}
-                  {fieldRow(ar ? 'بدل روستر' : 'Roster Allowance', 'rosterAllowance')}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="text-xs">{ar ? 'بدل روستر' : 'Roster Allowance'}</Label>
+                      <Switch
+                        checked={rosterEnabled}
+                        onCheckedChange={(v) => { setRosterEnabled(v); if (!v) setFormData(p => ({ ...p, rosterAllowance: 0 })); }}
+                        aria-label={ar ? 'تفعيل بدل الروستر' : 'Enable roster allowance'}
+                      />
+                    </div>
+                    <Input
+                      type="number"
+                      disabled={!rosterEnabled}
+                      value={formData.rosterAllowance || ''}
+                      placeholder={rosterEnabled ? (ar ? 'أدخل قيمة البدل' : 'Enter amount') : (ar ? 'معطل' : 'Disabled')}
+                      onChange={e => updateField('rosterAllowance', e.target.value)}
+                      className={cn("h-9 text-sm", isRTL && "text-right", rosterEnabled && !(formData.rosterAllowance > 0) && "border-destructive")}
+                    />
+                  </div>
                 </div>
               </div>
 

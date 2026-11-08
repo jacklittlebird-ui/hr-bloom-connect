@@ -2955,6 +2955,30 @@ export type Database = {
           },
         ]
       }
+      sharm_allowance_runs: {
+        Row: {
+          employees_count: number
+          run_at: string
+          run_by: string | null
+          run_month: string
+          total_amount: number
+        }
+        Insert: {
+          employees_count?: number
+          run_at?: string
+          run_by?: string | null
+          run_month: string
+          total_amount?: number
+        }
+        Update: {
+          employees_count?: number
+          run_at?: string
+          run_by?: string | null
+          run_month?: string
+          total_amount?: number
+        }
+        Relationships: []
+      }
       shifts: {
         Row: {
           break_duration: number
