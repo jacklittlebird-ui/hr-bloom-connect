@@ -36,7 +36,7 @@ const natAr = (n?: string | null) => {
   return n || '';
 };
 
-const TOP_MARGIN_MM = 10; // هامش علوي إضافي 1 سم
+const TOP_MARGIN_MM = 14; // هامش علوي إضافي 1.4 سم
 function pageHtml(e: PermitFormEmployee, x: Extra, d: Defaults, offIn: { x: number; y: number }, bg?: string) {
   const off = { x: offIn.x, y: offIn.y + TOP_MARGIN_MM };
   const T = 'position:absolute;font-size:12pt;font-weight:600;white-space:nowrap;overflow:hidden;line-height:1;';
