@@ -183,6 +183,13 @@
       "when": 1793993974912,
       "tag": "0025_sync_salary_bank_from_bank_name",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794126523239,
+      "tag": "0026_tamper_block_incident_levels",
+      "breakpoints": true
     }
   ]
 }

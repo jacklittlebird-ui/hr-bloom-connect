@@ -164,7 +164,7 @@ async function resolveDevice(
 
   const { data: userDevices } = await supabaseAdmin
     .from("user_devices")
-    .select("id, device_id, browser, os, device_type, expires_at, is_active")
+    .select("id, device_id, browser, os, device_type, expires_at, is_active, approved_status")
     .eq("user_id", userId)
     .eq("is_active", true);
 
@@ -174,6 +174,9 @@ async function resolveDevice(
 
   const exactMatch = devices.find((d: any) => d.device_id === deviceId);
   if (exactMatch) {
+    if (exactMatch.approved_status === "awaiting_approval") {
+      return { allowed: false, reason: "new_device_pending" };
+    }
     await supabaseAdmin
       .from("user_devices")
       .update({ last_used_at: now })
@@ -181,8 +184,9 @@ async function resolveDevice(
     return { allowed: true };
   }
 
-  if (meta && devices.length > 0) {
-    for (const dev of devices) {
+  const approvedDevices = devices.filter((d: any) => d.approved_status !== "awaiting_approval");
+  if (meta && approvedDevices.length > 0) {
+    for (const dev of approvedDevices) {
       const score = softMatchScore(meta, dev);
       if (score >= SOFT_MATCH_THRESHOLD) {
         await supabaseAdmin
@@ -201,15 +205,17 @@ async function resolveDevice(
   }
 
   if (devices.length < MAX_DEVICES_PER_USER) {
+    const isFirst = approvedDevices.length === 0;
     await supabaseAdmin.from("user_devices").insert({
       user_id: userId,
       device_id: deviceId,
       browser: meta?.browser || null,
       os: meta?.os || null,
       device_type: meta?.deviceType || null,
-      approved_status: "pending",
+      approved_status: isFirst ? "approved" : "awaiting_approval",
       expires_at: new Date(Date.now() + DEVICE_EXPIRY_DAYS * 86400_000).toISOString(),
     });
+    if (!isFirst) return { allowed: false, reason: "new_device_pending", action: "new_device_registered" };
     return { allowed: true, action: "new_device_registered" };
   }
 
@@ -461,8 +467,8 @@ Deno.serve(async (req) => {
       });
       await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
-        error: "هذا الجهاز مسجل لموظف آخر اليوم. لا يمكن استخدام نفس الجهاز لأكثر من موظف / This device was used by another employee today.",
-        device_fraud: true,
+        error: "⛔ تم رفض تسجيل الحضور. هذا الجهاز استُخدم لتسجيل حضور موظف آخر اليوم. يُعد ذلك تلاعباً صريحاً بنظام الحضور، وتم تسجيل المحاولة وإبلاغ الإدارة، وتكرارها يعرضك للمساءلة والجزاء.",
+        device_fraud: true, tamper_block: true,
       }, 403);
     }
 
@@ -471,6 +477,17 @@ Deno.serve(async (req) => {
       supabaseAdmin, userId, device_id,
       device_meta ? { browser: device_meta.browser, os: device_meta.os, deviceType: device_meta.deviceType } : null
     );
+
+    if (!deviceResult.allowed && deviceResult.reason === "new_device_pending") {
+      await supabaseAdmin.from("device_alerts").insert({
+        user_id: userId, device_id, reason: "new_device_registered", meta: { device_meta: device_meta || null, blocked: true },
+      });
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+      return json({
+        error: "⛔ تم رفض تسجيل الحضور. هذا جهاز غير معتمد لحسابك. تم تسجيل المحاولة كمحاولة تلاعب وإبلاغ الإدارة، ولن يُسمح بالتسجيل من هذا الجهاز إلا بعد اعتماده من الإدارة. استخدم جهازك المعتمد.",
+        new_device_blocked: true, tamper_block: true,
+      }, 403);
+    }
 
     if (!deviceResult.allowed) {
       await supabaseAdmin.from("device_alerts").insert({
@@ -536,13 +553,14 @@ Deno.serve(async (req) => {
     if (!matchedLocation) {
       await logIncident(supabaseAdmin, {
         user_id: userId, employee_id: employeeId, station_id: empStationId, event_type,
-        category: "outside_geofence", risk_level: nearestDist > 5000 ? "high" : "medium",
+        category: "outside_geofence", risk_level: "high",
         reasons: ["outside_geofence"], device_id, outcome: "rejected",
         evidence: { gps_lat, gps_lng, gps_accuracy, nearest_distance_m: Math.round(nearestDist) },
       });
       await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({
-        error: `خارج النطاق المسموح - المسافة ${Math.round(nearestDist)} متر / Out of range - distance ${Math.round(nearestDist)}m`,
+        error: `⛔ تم رفض تسجيل الحضور. أنت خارج نطاق المحطة بمسافة ${Math.round(nearestDist)} متر. تم رصد محاولة تلاعب وتسجيلها وإبلاغ الإدارة، وتكرارها يعرضك للمساءلة والجزاء.`,
+        tamper_block: true,
       }, 403);
     }
 
