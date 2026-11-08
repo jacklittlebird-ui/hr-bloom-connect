@@ -95,7 +95,7 @@ export function RosterGrid({ employees, stations }: Props) {
     return scoped
       .filter(e => dept === 'all' || e.department === dept)
       .filter(e => !q || [e.nameAr, e.nameEn, e.employeeId].some(v => (v || '').toLowerCase().includes(q)))
-      .filter(e => e.status === 'active' || flags[e.id])
+      .filter(e => e.status === 'active')
       .sort((a, b) => compareRoster({ ...a, hasRosterAllowance: allowanceIds.has(a.id) }, { ...b, hasRosterAllowance: allowanceIds.has(b.id) }))
       .map(e => {
         const codes: RosterCode[] = period.days.map(d => rosterCode(flags[e.id]?.[d], d, today));
