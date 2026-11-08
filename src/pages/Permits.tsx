@@ -20,6 +20,7 @@ import { exportPermitRenewalSheet, fmt } from '@/lib/permitRenewalExcel';
 import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, exportSecurityCairoRenewalLetter, exportSecurityCairoIssueLetter, exportSecurityAirportsIssueLetter, exportSecurityAirportsRenewalLetter, exportPortsSecurityIssueLetter, exportPortsSecurityRenewalLetter } from '@/lib/permitRenewalLetter';
 import { exportPortsSecuritySheet, exportPortsSecurityRenewalSheet } from '@/lib/permitPortsSecurityExcel';
 import { fetchAllPages } from '@/lib/fetchAllPages';
+import { TemporaryPermitForms } from '@/components/permits/TemporaryPermitForms';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -261,7 +262,19 @@ const Permits = () => {
                 {ar ? section.ar : section.en}
               </TabsTrigger>
             ))}
+            <TabsTrigger value="permit_forms" className="gap-2">
+              <FileText className="w-4 h-4" />
+              {ar ? 'نماذج تصاريح' : 'Permit Forms'}
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="permit_forms">
+            <TemporaryPermitForms
+              employees={employees}
+              employeeById={employeeById}
+              airportsIssueIds={entries.filter(e => e.list_key === 'security_airports_issue').map(e => e.employee_id)}
+            />
+          </TabsContent>
 
           {SECTIONS.map(section => (
             <TabsContent key={section.key} value={section.key}>
