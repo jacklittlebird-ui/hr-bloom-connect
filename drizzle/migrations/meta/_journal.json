@@ -204,6 +204,13 @@
       "when": 1794130413479,
       "tag": "0028_devices_no_expiry_block_desktop",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794145675642,
+      "tag": "0029_enforce_leave_balance_on_approval",
+      "breakpoints": true
     }
   ]
 }

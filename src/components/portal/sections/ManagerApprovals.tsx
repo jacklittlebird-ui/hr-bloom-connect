@@ -100,7 +100,8 @@ export const ManagerApprovals = ({ stationEmployees }: ManagerApprovalsProps) =>
     const table = type === 'leave' ? 'leave_requests' : type === 'permission' ? 'permission_requests' : type === 'mission' ? 'missions' : 'overtime_requests';
     const { error } = await supabase.from(table).update({ status: 'approved' }).eq('id', id);
     if (error) {
-      toast({ title: t('حدث خطأ', 'Error occurred'), variant: 'destructive' });
+      const balanceMsg = error.message?.includes('لا يمكن قبول الإجازة') ? error.message : undefined;
+      toast({ title: balanceMsg || t('حدث خطأ', 'Error occurred'), variant: 'destructive' });
     } else {
       toast({ title: t('تمت الموافقة', 'Approved') });
       await fetchAll();
