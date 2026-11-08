@@ -68,7 +68,7 @@ function pageHtml(e: PermitFormEmployee, x: Extra, d: Defaults, offIn: { x: numb
   ${field(12, d.places)}
   ${field(13, d.duration)}
   ${field(14, d.purpose)}
-  <div style="${T}left:${19.5 + off.x}mm;width:55mm;top:${244 + off.y}mm;text-align:right;font-size:11pt">${esc(e.name_ar)}</div>
+  <div style="${T}left:${19.5 + off.x}mm;width:55mm;top:${240 + off.y}mm;text-align:right;font-size:11pt">${esc(e.name_ar)}</div>
 </div>`;
 }
 
