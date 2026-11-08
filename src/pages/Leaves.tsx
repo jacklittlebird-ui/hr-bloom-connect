@@ -365,6 +365,7 @@ const Leaves = () => {
 
   // Translate raw DB errors into user-friendly bilingual messages
   const friendlyError = (raw: string): string => {
+    if ((raw || '').includes('لا يمكن قبول الإجازة')) return raw;
     const m = (raw || '').toLowerCase();
     if (m.includes('existing leave request')) {
       return language === 'ar' ? 'لا يمكن تنفيذ العملية: يوجد إجازة مسجلة في نفس اليوم' : 'Cannot proceed: an existing leave request exists for that day';
