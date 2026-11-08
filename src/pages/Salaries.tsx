@@ -17,6 +17,7 @@ const PayrollHistory = lazyWithRetry(() => import('@/components/salaries/Payroll
 const MobileBills = lazyWithRetry(() => import('@/components/salaries/MobileBills').then(m => ({ default: m.MobileBills })));
 const LeaveDeductions = lazyWithRetry(() => import('@/components/salaries/LeaveDeductions').then(m => ({ default: m.LeaveDeductions })));
 const PenaltyDeductionsUpload = lazyWithRetry(() => import('@/components/salaries/PenaltyDeductionsUpload').then(m => ({ default: m.PenaltyDeductions })));
+const SharmAllowances = lazyWithRetry(() => import('@/components/salaries/SharmAllowances'));
 const LivingAllowances = lazyWithRetry(() => import('@/components/salaries/LivingAllowances').then(m => ({ default: m.LivingAllowances })));
 const SalaryTransfer = lazyWithRetry(() => import('@/components/salaries/SalaryTransfer').then(m => ({ default: m.SalaryTransfer })));
 const EidBonuses = lazyWithRetry(() => import('@/components/salaries/EidBonuses').then(m => ({ default: m.EidBonuses })));
@@ -61,6 +62,7 @@ const Salaries = () => {
     { id: 'structure', label: t('salaries.tabs.structure') },
     { id: 'history', label: t('salaries.tabs.history') },
     { id: 'mobile-bills', label: isRTL ? 'فواتير الموبايل' : 'Mobile Bills' },
+    { id: 'sharm-allowances', label: isRTL ? 'بدلات شرم الشيخ' : 'Sharm Allowances' },
     { id: 'leave-deductions', label: isRTL ? 'الإجازات' : 'Leaves' },
 
     { id: 'penalty-deductions', label: isRTL ? 'الخصومات' : 'Deductions' },
@@ -147,6 +149,9 @@ const Salaries = () => {
         )}
         {activeTab === 'extra-days' && (!evalOnly || allowedSubTabs.includes('extra-days')) && (
           <TabsContent value="extra-days"><Suspense fallback={<TabFallback />}><ExtraDaysAllowance /></Suspense></TabsContent>
+        )}
+        {activeTab === 'sharm-allowances' && !evalOnly && (
+          <TabsContent value="sharm-allowances"><Suspense fallback={<TabFallback />}><SharmAllowances /></Suspense></TabsContent>
         )}
       </Tabs>
     </DashboardLayout>
