@@ -50,6 +50,20 @@ export function getDeviceMeta(): DeviceMeta {
   if (/Mobi|Android/i.test(ua)) deviceType = "mobile";
   else if (/Tablet|iPad/i.test(ua)) deviceType = "tablet";
 
+  // Phones with "Desktop site" enabled report a Linux/Mac desktop UA.
+  // Detect real touch phones/tablets via hints and touch capability.
+  if (deviceType === "desktop") {
+    const uaData = (navigator as any).userAgentData;
+    const touch = (navigator.maxTouchPoints || 0) > 1;
+    const coarse = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+    const smallScreen = typeof screen !== "undefined" && Math.min(screen.width, screen.height) <= 1024;
+    const isTouchDevice = uaData?.mobile === true || (touch && coarse && smallScreen);
+    if (isTouchDevice) {
+      if (os === "macos") { os = "ios"; deviceType = "tablet"; }
+      else if (os === "linux" || os === "unknown") { os = "android"; deviceType = "mobile"; }
+    }
+  }
+
   return { browser, os, deviceType };
 }
 
