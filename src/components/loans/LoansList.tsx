@@ -73,6 +73,8 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
   const [submitting, setSubmitting] = useState(false);
   const [dateFromFilter, setDateFromFilter] = useState('');
   const [dateToFilter, setDateToFilter] = useState('');
+  const [displayMode, setDisplayMode] = useState<'cards' | 'table'>(() => (typeof window !== 'undefined' && localStorage.getItem('loans_display_mode') === 'table') ? 'table' : 'cards');
+  useEffect(() => { try { localStorage.setItem('loans_display_mode', displayMode); } catch { /* ignore */ } }, [displayMode]);
 
   const [formData, setFormData] = useState({
     employeeId: '', // UUID
@@ -519,7 +521,51 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex justify-end mb-4">
+            <div className="inline-flex rounded-lg bg-muted p-1 gap-1">
+              <Button type="button" size="sm" variant={displayMode === 'cards' ? 'default' : 'ghost'} onClick={() => setDisplayMode('cards')}>{isRTL ? 'كروت' : 'Cards'}</Button>
+              <Button type="button" size="sm" variant={displayMode === 'table' ? 'default' : 'ghost'} onClick={() => setDisplayMode('table')}>{isRTL ? 'جدول' : 'Table'}</Button>
+            </div>
+          </div>
+          {displayMode === 'table' && (
+            <div className="overflow-x-auto rounded-md border">
+              <table className="w-full text-sm" dir={isRTL ? 'rtl' : 'ltr'}>
+                <thead className="bg-muted/60">
+                  <tr className="text-start">
+                    {[isRTL ? 'الموظف' : 'Employee', isRTL ? 'المحطة' : 'Station', isRTL ? 'النوع' : 'Type', isRTL ? 'إجمالي القرض' : 'Total', isRTL ? 'القسط' : 'Monthly', isRTL ? 'الأقساط' : 'Inst.', isRTL ? 'المسدد' : 'Paid', isRTL ? 'المتبقي' : 'Remaining', isRTL ? 'الحالة' : 'Status', isRTL ? 'الإجراءات' : 'Actions'].map(h => (
+                      <th key={h} className="px-3 py-2 font-semibold text-start whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedLoans.map(loan => (
+                    <tr key={loan.id} className="border-t hover:bg-muted/30">
+                      <td className="px-3 py-2 font-semibold">{loan.employeeName}</td>
+                      <td className="px-3 py-2">{getStationLabel(loan.employeeId)}</td>
+                      <td className="px-3 py-2"><Badge variant="default" className={loan.loanType === 'insurance' ? 'bg-success text-success-foreground hover:bg-success/90' : ''}>{loan.loanType === 'insurance' ? (isRTL ? 'قسط تأمين' : 'Insurance') : (isRTL ? 'قرض شخصي' : 'Personal')}</Badge></td>
+                      <td className="px-3 py-2 whitespace-nowrap">{loan.amount.toLocaleString()}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{loan.monthlyPayment.toLocaleString()}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{loan.paidInstallments}/{loan.installments}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-success">{(loan.amount - loan.remainingAmount).toLocaleString()}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-bold text-destructive">{loan.remainingAmount.toLocaleString()}</td>
+                      <td className="px-3 py-2"><Badge variant="outline" className={statusLabels[loan.status]?.color}>{isRTL ? statusLabels[loan.status]?.ar : statusLabels[loan.status]?.en}</Badge></td>
+                      <td className="px-3 py-2">
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title={isRTL ? 'الأقساط' : 'Schedule'} onClick={() => { setViewingLoan(loan); setShowInstallmentSchedule(true); }}><List className="h-3.5 w-3.5" /></Button>
+                          {loan.status === 'active' && <Button size="icon" variant="ghost" className="h-7 w-7 text-success" title={isRTL ? 'تسجيل دفعة' : 'Pay'} disabled={actioningId === loan.id} onClick={() => handleRecordPayment(loan.id)}><CreditCard className="h-3.5 w-3.5" /></Button>}
+                          {loan.paidInstallments > 0 && loan.status !== 'completed' && <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" title={isRTL ? 'تراجع' : 'Undo'} disabled={actioningId === loan.id} onClick={() => handleReversePayment(loan.id)}><Undo2 className="h-3.5 w-3.5" /></Button>}
+                          {loan.status === 'active' && loan.remainingAmount > 0 && <Button size="icon" variant="ghost" className="h-7 w-7 text-primary" title={isRTL ? 'إعادة جدولة' : 'Reschedule'} onClick={() => openRescheduleDialog(loan)}><RefreshCw className="h-3.5 w-3.5" /></Button>}
+                          <Button size="icon" variant="ghost" className="h-7 w-7" title={isRTL ? 'تعديل' : 'Edit'} onClick={() => openEditDialog(loan)}><Edit className="h-3.5 w-3.5" /></Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" title={isRTL ? 'حذف' : 'Delete'} onClick={() => { setDeletingLoanId(loan.id); setShowDeleteDialog(true); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${displayMode === 'table' ? 'hidden' : ''}`}>
             {paginatedLoans.map(loan => {
               const progressPercent = loan.installments > 0 ? (loan.paidInstallments / loan.installments) * 100 : 0;
               return (
@@ -554,6 +600,12 @@ export const LoansList = ({ refreshKey = 0, view = 'all' }: { refreshKey?: numbe
                         <span className="text-muted-foreground">{isRTL ? 'تاريخ البدء' : 'Start Date'}</span>
                         <span className="font-semibold">{getMonthName(loan.startDate, language)}</span>
                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted/50 p-2 text-center">
+                      <div><p className="text-xs text-muted-foreground">{isRTL ? 'إجمالي القرض' : 'Total'}</p><p className="font-semibold">{loan.amount.toLocaleString()}</p></div>
+                      <div><p className="text-xs text-muted-foreground">{isRTL ? 'المسدد' : 'Paid'}</p><p className="font-semibold text-success">{(loan.amount - loan.remainingAmount).toLocaleString()}</p></div>
+                      <div><p className="text-xs text-muted-foreground">{isRTL ? 'المتبقي' : 'Remaining'}</p><p className="font-bold text-destructive">{loan.remainingAmount.toLocaleString()}</p></div>
                     </div>
 
                     <div>
