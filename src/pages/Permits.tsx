@@ -21,6 +21,7 @@ import { exportPortAuthorityRenewalLetter, exportPortAuthorityIssueLetter, expor
 import { exportPortsSecuritySheet, exportPortsSecurityRenewalSheet } from '@/lib/permitPortsSecurityExcel';
 import { fetchAllPages } from '@/lib/fetchAllPages';
 import { TemporaryPermitForms } from '@/components/permits/TemporaryPermitForms';
+import { DataUpdateOverprintForm } from '@/components/permits/DataUpdateOverprintForm';
 
 type ListKey =
   | 'security_airports_issue' | 'security_airports_renew'
@@ -273,7 +274,16 @@ const Permits = () => {
               employees={employees}
               employeeById={employeeById}
               airportsIssueIds={entries.filter(e => e.list_key === 'security_airports_issue').map(e => e.employee_id)}
+              airportsRenewIds={entries.filter(e => e.list_key === 'security_airports_renew').map(e => e.employee_id)}
             />
+            <div className="mt-4">
+              <DataUpdateOverprintForm
+                employees={employees}
+                employeeById={employeeById}
+                airportsIssueIds={entries.filter(e => e.list_key === 'security_airports_issue').map(e => e.employee_id)}
+                airportsRenewIds={entries.filter(e => e.list_key === 'security_airports_renew').map(e => e.employee_id)}
+              />
+            </div>
           </TabsContent>
 
           {SECTIONS.map(section => (

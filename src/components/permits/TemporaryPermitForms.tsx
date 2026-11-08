@@ -118,10 +118,15 @@ async function loadExtras(ids: string[]): Promise<Map<string, Extra>> {
 interface Props {
   employees: PermitFormEmployee[];
   airportsIssueIds: string[];
+  airportsRenewIds?: string[];
   employeeById: Map<string, PermitFormEmployee>;
 }
 
-export const TemporaryPermitForms = ({ employees, airportsIssueIds, employeeById }: Props) => {
+export const TemporaryPermitForms = ({ employees, airportsIssueIds, airportsRenewIds = [], employeeById }: Props) => {
+  const renewEmployees = useMemo(
+    () => airportsRenewIds.map(id => employeeById.get(id)).filter(Boolean) as PermitFormEmployee[],
+    [airportsRenewIds, employeeById],
+  );
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -159,7 +164,7 @@ export const TemporaryPermitForms = ({ employees, airportsIssueIds, employeeById
   };
 
   const printForms = async (list: PermitFormEmployee[]) => {
-    if (list.length === 0) { toast.error('لا يوجد موظفون في قائمة مطارات - استخراج'); return; }
+    if (list.length === 0) { toast.error('لا يوجد موظفون في هذه القائمة'); return; }
     const w = window.open('', '_blank');
     if (!w) { toast.error('يرجى السماح بالنوافذ المنبثقة للطباعة'); return; }
     setBusy(true);
@@ -213,6 +218,9 @@ export const TemporaryPermitForms = ({ employees, airportsIssueIds, employeeById
           </Button>
           <Button variant="secondary" onClick={() => printForms(airportEmployees)} disabled={busy} className="gap-2">
             <Printer className="w-4 h-4" /> طباعة الجميع (مطارات - استخراج: {airportEmployees.length})
+          </Button>
+          <Button variant="secondary" onClick={() => printForms(renewEmployees)} disabled={busy} className="gap-2">
+            <Printer className="w-4 h-4" /> طباعة الجميع (مطارات - تجديد: {renewEmployees.length})
           </Button>
         </div>
         {preview && (
