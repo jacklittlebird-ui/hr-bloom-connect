@@ -37,8 +37,9 @@ const natAr = (n?: string | null) => {
 };
 
 const TOP_MARGIN_MM = 14; // هامش علوي إضافي 1.4 سم
+const RIGHT_SHIFT_MM = 5; // تقليل الهامش من اليمين 0.5 سم (إزاحة المحتوى يميناً)
 function pageHtml(e: PermitFormEmployee, x: Extra, d: Defaults, offIn: { x: number; y: number }, bg?: string) {
-  const off = { x: offIn.x, y: offIn.y + TOP_MARGIN_MM };
+  const off = { x: offIn.x - RIGHT_SHIFT_MM, y: offIn.y + TOP_MARGIN_MM };
   const T = 'position:absolute;font-size:12pt;font-weight:600;white-space:nowrap;overflow:hidden;line-height:1;';
   // القيمة تجلس فوق السطر المنقط (حوالي 4.5 مم فوق الحد السفلي للصف)
   const base = (row: number) => LINES[row + 1] - 4.2 + off.y;
