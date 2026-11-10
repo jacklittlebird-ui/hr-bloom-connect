@@ -545,6 +545,36 @@ Deno.serve(async (req) => {
       return json({ error: "No GPS locations configured for this station" }, 400);
     }
 
+    // Fake-GPS detection: real GPS always jitters between separate readings.
+    // Identical coordinates (6 decimals) to this user's previous scan taken
+    // ≥20s earlier (within 12h) = frozen/mocked location (case emp0117).
+    {
+      const { data: lastEv } = await supabaseAdmin
+        .from("attendance_events")
+        .select("gps_lat, gps_lng, scan_time")
+        .eq("user_id", userId)
+        .not("gps_lat", "is", null)
+        .order("scan_time", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastEv) {
+        const gapMs = Date.now() - new Date(lastEv.scan_time).getTime();
+        const same = (a: number, b: number) => Math.round(Number(a) * 1e6) === Math.round(Number(b) * 1e6);
+        if (gapMs >= 20_000 && gapMs <= 12 * 3_600_000 && same(lastEv.gps_lat, gps_lat) && same(lastEv.gps_lng, gps_lng)) {
+          await logIncident(supabaseAdmin, {
+            user_id: userId, employee_id: employeeId, station_id: empStationId, event_type,
+            category: "fake_gps", risk_level: "high", reasons: ["frozen_coordinates"], device_id, outcome: "rejected",
+            evidence: { gps_lat, gps_lng, gps_accuracy, previous_scan_time: lastEv.scan_time, gap_seconds: Math.round(gapMs / 1000), device_meta: device_meta || null },
+          });
+          await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+          return json({
+            error: "⛔ تم رفض تسجيل الحضور. تم رصد استخدام برنامج لتزييف الموقع (Fake GPS) — الإحداثيات مطابقة تماماً لقراءة سابقة وهذا مستحيل مع GPS حقيقي. تم تسجيل المحاولة كتلاعب وإبلاغ الإدارة، وتكرارها يعرضك للمساءلة والجزاء. أغلق أي برنامج لتغيير الموقع وأعد المحاولة.",
+            tamper_block: true, fake_gps: true,
+          }, 403);
+        }
+      }
+    }
+
     const accuracyBuffer = Math.min(gps_accuracy || 0, 150);
 
     let nearestDist = Infinity;
@@ -765,6 +795,27 @@ Deno.serve(async (req) => {
               errorCode: "MINIMUM_WORK_DURATION",
               retryable: false,
             }));
+          }
+          // Fake re-entry: a 2nd session the same day closed within 15 minutes
+          // (used to push the day's last check-out later — case emp0117).
+          if (elapsedSeconds < 15 * 60) {
+            const { count: closedToday } = await supabaseAdmin
+              .from("attendance_records")
+              .select("id", { count: "exact", head: true })
+              .eq("employee_id", employeeId)
+              .eq("date", dateStr)
+              .not("check_out", "is", null)
+              .neq("id", openRecord.id);
+            if ((closedToday || 0) > 0) {
+              await logIncident(supabaseAdmin, {
+                user_id: userId, employee_id: employeeId, station_id: empStationId, event_type,
+                category: "fake_session", risk_level: "high", reasons: ["short_reentry_session"], device_id, outcome: "rejected",
+                evidence: { gps_lat, gps_lng, gps_accuracy, open_record_id: openRecord.id, session_seconds: Math.round(elapsedSeconds) },
+              });
+              return Promise.reject(Object.assign(new Error("⛔ تم رفض تسجيل الانصراف. لديك انصراف مسجل بالفعل اليوم، ومحاولة تسجيل حضور وانصراف إضافي لدقائق معدودة تُعد تلاعباً بوقت الانصراف. تم تسجيل المحاولة وإبلاغ الإدارة."), {
+                statusCode: 403, errorCode: "FAKE_REENTRY_SESSION", retryable: false, tamper_block: true,
+              }));
+            }
           }
         }
 
