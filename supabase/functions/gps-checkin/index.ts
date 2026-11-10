@@ -440,7 +440,7 @@ Deno.serve(async (req) => {
 
     const station = emp.stations as any;
     const effectiveMethod = (emp as any)?.checkin_method_override || station?.checkin_method || "qr";
-    if (effectiveMethod !== "gps" && effectiveMethod !== "both") {
+    if (effectiveMethod !== "gps" && effectiveMethod !== "both" && effectiveMethod !== "ble") {
       await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({ error: "GPS check-in not enabled for this employee" }, 403);
     }

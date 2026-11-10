@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Search, QrCode, Navigation, Layers, UserCog, X, Plus, ChevronsUpDown, Check } from 'lucide-react';
+import { Search, QrCode, Navigation, Layers, Bluetooth, UserCog, X, Plus, ChevronsUpDown, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +26,7 @@ const labels = {
   qr: { ar: '📱 QR فقط', en: '📱 QR Only', icon: QrCode, color: 'bg-blue-100 text-blue-700 border-blue-300' },
   gps: { ar: '📍 GPS فقط', en: '📍 GPS Only', icon: Navigation, color: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
   both: { ar: '🔄 QR + GPS', en: '🔄 QR + GPS', icon: Layers, color: 'bg-purple-100 text-purple-700 border-purple-300' },
+  ble: { ar: '📶 BLE + GPS', en: '📶 BLE + GPS', icon: Bluetooth, color: 'bg-sky-100 text-sky-700 border-sky-300' },
 };
 
 export const EmployeeCheckinOverrides = () => {
@@ -162,6 +163,7 @@ export const EmployeeCheckinOverrides = () => {
                       <SelectItem value="qr">{ar ? labels.qr.ar : labels.qr.en}</SelectItem>
                       <SelectItem value="gps">{ar ? labels.gps.ar : labels.gps.en}</SelectItem>
                       <SelectItem value="both">{ar ? labels.both.ar : labels.both.en}</SelectItem>
+                      <SelectItem value="ble">{ar ? labels.ble.ar : labels.ble.en}</SelectItem>
                     </SelectContent>
                   </Select>
                 </CardContent>
@@ -219,6 +221,7 @@ export const EmployeeCheckinOverrides = () => {
                     <SelectItem value="qr">{ar ? labels.qr.ar : labels.qr.en}</SelectItem>
                     <SelectItem value="gps">{ar ? labels.gps.ar : labels.gps.en}</SelectItem>
                     <SelectItem value="both">{ar ? labels.both.ar : labels.both.en}</SelectItem>
+                      <SelectItem value="ble">{ar ? labels.ble.ar : labels.ble.en}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

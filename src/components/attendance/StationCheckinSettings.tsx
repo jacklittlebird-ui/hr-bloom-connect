@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { QrCode, Navigation, Layers } from 'lucide-react';
+import { QrCode, Navigation, Layers, Bluetooth } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { EmployeeCheckinOverrides } from './EmployeeCheckinOverrides';
@@ -22,6 +22,7 @@ const methodConfig = {
   qr: { icon: QrCode, labelAr: 'مسح QR فقط', labelEn: 'QR Only', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/40', badge: 'bg-blue-100 text-blue-700 border-blue-300' },
   gps: { icon: Navigation, labelAr: 'GPS فقط', labelEn: 'GPS Only', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/40', badge: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
   both: { icon: Layers, labelAr: 'QR + GPS معاً', labelEn: 'QR + GPS', color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/40', badge: 'bg-purple-100 text-purple-700 border-purple-300' },
+  ble: { icon: Bluetooth, labelAr: 'BLE + GPS', labelEn: 'BLE + GPS', color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-950/40', badge: 'bg-sky-100 text-sky-700 border-sky-300' },
 };
 
 export const StationCheckinSettings = () => {
@@ -104,6 +105,12 @@ export const StationCheckinSettings = () => {
                       <span className="flex items-center gap-2">
                         <Layers className="w-4 h-4 text-purple-600" />
                         {ar ? '🔄 QR + GPS معاً' : '🔄 QR + GPS'}
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="ble">
+                      <span className="flex items-center gap-2">
+                        <Bluetooth className="w-4 h-4 text-sky-600" />
+                        {ar ? '📶 BLE + GPS (أندرويد)' : '📶 BLE + GPS (Android)'}
                       </span>
                     </SelectItem>
                   </SelectContent>
