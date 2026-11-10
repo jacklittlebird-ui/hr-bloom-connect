@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { assessRisk, DEFAULT_RULES } from "./risk.ts";
+import { analyzeGpsSamples } from "./fakeGps.ts";
 
 async function logIncident(supabaseAdmin: any, row: Record<string, unknown>) {
   const { error } = await supabaseAdmin.from("attendance_tamper_incidents").insert({ source: "gps-checkin", ...row });
