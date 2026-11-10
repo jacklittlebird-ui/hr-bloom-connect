@@ -1,7 +1,7 @@
 // Trial: verify physical presence via the station ESP32 BLE beacon (Web Bluetooth, Android Chrome).
 export const BLE_SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
 export const BLE_CHAR_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
-export const BLE_TRIAL_EMPLOYEES = ['emp1490'];
+export const BLE_TRIAL_EMPLOYEES: string[] = [];
 
 export const isBleTrialEmployee = (...codes: (string | null | undefined)[]) =>
   codes.some((c) => !!c && BLE_TRIAL_EMPLOYEES.includes(String(c).trim().toLowerCase()));
