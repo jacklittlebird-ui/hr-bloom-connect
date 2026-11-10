@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
     if (userErr || !user) return json({ error: "Invalid token" }, 401);
     const userId = user.id;
 
-    const { event_type, gps_lat, gps_lng, gps_accuracy, device_id, device_meta } = await req.json();
+    const { event_type, gps_lat, gps_lng, gps_accuracy, device_id, device_meta, gps_samples } = await req.json();
     if (!event_type || !gps_lat || !gps_lng || !device_id) {
       return json({ error: "Missing fields" }, 400);
     }
