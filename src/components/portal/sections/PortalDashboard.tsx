@@ -19,6 +19,7 @@ import { getCairoDateString } from '@/lib/cairoDate';
 import { getOrCreateDeviceId, getDeviceMeta } from '@/lib/device';
 import QrScanner from '@/components/attendance/QrScanner';
 import { GpsCheckinButton } from '@/components/portal/GpsCheckinButton';
+import { isBleTrialEmployee } from '@/lib/bleBeacon';
 import { invokeAttendanceFunction } from '@/lib/attendanceApi';
 import { getFreshPosition, freshGeoErrorMessage, FreshGeolocationError } from '@/lib/freshGeolocation';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -460,12 +461,14 @@ export const PortalDashboard = () => {
                   disabled={authLoading || methodLoading || (hasCheckedIn && !hasCheckedOut)}
                   onSuccess={() => { refreshAttendance(true); refreshLiveAttendanceState(); }}
                   ar={ar}
+                  bleTrial={isBleTrialEmployee(PORTAL_EMPLOYEE_ID, employee?.employeeId)}
                 />
                 <GpsCheckinButton
                   eventType="check_out"
                   disabled={gpsCheckoutDisabled}
                   onSuccess={() => { refreshAttendance(true); refreshLiveAttendanceState(); }}
                   ar={ar}
+                  bleTrial={isBleTrialEmployee(PORTAL_EMPLOYEE_ID, employee?.employeeId)}
                 />
               </div>
             )}

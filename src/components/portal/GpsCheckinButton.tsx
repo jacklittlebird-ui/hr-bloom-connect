@@ -5,6 +5,7 @@ import { getOrCreateDeviceId, getDeviceMeta } from '@/lib/device';
 import { performCheckin, clearCheckinDedup } from '@/lib/attendanceQueue';
 import { getFreshPosition, collectGpsSamples, freshGeoErrorMessage } from '@/lib/freshGeolocation';
 import { supabase } from '@/integrations/supabase/client';
+import { verifyStationBeacon } from '@/lib/bleBeacon';
 import { Navigation, Loader2, CheckCircle, XCircle, WifiOff, RefreshCw } from 'lucide-react';
 import {
   AlertDialog,
@@ -22,11 +23,13 @@ interface Props {
   disabled?: boolean;
   onSuccess?: () => void;
   ar?: boolean;
+  /** Trial: require the station BLE beacon before GPS check-in/out. */
+  bleTrial?: boolean;
 }
 
 type Status = 'idle' | 'loading' | 'verifying' | 'success' | 'error' | 'offline';
 
-export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: Props) => {
+export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true, bleTrial = false }: Props) => {
   const { session } = useAuth();
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
@@ -134,6 +137,17 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
   };
 
   const submitAttendance = async () => {
+    if (bleTrial) {
+      setStatus('loading');
+      setMessage(ar ? 'جارٍ البحث عن جهاز المحطة (بلوتوث)...' : 'Searching for station beacon...');
+      try {
+        await verifyStationBeacon(ar);
+      } catch (e: any) {
+        setStatus('error');
+        setMessage(e?.message || 'BLE error');
+        return;
+      }
+    }
     if (!navigator.onLine) {
       setStatus('offline');
       setMessage(
@@ -372,8 +386,8 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         {status === 'verifying'
           ? ar ? 'جارٍ التحقق من الخادم...' : 'Verifying with server...'
           : eventType === 'check_in'
-            ? ar ? 'تسجيل حضور (GPS)' : 'Check In (GPS)'
-            : ar ? 'تسجيل انصراف (GPS)' : 'Check Out (GPS)'}
+            ? ar ? (bleTrial ? 'تسجيل حضور (بلوتوث + GPS)' : 'تسجيل حضور (GPS)') : 'Check In (GPS)'
+            : ar ? (bleTrial ? 'تسجيل انصراف (بلوتوث + GPS)' : 'تسجيل انصراف (GPS)') : 'Check Out (GPS)'}
       </Button>
 
       {status === 'success' && (
