@@ -235,3 +235,44 @@ export function freshGeoErrorMessage(err: unknown, ar: boolean): string {
       return err.message;
   }
 }
+
+/** One raw GPS reading sent to the server for fake-GPS analysis. */
+export interface GpsSample {
+  lat: number;
+  lng: number;
+  acc: number | null;
+  alt: number | null;
+  alt_acc: number | null;
+  speed: number | null;
+  ts: number;
+}
+
+/**
+ * Collect several live GPS readings over ~3 seconds via watchPosition.
+ * Real satellites always jitter; mock-location apps return frozen values.
+ * Never throws — returns whatever samples were obtained (possibly empty).
+ */
+export function collectGpsSamples(durationMs = 3000, max = 5): Promise<GpsSample[]> {
+  return new Promise((resolve) => {
+    const out: GpsSample[] = [];
+    if (!navigator.geolocation) return resolve(out);
+    let id: number | null = null;
+    const done = () => { if (id != null) navigator.geolocation.clearWatch(id); resolve(out); };
+    const timer = setTimeout(done, durationMs);
+    try {
+      id = navigator.geolocation.watchPosition(
+        (p) => {
+          out.push({
+            lat: p.coords.latitude, lng: p.coords.longitude,
+            acc: p.coords.accuracy ?? null, alt: p.coords.altitude ?? null,
+            alt_acc: p.coords.altitudeAccuracy ?? null, speed: p.coords.speed ?? null,
+            ts: p.timestamp,
+          });
+          if (out.length >= max) { clearTimeout(timer); done(); }
+        },
+        () => { /* ignore */ },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: durationMs },
+      );
+    } catch { clearTimeout(timer); resolve(out); }
+  });
+}

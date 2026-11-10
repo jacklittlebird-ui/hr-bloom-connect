@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { getOrCreateDeviceId, getDeviceMeta } from '@/lib/device';
 import { performCheckin, clearCheckinDedup } from '@/lib/attendanceQueue';
-import { getFreshPosition, freshGeoErrorMessage } from '@/lib/freshGeolocation';
+import { getFreshPosition, collectGpsSamples, freshGeoErrorMessage } from '@/lib/freshGeolocation';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigation, Loader2, CheckCircle, XCircle, WifiOff, RefreshCw } from 'lucide-react';
 import {
@@ -176,6 +176,7 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true }: 
         gpsLat: pos.coords.latitude,
         gpsLng: pos.coords.longitude,
         gpsAccuracy: pos.coords.accuracy,
+        gpsSamples: await collectGpsSamples(),
         deviceMeta,
       });
 

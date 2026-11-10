@@ -545,6 +545,23 @@ Deno.serve(async (req) => {
       return json({ error: "No GPS locations configured for this station" }, 400);
     }
 
+    // Live multi-sample fake-GPS check (zero jitter / zero altitude / rounded accuracy).
+    {
+      const verdict = analyzeGpsSamples(gps_samples);
+      if (verdict.block) {
+        await logIncident(supabaseAdmin, {
+          user_id: userId, employee_id: employeeId, station_id: empStationId, event_type,
+          category: "fake_gps", risk_level: "high", reasons: verdict.reasons, device_id, outcome: "rejected",
+          evidence: { gps_lat, gps_lng, gps_accuracy, gps_samples, device_meta: device_meta || null },
+        });
+        await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+        return json({
+          error: "⛔ تم رفض تسجيل الحضور. تم رصد استخدام برنامج لتزييف الموقع (Fake GPS) — قراءات الموقع ثابتة ومصطنعة ولا تصدر عن أقمار GPS حقيقية. تم تسجيل المحاولة كتلاعب وإبلاغ الإدارة، وتكرارها يعرضك للمساءلة والجزاء. أغلق أي برنامج لتغيير الموقع وألغِ «الموقع الوهمي» من خيارات المطور ثم أعد المحاولة.",
+          tamper_block: true, fake_gps: true,
+        }, 403);
+      }
+    }
+
     // Fake-GPS detection: real GPS always jitters between separate readings.
     // Identical coordinates (6 decimals) to this user's previous scan taken
     // ≥20s earlier (within 12h) = frozen/mocked location (case emp0117).
