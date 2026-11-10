@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Play, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -17,13 +19,17 @@ const chunk = <T,>(a: T[], n: number) => Array.from({ length: Math.ceil(a.length
 
 export const SharmAllowances = () => {
   const today = cairoToday();
-  const month = today.slice(0, 7);
+  const [month, setMonth] = useState(() => today.slice(0, 7));
   const period = useMemo(() => rosterPeriod(month), [month]);
-  const canRun = canRunSharmAllowance(today);
+  const canRun = canRunSharmAllowance(today, month);
   const [rows, setRows] = useState<Row[]>([]);
   const [running, setRunning] = useState(false);
 
   const run = async () => {
+    if (!canRunSharmAllowance(cairoToday(), month)) {
+      toast({ title: 'لا يمكن تشغيل البدلات', description: 'يتاح التشغيل بعد يوم 25 من الشهر المختار.', variant: 'destructive' });
+      return;
+    }
     setRunning(true);
     try {
       const { data: st } = await supabase.from('stations').select('id').eq('code', 'sharm').single();
@@ -78,11 +84,19 @@ export const SharmAllowances = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2 items-center">
+          <Label htmlFor="sharm-allowance-month">شهر البدلات</Label>
+          <Input id="sharm-allowance-month" type="month" className="w-44" value={month} max={today.slice(0, 7)} disabled={running}
+            onChange={e => {
+              if (/^\d{4}-(0[1-9]|1[0-2])$/.test(e.target.value)) {
+                setMonth(e.target.value);
+                setRows([]);
+              }
+            }} />
           <Button onClick={run} disabled={!canRun || running}>
             {running ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Play className="w-4 h-4 ml-2" />}تشغيل بدلات شرم
           </Button>
           {rows.length > 0 && <Button variant="outline" onClick={exportXlsx}><FileSpreadsheet className="w-4 h-4 ml-2" />تصدير Excel</Button>}
-          {!canRun && <span className="text-sm text-muted-foreground">يتاح الزر بعد يوم 25 من الشهر.</span>}
+          {!canRun && <span className="text-sm text-muted-foreground">يتاح الزر بعد يوم 25 من الشهر المختار.</span>}
         </div>
         {rows.length > 0 && (
           <Table>

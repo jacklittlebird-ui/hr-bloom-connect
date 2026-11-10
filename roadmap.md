@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Correct data-update overprint horizontal direction; verified signed-in preview and print window coordinates.
+- [x] Allow Sharm allowance runs for closed past months while retaining the bulk-payroll prerequisite; 9 tests passed and signed-in October selection verified without modifying live payroll.
 - [x] Move the employee Roster beside Attendance; 11 Roster and personal-record isolation tests passed, build OK.
 - [ ] Verify the Roster in the live employee portal — blocked because the requesting user has no matching employee account; requires employee sign-in in the preview.
 - [x] Correct Form 1 and Form 6 PDF text and digit alignment; locally downloaded both actual templates with test data and visually verified boxed digits, labels, logos and two-page output against preview (tests passed; build OK).
