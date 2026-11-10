@@ -174,8 +174,9 @@ export const PortalDashboard = () => {
     fetchLiveAttendanceState();
   }, [PORTAL_EMPLOYEE_ID, session?.access_token, authLoading, records, attendanceStateVersion]);
 
-  const showQr = checkinMethod === 'qr' || checkinMethod === 'both';
-  const showGps = checkinMethod === 'gps' || checkinMethod === 'both';
+  const bleTrial = isBleTrialEmployee(PORTAL_EMPLOYEE_ID, employee?.employeeId);
+  const showQr = !bleTrial && (checkinMethod === 'qr' || checkinMethod === 'both');
+  const showGps = bleTrial || checkinMethod === 'gps' || checkinMethod === 'both';
   // GPS checkout must remain actionable as long as the employee has an actual
   // open record on the server. We intentionally IGNORE liveAttendanceState.error
   // and liveAttendanceState.loading here — the backend (gps-checkin function) is
