@@ -23,6 +23,7 @@ const methodConfig = {
   gps: { icon: Navigation, labelAr: 'GPS فقط', labelEn: 'GPS Only', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/40', badge: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
   both: { icon: Layers, labelAr: 'QR + GPS معاً', labelEn: 'QR + GPS', color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/40', badge: 'bg-purple-100 text-purple-700 border-purple-300' },
   ble: { icon: Bluetooth, labelAr: 'BLE + GPS', labelEn: 'BLE + GPS', color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-950/40', badge: 'bg-sky-100 text-sky-700 border-sky-300' },
+  ble_only: { icon: Bluetooth, labelAr: 'BLE فقط', labelEn: 'BLE Only', color: 'text-sky-600', bg: 'bg-sky-50 dark:bg-sky-950/40', badge: 'bg-sky-100 text-sky-700 border-sky-300' },
 };
 
 export const StationCheckinSettings = () => {
@@ -111,6 +112,12 @@ export const StationCheckinSettings = () => {
                       <span className="flex items-center gap-2">
                         <Bluetooth className="w-4 h-4 text-sky-600" />
                         {ar ? '📶 BLE + GPS (أندرويد)' : '📶 BLE + GPS (Android)'}
+                      </span>
+                    </SelectItem>
+                    <SelectItem value="ble_only">
+                      <span className="flex items-center gap-2">
+                        <Bluetooth className="w-4 h-4 text-sky-600" />
+                        {ar ? '📶 BLE فقط (أندرويد)' : '📶 BLE Only (Android)'}
                       </span>
                     </SelectItem>
                   </SelectContent>

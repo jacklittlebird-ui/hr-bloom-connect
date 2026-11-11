@@ -27,6 +27,7 @@ const labels = {
   gps: { ar: '📍 GPS فقط', en: '📍 GPS Only', icon: Navigation, color: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
   both: { ar: '🔄 QR + GPS', en: '🔄 QR + GPS', icon: Layers, color: 'bg-purple-100 text-purple-700 border-purple-300' },
   ble: { ar: '📶 BLE + GPS', en: '📶 BLE + GPS', icon: Bluetooth, color: 'bg-sky-100 text-sky-700 border-sky-300' },
+  ble_only: { ar: '📶 BLE فقط', en: '📶 BLE Only', icon: Bluetooth, color: 'bg-sky-100 text-sky-700 border-sky-300' },
 };
 
 export const EmployeeCheckinOverrides = () => {
@@ -164,6 +165,7 @@ export const EmployeeCheckinOverrides = () => {
                       <SelectItem value="gps">{ar ? labels.gps.ar : labels.gps.en}</SelectItem>
                       <SelectItem value="both">{ar ? labels.both.ar : labels.both.en}</SelectItem>
                       <SelectItem value="ble">{ar ? labels.ble.ar : labels.ble.en}</SelectItem>
+                      <SelectItem value="ble_only">{ar ? labels.ble_only.ar : labels.ble_only.en}</SelectItem>
                     </SelectContent>
                   </Select>
                 </CardContent>
@@ -222,6 +224,7 @@ export const EmployeeCheckinOverrides = () => {
                     <SelectItem value="gps">{ar ? labels.gps.ar : labels.gps.en}</SelectItem>
                     <SelectItem value="both">{ar ? labels.both.ar : labels.both.en}</SelectItem>
                       <SelectItem value="ble">{ar ? labels.ble.ar : labels.ble.en}</SelectItem>
+                      <SelectItem value="ble_only">{ar ? labels.ble_only.ar : labels.ble_only.en}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -25,11 +25,13 @@ interface Props {
   ar?: boolean;
   /** Trial: require the station BLE beacon before GPS check-in/out. */
   bleTrial?: boolean;
+  /** BLE only: the station beacon alone proves presence (no GPS). */
+  bleOnly?: boolean;
 }
 
 type Status = 'idle' | 'loading' | 'verifying' | 'success' | 'error' | 'offline';
 
-export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true, bleTrial = false }: Props) => {
+export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true, bleTrial = false, bleOnly = false }: Props) => {
   const { session } = useAuth();
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
@@ -137,7 +139,7 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true, bl
   };
 
   const submitAttendance = async () => {
-    if (bleTrial) {
+    if (bleTrial || bleOnly) {
       setStatus('loading');
       setMessage(ar ? 'جارٍ البحث عن جهاز المحطة (بلوتوث)...' : 'Searching for station beacon...');
       try {
@@ -162,8 +164,8 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true, bl
     setMessage('');
 
     try {
-      let pos: GeolocationPosition;
-      try {
+      let pos: GeolocationPosition | null = null;
+      if (!bleOnly) try {
         pos = await getFreshPosition({
           maxAgeMs: 10_000,
           maxAccuracyMeters: 150,
@@ -187,10 +189,11 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true, bl
         accessToken: session.access_token,
         userId: session.user.id,
         deviceId: getOrCreateDeviceId(),
-        gpsLat: pos.coords.latitude,
-        gpsLng: pos.coords.longitude,
-        gpsAccuracy: pos.coords.accuracy,
-        gpsSamples: await collectGpsSamples(),
+        gpsLat: pos ? pos.coords.latitude : null,
+        gpsLng: pos ? pos.coords.longitude : null,
+        gpsAccuracy: pos ? pos.coords.accuracy : null,
+        gpsSamples: pos ? await collectGpsSamples() : undefined,
+        bleVerified: bleOnly || undefined,
         deviceMeta,
       });
 

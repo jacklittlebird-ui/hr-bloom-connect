@@ -172,9 +172,10 @@ interface CheckinParams {
   accessToken: string;
   userId: string;
   deviceId: string;
-  gpsLat: number;
-  gpsLng: number;
-  gpsAccuracy: number;
+  gpsLat: number | null;
+  gpsLng: number | null;
+  gpsAccuracy: number | null;
+  bleVerified?: boolean;
   gpsSamples?: unknown[];
   deviceMeta?: DeviceMeta;
 }
@@ -227,6 +228,7 @@ export async function performCheckin(params: CheckinParams): Promise<CheckinResu
           gps_lng: params.gpsLng,
           gps_accuracy: params.gpsAccuracy,
           gps_samples: params.gpsSamples || null,
+          ble_verified: params.bleVerified || undefined,
           device_id: params.deviceId,
           device_meta: params.deviceMeta || null,
         },

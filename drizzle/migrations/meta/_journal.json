@@ -218,6 +218,13 @@
       "when": 1794323251413,
       "tag": "0030_ble_checkin_method",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794383945342,
+      "tag": "0031_ble_only_checkin_method",
+      "breakpoints": true
     }
   ]
 }

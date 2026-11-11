@@ -261,8 +261,8 @@ Deno.serve(async (req) => {
     if (userErr || !user) return json({ error: "Invalid token" }, 401);
     const userId = user.id;
 
-    const { event_type, gps_lat, gps_lng, gps_accuracy, device_id, device_meta, gps_samples } = await req.json();
-    if (!event_type || !gps_lat || !gps_lng || !device_id) {
+    const { event_type, gps_lat, gps_lng, gps_accuracy, device_id, device_meta, gps_samples, ble_verified } = await req.json();
+    if (!event_type || !device_id || (!ble_verified && (!gps_lat || !gps_lng))) {
       return json({ error: "Missing fields" }, 400);
     }
 
@@ -440,7 +440,7 @@ Deno.serve(async (req) => {
 
     const station = emp.stations as any;
     const effectiveMethod = (emp as any)?.checkin_method_override || station?.checkin_method || "qr";
-    if (effectiveMethod !== "gps" && effectiveMethod !== "both" && effectiveMethod !== "ble") {
+    if (effectiveMethod !== "gps" && effectiveMethod !== "both" && effectiveMethod !== "ble" && effectiveMethod !== "ble_only") {
       await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
       return json({ error: "GPS check-in not enabled for this employee" }, 403);
     }
@@ -522,6 +522,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    // BLE-only: presence proven by the station beacon; skip all GPS checks.
+    const bleOnly = effectiveMethod === "ble_only";
+    if (bleOnly && !ble_verified) {
+      await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+      return json({ error: "يجب التحقق من جهاز المحطة (بلوتوث) أولاً" }, 403);
+    }
+
     // GPS geofence validation
     const empStationId = emp.station_id;
 
@@ -546,6 +553,9 @@ Deno.serve(async (req) => {
       return json({ error: "No GPS locations configured for this station" }, 400);
     }
 
+    let matchedLocation: any = bleOnly ? locations[0] : null;
+    let nearestDist = Infinity;
+    if (!bleOnly) {
     // Live multi-sample fake-GPS check (zero jitter / zero altitude / rounded accuracy).
     {
       const verdict = analyzeGpsSamples(gps_samples);
@@ -595,8 +605,6 @@ Deno.serve(async (req) => {
 
     const accuracyBuffer = Math.min(gps_accuracy || 0, 150);
 
-    let nearestDist = Infinity;
-    let matchedLocation: any = null;
     for (const loc of locations) {
       if (!loc.latitude || !loc.longitude) continue;
       const dist = haversine(gps_lat, gps_lng, loc.latitude, loc.longitude);
@@ -622,6 +630,7 @@ Deno.serve(async (req) => {
         tamper_block: true,
       }, 403);
     }
+    } // end !bleOnly
 
     // NOTE: dedup/min-interval is now recorded ONLY on success (after the
     // record write below) so that failed attempts (NO_OPEN_RECORD,
@@ -649,7 +658,7 @@ Deno.serve(async (req) => {
 
     // Risk assessment (flag only — never blocks an otherwise valid attempt)
     let risk: ReturnType<typeof assessRisk> | null = null;
-    try {
+    if (!bleOnly) try {
       const { data: ruleRows } = await supabaseAdmin
         .from("attendance_risk_rules")
         .select("station_id, max_accuracy_m, max_speed_kmh")
@@ -682,8 +691,8 @@ Deno.serve(async (req) => {
       device_id,
       location_id: matchedLocation.id,
       token_ts: now.toISOString(),
-      gps_lat,
-      gps_lng,
+      gps_lat: gps_lat ?? null,
+      gps_lng: gps_lng ?? null,
     });
 
     // Attendance record upsert
@@ -726,7 +735,7 @@ Deno.serve(async (req) => {
           check_in: now.toISOString(),
           status: isLate ? "late" : "present",
           is_late: isLate,
-          notes: `GPS - ${matchedLocation.name_ar}`,
+          notes: `${bleOnly ? "BLE" : "GPS"} - ${matchedLocation.name_ar}`,
         };
 
         const { error } = await supabaseAdmin.from("attendance_records").insert(insertPayload);
