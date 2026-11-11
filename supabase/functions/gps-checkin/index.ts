@@ -588,7 +588,13 @@ Deno.serve(async (req) => {
       if (lastEv) {
         const gapMs = Date.now() - new Date(lastEv.scan_time).getTime();
         const same = (a: number, b: number) => Math.round(Number(a) * 1e6) === Math.round(Number(b) * 1e6);
-        if (gapMs >= 20_000 && gapMs <= 12 * 3_600_000 && same(lastEv.gps_lat, gps_lat) && same(lastEv.gps_lng, gps_lng)) {
+        // Wi-Fi/network fixes (accuracy >= 20m) legitimately repeat the same estimate
+        // indoors, and live samples that jitter prove a real GPS — only block a
+        // precise fix whose live samples are also frozen.
+        const smp = Array.isArray(gps_samples) ? gps_samples.filter((x: any) => x && typeof x.lat === "number") : [];
+        const samplesFrozen = smp.length < 2 || smp.every((x: any) => same(x.lat, smp[0].lat) && same(x.lng, smp[0].lng));
+        const preciseFix = typeof gps_accuracy === "number" && gps_accuracy < 20;
+        if (preciseFix && samplesFrozen && gapMs >= 20_000 && gapMs <= 12 * 3_600_000 && same(lastEv.gps_lat, gps_lat) && same(lastEv.gps_lng, gps_lng)) {
           await logIncident(supabaseAdmin, {
             user_id: userId, employee_id: employeeId, station_id: empStationId, event_type,
             category: "fake_gps", risk_level: "high", reasons: ["frozen_coordinates"], device_id, outcome: "rejected",
