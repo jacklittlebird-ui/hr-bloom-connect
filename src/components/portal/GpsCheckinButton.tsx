@@ -389,8 +389,8 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true, bl
         {status === 'verifying'
           ? ar ? 'جارٍ التحقق من الخادم...' : 'Verifying with server...'
           : eventType === 'check_in'
-            ? ar ? (bleTrial ? 'تسجيل حضور (بلوتوث + GPS)' : 'تسجيل حضور (GPS)') : 'Check In (GPS)'
-            : ar ? (bleTrial ? 'تسجيل انصراف (بلوتوث + GPS)' : 'تسجيل انصراف (GPS)') : 'Check Out (GPS)'}
+            ? ar ? (bleOnly ? 'تسجيل حضور (BLE)' : bleTrial ? 'تسجيل حضور (BLE + GPS)' : 'تسجيل حضور (GPS)') : (bleOnly ? 'Check In (BLE)' : bleTrial ? 'Check In (BLE + GPS)' : 'Check In (GPS)')
+            : ar ? (bleOnly ? 'تسجيل انصراف (BLE)' : bleTrial ? 'تسجيل انصراف (BLE + GPS)' : 'تسجيل انصراف (GPS)') : (bleOnly ? 'Check Out (BLE)' : bleTrial ? 'Check Out (BLE + GPS)' : 'Check Out (GPS)')}
       </Button>
 
       {status === 'success' && (
