@@ -22,6 +22,8 @@ const FinalSettlement = lazy(() => import('@/components/documents/FinalSettlemen
 const ResignationLetter = lazy(() => import('@/components/documents/ResignationLetter').then(m => ({ default: m.ResignationLetter })));
 const EmployeeDataForm = lazy(() => import('@/components/documents/EmployeeDataForm').then(m => ({ default: m.EmployeeDataForm })));
 
+const CandidateDataForm = lazy(() => import('@/components/documents/CandidateDataForm').then(m => ({ default: m.CandidateDataForm })));
+
 const DOC_TABS = [
   { key: 'form01', ar: 'استمارة 1', en: 'Form 1', Comp: Form01 },
   { key: 'form06', ar: 'استمارة 6', en: 'Form 6', Comp: Form06 },
@@ -32,6 +34,7 @@ const DOC_TABS = [
   { key: 'settlement', ar: 'مخالصة نهائية', en: 'Final Settlement', Comp: FinalSettlement },
   { key: 'resignation', ar: 'استقالة', en: 'Resignation', Comp: ResignationLetter },
   { key: 'dataForm', ar: 'نموذج بيانات موظف', en: 'Employee Data Form', Comp: EmployeeDataForm },
+  { key: 'candidateData', ar: 'بيانات مرشح', en: 'Candidate Data', Comp: CandidateDataForm },
 ] as const;
 
 export const EmployeeForms = () => {
