@@ -261,7 +261,8 @@ Deno.serve(async (req) => {
     if (userErr || !user) return json({ error: "Invalid token" }, 401);
     const userId = user.id;
 
-    const { event_type, gps_lat, gps_lng, gps_accuracy, device_id, device_meta, gps_samples, ble_verified } = await req.json();
+    const { event_type, gps_lat, gps_lng, gps_accuracy, device_id, device_meta, gps_samples, ble_verified, ble_device_name } = await req.json();
+    const bleDeviceName = typeof ble_device_name === "string" ? ble_device_name.trim().slice(0, 64) : "";
     if (!event_type || !device_id || (!ble_verified && (!gps_lat || !gps_lng))) {
       return json({ error: "Missing fields" }, 400);
     }
@@ -541,7 +542,7 @@ Deno.serve(async (req) => {
 
     const { data: allLocations } = await supabaseAdmin
       .from("qr_locations")
-      .select("id, name_ar, latitude, longitude, radius_m, station_id")
+      .select("id, name_ar, latitude, longitude, radius_m, station_id, ble_device_name")
       .eq("is_active", true);
 
     const locations = (allLocations || []).filter((loc: any) =>
@@ -553,7 +554,17 @@ Deno.serve(async (req) => {
       return json({ error: "No GPS locations configured for this station" }, 400);
     }
 
-    let matchedLocation: any = bleOnly ? locations[0] : null;
+    let matchedLocation: any = null;
+    if (bleOnly) {
+      const norm = (v: any) => String(v || "").trim().toLowerCase();
+      const withDevice = locations.filter((l: any) => norm(l.ble_device_name));
+      matchedLocation = bleDeviceName ? locations.find((l: any) => norm(l.ble_device_name) === norm(bleDeviceName)) : null;
+      if (!matchedLocation && withDevice.length > 0) {
+        await releaseAttendanceLock(supabaseAdmin, employeeId, device_id, event_type);
+        return json({ error: "⛔ جهاز البلوتوث غير مرتبط بأي موقع في محطتك. اقترب من جهاز موقعك واختره ثم أعد المحاولة." }, 403);
+      }
+      if (!matchedLocation) matchedLocation = locations[0];
+    }
     let nearestDist = Infinity;
     if (!bleOnly) {
     // Live multi-sample fake-GPS check (zero jitter / zero altitude / rounded accuracy).
@@ -741,7 +752,7 @@ Deno.serve(async (req) => {
           check_in: now.toISOString(),
           status: isLate ? "late" : "present",
           is_late: isLate,
-          notes: `${bleOnly ? "BLE" : "GPS"} - ${matchedLocation.name_ar}`,
+          notes: `${bleOnly ? `BLE${bleDeviceName ? ` (${bleDeviceName})` : ""}` : "GPS"} - ${matchedLocation.name_ar}`,
         };
 
         const { error } = await supabaseAdmin.from("attendance_records").insert(insertPayload);

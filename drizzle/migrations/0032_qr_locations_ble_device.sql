@@ -1,0 +1,1 @@
+ALTER TABLE public.qr_locations ADD COLUMN IF NOT EXISTS ble_device_name text;

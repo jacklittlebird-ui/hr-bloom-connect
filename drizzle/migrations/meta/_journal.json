@@ -225,6 +225,13 @@
       "when": 1794383945342,
       "tag": "0031_ble_only_checkin_method",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794396602258,
+      "tag": "0032_qr_locations_ble_device",
+      "breakpoints": true
     }
   ]
 }

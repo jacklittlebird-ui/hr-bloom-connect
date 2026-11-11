@@ -139,11 +139,12 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true, bl
   };
 
   const submitAttendance = async () => {
+    let bleDeviceName: string | undefined;
     if (bleTrial || bleOnly) {
       setStatus('loading');
       setMessage(ar ? 'جارٍ البحث عن جهاز المحطة (بلوتوث)...' : 'Searching for station beacon...');
       try {
-        await verifyStationBeacon(ar);
+        bleDeviceName = (await verifyStationBeacon(ar)) || undefined;
       } catch (e: any) {
         setStatus('error');
         setMessage(e?.message || 'BLE error');
@@ -194,6 +195,7 @@ export const GpsCheckinButton = ({ eventType, disabled, onSuccess, ar = true, bl
         gpsAccuracy: pos ? pos.coords.accuracy : null,
         gpsSamples: pos ? await collectGpsSamples() : undefined,
         bleVerified: bleOnly || undefined,
+        bleDeviceName,
         deviceMeta,
       });
 

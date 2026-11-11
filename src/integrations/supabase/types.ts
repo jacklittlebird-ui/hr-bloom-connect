@@ -2783,6 +2783,7 @@ export type Database = {
       }
       qr_locations: {
         Row: {
+          ble_device_name: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -2794,6 +2795,7 @@ export type Database = {
           station_id: string | null
         }
         Insert: {
+          ble_device_name?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -2805,6 +2807,7 @@ export type Database = {
           station_id?: string | null
         }
         Update: {
+          ble_device_name?: string | null
           created_at?: string
           id?: string
           is_active?: boolean

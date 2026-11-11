@@ -77,7 +77,7 @@ const AttendanceAdmin = () => {
   const [editLocationOpen, setEditLocationOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<any>(null);
   const [newLocation, setNewLocation] = useState({
-    name_ar: "", name_en: "", station_ids: [] as string[], latitude: "", longitude: "", radius_m: "150",
+    name_ar: "", name_en: "", station_ids: [] as string[], latitude: "", longitude: "", radius_m: "150", ble_device_name: "",
   });
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -176,6 +176,7 @@ const AttendanceAdmin = () => {
       latitude: newLocation.latitude ? parseFloat(newLocation.latitude) : null,
       longitude: newLocation.longitude ? parseFloat(newLocation.longitude) : null,
       radius_m: parseInt(newLocation.radius_m) || 150,
+      ble_device_name: newLocation.ble_device_name.trim() || null,
     }).select("id").single();
     if (error) {
       toast.error(error.message);
@@ -199,7 +200,7 @@ const AttendanceAdmin = () => {
 
     toast.success(ar ? "تمت إضافة الموقع" : "Location added");
     setAddLocationOpen(false);
-    setNewLocation({ name_ar: "", name_en: "", station_ids: [], latitude: "", longitude: "", radius_m: "150" });
+    setNewLocation({ name_ar: "", name_en: "", station_ids: [], latitude: "", longitude: "", radius_m: "150", ble_device_name: "" });
     fetchAll();
   };
 
@@ -246,6 +247,7 @@ const AttendanceAdmin = () => {
       latitude: loc.latitude?.toString() || "",
       longitude: loc.longitude?.toString() || "",
       radius_m: loc.radius_m?.toString() || "150",
+      ble_device_name: loc.ble_device_name || "",
       is_active: loc.is_active,
     });
     setEditLocationOpen(true);
@@ -262,6 +264,7 @@ const AttendanceAdmin = () => {
       latitude: editingLocation.latitude ? parseFloat(editingLocation.latitude) : null,
       longitude: editingLocation.longitude ? parseFloat(editingLocation.longitude) : null,
       radius_m: parseInt(editingLocation.radius_m) || 150,
+      ble_device_name: (editingLocation.ble_device_name || "").trim() || null,
       is_active: editingLocation.is_active,
     }).eq("id", editingLocation.id);
 
@@ -674,6 +677,11 @@ const AttendanceAdmin = () => {
                         <Label>{ar ? "نطاق الجيوفنس (متر)" : "Geofence Radius (m)"}</Label>
                         <Input dir="ltr" type="number" value={newLocation.radius_m} onChange={(e) => setNewLocation({ ...newLocation, radius_m: e.target.value })} />
                       </div>
+                      <div>
+                        <Label>{ar ? "جهاز BLE المرتبط بهذا الموقع (اختياري)" : "Linked BLE device (optional)"}</Label>
+                        <Input dir="ltr" placeholder="BLOOM-HR-STATION-01" value={newLocation.ble_device_name} onChange={(e) => setNewLocation({ ...newLocation, ble_device_name: e.target.value })} />
+                        <p className="text-xs text-muted-foreground mt-1">{ar ? "اكتب اسم الجهاز كما يظهر في البلوتوث. الختم بهذا الجهاز يُسجَّل في هذا الموقع." : "Exact Bluetooth name. Check-ins via this device are recorded at this location."}</p>
+                      </div>
                       <Button onClick={handleAddLocation} className="w-full">
                         {ar ? "حفظ" : "Save"}
                       </Button>
@@ -732,7 +740,7 @@ const AttendanceAdmin = () => {
                               ? `${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)}`
                               : "—"}
                           </TableCell>
-                          <TableCell dir="ltr">{loc.radius_m}m</TableCell>
+                          <TableCell dir="ltr">{loc.radius_m}m{loc.ble_device_name && <Badge variant="outline" className="ms-2 font-mono text-[10px]">BLE: {loc.ble_device_name}</Badge>}</TableCell>
                           <TableCell>
                             <Badge variant={loc.is_active ? "default" : "secondary"}>
                               {loc.is_active ? (ar ? "نشط" : "Active") : (ar ? "غير نشط" : "Inactive")}
@@ -818,6 +826,11 @@ const AttendanceAdmin = () => {
                       <Label>{ar ? "نطاق الجيوفنس (متر)" : "Geofence Radius (m)"}</Label>
                       <Input dir="ltr" type="number" value={editingLocation.radius_m} onChange={(e) => setEditingLocation({ ...editingLocation, radius_m: e.target.value })} />
                     </div>
+                      <div>
+                        <Label>{ar ? "جهاز BLE المرتبط بهذا الموقع (اختياري)" : "Linked BLE device (optional)"}</Label>
+                        <Input dir="ltr" placeholder="BLOOM-HR-STATION-01" value={editingLocation.ble_device_name} onChange={(e) => setEditingLocation({ ...editingLocation, ble_device_name: e.target.value })} />
+                        <p className="text-xs text-muted-foreground mt-1">{ar ? "اكتب اسم الجهاز كما يظهر في البلوتوث. الختم بهذا الجهاز يُسجَّل في هذا الموقع." : "Exact Bluetooth name. Check-ins via this device are recorded at this location."}</p>
+                      </div>
                     <label className="flex items-center gap-3 rounded-md border px-3 py-2 cursor-pointer">
                       <Checkbox
                         checked={editingLocation.is_active}

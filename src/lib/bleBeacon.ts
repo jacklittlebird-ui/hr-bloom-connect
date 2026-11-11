@@ -7,7 +7,8 @@ export const isBleTrialEmployee = (...codes: (string | null | undefined)[]) =>
   codes.some((c) => !!c && BLE_TRIAL_EMPLOYEES.includes(String(c).trim().toLowerCase()));
 
 /** Must be called directly from a click (user gesture). Throws an Arabic/English message on failure. */
-export async function verifyStationBeacon(ar = true): Promise<void> {
+/** Returns the advertised name of the station device that was verified. */
+export async function verifyStationBeacon(ar = true): Promise<string> {
   const bt = (navigator as any).bluetooth;
   if (!bt?.requestDevice) {
     throw new Error(ar
@@ -29,6 +30,7 @@ export async function verifyStationBeacon(ar = true): Promise<void> {
     const val = new TextDecoder().decode(await ch.readValue());
     try { server.disconnect(); } catch { /* ignore */ }
     if (val !== 'STATION_VERIFIED') throw new Error('bad');
+    return String(device.name || '').trim();
   } catch {
     throw new Error(ar
       ? 'تعذّر التحقق من جهاز المحطة. اقترب من الجهاز وأعد المحاولة.'
