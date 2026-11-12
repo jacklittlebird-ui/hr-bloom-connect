@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { toast } from 'sonner';
+import { requestGlobalRefresh } from '@/lib/portalRefresh';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { TrainingAcknowledgmentModal } from '@/components/portal/TrainingAcknowledgmentModal';
 import { SystemUsageAcknowledgmentModal } from '@/components/portal/SystemUsageAcknowledgmentModal';
@@ -63,12 +65,13 @@ const sectionComponents: Record<PortalSection, React.FC> = {
 };
 
 const EmployeePortal = () => {
-  const { isRTL } = useLanguage();
+  const { isRTL, language } = useLanguage();
   const isMobile = useIsMobile();
   const [activeSection, setActiveSection] = useState<PortalSection>('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const [ackDismissed, setAckDismissed] = useState(false);
   const [assetAckDismissed, setAssetAckDismissed] = useState(false);
   const [uniformAckDismissed, setUniformAckDismissed] = useState(false);
@@ -90,6 +93,17 @@ const EmployeePortal = () => {
   useScrollRestoration(mainRef);
 
   const ActiveComponent = sectionComponents[activeSection];
+
+  // Refresh the selected page: drop every cached query and every "already
+  // loaded" guard in the data contexts, then remount the section so all of
+  // its data is read from the database again.
+  const handleRefresh = () => {
+    requestGlobalRefresh();
+    setRefreshKey((k) => k + 1);
+    setRefreshing(true);
+    window.setTimeout(() => setRefreshing(false), 900);
+    toast.success(language === 'ar' ? 'تم تحديث بيانات الصفحة' : 'Page data refreshed');
+  };
 
   const [hidden, setHidden] = useState(false);
 
@@ -124,7 +138,7 @@ const EmployeePortal = () => {
             } else {
               setSidebarCollapsed(!sidebarCollapsed);
             }
-          }} onRefresh={() => setRefreshKey(k => k + 1)} />
+          }} onRefresh={handleRefresh} refreshing={refreshing} />
           <div
             ref={mainRef}
             className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden min-w-0 relative"

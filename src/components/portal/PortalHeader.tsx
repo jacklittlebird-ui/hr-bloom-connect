@@ -11,9 +11,10 @@ import { NotificationDropdown } from '@/components/notifications/NotificationDro
 interface PortalHeaderProps {
   onToggleSidebar: () => void;
   onRefresh?: () => void;
+  refreshing?: boolean;
 }
 
-export const PortalHeader = ({ onToggleSidebar, onRefresh }: PortalHeaderProps) => {
+export const PortalHeader = ({ onToggleSidebar, onRefresh, refreshing }: PortalHeaderProps) => {
   const { language, setLanguage, isRTL } = useLanguage();
   const { user, logout } = useAuth();
   const { getEmployeeById } = useEmployeeData();
@@ -91,8 +92,16 @@ export const PortalHeader = ({ onToggleSidebar, onRefresh }: PortalHeaderProps) 
 
       <div className="flex items-center gap-2">
         {onRefresh && (
-          <Button variant="ghost" size="icon" onClick={onRefresh} className="shrink-0">
-            <RefreshCw className="w-4 h-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onRefresh}
+            className="shrink-0"
+            aria-label={language === 'ar' ? 'تحديث بيانات الصفحة' : 'Refresh page data'}
+            title={language === 'ar' ? 'تحديث بيانات الصفحة' : 'Refresh page data'}
+            disabled={refreshing}
+          >
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
           </Button>
         )}
         <Button

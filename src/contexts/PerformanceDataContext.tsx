@@ -2,6 +2,7 @@ import React, { createContext, useContext, useCallback, useState, useEffect, use
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
+import { subscribePortalRefresh } from '@/lib/portalRefresh';
 
 export interface CriteriaItem {
   name: string;
@@ -173,6 +174,9 @@ export const PerformanceDataProvider: React.FC<{ children: React.ReactNode }> = 
 
   // Lazy loading: only fetch when accessed
   const hasFetched = useRef(false);
+
+  // Portal refresh button: allow the next evaluations access to re-fetch.
+  useEffect(() => subscribePortalRefresh(() => { hasFetched.current = false; }), []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {

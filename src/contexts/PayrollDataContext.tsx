@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { trackQuery } from '@/lib/queryOptimizer';
 import { revertLoanPaymentsForPeriod } from '@/lib/loanPayments';
 import { recomputePayroll } from '@/lib/payrollCalc';
+import { subscribePortalRefresh } from '@/lib/portalRefresh';
 
 export interface ProcessedPayroll {
   employeeId: string;
@@ -421,6 +422,9 @@ export const PayrollDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
     hasFetched.current = true;
     await Promise.all([fetchEmployeeMap(), fetchEntries()]);
   }, [fetchEmployeeMap, fetchEntries]);
+
+  // Portal refresh button: allow the next payroll access to re-fetch.
+  useEffect(() => subscribePortalRefresh(() => { hasFetched.current = false; }), []);
 
   // Don't fetch on mount — wait until a page actually needs payroll data
   useEffect(() => {

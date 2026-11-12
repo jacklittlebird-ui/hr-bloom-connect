@@ -3,6 +3,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { trackQuery } from '@/lib/queryOptimizer';
+import { subscribePortalRefresh } from '@/lib/portalRefresh';
 
 export interface SalaryRecord {
   year: string;
@@ -104,6 +105,9 @@ export const SalaryDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     hasFetched.current = true;
     await fetchRecords();
   }, [fetchRecords]);
+
+  // Portal refresh button: allow the next salary access to re-fetch.
+  useEffect(() => subscribePortalRefresh(() => { hasFetched.current = false; }), []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
+import { subscribePortalRefresh } from '@/lib/portalRefresh';
 
 export type PortalFilter = 'admin' | 'employee' | 'station_manager' | 'training' | 'kiosk' | 'all';
 
@@ -84,6 +85,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const hasFetched = useRef(false);
+
+  // Portal refresh button: allow the next notifications access to re-fetch.
+  useEffect(() => subscribePortalRefresh(() => { hasFetched.current = false; }), []);
 
   const ensureLoaded = useCallback(async () => {
     if (hasFetched.current) return;

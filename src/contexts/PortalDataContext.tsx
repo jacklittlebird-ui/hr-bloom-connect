@@ -2,6 +2,7 @@ import React, { createContext, useContext, useCallback, useState, useRef, useEff
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackQuery, debouncedFetch, invalidateCache } from '@/lib/queryOptimizer';
+import { subscribePortalRefresh } from '@/lib/portalRefresh';
 
 // ===== LEAVES =====
 export interface LeaveBalance {
@@ -234,6 +235,10 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Track which sections have been loaded
   const loaded = useRef<Set<string>>(new Set());
   const ensureLeavesRef = useRef<((force?: boolean) => Promise<void>) | null>(null);
+
+  // Portal refresh button: forget every "already loaded" section so the next
+  // mount of the selected page re-reads it from the database.
+  useEffect(() => subscribePortalRefresh(() => { loaded.current.clear(); }), []);
 
   // Realtime subscription: refetch portal leaves whenever admin/HR mutates
   // leave_requests / permission_requests / overtime_requests for this employee.

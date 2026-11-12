@@ -4,6 +4,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackQuery } from '@/lib/queryOptimizer';
 import { markInstallmentPaid, recalculateLoanSummary, revertInstallmentPayment } from '@/lib/loanPayments';
+import { subscribePortalRefresh } from '@/lib/portalRefresh';
 
 export interface Loan {
   id: string;
@@ -135,6 +136,9 @@ export const LoanDataProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     hasFetched.current = true;
     await Promise.all([fetchLoans(), fetchAdvances()]);
   }, [fetchLoans, fetchAdvances]);
+
+  // Portal refresh button: allow the next loans access to re-fetch.
+  useEffect(() => subscribePortalRefresh(() => { hasFetched.current = false; }), []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
