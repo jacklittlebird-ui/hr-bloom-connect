@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatDate } from '@/lib/utils';
@@ -156,7 +157,7 @@ export function exportToXLSX<T>(
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
-  XLSX.writeFile(wb, `${filenameBase}_${todayStamp()}.xlsx`);
+  void writeXlsxRtl(wb, `${filenameBase}_${todayStamp()}.xlsx`);
 }
 
 /**

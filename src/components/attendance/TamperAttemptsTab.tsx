@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { RefreshCw, Download, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 
 interface Incident {
   id: string; incident_no: number; created_at: string; user_id: string | null;
@@ -176,7 +177,7 @@ export default function TamperAttemptsTab() {
     if (ar) ws['!views'] = [{ RTL: true } as any];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Tamper');
-    XLSX.writeFile(wb, `tamper-attempts-${from}-${to}.xlsx`);
+    void writeXlsxRtl(wb, `tamper-attempts-${from}-${to}.xlsx`);
   };
 
   const sel2 = (v: string, set: (s: string) => void, keys: string[], label: string) => (

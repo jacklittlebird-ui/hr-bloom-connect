@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -175,7 +176,7 @@ export const NonRecurringBonuses = () => {
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'non_recurring_bonuses_template.xlsx');
+    void writeXlsxRtl(wb, 'non_recurring_bonuses_template.xlsx');
   };
 
   const exportResult = (data: { employeeCode: string; employeeName: string; amount: number; bankIdNumber: string; bankAccountNumber: string }[], filename: string) => {
@@ -192,7 +193,7 @@ export const NonRecurringBonuses = () => {
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Bonuses');
-    XLSX.writeFile(wb, filename);
+    void writeXlsxRtl(wb, filename);
   };
 
   const total = rows.reduce((s, r) => s + r.amount, 0);

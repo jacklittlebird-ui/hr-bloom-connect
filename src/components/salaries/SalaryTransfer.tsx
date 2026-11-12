@@ -13,6 +13,7 @@ import { Download, FileSpreadsheet, Banknote, Users } from 'lucide-react';
 import { stationLocations } from '@/data/stationLocations';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 import { stripEmpPrefix, transferBankOf, type TransferBank } from '@/lib/salaryBank';
 
 export const SalaryTransfer = () => {
@@ -92,7 +93,7 @@ export const SalaryTransfer = () => {
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-    XLSX.writeFile(wb, `تحويل_الأهلي_${selectedYear}_${selectedMonth}.xlsx`);
+    void writeXlsxRtl(wb, `تحويل_الأهلي_${selectedYear}_${selectedMonth}.xlsx`);
   };
 
   const exportTotals = () => {
@@ -102,7 +103,7 @@ export const SalaryTransfer = () => {
     aoa.push([ar ? 'الإجمالي' : 'Total', transferData.length, transferData.reduce((s, e) => s + e.netSalary, 0)]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Totals');
-    XLSX.writeFile(wb, `اجماليات_التحويل_${selectedYear}_${selectedMonth}.xlsx`);
+    void writeXlsxRtl(wb, `اجماليات_التحويل_${selectedYear}_${selectedMonth}.xlsx`);
   };
 
   const handleExportExcel = () => {

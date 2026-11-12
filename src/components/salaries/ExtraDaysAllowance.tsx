@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEmployeeData } from '@/contexts/EmployeeDataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -142,7 +143,7 @@ export const ExtraDaysAllowance = () => {
     const ws = XLSX.utils.aoa_to_sheet([[isRTL ? 'كود الموظف' : 'Employee ID', isRTL ? 'عدد الأيام الإضافية' : 'Extra Days'], ['EMP001', 2]]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'extra_days_template.xlsx');
+    void writeXlsxRtl(wb, 'extra_days_template.xlsx');
   };
 
   // Same layout as the non-recurring bonuses export
@@ -155,7 +156,7 @@ export const ExtraDaysAllowance = () => {
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Bonuses');
-    XLSX.writeFile(wb, filename);
+    void writeXlsxRtl(wb, filename);
   };
 
   const total = rows.filter(r => r.ok).reduce((s, r) => s + r.amount, 0);

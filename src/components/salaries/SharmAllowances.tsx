@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,7 +74,7 @@ export const SharmAllowances = () => {
   const exportXlsx = () => {
     const ws = XLSX.utils.json_to_sheet(rows.map(r => ({ 'كود الموظف': r.code, 'الاسم': r.name, 'أيام العمل W': r.days, 'أجر اليوم': SHARM_DAY_RATE, 'البدل': r.amount })));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Sharm');
-    XLSX.writeFile(wb, `بدلات-شرم-${month}.xlsx`);
+    void writeXlsxRtl(wb, `بدلات-شرم-${month}.xlsx`);
   };
 
   return (

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { format, differenceInDays, startOfYear, endOfYear, isWithinInterval, parseISO } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -356,7 +357,7 @@ export const PropertyTaxesManager = () => {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, isAr ? 'الضرائب العقارية' : 'Property Taxes');
-    XLSX.writeFile(wb, `property_taxes_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
+    void writeXlsxRtl(wb, `property_taxes_${format(new Date(), 'yyyyMMdd_HHmm')}.xlsx`);
     toast.success(isAr ? 'تم تصدير Excel' : 'Excel exported');
   };
 

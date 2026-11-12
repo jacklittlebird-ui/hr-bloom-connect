@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchAllPages } from '@/lib/fetchAllPages';
@@ -119,7 +120,7 @@ export function PayrollAttachmentReport() {
     XLSX.utils.book_append_sheet(wb, sheet([[title], [], ...summary]), ar ? 'الملخص' : 'Summary');
     XLSX.utils.book_append_sheet(wb, sheet([newHeaders, ...newRows, ['', '', '', '', '', ar ? 'الإجمالي' : 'Total', newTotal]]), ar ? 'الموظفون الجدد' : 'New');
     XLSX.utils.book_append_sheet(wb, sheet([stoppedHeaders, ...stoppedRows, ['', '', '', '', ar ? 'الإجمالي' : 'Total', stoppedTotal]]), ar ? 'لم يحول لهم' : 'Not Paid');
-    XLSX.writeFile(wb, `${title}.xlsx`);
+    void writeXlsxRtl(wb, `${title}.xlsx`);
   };
 
   const printReport = () => {

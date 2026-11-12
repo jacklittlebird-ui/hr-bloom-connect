@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDate } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 
 type FilterStatus = 'all' | 'active' | 'inactive' | 'suspended';
 
@@ -479,7 +480,7 @@ const Employees = () => {
     wb.Workbook.Views = [{ RTL: true }];
 
     const fileName = `Employees_Full_Report_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fileName, { bookType: 'xlsx', compression: true });
+    void writeXlsxRtl(wb, fileName);
 
     toast({ title: ar ? 'تم التصدير بنجاح (Excel)' : 'Export completed (Excel)' });
   };

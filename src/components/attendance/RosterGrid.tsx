@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
+import { writeXlsxRtl } from '@/lib/xlsxRtl';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Employee } from '@/types/employee';
@@ -122,7 +123,7 @@ export function RosterGrid({ employees, stations }: Props) {
     if (isRTL) ws['!views'] = [{ RTL: true } as any];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Roster');
-    XLSX.writeFile(wb, `Roster-${station || 'station'}-${month}.xlsx`);
+    void writeXlsxRtl(wb, `Roster-${station || 'station'}-${month}.xlsx`);
   };
 
   return (
