@@ -16,8 +16,8 @@ export interface PortsSecurityRow {
 }
 
 const FONT = 'Baloo Bhaijaan 2';
-const WIDTHS = [27.29, 10.29, 9.86, 9.86, 6.86, 14.43, 10.29, 16.57, 6.71, 19.14, 27.71, 4.14];
-const HEADERS = ['محل الإقامة', 'قسم/مركز', 'محافظة الأقامة', 'تاريخ الميلاد', 'محل الميلاد', 'المهنة بالإنجليزية', 'المهنة', 'الرقم القومي', 'الجنسية', 'الاسم خماسي بالانجليزية', 'الاسم خماسي', 'م'];
+const WIDTHS = [4.14, 27.71, 19.14, 6.71, 16.57, 10.29, 14.43, 6.86, 9.86, 9.86, 10.29, 27.29];
+const HEADERS = ['م', 'الاسم خماسي', 'الاسم خماسي بالانجليزية', 'الجنسية', 'الرقم القومي', 'المهنة', 'المهنة بالإنجليزية', 'محل الميلاد', 'تاريخ الميلاد', 'محافظة الأقامة', 'قسم/مركز', 'محل الإقامة'];
 
 const thin = { style: 'thin' as const };
 const medium = { style: 'medium' as const };
@@ -38,18 +38,18 @@ export const exportPortsSecuritySheet = async (rows: PortsSecurityRow[], year: s
   WIDTHS.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
   // الرأس العلوي
-  Object.assign(ws.getCell('A1'), hdrCell('عموم المطارات'));
-  Object.assign(ws.getCell('C1'), hdrCell('المواني المصرح بها:'));
-  Object.assign(ws.getCell('A2'), hdrCell('صالة و مهبط'));
-  Object.assign(ws.getCell('C2'), hdrCell('القطاعات المصرح بها: '));
-  ws.mergeCells('E1:I1');
-  Object.assign(ws.getCell('E1'), hdrCell(`نموذج رقم (2) استخراج التصاريح المستديمة لعام ${year}`, 14, { horizontal: 'center' }));
-  Object.assign(ws.getCell('K1'), hdrCell('وزارة الداخلية'));
-  Object.assign(ws.getCell('K2'), hdrCell('الإدارة العامة لأمن المواني'));
-  Object.assign(ws.getCell('K3'), hdrCell('ادارة التصاريح'));
-  Object.assign(ws.getCell('K4'), hdrCell('اسم الشركة : لينك ايرو تريدنج اجنسي'));
-  Object.assign(ws.getCell('K5'), hdrCell('اسم الشركة  Link Aero Trading Agency'));
-  Object.assign(ws.getCell('K6'), hdrCell('رقم الملف:  (48)', 9));
+  Object.assign(ws.getCell('L1'), hdrCell('عموم المطارات'));
+  Object.assign(ws.getCell('J1'), hdrCell('المواني المصرح بها:'));
+  Object.assign(ws.getCell('L2'), hdrCell('صالة و مهبط'));
+  Object.assign(ws.getCell('J2'), hdrCell('القطاعات المصرح بها: '));
+  ws.mergeCells('D1:H1');
+  Object.assign(ws.getCell('D1'), hdrCell(`نموذج رقم (2) استخراج التصاريح المستديمة لعام ${year}`, 14, { horizontal: 'center' }));
+  Object.assign(ws.getCell('B1'), hdrCell('وزارة الداخلية'));
+  Object.assign(ws.getCell('B2'), hdrCell('الإدارة العامة لأمن المواني'));
+  Object.assign(ws.getCell('B3'), hdrCell('ادارة التصاريح'));
+  Object.assign(ws.getCell('B4'), hdrCell('اسم الشركة : لينك ايرو تريدنج اجنسي'));
+  Object.assign(ws.getCell('B5'), hdrCell('اسم الشركة  Link Aero Trading Agency'));
+  Object.assign(ws.getCell('B6'), hdrCell('رقم الملف:  (48)', 9));
   for (let r = 1; r <= 6; r++) ws.getRow(r).height = 18;
   ws.getRow(7).height = 6;
 
@@ -69,18 +69,18 @@ export const exportPortsSecuritySheet = async (rows: PortsSecurityRow[], year: s
     const row = ws.getRow(9 + idx);
     row.height = 22;
     const values = [
-      r.address,
-      r.city,
-      r.governorate,
-      r.birthDate,
-      r.birthPlace,
-      r.jobEn,
-      r.jobAr,
-      r.nationalId,
-      r.nationality,
-      r.nameEn,
-      r.nameAr,
       idx + 1,
+      r.nameAr,
+      r.nameEn,
+      r.nationality,
+      r.nationalId,
+      r.jobAr,
+      r.jobEn,
+      r.birthPlace,
+      r.birthDate,
+      r.governorate,
+      r.city,
+      r.address,
     ];
     values.forEach((v, i) => {
       const cell = row.getCell(i + 1);
@@ -107,8 +107,8 @@ export interface PortsSecurityRenewalRow extends PortsSecurityRow {
   permitNo: string;
 }
 
-const RENEW_WIDTHS = [11.14, 21.43, 10.14, 10, 14, 9.14, 12.43, 14.43, 21.71, 7.71, 28.57, 34, 4.71];
-const RENEW_HEADERS = ['رقم التصريح', 'محل الاقامة', 'قسم/مركز', 'محافظة الإقامة', 'تاريخ الميلاد', 'محل الميلاد', 'المهنة بالإنجليزية', 'المهنة', 'الرقم القومي', 'الجنسية', 'الاسم بالانجليزية', 'الاسم خماسي', 'م'];
+const RENEW_WIDTHS = [4.71, 34, 28.57, 7.71, 21.71, 14.43, 12.43, 9.14, 14, 10, 10.14, 21.43, 11.14];
+const RENEW_HEADERS = ['م', 'الاسم خماسي', 'الاسم بالانجليزية', 'الجنسية', 'الرقم القومي', 'المهنة', 'المهنة بالإنجليزية', 'محل الميلاد', 'تاريخ الميلاد', 'محافظة الإقامة', 'قسم/مركز', 'محل الاقامة', 'رقم التصريح'];
 const RENEW_ROW_HEIGHTS = [30, 30, 30, 21.75, 30, 22.5, 9.75];
 
 const dashed = { style: 'dashed' as const };
@@ -123,20 +123,20 @@ export const exportPortsSecurityRenewalSheet = async (rows: PortsSecurityRenewal
   RENEW_WIDTHS.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
   // الرأس العلوي
-  Object.assign(ws.getCell('B1'), hdrCell('عموم المطارات'));
-  Object.assign(ws.getCell('B2'), hdrCell('صالة و مهبط'));
-  Object.assign(ws.getCell('D1'), hdrCell('المواني المصرح بها:'));
-  Object.assign(ws.getCell('D2'), hdrCell('القطاعات المصرح بها: '));
+  Object.assign(ws.getCell('L1'), hdrCell('عموم المطارات'));
+  Object.assign(ws.getCell('L2'), hdrCell('صالة و مهبط'));
+  Object.assign(ws.getCell('J1'), hdrCell('المواني المصرح بها:'));
+  Object.assign(ws.getCell('J2'), hdrCell('القطاعات المصرح بها: '));
   ws.mergeCells('E1:I1');
   Object.assign(ws.getCell('E1'), hdrCell(`نموذج رقم (1) تجديد التصاريح المستديمة لعام ${year}`, 14, { horizontal: 'center' }));
-  Object.assign(ws.getCell('L1'), hdrCell('وزارة الداخلية'));
-  Object.assign(ws.getCell('L2'), hdrCell('الإدارة العامة لأمن المواني'));
-  Object.assign(ws.getCell('L3'), hdrCell('ادارة التصاريح'));
-  Object.assign(ws.getCell('L4'), hdrCell('اسم الشركة : لينك ايرو تريدنج اجنسي'));
-  Object.assign(ws.getCell('L5'), hdrCell('اسم الشركة  Link Aero Trading Agency'));
-  Object.assign(ws.getCell('L6'), hdrCell('رقم الملف:  (48)', 12));
+  Object.assign(ws.getCell('B1'), hdrCell('وزارة الداخلية'));
+  Object.assign(ws.getCell('B2'), hdrCell('الإدارة العامة لأمن المواني'));
+  Object.assign(ws.getCell('B3'), hdrCell('ادارة التصاريح'));
+  Object.assign(ws.getCell('B4'), hdrCell('اسم الشركة : لينك ايرو تريدنج اجنسي'));
+  Object.assign(ws.getCell('B5'), hdrCell('اسم الشركة  Link Aero Trading Agency'));
+  Object.assign(ws.getCell('B6'), hdrCell('رقم الملف:  (48)', 12));
   RENEW_ROW_HEIGHTS.forEach((h, i) => { ws.getRow(i + 1).height = h; });
-  ws.mergeCells('J7:K7');
+  ws.mergeCells('C7:D7');
 
   // صف العناوين
   const headerRow = ws.getRow(8);
@@ -149,8 +149,8 @@ export const exportPortsSecurityRenewalSheet = async (rows: PortsSecurityRenewal
     cell.border = {
       top: medium,
       bottom: medium,
-      left: i === 12 ? medium : dashed,
-      right: i === 12 ? medium : dashed,
+      left: i === 0 ? medium : dashed,
+      right: i === 0 ? medium : dashed,
     };
   });
 
@@ -159,19 +159,19 @@ export const exportPortsSecurityRenewalSheet = async (rows: PortsSecurityRenewal
     const row = ws.getRow(9 + idx);
     row.height = 47.25;
     const values = [
-      r.permitNo,
-      r.address,
-      r.city,
-      r.governorate,
-      r.birthDate,
-      r.birthPlace,
-      r.jobEn,
-      r.jobAr,
-      r.nationalId,
-      r.nationality,
-      r.nameEn,
-      r.nameAr,
       idx + 1,
+      r.nameAr,
+      r.nameEn,
+      r.nationality,
+      r.nationalId,
+      r.jobAr,
+      r.jobEn,
+      r.birthPlace,
+      r.birthDate,
+      r.governorate,
+      r.city,
+      r.address,
+      r.permitNo,
     ];
     values.forEach((v, i) => {
       const cell = row.getCell(i + 1);
@@ -181,8 +181,8 @@ export const exportPortsSecurityRenewalSheet = async (rows: PortsSecurityRenewal
       cell.border = {
         top: idx === 0 ? medium : thin,
         bottom: thin,
-        left: i === 12 ? medium : thin,
-        right: i === 12 ? medium : thin,
+        left: i === 0 ? medium : thin,
+        right: i === 0 ? medium : thin,
       };
     });
   });
