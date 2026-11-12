@@ -390,6 +390,17 @@ const PermitListPanel = ({
     });
   }, [entries, employeeById, search]);
 
+  // Export order: alphabetical by Arabic name (on-screen table order stays unchanged)
+  const exportRows = useMemo(() => {
+    const collator = new Intl.Collator('ar');
+    return [...rows].sort((a, b) =>
+      collator.compare(
+        employeeById.get(a.employee_id)?.name_ar || '',
+        employeeById.get(b.employee_id)?.name_ar || '',
+      )
+    );
+  }, [rows, employeeById]);
+
   const canExportRenewalSheet = listKey === 'port_authority_renew';
   const canExportCairoLetter = listKey === 'security_cairo_renew';
   const canExportCairoIssueLetter = listKey === 'security_cairo_issue';
@@ -400,7 +411,7 @@ const PermitListPanel = ({
   const canExportPortsSecurityRenewalLetter = listKey === 'ports_security_renew';
 
   const handleExportSheet = async () => {
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         name: emp?.name_ar || '',
@@ -427,11 +438,11 @@ const PermitListPanel = ({
   };
 
   const handleExportLetter = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         name: emp?.name_ar || '',
@@ -444,11 +455,11 @@ const PermitListPanel = ({
   };
 
   const handleExportCairoLetter = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         name: emp?.name_ar || '',
@@ -461,11 +472,11 @@ const PermitListPanel = ({
   };
 
   const handleExportCairoIssueLetter = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         name: emp?.name_ar || '',
@@ -478,11 +489,11 @@ const PermitListPanel = ({
   };
 
   const handleExportPortIssueLetter = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         name: emp?.name_ar || '',
@@ -495,11 +506,11 @@ const PermitListPanel = ({
   };
 
   const handleExportAirportsIssueLetter = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         name: emp?.name_ar || '',
@@ -512,11 +523,11 @@ const PermitListPanel = ({
   };
 
   const handleExportAirportsRenewalLetter = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         name: emp?.name_ar || '',
@@ -529,11 +540,11 @@ const PermitListPanel = ({
   };
 
   const handleExportPortsSecurityIssueLetter = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         name: emp?.name_ar || '',
@@ -546,11 +557,11 @@ const PermitListPanel = ({
   };
 
   const handleExportPortsSecuritySheet = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         nameAr: emp?.name_ar || '',
@@ -572,11 +583,11 @@ const PermitListPanel = ({
   };
 
   const handleExportPortsSecurityRenewalLetter = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         name: emp?.name_ar || '',
@@ -589,11 +600,11 @@ const PermitListPanel = ({
   };
 
   const handleExportPortsSecurityRenewalSheet = async () => {
-    if (rows.length === 0) {
+    if (exportRows.length === 0) {
       toast.error(ar ? 'لا توجد أسماء للتصدير' : 'No rows to export');
       return;
     }
-    const data = rows.map(entry => {
+    const data = exportRows.map(entry => {
       const emp = employeeById.get(entry.employee_id);
       return {
         permitNo: entry.permit_no ?? emp?.airports_annual_permit_no ?? '',
