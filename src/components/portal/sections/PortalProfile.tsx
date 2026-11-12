@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { User, Building2, Briefcase, Mail, Phone, CreditCard, Calendar, FileText, Shield, Landmark, Pencil } from 'lucide-react';
+import { User, Building2, Briefcase, Mail, Phone, CreditCard, Calendar, FileText, Shield, Landmark, Pencil, Wallet } from 'lucide-react';
+import { visibleBankOf } from '@/lib/salaryBank';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { usePortalEmployee } from '@/hooks/usePortalEmployee';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,6 +84,7 @@ export const PortalProfile = () => {
   }
 
   const statusLabel = employee.status === 'active' ? (ar ? 'نشط' : 'Active') : employee.status === 'inactive' ? (ar ? 'غير نشط' : 'Inactive') : (ar ? 'موقوف' : 'Suspended');
+  const visibleBank = visibleBankOf(employee);
   const statusColor = employee.status === 'active' ? 'bg-success/10 text-success border-success' : 'bg-destructive/10 text-destructive border-destructive';
 
   return (
@@ -138,10 +140,23 @@ export const PortalProfile = () => {
         <Card>
           <CardHeader className="pb-4"><CardTitle className="flex items-center gap-2 text-lg"><Landmark className="w-5 h-5" />{ar ? 'المعلومات البنكية' : 'Bank Information'}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <InfoItem icon={Landmark} label={ar ? 'اسم البنك' : 'Bank Name'} value={employee.bankName || ''} />
-            <InfoItem icon={CreditCard} label={ar ? 'رقم الحساب' : 'Account Number'} value={employee.bankAccountNumber || ''} />
-            <InfoItem icon={CreditCard} label={ar ? 'رقم التعريف البنكي' : 'Bank ID'} value={employee.bankIdNumber || ''} />
-            <InfoItem icon={FileText} label={ar ? 'نوع الحساب' : 'Account Type'} value={tr(employee.bankAccountType, accountTypeMap, ar)} />
+            {visibleBank === 'credit_agricole' && (
+              <>
+                <InfoItem icon={Landmark} label={ar ? 'البنك' : 'Bank'} value={employee.bankName || (ar ? 'كريدي أجريكول' : 'Crédit Agricole')} />
+                <InfoItem icon={CreditCard} label={ar ? 'رقم الحساب' : 'Account Number'} value={employee.bankAccountNumber || ''} />
+                <InfoItem icon={CreditCard} label={ar ? 'رقم التعريف البنكي' : 'Bank ID'} value={employee.bankIdNumber || ''} />
+                <InfoItem icon={FileText} label={ar ? 'نوع الحساب' : 'Account Type'} value={tr(employee.bankAccountType, accountTypeMap, ar)} />
+              </>
+            )}
+            {visibleBank === 'nbe' && (
+              <>
+                <InfoItem icon={Landmark} label={ar ? 'البنك' : 'Bank'} value={ar ? 'البنك الأهلي المصري' : 'National Bank of Egypt'} />
+                <InfoItem icon={CreditCard} label={ar ? 'رقم الحساب (19 رقم)' : 'Account Number (19 digits)'} value={employee.nbeAccountNumber || ''} />
+              </>
+            )}
+            {visibleBank === 'cash' && (
+              <InfoItem icon={Wallet} label={ar ? 'طريقة الصرف' : 'Payment Method'} value={ar ? 'نقدي' : 'Cash'} />
+            )}
           </CardContent>
         </Card>
 
