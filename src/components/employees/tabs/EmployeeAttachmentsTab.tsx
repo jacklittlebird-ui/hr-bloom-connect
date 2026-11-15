@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { compressDocument } from '@/lib/compressDocument';
 import { formatDate } from '@/lib/utils';
+import { PrintStudio } from '@/components/employees/docs/PrintStudio';
 
 const DOC_TYPES = [
   { key: 'national_id', label: 'الرقم القومي' },
@@ -37,6 +38,7 @@ export const EmployeeAttachmentsTab = ({ employee }: { employee: Employee }) => 
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ url: string; mime: string; title: string } | null>(null);
+  const [printing, setPrinting] = useState(false);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const load = useCallback(async () => {
@@ -64,10 +66,8 @@ export const EmployeeAttachmentsTab = ({ employee }: { employee: Employee }) => 
       const r = await invoke({ action: 'view', id: doc.id });
       const bytes = Uint8Array.from(atob(r.data), c => c.charCodeAt(0));
       const url = URL.createObjectURL(new Blob([bytes], { type: r.mime }));
-      if (print) {
-        const w = window.open(url, '_blank');
-        if (w) w.addEventListener('load', () => w.print());
-      } else setPreview({ url, mime: r.mime, title });
+      setPreview({ url, mime: r.mime, title });
+      setPrinting(print);
     } catch (e) { toast.error('تعذر فتح الملف: ' + (e as Error).message); }
     finally { setBusy(null); }
   };
@@ -114,12 +114,14 @@ export const EmployeeAttachmentsTab = ({ employee }: { employee: Employee }) => 
       })}
       <Dialog open={!!preview} onOpenChange={o => { if (!o && preview) { URL.revokeObjectURL(preview.url); setPreview(null); } }}>
         <DialogContent className="max-w-4xl h-[85dvh] flex flex-col">
-          <DialogHeader><DialogTitle>{preview?.title}</DialogTitle></DialogHeader>
+          <DialogHeader className="flex-row items-center justify-between gap-2 pe-8"><DialogTitle>{preview?.title}</DialogTitle>
+            <Button size="sm" onClick={() => setPrinting(true)}><Printer className="w-4 h-4" />طباعة</Button></DialogHeader>
           {preview && (preview.mime === 'application/pdf'
             ? <iframe src={preview.url} title={preview.title} className="flex-1 w-full rounded border" />
             : <div className="flex-1 overflow-auto"><img src={preview.url} alt={preview.title} className="mx-auto max-w-full" /></div>)}
         </DialogContent>
       </Dialog>
+      {preview && <PrintStudio open={printing} onOpenChange={setPrinting} url={preview.url} mime={preview.mime} title={preview.title} employeeName={employee.nameAr} employeeCode={employee.employeeId} />}
     </div>
   );
 };
