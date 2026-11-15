@@ -262,7 +262,7 @@ const EmployeeDetails = () => {
         <div className="border-2 border-destructive/30 rounded-xl p-6 bg-card">
           <div className="flex items-center gap-6 flex-wrap">
             <Avatar className="w-24 h-24 border-4 border-primary/20">
-              <AvatarImage src={employee.avatar} />
+              <AvatarImage src={employee.avatar} className="object-cover object-center scale-125" />
               <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
                 {employee.nameAr.slice(0, 2)}
               </AvatarFallback>

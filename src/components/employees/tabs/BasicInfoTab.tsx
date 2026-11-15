@@ -140,7 +140,7 @@ export const BasicInfoTab = ({ employee, onUpdate, readOnly }: BasicInfoTabProps
       <div className="bg-primary py-8 rounded-lg flex flex-col items-center justify-center">
         <div className="relative cursor-pointer" onClick={() => fileInputRef.current?.click()}>
           <Avatar className="w-24 h-24 border-4 border-primary-foreground/20">
-            <AvatarImage src={avatarUrl} />
+            <AvatarImage src={avatarUrl} className="object-cover object-center scale-125" />
             <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-2xl">
               {employee.nameAr.slice(0, 2)}
             </AvatarFallback>
