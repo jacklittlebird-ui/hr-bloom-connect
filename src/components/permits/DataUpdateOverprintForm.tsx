@@ -37,7 +37,7 @@ const natAr = (n?: string | null) => {
 };
 
 const TOP_MARGIN_MM = 14; // هامش علوي إضافي 1.4 سم
-const RIGHT_SHIFT_MM = -5; // إزاحة كل الخانات (موجب = يمين، سالب = يسار)
+const RIGHT_SHIFT_MM = 5; // إزاحة كل الخانات (موجب = يمين، سالب = يسار)
 function pageHtml(e: PermitFormEmployee, x: Extra, d: Defaults, offIn: { x: number; y: number }, bg?: string) {
   const off = { x: RIGHT_SHIFT_MM - offIn.x, y: offIn.y + TOP_MARGIN_MM };
   const T = 'position:absolute;font-size:12pt;font-weight:600;white-space:nowrap;overflow:hidden;line-height:1;';
