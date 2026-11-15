@@ -900,26 +900,35 @@ export type Database = {
       }
       employee_documents: {
         Row: {
+          drive_file_id: string | null
           employee_id: string
           file_url: string | null
           id: string
+          mime_type: string | null
           name: string
+          size_bytes: number | null
           type: string | null
           uploaded_at: string
         }
         Insert: {
+          drive_file_id?: string | null
           employee_id: string
           file_url?: string | null
           id?: string
+          mime_type?: string | null
           name: string
+          size_bytes?: number | null
           type?: string | null
           uploaded_at?: string
         }
         Update: {
+          drive_file_id?: string | null
           employee_id?: string
           file_url?: string | null
           id?: string
+          mime_type?: string | null
           name?: string
+          size_bytes?: number | null
           type?: string | null
           uploaded_at?: string
         }

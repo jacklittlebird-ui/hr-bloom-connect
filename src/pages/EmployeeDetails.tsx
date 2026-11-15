@@ -30,6 +30,7 @@ import { AttendanceRecordTab } from '@/components/employees/tabs/AttendanceRecor
 import { EvaluationsTab } from '@/components/employees/tabs/EvaluationsTab';
 import { ViolationsTab } from '@/components/employees/tabs/ViolationsTab';
 import { DocumentsTab } from '@/components/employees/tabs/DocumentsTab';
+import { EmployeeAttachmentsTab } from '@/components/employees/tabs/EmployeeAttachmentsTab';
 import { SalaryRecordTab } from '@/components/employees/tabs/SalaryRecordTab';
 import { LoansAdvancesTab } from '@/components/employees/tabs/LoansAdvancesTab';
 import { TrainingTab } from '@/components/employees/tabs/TrainingTab';
@@ -64,6 +65,7 @@ const allDetailTabs = [
   { id: 'evaluations', icon: BarChart3, labelKey: 'employees.tabs.evaluations' },
   { id: 'violations', icon: AlertTriangle, labelKey: 'employees.tabs.violations' },
   { id: 'documents', icon: FileText, labelKey: 'employees.tabs.documents' },
+  { id: 'attachments', icon: FileCheck, labelKey: 'employees.tabs.attachments' },
   { id: 'salaryRecord', icon: Receipt, labelKey: 'employees.tabs.salaryRecord' },
   { id: 'loansAdvances', icon: HandCoins, labelKey: 'employees.tabs.loansAdvances' },
   { id: 'training', icon: GraduationCap, labelKey: 'employees.tabs.training' },
@@ -189,6 +191,7 @@ const EmployeeDetails = () => {
       case 'evaluations': return <EvaluationsTab employee={employee} />;
       case 'violations': return <ViolationsTab employee={employee} />;
       case 'documents': return <DocumentsTab employee={employee} />;
+      case 'attachments': return <EmployeeAttachmentsTab employee={employee} />;
       case 'salaryRecord': return <SalaryRecordTab employee={employee} />;
       case 'loansAdvances': return <LoansAdvancesTab employee={employee} />;
       case 'training': return <TrainingTab employee={employee} />;
