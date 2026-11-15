@@ -39,7 +39,7 @@ const natAr = (n?: string | null) => {
 const TOP_MARGIN_MM = 14; // هامش علوي إضافي 1.4 سم
 const RIGHT_SHIFT_MM = -5; // إزاحة كل الخانات (موجب = يمين، سالب = يسار)
 function pageHtml(e: PermitFormEmployee, x: Extra, d: Defaults, offIn: { x: number; y: number }, bg?: string) {
-  const off = { x: offIn.x + RIGHT_SHIFT_MM, y: offIn.y + TOP_MARGIN_MM };
+  const off = { x: RIGHT_SHIFT_MM - offIn.x, y: offIn.y + TOP_MARGIN_MM };
   const T = 'position:absolute;font-size:12pt;font-weight:600;white-space:nowrap;overflow:hidden;line-height:1;';
   // القيمة تجلس فوق السطر المنقط (حوالي 4.5 مم فوق الحد السفلي للصف)
   const base = (row: number) => LINES[row + 1] - 4.2 + off.y;
@@ -190,7 +190,7 @@ export const DataUpdateOverprintForm = ({ employees, employeeById, airportsIssue
           <div><Label>أماكن التردد</Label><Input value={d.places} onChange={e => setD({ ...d, places: e.target.value })} /></div>
           <div><Label>مدة التردد</Label><Input value={d.duration} onChange={e => setD({ ...d, duration: e.target.value })} /></div>
           <div><Label>الغرض من التردد</Label><Input value={d.purpose} onChange={e => setD({ ...d, purpose: e.target.value })} /></div>
-          <div><Label>إزاحة أفقية (مم، + لليمين)</Label><Input type="number" step="0.5" value={off.x} onChange={e => setOff({ ...off, x: Number(e.target.value) || 0 })} /></div>
+          <div><Label>إزاحة أفقية (مم، + لليسار)</Label><Input type="number" step="0.5" value={off.x} onChange={e => setOff({ ...off, x: Number(e.target.value) || 0 })} /></div>
           <div><Label>إزاحة رأسية (مم، + للأسفل)</Label><Input type="number" step="0.5" value={off.y} onChange={e => setOff({ ...off, y: Number(e.target.value) || 0 })} /></div>
         </div>
         <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
