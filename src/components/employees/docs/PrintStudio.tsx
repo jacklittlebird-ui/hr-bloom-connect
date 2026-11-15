@@ -42,7 +42,7 @@ export const PrintStudio = ({ open, onOpenChange, url, mime, title, employeeName
   const [custom, setCustom] = useState(60);
   const [rotate, setRotate] = useState(0);
   const [outline, setOutline] = useState(true);
-  const [header, setHeader] = useState(true);
+  const [header, setHeader] = useState(false);
   const [ratio, setRatio] = useState(1.585);
 
   useEffect(() => {
@@ -60,9 +60,9 @@ export const PrintStudio = ({ open, onOpenChange, url, mime, title, employeeName
 
   const print = () => {
     if (isPdf) { const f = window.open(url, '_blank'); f?.addEventListener('load', () => f.print()); return; }
-    const html = `<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>${title} - ${employeeName}</title>
-<style>@page{size:${paper} portrait;margin:12mm}html,body{margin:0;font-family:Arial,sans-serif}
-.page{height:${p.h - 24}mm;display:flex;flex-direction:column;align-items:center;justify-content:${pos === 'top' ? 'flex-start' : 'center'}}
+    const html = `<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title> </title>
+<style>@page{size:${paper} portrait;margin:0}html,body{margin:0;font-family:Arial,sans-serif}
+.page{box-sizing:border-box;padding:12mm;height:${p.h}mm;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:${pos === 'top' ? 'flex-start' : 'center'}}
 .hdr{width:100%;font-size:10pt;border-bottom:1px solid #999;padding-bottom:2mm;margin-bottom:5mm;display:flex;justify-content:space-between}
 .box{width:${w}mm;height:${h}mm;display:flex;align-items:center;justify-content:center;${outline ? 'outline:0.3mm dashed #777;outline-offset:1.5mm;' : ''}}
 img{width:${imgW}mm;height:${imgH}mm;transform:rotate(${rotate}deg)}</style></head><body><div class="page">
