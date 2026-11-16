@@ -104,6 +104,7 @@ export interface Violation {
   typeEn: string;
   penaltyAr: string;
   penaltyEn: string;
+  description?: string;
   status: 'open' | 'closed';
 }
 
@@ -504,7 +505,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     await debouncedFetch(`portal_violations_${scopedEmployeeId || 'all'}`, async () => {
       // Employees only see violations that have been approved (status = 'approved')
-      const q = supabase.from('violations').select('id, employee_id, date, type, penalty, status').order('created_at', { ascending: false }).limit(20);
+      const q = supabase.from('violations').select('id, employee_id, date, type, description, penalty, status').order('created_at', { ascending: false }).limit(20);
       if (scopedEmployeeId) {
         q.eq('employee_id', scopedEmployeeId).eq('status', 'approved');
       }
@@ -516,6 +517,7 @@ export const PortalDataProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             id: v.id as any, employeeId: v.employee_id,
             date: v.date, typeAr: v.type, typeEn: v.type,
             penaltyAr: v.penalty || '', penaltyEn: v.penalty || '',
+            description: v.description || '',
             status: v.status === 'approved' ? 'closed' as const : 'open' as const,
           })));
         }
