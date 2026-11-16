@@ -25,6 +25,7 @@ export const UNIFORM_TYPES = [
   { ar: 'كرافت', en: 'Tie' },
   { ar: 'إيشارب', en: 'Scarf' },
   { ar: 'بلوزة حريمي', en: 'Women Blouse' },
+  { ar: 'رامب جاكيت', en: 'Ramp Jacket' },
 ];
 
 export function getDepreciationPercent(deliveryDate: string): number {
