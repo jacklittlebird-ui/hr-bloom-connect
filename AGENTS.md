@@ -1,4 +1,5 @@
 # Project rules
+- Experimental BLE Central testing is lazy-mounted in Site Settings and owns its own GATT connection/listeners; it must remain isolated from attendance, auth, routing, and persisted data.
 - Sharm allowance date eligibility uses the selected payroll month in `src/lib/sharmAllowance.ts`; closed past months remain runnable without bypassing the bulk-payroll run prerequisite.
 - Employee form PDF downloads use a shared wrapper around the rendered preview in both document entry points; export each existing page separately to preserve current values and pagination without duplicating template logic.
 - Insurance Form 1 and Form 6 PDF exports use native browser text layout through foreignObject rendering to keep Arabic text baselines and boxed digits aligned with their previews.

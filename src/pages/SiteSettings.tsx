@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePersistedState } from '@/hooks/usePersistedState';
@@ -16,6 +16,10 @@ import { Building2, Globe, Bell, Shield, Palette, Database, Save, Check, Sun, Mo
 import { applyThemeSettings, THEME_PRESETS, ACCENT_PALETTE, FONT_OPTIONS } from '@/lib/themeUtils';
 import { loadAndApplyUserThemePrefs, saveUserThemePrefs } from '@/lib/userThemePrefs';
 import { WELCOME_BG_OPTIONS } from '@/lib/welcomeBackgrounds';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Bluetooth } from 'lucide-react';
+
+const BluetoothTesting = lazy(() => import('@/components/bluetooth/BluetoothTesting'));
 
 interface SiteConfig {
   companyName: string;
@@ -109,8 +113,11 @@ const daysOfWeek = [
 
 const SiteSettings = () => {
   const { language, isRTL } = useLanguage();
-  const [config, setConfig] = usePersistedState<SiteConfig>('hr_site_config', defaultConfig);
+  const [savedConfig, setConfig] = usePersistedState<SiteConfig>('hr_site_config', defaultConfig);
+  // Older saved appearance-only settings may omit general settings such as workingDays.
+  const config = { ...defaultConfig, ...savedConfig };
   const [hasChanges, setHasChanges] = useState(false);
+  const [bluetoothOpen, setBluetoothOpen] = useState(false);
   const isAr = language === 'ar';
 
   // Re-apply theme settings on mount, then merge any saved per-user prefs from DB
@@ -221,12 +228,19 @@ const SiteSettings = () => {
             <h1 className="text-2xl font-bold text-foreground">{isAr ? 'إعدادات الموقع' : 'Site Settings'}</h1>
             <p className="text-muted-foreground">{isAr ? 'تكوين إعدادات النظام العامة' : 'Configure general system settings'}</p>
           </div>
-          <div className={cn("flex gap-2", isRTL && "flex-row-reverse")}>
+          <div className={cn("flex flex-wrap gap-2", isRTL && "flex-row-reverse")}>
+            <Button variant="outline" className="gap-2" onClick={() => setBluetoothOpen(true)}><Bluetooth className="w-4 h-4" />{isAr ? 'اختبار البلوتوث' : 'Bluetooth Testing'}</Button>
             <Button variant="outline" onClick={handleReset}>{isAr ? 'استعادة الافتراضي' : 'Reset Defaults'}</Button>
             <Button onClick={handleSave} disabled={!hasChanges} className="gap-2"><Save className="w-4 h-4" />{isAr ? 'حفظ التغييرات' : 'Save Changes'}</Button>
           </div>
         </div>
 
+        <Dialog open={bluetoothOpen} onOpenChange={setBluetoothOpen}>
+          <DialogContent className="max-w-4xl max-h-[90dvh] overflow-y-auto" aria-describedby={undefined}>
+            <DialogHeader><DialogTitle>{isAr ? 'اختبار البلوتوث BLE' : 'BLE Bluetooth Testing'}</DialogTitle></DialogHeader>
+            {bluetoothOpen && <Suspense fallback={<p className="text-muted-foreground">{isAr ? 'جارٍ التحميل…' : 'Loading…'}</p>}><BluetoothTesting /></Suspense>}
+          </DialogContent>
+        </Dialog>
         <Tabs defaultValue="company" dir={isRTL ? 'rtl' : 'ltr'}>
           <TabsList className="grid grid-cols-6 w-full max-w-3xl">
             <TabsTrigger value="company" className="gap-1"><Building2 className="w-4 h-4" /><span className="hidden sm:inline">{isAr ? 'الشركة' : 'Company'}</span></TabsTrigger>

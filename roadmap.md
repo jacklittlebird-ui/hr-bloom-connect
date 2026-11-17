@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Add an isolated BLE Central testing module in Site Settings; 7 logic tests passed, signed-in desktop/mobile capability reporting and clean reopen verified, build OK; attendance and routing unchanged.
+- [ ] Verify BLE discovery, GATT read/write and notifications with physical hardware and any installed Android APK — blocked by absence of a Bluetooth adapter/device and installed APK in the test environment.
 - [x] Correct data-update overprint horizontal direction; verified signed-in preview and print window coordinates.
 - [x] Allow Sharm allowance runs for closed past months while retaining the bulk-payroll prerequisite; 9 tests passed and signed-in October selection verified without modifying live payroll.
 - [x] Move the employee Roster beside Attendance; 11 Roster and personal-record isolation tests passed, build OK.
