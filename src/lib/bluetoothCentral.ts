@@ -54,6 +54,7 @@ export class BluetoothCentral {
   private device?: BleDevice;
   private server?: BleServer;
   private disposed = false;
+  private connectionAttempt = 0;
   private subscriptions = new Map<BleCharacteristic, EventListener>();
   constructor(private onDisconnect: () => void) {}
   private disconnected = () => {
@@ -71,14 +72,20 @@ export class BluetoothCentral {
     if (!device.gatt) throw new Error('الجهاز لا يدعم اتصال GATT');
     this.device = device;
     device.addEventListener('gattserverdisconnected', this.disconnected);
-    const server = await device.gatt.connect();
-    if (this.disposed || this.device !== device) {
-      server.disconnect();
-      throw new Error('تم إلغاء الاتصال');
+    const attempt = this.connectionAttempt;
+    try {
+      const server = await device.gatt.connect();
+      if (this.disposed || this.device !== device || attempt !== this.connectionAttempt) {
+        server.disconnect();
+        throw new Error('تم إلغاء الاتصال');
+      }
+      if (!server.connected) throw new Error('لم يتم إنشاء اتصال GATT فعلي');
+      this.server = server;
+      return server;
+    } catch (error) {
+      if (attempt === this.connectionAttempt) this.disconnect();
+      throw error;
     }
-    if (!server.connected) throw new Error('لم يتم إنشاء اتصال GATT فعلي');
-    this.server = server;
-    return server;
   }
   get connected() { return this.server?.connected === true; }
   async subscribe(characteristic: BleCharacteristic, receive: (value: DataView) => void) {
@@ -107,6 +114,7 @@ export class BluetoothCentral {
     if (this.connected) await characteristic.stopNotifications();
   }
   disconnect() {
+    this.connectionAttempt++;
     this.clearListeners();
     this.device?.removeEventListener('gattserverdisconnected', this.disconnected);
     if (this.device?.gatt?.connected) this.device.gatt.disconnect();

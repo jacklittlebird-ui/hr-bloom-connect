@@ -74,7 +74,7 @@ export default function BluetoothTesting() {
   };
   // requestDevice is invoked synchronously inside the button's user gesture, before any await.
   const scan = () => {
-    if (!api || !secure) return;
+    if (!api || !secure || availability === false) return;
     let request: Promise<BleDevice>;
     try { request = api.requestDevice({ acceptAllDevices: true, optionalServices: parseBluetoothUuids(serviceInput) }); }
     catch (reason) { fail(reason); return; }
@@ -126,7 +126,7 @@ export default function BluetoothTesting() {
   const recordValue = (key: string, value: DataView) => {
     const decoded = formatBleValue(value); log(key, decoded.text, decoded.hex);
   };
-  const usable = Boolean(api && secure);
+  const usable = Boolean(api && secure && availability !== false);
   return (
     <div dir={ar ? 'rtl' : 'ltr'} className="min-w-0 space-y-6 text-foreground">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -136,7 +136,7 @@ export default function BluetoothTesting() {
         </Badge>
         <Badge variant="outline">{t('تجريبي • أجهزة حقيقية فقط', 'Experimental • Real hardware only')}</Badge>
       </div>
-      {!usable && <p role="status" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{!secure ? t('يلزم اتصال آمن HTTPS لاستخدام البلوتوث.', 'Bluetooth requires a secure HTTPS context.') : t('Web Bluetooth غير متاح في هذا المتصفح. Safari على iPhone غير مدعوم.', 'Web Bluetooth is unavailable in this browser. iPhone Safari is not supported.')}</p>}
+      {!usable && <p role="status" className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{!secure ? t('يلزم اتصال آمن HTTPS لاستخدام البلوتوث.', 'Bluetooth requires a secure HTTPS context.') : !api ? t('Web Bluetooth غير متاح في هذا المتصفح. Safari على iPhone غير مدعوم.', 'Web Bluetooth is unavailable in this browser. iPhone Safari is not supported.') : t('محول البلوتوث غير متاح حسب المتصفح.', 'Bluetooth adapter is unavailable according to the browser.')}</p>}
       <section className="space-y-3" aria-label={t('إعدادات البلوتوث', 'Bluetooth configuration')}>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1"><Label htmlFor="ble-services">{t('UUID الخدمات المسموح بها', 'Allowed service UUIDs')}</Label><Input id="ble-services" dir="ltr" value={serviceInput} disabled={busy || connected} onChange={event => setServiceInput(event.target.value)} /></div>
