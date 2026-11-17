@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.onestory.onehr",
+      "sha256_cert_fingerprints": [
+        "CD:EC:10:5E:AC:0E:57:5A:D6:D7:F3:B7:E7:E8:88:DC:FC:3C:E4:CE:10:5D:64:70:E2:B7:16:19:F2:97:D6:AA",
+        "5D:FD:89:A0:67:4C:77:BB:79:E8:46:69:8F:9C:71:1B:5D:1C:EC:41:50:24:15:88:87:40:3A:B8:87:DD:20:CA"
+      ]
+    }
+  }
+]
