@@ -101,6 +101,7 @@ const permissionTypeLabels: Record<string, { en: string; ar: string }> = {
   late_arrival: { en: 'Late Arrival', ar: 'حضور متأخر' },
   personal: { en: 'Personal', ar: 'شخصي' },
   medical: { en: 'Medical', ar: 'طبي' },
+  no_deduction: { en: 'No-Deduction Permission', ar: 'إذن بدون خصم' },
 };
 
 const EID_FIRST_DAY_TYPES = new Set(['eid_first_day', 'eid_first_day_adha_fitr']);

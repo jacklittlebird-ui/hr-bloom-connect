@@ -529,6 +529,19 @@ const Leaves = () => {
   const handleNewPermission = async (data: Omit<PermissionRequest, 'id' | 'status' | 'submittedDate'>) => {
     const uuid = await resolveEmployeeUUID(data.employeeId);
     if (!uuid) { toast.error(language === 'ar' ? 'تعذّر العثور على بيانات الموظف' : 'Employee not found'); return; }
+    if (data.permissionType !== 'no_deduction') {
+      const bal = leaveBalances.find(b => b.employeeId === uuid || b.employeeCode === data.employeeId);
+      if (bal && bal.permissionsRemaining < data.durationHours) {
+        const unpaidDays = data.durationHours <= 1 ? 0.125 : 0.25;
+        const okUnpaid = await runMutation(
+          () => supabase.from('leave_requests').insert({ employee_id: uuid, leave_type: 'unpaid', start_date: data.date, end_date: data.date, days: unpaidDays, reason: `إذن بدون رصيد (${data.fromTime}-${data.toTime}) - ${data.reason}` }),
+          language === 'ar' ? `لا يوجد رصيد أذونات: سُجّل كإجازة بدون راتب (${unpaidDays} يوم) وتخصم من الراتب` : `No permission balance: saved as unpaid leave (${unpaidDays} day)`,
+          { key: 'new-perm-unpaid' },
+        );
+        if (okUnpaid) setActiveTab('leaves');
+        return;
+      }
+    }
     const ok = await runMutation(
       () => supabase.from('permission_requests').insert({ employee_id: uuid, permission_type: data.permissionType, date: data.date, start_time: data.fromTime, end_time: data.toTime, hours: data.durationHours, reason: data.reason }),
       language === 'ar' ? 'تم تسجيل طلب الإذن' : 'Permission request submitted',

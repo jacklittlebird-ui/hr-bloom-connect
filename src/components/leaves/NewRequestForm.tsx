@@ -293,6 +293,7 @@ const PermissionForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
               <SelectItem value="late_arrival">{language === 'ar' ? 'تأخير صباحًا' : 'Late Arrival'}</SelectItem>
               <SelectItem value="early_leave">{language === 'ar' ? 'انصراف مبكر' : 'Early Leave'}</SelectItem>
               <SelectItem value="midday">{language === 'ar' ? 'في منتصف اليوم' : 'Midday'}</SelectItem>
+              <SelectItem value="no_deduction">{language === 'ar' ? 'إذن بدون خصم' : 'No-Deduction Permission'}</SelectItem>
             </SelectContent>
           </Select>
         </div>
