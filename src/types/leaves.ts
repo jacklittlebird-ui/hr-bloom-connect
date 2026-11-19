@@ -27,7 +27,7 @@ export interface PermissionRequest {
   employeeNameAr: string;
   department: string;
   station: string;
-  permissionType: 'early_leave' | 'late_arrival' | 'personal' | 'medical';
+  permissionType: 'early_leave' | 'late_arrival' | 'personal' | 'medical' | 'midday' | 'no_deduction';
   date: string;
   fromTime: string;
   toTime: string;
